@@ -9,7 +9,7 @@ import { getLanAccounts } from "@/lib/lan-accounts";
 import { SeatMap } from "@/components/seat-map";
 import { Card, Pill, StatusBadge, btnGhost, btnSecondary } from "@/components/ui";
 import { fmtDate, fmtRange, relative } from "@/lib/format";
-import { getDisplayNames, getLan, pickNick, signupClosed } from "@/lib/lans";
+import { ATTENDANCE_LOCKED_MSG, attendanceLocked, getDisplayNames, getLan, pickNick, signupClosed } from "@/lib/lans";
 import { canViewLan, isLanManager, requireUser } from "@/lib/session";
 import { getClan } from "@/lib/clans";
 import { ClanAvatar } from "@/components/clan-avatar";
@@ -72,6 +72,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
     seats.filter((s) => s.userId && (l.seatsPublishedAt || isLanManager(me, id))).map((s) => [s.userId!, s.label]),
   );
   const closed = signupClosed(l, now);
+  const locked = attendanceLocked(my);
   const group = (st: string) =>
     rows
       .filter((r) => r.status === st)
@@ -222,7 +223,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
         <div className="grid grid-cols-1 items-start gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_22rem]">
           <div className="min-w-0 space-y-4 sm:space-y-6 lg:col-start-2 lg:row-span-2 lg:row-start-1">
           <Card title="Your attendance" actions={<StatusBadge status={my?.status} seat={seatOf.get(me.id)} />}>
-            <AttendanceButtons lanId={l.id} current={my?.status ?? null} disabled={!!closed} />
+            <AttendanceButtons lanId={l.id} current={my?.status ?? null} disabled={!!closed || locked} />
+            {locked && !closed && <p className="mt-3 text-sm text-muted">{ATTENDANCE_LOCKED_MSG}</p>}
             {my?.status === "waitlist" && (
               <p className="mt-3 text-sm text-seat-taken">
                 The LAN is full. You&apos;re on the waitlist and will get an email if a spot opens up.

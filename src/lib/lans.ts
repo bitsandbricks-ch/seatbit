@@ -61,6 +61,16 @@ export function goingCount(lanId: string) {
     .all().length;
 }
 
+/**
+ * Once a member has bought their ticket (or an orga confirmed it), their answer
+ * is locked: only orgas can change it. Stops people dropping out with a ticket
+ * the group already counted on.
+ */
+export function attendanceLocked(a: { ticketBought: boolean; paid: boolean } | null | undefined) {
+  return !!a && (a.ticketBought || a.paid);
+}
+export const ATTENDANCE_LOCKED_MSG = "You have a ticket, so your answer is locked. Ask an orga if your plans change.";
+
 export function signupClosed(l: Lan, now = new Date()) {
   return (l.signupDeadline && l.signupDeadline < now) || l.endsAt < now;
 }
