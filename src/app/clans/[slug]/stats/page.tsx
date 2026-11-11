@@ -3,6 +3,8 @@ import { notFound, redirect } from "next/navigation";
 import { and, isNull } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { ClanAvatar } from "@/components/clan-avatar";
+import { Avatar } from "@/components/avatar";
+import { getAvatars, type AvatarData } from "@/lib/avatars";
 import { EventTurnoutChart } from "@/components/event-turnout-chart";
 import { Card, EmptyState, Page, PageHeader, Pill, StatTile } from "@/components/ui";
 import { canManageClan, getClanBySlug } from "@/lib/clans";
@@ -31,6 +33,7 @@ export default async function ClanStatsPage({ params }: PageProps<"/clans/[slug]
       .all()
       .map((n) => [n.userId, n.nick]),
   );
+  const avatars = getAvatars(members.map((m) => m.userId));
   const label = (m: MemberStats) => personLabel(m, defaultNicks.get(m.userId));
 
   const withPast = members.filter((m) => m.asked > 0);
@@ -168,6 +171,7 @@ export default async function ClanStatsPage({ params }: PageProps<"/clans/[slug]
             <Card title="Most active">
               <MemberList
                 slug={c.slug}
+                avatars={avatars}
                 list={mostActive}
                 label={label}
                 empty="Nobody has come to a past event yet."
@@ -185,6 +189,7 @@ export default async function ClanStatsPage({ params }: PageProps<"/clans/[slug]
               <p className="mb-3 text-sm text-muted">Past events these members never answered for.</p>
               <MemberList
                 slug={c.slug}
+                avatars={avatars}
                 list={quiet}
                 label={label}
                 empty="Everyone answered every time."
@@ -199,6 +204,7 @@ export default async function ClanStatsPage({ params }: PageProps<"/clans/[slug]
               <p className="mb-3 text-sm text-muted">Past events where the answer stayed &ldquo;unsure&rdquo;.</p>
               <MemberList
                 slug={c.slug}
+                avatars={avatars}
                 list={unsure}
                 label={label}
                 empty="No open “unsure” answers at past events."
@@ -213,6 +219,7 @@ export default async function ClanStatsPage({ params }: PageProps<"/clans/[slug]
               <p className="mb-3 text-sm text-muted">Members who haven&apos;t come to any past event since joining.</p>
               <MemberList
                 slug={c.slug}
+                avatars={avatars}
                 list={neverCame.slice(0, 15)}
                 label={label}
                 empty="Everyone has been to at least one LAN."
@@ -237,7 +244,9 @@ function MemberList({
   label,
   right,
   empty,
+  avatars,
 }: {
+  avatars: Map<string, AvatarData>;
   slug: string;
   list: MemberStats[];
   label: (m: MemberStats) => string;
@@ -253,8 +262,10 @@ function MemberList({
             href={`/clans/${slug}/members/${m.userId}`}
             className="-mx-2 flex min-h-11 items-center justify-between gap-3 rounded-md px-2 py-1.5 text-sm transition hover:bg-raised"
           >
-            <span className="min-w-0 truncate">
-              {label(m)} {m.isGuest && <Pill>guest</Pill>}
+            <span className="flex min-w-0 items-center gap-2">
+              <Avatar data={avatars.get(m.userId)} size={24} />
+              <span className="truncate">{label(m)}</span>
+              {m.isGuest && <Pill>guest</Pill>}
             </span>
             <span className="shrink-0 text-right text-muted tabular-nums">{right(m)}</span>
           </Link>

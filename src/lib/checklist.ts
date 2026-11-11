@@ -59,10 +59,10 @@ export function buildChecklist(input: {
       hint: seatLabel
         ? `Seat ${seatLabel}.`
         : lan.seatPicking && !lan.seatsPublishedAt
-          ? "Seat picking is open: tick that you have your ticket, then take a free seat below."
+          ? "Seat picking is open: tick that you have your ticket, then take a free seat on the Seats tab."
           : freeSeats === 0
           ? "The orgas will publish the seat plan soon."
-          : "Add seat wishes below. The orgas publish the seat plan after the deadline.",
+          : "Add seat wishes on the Seats tab. The orgas publish the seat plan after the deadline.",
     });
   }
   // The event's own seat plan (e.g. lal.gg): members book the seat they got there themselves.

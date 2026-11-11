@@ -8,8 +8,9 @@ Seatbit helps a clan or group of friends coordinate going to LAN parties run by 
 - **Member checklist per LAN**: sign up, set nickname, buy ticket (members tick it off, orgas confirm), claim a seat. Progress shows on the LAN list.
 - **Status at a glance**: no answer, attending, seat claimed (with seat number), waitlist/full, maybe, not going, plus free seats left.
 - **Due dates and email reminders**: an answer deadline and a buy-ticket deadline per LAN. Reminders go out automatically N days before each (to undecided members and to attendees without a ticket) and one day before the LAN (to everyone going). Each one goes out once per person; orgas can also nudge manually; members can opt out.
-- **Seat plan**: a compact grid of the seats the group has (seat label or the first letters of the nick), so even a big block fits on a phone. Tap a seat to see who sits there in a details pane (side panel on desktop, bottom sheet on phones); switch to *Large* to show whole nicks (remembered per device), and use *Find someone* to highlight people.
-  - **Orgas edit seats right in the map**: tap a seat to assign or give it to someone, swap or move people, clear it, hold it for a guest or rename it to match the event's numbering. People without a seat are listed under *Not seated yet*: tap one and then a seat, or drag names and seated people around on desktop. *Edit seats* adds and removes single seats for aisles; the Seats tab also fills/clears rows, auto-assigns by seat wishes and publishes the plan.
+- **Event page**: your answer and your checklist sit at the top on every tab (once you have a ticket your answer is locked and just shown). Tabs: *Overview* (dates, orgas, your nick, quick links to your seat and who's coming), *Seats*, *Attendees*, *Travel* and *Packing list*. Orgas switch between **View** and **Manage** right next to the title; the manage page has the same header and tab order (Overview, Seats, Attendees) plus Discord & WhatsApp and Settings.
+- **Seat plan** (Seats tab): a compact grid of the seats the group has (seat label or the first letters of the nick), so even a big block fits on a phone. Each letter is one row and every letter+number exists only once; seats sit at their number, so a block like `F1-F20, F25-F30` shows a small dotted gap for the seats that aren't ours. Rows too long for the screen wrap onto indented extra lines, and the row letter spans all lines of its row. Tap a seat to see who sits there in a details panel (its own column on the right on desktop, a bottom sheet on phones); switch to *Large* to show whole nicks (remembered per device), and use *Find someone* to highlight people.
+  - **Orgas edit seats right in the map**: tap a seat to assign or give it to someone, swap or move people, clear it, hold it for a guest or rename it to match the event's numbering. People without a seat are listed under *Not seated yet*: tap one and then a seat, or drag names and seated people around on desktop. *Edit seats* shows every number of a row: tap a dashed one to add it or a seat to remove it; the Seats tab also fills/clears rows, auto-assigns by seat wishes and publishes the plan.
   - **Seat picking** (optional): orgas can let members choose their own free seat before the plan is published. Members with a ticket tap a free seat and *Take this seat* (or *Move here* / *Give up my seat*).
   - **Booking on the event site**: put the event's own seat plan link (e.g. the lal.gg Sitzplan, new every year) on the event. Once the plan is published, each member gets a checklist step and a DM with an *I booked it* button to book the same seat there. Orgas see who booked, can remind the rest, and a seat change clears the tick.
   - **Seat swaps**: after the plan is out, a member asks another to swap; they accept, an orga approves on the Seats tab and both get told.
@@ -36,11 +37,13 @@ Phone (390 px) and desktop (1440 px) shots of the main pages are in [`docs/scree
 | --- | --- | --- | --- |
 | <img src="docs/screenshots/phone-travel.png" width="200" alt="Travel tab"> | <img src="docs/screenshots/phone-packing-list.png" width="200" alt="Packing list"> | <img src="docs/screenshots/phone-date-picker.png" width="200" alt="24h date picker"> | <img src="docs/screenshots/phone-manage-seats.png" width="200" alt="Orga seat editing on a phone"> |
 
-**Desktop:** seat plan with orga tools and the details panel.
+**Desktop:** Seats tab with the details panel on the right, and the orgas' seat plan.
+
+![Seats tab on desktop](docs/screenshots/desktop-event-seats.png)
 
 ![Orga seat plan on desktop](docs/screenshots/desktop-manage-seats.png)
 
-More: [LAN list](docs/screenshots/desktop-lans.png) · [event page](docs/screenshots/desktop-event.png) · [attendees](docs/screenshots/desktop-manage-attendees.png) · [clan](docs/screenshots/desktop-clan.png) · [admin](docs/screenshots/desktop-admin.png) · [clan (phone)](docs/screenshots/phone-clan.png) · [profile (phone)](docs/screenshots/phone-profile.png)
+More: [LAN list](docs/screenshots/desktop-lans.png) · [event overview](docs/screenshots/desktop-event.png) · [event attendees](docs/screenshots/desktop-event-attendees.png) · [attendees](docs/screenshots/desktop-manage-attendees.png) · [clan](docs/screenshots/desktop-clan.png) · [admin](docs/screenshots/desktop-admin.png) · [clan (phone)](docs/screenshots/phone-clan.png) · [profile (phone)](docs/screenshots/phone-profile.png)
 
 ## Platform settings
 

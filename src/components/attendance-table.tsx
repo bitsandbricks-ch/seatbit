@@ -14,6 +14,8 @@ import type { AttendanceStatus } from "@/db/schema";
 import { GuestForm } from "./guest-form";
 import { PagerBar, matches, usePager } from "./pager";
 import { btnGhost, btnSecondary, input } from "./ui";
+import { Avatar } from "./avatar";
+import type { AvatarData } from "@/lib/avatars";
 
 export type AttendanceRow = {
   id: string;
@@ -31,6 +33,7 @@ export type AttendanceRow = {
   seat: string | null;
   /** Booked the seat on the event's own seat plan; null when the event has no seat plan link. */
   seatBooked?: boolean | null;
+  avatar?: AvatarData;
 };
 
 const statuses: AttendanceStatus[] = ["going", "waitlist", "maybe", "declined"];
@@ -194,6 +197,8 @@ export function AttendanceTable({
             className={`rounded-card border border-line bg-surface p-3 lg:grid ${cols} lg:items-center lg:gap-3 lg:rounded-none lg:border-0 lg:bg-transparent lg:px-4 lg:py-2 lg:hover:bg-raised/30`}
           >
             <div className="flex items-start justify-between gap-2">
+              <div className="flex min-w-0 items-center gap-2.5">
+              <Avatar data={r.avatar} size={28} />
               <div className="min-w-0">
                 <p className="truncate font-medium">
                   {profileBase ? (
@@ -210,6 +215,7 @@ export function AttendanceTable({
                 <p className="truncate text-xs text-muted">
                   {r.name} · {r.email}
                 </p>
+              </div>
               </div>
               <button
                 className={`${btnGhost} shrink-0 !px-2 text-xs !text-danger lg:hidden`}

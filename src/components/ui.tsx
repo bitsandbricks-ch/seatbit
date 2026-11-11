@@ -185,21 +185,6 @@ export function PageHeader({
   );
 }
 
-/** Round initials avatar for people (same size steps as ClanAvatar). */
-export function Avatar({ text, image, size = 56 }: { text: string; image?: string | null; size?: number }) {
-  if (image)
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={image} alt="" width={size} height={size} className="shrink-0 rounded-full object-cover" style={{ width: size, height: size }} />;
-  return (
-    <span
-      className="grid shrink-0 place-items-center rounded-full bg-bit-soft font-mono font-semibold uppercase text-bit"
-      style={{ width: size, height: size, fontSize: Math.round(size * 0.32) }}
-    >
-      {text.slice(0, 2)}
-    </span>
-  );
-}
-
 /**
  * Segmented control: switches between a few views inside a card (Carpool /
  * Sleeping, Compact / Large). Page sections use <Tabs> instead. Each option is a

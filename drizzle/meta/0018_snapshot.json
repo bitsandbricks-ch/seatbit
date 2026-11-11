@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "3484aeb0-307d-42ad-8869-cab795309c1f",
-  "prevId": "db8c94a0-9310-45d2-ac79-a3b67b1ec8f6",
+  "id": "f4d7f048-3b80-4797-bc22-47edba503531",
+  "prevId": "ca325459-ebcf-4709-a7cd-17c7c8296745",
   "tables": {
     "account": {
       "name": "account",
@@ -2457,6 +2457,35 @@
         "invited_at": {
           "name": "invited_at",
           "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "avatar_style": {
+          "name": "avatar_style",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'picture'"
+        },
+        "avatar_file": {
+          "name": "avatar_file",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "icon": {
+          "name": "icon",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "color": {
+          "name": "color",
+          "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false

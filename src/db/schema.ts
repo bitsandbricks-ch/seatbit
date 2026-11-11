@@ -37,6 +37,15 @@ export const user = sqliteTable("user", {
   // Discord sign-in with this (verified) address takes the guest over automatically.
   inviteEmail: text("invite_email"),
   invitedAt: integer("invited_at", { mode: "timestamp_ms" }),
+  // How the member is shown: "picture" = their uploaded picture, else the Discord
+  // picture, else initials; "icon" = an emoji on their colour; "initials".
+  avatarStyle: text("avatar_style").$type<"picture" | "icon" | "initials">().default("picture").notNull(),
+  /** File name of an uploaded picture in the uploads dir, or null. */
+  avatarFile: text("avatar_file"),
+  /** Emoji shown when avatarStyle is "icon". */
+  icon: text("icon"),
+  /** Personal colour (one of PROFILE_COLORS), used for rings, seats and lists; null = picked from the user id. */
+  color: text("color"),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" })
     .default(now)

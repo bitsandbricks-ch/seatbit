@@ -174,7 +174,7 @@ export async function notifySeatChanged(l: Lan, userId: string, label: string | 
     text: label
       ? `Your seat at ${l.name} changed. You're now sitting at ${label}.`
       : `An orga took you off your seat at ${l.name}. They'll get back to you.`,
-    url: lanUrl(l),
+    url: `${lanUrl(l)}?tab=seats`,
     dmOnly: true,
   });
 }
