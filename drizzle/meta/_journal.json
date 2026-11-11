@@ -36,6 +36,13 @@
       "when": 1794394804671,
       "tag": "0004_clans",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1794395771109,
+      "tag": "0007_profile_names",
+      "breakpoints": true
     }
   ]
 }

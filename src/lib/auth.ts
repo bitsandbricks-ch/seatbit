@@ -48,6 +48,7 @@ export const auth = betterAuth({
       google: {
         clientId: process.env.GOOGLE_CLIENT_ID!,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+        mapProfileToUser: (p) => ({ firstName: p.given_name ?? "", lastName: p.family_name ?? "" }),
       },
     }),
   },
@@ -58,6 +59,8 @@ export const auth = betterAuth({
     additionalFields: {
       role: { type: "string", defaultValue: "member", input: false },
       emailReminders: { type: "boolean", defaultValue: true, input: false },
+      firstName: { type: "string", defaultValue: "", required: false },
+      lastName: { type: "string", defaultValue: "", required: false },
     },
   },
   databaseHooks: {

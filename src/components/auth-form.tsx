@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { setNick } from "@/app/actions";
 import { authClient } from "@/lib/auth-client";
 import { btnPrimary, btnSecondary, Field, Input } from "./ui";
 
@@ -25,12 +26,22 @@ export function AuthForm({
     const f = new FormData(e.currentTarget);
     const email = String(f.get("email"));
     const password = String(f.get("password"));
+    const firstName = String(f.get("firstName") ?? "").trim();
+    const lastName = String(f.get("lastName") ?? "").trim();
     const res =
       mode === "login"
         ? await authClient.signIn.email({ email, password })
-        : await authClient.signUp.email({ email, password, name: String(f.get("name")) });
+        : await authClient.signUp.email({ email, password, name: `${firstName} ${lastName}`, firstName, lastName });
+    if (res.error) {
+      setBusy(false);
+      return setError(res.error.message ?? "Something went wrong");
+    }
+    if (mode === "register" && String(f.get("nick") ?? "").trim()) {
+      const n = new FormData();
+      n.set("nick", String(f.get("nick")));
+      await setNick(n);
+    }
     setBusy(false);
-    if (res.error) return setError(res.error.message ?? "Something went wrong");
     router.push(next);
     router.refresh();
   }
@@ -67,9 +78,19 @@ export function AuthForm({
 
       <form onSubmit={onSubmit} className="space-y-4">
         {mode === "register" && (
-          <Field label="Name">
-            <Input name="name" required autoComplete="name" />
-          </Field>
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="First name">
+                <Input name="firstName" required maxLength={40} autoComplete="given-name" />
+              </Field>
+              <Field label="Surname">
+                <Input name="lastName" required maxLength={40} autoComplete="family-name" />
+              </Field>
+            </div>
+            <Field label="Nickname" hint="Your gamer tag. You can set a different one per LAN type later.">
+              <Input name="nick" required maxLength={32} autoComplete="nickname" />
+            </Field>
+          </>
         )}
         <Field label="Email">
           <Input name="email" type="email" required autoComplete="email" />

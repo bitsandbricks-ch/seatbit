@@ -17,7 +17,9 @@ const id = () =>
 
 export const user = sqliteTable("user", {
   id: text("id").primaryKey(),
-  name: text("name").notNull(),
+  name: text("name").notNull(), // "First Last", kept in sync with the two fields below
+  firstName: text("first_name").default("").notNull(),
+  lastName: text("last_name").default("").notNull(),
   email: text("email").notNull().unique(),
   emailVerified: integer("email_verified", { mode: "boolean" }).default(false).notNull(),
   image: text("image"),
