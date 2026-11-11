@@ -147,13 +147,13 @@ export function SeatMap({
                 <button
                   key={i}
                   onClick={() => run(() => toggleSeatRow(lanId, row))}
-                  className="sticky left-0 z-10 h-[4.5rem] rounded bg-surface text-xs font-mono text-muted hover:bg-raised hover:text-fg"
+                  className="h-[4.5rem] rounded text-xs font-mono text-muted hover:bg-raised hover:text-fg"
                   title={`Fill or clear row ${letter}`}
                 >
                   {letter}
                 </button>
               ) : (
-                <div key={i} className="sticky left-0 z-10 grid h-[4.5rem] place-items-center bg-surface text-xs font-mono text-muted">
+                <div key={i} className="grid h-[4.5rem] place-items-center text-xs font-mono text-muted">
                   {letter}
                 </div>
               );
