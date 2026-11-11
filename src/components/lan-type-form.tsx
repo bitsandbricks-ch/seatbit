@@ -5,6 +5,7 @@ import { Field, Input, btnPrimary, input } from "./ui";
 
 export type LanTypeValues = {
   id?: string;
+  clanId?: string;
   name: string;
   description: string;
   location: string;
@@ -21,6 +22,7 @@ export function LanTypeForm({ values }: { values: LanTypeValues }) {
   return (
     <form action={action} className="space-y-5">
       {values.id && <input type="hidden" name="id" value={values.id} />}
+      {values.clanId && <input type="hidden" name="clanId" value={values.clanId} />}
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Name">
           <Input name="name" defaultValue={values.name} required placeholder="e.g. Lock & Load" />

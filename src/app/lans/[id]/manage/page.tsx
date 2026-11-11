@@ -40,7 +40,21 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
 
   const rows = db.select().from(attendance).where(eq(attendance.lanId, id)).all();
   const seats = db.select().from(seat).where(eq(seat.lanId, id)).all();
-  const users = db.select().from(user).all();
+  const memberIds = new Set(
+    db
+      .select({ userId: schema.clanMember.userId, role: schema.clanMember.role })
+      .from(schema.clanMember)
+      .where(eq(schema.clanMember.clanId, l.clanId ?? ""))
+      .all()
+      .filter((m) => m.role !== "pending")
+      .map((m) => m.userId),
+  );
+  // Clan members, plus anyone who already has an attendance row (e.g. left the clan later).
+  const users = db
+    .select()
+    .from(user)
+    .all()
+    .filter((u) => memberIds.has(u.id) || rows.some((r) => r.userId === u.id));
   const names = await getDisplayNames(id, users.map((u) => u.id));
   const userById = new Map(users.map((u) => [u.id, u]));
   const seatOf = new Map(seats.filter((s) => s.userId).map((s) => [s.userId!, s.label]));
@@ -53,7 +67,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
 
   const wantsMail = (uid: string) => userById.get(uid)?.emailReminders;
   const undecided = users.filter(
-    (u) => u.emailReminders && (!inLan.has(u.id) || rows.find((r) => r.userId === u.id)?.status === "maybe"),
+    (u) => u.emailReminders && memberIds.has(u.id) && (!inLan.has(u.id) || rows.find((r) => r.userId === u.id)?.status === "maybe"),
   ).length;
   const unpaid = rows.filter(
     (r) => (r.status === "going" || r.status === "waitlist") && !r.paid && !r.ticketBought && wantsMail(r.userId),
@@ -98,7 +112,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
   const seated = going.filter((r) => seatOf.has(r.userId)).length;
   const freeSeats = seats.filter((s) => !s.userId && !s.locked).length;
   const count = (st: string) => rows.filter((r) => r.status === st).length;
-  const noAnswer = users.filter((u) => !inLan.has(u.id)).length;
+  const noAnswer = users.filter((u) => memberIds.has(u.id) && !inLan.has(u.id)).length;
 
   return (
     <div className="space-y-5">
@@ -189,7 +203,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
           lanId={l.id}
           rows={tableRows}
           seats={[...seats].sort((a, b) => a.row - b.row || a.col - b.col)}
-          others={users.filter((u) => !inLan.has(u.id)).map((u) => ({ id: u.id, name: names.get(u.id) ?? u.name }))}
+          others={users.filter((u) => !inLan.has(u.id) && memberIds.has(u.id)).map((u) => ({ id: u.id, name: names.get(u.id) ?? u.name }))}
         />
       )}
 
@@ -272,7 +286,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
         <div className="space-y-5">
           <Card title="Details">
             <LanForm
-              types={db.select().from(schema.lanType).all()}
+              types={db.select().from(schema.lanType).where(eq(schema.lanType.clanId, l.clanId ?? "")).all()}
               values={{
                 id: l.id,
                 typeId: l.typeId ?? "",
@@ -300,7 +314,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               lanId={l.id}
               orgas={orgaIds.map((uid) => ({ id: uid, name: names.get(uid) ?? userById.get(uid)?.name ?? "?" }))}
               candidates={users
-                .filter((u) => !orgaIds.includes(u.id))
+                .filter((u) => !orgaIds.includes(u.id) && memberIds.has(u.id))
                 .map((u) => ({ id: u.id, name: names.get(u.id) ?? u.name }))
                 .sort((a, b) => a.name.localeCompare(b.name))}
             />

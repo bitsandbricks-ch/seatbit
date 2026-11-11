@@ -29,6 +29,13 @@
       "when": 1794394294863,
       "tag": "0003_seat_wishes",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1794394804671,
+      "tag": "0004_clans",
+      "breakpoints": true
     }
   ]
 }

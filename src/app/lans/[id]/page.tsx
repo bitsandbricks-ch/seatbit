@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { AttendanceButtons } from "@/components/attendance-buttons";
 import { NickManager } from "@/components/nick-manager";
@@ -8,7 +8,9 @@ import { SeatMap } from "@/components/seat-map";
 import { Card, Pill, StatusBadge, btnSecondary } from "@/components/ui";
 import { fmtDate, relative } from "@/lib/format";
 import { getDisplayNames, getLan, pickNick, signupClosed } from "@/lib/lans";
-import { isLanManager, requireUser } from "@/lib/session";
+import { canViewLan, isLanManager, requireUser } from "@/lib/session";
+import { getClan } from "@/lib/clans";
+import { ClanAvatar } from "@/components/clan-avatar";
 import { buildChecklist, progress } from "@/lib/checklist";
 import { LanChecklist } from "@/components/lan-checklist";
 import { SeatWishes } from "@/components/seat-wishes";
@@ -19,7 +21,8 @@ export default async function LanPage({ params }: PageProps<"/lans/[id]">) {
   const { id } = await params;
   const me = await requireUser();
   const l = getLan(id);
-  if (!l) notFound();
+  if (!l || !canViewLan(me, id)) notFound();
+  const lanClan = l.clanId ? getClan(l.clanId) : undefined;
   const now = new Date();
 
   const rows = db.select().from(attendance).where(eq(attendance.lanId, id)).all();
@@ -29,7 +32,13 @@ export default async function LanPage({ params }: PageProps<"/lans/[id]">) {
   const orgaIds = db.select().from(schema.lanOrga).where(eq(schema.lanOrga.lanId, id)).all().map((o) => o.userId);
   const orgas = orgaIds.length
     ? db.select().from(schema.user).where(inArray(schema.user.id, orgaIds)).all()
-    : db.select().from(schema.user).where(eq(schema.user.role, "admin")).all();
+    : db
+        .select({ u: schema.user })
+        .from(schema.clanMember)
+        .innerJoin(schema.user, eq(schema.user.id, schema.clanMember.userId))
+        .where(and(eq(schema.clanMember.clanId, l.clanId ?? ""), eq(schema.clanMember.role, "admin")))
+        .all()
+        .map((r) => r.u);
   const orgaNames = await getDisplayNames(id, orgas.map((o) => o.id));
   const myNick = pickNick(myNicks, { lanId: id, typeId: l.typeId }, me.name);
   const names = await getDisplayNames(id, [
@@ -65,6 +74,11 @@ export default async function LanPage({ params }: PageProps<"/lans/[id]">) {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
+          {lanClan && (
+            <Link href={`/clans/${lanClan.slug}`} className="mb-1 flex items-center gap-1.5 text-sm text-zinc-400 hover:text-zinc-200">
+              <ClanAvatar clan={lanClan} size={20} /> {lanClan.name}
+            </Link>
+          )}
           <h1 className="text-2xl font-bold sm:text-3xl">{l.name}</h1>
           <p className="mt-1 text-zinc-400">
             {fmtDate(l.startsAt)} – {fmtDate(l.endsAt)}

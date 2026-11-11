@@ -91,9 +91,55 @@ export const verification = sqliteTable(
 
 // ---------- App tables ----------
 
+/** A clan / group of friends. Everything (LAN types, events) belongs to one clan. */
+export const clan = sqliteTable("clan", {
+  id: id(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  description: text("description").default("").notNull(),
+  /** File name of the uploaded avatar in the uploads dir, or null. */
+  avatar: text("avatar"),
+  /**
+   * "approval": anyone can ask to join, an admin approves; "open": anyone joins
+   * directly; "invite": only with an invite link. Invite links always work.
+   */
+  joinPolicy: text("join_policy").$type<"approval" | "open" | "invite">().default("approval").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+});
+
+/** "pending" = asked to join, waiting for an admin. */
+export const CLAN_ROLES = ["admin", "member", "pending"] as const;
+export type ClanRole = (typeof CLAN_ROLES)[number];
+
+export const clanMember = sqliteTable(
+  "clan_member",
+  {
+    clanId: text("clan_id")
+      .notNull()
+      .references(() => clan.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    role: text("role").$type<ClanRole>().default("member").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  (t) => [uniqueIndex("clan_member_uq").on(t.clanId, t.userId), index("clan_member_user_idx").on(t.userId)],
+);
+
+/** Invite links: anyone with the code can join the clan as a member. */
+export const clanInvite = sqliteTable("clan_invite", {
+  code: text("code").primaryKey(),
+  clanId: text("clan_id")
+    .notNull()
+    .references(() => clan.id, { onDelete: "cascade" }),
+  createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+});
+
 /** A recurring LAN party (e.g. "Lock & Load") that yearly events are created from. */
 export const lanType = sqliteTable("lan_type", {
   id: id(),
+  clanId: text("clan_id").references(() => clan.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   description: text("description").default("").notNull(),
   location: text("location").default("").notNull(),
@@ -109,6 +155,7 @@ export const lanType = sqliteTable("lan_type", {
 
 export const lan = sqliteTable("lan", {
   id: id(),
+  clanId: text("clan_id").references(() => clan.id, { onDelete: "cascade" }),
   typeId: text("type_id").references(() => lanType.id, { onDelete: "set null" }),
   name: text("name").notNull(),
   description: text("description").default("").notNull(),
@@ -250,6 +297,7 @@ export const reminderLog = sqliteTable(
 export type User = typeof user.$inferSelect;
 export type Lan = typeof lan.$inferSelect;
 export type LanType = typeof lanType.$inferSelect;
+export type Clan = typeof clan.$inferSelect;
 export type Attendance = typeof attendance.$inferSelect;
 export type Nickname = typeof nickname.$inferSelect;
 export type Seat = typeof seat.$inferSelect;

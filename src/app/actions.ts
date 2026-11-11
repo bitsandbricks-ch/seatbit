@@ -16,7 +16,8 @@ import {
 import { sendReminderNow } from "@/lib/reminders";
 import { planSeats } from "@/lib/seating";
 import { appUrl, sendMail } from "@/lib/mail";
-import { requireAdmin, requireLanManager, requireUser } from "@/lib/session";
+import { canViewLan, requireAdmin, requireClanManager, requireLanManager, requireUser } from "@/lib/session";
+import { isClanMember } from "@/lib/clans";
 
 const { attendance, nickname, seat, lan, user, lanOrga, lanType } = schema;
 
@@ -37,6 +38,7 @@ const lanPath = (id: string) => {
 export async function setMyAttendance(lanId: string, status: AttendanceStatus) {
   const me = await requireUser();
   const l = mustGetLan(lanId);
+  if (!canViewLan(me, lanId)) throw new Error("Join the clan first");
   if (!ATTENDANCE_STATUSES.includes(status) || status === "waitlist") throw new Error("Bad status");
   if (signupClosed(l)) throw new Error("Sign-up for this LAN is closed");
   await setAttendance(l, me.id, status);
@@ -119,15 +121,21 @@ export type FormState = { error?: string } | undefined;
 
 export async function saveLan(_: FormState, formData: FormData): Promise<FormState> {
   const id = (formData.get("id") as string) || null;
-  const me = id ? await requireLanManager(id) : await requireAdmin();
+  const clanId = id ? mustGetLan(id).clanId : String(formData.get("clanId") ?? "");
+  if (!clanId) return { error: "Pick a clan." };
+  const me = id ? await requireLanManager(id) : await requireClanManager(clanId);
   const parsed = lanInput.safeParse(
-    Object.fromEntries([...formData.entries()].filter(([k]) => k !== "id")),
+    Object.fromEntries([...formData.entries()].filter(([k]) => k !== "id" && k !== "clanId")),
   );
   if (!parsed.success) {
     return { error: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join(", ") };
   }
   const v = parsed.data;
   if (v.endsAt <= v.startsAt) return { error: "The end must be after the start." };
+  if (v.typeId) {
+    const t = db.select().from(lanType).where(eq(lanType.id, v.typeId)).get();
+    if (t?.clanId !== clanId) return { error: "That LAN type belongs to another clan." };
+  }
 
   let lanId = id;
   if (id) {
@@ -137,7 +145,7 @@ export async function saveLan(_: FormState, formData: FormData): Promise<FormSta
       await promoteFromWaitlist(mustGetLan(id));
     }
   } else {
-    const row = db.insert(lan).values(v).returning().get();
+    const row = db.insert(lan).values({ ...v, clanId }).returning().get();
     lanId = row.id;
     db.insert(lanOrga).values({ lanId: row.id, userId: me.id }).run();
     const t = v.typeId ? db.select().from(lanType).where(eq(lanType.id, v.typeId)).get() : undefined;
@@ -148,10 +156,12 @@ export async function saveLan(_: FormState, formData: FormData): Promise<FormSta
 }
 
 export async function deleteLan(id: string) {
-  await requireAdmin();
+  const l = mustGetLan(id);
+  if (!l.clanId) await requireAdmin();
+  else await requireClanManager(l.clanId);
   db.delete(lan).where(eq(lan.id, id)).run();
   revalidatePath("/");
-  redirect("/admin");
+  redirect("/");
 }
 
 export async function toggleSeatCell(lanId: string, row: number, col: number) {
@@ -204,6 +214,8 @@ export async function adminAssignSeat(seatId: string, userId: string | null) {
 
 export async function adminSetAttendance(lanId: string, userId: string, status: AttendanceStatus) {
   await requireLanManager(lanId);
+  const cid = mustGetLan(lanId).clanId;
+  if (cid && !isClanMember(userId, cid)) throw new Error("Not a member of this clan");
   if (!ATTENDANCE_STATUSES.includes(status)) throw new Error("Bad status");
   // Admins can override capacity.
   await setAttendance(mustGetLan(lanId), userId, status, { force: true });
@@ -265,6 +277,8 @@ export async function setMyTicketBought(lanId: string, bought: boolean) {
 
 export async function addOrga(lanId: string, userId: string) {
   await requireLanManager(lanId);
+  const cid = mustGetLan(lanId).clanId;
+  if (cid && !isClanMember(userId, cid)) throw new Error("Not a member of this clan");
   db.insert(lanOrga).values({ lanId, userId }).onConflictDoNothing().run();
   lanPath(lanId);
 }
@@ -511,10 +525,13 @@ const lanTypeInput = z.object({
 });
 
 export async function saveLanType(_: FormState, formData: FormData): Promise<FormState> {
-  await requireAdmin();
   const id = (formData.get("id") as string) || null;
+  const existing = id ? db.select().from(lanType).where(eq(lanType.id, id)).get() : undefined;
+  const clanId = existing?.clanId ?? String(formData.get("clanId") ?? "");
+  if (!clanId) return { error: "Pick a clan." };
+  await requireClanManager(clanId);
   const parsed = lanTypeInput.safeParse(
-    Object.fromEntries([...formData.entries()].filter(([k]) => k !== "id")),
+    Object.fromEntries([...formData.entries()].filter(([k]) => k !== "id" && k !== "clanId")),
   );
   if (!parsed.success) {
     return { error: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join(", ") };
@@ -527,14 +544,20 @@ export async function saveLanType(_: FormState, formData: FormData): Promise<For
     }
   }
   if (id) db.update(lanType).set(parsed.data).where(eq(lanType.id, id)).run();
-  else db.insert(lanType).values(parsed.data).run();
+  else db.insert(lanType).values({ ...parsed.data, clanId }).run();
   revalidatePath("/", "layout");
-  redirect("/admin/types");
+  redirect(`/clans/${clanSlug(clanId)}/settings?tab=types`);
 }
 
 export async function deleteLanType(id: string) {
-  await requireAdmin();
+  const t = db.select().from(lanType).where(eq(lanType.id, id)).get();
+  if (!t?.clanId) return;
+  await requireClanManager(t.clanId);
   db.delete(lanType).where(eq(lanType.id, id)).run();
   revalidatePath("/", "layout");
-  redirect("/admin/types");
+  redirect(`/clans/${clanSlug(t.clanId)}/settings?tab=types`);
+}
+
+function clanSlug(clanId: string) {
+  return db.select({ slug: schema.clan.slug }).from(schema.clan).where(eq(schema.clan.id, clanId)).get()?.slug ?? "";
 }
