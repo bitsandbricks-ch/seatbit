@@ -7,7 +7,6 @@ import { NickManager } from "@/components/nick-manager";
 import { LanIdForm } from "@/components/lan-id-form";
 import { getLanAccounts } from "@/lib/lan-accounts";
 import { SeatMap } from "@/components/seat-map";
-import { TicketConfirm } from "@/components/ticket-confirm";
 import { Card, Pill, StatusBadge, btnGhost, btnSecondary } from "@/components/ui";
 import { fmtDate, fmtRange, relative } from "@/lib/format";
 import { ATTENDANCE_LOCKED_MSG, attendanceLocked, getDisplayNames, getLan, pickNick, signupClosed } from "@/lib/lans";
@@ -87,7 +86,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
     hasNick: myNicks.some(
       (n) => (n.lanId === null && n.typeId === null) || n.lanId === id || (!!l.typeId && n.typeId === l.typeId),
     ),
-    seatLabel: published ? (seatOf.get(me.id) ?? null) : null,
+    seatLabel: mySeatLabel,
     hasSeatPlan: seats.length > 0,
     freeSeats: seats.filter((s) => !s.userId && !s.locked).length,
   });
@@ -270,14 +269,13 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
               </span>
             }
           >
-            {seats.length > 0 && my?.status === "going" && (picking || mySeatLabel) && !my.paid && (
-              <div className="mb-4 space-y-2">
-                <p className="text-sm text-muted">
+            {seats.length > 0 && my?.status === "going" && (picking || mySeatLabel) && !my.paid && !my.ticketBought && (
+              <div className="mb-4">
+                <p className="text-sm text-warn">
                   {mySeatLabel
-                    ? `You have seat ${mySeatLabel}. Confirm you have your ticket for this LAN.`
-                    : "Confirm you have your ticket, then pick your seat."}
+                    ? `You have seat ${mySeatLabel}. Tick "I have my ticket" in your checklist above.`
+                    : `Tick "I have my ticket" in your checklist above, then pick your seat.`}
                 </p>
-                <TicketConfirm lanId={l.id} bought={my.ticketBought} confirmed={my.paid} />
               </div>
             )}
             {seats.length === 0 ? (
