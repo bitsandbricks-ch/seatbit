@@ -25,7 +25,7 @@ export default async function Home() {
     .all();
   const info = (l: Lan) => {
     const ls = seats.filter((s) => s.lanId === l.id);
-    const mySeat = ls.find((s) => s.userId === me.id)?.label ?? null;
+    const mySeat = l.seatsPublishedAt ? (ls.find((s) => s.userId === me.id)?.label ?? null) : null;
     const freeSeats = ls.filter((s) => !s.userId && !s.locked).length;
     const steps = buildChecklist({
       lan: l,

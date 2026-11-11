@@ -57,8 +57,8 @@ export function buildChecklist(input: {
       hint: seatLabel
         ? `Seat ${seatLabel}.`
         : freeSeats === 0
-          ? "All of the group's seats are taken. The orgas will sort it out."
-          : "The orgas assign seats after the deadline.",
+          ? "The orgas will publish the seat plan soon."
+          : "Add seat wishes below. The orgas publish the seat plan after the deadline.",
     });
   }
   return steps;

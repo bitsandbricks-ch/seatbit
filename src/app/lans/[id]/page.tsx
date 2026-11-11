@@ -11,6 +11,7 @@ import { getDisplayNames, getLan, pickNick, signupClosed } from "@/lib/lans";
 import { isLanManager, requireUser } from "@/lib/session";
 import { buildChecklist, progress } from "@/lib/checklist";
 import { LanChecklist } from "@/components/lan-checklist";
+import { SeatWishes } from "@/components/seat-wishes";
 
 const { attendance, seat, nickname } = schema;
 
@@ -35,7 +36,9 @@ export default async function LanPage({ params }: PageProps<"/lans/[id]">) {
     ...new Set([...rows.map((r) => r.userId), ...seats.flatMap((s) => (s.userId ? [s.userId] : []))]),
   ]);
   const my = rows.find((r) => r.userId === me.id);
-  const seatOf = new Map(seats.filter((s) => s.userId).map((s) => [s.userId!, s.label]));
+  const seatOf = new Map(
+    seats.filter((s) => s.userId && (l.seatsPublishedAt || isLanManager(me, id))).map((s) => [s.userId!, s.label]),
+  );
   const closed = signupClosed(l, now);
   const group = (st: string) =>
     rows
@@ -43,17 +46,17 @@ export default async function LanPage({ params }: PageProps<"/lans/[id]">) {
       .sort((a, b) => (names.get(a.userId) ?? "").localeCompare(names.get(b.userId) ?? ""));
   const going = group("going");
   const isAdmin = isLanManager(me, id);
+  const published = !!l.seatsPublishedAt;
   const steps = buildChecklist({
     lan: l,
     attendance: my,
     hasNick: myNicks.some(
       (n) => (n.lanId === null && n.typeId === null) || n.lanId === id || (!!l.typeId && n.typeId === l.typeId),
     ),
-    seatLabel: seatOf.get(me.id) ?? null,
+    seatLabel: published ? (seatOf.get(me.id) ?? null) : null,
     hasSeatPlan: seats.length > 0,
     freeSeats: seats.filter((s) => !s.userId && !s.locked).length,
   });
-  const freeSeats = seats.filter((s) => !s.userId && !s.locked).length;
   const full = l.capacity != null && going.length >= l.capacity;
   const prog = progress(steps);
 
@@ -101,15 +104,13 @@ export default async function LanPage({ params }: PageProps<"/lans/[id]">) {
             title="Our seats"
             actions={
               <span className="flex gap-2">
-                {seats.length > 0 && (
-                  <Pill tone={freeSeats ? "zinc" : "red"}>{freeSeats ? `${freeSeats} seats free` : "No seats left"}</Pill>
-                )}
+                {!published && seats.length > 0 && <Pill tone="amber">Not published yet</Pill>}
               </span>
             }
           >
             {seats.length === 0 ? (
               <p className="text-sm text-zinc-400">The orgas haven&apos;t entered the group&apos;s seats yet.</p>
-            ) : (
+            ) : published || isAdmin ? (
               <SeatMap
                 lanId={l.id}
                 rows={l.seatRows}
@@ -118,6 +119,12 @@ export default async function LanPage({ params }: PageProps<"/lans/[id]">) {
                 mode="view"
                 seats={seats.map((s) => ({ ...s, nick: s.userId ? (names.get(s.userId) ?? "?") : null }))}
               />
+            ) : (
+              <p className="text-sm text-zinc-400">
+                The group has {seats.length} seats ({seats[0]?.label}
+                {seats.length > 1 ? `–${seats[seats.length - 1]?.label}` : ""}). The orgas assign them after the deadline
+                and then publish the seat plan here.
+              </p>
             )}
           </Card>
 
@@ -154,6 +161,29 @@ export default async function LanPage({ params }: PageProps<"/lans/[id]">) {
             )}
             {closed && <p className="mt-3 text-sm text-zinc-400">Sign-up is closed.</p>}
           </Card>
+
+          {my?.status === "going" && !published && seats.length > 0 && (
+            <Card title="Seat wishes">
+              <p className="mb-3 text-sm text-zinc-400">
+                Tell the orgas where you&apos;d like to sit. They plan the seats after the deadline.
+              </p>
+              <SeatWishes
+                lanId={l.id}
+                people={rows
+                  .filter((r) => r.userId !== me.id && (r.status === "going" || r.status === "maybe" || r.status === "waitlist"))
+                  .map((r) => ({ id: r.userId, nick: names.get(r.userId) ?? "?" }))
+                  .sort((a, b) => a.nick.localeCompare(b.nick))}
+                seatLabels={[...seats].sort((a, b) => a.row - b.row || a.col - b.col).map((s) => s.label)}
+                initial={{
+                  near: my.wishNear ?? [],
+                  avoid: my.wishAvoid ?? [],
+                  position: my.wishPosition,
+                  seat: my.wishSeat,
+                  note: my.wishNote,
+                }}
+              />
+            </Card>
+          )}
 
           <Card title="Dates">
             <dl className="space-y-3 text-sm">

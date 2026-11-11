@@ -14,6 +14,8 @@ import {
   signupClosed,
 } from "@/lib/lans";
 import { sendReminderNow } from "@/lib/reminders";
+import { planSeats } from "@/lib/seating";
+import { appUrl, sendMail } from "@/lib/mail";
 import { requireAdmin, requireLanManager, requireUser } from "@/lib/session";
 
 const { attendance, nickname, seat, lan, user, lanOrga, lanType } = schema;
@@ -377,38 +379,117 @@ export async function adminSetSeatFor(lanId: string, userId: string, seatId: str
   lanPath(lanId);
 }
 
-/**
- * Fills free (not held) seats, in seat order, with attendees who are going
- * and have no seat yet. Attendees with a confirmed or reported ticket go first.
- */
-export async function adminAutoAssignSeats(lanId: string): Promise<number> {
-  await requireLanManager(lanId);
-  const seats = db.select().from(seat).where(eq(seat.lanId, lanId)).all();
-  const seated = new Set(seats.map((s) => s.userId).filter(Boolean));
-  const free = seats
-    .filter((s) => !s.userId && !s.locked)
-    .sort((a, b) => a.row - b.row || a.col - b.col);
-  const waiting = db
+function planPeople(lanId: string) {
+  return db
     .select()
     .from(attendance)
     .where(and(eq(attendance.lanId, lanId), eq(attendance.status, "going")))
     .all()
-    .filter((a) => !seated.has(a.userId))
-    .sort(
-      (a, b) =>
-        Number(b.paid) - Number(a.paid) ||
-        Number(b.ticketBought) - Number(a.ticketBought) ||
-        a.createdAt.getTime() - b.createdAt.getTime(),
-    );
-  let n = 0;
-  for (const a of waiting) {
-    const s = free.shift();
-    if (!s) break;
-    db.update(seat).set({ userId: a.userId }).where(eq(seat.id, s.id)).run();
-    n++;
+    .map((a) => ({
+      userId: a.userId,
+      near: a.wishNear ?? [],
+      avoid: a.wishAvoid ?? [],
+      position: a.wishPosition,
+      seat: a.wishSeat,
+      priority: a.paid ? 2 : a.ticketBought ? 1 : 0,
+      order: a.createdAt.getTime(),
+    }));
+}
+
+/**
+ * Seats attendees who are coming, using their seat wishes. "fill" only seats
+ * people without a seat; "replan" first clears every seat that isn't held.
+ * People with a confirmed or reported ticket go first.
+ */
+export async function adminAutoAssignSeats(lanId: string, mode: "fill" | "replan" = "fill"): Promise<number> {
+  await requireLanManager(lanId);
+  if (mode === "replan") {
+    db.update(seat)
+      .set({ userId: null })
+      .where(and(eq(seat.lanId, lanId), eq(seat.locked, false)))
+      .run();
+  }
+  const seats = db.select().from(seat).where(eq(seat.lanId, lanId)).all();
+  const everyone = planPeople(lanId);
+  const seated = new Set(seats.map((s) => s.userId).filter(Boolean));
+  const plan = planSeats(seats, everyone.filter((p) => !seated.has(p.userId)), everyone);
+  db.transaction((tx) => {
+    for (const [userId, seatId] of plan) tx.update(seat).set({ userId }).where(eq(seat.id, seatId)).run();
+  });
+  lanPath(lanId);
+  return plan.size;
+}
+
+const wishInput = z.object({
+  near: z.array(z.string()).max(10),
+  avoid: z.array(z.string()).max(10),
+  position: z.enum(["any", "edge", "middle"]),
+  seat: z.string().trim().max(12),
+  note: z.string().trim().max(300),
+});
+
+export async function setMySeatWishes(lanId: string, input: z.input<typeof wishInput>) {
+  const me = await requireUser();
+  const l = mustGetLan(lanId);
+  if (l.seatsPublishedAt) throw new Error("The seat plan is already published. Ask an orga.");
+  const w = wishInput.parse(input);
+  const a = db
+    .select()
+    .from(attendance)
+    .where(and(eq(attendance.lanId, lanId), eq(attendance.userId, me.id)))
+    .get();
+  if (!a) throw new Error("Say you're coming first");
+  db.update(attendance)
+    .set({
+      wishNear: w.near.filter((x) => x !== me.id),
+      wishAvoid: w.avoid.filter((x) => x !== me.id && !w.near.includes(x)),
+      wishPosition: w.position,
+      wishSeat: w.seat.toUpperCase(),
+      wishNote: w.note,
+    })
+    .where(eq(attendance.id, a.id))
+    .run();
+  lanPath(lanId);
+}
+
+/** Makes the seat plan visible to members; optionally emails everyone coming their seat. */
+export async function publishSeats(lanId: string, notify: boolean): Promise<number> {
+  await requireLanManager(lanId);
+  const l = mustGetLan(lanId);
+  db.update(lan).set({ seatsPublishedAt: new Date() }).where(eq(lan.id, lanId)).run();
+  let sent = 0;
+  if (notify) {
+    const rows = db
+      .select({ a: attendance, u: user })
+      .from(attendance)
+      .innerJoin(user, eq(user.id, attendance.userId))
+      .where(and(eq(attendance.lanId, lanId), eq(attendance.status, "going")))
+      .all();
+    const seats = db.select().from(seat).where(eq(seat.lanId, lanId)).all();
+    for (const { u } of rows) {
+      const mine = seats.find((s) => s.userId === u.id);
+      try {
+        await sendMail(
+          u.email,
+          mine ? `Your seat at ${l.name}: ${mine.label}` : `Seat plan for ${l.name} is out`,
+          `Hi ${u.name},\n\nthe seat plan for ${l.name} is published. ${
+            mine ? `You're sitting at ${mine.label}.` : "You don't have a seat yet, an orga will get back to you."
+          }\n\n${appUrl}/lans/${l.id}`,
+        );
+        sent++;
+      } catch (e) {
+        console.error("[mail] failed", e);
+      }
+    }
   }
   lanPath(lanId);
-  return n;
+  return sent;
+}
+
+export async function unpublishSeats(lanId: string) {
+  await requireLanManager(lanId);
+  db.update(lan).set({ seatsPublishedAt: null }).where(eq(lan.id, lanId)).run();
+  lanPath(lanId);
 }
 
 // ---------------- LAN types (templates) ----------------

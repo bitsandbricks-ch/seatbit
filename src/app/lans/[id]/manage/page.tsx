@@ -7,7 +7,7 @@ import { AttendanceTable } from "@/components/attendance-table";
 import { LanForm } from "@/components/lan-form";
 import { ReminderButtons } from "@/components/reminder-buttons";
 import { SeatMap } from "@/components/seat-map";
-import { Card, btnDanger, btnSecondary } from "@/components/ui";
+import { Card, Pill, btnDanger, btnSecondary } from "@/components/ui";
 import { fmtDate, relative, toInputValue } from "@/lib/format";
 import { getDisplayNames, getLan } from "@/lib/lans";
 import { dueKinds } from "@/lib/reminders";
@@ -15,6 +15,8 @@ import { isLanManager, requireUser } from "@/lib/session";
 import { OrgaManager } from "@/components/orga-manager";
 import { SeatSetup } from "@/components/seat-setup";
 import { Tabs } from "@/components/tabs";
+import { PublishSeats } from "@/components/publish-seats";
+import { checkWishes } from "@/lib/seating";
 
 const { attendance, seat, user, reminderLog } = schema;
 
@@ -79,6 +81,17 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
     .sort((a, b) => statusOrder[a.status] - statusOrder[b.status] || a.nick.localeCompare(b.nick));
 
   const due = dueKinds(l);
+  const planPeople = going.map((r) => ({
+    userId: r.userId,
+    near: r.wishNear ?? [],
+    avoid: r.wishAvoid ?? [],
+    position: r.wishPosition,
+    seat: r.wishSeat,
+    priority: 0,
+    order: 0,
+  }));
+  const wishChecks = checkWishes(seats, planPeople, (uid) => names.get(uid) ?? "?");
+  const wishNotes = going.filter((r) => r.wishNote);
   const now = new Date();
   const ticketsConfirmed = going.filter((r) => r.paid).length;
   const ticketsReported = going.filter((r) => !r.paid && r.ticketBought).length;
@@ -194,6 +207,49 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               free={freeSeats}
             />
           </Card>
+          {seats.length > 0 && (
+            <Card title="Publish">
+              <PublishSeats
+                lanId={l.id}
+                publishedAt={l.seatsPublishedAt ? fmtDate(l.seatsPublishedAt) : null}
+                unseated={going.length - seated}
+              />
+            </Card>
+          )}
+          {wishChecks.length > 0 && (
+            <Card title="Seat wishes">
+              <ul className="space-y-2 text-sm">
+                {wishChecks.map((w) => (
+                  <li key={w.userId} className="flex flex-wrap gap-1.5">
+                    <span className="mr-1 font-medium">{names.get(w.userId)}</span>
+                    {w.ok.map((t) => (
+                      <Pill key={t} tone="emerald">
+                        ✓ {t}
+                      </Pill>
+                    ))}
+                    {w.missed.map((t) => (
+                      <Pill key={t} tone="red">
+                        ✗ {t}
+                      </Pill>
+                    ))}
+                  </li>
+                ))}
+              </ul>
+              {wishNotes.length > 0 && (
+                <div className="mt-4 border-t border-line pt-3">
+                  <p className="mb-2 text-xs uppercase tracking-wide text-zinc-500">Notes</p>
+                  <ul className="space-y-1 text-sm">
+                    {wishNotes.map((r) => (
+                      <li key={r.id}>
+                        <span className="font-medium">{names.get(r.userId)}:</span>{" "}
+                        <span className="text-zinc-300">{r.wishNote}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </Card>
+          )}
           {seats.length > 0 && (
             <Card>
               <SeatMap

@@ -22,6 +22,13 @@
       "when": 1794393579687,
       "tag": "0002_lan_types",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1794394294863,
+      "tag": "0003_seat_wishes",
+      "breakpoints": true
     }
   ]
 }

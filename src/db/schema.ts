@@ -130,6 +130,8 @@ export const lan = sqliteTable("lan", {
   reminderDays: integer("reminder_days").default(3).notNull(),
   seatRows: integer("seat_rows").default(6).notNull(),
   seatCols: integer("seat_cols").default(10).notNull(),
+  /** When the orgas published the seat plan; members only see seats after this. */
+  seatsPublishedAt: integer("seats_published_at", { mode: "timestamp_ms" }),
   /** Whether attendees may pick their own seats. */
   seatingOpen: integer("seating_open", { mode: "boolean" }).default(true).notNull(),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
@@ -154,6 +156,13 @@ export const attendance = sqliteTable(
     /** Set by an orga: payment / ticket confirmed. */
     paid: integer("paid", { mode: "boolean" }).default(false).notNull(),
     note: text("note").default("").notNull(),
+    /** Seat wishes: user ids to sit near / not next to (JSON arrays). */
+    wishNear: text("wish_near", { mode: "json" }).$type<string[]>().default([]).notNull(),
+    wishAvoid: text("wish_avoid", { mode: "json" }).$type<string[]>().default([]).notNull(),
+    wishPosition: text("wish_position").$type<"any" | "edge" | "middle">().default("any").notNull(),
+    /** Preferred seat label, e.g. "F7". */
+    wishSeat: text("wish_seat").default("").notNull(),
+    wishNote: text("wish_note").default("").notNull(),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" })
       .default(now)
