@@ -202,7 +202,7 @@ export function SeatMap({
       const sm = window.matchMedia("(min-width: 640px)").matches;
       const gap = sm ? 4 : 3;
       const min = compact ? (sm ? 36 : 26) : 76;
-      const avail = el.clientWidth - 20 - 4 - 8; // row letter, its gap, band border + padding
+      const avail = el.clientWidth - 20 - 4 - 12; // row letter, its gap, indent of wrapped lines
       setPerLine(Math.max(1, Math.min(cols, Math.floor((avail + gap) / (min + gap)))));
     };
     measure();
@@ -227,13 +227,13 @@ export function SeatMap({
       <button
         type="button"
         onClick={() => run(() => toggleSeatRow(lanId, row))}
-        className="w-5 shrink-0 self-stretch rounded font-mono text-xs text-muted hover:bg-raised hover:text-fg"
+        className={`${wrapped ? "self-stretch border-r-2 border-line" : cell} w-5 shrink-0 rounded font-mono text-xs text-muted hover:bg-raised hover:text-fg`}
         title={`Fill or clear row ${letter}`}
       >
         {letter}
       </button>
     ) : (
-      <div className="grid w-5 shrink-0 self-stretch place-items-center font-mono text-[11px] text-faint">{first ? letter : ""}</div>
+      <div className={`${wrapped && first ? "self-stretch rounded-l border-r-2 border-line" : cell} grid w-5 shrink-0 place-items-center font-mono text-[11px] text-faint`}>{first ? letter : ""}</div>
     );
   };
 
@@ -306,8 +306,8 @@ export function SeatMap({
     );
   };
 
-  // Long rows wrap onto extra lines. Every row breaks at the same column, so seats stay lined up, and the lines
-  // of one row sit together in a band with one row letter.
+  // Long rows wrap onto extra lines. Every row breaks at the same column, so seats stay lined up; the row letter
+  // spans all lines of its row (with a bracket line) and the wrapped lines are indented.
   const lines = Math.ceil(cols / perLine);
   const per = Math.ceil(cols / lines);
   const wrapped = lines > 1;
@@ -428,15 +428,14 @@ export function SeatMap({
                   key={row}
                   role="group"
                   aria-label={`Row ${row + 1}`}
-                  className={`flex gap-1 ${wrapped ? "rounded-md border-l-2 border-line bg-raised/25 py-1 pr-1" : ""}`}
-                  style={compact ? { maxWidth: `calc(${per * 3.25}rem + 2rem)` } : undefined}
+                  className="flex items-start gap-1"
                 >
                   {rowLabel(row)}
                   <div className="min-w-0 flex-1 space-y-[3px] sm:space-y-1">
                     {lineCols.map((cs, i) => (
                       <div
                         key={i}
-                        className="grid gap-[3px] [--seat-min:1.625rem] sm:gap-1 sm:[--seat-min:2.25rem]"
+                        className={`grid gap-[3px] [--seat-min:1.625rem] sm:gap-1 sm:[--seat-min:2.25rem] ${i > 0 ? "ml-3" : ""}`}
                         style={{ gridTemplateColumns: `repeat(${per}, ${colW})`, maxWidth: compact ? `${per * 3.25}rem` : undefined }}
                       >
                         {cs.map((col) => renderCell(row, col))}
@@ -452,7 +451,7 @@ export function SeatMap({
               <Legend cls="bg-bit border-bit">You</Legend>
               <Legend cls="bg-seat-taken/20 border-seat-taken/40">Taken</Legend>
               <Legend cls="bg-raised/60 border-line">Held</Legend>
-              {wrapped && <span className="text-faint">Long rows wrap: a band is one row.</span>}
+              {wrapped && <span className="text-faint">Wrapped rows are indented next to their letter.</span>}
             </div>
             {error && <p className="text-sm text-danger">{error}</p>}
 
