@@ -8,14 +8,35 @@ Seatbit helps a clan or group of friends coordinate going to LAN parties run by 
 - **Member checklist per LAN**: sign up, set nickname, buy ticket (members tick it off, orgas confirm), claim a seat. Progress shows on the LAN list.
 - **Status at a glance**: no answer, attending, seat claimed (with seat number), waitlist/full, maybe, not going, plus free seats left.
 - **Due dates and email reminders**: an answer deadline and a buy-ticket deadline per LAN. Reminders go out automatically N days before each (to undecided members and to attendees without a ticket) and one day before the LAN (to everyone going). Each one goes out once per person; orgas can also nudge manually; members can opt out.
-- **Seat block**: a grid of the seats the group has. Orgas fill/clear rows, add/remove single seats for aisles, rename seats to match the event's numbering, hold seats for guests, and assign people. Members claim their own seat while seating is open.
+- **Seat plan**: a compact grid of the seats the group has (seat label or the first letters of the nick), so even a big block fits on a phone. Tap a seat to see who sits there in a details pane (side panel on desktop, bottom sheet on phones); switch to *Large* to show whole nicks (remembered per device), and use *Find someone* to highlight people.
+  - **Orgas edit seats right in the map**: tap a seat to assign or give it to someone, swap or move people, clear it, hold it for a guest or rename it to match the event's numbering. People without a seat are listed under *Not seated yet*: tap one and then a seat, or drag names and seated people around on desktop. *Edit seats* adds and removes single seats for aisles; the Seats tab also fills/clears rows, auto-assigns by seat wishes and publishes the plan.
+  - **Seat picking** (optional): orgas can let members choose their own free seat before the plan is published. Members with a ticket tap a free seat and *Take this seat* (or *Move here* / *Give up my seat*).
 - **Travel** (event page, Travel tab): members offer or ask for rides and places to sleep, grouped by town. Others join an offer with free places; a driver can take a person who asked along with one tap, which also clears their request.
 - **Packing list** (event page, Packing list tab): each member gets a private packing list with the usual items (PC, screen, cables, headset, ticket, sleeping bag, ...), adds their own items and ticks them off.
 - **CSV export** of the group (seat, nick, name, email, status, ticket) to hand to the event's organisers.
+- **Dates and times** are always 24h, Swiss style ("Sat 14.11.2026, 18:00"), with a Monday-first date picker.
 - **Nicknames**: several nicks per user, a primary default, and separate nicks per LAN.
 - **Login with Discord.** The Discord login asks for the account's email, which is used for reminders. On first login members give their first name, surname and nickname (gamer tag). The first user to sign up becomes global admin. Google and email/password login are switched off for now; turn them back on in `LOGIN_METHODS` in `src/lib/auth.ts`. `ALLOW_EMAIL_LOGIN=1` enables email login for local development and tests.
 
 Brand assets and guidelines are in `brand/` (see `brand/BRAND.md`).
+
+## Screenshots
+
+Phone (390 px) and desktop (1440 px) shots of the main pages are in [`docs/screenshots/`](docs/screenshots/). Regenerate them after UI changes so they stay current.
+
+| LANs | Event | Seat plan | Seat picking |
+| --- | --- | --- | --- |
+| <img src="docs/screenshots/phone-lans.png" width="200" alt="LAN list on a phone"> | <img src="docs/screenshots/phone-event.png" width="200" alt="Event page on a phone"> | <img src="docs/screenshots/phone-seat-plan.png" width="200" alt="Compact seat plan with the details sheet"> | <img src="docs/screenshots/phone-seat-picking.png" width="200" alt="A member picking a free seat"> |
+
+| Travel | Packing list | Date picker | Orga: seats |
+| --- | --- | --- | --- |
+| <img src="docs/screenshots/phone-travel.png" width="200" alt="Travel tab"> | <img src="docs/screenshots/phone-packing-list.png" width="200" alt="Packing list"> | <img src="docs/screenshots/phone-date-picker.png" width="200" alt="24h date picker"> | <img src="docs/screenshots/phone-manage-seats.png" width="200" alt="Orga seat editing on a phone"> |
+
+**Desktop:** seat plan with orga tools and the details panel.
+
+![Orga seat plan on desktop](docs/screenshots/desktop-manage-seats.png)
+
+More: [LAN list](docs/screenshots/desktop-lans.png) · [event page](docs/screenshots/desktop-event.png) · [attendees](docs/screenshots/desktop-manage-attendees.png) · [clan](docs/screenshots/desktop-clan.png) · [admin](docs/screenshots/desktop-admin.png) · [clan (phone)](docs/screenshots/phone-clan.png) · [profile (phone)](docs/screenshots/phone-profile.png)
 
 ## Platform settings
 

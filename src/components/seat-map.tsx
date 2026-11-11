@@ -156,7 +156,8 @@ export function SeatMap({
     setSelectedId(next);
     // Phones: the details sheet covers the lower half, so bring the tapped seat up.
     if (next && window.matchMedia("(max-width: 1023px)").matches) {
-      document.querySelector(`[data-seat="${next}"]`)?.scrollIntoView({ block: "start", behavior: "smooth" });
+      // Scroll the whole map (not just the seat) to the top so every row stays visible above the sheet.
+      document.querySelector(`[data-seat="${next}"]`)?.closest("[data-seat-grid]")?.scrollIntoView({ block: "start", behavior: "smooth" });
     }
   }
 
@@ -280,7 +281,8 @@ export function SeatMap({
         <div className="min-w-0 space-y-3">
           <div className={`overflow-x-auto pb-1 ${pending ? "opacity-70" : ""}`}>
             <div
-              className="grid gap-[3px] [--seat-min:1.625rem] sm:gap-1 sm:[--seat-min:2.25rem]"
+              data-seat-grid
+              className="grid scroll-mt-20 gap-[3px] [--seat-min:1.625rem] sm:gap-1 sm:[--seat-min:2.25rem]"
               style={{
                 gridTemplateColumns: `1.25rem repeat(${cols}, ${colW})`,
                 maxWidth: maxW,
