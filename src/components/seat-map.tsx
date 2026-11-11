@@ -2,8 +2,6 @@
 import { useState, useTransition } from "react";
 import {
   adminAssignSeat,
-  pickSeat,
-  releaseMySeat,
   renameSeat,
   toggleSeatCell,
   toggleSeatLock,
@@ -31,7 +29,6 @@ export function SeatMap({
   seats,
   meId,
   mode,
-  canPick = false,
   assignable = [],
 }: {
   lanId: string;
@@ -39,8 +36,7 @@ export function SeatMap({
   cols: number;
   seats: SeatView[];
   meId: string;
-  mode: "pick" | "admin";
-  canPick?: boolean;
+  mode: "view" | "admin";
   assignable?: { id: string; nick: string }[];
 }) {
   const [pending, start] = useTransition();
@@ -62,12 +58,7 @@ export function SeatMap({
     });
 
   function onCell(row: number, col: number, s?: SeatView) {
-    if (mode === "pick") {
-      if (!s || !canPick) return;
-      if (s.userId === meId) return run(() => releaseMySeat(lanId));
-      if (s.userId || s.locked) return;
-      return run(() => pickSeat(s.id));
-    }
+    if (mode === "view") return;
     // admin
     if (tool === "layout") {
       if (s?.userId && !confirm(`${s.label} is taken by ${s.nick}. Remove the seat anyway?`)) return;
@@ -129,13 +120,9 @@ export function SeatMap({
         </div>
       )}
 
-      {mode === "pick" && (
+      {mode === "view" && (
         <p className="text-sm text-zinc-400">
-          {canPick
-            ? mySeat
-              ? `You're sitting at ${mySeat.label}. Click another free seat to move, or your own seat to leave it.`
-              : "Click a free seat in our block to claim it."
-            : "Seats can be picked by attendees who are going, while seating is open."}
+          {mySeat ? `You're at ${mySeat.label}.` : "The orgas assign the group's seats after the deadline."}
         </p>
       )}
 
@@ -186,10 +173,11 @@ export function SeatMap({
                 ? "bg-seat-taken/20 text-seat-taken border-seat-taken/40"
                 : s.locked
                   ? "bg-zinc-800/50 text-zinc-500 border-zinc-700 [background-image:repeating-linear-gradient(45deg,transparent,transparent_4px,rgba(255,255,255,.04)_4px,rgba(255,255,255,.04)_8px)]"
-                  : "bg-zinc-800 text-zinc-300 border-zinc-700 hover:border-bit";
+                  : `bg-zinc-800 text-zinc-300 border-zinc-700 ${mode === "admin" ? "hover:border-bit" : ""}`;
             return (
               <button
                 key={i}
+                disabled={mode === "view"}
                 onClick={() => onCell(row, col, s)}
                 title={`${s.label}${s.nick ? ` · ${s.nick}` : ""}${s.locked ? " · held" : ""}`}
                 className={`flex h-14 flex-col items-center justify-center overflow-hidden rounded border px-1 text-center ${cls}`}

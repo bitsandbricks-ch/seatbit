@@ -12,7 +12,6 @@ import {
   seatLabel,
   setAttendance,
   signupClosed,
-  trimSeatGrid,
 } from "@/lib/lans";
 import { announceLan, postReminderNow, refreshLanMessagesSoon } from "@/lib/discord";
 import { sendReminderNow } from "@/lib/reminders";
@@ -97,40 +96,6 @@ export async function setPrimaryNick(id: string) {
   revalidatePath("/", "layout");
 }
 
-export async function pickSeat(seatId: string) {
-  const me = await requireUser();
-  const s = db.select().from(seat).where(eq(seat.id, seatId)).get();
-  if (!s) throw new Error("Seat not found");
-  const l = mustGetLan(s.lanId);
-  if (!l.seatingOpen) throw new Error("Seating is closed");
-  if (s.locked || (s.userId && s.userId !== me.id)) throw new Error("Seat is taken");
-  const a = db
-    .select()
-    .from(attendance)
-    .where(and(eq(attendance.lanId, l.id), eq(attendance.userId, me.id)))
-    .get();
-  if (a?.status !== "going") throw new Error("Only attendees who are going can pick a seat");
-  db.transaction((tx) => {
-    tx.update(seat)
-      .set({ userId: null })
-      .where(and(eq(seat.lanId, l.id), eq(seat.userId, me.id)))
-      .run();
-    tx.update(seat).set({ userId: me.id }).where(eq(seat.id, seatId)).run();
-  });
-  lanPath(l.id);
-}
-
-export async function releaseMySeat(lanId: string) {
-  const me = await requireUser();
-  const l = mustGetLan(lanId);
-  if (!l.seatingOpen) throw new Error("Seating is closed");
-  db.update(seat)
-    .set({ userId: null })
-    .where(and(eq(seat.lanId, lanId), eq(seat.userId, me.id)))
-    .run();
-  lanPath(lanId);
-}
-
 export async function updateProfile(formData: FormData) {
   const me = await requireUser();
   const name = z.string().trim().min(1).max(64).parse(formData.get("name"));
@@ -164,9 +129,6 @@ const lanInput = z.object({
     .transform((v) => (v ? Number(v) : null))
     .pipe(z.number().int().min(1).nullable()),
   reminderDays: z.coerce.number().int().min(0).max(60),
-  seatRows: z.coerce.number().int().min(1).max(40),
-  seatCols: z.coerce.number().int().min(1).max(40),
-  seatingOpen: z.string().optional().transform((v) => v === "on"),
 });
 
 export type FormState = { error?: string } | undefined;
@@ -187,7 +149,6 @@ export async function saveLan(_: FormState, formData: FormData): Promise<FormSta
   if (id) {
     const before = mustGetLan(id);
     db.update(lan).set(v).where(eq(lan.id, id)).run();
-    trimSeatGrid(id, v.seatRows, v.seatCols);
     if ((v.capacity ?? Infinity) > (before.capacity ?? Infinity) || v.capacity === null) {
       await promoteFromWaitlist(mustGetLan(id));
     }
@@ -195,12 +156,6 @@ export async function saveLan(_: FormState, formData: FormData): Promise<FormSta
     const row = db.insert(lan).values(v).returning().get();
     lanId = row.id;
     db.insert(lanOrga).values({ lanId: row.id, userId: me.id }).run();
-    // Start with a full grid of seats; admins carve out aisles in the editor.
-    const seats = [];
-    for (let r = 0; r < v.seatRows; r++)
-      for (let c = 0; c < v.seatCols; c++)
-        seats.push({ lanId: row.id, row: r, col: c, label: seatLabel(r, c) });
-    if (seats.length) db.insert(seat).values(seats).run();
   }
   lanPath(lanId!);
   // New LANs are announced in the Discord channels; edits update the existing posts.
@@ -219,7 +174,7 @@ export async function deleteLan(id: string) {
 export async function toggleSeatCell(lanId: string, row: number, col: number) {
   await requireLanManager(lanId);
   const l = mustGetLan(lanId);
-  if (row >= l.seatRows || col >= l.seatCols) return;
+  if (row < 0 || col < 0 || row >= l.seatRows || col >= l.seatCols) return;
   const s = db
     .select()
     .from(seat)
@@ -369,4 +324,113 @@ export async function toggleSeatRow(lanId: string, row: number) {
     for (const s of existing) if (!s.userId) db.delete(seat).where(eq(seat.id, s.id)).run();
   }
   lanPath(lanId);
+}
+
+/**
+ * Parses a seat list like "F1-F20" or "F1-F10, G1-G10, H3" into rows of labels.
+ * Each letter prefix becomes one row, in the order given.
+ */
+function parseSeatSpec(spec: string): string[][] {
+  const rows = new Map<string, string[]>();
+  for (const raw of spec.split(/[\s,;]+/).filter(Boolean)) {
+    const range = raw.match(/^([A-Za-z]*)(\d+)-(?:([A-Za-z]*))?(\d+)$/);
+    const single = raw.match(/^([A-Za-z]*)(\d+)$/);
+    let prefix: string, from: number, to: number;
+    if (range && (!range[3] || range[3].toUpperCase() === range[1].toUpperCase())) {
+      [prefix, from, to] = [range[1].toUpperCase(), Number(range[2]), Number(range[4])];
+    } else if (single) {
+      [prefix, from, to] = [single[1].toUpperCase(), Number(single[2]), Number(single[2])];
+    } else {
+      throw new Error(`Can't read "${raw}". Use e.g. F1-F20 or F1, F2, G5.`);
+    }
+    if (to < from) [from, to] = [to, from];
+    if (to - from > 200) throw new Error(`"${raw}" is too many seats`);
+    const row = rows.get(prefix) ?? [];
+    for (let n = from; n <= to; n++) {
+      const label = `${prefix}${n}`;
+      if (!row.includes(label)) row.push(label);
+    }
+    rows.set(prefix, row);
+  }
+  return [...rows.values()];
+}
+
+/** Replaces the seat block with the given seat labels, keeping assignments for labels that remain. */
+export async function setSeatsFromList(lanId: string, spec: string): Promise<{ error?: string; count?: number }> {
+  await requireLanManager(lanId);
+  let rows: string[][];
+  try {
+    rows = parseSeatSpec(spec);
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+  const total = rows.reduce((n, r) => n + r.length, 0);
+  if (total === 0) return { error: "Enter at least one seat, e.g. F1-F20." };
+  if (total > 1000) return { error: "That's more than 1000 seats." };
+  const old = new Map(
+    db.select().from(seat).where(eq(seat.lanId, lanId)).all().map((s) => [s.label.toUpperCase(), s]),
+  );
+  db.transaction((tx) => {
+    tx.delete(seat).where(eq(seat.lanId, lanId)).run();
+    const values = rows.flatMap((labels, r) =>
+      labels.map((label, c) => {
+        const prev = old.get(label);
+        return { lanId, row: r, col: c, label, userId: prev?.userId ?? null, locked: prev?.locked ?? false };
+      }),
+    );
+    tx.insert(seat).values(values).run();
+    tx.update(lan)
+      .set({ seatRows: rows.length, seatCols: Math.max(...rows.map((r) => r.length)) })
+      .where(eq(lan.id, lanId))
+      .run();
+  });
+  lanPath(lanId);
+  return { count: total };
+}
+
+/** Assigns a seat to an attendee from the attendee list (seatId null = no seat). */
+export async function adminSetSeatFor(lanId: string, userId: string, seatId: string | null) {
+  await requireLanManager(lanId);
+  db.transaction((tx) => {
+    tx.update(seat)
+      .set({ userId: null })
+      .where(and(eq(seat.lanId, lanId), eq(seat.userId, userId)))
+      .run();
+    if (seatId) tx.update(seat).set({ userId }).where(and(eq(seat.id, seatId), eq(seat.lanId, lanId))).run();
+  });
+  lanPath(lanId);
+}
+
+/**
+ * Fills free (not held) seats, in seat order, with attendees who are going
+ * and have no seat yet. Attendees with a confirmed or reported ticket go first.
+ */
+export async function adminAutoAssignSeats(lanId: string): Promise<number> {
+  await requireLanManager(lanId);
+  const seats = db.select().from(seat).where(eq(seat.lanId, lanId)).all();
+  const seated = new Set(seats.map((s) => s.userId).filter(Boolean));
+  const free = seats
+    .filter((s) => !s.userId && !s.locked)
+    .sort((a, b) => a.row - b.row || a.col - b.col);
+  const waiting = db
+    .select()
+    .from(attendance)
+    .where(and(eq(attendance.lanId, lanId), eq(attendance.status, "going")))
+    .all()
+    .filter((a) => !seated.has(a.userId))
+    .sort(
+      (a, b) =>
+        Number(b.paid) - Number(a.paid) ||
+        Number(b.ticketBought) - Number(a.ticketBought) ||
+        a.createdAt.getTime() - b.createdAt.getTime(),
+    );
+  let n = 0;
+  for (const a of waiting) {
+    const s = free.shift();
+    if (!s) break;
+    db.update(seat).set({ userId: a.userId }).where(eq(seat.id, s.id)).run();
+    n++;
+  }
+  lanPath(lanId);
+  return n;
 }

@@ -17,9 +17,6 @@ export type LanFormValues = {
   price: string;
   capacity: string;
   reminderDays: number;
-  seatRows: number;
-  seatCols: number;
-  seatingOpen: boolean;
 };
 
 export function LanForm({ values }: { values: LanFormValues }) {
@@ -61,22 +58,10 @@ export function LanForm({ values }: { values: LanFormValues }) {
         <Field label="Remind days before deadline">
           <Input type="number" min={0} max={60} name="reminderDays" defaultValue={values.reminderDays} />
         </Field>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Seat block rows">
-            <Input type="number" min={1} max={40} name="seatRows" defaultValue={values.seatRows} />
-          </Field>
-          <Field label="Seats per row">
-            <Input type="number" min={1} max={40} name="seatCols" defaultValue={values.seatCols} />
-          </Field>
-        </div>
       </div>
       <Field label="Description">
         <textarea name="description" defaultValue={values.description} rows={4} className={input} />
       </Field>
-      <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" name="seatingOpen" defaultChecked={values.seatingOpen} className="accent-bit" />
-        Attendees can claim seats in the group&apos;s block themselves
-      </label>
       {state?.error && <p className="text-sm text-red-400">{state.error}</p>}
       <button disabled={pending} className={btnPrimary}>
         {values.id ? "Save changes" : "Add LAN"}

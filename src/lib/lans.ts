@@ -1,4 +1,4 @@
-import { and, asc, eq, gte, inArray, isNull, or } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, or } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { AttendanceStatus, Lan, Nickname } from "@/db/schema";
 import { appUrl, sendMail } from "./mail";
@@ -126,13 +126,6 @@ export async function promoteFromWaitlist(l: Lan) {
       `Hi ${u.name},\n\na spot opened up and you moved from the waitlist to "going" for ${l.name}.\n\nPick your seat: ${appUrl}/lans/${l.id}`,
     ).catch((e) => console.error("[mail] failed", e));
   }
-}
-
-/** Drops seats that no longer fit after the grid was made smaller. */
-export function trimSeatGrid(lanId: string, rows: number, cols: number) {
-  db.delete(seat)
-    .where(and(eq(seat.lanId, lanId), or(gte(seat.row, rows), gte(seat.col, cols))))
-    .run();
 }
 
 export function getLan(id: string) {

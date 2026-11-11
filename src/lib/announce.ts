@@ -75,7 +75,7 @@ export async function whatsappTexts(l: Lan) {
     l.description ? l.description.trim().slice(0, 500) : null,
     facts,
     `Who's in so far${spots}: ${s.going.map((g) => g.nick).join(", ") || "nobody yet"}`,
-    `Say if you're coming and grab a seat: ${link}`,
+    `Say if you're coming: ${link}`,
   ]
     .filter(Boolean)
     .join("\n\n");
@@ -100,7 +100,7 @@ export async function whatsappTexts(l: Lan) {
   texts.push({
     kind: "event",
     label: "Starts soon",
-    text: `🚀 *${l.name}* starts ${fmtWhen(l.startsAt)}${l.location ? ` at ${l.location}` : ""}. Check your seat: ${link}`,
+    text: `🚀 *${l.name}* starts ${fmtWhen(l.startsAt)}${l.location ? ` at ${l.location}` : ""}. Details and your seat: ${link}`,
   });
   return texts;
 }

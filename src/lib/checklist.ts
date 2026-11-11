@@ -17,19 +17,21 @@ export function buildChecklist(input: {
 
   steps.push({
     key: "going",
-    title: "Sign up",
+    title: "Say you're coming",
     state: a?.status === "going" ? "done" : a?.status === "waitlist" ? "pending" : "todo",
     hint:
       a?.status === "going"
         ? "You're going."
         : a?.status === "waitlist"
           ? "You're on the waitlist."
-          : "Tell us you're coming.",
+          : lan.signupDeadline
+            ? "Answer before the deadline."
+            : "Let the orgas know.",
   });
 
   steps.push({
     key: "nick",
-    title: "Set your nickname",
+    title: "Give your nickname",
     state: hasNick ? "done" : "todo",
     hint: hasNick ? "Nick is set." : "Add the nick you want on the seat plan.",
   });
@@ -47,18 +49,16 @@ export function buildChecklist(input: {
     });
   }
 
-  if (hasSeatPlan) {
+  if (hasSeatPlan && a?.status === "going") {
     steps.push({
       key: "seat",
-      title: "Claim your seat in our block",
-      state: seatLabel ? "done" : "todo",
+      title: "Get your seat",
+      state: seatLabel ? "done" : "pending",
       hint: seatLabel
         ? `Seat ${seatLabel}.`
-        : !lan.seatingOpen
-          ? "The orgas will assign your seat."
-          : freeSeats === 0
-            ? "No free seats left. Ask an orga."
-            : `Pick one of ${freeSeats} free seats on the plan.`,
+        : freeSeats === 0
+          ? "All of the group's seats are taken. The orgas will sort it out."
+          : "The orgas assign seats after the deadline.",
     });
   }
   return steps;

@@ -328,7 +328,7 @@ export function handleInteraction(i: Interaction): { response: Json; later?: () 
       later: async () => {
         try {
           const stored = await setAttendance(l, userId, status);
-          const extra = stored === "going" ? ` Pick your seat and tick off your ticket in Seatbit.` : "";
+          const extra = stored === "going" ? ` Tick off your ticket in Seatbit once you have it.` : "";
           await editReply({
             content: `${statusLabel[stored]} for **${l.name}**.${extra}`,
             components: [{ type: 1, components: [{ type: 2, style: 5, label: "Open in Seatbit", url: lanLink(l) }] }],
