@@ -9,7 +9,8 @@
  *            button      label editable, goes to {link}
  *            note        small grey line, editable
  *   footer   why you get this, link to your mail settings, "sent with seatbit"
- * Each mail goes out as HTML with a plain-text part.
+ * Each mail goes out as HTML with a plain-text part. The same content also comes as a
+ * Discord DM text: no greeting or footer, the button as a link.
  */
 
 export type Vars = Record<string, string | null | undefined>;
@@ -102,7 +103,7 @@ export interface MailContent {
   privacyUrl: string;
 }
 
-export function renderMail(m: MailContent): { html: string; text: string } {
+export function renderMail(m: MailContent): { html: string; text: string; dm: string } {
   const paragraphs = m.body.split(/\n{2,}/).filter((p) => p.trim());
   const preheader = (paragraphs[0] ?? "").replace(/\s+/g, " ").slice(0, 140);
   const html = `<!DOCTYPE html>
@@ -172,7 +173,17 @@ export function renderMail(m: MailContent): { html: string; text: string } {
   ]
     .filter((s) => s.trim())
     .join("\n\n");
-  return { html, text };
+
+  // Discord markdown: facts in bold, the button as a link (the DM also gets a button).
+  const dm = [
+    m.body,
+    m.facts.map(([l, v]) => `**${l}:** ${v}`).join("\n"),
+    m.button ? `[${m.button.label.replace(/[[\]]/g, "")}](${m.button.url})` : "",
+    m.note ? `-# ${m.note.replace(/\n+/g, " ")}` : "",
+  ]
+    .filter((s) => s.trim())
+    .join("\n\n");
+  return { html, text, dm };
 }
 
 /** Fills a template's parts and facts and renders the mail. */
@@ -181,14 +192,14 @@ export function buildMail(
   facts: readonly FactRow[],
   vars: Vars,
   ctx: { appUrl: string },
-): { subject: string; html: string; text: string } {
+): { subject: string; html: string; text: string; dm: string } {
   const subject = fill(t.subject, vars).replace(/\s*\n\s*/g, " ");
   const filledFacts = facts
     .map(([l, v, mono]) => [l, fill(v, vars), mono] as FactRow)
     .filter(([, v]) => v.trim());
   const label = fill(t.button, vars);
   const link = vars.link?.trim();
-  const { html, text } = renderMail({
+  const { html, text, dm } = renderMail({
     subject,
     greeting: vars.firstName?.trim() ? `Hi ${vars.firstName.trim()},` : "Hi,",
     body: fill(t.body, vars),
@@ -201,7 +212,7 @@ export function buildMail(
     termsUrl: `${ctx.appUrl}/terms`,
     privacyUrl: `${ctx.appUrl}/privacy`,
   });
-  return { subject, html, text };
+  return { subject, html, text, dm };
 }
 
 /** Example values for the admin preview. */
