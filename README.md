@@ -15,6 +15,15 @@ Seatbit helps a clan or group of friends coordinate going to LAN parties run by 
 
 Brand assets and guidelines are in `brand/` (see `brand/BRAND.md`).
 
+## Platform settings
+
+Global admins can configure the platform under **Admin → Platform settings** (`/admin/settings`) without touching the server: SMTP mail relay (with a "send test mail" button), Discord login and bot credentials (with a "check bot & register slash commands" button), Google login, sign-up on/off, admin emails, the reminder interval and the cron secret.
+
+- A value saved there wins over the matching environment variable. Clearing it falls back to the env var, then to the default. Each field shows where its current value comes from.
+- Passwords, client secrets and tokens are encrypted (AES-256-GCM) before they are stored, and are never shown again; the page only shows whether one is set and its last four characters.
+- The encryption key is `SETTINGS_ENCRYPTION_KEY`, or derived from `BETTER_AUTH_SECRET` if that isn't set. If the key changes, saved secrets can't be read any more and have to be entered again (the page says so).
+- `BETTER_AUTH_URL`, `BETTER_AUTH_SECRET`, `DATABASE_PATH` and `TZ` are needed at startup, so they stay env-only.
+
 ## Stack
 
 Next.js 16 (App Router, server actions) · Better Auth · SQLite via Drizzle ORM · Tailwind CSS · Nodemailer.
@@ -29,7 +38,7 @@ npm run dev
 
 Open http://localhost:3000 and register; the first account is the admin. The database is created in `./data/lan.db` and migrations run automatically on start.
 
-Without `SMTP_URL`, emails are printed to the server console, so you can try reminders locally.
+Without an SMTP host (platform settings or env), emails are printed to the server console, so you can try reminders locally.
 
 ### Discord / Google login
 
@@ -45,7 +54,7 @@ The bot uses the same Discord application as the login. It runs inside the app (
 1. In the Discord developer portal, open your app:
    - **Bot**: reset/copy the token into `DISCORD_BOT_TOKEN`.
    - **General Information**: copy the public key into `DISCORD_PUBLIC_KEY`, and set **Interactions Endpoint URL** to `<BETTER_AUTH_URL>/api/discord/interactions` (the app must be running and reachable for Discord to accept it).
-2. Run `npm run discord:register` once. It registers the slash commands and prints the invite link for the bot.
+2. Click **Check bot & register slash commands** in the platform settings (or run `npm run discord:register`). Both register the slash commands; the settings page also shows the bot invite link.
 3. Invite the bot to each server, then run `/seatbit here` in the channel it should post in (needs "Manage Server").
 
 What it does:

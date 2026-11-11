@@ -5,11 +5,12 @@ import type { AttendanceStatus, Lan } from "@/db/schema";
 import { type ChatReminderKind, fmtWhen, lanFacts, lanLink, lanSummary } from "./announce";
 import { getLan, setAttendance, signupClosed } from "./lans";
 import { type Json, api, discordEnabled } from "./discord-api";
+import { getSetting } from "./settings";
 import { appUrl } from "./mail";
 
 const { discordChannel, discordMessage, channelReminderLog, account, attendance, lan } = schema;
 
-const appId = process.env.DISCORD_CLIENT_ID;
+const appId = () => getSetting("discord.clientId");
 
 // ---------- Request verification ----------
 
@@ -18,7 +19,7 @@ const ED25519_SPKI_PREFIX = Buffer.from("302a300506032b6570032100", "hex");
 
 /** Checks Discord's Ed25519 signature on an interaction request. */
 export function verifyDiscordRequest(body: string, signature: string | null, timestamp: string | null) {
-  const publicKey = process.env.DISCORD_PUBLIC_KEY;
+  const publicKey = getSetting("discord.publicKey");
   if (!publicKey || !signature || !timestamp) return false;
   try {
     const key = crypto.createPublicKey({
@@ -155,7 +156,7 @@ function forgetIfGone(channelId: string, e: unknown) {
  * yet, and refreshes it where it exists. Returns how many channels got a new post.
  */
 export async function announceLan(lanId: string, onlyChannelId?: string) {
-  if (!discordEnabled) return 0;
+  if (!discordEnabled()) return 0;
   const l = getLan(lanId);
   if (!l) return 0;
   const msg = await lanMessage(l);
@@ -181,7 +182,7 @@ const pending = new Map<string, ReturnType<typeof setTimeout>>();
 
 /** Updates the attendee list on every posted announcement for a LAN (debounced). */
 export function refreshLanMessagesSoon(lanId: string) {
-  if (!discordEnabled) return;
+  if (!discordEnabled()) return;
   clearTimeout(pending.get(lanId));
   pending.set(
     lanId,
@@ -193,7 +194,7 @@ export function refreshLanMessagesSoon(lanId: string) {
 }
 
 export async function refreshLanMessages(lanId: string) {
-  if (!discordEnabled) return;
+  if (!discordEnabled()) return;
   const l = getLan(lanId);
   const posts = db.select().from(discordMessage).where(eq(discordMessage.lanId, lanId)).all();
   if (!l || posts.length === 0) return;
@@ -212,7 +213,7 @@ export async function refreshLanMessages(lanId: string) {
 
 /** Posts a reminder to every channel now (orga "nudge" button). */
 export async function postReminderNow(l: Lan, kind: ChatReminderKind) {
-  if (!discordEnabled) return 0;
+  if (!discordEnabled()) return 0;
   const msg = await reminderMessage(kind, l);
   if (!msg) return 0;
   let sent = 0;
@@ -236,7 +237,7 @@ export async function postReminderNow(l: Lan, kind: ChatReminderKind) {
 
 /** Posts due reminders that haven't been posted to a channel yet (called by the reminder scheduler). */
 export async function postDueChannelReminders(kinds: ChatReminderKind[], l: Lan) {
-  if (!discordEnabled || kinds.length === 0) return 0;
+  if (!discordEnabled() || kinds.length === 0) return 0;
   let sent = 0;
   for (const kind of kinds) {
     const done = new Set(
@@ -312,7 +313,7 @@ export function handleInteraction(i: Interaction): { response: Json; later?: () 
   if (i.type === 1) return { response: { type: 1 } }; // PING
 
   const discordUser = i.member?.user.id ?? i.user?.id ?? "";
-  const editReply = (body: Json) => api("PATCH", `/webhooks/${appId}/${i.token}/messages/@original`, body);
+  const editReply = (body: Json) => api("PATCH", `/webhooks/${appId()}/${i.token}/messages/@original`, body);
 
   // Attendance button
   if (i.type === 3 && i.data?.custom_id?.startsWith("att:")) {

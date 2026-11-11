@@ -5,5 +5,5 @@ import { getCurrentUser } from "@/lib/session";
 
 export default async function LoginPage() {
   if (await getCurrentUser()) redirect("/");
-  return <AuthForm mode="login" providers={enabledProviders} />;
+  return <AuthForm mode="login" providers={enabledProviders()} />;
 }

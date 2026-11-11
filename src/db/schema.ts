@@ -286,3 +286,18 @@ export type LanType = typeof lanType.$inferSelect;
 export type Attendance = typeof attendance.$inferSelect;
 export type Nickname = typeof nickname.$inferSelect;
 export type Seat = typeof seat.$inferSelect;
+
+// ---------- Platform settings ----------
+
+/**
+ * Admin-editable platform settings (SMTP, OAuth, bot tokens, ...). A row here
+ * overrides the matching environment variable. Secret values are stored
+ * AES-256-GCM encrypted (see src/lib/settings.ts) and never sent to the browser.
+ */
+export const appSetting = sqliteTable("app_setting", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+  encrypted: integer("encrypted", { mode: "boolean" }).default(false).notNull(),
+  updatedBy: text("updated_by").references(() => user.id, { onDelete: "set null" }),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).default(now).notNull(),
+});

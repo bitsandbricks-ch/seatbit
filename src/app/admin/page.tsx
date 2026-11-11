@@ -15,7 +15,12 @@ export default async function AdminPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Admin</h1>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-2xl font-bold">Admin</h1>
+        <Link href="/admin/settings" className={btnGhost}>
+          Platform settings
+        </Link>
+      </div>
       <Card
         title="LANs"
         actions={
