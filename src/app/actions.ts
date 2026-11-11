@@ -50,54 +50,25 @@ const nickInput = z.object({
 const sameScope = (a: { lanId: string | null; typeId: string | null }, b: typeof a) =>
   a.lanId === b.lanId && a.typeId === b.typeId;
 
-export async function addNick(formData: FormData) {
+/** Sets the user's one nick for a scope (default, LAN type or single event). Empty removes it. */
+export async function setNick(formData: FormData) {
   const me = await requireUser();
+  const nickRaw = String(formData.get("nick") ?? "").trim();
   const scope = nickInput.parse({
-    nick: formData.get("nick"),
+    nick: nickRaw || "-",
     lanId: formData.get("lanId") ?? undefined,
     typeId: formData.get("typeId") ?? undefined,
   });
   if (scope.lanId && scope.typeId) throw new Error("Pick one scope");
-  const existing = db
-    .select()
-    .from(nickname)
-    .where(eq(nickname.userId, me.id))
-    .all()
-    .filter((n) => sameScope(n, scope));
-  db.insert(nickname)
-    .values({ userId: me.id, lanId: scope.lanId, typeId: scope.typeId, nick: scope.nick, isPrimary: existing.length === 0 })
-    .run();
-  revalidatePath("/", "layout");
-}
-
-export async function deleteNick(id: string) {
-  const me = await requireUser();
-  const n = db.select().from(nickname).where(eq(nickname.id, id)).get();
-  if (!n || n.userId !== me.id) return;
-  db.delete(nickname).where(eq(nickname.id, id)).run();
-  if (n.isPrimary) {
-    const next = db
-      .select()
-      .from(nickname)
-      .where(eq(nickname.userId, me.id))
-      .all()
-      .find((x) => sameScope(x, n));
-    if (next) db.update(nickname).set({ isPrimary: true }).where(eq(nickname.id, next.id)).run();
-  }
-  revalidatePath("/", "layout");
-}
-
-export async function setPrimaryNick(id: string) {
-  const me = await requireUser();
-  const n = db.select().from(nickname).where(eq(nickname.id, id)).get();
-  if (!n || n.userId !== me.id) return;
-  for (const other of db.select().from(nickname).where(eq(nickname.userId, me.id)).all()) {
-    if (!sameScope(other, n)) continue;
-    db.update(nickname)
-      .set({ isPrimary: other.id === id })
-      .where(eq(nickname.id, other.id))
-      .run();
-  }
+  const mine = db.select().from(nickname).where(eq(nickname.userId, me.id)).all();
+  db.transaction((tx) => {
+    for (const n of mine) if (sameScope(n, scope)) tx.delete(nickname).where(eq(nickname.id, n.id)).run();
+    if (nickRaw) {
+      tx.insert(nickname)
+        .values({ userId: me.id, lanId: scope.lanId, typeId: scope.typeId, nick: scope.nick, isPrimary: true })
+        .run();
+    }
+  });
   revalidatePath("/", "layout");
 }
 

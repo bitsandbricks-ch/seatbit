@@ -35,9 +35,9 @@ export default async function ProfilePage() {
         </form>
       </Card>
 
-      <Card title="Default nicks">
+      <Card title="Default nick">
         <p className="mb-3 text-sm text-zinc-400">
-          Your primary nick is shown at every LAN unless you set a nick for that LAN type below.
+          Shown at every LAN unless you set a nick for that LAN type below.
         </p>
         <NickManager nicks={nicks} />
       </Card>
@@ -45,7 +45,7 @@ export default async function ProfilePage() {
       {types.length > 0 && (
         <Card title="Nicks per LAN type">
           <p className="mb-4 text-sm text-zinc-400">
-            Used for every event of that type, e.g. every Lock &amp; Load. Leave empty to use your default nick.
+            One nick per LAN type, used for every event of that type. Leave it empty to use your default nick.
           </p>
           <div className="space-y-5">
             {types.map((t) => (
