@@ -17,7 +17,7 @@ import {
 } from "@/lib/lans";
 import { announceLan, postReminderNow, refreshLanMessagesSoon, unlinkChannel } from "@/lib/discord";
 import { sendReminderNow } from "@/lib/reminders";
-import { notify as notifyMember, notifyLanChanged, notifyLater, notifySeatChanged } from "@/lib/notify";
+import { notify as notifyMember, notifyLanChanged, notifyLater, notifySeatChanged, trySendDiscordDm } from "@/lib/notify";
 import { appUrl } from "@/lib/mail";
 import { planSeats } from "@/lib/seating";
 import { eventMailVars, renderTemplate } from "@/lib/mail-templates";
@@ -120,6 +120,19 @@ export async function updateProfile(formData: FormData) {
     .run();
   if (formData.has("nick")) saveNick(me.id, String(formData.get("nick")));
   revalidatePath("/", "layout");
+}
+
+/** Sends the member a test DM and shows on the profile whether it arrived, or why not. */
+export async function sendTestDm() {
+  const me = await requireUser();
+  const r = await trySendDiscordDm(me, {
+    kind: "test",
+    subject: "Seatbit test DM",
+    text: "This is a test from your Seatbit profile. Changes to your events, seats and reminders will show up here.",
+    url: `${appUrl}/profile`,
+    dmOnly: true,
+  });
+  redirect(`/profile?dm=${r.ok ? "ok" : r.problem}#dms`);
 }
 
 /** First-login form: saves the names and nickname, then continues to the app. */

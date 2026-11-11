@@ -60,15 +60,18 @@ function dmBody(text: string, url?: string) {
   return t.charAt(0).toUpperCase() + t.slice(1);
 }
 
-/**
- * DMs a member through the bot. Returns false when they can't get one
- * (no linked Discord, DMs off, bot not set up, or Discord refuses because
- * they share no server with the bot or blocked DMs).
- */
-export async function sendDiscordDm(u: Pick<User, "id" | "discordDms" | "isGuest">, n: Notice) {
-  if (!u.discordDms || u.isGuest || !discordEnabled()) return false;
+/** Why a DM couldn't be sent, so the profile test button and the logs can say it plainly. */
+export type DmProblem = "dms_off" | "guest" | "bot_not_set_up" | "no_discord" | "cant_dm" | "error";
+
+export type DmResult = { ok: true } | { ok: false; problem: DmProblem; detail?: string };
+
+/** Sends a DM and says why when it can't. */
+export async function trySendDiscordDm(u: Pick<User, "id" | "discordDms" | "isGuest">, n: Notice): Promise<DmResult> {
+  if (!u.discordDms) return { ok: false, problem: "dms_off" };
+  if (u.isGuest) return { ok: false, problem: "guest" };
+  if (!discordEnabled()) return { ok: false, problem: "bot_not_set_up" };
   const discordId = discordIdOf(u.id);
-  if (!discordId) return false;
+  if (!discordId) return { ok: false, problem: "no_discord" };
   try {
     let channelId = dmChannels.get(discordId);
     if (!channelId) {
@@ -88,14 +91,28 @@ export async function sendDiscordDm(u: Pick<User, "id" | "discordDms" | "isGuest
       components: n.url ? [{ type: 1, components: [{ type: 2, style: 5, label: "Open in Seatbit", url: n.url }] }] : [],
       allowed_mentions: { parse: [] },
     });
-    return true;
+    return { ok: true };
   } catch (e) {
-    // 50007: can't DM this user (no shared server or DMs closed). Not worth a stack trace.
+    // 50007: can't DM this user (no shared server with the bot, or DMs from server members are off).
     const msg = String((e as Error).message);
-    if (msg.includes("50007") || msg.includes("-> 403")) console.warn(`[discord] can't DM ${discordId}`);
-    else console.error("[discord] DM failed", e);
-    return false;
+    if (msg.includes("50007") || msg.includes("-> 403")) {
+      console.warn(`[discord] can't DM ${discordId} (${n.kind}): ${msg}`);
+      return { ok: false, problem: "cant_dm", detail: msg };
+    }
+    console.error(`[discord] DM to ${discordId} (${n.kind}) failed`, e);
+    return { ok: false, problem: "error", detail: msg };
   }
+}
+
+/**
+ * DMs a member through the bot. Returns false when they can't get one
+ * (no linked Discord, DMs off, bot not set up, or Discord refuses because
+ * they share no server with the bot or blocked DMs).
+ */
+export async function sendDiscordDm(u: Pick<User, "id" | "discordDms" | "isGuest">, n: Notice) {
+  const r = await trySendDiscordDm(u, n);
+  if (!r.ok && r.problem === "bot_not_set_up") console.warn(`[discord] no DM (${n.kind}): bot token or application ID not set`);
+  return r.ok;
 }
 
 // ---------- Fan-out ----------
