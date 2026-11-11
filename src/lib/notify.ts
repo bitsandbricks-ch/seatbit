@@ -29,6 +29,8 @@ export type Notice = {
   text: string;
   /** Link for the DM button, e.g. the LAN page. */
   url?: string;
+  /** HTML version of the mail (from renderTemplate); the DM always uses `text`. */
+  html?: string;
   /** Don't email, only DM (for small updates that aren't worth a mail). */
   dmOnly?: boolean;
 };
@@ -106,7 +108,7 @@ export async function notify(userOrId: User | string, n: Notice): Promise<Notify
   let email = false;
   if (wantsMail) {
     try {
-      await sendMail(u.email, n.subject, n.text);
+      await sendMail(u.email, n.subject, n.text, n.html);
       email = true;
     } catch (e) {
       console.error(`[mail] ${n.kind} to ${u.email} failed`, e);

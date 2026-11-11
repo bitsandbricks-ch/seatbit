@@ -15,9 +15,10 @@ import {
 } from "@/lib/lans";
 import { announceLan, postReminderNow, refreshLanMessagesSoon, unlinkChannel } from "@/lib/discord";
 import { sendReminderNow } from "@/lib/reminders";
-import { notifyLanChanged, notifyLater, notifySeatChanged } from "@/lib/notify";
+import { notify as notifyMember, notifyLanChanged, notifyLater, notifySeatChanged } from "@/lib/notify";
+import { appUrl } from "@/lib/mail";
 import { planSeats } from "@/lib/seating";
-import { eventMailVars, sendTemplate } from "@/lib/mail-templates";
+import { eventMailVars, renderTemplate } from "@/lib/mail-templates";
 import { canViewLan, requireAdmin, requireClanManager, requireLanManager, requireUser } from "@/lib/session";
 import { isClanMember } from "@/lib/clans";
 
@@ -533,12 +534,16 @@ export async function publishSeats(lanId: string, notify: boolean): Promise<numb
     for (const { u } of rows) {
       const mine = seats.find((s) => s.userId === u.id);
       try {
-        await sendTemplate(u.email, "seatsPublished", {
-          ...eventMailVars(l, u),
-          seat: mine?.label,
-          seatInfo: mine ? `You're sitting at ${mine.label}.` : "You don't have a seat yet, an orga will get back to you.",
+        const r = await notifyMember(u, {
+          kind: "seatsPublished",
+          ...renderTemplate("seatsPublished", {
+            ...eventMailVars(l, u),
+            seat: mine?.label,
+            seatInfo: mine ? `You're sitting at ${mine.label}.` : "You don't have a seat yet, an orga will get back to you.",
+          }),
+          url: `${appUrl}/lans/${l.id}`,
         });
-        sent++;
+        if (r.email || r.dm) sent++;
       } catch (e) {
         console.error("[mail] failed", e);
       }

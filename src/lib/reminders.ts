@@ -1,8 +1,9 @@
 import { fmtDate } from "./format";
-import { and, eq, gt } from "drizzle-orm";
+import { and, eq, gt, ne } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Lan, ReminderKind, User } from "@/db/schema";
-import { sendMail } from "./mail";
+import { appUrl } from "./mail";
+import { notify } from "./notify";
 import { eventMailVars, renderTemplate } from "./mail-templates";
 
 const { lan, user, attendance, reminderLog } = schema;
@@ -41,7 +42,9 @@ function recipients(kind: ReminderKind, l: Lan): User[] {
     .select({ u: user })
     .from(user)
     .innerJoin(schema.clanMember, eq(schema.clanMember.userId, user.id))
-    .where(and(eq(user.emailReminders, true), eq(schema.clanMember.clanId, l.clanId ?? "")))
+    // Everyone in the clan: notify() mails only those with email reminders on and
+    // DMs those with Discord DMs on.
+    .where(and(eq(schema.clanMember.clanId, l.clanId ?? ""), ne(schema.clanMember.role, "pending")))
     .all()
     .map((r) => r.u);
   const rows = db.select().from(attendance).where(eq(attendance.lanId, l.id)).all();
@@ -83,7 +86,8 @@ async function send(kind: ReminderKind, l: Lan, users: User[], dedupe: boolean) 
     }
     const m = message(kind, l, u);
     try {
-      await sendMail(u.email, m.subject, m.text, "html" in m ? m.html : undefined);
+      const r = await notify(u, { kind: "reminder", ...m, url: `${appUrl}/lans/${l.id}` });
+      if (!r.email && !r.dm) continue;
       db.insert(reminderLog)
         .values({ lanId: l.id, userId: u.id, kind })
         .onConflictDoUpdate({
