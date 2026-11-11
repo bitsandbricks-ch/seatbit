@@ -36,7 +36,9 @@ export function buildChecklist(input: {
     hint: hasNick ? "Nick is set." : "Add the nick you want on the seat plan.",
   });
 
-  if (lan.price || lan.paymentDueDate) {
+  // Every LAN the group goes to needs a ticket, so this step is always there
+  // (it used to depend on a price or payment date being set).
+  {
     steps.push({
       key: "ticket",
       title: "Buy your ticket",
@@ -56,7 +58,9 @@ export function buildChecklist(input: {
       state: seatLabel ? "done" : "pending",
       hint: seatLabel
         ? `Seat ${seatLabel}.`
-        : freeSeats === 0
+        : lan.seatPicking && !lan.seatsPublishedAt
+          ? "Seat picking is open: tick that you have your ticket, then take a free seat below."
+          : freeSeats === 0
           ? "The orgas will publish the seat plan soon."
           : "Add seat wishes below. The orgas publish the seat plan after the deadline.",
     });

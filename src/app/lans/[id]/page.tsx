@@ -7,6 +7,7 @@ import { NickManager } from "@/components/nick-manager";
 import { LanIdForm } from "@/components/lan-id-form";
 import { getLanAccounts } from "@/lib/lan-accounts";
 import { SeatMap } from "@/components/seat-map";
+import { TicketConfirm } from "@/components/ticket-confirm";
 import { Card, Pill, StatusBadge, btnGhost, btnSecondary } from "@/components/ui";
 import { fmtDate, fmtRange, relative } from "@/lib/format";
 import { ATTENDANCE_LOCKED_MSG, attendanceLocked, getDisplayNames, getLan, pickNick, signupClosed } from "@/lib/lans";
@@ -77,6 +78,9 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
   const going = group("going");
   const isAdmin = isLanManager(me, id);
   const published = !!l.seatsPublishedAt;
+  // Seat-picking phase: members choose their own seat until the orgas publish the plan.
+  const picking = l.seatPicking && !published;
+  const mySeatLabel = published || picking ? (seats.find((s) => s.userId === me.id)?.label ?? null) : null;
   const steps = buildChecklist({
     lan: l,
     attendance: my,
@@ -136,7 +140,11 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
         <div className="min-w-0">
           {lanClan && (
             <Link href={`/clans/${lanClan.slug}`} className="mb-1.5 inline-flex items-center gap-1.5 text-sm text-muted hover:text-fg">
-              <ClanAvatar clan={lanClan} size={20} /> <span className="truncate">{lanClan.name}</span>
+              <ClanAvatar clan={lanClan} size={20} />
+              <span className="truncate">
+                <span className="text-faint">Event of </span>
+                <span className="text-fg">{lanClan.name}</span>
+              </span>
             </Link>
           )}
           <h1 className="text-2xl font-bold tracking-tight text-balance sm:text-3xl">{l.name}</h1>
@@ -257,19 +265,30 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
             title="Our seats"
             actions={
               <span className="flex gap-2">
-                {!published && seats.length > 0 && <Pill tone="amber">Not published yet</Pill>}
+                {picking && seats.length > 0 && <Pill tone="emerald">Pick your seat</Pill>}
+                {!published && !picking && seats.length > 0 && <Pill tone="amber">Not published yet</Pill>}
               </span>
             }
           >
+            {seats.length > 0 && my?.status === "going" && (picking || mySeatLabel) && !my.paid && (
+              <div className="mb-4 space-y-2">
+                <p className="text-sm text-muted">
+                  {mySeatLabel
+                    ? `You have seat ${mySeatLabel}. Confirm you have your ticket for this LAN.`
+                    : "Confirm you have your ticket, then pick your seat."}
+                </p>
+                <TicketConfirm lanId={l.id} bought={my.ticketBought} confirmed={my.paid} />
+              </div>
+            )}
             {seats.length === 0 ? (
               <p className="text-sm text-muted">The orgas haven&apos;t entered the group&apos;s seats yet.</p>
-            ) : published || isAdmin ? (
+            ) : published || isAdmin || picking ? (
               <SeatMap
                 lanId={l.id}
                 rows={l.seatRows}
                 cols={l.seatCols}
                 meId={me.id}
-                mode="view"
+                mode={picking && my?.status === "going" && (my.ticketBought || my.paid) ? "pick" : "view"}
                 seats={seats.map((s) => ({ ...s, nick: s.userId ? (names.get(s.userId) ?? "?") : null }))}
               />
             ) : (
