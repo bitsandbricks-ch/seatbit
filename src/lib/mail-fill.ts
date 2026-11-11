@@ -95,9 +95,11 @@ export interface MailContent {
   note?: string;
   /** Name in the header: the clan, or Seatbit. */
   header: string;
-  /** Absolute URLs for the logo and the mail settings page. */
+  /** Absolute URLs for the logo, the mail settings page and the legal pages. */
   logoUrl: string;
   settingsUrl: string;
+  termsUrl: string;
+  privacyUrl: string;
 }
 
 export function renderMail(m: MailContent): { html: string; text: string } {
@@ -149,7 +151,9 @@ export function renderMail(m: MailContent): { html: string; text: string } {
         </td></tr>
         <tr><td class="sb-foot" align="center" style="padding: 22px 16px 0; font-family: ${FONT}; font-size: 12px; line-height: 18px; color: ${C.muted};">
           Sent to you for ${esc(m.header)} on Seatbit.<br />
-          <a href="${esc(m.settingsUrl)}" style="color: ${C.muted}; text-decoration: underline;">Email settings</a><br />
+          <a href="${esc(m.settingsUrl)}" style="color: ${C.muted}; text-decoration: underline;">Email settings</a>
+          &nbsp;&middot;&nbsp; <a href="${esc(m.privacyUrl)}" style="color: ${C.muted}; text-decoration: underline;">Privacy</a>
+          &nbsp;&middot;&nbsp; <a href="${esc(m.termsUrl)}" style="color: ${C.muted}; text-decoration: underline;">Terms</a><br />
           Sent with <span class="sb-word" style="font-weight: 800; letter-spacing: -0.2px; color: ${C.fg};">seat</span><span style="font-weight: 800; letter-spacing: -0.2px; color: ${C.bitDeep};">bit</span>
         </td></tr>
       </table>
@@ -164,7 +168,7 @@ export function renderMail(m: MailContent): { html: string; text: string } {
     m.facts.map(([l, v]) => `${l}: ${v}`).join("\n"),
     m.button ? `${m.button.label}: ${m.button.url}` : "",
     m.note ?? "",
-    `--\nSent with Seatbit. Email settings: ${m.settingsUrl}`,
+    `--\nSent with Seatbit. Email settings: ${m.settingsUrl}\nPrivacy: ${m.privacyUrl}\nTerms: ${m.termsUrl}`,
   ]
     .filter((s) => s.trim())
     .join("\n\n");
@@ -194,6 +198,8 @@ export function buildMail(
     header: vars.clan?.trim() || "Seatbit",
     logoUrl: `${ctx.appUrl}/brand/icon-192.png`,
     settingsUrl: `${ctx.appUrl}/profile`,
+    termsUrl: `${ctx.appUrl}/terms`,
+    privacyUrl: `${ctx.appUrl}/privacy`,
   });
   return { subject, html, text };
 }
