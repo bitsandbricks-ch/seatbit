@@ -21,6 +21,7 @@ import { discordEnabled, inviteUrl } from "@/lib/discord-api";
 import { canManageClan, getClan } from "@/lib/clans";
 import { PublishSeats } from "@/components/publish-seats";
 import { checkWishes } from "@/lib/seating";
+import { getLanAccounts } from "@/lib/lan-accounts";
 
 const { attendance, seat, user, reminderLog } = schema;
 
@@ -61,6 +62,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
     .all()
     .filter((u) => memberIds.has(u.id) || rows.some((r) => r.userId === u.id));
   const names = await getDisplayNames(id, users.map((u) => u.id));
+  const lanIds = getLanAccounts(l, rows.map((r) => r.userId));
   const userById = new Map(users.map((u) => [u.id, u]));
   const seatOf = new Map(seats.filter((s) => s.userId).map((s) => [s.userId!, s.label]));
   const inLan = new Set(rows.map((r) => r.userId));
@@ -100,6 +102,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
         paid: r.paid,
         ticketBought: r.ticketBought,
         note: r.note,
+        lanAccount: lanIds.get(r.userId) ?? "",
         seat: seatOf.get(r.userId) ?? null,
         seatId: seats.find((s) => s.userId === r.userId)?.id ?? null,
       };

@@ -264,6 +264,26 @@ export const nickname = sqliteTable(
   (t) => [index("nickname_user_idx").on(t.userId, t.lanId)],
 );
 
+/**
+ * A member's own participant number at a LAN (user ID on lal.gg, SwitzerLAN
+ * ticket number, ...). Same scopes as nicknames: per LAN type (normal), or per
+ * single event when the event has no type. Shown to orgas and in the export.
+ */
+export const lanAccount = sqliteTable(
+  "lan_account",
+  {
+    id: id(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    lanId: text("lan_id").references(() => lan.id, { onDelete: "cascade" }),
+    typeId: text("type_id").references(() => lanType.id, { onDelete: "cascade" }),
+    value: text("value").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  (t) => [index("lan_account_user_idx").on(t.userId)],
+);
+
 /** One row per seat cell in a LAN's seating grid. Cells without a row are aisles/empty. */
 export const seat = sqliteTable(
   "seat",
@@ -462,6 +482,7 @@ export type LanType = typeof lanType.$inferSelect;
 export type Clan = typeof clan.$inferSelect;
 export type Attendance = typeof attendance.$inferSelect;
 export type Nickname = typeof nickname.$inferSelect;
+export type LanAccount = typeof lanAccount.$inferSelect;
 export type Seat = typeof seat.$inferSelect;
 export type TravelPost = typeof travelPost.$inferSelect;
 export type GearNeed = typeof gearNeed.$inferSelect;

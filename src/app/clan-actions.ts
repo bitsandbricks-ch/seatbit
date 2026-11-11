@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db, schema } from "@/db";
+import { moveLanAccounts } from "@/lib/lan-accounts";
 import { canManageClan, clanRole, getClan, saveAvatar, uniqueSlug } from "@/lib/clans";
 import { guestEmail } from "@/lib/guests";
 import { appUrl } from "@/lib/mail";
@@ -308,6 +309,7 @@ export async function claimGuest(code: string) {
       if (!myNicks.some((x) => x.lanId === n.lanId && x.typeId === n.typeId))
         tx.update(nickname).set({ userId: me.id }).where(eq(nickname.id, n.id)).run();
     }
+    moveLanAccounts(tx, g.id, me.id);
     for (const o of tx.select().from(lanOrga).where(eq(lanOrga.userId, g.id)).all()) {
       const mine = tx.select().from(lanOrga).where(and(eq(lanOrga.lanId, o.lanId), eq(lanOrga.userId, me.id))).get();
       if (!mine) tx.update(lanOrga).set({ userId: me.id }).where(and(eq(lanOrga.lanId, o.lanId), eq(lanOrga.userId, g.id))).run();

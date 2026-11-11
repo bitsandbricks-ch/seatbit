@@ -20,6 +20,7 @@ import { planSeats } from "@/lib/seating";
 import { appUrl, sendMail } from "@/lib/mail";
 import { canViewLan, requireAdmin, requireClanManager, requireLanManager, requireUser } from "@/lib/session";
 import { isClanMember } from "@/lib/clans";
+import { lanAccountScope, saveLanAccount } from "@/lib/lan-accounts";
 
 const { attendance, nickname, seat, lan, user, lanOrga, lanType } = schema;
 
@@ -76,6 +77,26 @@ function saveNick(userId: string, raw: string, lanId?: FormDataEntryValue | null
         .run();
     }
   });
+}
+
+/**
+ * The member's own participant number/ID at a LAN (lal.gg user ID, ticket
+ * number, ...). Stored for the LAN type (or a single untyped event). Empty clears it.
+ */
+export async function setMyLanId(formData: FormData) {
+  const me = await requireUser();
+  const typeId = String(formData.get("typeId") ?? "");
+  const lanId = String(formData.get("lanId") ?? "");
+  if (typeId) {
+    const t = db.select().from(lanType).where(eq(lanType.id, typeId)).get();
+    if (!t || (t.clanId && !isClanMember(me.id, t.clanId) && me.role !== "admin")) throw new Error("Not found");
+    saveLanAccount(me.id, { lanId: null, typeId }, String(formData.get("lanAccount") ?? ""));
+  } else {
+    const l = mustGetLan(lanId);
+    if (!canViewLan(me, lanId)) throw new Error("Not found");
+    saveLanAccount(me.id, lanAccountScope(l), String(formData.get("lanAccount") ?? ""));
+  }
+  revalidatePath("/", "layout");
 }
 
 const personName = z.string().trim().min(1).max(40);
@@ -270,6 +291,16 @@ export async function adminSetNote(attendanceId: string, note: string) {
   await requireLanManager(a.lanId);
   db.update(attendance).set({ note: note.slice(0, 500) }).where(eq(attendance.id, attendanceId)).run();
   lanPath(a.lanId);
+}
+
+/** Orgas fill in or fix someone's participant ID (e.g. for guests). Same scope as the member's own. */
+export async function adminSetLanId(lanId: string, userId: string, value: string) {
+  await requireLanManager(lanId);
+  const l = mustGetLan(lanId);
+  const a = db.select().from(attendance).where(and(eq(attendance.lanId, lanId), eq(attendance.userId, userId))).get();
+  if (!a) throw new Error("Not on this LAN");
+  saveLanAccount(userId, lanAccountScope(l), value);
+  lanPath(lanId);
 }
 
 export async function adminSendReminder(

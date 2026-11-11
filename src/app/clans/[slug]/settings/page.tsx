@@ -1,11 +1,10 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq, isNull } from "drizzle-orm";
 import { db, schema } from "@/db";
 import {
   addClanMember,
   addGuest,
-  deleteGuest,
   renewGuestLink,
   createInvite,
   deleteClan,
@@ -19,7 +18,8 @@ import { AddMemberForm } from "@/components/add-member-form";
 import { CopyField } from "@/components/copy-field";
 import { GuestForm } from "@/components/guest-form";
 import { Tabs } from "@/components/tabs";
-import { Card, Pill, btnDanger, btnGhost, btnPrimary, btnSecondary } from "@/components/ui";
+import { ClanMemberAdmin } from "@/components/clan-member-list";
+import { Card, btnDanger, btnGhost, btnPrimary, btnSecondary } from "@/components/ui";
 import { appUrl } from "@/lib/mail";
 import { canManageClan, getClanBySlug } from "@/lib/clans";
 import { requireUser } from "@/lib/session";
@@ -53,6 +53,14 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
   const pending = members.filter((m) => m.role === "pending");
   const active = members.filter((m) => m.role !== "pending");
   const guests = active.filter((m) => m.u.isGuest);
+  const defaultNick = new Map(
+    db
+      .select({ userId: schema.nickname.userId, nick: schema.nickname.nick })
+      .from(schema.nickname)
+      .where(and(isNull(schema.nickname.lanId), isNull(schema.nickname.typeId)))
+      .all()
+      .map((n) => [n.userId, n.nick]),
+  );
   const inClan = new Set(members.map((m) => m.u.id));
   const others = db
     .select({ id: schema.user.id, name: schema.user.name, email: schema.user.email })
@@ -151,37 +159,18 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
             <GuestForm action={addGuest.bind(null, c.id)} />
           </Card>
           <Card title={`Members (${active.length})`}>
-            <ul className="divide-y divide-line">
-              {active.map(({ u, role }) => (
-                <li key={u.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
-                  <span className="min-w-0">
-                    <span className="block truncate font-medium">
-                      {u.name} {role === "admin" && <Pill tone="emerald">admin</Pill>}
-                      {u.isGuest && <Pill>guest</Pill>}
-                    </span>
-                    <span className="block truncate text-xs text-muted">{u.isGuest ? "No login yet" : u.email}</span>
-                  </span>
-                  <span className="flex gap-1">
-                    {u.isGuest ? (
-                      <form action={deleteGuest.bind(null, c.id, u.id)}>
-                        <button className={`${btnGhost} text-xs text-danger`}>Remove</button>
-                      </form>
-                    ) : (
-                    <>
-                    <form action={setClanMemberRole.bind(null, c.id, u.id, role === "admin" ? "member" : "admin")}>
-                      <button className={`${btnGhost} text-xs`}>{role === "admin" ? "Remove admin" : "Make admin"}</button>
-                    </form>
-                    {u.id !== me.id && (
-                      <form action={removeClanMember.bind(null, c.id, u.id)}>
-                        <button className={`${btnGhost} text-xs text-danger`}>Remove</button>
-                      </form>
-                    )}
-                    </>
-                    )}
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <ClanMemberAdmin
+              clanId={c.id}
+              meId={me.id}
+              members={active.map(({ u, role }) => ({
+                id: u.id,
+                name: u.name,
+                nick: defaultNick.get(u.id) ?? "",
+                sub: u.isGuest ? "No login yet" : u.email,
+                role: role === "admin" ? "admin" : "member",
+                isGuest: u.isGuest,
+              }))}
+            />
           </Card>
         </>
       )}
