@@ -24,6 +24,28 @@ Global admins can configure the platform under **Admin → Platform settings** (
 - The encryption key is `SETTINGS_ENCRYPTION_KEY`, or derived from `BETTER_AUTH_SECRET` if that isn't set. If the key changes, saved secrets can't be read any more and have to be entered again (the page says so).
 - `BETTER_AUTH_URL`, `BETTER_AUTH_SECRET`, `DATABASE_PATH` and `TZ` are needed at startup, so they stay env-only.
 
+### First start (bootstrap)
+
+Login is Discord-only, so nobody can reach the settings page until Discord login works:
+
+1. Create a Discord application (see below) and start Seatbit with `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET` set as env vars (plus `BETTER_AUTH_URL` and `BETTER_AUTH_SECRET`).
+2. Sign in. **The first account becomes platform admin.** To pick admins up front instead, set `ADMIN_EMAILS` (the emails of their Discord accounts).
+3. Everything else (bot token, public key, SMTP, ...) can then be set in the platform settings. Keep the two login env vars in place: if a wrong client ID or secret is ever saved on the settings page, nobody can sign in, and `node scripts/admin.mjs reset-setting discord.clientSecret` (and `discord.clientId`) brings back the env values.
+
+### Admin CLI
+
+`scripts/admin.mjs` manages platform admins straight on the database, also while the app runs (it's in the container image):
+
+```sh
+kubectl exec deploy/seatbit -- node scripts/admin.mjs list                    # platform admins
+kubectl exec deploy/seatbit -- node scripts/admin.mjs users mike              # find users
+kubectl exec deploy/seatbit -- node scripts/admin.mjs grant mike@example.com  # make admin
+kubectl exec deploy/seatbit -- node scripts/admin.mjs revoke 123456789012345678
+kubectl exec deploy/seatbit -- node scripts/admin.mjs reset-setting discord.clientSecret
+```
+
+A user can be given by email, Discord user ID, Seatbit user ID, name or nickname. `grant` with an email nobody has signed in with yet adds it to the admin emails, so that person becomes admin on first sign-in. Locally: `npm run admin -- list`.
+
 ## Stack
 
 Next.js 16 (App Router, server actions) · Better Auth · SQLite via Drizzle ORM · Tailwind CSS · Nodemailer.
@@ -98,10 +120,12 @@ GitHub Actions builds a multi-arch image (amd64 + arm64) on every push to `main`
 ```sh
 docker run -p 3000:3000 -v seatbit-data:/data \
   -e BETTER_AUTH_URL=https://seatbit.ch -e BETTER_AUTH_SECRET=$(openssl rand -base64 32) \
+  -e DISCORD_CLIENT_ID=... -e DISCORD_CLIENT_SECRET=... \
   ghcr.io/bitsandbricks-ch/seatbit:main
 ```
 
 - Runs as uid/gid 1001; the SQLite database is `/data/seatbit.db` (keep `/data` on a volume, one instance only).
 - Health check: `GET /api/health`. Migrations run on startup.
+- Admin CLI: `docker exec <container> node scripts/admin.mjs help` (see "Admin CLI").
 - Online backup while running: `node scripts/backup.mjs` (writes to `BACKUP_DIR`, default `/backups`, keeps `BACKUP_KEEP_DAYS`, default 14).
 - Works with a read-only root filesystem if `/tmp` and `/app/.next/cache` are writable.

@@ -137,7 +137,7 @@ export const SETTINGS: SettingDef[] = [
     label: "OAuth2 client secret",
     kind: "secret",
     env: "DISCORD_CLIENT_SECRET",
-    help: "Login with Discord is enabled when the client ID and secret are set.",
+    help: "Login with Discord is enabled when the client ID and secret are set. Keep them in the env vars too, for the first sign-in.",
   },
   {
     key: "discord.botToken",
