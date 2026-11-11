@@ -2,12 +2,13 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { db, schema } from "@/db";
-import { deleteLan } from "@/app/actions";
+import { deleteLan, setSeatPicking } from "@/app/actions";
 import { AttendanceTable } from "@/components/attendance-table";
 import { LanForm } from "@/components/lan-form";
 import { ReminderButtons } from "@/components/reminder-buttons";
 import { SeatMap } from "@/components/seat-map";
-import { Card, Pill, btnDanger, btnSecondary } from "@/components/ui";
+import { ClanAvatar } from "@/components/clan-avatar";
+import { Card, Pill, btnDanger, btnPrimary, btnSecondary } from "@/components/ui";
 import { fmtDate, fmtRange, relative, toInputValue } from "@/lib/format";
 import { getDisplayNames, getLan } from "@/lib/lans";
 import { dueKinds } from "@/lib/reminders";
@@ -139,6 +140,14 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
           </Link>
           <h1 className="truncate text-2xl font-bold tracking-tight sm:text-3xl">{l.name}</h1>
           <p className="text-sm text-muted">{fmtRange(l.startsAt, l.endsAt)}</p>
+          {lanClan && (
+            <Link href={`/clans/${lanClan.slug}`} className="mt-1.5 inline-flex items-center gap-1.5 text-sm text-muted hover:text-fg">
+              <ClanAvatar clan={lanClan} size={20} />
+              <span className="truncate">
+                Managed by <span className="text-fg">{lanClan.name}</span>
+              </span>
+            </Link>
+          )}
         </div>
         <a href={`/lans/${l.id}/manage/export`} className={btnSecondary}>
           Export CSV
@@ -258,6 +267,24 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               free={freeSeats}
             />
           </Card>
+          {seats.length > 0 && (
+            <Card title="Seat picking" actions={l.seatPicking && !l.seatsPublishedAt ? <Pill tone="emerald">open</Pill> : <Pill>closed</Pill>}>
+              <p className="mb-3 text-sm text-muted">
+                {l.seatPicking && !l.seatsPublishedAt
+                  ? "Members who are coming and have ticked \"I have my ticket\" can take a free seat on the event page. Held seats stay out of reach. You can still move anyone here. Close picking, then publish the plan."
+                  : l.seatsPublishedAt
+                    ? "The plan is published, so members can't pick seats."
+                    : "Optional first phase: let members choose their own free seat before you finish and publish the plan."}
+              </p>
+              {!l.seatsPublishedAt && (
+                <form action={setSeatPicking.bind(null, l.id, !l.seatPicking)}>
+                  <button className={l.seatPicking ? btnSecondary : btnPrimary}>
+                    {l.seatPicking ? "Close seat picking" : "Let members pick their seats"}
+                  </button>
+                </form>
+              )}
+            </Card>
+          )}
           {seats.length > 0 && (
             <Card title="Publish">
               <PublishSeats

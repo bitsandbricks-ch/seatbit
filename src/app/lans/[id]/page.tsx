@@ -77,13 +77,16 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
   const going = group("going");
   const isAdmin = isLanManager(me, id);
   const published = !!l.seatsPublishedAt;
+  // Seat-picking phase: members choose their own seat until the orgas publish the plan.
+  const picking = l.seatPicking && !published;
+  const mySeatLabel = published || picking ? (seats.find((s) => s.userId === me.id)?.label ?? null) : null;
   const steps = buildChecklist({
     lan: l,
     attendance: my,
     hasNick: myNicks.some(
       (n) => (n.lanId === null && n.typeId === null) || n.lanId === id || (!!l.typeId && n.typeId === l.typeId),
     ),
-    seatLabel: published ? (seatOf.get(me.id) ?? null) : null,
+    seatLabel: mySeatLabel,
     hasSeatPlan: seats.length > 0,
     freeSeats: seats.filter((s) => !s.userId && !s.locked).length,
   });
@@ -136,7 +139,11 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
         <div className="min-w-0">
           {lanClan && (
             <Link href={`/clans/${lanClan.slug}`} className="mb-1.5 inline-flex items-center gap-1.5 text-sm text-muted hover:text-fg">
-              <ClanAvatar clan={lanClan} size={20} /> <span className="truncate">{lanClan.name}</span>
+              <ClanAvatar clan={lanClan} size={20} />
+              <span className="truncate">
+                <span className="text-faint">Event of </span>
+                <span className="text-fg">{lanClan.name}</span>
+              </span>
             </Link>
           )}
           <h1 className="text-2xl font-bold tracking-tight text-balance sm:text-3xl">{l.name}</h1>
@@ -257,19 +264,29 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
             title="Our seats"
             actions={
               <span className="flex gap-2">
-                {!published && seats.length > 0 && <Pill tone="amber">Not published yet</Pill>}
+                {picking && seats.length > 0 && <Pill tone="emerald">Pick your seat</Pill>}
+                {!published && !picking && seats.length > 0 && <Pill tone="amber">Not published yet</Pill>}
               </span>
             }
           >
+            {seats.length > 0 && my?.status === "going" && (picking || mySeatLabel) && !my.paid && !my.ticketBought && (
+              <div className="mb-4">
+                <p className="text-sm text-warn">
+                  {mySeatLabel
+                    ? `You have seat ${mySeatLabel}. Tick "I have my ticket" in your checklist above.`
+                    : `Tick "I have my ticket" in your checklist above, then pick your seat.`}
+                </p>
+              </div>
+            )}
             {seats.length === 0 ? (
               <p className="text-sm text-muted">The orgas haven&apos;t entered the group&apos;s seats yet.</p>
-            ) : published || isAdmin ? (
+            ) : published || isAdmin || picking ? (
               <SeatMap
                 lanId={l.id}
                 rows={l.seatRows}
                 cols={l.seatCols}
                 meId={me.id}
-                mode="view"
+                mode={picking && my?.status === "going" && (my.ticketBought || my.paid) ? "pick" : "view"}
                 seats={seats.map((s) => ({ ...s, nick: s.userId ? (names.get(s.userId) ?? "?") : null }))}
               />
             ) : (

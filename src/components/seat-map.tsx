@@ -2,6 +2,7 @@
 import { useState, useTransition } from "react";
 import {
   adminAssignSeat,
+  pickMySeat,
   renameSeat,
   toggleSeatCell,
   toggleSeatLock,
@@ -36,7 +37,8 @@ export function SeatMap({
   cols: number;
   seats: SeatView[];
   meId: string;
-  mode: "view" | "admin";
+  /** view: read only. pick: members choose their own free seat. admin: orga tools. */
+  mode: "view" | "pick" | "admin";
   assignable?: { id: string; nick: string }[];
 }) {
   const [pending, start] = useTransition();
@@ -59,6 +61,12 @@ export function SeatMap({
 
   function onCell(row: number, col: number, s?: SeatView) {
     if (mode === "view") return;
+    if (mode === "pick") {
+      if (!s) return;
+      if (s.userId === meId) return run(() => pickMySeat(lanId, null));
+      if (s.locked || s.userId) return;
+      return run(() => pickMySeat(lanId, s.id));
+    }
     // admin
     if (tool === "layout") {
       if (s?.userId && !confirm(`${s.label} is taken by ${s.nick}. Remove the seat anyway?`)) return;
@@ -119,6 +127,15 @@ export function SeatMap({
           </span>
         </div>
       )}
+
+      {mode === "pick" && (
+        <p className="text-sm text-muted">
+          {mySeat
+            ? `You're at ${mySeat.label}. Tap a free seat to move, or tap yours to give it up.`
+            : "Tap a free seat to take it. The orgas can still move people before they publish the plan."}
+        </p>
+      )}
+      {error && <p className="text-sm text-danger">{error}</p>}
 
       {mode === "view" && (
         <p className="text-sm text-muted">
