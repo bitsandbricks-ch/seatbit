@@ -11,7 +11,7 @@ import {
   toggleSeatRow,
 } from "@/app/actions";
 import { rowLetter } from "@/lib/seat-labels";
-import { Card, Pill, btnGhost, btnPrimary, btnSecondary, input } from "./ui";
+import { Card, Pill, Segmented, btnGhost, btnPrimary, btnSecondary, input } from "./ui";
 
 export type SeatView = {
   id: string;
@@ -402,19 +402,15 @@ export function SeatMap({
                   <path d="m20 20-4.5-4.5" />
                 </svg>
               </div>
-              <div role="group" aria-label="Seat size" className="inline-flex rounded-md border border-line bg-raised p-0.5 text-xs">
-                {(["compact", "large"] as Zoom[]).map((z) => (
-                  <button
-                    key={z}
-                    type="button"
-                    onClick={() => setZoom(z)}
-                    aria-pressed={zoom === z}
-                    className={`min-h-8 rounded px-2.5 font-medium capitalize transition ${zoom === z ? "bg-line text-fg" : "text-muted hover:text-fg"}`}
-                  >
-                    {z}
-                  </button>
-                ))}
-              </div>
+              <Segmented
+                label="Seat size"
+                value={zoom}
+                onChange={setZoom}
+                options={[
+                  { id: "compact", label: "Compact" },
+                  { id: "large", label: "Large" },
+                ]}
+              />
               {admin && (
                 <button
                   type="button"
