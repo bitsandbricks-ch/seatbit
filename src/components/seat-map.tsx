@@ -84,7 +84,8 @@ export function SeatMap({
   const [query, setQuery] = useState("");
   const [dragOver, setDragOver] = useState<string | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
-  const [perLine, setPerLine] = useState(cols);
+  // Measured seat size and how many seats fit on one line (long rows wrap).
+  const [dims, setDims] = useState({ cap: 999, w: 40, g: 4 });
 
   useEffect(() => {
     try {
@@ -130,7 +131,8 @@ export function SeatMap({
     start(async () => {
       setError(null);
       try {
-        await fn();
+        const r = await fn();
+        if (r && typeof r === "object" && "error" in r && typeof r.error === "string") setError(r.error);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Something went wrong");
       }
@@ -192,35 +194,38 @@ export function SeatMap({
   const compact = zoom === "compact";
   // Compact seats fit a 10-wide block on a 390px phone without scrolling.
   const cell = compact ? "h-8 sm:h-10" : "h-[4.5rem]";
-  const colW = compact ? "minmax(var(--seat-min), 1fr)" : "minmax(4.75rem, 1fr)";
 
-  // How many seats fit on one line; longer rows wrap (see below).
+  // Seat width and seats per line from the available width; longer rows wrap (see below).
   useEffect(() => {
     const el = wrapRef.current;
     if (!el) return;
     const measure = () => {
       const sm = window.matchMedia("(min-width: 640px)").matches;
-      const gap = sm ? 4 : 3;
+      const g = sm ? 4 : 3;
       const min = compact ? (sm ? 36 : 26) : 76;
+      const max = compact ? 52 : 128;
       const avail = el.clientWidth - 20 - 4 - 12; // row letter, its gap, indent of wrapped lines
-      setPerLine(Math.max(1, Math.min(cols, Math.floor((avail + gap) / (min + gap)))));
+      const cap = Math.max(1, Math.floor((avail + g) / (min + g)));
+      setDims({ cap, w: Math.max(min, Math.min(max, Math.floor((avail + g) / cap - g))), g });
     };
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [cols, compact]);
+  }, [compact]);
 
   const hint = layout
-    ? "Tap a cell to add or remove a seat, or a row letter to fill or clear the row."
+    ? "Tap a dashed cell to add that seat, a seat to remove it, or a row letter to fill or clear the row."
     : swapFrom
       ? `Tap the seat to swap ${byId.get(swapFrom)?.label} with, or a free seat to move there.`
       : placing
         ? `Tap a seat for ${people.get(placing)?.nick ?? "them"}.`
         : null;
 
+  const rowLetterOf = (row: number) => seats.find((x) => x.row === row)?.label.match(/^[A-Za-z]+/)?.[0] ?? rowLetter(row);
+
   /** The row letter, as a button in "Edit seats" mode (fills or clears the row). */
-  const rowLabel = (row: number) => {
+  const rowLabel = (row: number, wrapped: boolean) => {
     const first = seats.find((x) => x.row === row);
     const letter = first?.label.match(/^[A-Za-z]+/)?.[0] ?? rowLetter(row);
     return admin && layout ? (
@@ -246,11 +251,14 @@ export function SeatMap({
           key={key}
           type="button"
           onClick={() => onCell(row, col)}
-          className={`${cell} rounded-bit border border-dashed border-line hover:border-muted/50`}
-          aria-label={`Add seat at row ${row + 1}, column ${col + 1}`}
-        />
+          className={`${cell} w-full rounded-bit border border-dashed border-line font-mono text-[10px] text-faint hover:border-muted/50 hover:text-muted`}
+          aria-label={`Add seat ${rowLetterOf(row)}${col + 1}`}
+          title={`Add ${rowLetterOf(row)}${col + 1}`}
+        >
+          {compact ? "+" : `${rowLetterOf(row)}${col + 1}`}
+        </button>
       ) : (
-        <div key={key} className={cell} />
+        <div key={key} className={`${cell} w-full`} />
       );
     }
     const mine = s.userId === meId;
@@ -287,7 +295,7 @@ export function SeatMap({
         title={`${s.label}${s.nick ? ` · ${s.nick}` : ""}${s.locked ? " · held" : ""}`}
         aria-label={`Seat ${s.label}${s.nick ? `, ${s.nick}` : ", free"}${s.locked ? ", held" : ""}`}
         aria-pressed={isSel}
-        className={`relative flex ${cell} min-w-0 flex-col items-center justify-center overflow-hidden rounded-bit border px-0.5 text-center transition hover:brightness-125 ${tone} ${ring} ${dim ? "opacity-25" : ""} ${canDrag && taken ? "cursor-grab active:cursor-grabbing" : ""}`}
+        className={`relative flex ${cell} w-full min-w-0 flex-col items-center justify-center overflow-hidden rounded-bit border px-0.5 text-center transition hover:brightness-125 ${tone} ${ring} ${dim ? "opacity-25" : ""} ${canDrag && taken ? "cursor-grab active:cursor-grabbing" : ""}`}
       >
         {compact ? (
           <span className={`w-full truncate font-mono leading-none ${taken ? "text-[11px] font-semibold" : "text-[10px]"}`}>{short}</span>
@@ -306,14 +314,45 @@ export function SeatMap({
     );
   };
 
-  // Long rows wrap onto extra lines. Every row breaks at the same column, so seats stay lined up; the row letter
-  // spans all lines of its row (with a bracket line) and the wrapped lines are indented.
-  const lines = Math.ceil(cols / perLine);
-  const per = Math.ceil(cols / lines);
-  const wrapped = lines > 1;
-  const lineCols = Array.from({ length: lines }, (_, i) =>
-    Array.from({ length: Math.min(per, cols - i * per) }, (_, k) => i * per + k),
-  );
+  // Each letter is one row; seats sit at their number (col = number - 1). Between number ranges of one row
+  // (e.g. F1-F20, F25-F30) a narrow gap marker shows the seats that aren't ours. In "Edit seats" every number
+  // gets a cell, so missing ones can be added.
+  type Item = { kind: "seat" | "empty"; col: number } | { kind: "gap"; from: number; to: number };
+  const maxRow = Math.max(rows - 1, ...seats.map((x) => x.row));
+  const rowList = Array.from({ length: maxRow + 1 }, (_, r) => r).filter((r) => layout || seats.some((x) => x.row === r));
+  const itemsFor = (row: number): Item[] => {
+    const inRow = seats.filter((x) => x.row === row).sort((a, b) => a.col - b.col);
+    if (admin && layout) {
+      // Every number up to one past the row's last seat (an empty row gets the block's width).
+      const last = inRow.length ? inRow.at(-1)!.col + 1 : cols - 1;
+      return Array.from({ length: last + 1 }, (_, c) => ({ kind: inRow.some((x) => x.col === c) ? "seat" : "empty", col: c }));
+    }
+    const out: Item[] = [];
+    inRow.forEach((x, i) => {
+      const prev = inRow[i - 1];
+      if (prev && x.col - prev.col > 1) out.push({ kind: "gap", from: prev.col + 2, to: x.col });
+      out.push({ kind: "seat", col: x.col });
+    });
+    return out;
+  };
+  const unit = (it: Item) => (it.kind === "gap" ? 0.5 : 1);
+  /** Splits a row into lines of about equal length that each fit the width. */
+  const linesFor = (items: Item[]): Item[][] => {
+    const total = items.reduce((n, it) => n + unit(it), 0);
+    const limit = Math.min(dims.cap, Math.ceil(total / Math.ceil(total / dims.cap)));
+    const lines: Item[][] = [[]];
+    let acc = 0;
+    for (const it of items) {
+      if (lines.at(-1)!.length && acc + unit(it) > limit + 1e-6) {
+        lines.push([]);
+        acc = 0;
+      }
+      lines.at(-1)!.push(it);
+      acc += unit(it);
+    }
+    return lines;
+  };
+  const anyGap = !layout && rowList.some((r) => itemsFor(r).some((it) => it.kind === "gap"));
 
   const details = (onSwap: () => void) =>
     selected && (
@@ -422,28 +461,38 @@ export function SeatMap({
               </p>
             )}
 
-            <div ref={wrapRef} data-seat-grid className={`scroll-mt-20 ${wrapped ? "space-y-2" : "space-y-[3px] sm:space-y-1"} ${pending ? "opacity-70" : ""}`}>
-              {Array.from({ length: rows }, (_, row) => (
-                <div
-                  key={row}
-                  role="group"
-                  aria-label={`Row ${row + 1}`}
-                  className="flex items-start gap-1"
-                >
-                  {rowLabel(row)}
-                  <div className="min-w-0 flex-1 space-y-[3px] sm:space-y-1">
-                    {lineCols.map((cs, i) => (
-                      <div
-                        key={i}
-                        className={`grid gap-[3px] [--seat-min:1.625rem] sm:gap-1 sm:[--seat-min:2.25rem] ${i > 0 ? "ml-3" : ""}`}
-                        style={{ gridTemplateColumns: `repeat(${per}, ${colW})`, maxWidth: compact ? `${per * 3.25}rem` : undefined }}
-                      >
-                        {cs.map((col) => renderCell(row, col))}
-                      </div>
-                    ))}
+            <div ref={wrapRef} data-seat-grid className={`scroll-mt-20 space-y-2 overflow-x-auto ${pending ? "opacity-70" : ""}`}>
+              {rowList.map((row) => {
+                const lines = linesFor(itemsFor(row));
+                return (
+                  <div key={row} role="group" aria-label={`Row ${rowLetterOf(row)}`} className="flex items-start gap-1">
+                    {rowLabel(row, lines.length > 1)}
+                    <div className="min-w-0 flex-1" style={{ display: "grid", rowGap: dims.g }}>
+                      {lines.map((line, i) => (
+                        <div key={i} className={`flex ${i > 0 ? "ml-3" : ""}`} style={{ gap: dims.g }}>
+                          {line.map((it) =>
+                            it.kind === "gap" ? (
+                              <div
+                                key={`g${it.from}`}
+                                className={`${cell} grid shrink-0 place-items-center`}
+                                style={{ width: dims.w / 2 }}
+                                title={`${rowLetterOf(row)}${it.from}${it.to > it.from ? `–${rowLetterOf(row)}${it.to}` : ""} aren't ours`}
+                                aria-hidden
+                              >
+                                <span className="h-3/5 border-l-2 border-dotted border-faint/60" />
+                              </div>
+                            ) : (
+                              <div key={it.col} className="shrink-0" style={{ width: dims.w }}>
+                                {renderCell(row, it.col)}
+                              </div>
+                            ),
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
@@ -451,7 +500,12 @@ export function SeatMap({
               <Legend cls="bg-bit border-bit">You</Legend>
               <Legend cls="bg-seat-taken/20 border-seat-taken/40">Taken</Legend>
               <Legend cls="bg-raised/60 border-line">Held</Legend>
-              {wrapped && <span className="text-faint">Wrapped rows are indented next to their letter.</span>}
+              {anyGap && (
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="inline-block h-3 border-l-2 border-dotted border-faint/60" />
+                  Not our seats
+                </span>
+              )}
             </div>
             {error && <p className="text-sm text-danger">{error}</p>}
 
@@ -495,8 +549,9 @@ export function SeatMap({
         <div className="rounded-card border border-line bg-surface p-4 sm:p-5">
           {layout ? (
             <p className="text-sm text-muted">
-              Editing seats. Tap an empty cell to add a seat, a seat to remove it, or a row letter to fill or clear the
-              whole row. Click <strong className="text-fg">Done editing seats</strong> when you&apos;re finished.
+              Editing seats. Each letter is one row and every number has a cell: tap a dashed cell to add that seat, a
+              seat to remove it, or a row letter to fill or clear the whole row. For new rows or many seats at once, use
+              the seat list below. Click <strong className="text-fg">Done editing seats</strong> when you&apos;re finished.
             </p>
           ) : selected ? (
             details(() => setSwapFrom(selected.id))
