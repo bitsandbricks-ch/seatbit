@@ -1,4 +1,5 @@
-import { asc, eq } from "drizzle-orm";
+import { asc, eq, inArray } from "drizzle-orm";
+import { myClans } from "@/lib/clans";
 import { db, schema } from "@/db";
 import { updateProfile } from "@/app/actions";
 import { LinkedAccounts } from "@/components/linked-accounts";
@@ -11,7 +12,10 @@ import { requireUser } from "@/lib/session";
 export default async function ProfilePage() {
   const me = await requireUser();
   const nicks = db.select().from(schema.nickname).where(eq(schema.nickname.userId, me.id)).all();
-  const types = db.select().from(schema.lanType).orderBy(asc(schema.lanType.name)).all();
+  const clanIds = myClans(me.id).map((c) => c.clan.id);
+  const types = clanIds.length
+    ? db.select().from(schema.lanType).where(inArray(schema.lanType.clanId, clanIds)).orderBy(asc(schema.lanType.name)).all()
+    : [];
   const accounts = db
     .select({ providerId: schema.account.providerId })
     .from(schema.account)

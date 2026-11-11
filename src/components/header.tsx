@@ -19,6 +19,9 @@ export async function Header() {
               <Link className="rounded px-2.5 py-1.5 text-zinc-300 hover:bg-zinc-800 sm:px-3" href="/">
                 LANs
               </Link>
+              <Link className="rounded px-2.5 py-1.5 text-zinc-300 hover:bg-zinc-800 sm:px-3" href="/clans">
+                Clans
+              </Link>
               {me.role === "admin" && (
                 <Link className="rounded px-2.5 py-1.5 text-zinc-300 hover:bg-zinc-800 sm:px-3" href="/admin">
                   Admin

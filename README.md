@@ -54,15 +54,15 @@ The bot uses the same Discord application as the login. It runs inside the app (
 1. In the Discord developer portal, open your app:
    - **Bot**: reset/copy the token into `DISCORD_BOT_TOKEN`.
    - **General Information**: copy the public key into `DISCORD_PUBLIC_KEY`, and set **Interactions Endpoint URL** to `<BETTER_AUTH_URL>/api/discord/interactions` (the app must be running and reachable for Discord to accept it).
-2. Click **Check bot & register slash commands** in the platform settings (or run `npm run discord:register`). Both register the slash commands; the settings page also shows the bot invite link.
-3. Invite the bot to each server, then run `/seatbit here` in the channel it should post in (needs "Manage Server").
+2. Click **Check bot & register slash commands** in **Admin → Platform settings → Discord** (or run `npm run discord:register`) once. It registers the slash commands.
+3. Any clan can now add the bot: a clan admin opens **Clan settings → Discord & WhatsApp**, invites the bot to their server, and runs `/seatbit here` in the channel it should post in (needs "Manage Server" on Discord and a linked Discord account in Seatbit). A Discord server belongs to one clan; `/seatbit here clan:<name>` picks the clan if you admin several.
 
-What it does:
+What it does, per clan:
 
-- Posts every new LAN as an announcement with **Coming / Unsure / Not coming** buttons. The attendee list on the post updates live, also when people answer on the website. `/seatbit announce` posts the current upcoming LANs in a channel.
-- Posts the answer, ticket and "starts tomorrow" reminders in the channel when they're due (same schedule as the emails), pinging the members they apply to.
-- `/lans` shows each member their upcoming LANs and status, privately, with answer buttons.
-- Orgas can re-post or post reminders by hand on the LAN's manage page.
+- Posts each new LAN of the clan as an announcement with **Coming / Unsure / Not coming** buttons. The attendee list on the post updates live, also when people answer on the website. Only clan members can answer. `/seatbit announce` posts the clan's upcoming LANs in a channel.
+- Posts the answer, ticket and "starts tomorrow" reminders in the clan's channels when they're due (same schedule as the emails), pinging the clan members they apply to.
+- `/lans` shows the server's clan's upcoming LANs and your status, privately, with answer buttons (in DMs: all your clans).
+- Orgas can re-post or post reminders by hand on the LAN's manage page; clan admins can unlink channels in clan settings.
 
 Members are matched by their linked Discord account. Anyone who signed up with email can link Discord on their profile.
 
