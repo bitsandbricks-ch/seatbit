@@ -19,7 +19,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col font-sans">
         <Header />
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">{children}</main>
-        <footer className="flex justify-center gap-4 py-6 text-xs text-zinc-600">
+        <footer className="flex flex-wrap justify-center gap-x-4 gap-y-1 px-4 py-6 text-xs text-zinc-600">
           <span>Seatbit</span>
           <Link href="/terms" className="hover:text-zinc-400">
             Terms
@@ -27,6 +27,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <Link href="/privacy" className="hover:text-zinc-400">
             Privacy
           </Link>
+          <a href="https://bitsandbricks.ch" target="_blank" rel="noreferrer" className="hover:text-zinc-400">
+            Powered by bitsandbricks.ch
+          </a>
         </footer>
       </body>
     </html>

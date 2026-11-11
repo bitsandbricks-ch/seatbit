@@ -20,7 +20,11 @@ export default function TermsPage() {
       <h2>1. Who runs Seatbit</h2>
       <Operator />
       <p>
-        Seatbit is a free hobby project. It is not affiliated with, endorsed by or run on behalf of Discord or any LAN
+        Seatbit is a free hobby project, powered by{" "}
+        <a href="https://bitsandbricks.ch" target="_blank" rel="noreferrer">
+          bitsandbricks.ch
+        </a>
+        . It is not affiliated with, endorsed by or run on behalf of Discord or any LAN
         party organiser. Tickets and seats at a LAN party are always sold and allocated by its organiser; Seatbit only
         helps your group keep track of them.
       </p>
@@ -89,8 +93,8 @@ export default function TermsPage() {
 
       <h2>10. Law and jurisdiction</h2>
       <p>
-        These terms are governed by Swiss law. Courts at {legal.jurisdiction} have jurisdiction, unless mandatory
-        consumer protection law gives you the right to sue in your own country.
+        These terms are governed by Swiss law. The courts at the operator&apos;s place of residence have jurisdiction,
+        unless mandatory consumer protection law gives you the right to sue in your own country.
       </p>
 
       <h2>11. Contact</h2>

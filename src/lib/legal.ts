@@ -1,21 +1,16 @@
 /**
  * Operator details shown on /terms and /privacy.
- *
- * TODO(operator): replace the bracketed placeholders before publishing the
- * pages (e.g. as the Discord app's Terms of Service / Privacy Policy URLs).
- * Each value can also be set with the LEGAL_* environment variable next to it.
+ * Each value can be overridden with the LEGAL_* environment variable next to it.
  */
 export const legal = {
   /** Person or company that runs this Seatbit instance. */
-  operatorName: process.env.LEGAL_OPERATOR_NAME ?? "[Operator name]",
+  operatorName: process.env.LEGAL_OPERATOR_NAME ?? "Mike Keller",
   /** Postal address (street, postcode, town, country). */
-  operatorAddress: process.env.LEGAL_OPERATOR_ADDRESS ?? "[Street and number, postcode town, Switzerland]",
+  operatorAddress: process.env.LEGAL_OPERATOR_ADDRESS ?? "Grossfeld 17, 6532 Seewen, Switzerland",
   /** Contact email for questions and privacy requests. */
-  contactEmail: process.env.LEGAL_CONTACT_EMAIL ?? "[privacy@example.ch]",
+  contactEmail: process.env.LEGAL_CONTACT_EMAIL ?? "mike@cheller.dev",
   /** Where the server and database run. */
   hostingLocation: process.env.LEGAL_HOSTING_LOCATION ?? "Switzerland",
-  /** Courts for disputes (seat of the operator). */
-  jurisdiction: process.env.LEGAL_JURISDICTION ?? "[town], Switzerland",
   /** Date of the current version of both documents. */
   lastUpdated: "11 November 2026",
 };
