@@ -8,17 +8,19 @@ const { attendance, nickname, seat, user, lan } = schema;
 export { rowLetter, seatLabel } from "./seat-labels";
 
 /**
- * Picks the nick shown for a user at a LAN: primary LAN nick, any LAN nick,
- * primary global nick, any global nick, then the account name.
+ * Picks the nick shown for a user at a LAN: event nick, then LAN-type nick,
+ * then default nick (primary first in each scope), then the account name.
  */
-export function pickNick(nicks: Nickname[], lanId: string | null, fallback: string) {
-  const forLan = nicks.filter((n) => lanId && n.lanId === lanId);
-  const global = nicks.filter((n) => n.lanId === null);
+export function pickNick(
+  nicks: Nickname[],
+  scope: { lanId: string | null; typeId: string | null },
+  fallback: string,
+) {
+  const pick = (list: Nickname[]) => list.find((n) => n.isPrimary)?.nick ?? list[0]?.nick;
   return (
-    forLan.find((n) => n.isPrimary)?.nick ??
-    forLan[0]?.nick ??
-    global.find((n) => n.isPrimary)?.nick ??
-    global[0]?.nick ??
+    (scope.lanId ? pick(nicks.filter((n) => n.lanId === scope.lanId)) : undefined) ??
+    (scope.typeId ? pick(nicks.filter((n) => n.typeId === scope.typeId)) : undefined) ??
+    pick(nicks.filter((n) => n.lanId === null && n.typeId === null)) ??
     fallback
   );
 }
@@ -27,27 +29,24 @@ export function pickNick(nicks: Nickname[], lanId: string | null, fallback: stri
 export async function getDisplayNames(lanId: string, userIds: string[]) {
   const map = new Map<string, string>();
   if (userIds.length === 0) return map;
-  const [users, nicks] = await Promise.all([
-    db.select().from(user).where(inArray(user.id, userIds)),
-    db
-      .select()
-      .from(nickname)
-      .where(
-        and(
-          inArray(nickname.userId, userIds),
-          or(isNull(nickname.lanId), eq(nickname.lanId, lanId)),
+  const typeId = getLan(lanId)?.typeId ?? null;
+  const users = db.select().from(user).where(inArray(user.id, userIds)).all();
+  const nicks = db
+    .select()
+    .from(nickname)
+    .where(
+      and(
+        inArray(nickname.userId, userIds),
+        or(
+          and(isNull(nickname.lanId), isNull(nickname.typeId)),
+          eq(nickname.lanId, lanId),
+          typeId ? eq(nickname.typeId, typeId) : undefined,
         ),
       ),
-  ]);
+    )
+    .all();
   for (const u of users) {
-    map.set(
-      u.id,
-      pickNick(
-        nicks.filter((n) => n.userId === u.id),
-        lanId,
-        u.name,
-      ),
-    );
+    map.set(u.id, pickNick(nicks.filter((n) => n.userId === u.id), { lanId, typeId }, u.name));
   }
   return map;
 }
@@ -121,7 +120,7 @@ export async function promoteFromWaitlist(l: Lan) {
     await sendMail(
       u.email,
       `You're in: ${l.name}`,
-      `Hi ${u.name},\n\na spot opened up and you moved from the waitlist to "going" for ${l.name}.\n\nPick your seat: ${appUrl}/lans/${l.id}`,
+      `Hi ${u.name},\n\na spot opened up and you moved from the waitlist to "going" for ${l.name}.\n\nDetails: ${appUrl}/lans/${l.id}`,
     ).catch((e) => console.error("[mail] failed", e));
   }
 }

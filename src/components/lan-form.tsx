@@ -5,6 +5,7 @@ import { Field, Input, btnPrimary, input } from "./ui";
 
 export type LanFormValues = {
   id?: string;
+  typeId: string;
   name: string;
   description: string;
   location: string;
@@ -19,12 +20,22 @@ export type LanFormValues = {
   reminderDays: number;
 };
 
-export function LanForm({ values }: { values: LanFormValues }) {
+export function LanForm({ values, types }: { values: LanFormValues; types: { id: string; name: string }[] }) {
   const [state, action, pending] = useActionState<FormState, FormData>(saveLan, undefined);
   return (
     <form action={action} className="space-y-5">
       {values.id && <input type="hidden" name="id" value={values.id} />}
       <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="LAN type" hint="Members' nicks for this type carry over to every event of it.">
+          <select name="typeId" defaultValue={values.typeId} className={input}>
+            <option value="">None (one-off)</option>
+            {types.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+        </Field>
         <Field label="Event name">
           <Input name="name" defaultValue={values.name} required placeholder="e.g. Winter LAN 2026" />
         </Field>

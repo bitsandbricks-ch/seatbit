@@ -30,7 +30,9 @@ export default async function Home() {
     const steps = buildChecklist({
       lan: l,
       attendance: mine.get(l.id),
-      hasNick: myNicks.some((n) => n.lanId === null || n.lanId === l.id),
+      hasNick: myNicks.some(
+        (n) => (n.lanId === null && n.typeId === null) || n.lanId === l.id || (!!l.typeId && n.typeId === l.typeId),
+      ),
       seatLabel: mySeat,
       hasSeatPlan: ls.length > 0,
       freeSeats,

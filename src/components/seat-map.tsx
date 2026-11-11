@@ -136,7 +136,8 @@ export function SeatMap({
             const col = (j % (cols + 1)) - 1;
             const i = `${row}:${col}`;
             if (col === -1) {
-              const letter = rowLetter(row);
+              const first = seats.find((x) => x.row === row);
+              const letter = first?.label.match(/^[A-Za-z]+/)?.[0] ?? rowLetter(row);
               return mode === "admin" && tool === "layout" ? (
                 <button
                   key={i}
