@@ -44,7 +44,7 @@ const statusStyles: Record<AttendanceStatus | "none", string> = {
 };
 const statusText: Record<AttendanceStatus | "none", string> = {
   going: "Attending",
-  maybe: "Maybe",
+  maybe: "Unsure",
   declined: "Not going",
   waitlist: "Waitlist · full",
   none: "No answer",

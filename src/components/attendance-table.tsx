@@ -25,6 +25,12 @@ export type AttendanceRow = {
 };
 
 const statuses: AttendanceStatus[] = ["going", "waitlist", "maybe", "declined"];
+const statusLabel: Record<AttendanceStatus, string> = {
+  going: "coming",
+  waitlist: "waitlist",
+  maybe: "unsure",
+  declined: "not coming",
+};
 
 export function AttendanceTable({
   lanId,
@@ -53,7 +59,7 @@ export function AttendanceTable({
             onClick={() => setFilter(s)}
             className={filter === s ? `${btnSecondary} !py-1` : `${btnGhost} !py-1`}
           >
-            {s} ({s === "all" ? rows.length : rows.filter((r) => r.status === s).length})
+            {s === "all" ? "all" : statusLabel[s]} ({s === "all" ? rows.length : rows.filter((r) => r.status === s).length})
           </button>
         ))}
       </div>
@@ -89,7 +95,7 @@ export function AttendanceTable({
                   >
                     {statuses.map((s) => (
                       <option key={s} value={s}>
-                        {s}
+                        {statusLabel[s]}
                       </option>
                     ))}
                   </select>
