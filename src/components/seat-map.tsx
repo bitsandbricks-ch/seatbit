@@ -126,10 +126,15 @@ export function SeatMap({
         </p>
       )}
 
-      <div className={`overflow-x-auto pb-2 ${pending ? "opacity-60" : ""}`}>
+      {/* Seats are wide enough for a whole nick (two lines if needed); on narrow screens the map scrolls sideways
+          and the row letters stay pinned on the left. */}
+      <div className={`-mx-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0 ${pending ? "opacity-60" : ""}`}>
         <div
-          className="grid gap-1.5"
-          style={{ gridTemplateColumns: `1.25rem repeat(${cols}, minmax(2.75rem, 1fr))`, minWidth: cols * 48 + 20 }}
+          className="grid gap-[var(--seat-gap)] [--seat-gap:0.375rem] [--seat-w:4.75rem] sm:[--seat-w:5.25rem] lg:[--seat-w:4.5rem] 2xl:[--seat-w:5rem]"
+          style={{
+            gridTemplateColumns: `1.25rem repeat(${cols}, minmax(var(--seat-w), 1fr))`,
+            minWidth: `calc(${cols} * (var(--seat-w) + var(--seat-gap)) + 1.25rem)`,
+          }}
         >
           {Array.from({ length: rows * (cols + 1) }, (_, j) => {
             const row = Math.floor(j / (cols + 1));
@@ -142,13 +147,13 @@ export function SeatMap({
                 <button
                   key={i}
                   onClick={() => run(() => toggleSeatRow(lanId, row))}
-                  className="h-14 rounded text-xs font-mono text-muted hover:bg-raised hover:text-fg"
+                  className="sticky left-0 z-10 h-[4.5rem] rounded bg-surface text-xs font-mono text-muted hover:bg-raised hover:text-fg"
                   title={`Fill or clear row ${letter}`}
                 >
                   {letter}
                 </button>
               ) : (
-                <div key={i} className="grid h-14 place-items-center text-xs font-mono text-faint">
+                <div key={i} className="sticky left-0 z-10 grid h-[4.5rem] place-items-center bg-surface text-xs font-mono text-muted">
                   {letter}
                 </div>
               );
@@ -159,17 +164,17 @@ export function SeatMap({
                 <button
                   key={i}
                   onClick={() => onCell(row, col)}
-                  className="h-14 rounded border border-dashed border-line hover:border-muted/50"
+                  className="h-[4.5rem] rounded-bit border border-dashed border-line hover:border-muted/50"
                   aria-label={`Add seat at row ${row + 1}, column ${col + 1}`}
                 />
               ) : (
-                <div key={i} className="h-14" />
+                <div key={i} className="h-[4.5rem]" />
               );
             }
             const mine = s.userId === meId;
             const taken = !!s.userId;
             const cls = mine
-              ? "bg-bit text-ink border-bit"
+              ? "bg-bit text-on-bit border-bit"
               : taken
                 ? "bg-seat-taken/20 text-seat-taken border-seat-taken/40"
                 : s.locked
@@ -181,13 +186,15 @@ export function SeatMap({
                 disabled={mode === "view"}
                 onClick={() => onCell(row, col, s)}
                 title={`${s.label}${s.nick ? ` · ${s.nick}` : ""}${s.locked ? " · held" : ""}`}
-                className={`flex h-14 flex-col items-center justify-center overflow-hidden rounded border px-1 text-center ${cls}`}
+                className={`flex h-[4.5rem] flex-col items-center justify-center gap-0.5 overflow-hidden rounded-bit border px-1.5 text-center transition ${cls}`}
               >
-                <span className="text-[10px] font-mono opacity-70">
+                <span className="font-mono text-[11px] leading-none opacity-75">
                   {s.label}
                   {s.locked ? " 🔒" : ""}
                 </span>
-                <span className="w-full truncate text-xs font-medium">{s.nick ?? ""}</span>
+                {s.nick && (
+                  <span className="line-clamp-2 w-full text-xs font-semibold leading-tight [overflow-wrap:anywhere]">{s.nick}</span>
+                )}
               </button>
             );
           })}

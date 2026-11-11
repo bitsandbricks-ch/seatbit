@@ -183,8 +183,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
       />
 
       {tab === "travel" && (
-        <div className="max-w-3xl">
-          <p className="mb-4 text-sm text-muted">
+        <div>
+          <p className="mb-4 max-w-2xl text-sm text-muted">
             Share rides and places to sleep, grouped by town. Join a ride with free seats, or post where you need one from.
           </p>
           <TravelBoard lanId={l.id} posts={travelViews} meId={me.id} canPost={canTakePart} isManager={isAdmin} />
@@ -216,8 +216,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
       {tab === "overview" && (
         // Phones: your answer and checklist first, then the event, then the rest.
         // Desktop: event on the left, your stuff in a sidebar on the right.
-        <div className="grid grid-cols-1 items-start gap-4 sm:gap-6 lg:grid-cols-3 lg:grid-rows-[auto_1fr]">
-          <div className="min-w-0 space-y-4 sm:space-y-6 lg:col-start-3 lg:row-start-1">
+        <div className="grid grid-cols-1 items-start gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_22rem]">
+          <div className="min-w-0 space-y-4 sm:space-y-6 lg:col-start-2 lg:row-span-2 lg:row-start-1">
           <Card title="Your attendance" actions={<StatusBadge status={my?.status} seat={seatOf.get(me.id)} />}>
             <AttendanceButtons lanId={l.id} current={my?.status ?? null} disabled={!!closed} />
             {my?.status === "waitlist" && (
@@ -267,7 +267,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
 
           </div>
 
-          <div className="min-w-0 space-y-4 sm:space-y-6 lg:col-span-2 lg:col-start-1 lg:row-span-2 lg:row-start-1">
+          <div className="min-w-0 space-y-4 sm:space-y-6 lg:col-start-1 lg:row-start-1">
           {l.description && (
             <Card>
               <p className="whitespace-pre-wrap text-fg/90">{l.description}</p>
@@ -315,7 +315,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           </Card>
           </div>
 
-          <div className="min-w-0 space-y-4 sm:space-y-6 lg:col-start-3 lg:row-start-2">
+          <div className="min-w-0 space-y-4 sm:space-y-6 lg:col-start-1 lg:row-start-2">
           {my?.status === "going" && !published && seats.length > 0 && (
             <Card title="Seat wishes">
               <p className="mb-3 text-sm text-muted">
@@ -339,6 +339,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
             </Card>
           )}
 
+          <div className="grid items-start gap-4 sm:gap-6 md:grid-cols-2">
           <Card title={orgaIds.length ? "Orgas" : "Contact"}>
             <p className="mb-3 text-sm text-muted">Questions about this LAN? Ask the orgas.</p>
             <ul className="space-y-2">
@@ -377,6 +378,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
               <NickManager nicks={myNicks} lanId={l.id} />
             )}
           </Card>
+          </div>
           </div>
         </div>
       )}

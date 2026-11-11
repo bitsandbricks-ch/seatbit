@@ -76,9 +76,21 @@ export function AttendanceTable({
         type="search"
       />
 
-      <ul className="space-y-2">
+      {/* Phones: one card per person. Desktop: one row per person in a table-like list. */}
+      <ul className="space-y-2 lg:space-y-0 lg:divide-y lg:divide-line lg:overflow-hidden lg:rounded-card lg:border lg:border-line lg:bg-surface">
+        <li aria-hidden className="hidden gap-3 bg-raised/40 px-4 py-2 text-[11px] font-medium uppercase tracking-wide text-muted lg:grid lg:grid-cols-[minmax(0,1.5fr)_9rem_6.5rem_12rem_minmax(0,1fr)_4.5rem]">
+          <span>Member</span>
+          <span>Status</span>
+          <span>Seat</span>
+          <span>Ticket</span>
+          <span>Note</span>
+          <span />
+        </li>
         {visible.map((r) => (
-          <li key={r.id} className="rounded-card border border-line bg-surface p-3">
+          <li
+            key={r.id}
+            className="rounded-card border border-line bg-surface p-3 lg:grid lg:grid-cols-[minmax(0,1.5fr)_9rem_6.5rem_12rem_minmax(0,1fr)_4.5rem] lg:items-center lg:gap-3 lg:rounded-none lg:border-0 lg:bg-transparent lg:px-4 lg:py-2 lg:hover:bg-raised/30"
+          >
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <p className="truncate font-medium">{r.nick}</p>
@@ -87,7 +99,7 @@ export function AttendanceTable({
                 </p>
               </div>
               <button
-                className={`${btnGhost} shrink-0 !px-2 text-xs text-danger`}
+                className={`${btnGhost} shrink-0 !px-2 text-xs !text-danger lg:hidden`}
                 onClick={() =>
                   confirm(`Remove ${r.nick} from this LAN?`) && run(() => adminRemoveAttendance(lanId, r.userId))
                 }
@@ -95,9 +107,9 @@ export function AttendanceTable({
                 Remove
               </button>
             </div>
-            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:contents">
               <label className="block">
-                <span className="mb-1 block text-[11px] uppercase tracking-wide text-faint">Status</span>
+                <span className="mb-1 block text-[11px] uppercase tracking-wide text-muted lg:sr-only">Status</span>
                 <select
                   key={r.status}
                   defaultValue={r.status}
@@ -112,7 +124,7 @@ export function AttendanceTable({
                 </select>
               </label>
               <label className="block">
-                <span className="mb-1 block text-[11px] uppercase tracking-wide text-faint">Seat</span>
+                <span className="mb-1 block text-[11px] uppercase tracking-wide text-muted lg:sr-only">Seat</span>
                 {r.status === "going" && seats.length > 0 ? (
                   <select
                     key={r.seatId ?? "none"}
@@ -134,7 +146,7 @@ export function AttendanceTable({
                   <span className="block py-1.5 font-mono text-sm text-muted">{r.seat ?? "—"}</span>
                 )}
               </label>
-              <label className="col-span-2 flex items-center gap-2 rounded-md border border-line px-3 py-2 text-sm sm:col-span-1 sm:self-end">
+              <label className="col-span-2 flex min-h-10 cursor-pointer items-center gap-2 rounded-md border border-line px-3 py-2 text-sm sm:col-span-1 sm:self-end lg:self-auto">
                 <input
                   type="checkbox"
                   key={String(r.paid)}
@@ -148,7 +160,7 @@ export function AttendanceTable({
                 </span>
               </label>
               <label className="col-span-2 block sm:col-span-1">
-                <span className="mb-1 block text-[11px] uppercase tracking-wide text-faint">Note</span>
+                <span className="mb-1 block text-[11px] uppercase tracking-wide text-muted lg:sr-only">Note</span>
                 <input
                   defaultValue={r.note}
                   onBlur={(e) => e.target.value !== r.note && run(() => adminSetNote(r.id, e.target.value))}
@@ -157,6 +169,14 @@ export function AttendanceTable({
                 />
               </label>
             </div>
+            <button
+              className={`${btnGhost} hidden !px-2 text-xs hover:!text-danger lg:inline-flex`}
+              onClick={() =>
+                confirm(`Remove ${r.nick} from this LAN?`) && run(() => adminRemoveAttendance(lanId, r.userId))
+              }
+            >
+              Remove
+            </button>
           </li>
         ))}
         {visible.length === 0 && <li className="py-6 text-center text-sm text-muted">Nobody here.</li>}

@@ -35,7 +35,7 @@ export function SeatWishes({
       {people.length > 0 && (
         <div>
           <p className="mb-2 text-fg/90">Who do you want to sit with, and who not right next to?</p>
-          <ul className="max-h-64 space-y-1 overflow-y-auto pr-1">
+          <ul className="grid max-h-72 gap-1 overflow-y-auto pr-1 md:grid-cols-2">
             {people.map((p) => {
               const near = w.near.includes(p.id);
               const avoid = w.avoid.includes(p.id);

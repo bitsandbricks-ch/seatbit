@@ -165,9 +165,10 @@ export function TravelBoard({
 
       {sorted.length === 0 && <p className="text-sm text-muted">{c.empty}</p>}
 
+      <div className="grid items-start gap-x-6 gap-y-4 lg:grid-cols-2">
       {sorted.map((g) => (
-        <section key={townKey(g.town)}>
-          <h3 className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-faint">
+        <section key={townKey(g.town)} className="min-w-0">
+          <h3 className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted">
             <span aria-hidden>📍</span> {g.town || "Somewhere"}
           </h3>
           <ul className="space-y-2">
@@ -274,6 +275,7 @@ export function TravelBoard({
           </ul>
         </section>
       ))}
+      </div>
     </div>
   );
 }
@@ -305,7 +307,7 @@ function PostForm({
   const listId = `towns-${kind}`;
   return (
     <form
-      className="space-y-3 rounded-lg border border-line bg-ink/40 p-3"
+      className="max-w-2xl space-y-3 rounded-lg border border-line bg-ink/40 p-3"
       onSubmit={(e) => {
         e.preventDefault();
         onSave({ kind, mode, ...v, places: Number(v.places) });

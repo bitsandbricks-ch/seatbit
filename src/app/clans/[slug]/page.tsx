@@ -38,7 +38,7 @@ export default async function ClanPage({ params }: PageProps<"/clans/[slug]">) {
       : [];
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-5xl space-y-6">
       <div className="flex items-center gap-4">
         <ClanAvatar clan={c} size={72} />
         <div className="min-w-0 flex-1">
@@ -72,6 +72,7 @@ export default async function ClanPage({ params }: PageProps<"/clans/[slug]">) {
         )}
       </div>
 
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
       {(isMember || isAdmin) && (
         <Card title="Upcoming events">
           {lans.length === 0 ? (
@@ -91,8 +92,8 @@ export default async function ClanPage({ params }: PageProps<"/clans/[slug]">) {
         </Card>
       )}
 
-      <Card title="Members">
-        <ul className="grid gap-1 sm:grid-cols-2">
+      <Card title={`Members (${members.length})`}>
+        <ul className="grid gap-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
           {members
             .map((m) => ({ ...m, nick: pickNick(nicks.filter((n) => n.userId === m.u.id), { lanId: null, typeId: null }, m.u.name) }))
             .sort((a, b) => a.nick.localeCompare(b.nick))
@@ -104,6 +105,7 @@ export default async function ClanPage({ params }: PageProps<"/clans/[slug]">) {
             ))}
         </ul>
       </Card>
+      </div>
     </div>
   );
 }

@@ -220,7 +220,25 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
       )}
 
       {tab === "seats" && (
+        // The seat plan is the main tool, so it gets the full width on top; setup, publishing and wishes sit below,
+        // side by side on wide screens.
         <div className="space-y-5">
+          {seats.length > 0 && (
+            <Card title="Seat plan">
+              <SeatMap
+                lanId={l.id}
+                rows={l.seatRows}
+                cols={l.seatCols}
+                meId={me.id}
+                mode="admin"
+                seats={seats.map((s) => ({ ...s, nick: s.userId ? (names.get(s.userId) ?? "?") : null }))}
+                assignable={going
+                  .map((r) => ({ id: r.userId, nick: names.get(r.userId) ?? "?" }))
+                  .sort((a, b) => a.nick.localeCompare(b.nick))}
+              />
+            </Card>
+          )}
+          <div className="grid items-start gap-5 lg:grid-cols-2">
           <Card title="Our seats">
             <p className="mb-4 text-sm text-muted">
               Enter the seats the event gave the group, then assign them here or on the Attendees tab. Hold keeps a seat
@@ -276,21 +294,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               )}
             </Card>
           )}
-          {seats.length > 0 && (
-            <Card>
-              <SeatMap
-                lanId={l.id}
-                rows={l.seatRows}
-                cols={l.seatCols}
-                meId={me.id}
-                mode="admin"
-                seats={seats.map((s) => ({ ...s, nick: s.userId ? (names.get(s.userId) ?? "?") : null }))}
-                assignable={going
-                  .map((r) => ({ id: r.userId, nick: names.get(r.userId) ?? "?" }))
-                  .sort((a, b) => a.nick.localeCompare(b.nick))}
-              />
-            </Card>
-          )}
+          </div>
         </div>
       )}
 
