@@ -12,6 +12,8 @@ import {
   seatLabel,
   setAttendance,
   signupClosed,
+  ATTENDANCE_LOCKED_MSG,
+  attendanceLocked,
 } from "@/lib/lans";
 import { announceLan, postReminderNow, refreshLanMessagesSoon, unlinkChannel } from "@/lib/discord";
 import { sendReminderNow } from "@/lib/reminders";
@@ -45,6 +47,8 @@ export async function setMyAttendance(lanId: string, status: AttendanceStatus) {
   if (!canViewLan(me, lanId)) throw new Error("Join the clan first");
   if (!ATTENDANCE_STATUSES.includes(status) || status === "waitlist") throw new Error("Bad status");
   if (signupClosed(l)) throw new Error("Sign-up for this LAN is closed");
+  const mine = db.select().from(attendance).where(and(eq(attendance.lanId, lanId), eq(attendance.userId, me.id))).get();
+  if (attendanceLocked(mine)) throw new Error(ATTENDANCE_LOCKED_MSG);
   await setAttendance(l, me.id, status);
   lanPath(lanId);
 }
@@ -343,6 +347,7 @@ export async function setMyTicketBought(lanId: string, bought: boolean) {
     .where(and(eq(attendance.lanId, lanId), eq(attendance.userId, me.id)))
     .get();
   if (!a) throw new Error("Say whether you're coming first");
+  if (a.paid) throw new Error("An orga already confirmed your ticket. Ask them if something changed.");
   db.update(attendance).set({ ticketBought: bought }).where(eq(attendance.id, a.id)).run();
   lanPath(lanId);
 }

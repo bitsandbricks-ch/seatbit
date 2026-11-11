@@ -4,7 +4,7 @@ import { db, schema } from "@/db";
 import type { AttendanceStatus, Clan, Lan } from "@/db/schema";
 import { avatarUrl, canManageClan, getClan, isClanMember, myClans } from "./clans";
 import { type ChatReminderKind, fmtWhen, lanFacts, lanLink, lanSummary } from "./announce";
-import { getLan, setAttendance, signupClosed } from "./lans";
+import { ATTENDANCE_LOCKED_MSG, attendanceLocked, getLan, setAttendance, signupClosed } from "./lans";
 import { type Json, api, discordEnabled } from "./discord-api";
 import { getSetting } from "./settings";
 import { appUrl } from "./mail";
@@ -371,6 +371,8 @@ export function handleInteraction(i: Interaction): { response: Json; later?: () 
     if (!["going", "maybe", "declined"].includes(status)) return { response: reply("Unknown button.") };
     const me = seatbitUserFor(discordUser);
     if (!me) return { response: notLinked() };
+    const mine = db.select().from(attendance).where(and(eq(attendance.lanId, l.id), eq(attendance.userId, me.id))).get();
+    if (attendanceLocked(mine)) return { response: reply(ATTENDANCE_LOCKED_MSG, { components: [linkButton("Open in Seatbit", lanLink(l))] }) };
     if (!l.clanId || !isClanMember(me.id, l.clanId)) {
       const c = l.clanId ? getClan(l.clanId) : undefined;
       return {
