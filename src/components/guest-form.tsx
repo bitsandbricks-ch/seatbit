@@ -32,7 +32,7 @@ export function GuestForm({
       <Field label="Email (optional)" hint="We mail them an invite. Signing in with a Discord account on this address takes the spot over automatically.">
         <Input name="email" type="email" maxLength={200} autoComplete="off" />
       </Field>
-      {state?.error && <p className="text-sm text-red-400">{state.error}</p>}
+      {state?.error && <p className="text-sm text-danger">{state.error}</p>}
       {state?.ok && state.message && <p className="text-sm text-bit">{state.message}</p>}
       <button disabled={pending} className={btnSecondary}>
         {pending ? "Adding…" : submitLabel}
@@ -67,7 +67,7 @@ export function GuestEmailForm({
           {pending ? "Sending…" : email ? "Send invite again" : "Send invite"}
         </button>
       </div>
-      {state?.error && <p className="text-xs text-red-400">{state.error}</p>}
+      {state?.error && <p className="text-xs text-danger">{state.error}</p>}
       {state?.ok && state.message && <p className="text-xs text-bit">{state.message}</p>}
     </form>
   );

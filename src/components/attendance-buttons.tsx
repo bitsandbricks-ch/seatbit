@@ -5,9 +5,9 @@ import type { AttendanceStatus } from "@/db/schema";
 import { btn } from "./ui";
 
 const options: { status: AttendanceStatus; label: string; active: string }[] = [
-  { status: "going", label: "I'm coming", active: "bg-bit text-ink" },
-  { status: "maybe", label: "Unsure", active: "bg-amber-400 text-ink" },
-  { status: "declined", label: "Not coming", active: "bg-zinc-600 text-white" },
+  { status: "going", label: "I'm coming", active: "border-bit bg-bit text-on-bit hover:bg-bit-hover" },
+  { status: "maybe", label: "Unsure", active: "border-warn bg-warn text-on-bit" },
+  { status: "declined", label: "Not coming", active: "border-danger/50 bg-danger/15 text-danger" },
 ];
 
 export function AttendanceButtons({
@@ -23,7 +23,7 @@ export function AttendanceButtons({
   const [error, setError] = useState<string | null>(null);
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap gap-2">
+      <div className="grid grid-cols-3 gap-2" aria-busy={pending}>
         {options.map((o) => {
           const isActive = current === o.status || (o.status === "going" && current === "waitlist");
           return (
@@ -40,14 +40,15 @@ export function AttendanceButtons({
                   }
                 })
               }
-              className={`${btn} border border-zinc-700 ${isActive ? o.active : "bg-zinc-800 text-zinc-200 hover:bg-zinc-700"}`}
+              aria-pressed={isActive}
+              className={`${btn} min-h-11 whitespace-nowrap border px-1 ${isActive ? o.active : "border-line bg-raised text-fg hover:bg-line"} ${pending ? "opacity-70" : ""}`}
             >
               {o.label}
             </button>
           );
         })}
       </div>
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
     </div>
   );
 }

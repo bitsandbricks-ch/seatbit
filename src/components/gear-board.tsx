@@ -69,12 +69,12 @@ export function SharedGear({
           (missing ? <Pill tone="amber">{missing} still missing</Pill> : <Pill tone="emerald">All covered</Pill>)
         }
       >
-        <p className="mb-4 text-sm text-zinc-400">
+        <p className="mb-4 text-sm text-muted">
           What the group needs at its table. Say how many you bring so nothing is missing and nobody carries three switches.
         </p>
 
         {needs.length === 0 && (
-          <p className="mb-4 text-sm text-zinc-400">
+          <p className="mb-4 text-sm text-muted">
             {isManager ? "No shared gear on the list yet. Add what the group needs." : "The orgas haven't listed any shared gear yet."}
           </p>
         )}
@@ -85,7 +85,7 @@ export function SharedGear({
             const mine = n.pledges.find((p) => p.userId === meId)?.qty ?? 0;
             const ok = have >= n.qty;
             return (
-              <li key={n.id} className="rounded-lg border border-line bg-zinc-900/50 px-3 py-2.5 text-sm">
+              <li key={n.id} className="rounded-lg border border-line bg-ink/40 px-3 py-2.5 text-sm">
                 {editing === n.id ? (
                   <NeedForm
                     initial={{ name: n.name, qty: String(n.qty), note: n.note }}
@@ -98,25 +98,25 @@ export function SharedGear({
                   <>
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="font-medium text-zinc-100">{n.name}</p>
-                        {n.note && <p className="text-zinc-400">{n.note}</p>}
+                        <p className="font-medium text-fg">{n.name}</p>
+                        {n.note && <p className="text-muted">{n.note}</p>}
                       </div>
-                      <span className={`shrink-0 font-mono text-sm ${ok ? "text-bit" : "text-amber-300"}`}>
+                      <span className={`shrink-0 font-mono text-sm ${ok ? "text-bit" : "text-warn"}`}>
                         {have} / {n.qty}
                       </span>
                     </div>
-                    <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-zinc-800">
+                    <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-raised">
                       <div
-                        className={`h-full rounded-full ${ok ? "bg-bit" : "bg-amber-400"}`}
+                        className={`h-full rounded-full ${ok ? "bg-bit" : "bg-warn"}`}
                         style={{ width: `${Math.min(100, (have / n.qty) * 100)}%` }}
                       />
                     </div>
                     <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
                       <ul className="flex flex-wrap gap-1.5">
                         {n.pledges.map((p) => (
-                          <li key={p.userId} className="rounded-full bg-zinc-800 px-2 py-0.5 text-xs">
+                          <li key={p.userId} className="rounded-full bg-raised px-2 py-0.5 text-xs">
                             <span className={p.userId === meId ? "text-bit" : ""}>{p.nick}</span>
-                            {p.qty > 1 && <span className="text-zinc-400"> ×{p.qty}</span>}
+                            {p.qty > 1 && <span className="text-muted"> ×{p.qty}</span>}
                           </li>
                         ))}
                       </ul>
@@ -127,7 +127,7 @@ export function SharedGear({
                               Edit
                             </button>
                             <button
-                              className={`${btnGhost} text-red-300`}
+                              className={`${btnGhost} text-danger`}
                               disabled={pending}
                               onClick={() => run(() => deleteGearNeed(n.id))}
                             >
@@ -150,7 +150,7 @@ export function SharedGear({
                               >
                                 −
                               </button>
-                              <span className="min-w-14 text-center text-xs text-zinc-100">I bring {mine}</span>
+                              <span className="min-w-14 text-center text-xs text-fg">I bring {mine}</span>
                               <button
                                 aria-label="One more"
                                 className="px-2.5 py-1 text-bit"
@@ -182,7 +182,7 @@ export function SharedGear({
                 {suggestions.map((s) => (
                   <button
                     key={s.name}
-                    className="rounded-full border border-zinc-700 px-2.5 py-1 text-xs text-zinc-300 hover:border-bit hover:text-bit"
+                    className="rounded-full border border-line px-2.5 py-1 text-xs text-fg/90 hover:border-bit hover:text-bit"
                     disabled={pending}
                     onClick={() => run(() => saveGearNeed(lanId, { name: s.name, qty: s.qty, note: "" }))}
                   >
@@ -200,24 +200,24 @@ export function SharedGear({
             />
           </div>
         )}
-        {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
+        {error && <p className="mt-3 text-sm text-danger">{error}</p>}
       </Card>
 
       <Card title="Also bringing">
-        <p className="mb-3 text-sm text-zinc-400">Anything else for the group that isn&apos;t on the list, like a beamer or a coffee machine.</p>
+        <p className="mb-3 text-sm text-muted">Anything else for the group that isn&apos;t on the list, like a beamer or a coffee machine.</p>
         {extras.length > 0 && (
           <ul className="mb-3 space-y-1">
             {extras.map((x) => (
-              <li key={x.id} className="flex items-center justify-between gap-2 rounded bg-zinc-800/50 px-3 py-1.5 text-sm">
+              <li key={x.id} className="flex items-center justify-between gap-2 rounded bg-raised/60 px-3 py-1.5 text-sm">
                 <span className="min-w-0 truncate">
                   {x.name}
-                  {x.qty > 1 && <span className="text-zinc-400"> ×{x.qty}</span>}
-                  <span className={`ml-2 text-xs ${x.userId === meId ? "text-bit" : "text-zinc-500"}`}>{x.nick}</span>
+                  {x.qty > 1 && <span className="text-muted"> ×{x.qty}</span>}
+                  <span className={`ml-2 text-xs ${x.userId === meId ? "text-bit" : "text-faint"}`}>{x.nick}</span>
                 </span>
                 {(x.userId === meId || isManager) && (
                   <button
                     aria-label={`Remove ${x.name}`}
-                    className="text-zinc-500 hover:text-red-300"
+                    className="text-muted hover:text-danger"
                     disabled={pending}
                     onClick={() => run(() => deleteGearPledge(x.id))}
                   >
@@ -258,7 +258,7 @@ export function SharedGear({
             </button>
           </form>
         ) : (
-          extras.length === 0 && <p className="text-sm text-zinc-500">Nothing yet.</p>
+          extras.length === 0 && <p className="text-sm text-muted">Nothing yet.</p>
         )}
       </Card>
     </div>
@@ -281,7 +281,7 @@ function NeedForm({
   const [v, set] = useState(initial);
   return (
     <form
-      className="grid gap-2 sm:grid-cols-[1fr_5rem_1fr_auto]"
+      className="grid grid-cols-[1fr_4.5rem] gap-2 sm:grid-cols-[1fr_5rem_1fr_auto]"
       onSubmit={(e) => {
         e.preventDefault();
         onSave(v);
@@ -296,8 +296,8 @@ function NeedForm({
         value={v.qty}
         onChange={(e) => set({ ...v, qty: e.target.value })}
       />
-      <Input maxLength={100} placeholder="Note (optional)" value={v.note} onChange={(e) => set({ ...v, note: e.target.value })} />
-      <span className="flex gap-2">
+      <Input maxLength={100} placeholder="Note (optional)" value={v.note} onChange={(e) => set({ ...v, note: e.target.value })} className="col-span-2 sm:col-span-1" />
+      <span className="col-span-2 flex gap-2 sm:col-span-1">
         <button className={btnPrimary} disabled={pending}>
           {submitLabel}
         </button>
@@ -323,14 +323,14 @@ export function PackingList({
   const { pending, error, run } = useRun();
   const [done, setDone] = useState(new Set(packed));
   return (
-    <Card title="Your packing list" actions={<span className="text-sm text-zinc-400">{done.size} / {items.length}</span>}>
-      <p className="mb-3 text-sm text-zinc-400">Only you see this. Tick things off as you pack.</p>
+    <Card title="Your packing list" actions={<span className="text-sm text-muted">{done.size} / {items.length}</span>}>
+      <p className="mb-3 text-sm text-muted">Only you see this. Tick things off as you pack.</p>
       <ul className="grid gap-1 sm:grid-cols-2 lg:grid-cols-1">
         {items.map((it) => {
           const on = done.has(it.id);
           return (
             <li key={it.id}>
-              <label className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-800/60">
+              <label className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 text-sm hover:bg-raised">
                 <input
                   type="checkbox"
                   className="size-4 accent-bit"
@@ -344,13 +344,13 @@ export function PackingList({
                     run(() => setPacked(lanId, it.id, e.target.checked));
                   }}
                 />
-                <span className={on ? "text-zinc-500 line-through" : "text-zinc-200"}>{it.label}</span>
+                <span className={on ? "text-faint line-through" : "text-fg"}>{it.label}</span>
               </label>
             </li>
           );
         })}
       </ul>
-      {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
+      {error && <p className="mt-2 text-sm text-danger">{error}</p>}
     </Card>
   );
 }

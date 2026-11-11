@@ -28,15 +28,15 @@ export function ClanForm({
       </Field>
       {clan && (
         <Field label="Avatar" hint="PNG, JPG, WebP or GIF, up to 2 MB.">
-          <input type="file" name="avatar" accept="image/png,image/jpeg,image/webp,image/gif" className="block w-full text-sm text-zinc-300 file:mr-3 file:rounded-md file:border-0 file:bg-zinc-800 file:px-3 file:py-1.5 file:text-zinc-100" />
+          <input type="file" name="avatar" accept="image/png,image/jpeg,image/webp,image/gif" className="block w-full text-sm text-fg/90 file:mr-3 file:rounded-md file:border-0 file:bg-raised file:px-3 file:py-1.5 file:text-fg" />
           {clan.hasAvatar && (
-            <label className="mt-2 flex items-center gap-2 text-sm text-zinc-400">
+            <label className="mt-2 flex items-center gap-2 text-sm text-muted">
               <input type="checkbox" name="removeAvatar" className="accent-bit" /> Remove current avatar
             </label>
           )}
         </Field>
       )}
-      {state?.error && <p className="text-sm text-red-400">{state.error}</p>}
+      {state?.error && <p className="text-sm text-danger">{state.error}</p>}
       <button disabled={pending} className={btnPrimary}>
         {clan ? "Save" : "Create clan"}
       </button>

@@ -9,7 +9,7 @@ import { type Json, api, discordEnabled } from "./discord-api";
 import { getSetting } from "./settings";
 import { appUrl } from "./mail";
 
-const { discordChannel, discordMessage, channelReminderLog, account, attendance, lan, clan, user } = schema;
+const { discordChannel, discordMessage, channelReminderLog, account, attendance, lan, user } = schema;
 
 const appId = () => getSetting("discord.clientId");
 
@@ -323,9 +323,8 @@ function clanForGuild(guildId: string | undefined): Clan | undefined {
   return ch ? getClan(ch.clanId) : undefined;
 }
 
-/** Clans this user may link a server to. */
+/** Clans this user may link a server to: only clans they're an admin of (platform admins included). */
 function manageableClans(u: { id: string; role: string }) {
-  if (u.role === "admin") return db.select().from(clan).orderBy(asc(clan.name)).all();
   return myClans(u.id)
     .filter((m) => m.role === "admin")
     .map((m) => m.clan);

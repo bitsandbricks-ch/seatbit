@@ -4,7 +4,7 @@ import { db, schema } from "@/db";
 import { joinClan } from "@/app/clan-actions";
 import { ClanAvatar } from "@/components/clan-avatar";
 import { ClanForm } from "@/components/clan-form";
-import { Card, Pill, btnPrimary, btnSecondary } from "@/components/ui";
+import { Card, PageHeader, Pill, btnPrimary, btnSecondary } from "@/components/ui";
 import { requireUser } from "@/lib/session";
 
 export default async function ClansPage() {
@@ -19,18 +19,18 @@ export default async function ClansPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <h1 className="text-2xl font-bold">Clans</h1>
+      <PageHeader title="Clans" subtitle="Your clan sees its events together. Join one with an invite link from your orga, or start your own." />
 
       {myClans.length > 0 && (
         <Card title="Your clans">
           <ul className="space-y-2">
             {myClans.map((c) => (
               <li key={c.id}>
-                <Link href={`/clans/${c.slug}`} className="flex items-center gap-3 rounded-md p-2 hover:bg-zinc-800/60">
+                <Link href={`/clans/${c.slug}`} className="-mx-2 flex min-h-14 items-center gap-3 rounded-md p-2 transition hover:bg-raised">
                   <ClanAvatar clan={c} />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-medium">{c.name}</span>
-                    <span className="text-xs text-zinc-500">{count(c.id)} members</span>
+                    <span className="text-xs text-muted">{count(c.id)} members</span>
                   </span>
                   {mine.get(c.id) === "admin" && <Pill tone="emerald">admin</Pill>}
                 </Link>
@@ -46,11 +46,11 @@ export default async function ClansPage() {
             {others.map((c) => {
               const pending = mine.get(c.id) === "pending";
               return (
-                <li key={c.id} className="flex items-center gap-3 p-2">
+                <li key={c.id} className="-mx-2 flex min-h-14 items-center gap-3 p-2">
                   <ClanAvatar clan={c} />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-medium">{c.name}</span>
-                    <span className="text-xs text-zinc-500">{count(c.id)} members</span>
+                    <span className="text-xs text-muted">{count(c.id)} members</span>
                   </span>
                   {pending ? (
                     <Pill tone="amber">Request sent</Pill>
@@ -71,7 +71,7 @@ export default async function ClansPage() {
       )}
 
       <Card title="Start a clan">
-        <p className="mb-4 text-sm text-zinc-400">You become its admin and can invite your friends.</p>
+        <p className="mb-4 text-sm text-muted">You become its admin and can invite your friends.</p>
         <ClanForm />
       </Card>
     </div>

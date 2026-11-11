@@ -26,6 +26,8 @@ export const user = sqliteTable("user", {
   image: text("image"),
   role: text("role").default("member").notNull(), // "admin" | "member"
   emailReminders: integer("email_reminders", { mode: "boolean" }).default(true).notNull(),
+  /** Discord DMs from the bot about changes (needs a linked Discord account). */
+  discordDms: integer("discord_dms", { mode: "boolean" }).default(true).notNull(),
   // Guests: members an orga added who have no login yet. They belong to one clan
   // and are taken over by a real account through their claim link.
   isGuest: integer("is_guest", { mode: "boolean" }).default(false).notNull(),

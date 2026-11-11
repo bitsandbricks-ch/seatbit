@@ -1,3 +1,4 @@
+import { fmtDate } from "./format";
 import { and, eq, gt } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Lan, ReminderKind, User } from "@/db/schema";
@@ -7,8 +8,7 @@ import { renderTemplate } from "./mail-templates";
 const { lan, user, attendance, reminderLog } = schema;
 const DAY = 24 * 60 * 60 * 1000;
 
-const fmt = (d: Date) =>
-  d.toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
+const fmt = fmtDate;
 
 function message(kind: ReminderKind, l: Lan, u: User) {
   const vars = {

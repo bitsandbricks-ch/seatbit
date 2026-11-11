@@ -34,20 +34,20 @@ export function SeatWishes({
     <div className="space-y-4 text-sm">
       {people.length > 0 && (
         <div>
-          <p className="mb-2 text-zinc-300">Who do you want to sit with, and who not right next to?</p>
-          <ul className="max-h-64 space-y-1 overflow-y-auto pr-1">
+          <p className="mb-2 text-fg/90">Who do you want to sit with, and who not right next to?</p>
+          <ul className="grid max-h-72 gap-1 overflow-y-auto pr-1 md:grid-cols-2">
             {people.map((p) => {
               const near = w.near.includes(p.id);
               const avoid = w.avoid.includes(p.id);
               return (
-                <li key={p.id} className="flex items-center justify-between gap-2 rounded-md bg-zinc-800/50 px-3 py-1.5">
+                <li key={p.id} className="flex items-center justify-between gap-2 rounded-md bg-raised/60 px-3 py-1.5">
                   <span className="truncate">{p.nick}</span>
                   <span className="flex shrink-0 gap-1">
                     <button
                       type="button"
                       onClick={() => toggle("near", p.id)}
                       aria-pressed={near}
-                      className={`rounded-full px-2.5 py-1 text-xs ${near ? "bg-bit text-ink" : "bg-zinc-700/60 text-zinc-300"}`}
+                      className={`min-h-8 rounded-full px-3 py-1 text-xs font-medium transition ${near ? "bg-bit text-on-bit" : "bg-line/60 text-fg/90 hover:bg-line"}`}
                     >
                       Near
                     </button>
@@ -55,7 +55,7 @@ export function SeatWishes({
                       type="button"
                       onClick={() => toggle("avoid", p.id)}
                       aria-pressed={avoid}
-                      className={`rounded-full px-2.5 py-1 text-xs ${avoid ? "bg-red-500/80 text-white" : "bg-zinc-700/60 text-zinc-300"}`}
+                      className={`min-h-8 rounded-full px-3 py-1 text-xs font-medium transition ${avoid ? "bg-danger text-on-bit" : "bg-line/60 text-fg/90 hover:bg-line"}`}
                     >
                       Not next to
                     </button>
@@ -68,7 +68,7 @@ export function SeatWishes({
       )}
 
       <fieldset>
-        <legend className="mb-2 text-zinc-300">Where in the row?</legend>
+        <legend className="mb-2 text-fg/90">Where in the row?</legend>
         <div className="flex gap-2">
           {(
             [
@@ -82,7 +82,7 @@ export function SeatWishes({
               type="button"
               onClick={() => setW({ ...w, position: v })}
               aria-pressed={w.position === v}
-              className={`flex-1 rounded-md border px-2 py-2 text-xs ${w.position === v ? "border-bit text-bit" : "border-line text-zinc-300"}`}
+              className={`flex-1 rounded-md border px-2 py-2 text-xs ${w.position === v ? "border-bit text-bit" : "border-line text-fg/90"}`}
             >
               {label}
             </button>
@@ -92,7 +92,7 @@ export function SeatWishes({
 
       <div className="grid grid-cols-2 gap-2">
         <label className="block">
-          <span className="mb-1 block text-zinc-300">Preferred seat</span>
+          <span className="mb-1 block text-fg/90">Preferred seat</span>
           <select value={w.seat} onChange={(e) => setW({ ...w, seat: e.target.value })} className={input}>
             <option value="">Any</option>
             {seatLabels.map((l) => (
@@ -103,7 +103,7 @@ export function SeatWishes({
           </select>
         </label>
         <label className="col-span-2 block">
-          <span className="mb-1 block text-zinc-300">Anything else for the orgas?</span>
+          <span className="mb-1 block text-fg/90">Anything else for the orgas?</span>
           <input
             value={w.note}
             onChange={(e) => setW({ ...w, note: e.target.value })}
@@ -131,7 +131,7 @@ export function SeatWishes({
         >
           Save wishes
         </button>
-        {msg && <span className={msg.ok ? "text-bit" : "text-red-400"}>{msg.text}</span>}
+        {msg && <span className={msg.ok ? "text-bit" : "text-danger"}>{msg.text}</span>}
       </div>
     </div>
   );

@@ -86,13 +86,13 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
       <div className="flex items-center gap-3">
         <ClanAvatar clan={c} size={48} />
         <div className="min-w-0">
-          <Link href={`/clans/${c.slug}`} className="text-sm text-zinc-500 hover:text-zinc-300">
+          <Link href={`/clans/${c.slug}`} className="text-sm text-muted hover:text-fg">
             ← {c.name}
           </Link>
           <h1 className="text-2xl font-bold">Clan settings</h1>
         </div>
       </div>
-      <div className="sticky top-0 z-10 bg-ink/95 backdrop-blur">
+      <div className="sticky top-14 z-20 -mx-4 bg-ink/95 px-4 backdrop-blur sm:mx-0 sm:px-0">
         <Tabs
           tabs={TABS.map((t) => ({ ...t, badge: t.id === "members" && pending.length ? `${pending.length} waiting` : undefined }))}
           active={tab}
@@ -109,7 +109,7 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
             />
           </Card>
           <Card title="Danger zone">
-            <p className="mb-3 text-sm text-zinc-400">Deletes the clan with all its events and LAN types.</p>
+            <p className="mb-3 text-sm text-muted">Deletes the clan with all its events and LAN types.</p>
             <form action={deleteClan.bind(null, c.id)}>
               <button className={btnDanger}>Delete {c.name}</button>
             </form>
@@ -126,7 +126,7 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
                   <li key={u.id} className="flex flex-wrap items-center justify-between gap-2">
                     <span className="min-w-0">
                       <span className="block truncate font-medium">{u.name}</span>
-                      <span className="block truncate text-xs text-zinc-500">{u.email}</span>
+                      <span className="block truncate text-xs text-muted">{u.email}</span>
                     </span>
                     <span className="flex gap-2">
                       <form action={setClanMemberRole.bind(null, c.id, u.id, "member")}>
@@ -145,7 +145,7 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
             <AddMemberForm clanId={c.id} users={candidates} action={addClanMember} />
           </Card>
           <Card title="Guests">
-            <p className="mb-3 text-sm text-zinc-400">
+            <p className="mb-3 text-sm text-muted">
               For people who aren&apos;t on Seatbit yet: add them by name, then sign them up for events and give them a seat
               like anyone else. With an email address, Seatbit mails them an invite, and signing in with a Discord account
               on that address takes over everything you set up for them. Or send them their link yourself.
@@ -155,7 +155,7 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
                 {guests.map(({ u }) => (
                   <li key={u.id} className="space-y-1.5 rounded-md border border-line p-3">
                     <span className="block truncate text-sm font-medium">{u.name}</span>
-                    <span className="block text-xs text-zinc-500">
+                    <span className="block text-xs text-faint">
                       {u.inviteEmail
                         ? u.invitedAt
                           ? `Invited ${u.invitedAt.toLocaleDateString("de-CH")} at ${u.inviteEmail}`
@@ -184,14 +184,14 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
                       {u.name} {role === "admin" && <Pill tone="emerald">admin</Pill>}
                       {u.isGuest && <Pill>guest</Pill>}
                     </span>
-                    <span className="block truncate text-xs text-zinc-500">
+                    <span className="block truncate text-xs text-muted">
                       {u.isGuest ? (u.inviteEmail ? `No login yet · ${u.inviteEmail}` : "No login yet") : u.email}
                     </span>
                   </span>
                   <span className="flex gap-1">
                     {u.isGuest ? (
                       <form action={deleteGuest.bind(null, c.id, u.id)}>
-                        <button className={`${btnGhost} text-xs text-red-300`}>Remove</button>
+                        <button className={`${btnGhost} text-xs text-danger`}>Remove</button>
                       </form>
                     ) : (
                     <>
@@ -200,7 +200,7 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
                     </form>
                     {u.id !== me.id && (
                       <form action={removeClanMember.bind(null, c.id, u.id)}>
-                        <button className={`${btnGhost} text-xs text-red-300`}>Remove</button>
+                        <button className={`${btnGhost} text-xs text-danger`}>Remove</button>
                       </form>
                     )}
                     </>
@@ -221,7 +221,7 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
 
       {tab === "invites" && (
         <Card title="Invite links">
-          <p className="mb-3 text-sm text-zinc-400">
+          <p className="mb-3 text-sm text-muted">
             Anyone with a link joins right away, without approval. Delete a link to stop it working.
           </p>
           <ul className="mb-4 space-y-2">
@@ -234,7 +234,7 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
                 <li key={i.code} className="flex items-center gap-2">
                   <input readOnly value={`${appUrl}/join/${i.code}`} className="min-w-0 flex-1 rounded-md border border-line bg-raised px-3 py-1.5 font-mono text-xs" />
                   <form action={deleteInvite.bind(null, i.code)}>
-                    <button className={`${btnGhost} text-xs text-red-300`}>Delete</button>
+                    <button className={`${btnGhost} text-xs text-danger`}>Delete</button>
                   </form>
                 </li>
               ))}
@@ -260,7 +260,7 @@ function ChatTab({ clanId }: { clanId: string }) {
     <div className="space-y-5">
       <Card title="Discord bot">
         {!discordEnabled() ? (
-          <p className="text-sm text-zinc-400">
+          <p className="text-sm text-muted">
             The Discord bot isn&apos;t set up on this Seatbit yet. A platform admin needs to add the bot token and public
             key in{" "}
             <Link href="/admin/settings?tab=discord" className="text-bit hover:underline">
@@ -270,10 +270,10 @@ function ChatTab({ clanId }: { clanId: string }) {
           </p>
         ) : (
           <div className="space-y-4 text-sm">
-            <ol className="list-decimal space-y-1 pl-5 text-zinc-300">
+            <ol className="list-decimal space-y-1 pl-5 text-fg/90">
               <li>
                 {invite ? (
-                  <a href={invite} target="_blank" rel="noreferrer" className="text-emerald-400 hover:underline">
+                  <a href={invite} target="_blank" rel="noreferrer" className="text-bit hover:underline">
                     Add the Seatbit bot
                   </a>
                 ) : (
@@ -287,13 +287,13 @@ function ChatTab({ clanId }: { clanId: string }) {
                 upcoming LANs.
               </li>
             </ol>
-            <p className="text-zinc-400">
+            <p className="text-muted">
               The bot posts new LANs with Coming / Unsure / Not coming buttons, keeps the attendee list up to date, posts
               deadline reminders that ping the members concerned, and answers <code>/lans</code>. A Discord server can
               belong to one clan.
             </p>
             {channels.length === 0 ? (
-              <p className="text-zinc-500">No channels linked yet.</p>
+              <p className="text-faint">No channels linked yet.</p>
             ) : (
               <ul className="divide-y divide-line">
                 {channels.map((ch) => (
@@ -307,7 +307,7 @@ function ChatTab({ clanId }: { clanId: string }) {
                       #{ch.channelName || ch.channelId}
                     </a>
                     <form action={unlinkDiscordChannel.bind(null, ch.channelId)}>
-                      <button className={`${btnGhost} text-xs text-red-300`}>Unlink</button>
+                      <button className={`${btnGhost} text-xs text-danger`}>Unlink</button>
                     </form>
                   </li>
                 ))}
@@ -317,7 +317,7 @@ function ChatTab({ clanId }: { clanId: string }) {
         )}
       </Card>
       <Card title="WhatsApp">
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-muted">
           WhatsApp doesn&apos;t let bots post into groups or communities. Each LAN&apos;s manage page has ready-made
           announcement and reminder texts to copy into your WhatsApp group.
         </p>
@@ -337,19 +337,19 @@ function TypesTab({ clanId, slug }: { clanId: string; slug: string }) {
         </Link>
       }
     >
-      <p className="mb-3 text-sm text-zinc-400">
+      <p className="mb-3 text-sm text-muted">
         Recurring LAN parties like Lock &amp; Load or SwitzerLAN. Each year&apos;s event is created from its type, and
         members keep one nick per type.
       </p>
       {types.length === 0 ? (
-        <p className="text-sm text-zinc-500">No LAN types yet.</p>
+        <p className="text-sm text-muted">No LAN types yet.</p>
       ) : (
         <ul className="divide-y divide-line">
           {types.map((t) => (
             <li key={t.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
               <span className="min-w-0">
                 <span className="block font-medium">{t.name}</span>
-                <span className="block truncate text-xs text-zinc-500">
+                <span className="block truncate text-xs text-muted">
                   {[t.location, t.price, t.seatSpec && `seats ${t.seatSpec}`].filter(Boolean).join(" · ") || "—"}
                 </span>
               </span>

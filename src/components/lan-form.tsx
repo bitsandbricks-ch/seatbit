@@ -1,7 +1,8 @@
 "use client";
 import { useActionState } from "react";
 import { saveLan, type FormState } from "@/app/actions";
-import { Field, Input, btnPrimary, input } from "./ui";
+import { DateTimePicker } from "./date-time-picker";
+import { Field, Input, btnPrimary, input, label as labelCls } from "./ui";
 
 export type LanFormValues = {
   id?: string;
@@ -50,18 +51,22 @@ export function LanForm({ values, types }: { values: LanFormValues; types: { id:
         <Field label="Ticket shop">
           <Input type="url" name="ticketUrl" defaultValue={values.ticketUrl} placeholder="https://" />
         </Field>
-        <Field label="Starts">
-          <Input type="datetime-local" name="startsAt" defaultValue={values.startsAt} required />
-        </Field>
-        <Field label="Ends">
-          <Input type="datetime-local" name="endsAt" defaultValue={values.endsAt} required />
-        </Field>
-        <Field label="Answer by" hint="When members must say if they come, e.g. before you book the group's seats. Undecided members get a reminder.">
-          <Input type="datetime-local" name="signupDeadline" defaultValue={values.signupDeadline} />
-        </Field>
-        <Field label="Buy ticket by" hint="Attendees without a ticket get a reminder before this.">
-          <Input type="datetime-local" name="paymentDueDate" defaultValue={values.paymentDueDate} />
-        </Field>
+        <DateField label="Starts" name="startsAt" value={values.startsAt} required />
+        <DateField label="Ends" name="endsAt" value={values.endsAt} required defaultTime="16:00" />
+        <DateField
+          label="Answer by"
+          name="signupDeadline"
+          value={values.signupDeadline}
+          hint="When members must say if they come, e.g. before you book the group's seats. Undecided members get a reminder."
+          defaultTime="23:59"
+        />
+        <DateField
+          label="Buy ticket by"
+          name="paymentDueDate"
+          value={values.paymentDueDate}
+          hint="Attendees without a ticket get a reminder before this."
+          defaultTime="23:59"
+        />
         <Field label="Ticket price">
           <Input name="price" defaultValue={values.price} placeholder="e.g. 25 CHF" />
         </Field>
@@ -75,10 +80,35 @@ export function LanForm({ values, types }: { values: LanFormValues; types: { id:
       <Field label="Description">
         <textarea name="description" defaultValue={values.description} rows={4} className={input} />
       </Field>
-      {state?.error && <p className="text-sm text-red-400">{state.error}</p>}
+      {state?.error && <p className="text-sm text-danger">{state.error}</p>}
       <button disabled={pending} className={btnPrimary}>
         {values.id ? "Save changes" : "Add LAN"}
       </button>
     </form>
+  );
+}
+
+/** Like Field, but not a <label>: the picker has its own buttons, and a wrapping label would hijack clicks. */
+function DateField({
+  label,
+  name,
+  value,
+  hint,
+  required,
+  defaultTime,
+}: {
+  label: string;
+  name: string;
+  value: string;
+  hint?: string;
+  required?: boolean;
+  defaultTime?: string;
+}) {
+  return (
+    <div>
+      <span className={labelCls}>{label}</span>
+      <DateTimePicker name={name} defaultValue={value} required={required} defaultTime={defaultTime} placeholder={required ? "Pick a date" : "No deadline"} />
+      {hint && <span className="mt-1.5 block text-xs text-muted">{hint}</span>}
+    </div>
   );
 }

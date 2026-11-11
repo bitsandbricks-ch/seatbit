@@ -15,8 +15,9 @@ export function Tabs({
   hrefFor: (id: string) => string;
 }) {
   return (
-    <nav aria-label="Sections" className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-      <ul className="flex min-w-max gap-1 border-b border-line">
+    <div className="-mx-4 border-b border-line sm:mx-0">
+    <nav aria-label="Sections" className="scroll-fade-x overflow-x-auto px-4 sm:px-0">
+      <ul className="flex min-w-max gap-1 pr-8">
         {tabs.map((t) => {
           const on = t.id === active;
           return (
@@ -25,13 +26,13 @@ export function Tabs({
                 href={hrefFor(t.id)}
                 scroll={false}
                 aria-current={on ? "page" : undefined}
-                className={`-mb-px flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium transition ${
-                  on ? "border-bit text-zinc-100" : "border-transparent text-zinc-400 hover:text-zinc-200"
+                className={`flex min-h-11 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 text-sm font-medium transition ${
+                  on ? "border-bit text-fg" : "border-transparent text-muted hover:border-line hover:text-fg"
                 }`}
               >
                 {t.label}
                 {t.badge && (
-                  <span className="rounded-full bg-amber-500/15 px-1.5 text-[10px] text-amber-300">{t.badge}</span>
+                  <span className="rounded-full bg-warn/15 px-1.5 py-px text-[11px] font-medium text-warn">{t.badge}</span>
                 )}
               </Link>
             </li>
@@ -39,5 +40,6 @@ export function Tabs({
         })}
       </ul>
     </nav>
+    </div>
   );
 }

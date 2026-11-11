@@ -8,6 +8,8 @@ import { db, schema } from "@/db";
 import { canManageClan, clanRole, getClan, saveAvatar, uniqueSlug } from "@/lib/clans";
 import { guestEmail } from "@/lib/guests";
 import { accountByEmail, mergeGuestInto, normEmail, sendGuestInvite } from "@/lib/guest-claim";
+import { appUrl } from "@/lib/mail";
+import { notify, notifyClanAdmins, notifyLater } from "@/lib/notify";
 import { requireClanManager, requireLanManager, requireUser } from "@/lib/session";
 import { adminSetAttendance, type FormState } from "./actions";
 
@@ -73,6 +75,16 @@ export async function joinClan(clanId: string) {
   if (c.joinPolicy === "invite" && me.role !== "admin") throw new Error("This clan is invite-only");
   const role = c.joinPolicy === "open" || me.role === "admin" ? "member" : "pending";
   db.insert(clanMember).values({ clanId, userId: me.id, role }).onConflictDoNothing().run();
+  if (role === "pending") {
+    notifyLater(() =>
+      notifyClanAdmins(clanId, {
+        kind: "clan_request",
+        subject: `${me.name} wants to join ${c.name}`,
+        text: `${me.name} asked to join ${c.name}. Approve or decline it in the clan's member list.`,
+        url: `${appUrl}/clans/${c.slug}/settings?tab=members`,
+      }),
+    );
+  }
   revalidatePath("/", "layout");
   redirect(`/clans/${c.slug}`);
 }
@@ -119,11 +131,24 @@ export async function setClanMemberRole(clanId: string, userId: string, role: "a
   if (role === "member" && clanRole(userId, clanId) === "admin" && adminCount(clanId) <= 1) {
     throw new Error("A clan needs at least one admin.");
   }
+  const wasPending = clanRole(userId, clanId) === "pending";
   db.update(clanMember)
     .set({ role })
     .where(and(eq(clanMember.clanId, clanId), eq(clanMember.userId, userId)))
     .run();
   revalidatePath("/", "layout");
+  const c = getClan(clanId);
+  if (wasPending && c) {
+    notifyLater(() =>
+      notify(userId, {
+        kind: "clan_approved",
+        subject: `You're in: ${c.name}`,
+        text: `Your request to join ${c.name} was approved. Their LANs now show up in Seatbit.`,
+        url: `${appUrl}/clans/${c.slug}`,
+        dmOnly: true,
+      }),
+    );
+  }
 }
 
 export async function removeClanMember(clanId: string, userId: string) {

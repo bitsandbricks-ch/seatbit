@@ -8,7 +8,7 @@ import { LanForm } from "@/components/lan-form";
 import { ReminderButtons } from "@/components/reminder-buttons";
 import { SeatMap } from "@/components/seat-map";
 import { Card, Pill, btnDanger, btnSecondary } from "@/components/ui";
-import { fmtDate, relative, toInputValue } from "@/lib/format";
+import { fmtDate, fmtRange, relative, toInputValue } from "@/lib/format";
 import { getDisplayNames, getLan } from "@/lib/lans";
 import { dueKinds } from "@/lib/reminders";
 import { isLanManager, requireUser } from "@/lib/session";
@@ -131,18 +131,18 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
     <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <Link href={`/lans/${l.id}`} className="text-sm text-zinc-500 hover:text-zinc-300">
-            ← Back to event
+          <Link href={`/lans/${l.id}`} className="-ml-1 inline-flex min-h-8 items-center gap-1 rounded-md px-1 text-sm text-muted hover:text-fg">
+            <span aria-hidden>←</span> Back to event
           </Link>
-          <h1 className="truncate text-2xl font-bold">{l.name}</h1>
-          <p className="text-sm text-zinc-400">{fmtDate(l.startsAt)}</p>
+          <h1 className="truncate text-2xl font-bold tracking-tight sm:text-3xl">{l.name}</h1>
+          <p className="text-sm text-muted">{fmtRange(l.startsAt, l.endsAt)}</p>
         </div>
         <a href={`/lans/${l.id}/manage/export`} className={btnSecondary}>
           Export CSV
         </a>
       </div>
 
-      <div className="sticky top-0 z-10 bg-ink/95 backdrop-blur">
+      <div className="sticky top-14 z-20 -mx-4 bg-ink/95 px-4 backdrop-blur sm:mx-0 sm:px-0">
         <Tabs
           tabs={TABS.map(([t, label]) => ({
             id: t,
@@ -178,7 +178,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
 
           <Card title="Reminders">
             <div className="space-y-4 text-sm">
-              <p className="text-zinc-400">
+              <p className="text-muted">
                 Sent automatically {l.reminderDays} day(s) before the answer deadline (to undecided members) and the
                 ticket deadline (to attendees without a ticket), and the day before the LAN (to everyone coming). Each
                 one goes out once per person.
@@ -194,8 +194,8 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               />
               {reminders.length > 0 && (
                 <details>
-                  <summary className="cursor-pointer text-zinc-400">Sent reminders ({reminders.length})</summary>
-                  <ul className="mt-2 space-y-1 text-xs text-zinc-400">
+                  <summary className="cursor-pointer text-muted">Sent reminders ({reminders.length})</summary>
+                  <ul className="mt-2 space-y-1 text-xs text-muted">
                     {reminders
                       .sort((a, b) => b.sentAt.getTime() - a.sentAt.getTime())
                       .map((r) => (
@@ -224,9 +224,27 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
       )}
 
       {tab === "seats" && (
+        // The seat plan is the main tool, so it gets the full width on top; setup, publishing and wishes sit below,
+        // side by side on wide screens.
         <div className="space-y-5">
+          {seats.length > 0 && (
+            <Card title="Seat plan">
+              <SeatMap
+                lanId={l.id}
+                rows={l.seatRows}
+                cols={l.seatCols}
+                meId={me.id}
+                mode="admin"
+                seats={seats.map((s) => ({ ...s, nick: s.userId ? (names.get(s.userId) ?? "?") : null }))}
+                assignable={going
+                  .map((r) => ({ id: r.userId, nick: names.get(r.userId) ?? "?" }))
+                  .sort((a, b) => a.nick.localeCompare(b.nick))}
+              />
+            </Card>
+          )}
+          <div className="grid items-start gap-5 lg:grid-cols-2">
           <Card title="Our seats">
-            <p className="mb-4 text-sm text-zinc-400">
+            <p className="mb-4 text-sm text-muted">
               Enter the seats the event gave the group, then assign them here or on the Attendees tab. Hold keeps a seat
               out of auto-assign, e.g. for a guest.
             </p>
@@ -267,12 +285,12 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               </ul>
               {wishNotes.length > 0 && (
                 <div className="mt-4 border-t border-line pt-3">
-                  <p className="mb-2 text-xs uppercase tracking-wide text-zinc-500">Notes</p>
+                  <p className="mb-2 text-xs uppercase tracking-wide text-faint">Notes</p>
                   <ul className="space-y-1 text-sm">
                     {wishNotes.map((r) => (
                       <li key={r.id}>
                         <span className="font-medium">{names.get(r.userId)}:</span>{" "}
-                        <span className="text-zinc-300">{r.wishNote}</span>
+                        <span className="text-fg/90">{r.wishNote}</span>
                       </li>
                     ))}
                   </ul>
@@ -280,21 +298,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               )}
             </Card>
           )}
-          {seats.length > 0 && (
-            <Card>
-              <SeatMap
-                lanId={l.id}
-                rows={l.seatRows}
-                cols={l.seatCols}
-                meId={me.id}
-                mode="admin"
-                seats={seats.map((s) => ({ ...s, nick: s.userId ? (names.get(s.userId) ?? "?") : null }))}
-                assignable={going
-                  .map((r) => ({ id: r.userId, nick: names.get(r.userId) ?? "?" }))
-                  .sort((a, b) => a.nick.localeCompare(b.nick))}
-              />
-            </Card>
-          )}
+          </div>
         </div>
       )}
 
@@ -302,12 +306,12 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
         <Card title="Discord & WhatsApp">
           <div className="space-y-5 text-sm">
             <div className="space-y-2">
-              <h3 className="font-semibold text-zinc-200">Discord</h3>
+              <h3 className="font-semibold text-fg">Discord</h3>
               {!discordEnabled() ? (
-                <p className="text-zinc-400">
+                <p className="text-muted">
                   The Discord bot isn&apos;t set up.{" "}
                   {me.role === "admin" ? (
-                    <Link href="/admin/settings?tab=discord" className="text-emerald-400 hover:underline">
+                    <Link href="/admin/settings?tab=discord" className="text-bit hover:underline">
                       Add the bot token in the platform settings.
                     </Link>
                   ) : (
@@ -315,10 +319,10 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
                   )}
                 </p>
               ) : discordChannels === 0 ? (
-                <p className="text-zinc-400">
+                <p className="text-muted">
                   {lanClan?.name ?? "This clan"} has no Discord channel yet.{" "}
                   {invite && (
-                    <a href={invite} target="_blank" rel="noreferrer" className="text-emerald-400 hover:underline">
+                    <a href={invite} target="_blank" rel="noreferrer" className="text-bit hover:underline">
                       Invite the bot
                     </a>
                   )}{" "}
@@ -327,7 +331,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
                     <>
                       {" "}
                       Manage linked channels in{" "}
-                      <Link href={`/clans/${lanClan.slug}/settings?tab=chat`} className="text-emerald-400 hover:underline">
+                      <Link href={`/clans/${lanClan.slug}/settings?tab=chat`} className="text-bit hover:underline">
                         clan settings
                       </Link>
                       .
@@ -335,7 +339,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
                   )}
                 </p>
               ) : (
-                <p className="text-zinc-400">
+                <p className="text-muted">
                   Posting to {discordChannels} channel(s); this LAN is posted in {discordPosts}. Members answer with the
                   buttons under the post, the attendee list updates live, and deadline reminders are posted automatically
                   (pinging members who linked Discord).
@@ -355,8 +359,8 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               )}
             </div>
             <div className="space-y-2">
-              <h3 className="font-semibold text-zinc-200">WhatsApp</h3>
-              <p className="text-zinc-400">Ready-made messages for the community. Copy one and paste it into the group.</p>
+              <h3 className="font-semibold text-fg">WhatsApp</h3>
+              <p className="text-muted">Ready-made messages for the community. Copy one and paste it into the group.</p>
               <WhatsAppTexts texts={await whatsappTexts(l)} />
             </div>
           </div>
@@ -388,7 +392,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
           </Card>
 
           <Card title="Orgas">
-            <p className="mb-3 text-sm text-zinc-400">
+            <p className="mb-3 text-sm text-muted">
               Orgas manage this LAN and are shown to members as contacts. Global admins can always manage it too.
             </p>
             <OrgaManager
@@ -416,10 +420,10 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
 
 function Stat({ label, value, sub, href }: { label: string; value: string; sub: string; href: string }) {
   return (
-    <Link href={href} className="rounded-card border border-line bg-surface p-4 hover:border-zinc-600">
-      <p className="text-xs uppercase tracking-wide text-zinc-500">{label}</p>
+    <Link href={href} className="rounded-card border border-line bg-surface p-4 hover:border-muted/50">
+      <p className="text-xs uppercase tracking-wide text-faint">{label}</p>
       <p className="mt-1 text-2xl font-bold tabular-nums">{value}</p>
-      <p className="text-xs text-zinc-500">{sub}</p>
+      <p className="text-xs text-muted">{sub}</p>
     </Link>
   );
 }
@@ -427,14 +431,14 @@ function Stat({ label, value, sub, href }: { label: string; value: string; sub: 
 function DateItem({ label, d, now }: { label: string; d: Date | null; now: Date }) {
   return (
     <div>
-      <dt className="text-xs uppercase tracking-wide text-zinc-500">{label}</dt>
+      <dt className="text-xs uppercase tracking-wide text-faint">{label}</dt>
       <dd>
         {d ? (
           <>
-            {fmtDate(d)} <span className={d < now ? "text-zinc-500" : "text-warn"}>({relative(d, now)})</span>
+            {fmtDate(d)} <span className={d < now ? "text-faint" : "text-warn"}>({relative(d, now)})</span>
           </>
         ) : (
-          <span className="text-zinc-500">—</span>
+          <span className="text-faint">—</span>
         )}
       </dd>
     </div>

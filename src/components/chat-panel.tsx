@@ -50,7 +50,7 @@ export function DiscordButtons({
           </button>
         ))}
       </div>
-      {msg && <p className="text-sm text-emerald-300">{msg}</p>}
+      {msg && <p className="text-sm text-bit">{msg}</p>}
     </div>
   );
 }
@@ -70,7 +70,7 @@ export function WhatsAppTexts({ texts }: { texts: { kind: string; label: string;
               setActive(t.kind);
               setCopied(false);
             }}
-            className={`rounded-md px-2 py-1 text-xs ${t.kind === current.kind ? "bg-zinc-700 text-zinc-100" : "text-zinc-400 hover:bg-zinc-800"}`}
+            className={`rounded-md px-2 py-1 text-xs ${t.kind === current.kind ? "bg-line text-fg" : "text-muted hover:bg-raised"}`}
           >
             {t.label}
           </button>
@@ -80,7 +80,7 @@ export function WhatsAppTexts({ texts }: { texts: { kind: string; label: string;
         readOnly
         value={current.text}
         rows={Math.min(14, current.text.split("\n").length + 1)}
-        className="w-full rounded-md border border-zinc-700 bg-zinc-950 p-3 font-mono text-xs text-zinc-200"
+        className="w-full rounded-md border border-line bg-ink p-3 font-mono text-xs text-fg"
       />
       <div className="flex flex-wrap gap-2">
         <button

@@ -2,8 +2,8 @@ import Link from "next/link";
 import { and, asc, desc, eq, gt, inArray, lte } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Lan } from "@/db/schema";
-import { Card, Pill, StatusBadge, btnPrimary } from "@/components/ui";
-import { fmtDate, fmtDay, relative } from "@/lib/format";
+import { EmptyState, PageHeader, Pill, StatusBadge, btnPrimary } from "@/components/ui";
+import { fmtDay, fmtWeekday, relative } from "@/lib/format";
 import { requireUser } from "@/lib/session";
 import { buildChecklist, progress } from "@/lib/checklist";
 import { myClans } from "@/lib/clans";
@@ -60,22 +60,35 @@ export default async function Home() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Upcoming LANs</h1>
-        {adminClans.length > 0 && (
-          <Link href={`/clans/${adminClans[0].clan.slug}/lans/new`} className={btnPrimary}>
-            New event
-          </Link>
-        )}
-      </div>
+      <PageHeader
+        title="Upcoming LANs"
+        actions={
+          adminClans.length > 0 && (
+            <Link href={`/clans/${adminClans[0].clan.slug}/lans/new`} className={btnPrimary}>
+              <span aria-hidden>+</span> New event
+            </Link>
+          )
+        }
+      />
 
       {upcoming.length === 0 && (
-        <Card>
-          <p className="text-zinc-400">No LANs on the list yet.</p>
-        </Card>
+        <EmptyState
+          title="No LANs on the list yet"
+          action={
+            adminClans.length > 0 ? (
+              <Link href={`/clans/${adminClans[0].clan.slug}/lans/new`} className={btnPrimary}>
+                Add the next LAN
+              </Link>
+            ) : undefined
+          }
+        >
+          {adminClans.length > 0
+            ? "Add the next LAN your clan is going to, and everyone can say if they're coming."
+            : "When an orga adds the next LAN your clan is going to, it shows up here."}
+        </EmptyState>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
         {upcoming.map((l) => (
           <LanCard
             key={l.id}
@@ -91,13 +104,13 @@ export default async function Home() {
 
       {past.length > 0 && (
         <div>
-          <h2 className="mb-3 text-lg font-semibold text-zinc-400">Past LANs</h2>
-          <ul className="divide-y divide-zinc-800 rounded-xl border border-line">
+          <h2 className="mb-3 text-xs font-medium uppercase tracking-wide text-muted">Past LANs</h2>
+          <ul className="divide-y divide-line overflow-hidden rounded-card border border-line bg-surface/50">
             {past.map((l) => (
               <li key={l.id}>
-                <Link href={`/lans/${l.id}`} className="flex justify-between px-4 py-3 hover:bg-zinc-900">
-                  <span>{l.name}</span>
-                  <span className="text-sm text-zinc-500">{fmtDay(l.startsAt)}</span>
+                <Link href={`/lans/${l.id}`} className="flex min-h-12 items-center justify-between gap-3 px-4 py-3 transition hover:bg-raised/60">
+                  <span className="truncate">{l.name}</span>
+                  <span className="shrink-0 text-sm text-muted">{fmtDay(l.startsAt)}</span>
                 </Link>
               </li>
             ))}
@@ -129,19 +142,21 @@ function LanCard({
   return (
     <Link
       href={`/lans/${l.id}`}
-      className="block rounded-xl border border-line bg-surface p-5 transition hover:border-bit/50"
+      className="group block rounded-card border border-line bg-surface p-4 transition hover:border-bit/50 active:scale-[0.99] sm:p-5"
     >
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           {clan && (
-            <p className="mb-1 flex items-center gap-1.5 text-xs text-zinc-500">
+            <p className="mb-1 flex items-center gap-1.5 text-xs text-muted">
               <ClanAvatar clan={clan} size={16} /> {clan.name}
             </p>
           )}
-          <h3 className="text-lg font-semibold">{l.name}</h3>
-          <p className="text-sm text-zinc-400">
-            {fmtDate(l.startsAt)} {l.location && <>· {l.location}</>}
+          <h3 className="text-lg font-semibold tracking-tight">{l.name}</h3>
+          <p className="text-sm text-muted">
+            {fmtWeekday(l.startsAt)}
+            <span className="text-faint"> · {relative(l.startsAt, now)}</span>
           </p>
+          {l.location && <p className="truncate text-sm text-muted">{l.location}</p>}
         </div>
         <StatusBadge status={my?.status} seat={info.mySeat} />
       </div>
@@ -169,9 +184,11 @@ function LanCard({
 
 async function NoClan() {
   return (
-    <div className="mx-auto max-w-md space-y-4 py-10 text-center">
-      <h1 className="text-2xl font-bold">Welcome to Seatbit</h1>
-      <p className="text-zinc-400">
+    <div className="mx-auto flex max-w-md flex-col items-center space-y-4 py-10 text-center">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/brand/seatbit-mark.svg" alt="" className="h-12 w-12" />
+      <h1 className="text-2xl font-bold tracking-tight">Welcome to Seatbit</h1>
+      <p className="text-muted">
         Seatbit organises your clan&apos;s trips to LAN parties. Join your clan, or start one, to see its events.
       </p>
       <Link href="/clans" className={btnPrimary}>

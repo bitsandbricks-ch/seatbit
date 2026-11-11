@@ -19,7 +19,7 @@ export default async function JoinPage({ params }: PageProps<"/join/[code]">) {
       <Card>
         <div className="flex flex-col items-center gap-3 text-center">
           <ClanAvatar clan={c} size={88} />
-          <p className="text-sm text-zinc-400">You&apos;re invited to join</p>
+          <p className="text-sm text-muted">You&apos;re invited to join</p>
           <h1 className="text-xl font-bold">{c.name}</h1>
           <form action={joinWithInvite.bind(null, code)}>
             <button className={btnPrimary}>Join clan</button>

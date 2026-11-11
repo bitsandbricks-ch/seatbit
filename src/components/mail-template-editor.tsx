@@ -57,7 +57,7 @@ export function MailTemplateEditor({
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-zinc-400">{t.when}</p>
+      <p className="text-sm text-muted">{t.when}</p>
       <form action={formAction} className="space-y-3">
         <label className="block">
           <span className={label}>Subject</span>
@@ -76,7 +76,7 @@ export function MailTemplateEditor({
           />
         </label>
         <div>
-          <span className="mb-1 block text-xs text-zinc-500">
+          <span className="mb-1 block text-xs text-faint">
             Placeholders (tap to insert). A line is left out when all its placeholders are empty.
           </span>
           <div className="flex flex-wrap gap-1.5">
@@ -86,7 +86,7 @@ export function MailTemplateEditor({
                 key={k}
                 title={help}
                 onClick={() => insert(k)}
-                className="rounded bg-zinc-800 px-1.5 py-0.5 font-mono text-xs text-zinc-300 hover:bg-zinc-700"
+                className="rounded bg-raised px-1.5 py-0.5 font-mono text-xs text-fg/90 hover:bg-raised/60"
               >
                 {`{${k}}`}
               </button>
@@ -101,10 +101,10 @@ export function MailTemplateEditor({
         </div>
       </form>
 
-      <div className="rounded-md border border-line bg-zinc-950/50 p-3">
-        <p className="mb-1 text-[11px] uppercase tracking-wide text-zinc-500">Preview</p>
+      <div className="rounded-md border border-line bg-raised/30 p-3">
+        <p className="mb-1 text-[11px] uppercase tracking-wide text-faint">Preview</p>
         <p className="text-sm font-medium">{fill(subject, vars).replace(/\n+/g, " ")}</p>
-        <pre className="mt-2 whitespace-pre-wrap break-words font-sans text-sm text-zinc-300">{fill(body, vars)}</pre>
+        <pre className="mt-2 whitespace-pre-wrap break-words font-sans text-sm text-fg/90">{fill(body, vars)}</pre>
       </div>
 
       <div className="flex flex-wrap gap-3">

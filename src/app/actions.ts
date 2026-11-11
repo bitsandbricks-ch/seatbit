@@ -15,6 +15,7 @@ import {
 } from "@/lib/lans";
 import { announceLan, postReminderNow, refreshLanMessagesSoon, unlinkChannel } from "@/lib/discord";
 import { sendReminderNow } from "@/lib/reminders";
+import { notifyLanChanged, notifyLater, notifySeatChanged } from "@/lib/notify";
 import { planSeats } from "@/lib/seating";
 import { appUrl } from "@/lib/mail";
 import { sendTemplate } from "@/lib/mail-templates";
@@ -87,8 +88,10 @@ export async function updateProfile(formData: FormData) {
   const firstName = personName.parse(formData.get("firstName"));
   const lastName = personName.parse(formData.get("lastName"));
   const emailReminders = formData.get("emailReminders") === "on";
+  // Only the profile form has the DM checkbox; other forms leave the setting alone.
+  const discordDms = formData.has("discordDmsShown") ? formData.get("discordDms") === "on" : undefined;
   db.update(user)
-    .set({ firstName, lastName, name: `${firstName} ${lastName}`, emailReminders })
+    .set({ firstName, lastName, name: `${firstName} ${lastName}`, emailReminders, ...(discordDms !== undefined && { discordDms }) })
     .where(eq(user.id, me.id))
     .run();
   if (formData.has("nick")) saveNick(me.id, String(formData.get("nick")));
@@ -159,6 +162,8 @@ export async function saveLan(_: FormState, formData: FormData): Promise<FormSta
   if (id) {
     const before = mustGetLan(id);
     db.update(lan).set(v).where(eq(lan.id, id)).run();
+    const after = mustGetLan(id);
+    notifyLater(() => notifyLanChanged(before, after));
     if ((v.capacity ?? Infinity) > (before.capacity ?? Infinity) || v.capacity === null) {
       await promoteFromWaitlist(mustGetLan(id));
     }
@@ -428,6 +433,8 @@ export async function adminSetSeatFor(lanId: string, userId: string, seatId: str
     if (seatId) tx.update(seat).set({ userId }).where(and(eq(seat.id, seatId), eq(seat.lanId, lanId))).run();
   });
   lanPath(lanId);
+  const label = seatId ? db.select().from(seat).where(eq(seat.id, seatId)).get()?.label ?? null : null;
+  notifyLater(() => notifySeatChanged(mustGetLan(lanId), userId, label));
 }
 
 function planPeople(lanId: string) {
@@ -468,6 +475,14 @@ export async function adminAutoAssignSeats(lanId: string, mode: "fill" | "replan
     for (const [userId, seatId] of plan) tx.update(seat).set({ userId }).where(eq(seat.id, seatId)).run();
   });
   lanPath(lanId);
+  // After the plan is out, tell people whose seat changed.
+  const l = mustGetLan(lanId);
+  if (l.seatsPublishedAt) {
+    const label = new Map(seats.map((s) => [s.id, s.label]));
+    notifyLater(async () => {
+      for (const [userId, seatId] of plan) await notifySeatChanged(l, userId, label.get(seatId) ?? null);
+    });
+  }
   return plan.size;
 }
 
