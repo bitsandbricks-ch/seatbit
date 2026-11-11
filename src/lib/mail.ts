@@ -1,4 +1,5 @@
 import nodemailer, { type Transporter } from "nodemailer";
+import { isGuestEmail } from "./guests";
 import { getNumberSetting, getSetting, settingsFingerprint } from "./settings";
 
 export const appUrl = (process.env.BETTER_AUTH_URL ?? "http://localhost:3000").replace(/\/$/, "");
@@ -45,6 +46,7 @@ function transport() {
  * logged to the console instead, so local development works without a mail server.
  */
 export async function sendMail(to: string, subject: string, text: string) {
+  if (isGuestEmail(to)) return; // guests have no real address
   const t = transport();
   const from = getSetting("mail.from") ?? "Seatbit <noreply@localhost>";
   if (!t) {

@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db, schema } from "@/db";
 import { canManageClan, clanRole, getClan, saveAvatar, uniqueSlug } from "@/lib/clans";
+import { guestEmail } from "@/lib/guests";
 import { requireClanManager, requireUser } from "@/lib/session";
 import type { FormState } from "./actions";
 
@@ -168,4 +169,111 @@ export async function addClanMember(clanId: string, userId: string) {
     })
     .run();
   revalidatePath("/", "layout");
+}
+
+// ---------------- Guests ----------------
+
+const guestInput = z.object({
+  firstName: z.string().trim().min(1).max(40),
+  lastName: z.string().trim().max(40).default(""),
+  nick: z.string().trim().max(32).default(""),
+});
+
+const newClaimCode = () => crypto.randomUUID().replace(/-/g, "").slice(0, 16);
+
+/** Adds a member without a login, so orgas can sign them up and seat them. */
+export async function addGuest(clanId: string, _: FormState, formData: FormData): Promise<FormState> {
+  await requireClanManager(clanId);
+  const parsed = guestInput.safeParse({
+    firstName: formData.get("firstName"),
+    lastName: formData.get("lastName") ?? "",
+    nick: formData.get("nick") ?? "",
+  });
+  if (!parsed.success) return { error: "Give the guest at least a first name." };
+  const { firstName, lastName, nick } = parsed.data;
+  const id = crypto.randomUUID();
+  db.transaction((tx) => {
+    tx.insert(schema.user)
+      .values({
+        id,
+        name: `${firstName} ${lastName}`.trim(),
+        firstName,
+        lastName,
+        email: guestEmail(id),
+        emailReminders: false,
+        isGuest: true,
+        guestClanId: clanId,
+        claimCode: newClaimCode(),
+      })
+      .run();
+    tx.insert(clanMember).values({ clanId, userId: id, role: "member" }).run();
+    if (nick) tx.insert(schema.nickname).values({ userId: id, nick, isPrimary: true }).run();
+  });
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+function requireGuestOf(clanId: string, userId: string) {
+  const g = db.select().from(schema.user).where(eq(schema.user.id, userId)).get();
+  if (!g?.isGuest || g.guestClanId !== clanId) throw new Error("Not a guest of this clan");
+  return g;
+}
+
+export async function deleteGuest(clanId: string, userId: string) {
+  await requireClanManager(clanId);
+  requireGuestOf(clanId, userId);
+  db.delete(schema.user).where(eq(schema.user.id, userId)).run();
+  revalidatePath("/", "layout");
+}
+
+/** New claim link; the old one stops working. */
+export async function renewGuestLink(clanId: string, userId: string) {
+  await requireClanManager(clanId);
+  requireGuestOf(clanId, userId);
+  db.update(schema.user).set({ claimCode: newClaimCode() }).where(eq(schema.user.id, userId)).run();
+  revalidatePath(`/clans`, "layout");
+}
+
+/**
+ * The signed-in user takes over a guest: clan membership, attendance, seats,
+ * nicks and orga roles move to the real account, then the guest is deleted.
+ * Where both have something for the same LAN, the real account's stays.
+ */
+export async function claimGuest(code: string) {
+  const me = await requireUser();
+  const g = db.select().from(schema.user).where(eq(schema.user.claimCode, code)).get();
+  if (!g?.isGuest) redirect("/");
+  const { attendance, seat, nickname, lanOrga } = schema;
+  db.transaction((tx) => {
+    for (const m of tx.select().from(clanMember).where(eq(clanMember.userId, g.id)).all()) {
+      const mine = tx.select().from(clanMember).where(and(eq(clanMember.clanId, m.clanId), eq(clanMember.userId, me.id))).get();
+      if (!mine) tx.update(clanMember).set({ userId: me.id }).where(and(eq(clanMember.clanId, m.clanId), eq(clanMember.userId, g.id))).run();
+      else if (mine.role === "pending")
+        tx.update(clanMember).set({ role: m.role }).where(and(eq(clanMember.clanId, m.clanId), eq(clanMember.userId, me.id))).run();
+    }
+    for (const a of tx.select().from(attendance).where(eq(attendance.userId, g.id)).all()) {
+      const mine = tx.select().from(attendance).where(and(eq(attendance.lanId, a.lanId), eq(attendance.userId, me.id))).get();
+      if (!mine) tx.update(attendance).set({ userId: me.id }).where(eq(attendance.id, a.id)).run();
+    }
+    for (const s of tx.select().from(seat).where(eq(seat.userId, g.id)).all()) {
+      const mine = tx.select().from(seat).where(and(eq(seat.lanId, s.lanId), eq(seat.userId, me.id))).get();
+      if (!mine) tx.update(seat).set({ userId: me.id }).where(eq(seat.id, s.id)).run();
+    }
+    const myNicks = tx.select().from(nickname).where(eq(nickname.userId, me.id)).all();
+    for (const n of tx.select().from(nickname).where(eq(nickname.userId, g.id)).all()) {
+      if (!myNicks.some((x) => x.lanId === n.lanId && x.typeId === n.typeId))
+        tx.update(nickname).set({ userId: me.id }).where(eq(nickname.id, n.id)).run();
+    }
+    for (const o of tx.select().from(lanOrga).where(eq(lanOrga.userId, g.id)).all()) {
+      const mine = tx.select().from(lanOrga).where(and(eq(lanOrga.lanId, o.lanId), eq(lanOrga.userId, me.id))).get();
+      if (!mine) tx.update(lanOrga).set({ userId: me.id }).where(and(eq(lanOrga.lanId, o.lanId), eq(lanOrga.userId, g.id))).run();
+    }
+    // Seat wishes of others that name the guest now name the real account.
+    for (const col of ["wish_near", "wish_avoid"] as const)
+      tx.run(sql`UPDATE attendance SET ${sql.raw(col)} = replace(${sql.raw(col)}, ${`"${g.id}"`}, ${`"${me.id}"`}) WHERE ${sql.raw(col)} LIKE ${`%"${g.id}"%`}`);
+    tx.delete(schema.user).where(eq(schema.user.id, g.id)).run();
+  });
+  revalidatePath("/", "layout");
+  const c = g.guestClanId ? getClan(g.guestClanId) : null;
+  redirect(c ? `/clans/${c.slug}` : "/");
 }

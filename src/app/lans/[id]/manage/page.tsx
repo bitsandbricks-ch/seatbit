@@ -95,7 +95,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
         userId: r.userId,
         nick: names.get(r.userId) ?? u.name,
         name: u.name,
-        email: u.email,
+        email: u.isGuest ? "guest, no login yet" : u.email,
         status: r.status,
         paid: r.paid,
         ticketBought: r.ticketBought,

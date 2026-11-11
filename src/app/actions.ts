@@ -58,31 +58,46 @@ const sameScope = (a: { lanId: string | null; typeId: string | null }, b: typeof
 /** Sets the user's one nick for a scope (default, LAN type or single event). Empty removes it. */
 export async function setNick(formData: FormData) {
   const me = await requireUser();
-  const nickRaw = String(formData.get("nick") ?? "").trim();
-  const scope = nickInput.parse({
-    nick: nickRaw || "-",
-    lanId: formData.get("lanId") ?? undefined,
-    typeId: formData.get("typeId") ?? undefined,
-  });
+  saveNick(me.id, String(formData.get("nick") ?? ""), formData.get("lanId"), formData.get("typeId"));
+  revalidatePath("/", "layout");
+}
+
+function saveNick(userId: string, raw: string, lanId?: FormDataEntryValue | null, typeId?: FormDataEntryValue | null) {
+  const nickRaw = raw.trim();
+  const scope = nickInput.parse({ nick: nickRaw || "-", lanId: lanId ?? undefined, typeId: typeId ?? undefined });
   if (scope.lanId && scope.typeId) throw new Error("Pick one scope");
-  const mine = db.select().from(nickname).where(eq(nickname.userId, me.id)).all();
+  const mine = db.select().from(nickname).where(eq(nickname.userId, userId)).all();
   db.transaction((tx) => {
     for (const n of mine) if (sameScope(n, scope)) tx.delete(nickname).where(eq(nickname.id, n.id)).run();
     if (nickRaw) {
       tx.insert(nickname)
-        .values({ userId: me.id, lanId: scope.lanId, typeId: scope.typeId, nick: scope.nick, isPrimary: true })
+        .values({ userId, lanId: scope.lanId, typeId: scope.typeId, nick: scope.nick, isPrimary: true })
         .run();
     }
   });
+}
+
+const personName = z.string().trim().min(1).max(40);
+
+/** First name, surname and the user's own nickname (gamer tag, independent of events). */
+export async function updateProfile(formData: FormData) {
+  const me = await requireUser({ allowIncomplete: true });
+  const firstName = personName.parse(formData.get("firstName"));
+  const lastName = personName.parse(formData.get("lastName"));
+  const emailReminders = formData.get("emailReminders") === "on";
+  db.update(user)
+    .set({ firstName, lastName, name: `${firstName} ${lastName}`, emailReminders })
+    .where(eq(user.id, me.id))
+    .run();
+  if (formData.has("nick")) saveNick(me.id, String(formData.get("nick")));
   revalidatePath("/", "layout");
 }
 
-export async function updateProfile(formData: FormData) {
-  const me = await requireUser();
-  const name = z.string().trim().min(1).max(64).parse(formData.get("name"));
-  const emailReminders = formData.get("emailReminders") === "on";
-  db.update(user).set({ name, emailReminders }).where(eq(user.id, me.id)).run();
-  revalidatePath("/", "layout");
+/** First-login form: saves the names and nickname, then continues to the app. */
+export async function completeProfile(formData: FormData) {
+  await updateProfile(formData);
+  const next = String(formData.get("next") ?? "/");
+  redirect(next.startsWith("/") && !next.startsWith("//") ? next : "/");
 }
 
 // ---------------- Admin actions ----------------
@@ -118,7 +133,7 @@ const lanInput = z.object({
   reminderDays: z.coerce.number().int().min(0).max(60),
 });
 
-export type FormState = { error?: string } | undefined;
+export type FormState = { error?: string; ok?: boolean } | undefined;
 
 export async function saveLan(_: FormState, formData: FormData): Promise<FormState> {
   const id = (formData.get("id") as string) || null;
