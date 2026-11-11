@@ -1,7 +1,7 @@
 import { asc, eq, inArray } from "drizzle-orm";
 import { myClans } from "@/lib/clans";
 import { db, schema } from "@/db";
-import { updateProfile } from "@/app/actions";
+import { sendTestDm, updateProfile } from "@/app/actions";
 import { LinkedAccounts } from "@/components/linked-accounts";
 import { NickManager } from "@/components/nick-manager";
 import { LanIdForm } from "@/components/lan-id-form";
@@ -10,9 +10,23 @@ import { SignOutButton } from "@/components/sign-out-button";
 import { Card, Field, Input, btnPrimary, btnSecondary } from "@/components/ui";
 import { enabledProviders } from "@/lib/auth";
 import { requireUser } from "@/lib/session";
+import { missingServers } from "@/lib/discord-invite";
 
-export default async function ProfilePage() {
+const DM_RESULT: Record<string, string> = {
+  ok: "Test DM sent. Check your Discord DMs from the Seatbit bot.",
+  dms_off: "Discord DMs are off. Tick the box above and save first.",
+  guest: "Guest profiles can't get DMs.",
+  bot_not_set_up: "The Discord bot isn't set up yet (bot token or application ID missing in the platform settings).",
+  no_discord: "Your profile isn't linked to Discord. Link it under sign-in methods below.",
+  cant_dm:
+    "Discord refused the DM. The bot can only DM you if you share a server with it and that server allows DMs from members (Discord: server name → Privacy Settings → Direct Messages).",
+  error: "The DM failed for another reason. The server log has the details.",
+};
+
+export default async function ProfilePage({ searchParams }: PageProps<"/profile">) {
   const me = await requireUser();
+  const dmParam = (await searchParams).dm;
+  const dmResult = typeof dmParam === "string" ? DM_RESULT[dmParam] : undefined;
   const nicks = db.select().from(schema.nickname).where(eq(schema.nickname.userId, me.id)).all();
   const lanIds = db.select().from(schema.lanAccount).where(eq(schema.lanAccount.userId, me.id)).all();
   const defaultNick = nicks.find((n) => !n.lanId && !n.typeId)?.nick ?? "";
@@ -26,6 +40,9 @@ export default async function ProfilePage() {
     .where(eq(schema.account.userId, me.id))
     .all();
   const hasDiscord = accounts.some((a) => a.providerId === "discord");
+  // After a refused test DM: the clan servers they're not on, with invites.
+  const joinServers =
+    dmParam === "cant_dm" ? (await Promise.all(clanIds.map((id) => missingServers(me.id, id)))).flat() : [];
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -72,6 +89,29 @@ export default async function ProfilePage() {
           </label>
           <button className={btnPrimary}>Save</button>
         </form>
+        {hasDiscord && me.discordDms && (
+          <form action={sendTestDm} id="dms" className="mt-4 space-y-2 border-t border-line pt-4">
+            <button className={btnSecondary}>Send me a test DM</button>
+            {dmResult && <p className={`text-sm ${dmParam === "ok" ? "text-bit" : "text-muted"}`}>{dmResult}</p>}
+            {joinServers.length > 0 && (
+              <p className="text-sm text-muted">
+                Your clan&apos;s servers you&apos;re not on:{" "}
+                {joinServers.map((g, i) => (
+                  <span key={g.guildId}>
+                    {i > 0 && ", "}
+                    {g.inviteUrl ? (
+                      <a href={g.inviteUrl} className="text-bit underline" target="_blank" rel="noreferrer">
+                        {g.guildName}
+                      </a>
+                    ) : (
+                      g.guildName
+                    )}
+                  </span>
+                ))}
+              </p>
+            )}
+          </form>
+        )}
       </Card>
 
       {types.length > 0 && (
