@@ -217,6 +217,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
       {tab === "attendees" && (
         <AttendanceTable
           lanId={l.id}
+          profileBase={lanClan ? `/clans/${lanClan.slug}/members/` : null}
           rows={tableRows}
           seats={[...seats].sort((a, b) => a.row - b.row || a.col - b.col)}
           others={users

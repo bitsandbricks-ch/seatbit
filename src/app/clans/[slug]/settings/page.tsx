@@ -156,7 +156,9 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
               <ul className="mb-4 space-y-3">
                 {guests.map(({ u }) => (
                   <li key={u.id} className="space-y-1.5 rounded-md border border-line p-3">
-                    <span className="block truncate text-sm font-medium">{u.name}</span>
+                    <Link href={`/clans/${c.slug}/members/${u.id}`} className="block truncate text-sm font-medium hover:text-bit hover:underline">
+                      {u.name}
+                    </Link>
                     <span className="block text-xs text-faint">
                       {u.inviteEmail
                         ? u.invitedAt
@@ -178,8 +180,13 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
             <GuestForm action={addGuest.bind(null, c.id)} />
           </Card>
           <Card title={`Members (${active.length})`}>
+            <p className="mb-3 text-sm text-muted">
+              Admins manage the clan: settings, members, LAN types and every event. Use &ldquo;Make admin&rdquo; and
+              &ldquo;Remove admin&rdquo; here or on a member&apos;s profile. A clan always keeps at least one admin.
+            </p>
             <ClanMemberAdmin
               clanId={c.id}
+              slug={c.slug}
               meId={me.id}
               members={active.map(({ u, role }) => ({
                 id: u.id,

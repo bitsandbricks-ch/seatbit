@@ -58,6 +58,9 @@ export default async function ClanPage({ params }: PageProps<"/clans/[slug]">) {
             <Link href={`/clans/${c.slug}/lans/new`} className={btnPrimary}>
               New event
             </Link>
+            <Link href={`/clans/${c.slug}/stats`} className={btnSecondary}>
+              Stats
+            </Link>
             <Link href={`/clans/${c.slug}/settings`} className={btnSecondary}>
               Clan settings
             </Link>
@@ -118,6 +121,7 @@ export default async function ClanPage({ params }: PageProps<"/clans/[slug]">) {
 
       <Card title={`Members (${members.length})`}>
         <ClanMemberGrid
+          slug={c.slug}
           members={members
             .map((m) => ({
               id: m.u.id,
