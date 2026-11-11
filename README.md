@@ -119,7 +119,7 @@ Edit `src/db/schema.ts`, then run `npm run db:generate` to create a migration in
 
 ## Container image
 
-GitHub Actions builds a multi-arch image (amd64 + arm64) on every push to `main` and pushes it to `ghcr.io/bitsandbricks-ch/seatbit` as `:main` and `:sha-<short sha>` (tags `v1.2.3` also give `:1.2.3`).
+GitHub Actions builds a multi-arch image (amd64 + arm64) on every push to `main` and pushes it to `ghcr.io/bitsandbricks-ch/seatbit` as `:main`, `:sha-<short sha>` and `:main-<UTC timestamp>-<short sha>` (sortable, for automatic updates) (tags `v1.2.3` also give `:1.2.3`).
 
 ```sh
 docker run -p 3000:3000 -v seatbit-data:/data \
