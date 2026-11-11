@@ -115,11 +115,22 @@ export function dueKinds(l: Lan, now = new Date()): ReminderKind[] {
  */
 export async function runDueReminders(now = new Date()) {
   const lans = db.select().from(lan).where(gt(lan.endsAt, now)).all();
-  const result: { lan: string; kind: ReminderKind; sent: number }[] = [];
+  const result: { lan: string; kind: string; sent: number }[] = [];
   for (const l of lans) {
-    for (const kind of dueKinds(l, now)) {
+    const kinds = dueKinds(l, now);
+    for (const kind of kinds) {
       const sent = await send(kind, l, recipients(kind, l), true);
       if (sent) result.push({ lan: l.name, kind, sent });
+    }
+    // Same reminders as a post in the configured Discord channels, once each.
+    const { postDueChannelReminders, refreshLanMessages } = await import("./discord");
+    try {
+      const posted = await postDueChannelReminders(kinds as ("signup" | "payment" | "event")[], l);
+      if (posted) result.push({ lan: l.name, kind: "discord", sent: posted });
+      // Also catches deadlines passing, which disables the buttons.
+      await refreshLanMessages(l.id);
+    } catch (e) {
+      console.error("[reminders] discord failed", e);
     }
   }
   return result;

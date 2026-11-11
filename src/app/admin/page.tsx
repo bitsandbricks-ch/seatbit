@@ -21,9 +21,14 @@ export default async function AdminPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Platform admin</h1>
-        <p className="text-sm text-zinc-400">All clans, events and users on this Seatbit. Clan admins manage their own clan.</p>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h1 className="text-2xl font-bold">Platform admin</h1>
+          <p className="text-sm text-zinc-400">All clans, events and users on this Seatbit. Clan admins manage their own clan.</p>
+        </div>
+        <Link href="/admin/settings" className={btnGhost}>
+          Platform settings
+        </Link>
       </div>
       <Card title={`Clans (${clans.length})`}>
         <ul className="divide-y divide-line">

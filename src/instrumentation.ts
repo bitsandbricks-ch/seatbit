@@ -1,17 +1,23 @@
 /**
  * Built-in reminder scheduler for self-hosted setups: checks for due reminders
- * every REMINDER_INTERVAL_MINUTES (default 60). Set it to 0 to disable and use
- * /api/cron/reminders instead.
+ * every N minutes, where N is the "Reminder check interval" platform setting
+ * (env REMINDER_INTERVAL_MINUTES, default 60). 0 turns it off; use
+ * /api/cron/reminders instead. Changes in the admin UI apply without a restart.
  */
 export async function register() {
   if (process.env.NEXT_RUNTIME !== "nodejs") return;
-  const minutes = Number(process.env.REMINDER_INTERVAL_MINUTES ?? 60);
-  if (!minutes) return;
   const { runDueReminders } = await import("./lib/reminders");
-  const tick = () =>
+  const { getNumberSetting } = await import("./lib/settings");
+  let last = 0;
+  const tick = () => {
+    const minutes = getNumberSetting("reminders.intervalMinutes") ?? 60;
+    if (!minutes || Date.now() - last < minutes * 60 * 1000) return;
+    last = Date.now();
     runDueReminders()
       .then((r) => r.length && console.log("[reminders] sent", r))
       .catch((e) => console.error("[reminders] failed", e));
+  };
+  // First check shortly after start, then look every minute whether the interval has passed.
   setTimeout(tick, 10_000);
-  setInterval(tick, minutes * 60 * 1000);
+  setInterval(tick, 60_000);
 }

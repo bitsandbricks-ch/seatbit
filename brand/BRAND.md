@@ -52,11 +52,12 @@ Dark-first. Bit Green is the only brand accent and it always means "you / yours 
 | `bit` | `#2EE59D` | **Bit Green**: your seat, primary buttons, "going" |
 | `bit-deep` | `#0E9F6E` | Bit Green on light backgrounds (logo, large type) |
 | `bit-ink` | `#047857` | Green body text on light backgrounds |
+| `on-bit` | `#0B0B0F` | Text and icons on a Bit Green fill |
 | `seat-taken` | `#38BDF8` | Someone else's seat |
 | `warn` | `#FBBF24` | Due soon, maybe |
 | `danger` | `#F87171` | Overdue, unpaid, can't make it |
 
-Text on a Bit Green button is `ink`, not white. Bit Green on ink is 12:1 and muted on surface is 7:1, both well above WCAG AA.
+Text on a Bit Green button is `on-bit` (ink), not white. Bit Green on ink is 12:1 and muted on surface is 7:1, both well above WCAG AA.
 `faint` is 4.1:1, so keep it to non-essential hints; `bit-deep` on white is 3.2:1, so use
 it only for the logo and large type and use `bit-ink` (5.3:1) for green text on light.
 
@@ -82,6 +83,8 @@ Friendly, short, a bit nerdy, never cringe. Talk like the orga in the group chat
 - English by default; Swiss German slang is fine in event descriptions, not in UI copy.
 
 ## Code
+
+- Source of truth for all of this is the repo `bitsandbricks-ch/seatbit`, folder `brand/`.
 
 - `brand/tokens.css` is a Tailwind 4 `@theme` block with every token above. Import it from `globals.css`.
 - `src/app/icon.svg`, `favicon.ico`, `apple-icon.png` and `opengraph-image.png` are picked up by Next.js automatically.

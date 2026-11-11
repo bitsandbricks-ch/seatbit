@@ -18,12 +18,15 @@ import { Card, Pill, btnDanger, btnGhost, btnPrimary, btnSecondary } from "@/com
 import { appUrl } from "@/lib/mail";
 import { canManageClan, getClanBySlug } from "@/lib/clans";
 import { requireUser } from "@/lib/session";
+import { unlinkDiscordChannel } from "@/app/actions";
+import { discordEnabled, inviteUrl } from "@/lib/discord-api";
 
 const TABS = [
   { id: "general", label: "General" },
   { id: "members", label: "Members" },
   { id: "types", label: "LAN types" },
   { id: "invites", label: "Invite links" },
+  { id: "chat", label: "Discord & WhatsApp" },
 ];
 
 export default async function ClanSettingsPage({ params, searchParams }: PageProps<"/clans/[slug]/settings">) {
@@ -144,6 +147,8 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
         </>
       )}
 
+      {tab === "chat" && <ChatTab clanId={c.id} />}
+
       {tab === "types" && (
         <TypesTab clanId={c.id} slug={c.slug} />
       )}
@@ -173,6 +178,84 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
           </form>
         </Card>
       )}
+    </div>
+  );
+}
+
+function ChatTab({ clanId }: { clanId: string }) {
+  const channels = db
+    .select()
+    .from(schema.discordChannel)
+    .where(eq(schema.discordChannel.clanId, clanId))
+    .orderBy(asc(schema.discordChannel.createdAt))
+    .all();
+  const invite = inviteUrl();
+  return (
+    <div className="space-y-5">
+      <Card title="Discord bot">
+        {!discordEnabled() ? (
+          <p className="text-sm text-zinc-400">
+            The Discord bot isn&apos;t set up on this Seatbit yet. A platform admin needs to add the bot token and public
+            key in{" "}
+            <Link href="/admin/settings?tab=discord" className="text-bit hover:underline">
+              Platform settings
+            </Link>
+            .
+          </p>
+        ) : (
+          <div className="space-y-4 text-sm">
+            <ol className="list-decimal space-y-1 pl-5 text-zinc-300">
+              <li>
+                {invite ? (
+                  <a href={invite} target="_blank" rel="noreferrer" className="text-emerald-400 hover:underline">
+                    Add the Seatbit bot
+                  </a>
+                ) : (
+                  "Add the Seatbit bot"
+                )}{" "}
+                to your Discord server.
+              </li>
+              <li>Make sure your Discord account is linked on your Seatbit profile.</li>
+              <li>
+                In the channel for LAN news, run <code>/seatbit here</code>. Use <code>/seatbit announce</code> to post the
+                upcoming LANs.
+              </li>
+            </ol>
+            <p className="text-zinc-400">
+              The bot posts new LANs with Coming / Unsure / Not coming buttons, keeps the attendee list up to date, posts
+              deadline reminders that ping the members concerned, and answers <code>/lans</code>. A Discord server can
+              belong to one clan.
+            </p>
+            {channels.length === 0 ? (
+              <p className="text-zinc-500">No channels linked yet.</p>
+            ) : (
+              <ul className="divide-y divide-line">
+                {channels.map((ch) => (
+                  <li key={ch.channelId} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                    <a
+                      href={`https://discord.com/channels/${ch.guildId}/${ch.channelId}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="hover:underline"
+                    >
+                      #{ch.channelName || ch.channelId}
+                    </a>
+                    <form action={unlinkDiscordChannel.bind(null, ch.channelId)}>
+                      <button className={`${btnGhost} text-xs text-red-300`}>Unlink</button>
+                    </form>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+      </Card>
+      <Card title="WhatsApp">
+        <p className="text-sm text-zinc-400">
+          WhatsApp doesn&apos;t let bots post into groups or communities. Each LAN&apos;s manage page has ready-made
+          announcement and reminder texts to copy into your WhatsApp group.
+        </p>
+      </Card>
     </div>
   );
 }
