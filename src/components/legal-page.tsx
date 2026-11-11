@@ -1,24 +1,24 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { legal } from "@/lib/legal";
+import { Page, PageHeader } from "./ui";
 
-/** Long-form text page for the Terms of Service and the Privacy Policy. */
+/** Long-form text page for the Terms of Service and the Privacy Policy. Title like every page, text at a readable width. */
 export function LegalPage({ title, children }: { title: string; children: ReactNode }) {
   return (
+    <Page>
+      <PageHeader title={title} subtitle={`Last updated: ${legal.lastUpdated}`} />
     <article
-      className="mx-auto max-w-2xl space-y-4 text-sm leading-relaxed text-fg/90
+      className="max-w-3xl space-y-4 text-sm leading-relaxed text-fg/90
         [&_a]:text-bit [&_a:hover]:underline
         [&_h2]:pt-4 [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:text-fg
         [&_h3]:pt-2 [&_h3]:font-semibold [&_h3]:text-fg
         [&_li]:pl-1 [&_ol]:list-decimal [&_ol]:space-y-1 [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-5
         [&_strong]:text-fg"
     >
-      <header className="space-y-1">
-        <h1 className="text-2xl font-bold text-fg">{title}</h1>
-        <p className="text-xs text-muted">Last updated: {legal.lastUpdated}</p>
-      </header>
       {children}
     </article>
+    </Page>
   );
 }
 

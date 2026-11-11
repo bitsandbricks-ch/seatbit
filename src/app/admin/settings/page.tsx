@@ -1,7 +1,6 @@
-import Link from "next/link";
 import { ActionButton, SettingsSection } from "@/components/settings-section";
 import { Tabs } from "@/components/tabs";
-import { Card } from "@/components/ui";
+import { Card, Notice, Page, PageHeader } from "@/components/ui";
 import { inviteUrl } from "@/lib/discord-api";
 import { appUrl, mailTarget } from "@/lib/mail";
 import { requireAdmin } from "@/lib/session";
@@ -64,30 +63,25 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
   );
 
   return (
-    <div className="space-y-6">
-      <div>
-        <Link href="/admin" className="text-sm text-muted hover:text-fg">
-          ← Admin
-        </Link>
-        <h1 className="mt-1 text-2xl font-bold">Platform settings</h1>
-        <p className="mt-1 max-w-2xl text-sm text-muted">
-          Saved values override the server&apos;s env vars; clear a field to fall back. Secrets are stored encrypted and
-          never shown again.
-        </p>
-      </div>
+    <Page>
+      <PageHeader
+        back={{ href: "/admin", label: "Admin" }}
+        title="Platform settings"
+        subtitle="Saved values override the server's env vars; clear a field to fall back. Secrets are stored encrypted and never shown again."
+      />
 
       {!keySource && (
-        <p className="rounded-md border border-warn/30 bg-warn/10 p-3 text-sm text-warn">
+        <Notice tone="warn">
           {canEncrypt()
             ? "No BETTER_AUTH_SECRET or SETTINGS_ENCRYPTION_KEY is set, so secrets are encrypted with a development key. Set one before going live."
             : "Secrets can't be saved until BETTER_AUTH_SECRET or SETTINGS_ENCRYPTION_KEY is set on the server."}
-        </p>
+        </Notice>
       )}
       {all.some((s) => s.undecryptable) && (
-        <p className="rounded-md border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
+        <Notice tone="danger">
           Some saved secrets can&apos;t be decrypted, probably because the encryption key changed. They are ignored
           until you enter them again.
-        </p>
+        </Notice>
       )}
 
       <Tabs
@@ -183,7 +177,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
           </dl>
         </Card>
       )}
-    </div>
+    </Page>
   );
 }
 

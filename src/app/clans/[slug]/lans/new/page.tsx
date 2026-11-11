@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { and, asc, eq } from "drizzle-orm";
 import { db, schema } from "@/db";
-import { Card } from "@/components/ui";
+import { Card, Columns, Page, PageHeader, Segmented } from "@/components/ui";
 import { LanForm } from "@/components/lan-form";
 import { toInputValue } from "@/lib/format";
 import { requireUser } from "@/lib/session";
@@ -42,14 +42,14 @@ export default async function NewLanPage({ params, searchParams }: PageProps<"/c
   const deadline = new Date(start);
   deadline.setDate(deadline.getDate() - 14);
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">New event</h1>
-        <p className="mt-1 text-sm text-muted">
-          An event the group wants to go to. Start from a LAN type to fill in its usual details and seats.
-        </p>
-      </div>
-      <div className="rounded-card border border-line bg-surface p-4">
+    <Page>
+      <PageHeader
+        back={{ href: `/clans/${c.slug}`, label: c.name }}
+        title="New event"
+        subtitle="An event the group wants to go to. Start from a LAN type to fill in its usual details and seats."
+      />
+      <Columns>
+      <div className="rounded-card border border-line bg-surface p-4 sm:p-5">
         <p className="mb-2 text-[11px] uppercase tracking-wide text-faint">Clan</p>
         {managed.length > 1 ? (
           <div className="flex flex-wrap gap-2">
@@ -74,20 +74,16 @@ export default async function NewLanPage({ params, searchParams }: PageProps<"/c
         </p>
       </div>
       {types.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 text-sm">
-          <span className="text-faint">Start from:</span>
-          {types.map((x) => (
-            <Link
-              key={x.id}
-              href={`/clans/${c.slug}/lans/new?type=${x.id}`}
-              className={`rounded-full border px-3 py-1 ${x.id === t?.id ? "border-bit text-bit" : "border-line text-fg/90 hover:border-muted/50"}`}
-            >
-              {x.name}
-            </Link>
-          ))}
-          <Link href={`/clans/${c.slug}/lans/new`} className="text-muted hover:text-fg">
-            blank
-          </Link>
+        <div className="flex flex-wrap items-center gap-3 text-sm">
+          <span className="text-muted">Start from</span>
+          <Segmented
+            label="Start from"
+            value={t?.id ?? "blank"}
+            options={[
+              ...types.map((x) => ({ id: x.id, label: x.name, href: `/clans/${c.slug}/lans/new?type=${x.id}` })),
+              { id: "blank", label: "Blank", href: `/clans/${c.slug}/lans/new` },
+            ]}
+          />
         </div>
       )}
       <Card>
@@ -115,6 +111,7 @@ export default async function NewLanPage({ params, searchParams }: PageProps<"/c
           <p className="mt-4 text-xs text-muted">Seats {t.seatSpec} will be set up from the {t.name} type.</p>
         )}
       </Card>
-    </div>
+      </Columns>
+    </Page>
   );
 }

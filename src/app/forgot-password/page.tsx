@@ -1,13 +1,13 @@
 "use client";
 import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
-import { btnPrimary, Field, Input } from "@/components/ui";
+import { btnPrimary, cardPage, cardPageTitle, Field, Input } from "@/components/ui";
 
 export default function ForgotPasswordPage() {
   const [sent, setSent] = useState(false);
   return (
-    <div className="mx-auto max-w-sm space-y-4 rounded-xl border border-line bg-surface p-6">
-      <h1 className="text-xl font-semibold">Reset password</h1>
+    <div className={cardPage}>
+      <h1 className={cardPageTitle}>Reset password</h1>
       {sent ? (
         <p className="text-sm text-fg/90">If that address has an account, a reset link is on its way.</p>
       ) : (

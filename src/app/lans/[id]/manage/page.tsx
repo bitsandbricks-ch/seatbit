@@ -8,7 +8,7 @@ import { LanForm } from "@/components/lan-form";
 import { ReminderButtons } from "@/components/reminder-buttons";
 import { SeatMap } from "@/components/seat-map";
 import { ClanAvatar } from "@/components/clan-avatar";
-import { Card, Pill, btnDanger, btnPrimary, btnSecondary } from "@/components/ui";
+import { Card, Page, PageHeader, Pill, btnDanger, btnPrimary, btnSecondary } from "@/components/ui";
 import { fmtDate, fmtRange, relative, toInputValue } from "@/lib/format";
 import { getDisplayNames, getLan } from "@/lib/lans";
 import { dueKinds } from "@/lib/reminders";
@@ -132,44 +132,41 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
   const noAnswer = users.filter((u) => memberIds.has(u.id) && !inLan.has(u.id)).length;
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <Link href={`/lans/${l.id}`} className="-ml-1 inline-flex min-h-8 items-center gap-1 rounded-md px-1 text-sm text-muted hover:text-fg">
-            <span aria-hidden>←</span> Back to event
+    <Page>
+      <PageHeader
+        back={{ href: `/lans/${l.id}`, label: "Back to event" }}
+        title={l.name}
+        subtitle={fmtRange(l.startsAt, l.endsAt)}
+        actions={
+          <a href={`/lans/${l.id}/manage/export`} className={btnSecondary}>
+            Export CSV
+          </a>
+        }
+      >
+        {lanClan && (
+          <Link href={`/clans/${lanClan.slug}`} className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-fg">
+            <ClanAvatar clan={lanClan} size={20} />
+            <span className="truncate">
+              Managed by <span className="text-fg">{lanClan.name}</span>
+            </span>
           </Link>
-          <h1 className="truncate text-2xl font-bold tracking-tight sm:text-3xl">{l.name}</h1>
-          <p className="text-sm text-muted">{fmtRange(l.startsAt, l.endsAt)}</p>
-          {lanClan && (
-            <Link href={`/clans/${lanClan.slug}`} className="mt-1.5 inline-flex items-center gap-1.5 text-sm text-muted hover:text-fg">
-              <ClanAvatar clan={lanClan} size={20} />
-              <span className="truncate">
-                Managed by <span className="text-fg">{lanClan.name}</span>
-              </span>
-            </Link>
-          )}
-        </div>
-        <a href={`/lans/${l.id}/manage/export`} className={btnSecondary}>
-          Export CSV
-        </a>
-      </div>
+        )}
+      </PageHeader>
 
-      <div className="sticky top-14 z-20 -mx-4 bg-ink/95 px-4 backdrop-blur sm:mx-0 sm:px-0">
-        <Tabs
-          tabs={TABS.map(([t, label]) => ({
-            id: t,
-            label,
-            badge:
-              t === "attendees" && ticketsReported
-                ? `${ticketsReported} to confirm`
-                : t === "seats" && going.length - seated > 0 && seats.length
-                  ? `${going.length - seated} unseated`
-                  : undefined,
-          }))}
-          active={tab}
-          hrefFor={(t) => `/lans/${l.id}/manage?tab=${t}`}
-        />
-      </div>
+      <Tabs
+        tabs={TABS.map(([t, label]) => ({
+          id: t,
+          label,
+          badge:
+            t === "attendees" && ticketsReported
+              ? `${ticketsReported} to confirm`
+              : t === "seats" && going.length - seated > 0 && seats.length
+                ? `${going.length - seated} unseated`
+                : undefined,
+        }))}
+        active={tab}
+        hrefFor={(t) => `/lans/${l.id}/manage?tab=${t}`}
+      />
 
       {tab === "overview" && (
         <div className="space-y-5">
@@ -455,7 +452,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
           )}
         </div>
       )}
-    </div>
+    </Page>
   );
 }
 
