@@ -61,12 +61,12 @@ export default async function LanPage({ params }: PageProps<"/lans/[id]">) {
           {(l.websiteUrl || l.ticketUrl) && (
             <p className="mt-2 flex gap-4 text-sm">
               {l.websiteUrl && (
-                <a href={l.websiteUrl} target="_blank" rel="noreferrer" className="text-emerald-400 hover:underline">
+                <a href={l.websiteUrl} target="_blank" rel="noreferrer" className="text-bit hover:underline">
                   Event website ↗
                 </a>
               )}
               {l.ticketUrl && (
-                <a href={l.ticketUrl} target="_blank" rel="noreferrer" className="text-emerald-400 hover:underline">
+                <a href={l.ticketUrl} target="_blank" rel="noreferrer" className="text-bit hover:underline">
                   Ticket shop ↗
                 </a>
               )}
@@ -141,7 +141,7 @@ export default async function LanPage({ params }: PageProps<"/lans/[id]">) {
           <Card title="Your attendance" actions={<StatusBadge status={my?.status} seat={seatOf.get(me.id)} />}>
             <AttendanceButtons lanId={l.id} current={my?.status ?? null} disabled={!!closed} />
             {my?.status === "waitlist" && (
-              <p className="mt-3 text-sm text-sky-300">
+              <p className="mt-3 text-sm text-seat-taken">
                 The LAN is full. You&apos;re on the waitlist and will get an email if a spot opens up.
               </p>
             )}
@@ -179,7 +179,7 @@ export default async function LanPage({ params }: PageProps<"/lans/[id]">) {
             <p className="mb-3 text-sm text-zinc-400">
               Shown as <strong className="text-zinc-100">{names.get(me.id) ?? myDisplay(myNicks, me.name)}</strong>.
               Add a nick just for this LAN, or manage your default nicks on your{" "}
-              <Link href="/profile" className="text-emerald-400 hover:underline">
+              <Link href="/profile" className="text-bit hover:underline">
                 profile
               </Link>
               .
@@ -233,7 +233,7 @@ function AttendeeList({
       <ul className="grid gap-1 sm:grid-cols-2">
         {list.map((a) => (
           <li key={a.id} className="flex items-center justify-between rounded bg-zinc-800/50 px-3 py-1.5 text-sm">
-            <span className={a.userId === meId ? "font-semibold text-emerald-300" : ""}>{names.get(a.userId)}</span>
+            <span className={a.userId === meId ? "font-semibold text-bit" : ""}>{names.get(a.userId)}</span>
             <span className="flex gap-1">
               {seatOf.get(a.userId) && <Pill>{seatOf.get(a.userId)}</Pill>}
               {showPaid && (a.paid ? <Pill tone="emerald">ticket ok</Pill> : a.ticketBought ? <Pill tone="amber">reported</Pill> : <Pill tone="red">no ticket</Pill>)}

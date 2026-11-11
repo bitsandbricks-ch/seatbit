@@ -27,7 +27,7 @@ export default async function ProfilePage() {
           </Field>
           <p className="text-sm text-zinc-400">Email: {me.email}</p>
           <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" name="emailReminders" defaultChecked={me.emailReminders} className="accent-emerald-500" />
+            <input type="checkbox" name="emailReminders" defaultChecked={me.emailReminders} className="accent-bit" />
             Send me email reminders about deadlines, payments and upcoming LANs
           </label>
           <button className={btnPrimary}>Save</button>

@@ -5,13 +5,13 @@ import { SignOutButton } from "./sign-out-button";
 export async function Header() {
   const me = await getCurrentUser();
   return (
-    <header className="border-b border-zinc-800 bg-zinc-950/80 backdrop-blur">
+    <header className="border-b border-line bg-zinc-950/80 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-        <Link href="/" className="flex items-center gap-2 font-semibold text-zinc-100">
-          <span className="grid h-7 w-7 place-items-center rounded bg-emerald-500 text-xs font-bold text-zinc-950">
-            SB
-          </span>
-          Seatbit
+        <Link href="/" className="flex items-center" aria-label="Seatbit home">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand/seatbit-logo.svg" alt="Seatbit" className="hidden h-7 w-auto sm:block" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand/seatbit-mark.svg" alt="Seatbit" className="h-7 w-auto sm:hidden" />
         </Link>
         <nav className="flex items-center gap-1 text-sm">
           {me ? (
@@ -35,7 +35,7 @@ export async function Header() {
                 Sign in
               </Link>
               <Link
-                className="rounded bg-emerald-500 px-3 py-1.5 font-medium text-zinc-950 hover:bg-emerald-400"
+                className="rounded bg-bit px-3 py-1.5 font-medium text-ink hover:bg-bit-hover"
                 href="/register"
               >
                 Register

@@ -1,15 +1,19 @@
 # Seatbit
 
-Seatbit is a small web app for a clan or group of friends to organise LAN parties.
+Seatbit helps a clan or group of friends coordinate going to LAN parties run by others (think SwitzerLAN or Lock&Load with 30+ people): who's coming, who has bought a ticket, and who sits where in the group's seat block.
 
-- **Multiple LANs**, each with dates, location, price, capacity and description.
-- **Attendance**: members answer *going / maybe / can't make it*. When the LAN is full, new sign-ups go on a **waitlist** and move up automatically (with an email) when someone drops out.
-- **Due dates**: an answer deadline and a payment due date per LAN. Admins tick off who has paid.
-- **Email reminders**: sent automatically N days before the answer deadline (to members who haven't answered or said maybe), before the payment due date (to unpaid attendees) and one day before the LAN (to everyone going). Each reminder goes out once per person; admins can also nudge manually. Members can opt out.
-- **Seating plans**: a grid per LAN. Admins add/remove seats to shape tables and aisles, lock seats, rename them and assign people. Attendees who are going pick their own seat.
-- **Nicknames**: each user can have several nicks, a primary default nick, and separate nicks per LAN. Seat plans and attendee lists show the LAN nick.
-- **Login** with email & password, Discord or Google (accounts with the same email are linked).
-- The first user to sign up becomes admin; admins can promote others.
+- **LANs**: each event the group goes to, with dates, location, event website, ticket shop link, ticket price and the number of group spots.
+- **Orgas per LAN**: the members who coordinate the group for that event. Only they (and global admins) can edit the LAN, the seat block and attendance. Any orga can add co-orgas.
+- **Attendance**: members answer *going / maybe / can't make it*. When the group's spots are full, new sign-ups go on a **waitlist** and move up automatically (with an email) when someone drops out.
+- **Member checklist per LAN**: sign up, set nickname, buy ticket (members tick it off, orgas confirm), claim a seat. Progress shows on the LAN list.
+- **Status at a glance**: no answer, attending, seat claimed (with seat number), waitlist/full, maybe, not going, plus free seats left.
+- **Due dates and email reminders**: an answer deadline and a buy-ticket deadline per LAN. Reminders go out automatically N days before each (to undecided members and to attendees without a ticket) and one day before the LAN (to everyone going). Each one goes out once per person; orgas can also nudge manually; members can opt out.
+- **Seat block**: a grid of the seats the group has. Orgas fill/clear rows, add/remove single seats for aisles, rename seats to match the event's numbering, hold seats for guests, and assign people. Members claim their own seat while seating is open.
+- **CSV export** of the group (seat, nick, name, email, status, ticket) to hand to the event's organisers.
+- **Nicknames**: several nicks per user, a primary default, and separate nicks per LAN.
+- **Login** with email & password, Discord or Google (accounts with the same email are linked). The first user to sign up becomes global admin.
+
+Brand assets and guidelines are in `brand/` (see `brand/BRAND.md`).
 
 ## Stack
 

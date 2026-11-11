@@ -96,7 +96,7 @@ export function AttendanceTable({
                     key={String(r.paid)}
                     defaultChecked={r.paid}
                     onChange={(e) => run(() => adminSetPaid(r.id, e.target.checked))}
-                    className="h-4 w-4 accent-emerald-500"
+                    className="h-4 w-4 accent-bit"
                     aria-label="Ticket confirmed"
                     title="Ticket / payment confirmed"
                   />
@@ -136,7 +136,7 @@ export function AttendanceTable({
         </table>
       </div>
       {others.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 border-t border-zinc-800 pt-4">
+        <div className="flex flex-wrap items-center gap-2 border-t border-line pt-4">
           <select value={addUser} onChange={(e) => setAddUser(e.target.value)} className={`${input} !w-auto`}>
             <option value="">Add a member…</option>
             {others.map((o) => (

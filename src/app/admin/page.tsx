@@ -45,7 +45,7 @@ export default async function AdminPage() {
                 return (
                   <tr key={l.id}>
                     <td className="py-2">
-                      <Link href={`/lans/${l.id}/manage`} className="font-medium hover:text-emerald-400">
+                      <Link href={`/lans/${l.id}/manage`} className="font-medium hover:text-bit">
                         {l.name}
                       </Link>
                       {l.endsAt < now && <span className="ml-2 text-xs text-zinc-500">past</span>}

@@ -74,7 +74,7 @@ export function LanForm({ values }: { values: LanFormValues }) {
         <textarea name="description" defaultValue={values.description} rows={4} className={input} />
       </Field>
       <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" name="seatingOpen" defaultChecked={values.seatingOpen} className="accent-emerald-500" />
+        <input type="checkbox" name="seatingOpen" defaultChecked={values.seatingOpen} className="accent-bit" />
         Attendees can claim seats in the group&apos;s block themselves
       </label>
       {state?.error && <p className="text-sm text-red-400">{state.error}</p>}

@@ -36,7 +36,7 @@ export function ReminderButtons({
           Remind attendees ({counts.event})
         </button>
       </div>
-      {msg && <p className="text-sm text-emerald-300">{msg}</p>}
+      {msg && <p className="text-sm text-bit">{msg}</p>}
     </div>
   );
 }

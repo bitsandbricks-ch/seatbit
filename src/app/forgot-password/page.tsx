@@ -6,7 +6,7 @@ import { btnPrimary, Field, Input } from "@/components/ui";
 export default function ForgotPasswordPage() {
   const [sent, setSent] = useState(false);
   return (
-    <div className="mx-auto max-w-sm space-y-4 rounded-xl border border-zinc-800 bg-zinc-900/60 p-6">
+    <div className="mx-auto max-w-sm space-y-4 rounded-xl border border-line bg-surface p-6">
       <h1 className="text-xl font-semibold">Reset password</h1>
       {sent ? (
         <p className="text-sm text-zinc-300">If that address has an account, a reset link is on its way.</p>

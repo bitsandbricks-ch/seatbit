@@ -39,7 +39,7 @@ export function AuthForm({
   const anySocial = providers.discord || providers.google;
 
   return (
-    <div className="mx-auto max-w-sm space-y-6 rounded-xl border border-zinc-800 bg-zinc-900/60 p-6">
+    <div className="mx-auto max-w-sm space-y-6 rounded-xl border border-line bg-surface p-6">
       <h1 className="text-xl font-semibold">{mode === "login" ? "Sign in" : "Create an account"}</h1>
 
       {anySocial && (

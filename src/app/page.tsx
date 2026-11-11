@@ -64,7 +64,7 @@ export default async function Home() {
       {past.length > 0 && (
         <div>
           <h2 className="mb-3 text-lg font-semibold text-zinc-400">Past LANs</h2>
-          <ul className="divide-y divide-zinc-800 rounded-xl border border-zinc-800">
+          <ul className="divide-y divide-zinc-800 rounded-xl border border-line">
             {past.map((l) => (
               <li key={l.id}>
                 <Link href={`/lans/${l.id}`} className="flex justify-between px-4 py-3 hover:bg-zinc-900">
@@ -99,7 +99,7 @@ function LanCard({
   return (
     <Link
       href={`/lans/${l.id}`}
-      className="block rounded-xl border border-zinc-800 bg-zinc-900/60 p-5 transition hover:border-emerald-500/50"
+      className="block rounded-xl border border-line bg-surface p-5 transition hover:border-bit/50"
     >
       <div className="flex items-start justify-between gap-3">
         <div>

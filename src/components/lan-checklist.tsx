@@ -20,7 +20,7 @@ export function LanChecklist({
   return (
     <div className="space-y-4">
       <div className="h-1.5 overflow-hidden rounded-full bg-zinc-800">
-        <div className="h-full bg-emerald-500 transition-all" style={{ width: `${(done / steps.length) * 100}%` }} />
+        <div className="h-full bg-bit transition-all" style={{ width: `${(done / steps.length) * 100}%` }} />
       </div>
       <ol className="space-y-3">
         {steps.map((s, i) => (
@@ -28,9 +28,9 @@ export function LanChecklist({
             <span
               className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-bold ${
                 s.state === "done"
-                  ? "bg-emerald-500 text-zinc-950"
+                  ? "bg-bit text-ink"
                   : s.state === "pending"
-                    ? "bg-amber-400 text-zinc-950"
+                    ? "bg-amber-400 text-ink"
                     : "border border-zinc-600 text-zinc-400"
               }`}
             >

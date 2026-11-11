@@ -13,7 +13,7 @@ export function NickManager({ nicks, lanId }: { nicks: Nickname[]; lanId: string
             <li key={n.id} className="flex items-center justify-between rounded-md bg-zinc-800/60 px-3 py-1.5">
               <span className="font-medium">
                 {n.nick}
-                {n.isPrimary && <span className="ml-2 text-xs text-emerald-400">primary</span>}
+                {n.isPrimary && <span className="ml-2 text-xs text-bit">primary</span>}
               </span>
               <span className="flex gap-1">
                 {!n.isPrimary && (

@@ -101,7 +101,7 @@ export function SeatMap({
             <button
               key={t}
               onClick={() => setTool(t)}
-              className={tool === t ? btnSecondary + " !border-emerald-500" : btnGhost}
+              className={tool === t ? btnSecondary + " !border-bit" : btnGhost}
             >
               {name}
             </button>
@@ -171,7 +171,7 @@ export function SeatMap({
                 <button
                   key={i}
                   onClick={() => onCell(row, col)}
-                  className="h-14 rounded border border-dashed border-zinc-800 hover:border-zinc-600"
+                  className="h-14 rounded border border-dashed border-line hover:border-zinc-600"
                   aria-label={`Add seat at row ${row + 1}, column ${col + 1}`}
                 />
               ) : (
@@ -181,12 +181,12 @@ export function SeatMap({
             const mine = s.userId === meId;
             const taken = !!s.userId;
             const cls = mine
-              ? "bg-emerald-500 text-zinc-950 border-emerald-400"
+              ? "bg-bit text-ink border-bit"
               : taken
-                ? "bg-sky-500/20 text-sky-200 border-sky-500/40"
+                ? "bg-seat-taken/20 text-seat-taken border-seat-taken/40"
                 : s.locked
                   ? "bg-zinc-800/50 text-zinc-500 border-zinc-700 [background-image:repeating-linear-gradient(45deg,transparent,transparent_4px,rgba(255,255,255,.04)_4px,rgba(255,255,255,.04)_8px)]"
-                  : "bg-zinc-800 text-zinc-300 border-zinc-700 hover:border-emerald-500";
+                  : "bg-zinc-800 text-zinc-300 border-zinc-700 hover:border-bit";
             return (
               <button
                 key={i}
@@ -207,8 +207,8 @@ export function SeatMap({
 
       <div className="flex flex-wrap gap-4 text-xs text-zinc-500">
         <Legend cls="bg-zinc-800 border-zinc-700">Free</Legend>
-        <Legend cls="bg-emerald-500 border-emerald-400">You</Legend>
-        <Legend cls="bg-sky-500/20 border-sky-500/40">Taken</Legend>
+        <Legend cls="bg-bit border-bit">You</Legend>
+        <Legend cls="bg-seat-taken/20 border-seat-taken/40">Taken</Legend>
         <Legend cls="bg-zinc-800/50 border-zinc-700">Held</Legend>
       </div>
       {error && <p className="text-sm text-red-400">{error}</p>}
