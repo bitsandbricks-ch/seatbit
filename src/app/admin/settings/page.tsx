@@ -45,6 +45,9 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
       : null;
   const mail = mailTarget();
   const invite = inviteUrl();
+  const loginFromDb = all.some(
+    (x) => (x.key === "discord.clientId" || x.key === "discord.clientSecret") && x.source === "database",
+  );
 
   const section = (g: SettingGroup, extra?: React.ReactNode) => (
     <div>
@@ -113,6 +116,22 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
         section(
           "discord",
           <>
+            <div className="mb-2 space-y-1 text-xs text-zinc-400">
+              <p>
+                <span className="font-semibold text-zinc-200">First sign-in:</span> login is Discord-only, so the
+                application ID and client secret must be set as <code>DISCORD_CLIENT_ID</code> and{" "}
+                <code>DISCORD_CLIENT_SECRET</code> env vars before anyone can sign in and open this page. After that
+                you can change them here.
+              </p>
+              {loginFromDb && (
+                <p className="text-amber-300">
+                  The login credentials below are saved here and override the env vars. If you save wrong ones, nobody
+                  can sign in; undo with{" "}
+                  <code>node scripts/admin.mjs reset-setting discord.clientSecret</code> (and{" "}
+                  <code>discord.clientId</code>) in the container.
+                </p>
+              )}
+            </div>
             <Url label="OAuth2 redirect" value={`${appUrl}/api/auth/callback/discord`} />
             <Url label="Interactions endpoint URL" value={`${appUrl}/api/discord/interactions`} />
             {invite && (

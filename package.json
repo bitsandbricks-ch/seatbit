@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "db:generate": "drizzle-kit generate",
+    "admin": "node --env-file-if-exists=.env scripts/admin.mjs",
     "discord:register": "tsx --env-file-if-exists=.env scripts/discord-register.ts"
   },
   "dependencies": {
