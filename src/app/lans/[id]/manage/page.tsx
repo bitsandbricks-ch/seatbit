@@ -131,6 +131,84 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
   const count = (st: string) => rows.filter((r) => r.status === st).length;
   const noAnswer = users.filter((u) => memberIds.has(u.id) && !inLan.has(u.id)).length;
 
+  const seatCards = (
+          <div className="grid items-start gap-5 lg:grid-cols-2">
+          <Card title="Our seats">
+            <p className="mb-4 text-sm text-muted">
+              Enter the seats the event gave the group, then assign them here or on the Attendees tab. Hold keeps a seat
+              out of auto-assign, e.g. for a guest.
+            </p>
+            <SeatSetup
+              lanId={l.id}
+              current={seatSpec(seats)}
+              unseated={going.length - seated}
+              free={freeSeats}
+            />
+          </Card>
+          {seats.length > 0 && (
+            <Card title="Seat picking" actions={l.seatPicking && !l.seatsPublishedAt ? <Pill tone="emerald">open</Pill> : <Pill>closed</Pill>}>
+              <p className="mb-3 text-sm text-muted">
+                {l.seatPicking && !l.seatsPublishedAt
+                  ? "Members who are coming and have ticked \"I have my ticket\" can take a free seat on the event page. Held seats stay out of reach. You can still move anyone here. Close picking, then publish the plan."
+                  : l.seatsPublishedAt
+                    ? "The plan is published, so members can't pick seats."
+                    : "Optional first phase: let members choose their own free seat before you finish and publish the plan."}
+              </p>
+              {!l.seatsPublishedAt && (
+                <form action={setSeatPicking.bind(null, l.id, !l.seatPicking)}>
+                  <button className={l.seatPicking ? btnSecondary : btnPrimary}>
+                    {l.seatPicking ? "Close seat picking" : "Let members pick their seats"}
+                  </button>
+                </form>
+              )}
+            </Card>
+          )}
+          {seats.length > 0 && (
+            <Card title="Publish">
+              <PublishSeats
+                lanId={l.id}
+                publishedAt={l.seatsPublishedAt ? fmtDate(l.seatsPublishedAt) : null}
+                unseated={going.length - seated}
+              />
+            </Card>
+          )}
+          {wishChecks.length > 0 && (
+            <Card title="Seat wishes">
+              <ul className="space-y-2 text-sm">
+                {wishChecks.map((w) => (
+                  <li key={w.userId} className="flex flex-wrap gap-1.5">
+                    <span className="mr-1 font-medium">{names.get(w.userId)}</span>
+                    {w.ok.map((t) => (
+                      <Pill key={t} tone="emerald">
+                        ✓ {t}
+                      </Pill>
+                    ))}
+                    {w.missed.map((t) => (
+                      <Pill key={t} tone="red">
+                        ✗ {t}
+                      </Pill>
+                    ))}
+                  </li>
+                ))}
+              </ul>
+              {wishNotes.length > 0 && (
+                <div className="mt-4 border-t border-line pt-3">
+                  <p className="mb-2 text-xs uppercase tracking-wide text-faint">Notes</p>
+                  <ul className="space-y-1 text-sm">
+                    {wishNotes.map((r) => (
+                      <li key={r.id}>
+                        <span className="font-medium">{names.get(r.userId)}:</span>{" "}
+                        <span className="text-fg/90">{r.wishNote}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </Card>
+          )}
+          </div>
+  );
+
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -237,11 +315,10 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
       )}
 
       {tab === "seats" && (
-        // The seat plan is the main tool, so it gets the full width on top; setup, publishing and wishes sit below,
-        // side by side on wide screens.
+        // The seat plan is the main tool: map on the left with setup, publishing and wishes below it, and the seat
+        // details panel in its own column on the right (desktop).
         <div className="space-y-5">
-          {seats.length > 0 && (
-            <Card title="Seat plan">
+          {seats.length > 0 ? (
               <SeatMap
                 lanId={l.id}
                 rows={l.seatRows}
@@ -262,84 +339,12 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
                     };
                   })
                   .sort((a, b) => a.nick.localeCompare(b.nick))}
-              />
-            </Card>
+              >
+                {seatCards}
+              </SeatMap>
+          ) : (
+            seatCards
           )}
-          <div className="grid items-start gap-5 lg:grid-cols-2">
-          <Card title="Our seats">
-            <p className="mb-4 text-sm text-muted">
-              Enter the seats the event gave the group, then assign them here or on the Attendees tab. Hold keeps a seat
-              out of auto-assign, e.g. for a guest.
-            </p>
-            <SeatSetup
-              lanId={l.id}
-              current={seatSpec(seats)}
-              unseated={going.length - seated}
-              free={freeSeats}
-            />
-          </Card>
-          {seats.length > 0 && (
-            <Card title="Seat picking" actions={l.seatPicking && !l.seatsPublishedAt ? <Pill tone="emerald">open</Pill> : <Pill>closed</Pill>}>
-              <p className="mb-3 text-sm text-muted">
-                {l.seatPicking && !l.seatsPublishedAt
-                  ? "Members who are coming and have ticked \"I have my ticket\" can take a free seat on the event page. Held seats stay out of reach. You can still move anyone here. Close picking, then publish the plan."
-                  : l.seatsPublishedAt
-                    ? "The plan is published, so members can't pick seats."
-                    : "Optional first phase: let members choose their own free seat before you finish and publish the plan."}
-              </p>
-              {!l.seatsPublishedAt && (
-                <form action={setSeatPicking.bind(null, l.id, !l.seatPicking)}>
-                  <button className={l.seatPicking ? btnSecondary : btnPrimary}>
-                    {l.seatPicking ? "Close seat picking" : "Let members pick their seats"}
-                  </button>
-                </form>
-              )}
-            </Card>
-          )}
-          {seats.length > 0 && (
-            <Card title="Publish">
-              <PublishSeats
-                lanId={l.id}
-                publishedAt={l.seatsPublishedAt ? fmtDate(l.seatsPublishedAt) : null}
-                unseated={going.length - seated}
-              />
-            </Card>
-          )}
-          {wishChecks.length > 0 && (
-            <Card title="Seat wishes">
-              <ul className="space-y-2 text-sm">
-                {wishChecks.map((w) => (
-                  <li key={w.userId} className="flex flex-wrap gap-1.5">
-                    <span className="mr-1 font-medium">{names.get(w.userId)}</span>
-                    {w.ok.map((t) => (
-                      <Pill key={t} tone="emerald">
-                        ✓ {t}
-                      </Pill>
-                    ))}
-                    {w.missed.map((t) => (
-                      <Pill key={t} tone="red">
-                        ✗ {t}
-                      </Pill>
-                    ))}
-                  </li>
-                ))}
-              </ul>
-              {wishNotes.length > 0 && (
-                <div className="mt-4 border-t border-line pt-3">
-                  <p className="mb-2 text-xs uppercase tracking-wide text-faint">Notes</p>
-                  <ul className="space-y-1 text-sm">
-                    {wishNotes.map((r) => (
-                      <li key={r.id}>
-                        <span className="font-medium">{names.get(r.userId)}:</span>{" "}
-                        <span className="text-fg/90">{r.wishNote}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </Card>
-          )}
-          </div>
         </div>
       )}
 

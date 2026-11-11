@@ -23,7 +23,7 @@ import { PACKING_ITEMS } from "@/lib/gear";
 
 const { attendance, seat, nickname } = schema;
 
-const TABS = ["overview", "travel", "gear"] as const;
+const TABS = ["overview", "seats", "attendees", "travel", "gear"] as const;
 
 export default async function LanPage({ params, searchParams }: PageProps<"/lans/[id]">) {
   const { id } = await params;
@@ -133,6 +133,34 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           .map((it) => ({ id: it.id, label: it.label, packed: it.packed }))
       : [];
 
+  const profileBase = lanClan ? `/clans/${lanClan.slug}/members/` : null;
+  const seatPills = (
+    <span className="flex gap-2">
+      {picking && seats.length > 0 && <Pill tone="emerald">Pick your seat</Pill>}
+      {!published && !picking && seats.length > 0 && <Pill tone="amber">Not published yet</Pill>}
+    </span>
+  );
+  const wishesCard = my?.status === "going" && !published && seats.length > 0 && (
+    <Card title="Seat wishes">
+      <p className="mb-3 text-sm text-muted">Tell the orgas where you&apos;d like to sit. They plan the seats after the deadline.</p>
+      <SeatWishes
+        lanId={l.id}
+        people={rows
+          .filter((r) => r.userId !== me.id && (r.status === "going" || r.status === "maybe" || r.status === "waitlist"))
+          .map((r) => ({ id: r.userId, nick: names.get(r.userId) ?? "?" }))
+          .sort((a, b) => a.nick.localeCompare(b.nick))}
+        seatLabels={[...seats].sort((a, b) => a.row - b.row || a.col - b.col).map((s) => s.label)}
+        initial={{
+          near: my.wishNear ?? [],
+          avoid: my.wishAvoid ?? [],
+          position: my.wishPosition,
+          seat: my.wishSeat,
+          note: my.wishNote,
+        }}
+      />
+    </Card>
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
@@ -176,6 +204,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
       <Tabs
         tabs={[
           { id: "overview", label: "Overview" },
+          { id: "seats", label: "Seats", badge: picking && seats.length > 0 ? "pick yours" : undefined },
+          { id: "attendees", label: `Attendees ${going.length}` },
           { id: "travel", label: "Travel", badge: openRequests ? `${openRequests} looking` : undefined },
           { id: "gear", label: "Packing list" },
         ]}
@@ -198,203 +228,210 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
         </div>
       )}
 
+      {tab === "seats" && (
+        <>
+          {seats.length > 0 && my?.status === "going" && (picking || mySeatLabel) && !my.paid && !my.ticketBought && (
+            <p className="rounded-md border border-warn/30 bg-warn/10 px-3 py-2 text-sm text-warn">
+              {mySeatLabel
+                ? `You have seat ${mySeatLabel}. Tick "I have my ticket" in your checklist on the Overview tab.`
+                : `Tick "I have my ticket" in your checklist on the Overview tab, then pick your seat.`}
+            </p>
+          )}
+          {seats.length > 0 && (published || isAdmin || picking) ? (
+            <SeatMap
+              lanId={l.id}
+              rows={l.seatRows}
+              cols={l.seatCols}
+              meId={me.id}
+              mode={picking && my?.status === "going" && (my.ticketBought || my.paid) ? "pick" : "view"}
+              seats={seats.map((s) => ({ ...s, nick: s.userId ? (names.get(s.userId) ?? "?") : null }))}
+              title="Our seats"
+              actions={seatPills}
+            >
+              {wishesCard}
+            </SeatMap>
+          ) : (
+            <div className="grid items-start gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_22rem]">
+              <div className="min-w-0 space-y-4 sm:space-y-6">
+                <Card title="Our seats" actions={seatPills}>
+                  <p className="text-sm text-muted">
+                    {seats.length === 0
+                      ? "The orgas haven't entered the group's seats yet."
+                      : `The group has ${seats.length} seats (${seats[0]?.label}${seats.length > 1 ? `–${seats[seats.length - 1]?.label}` : ""}). The orgas assign them after the deadline and then publish the seat plan here.`}
+                  </p>
+                </Card>
+                {wishesCard}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {tab === "attendees" && (
+        <Card
+          title={`Attendees (${going.length}${l.capacity ? ` / ${l.capacity}` : ""})`}
+          actions={full && <Pill tone="red">Full · new sign-ups go on the waitlist</Pill>}
+        >
+          <AttendeeList title="Coming" list={going} profileBase={profileBase} names={names} seatOf={seatOf} showPaid={isAdmin} meId={me.id} />
+          <AttendeeList title="Waitlist" list={group("waitlist")} profileBase={profileBase} names={names} seatOf={seatOf} showPaid={isAdmin} meId={me.id} />
+          <AttendeeList title="Unsure" list={group("maybe")} profileBase={profileBase} names={names} seatOf={seatOf} showPaid={false} meId={me.id} />
+          {group("declined").length > 0 && <p className="mt-3 text-xs text-muted">{group("declined").length} can&apos;t make it.</p>}
+        </Card>
+      )}
+
       {tab === "overview" && (
         // Phones: your answer and checklist first, then the event, then the rest.
         // Desktop: event on the left, your stuff in a sidebar on the right.
         <div className="grid grid-cols-1 items-start gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_22rem]">
           <div className="min-w-0 space-y-4 sm:space-y-6 lg:col-start-2 lg:row-span-2 lg:row-start-1">
-          <Card title="Your attendance" actions={<StatusBadge status={my?.status} seat={seatOf.get(me.id)} />}>
-            <AttendanceButtons lanId={l.id} current={my?.status ?? null} disabled={!!closed || locked} />
-            {locked && !closed && <p className="mt-3 text-sm text-muted">{ATTENDANCE_LOCKED_MSG}</p>}
-            {my?.status === "waitlist" && (
-              <p className="mt-3 text-sm text-seat-taken">
-                The LAN is full. You&apos;re on the waitlist and will get an email if a spot opens up.
-              </p>
-            )}
-            {closed && <p className="mt-3 text-sm text-muted">Sign-up is closed.</p>}
-          </Card>
-
-          {my && my.status !== "declined" && (
-            <Card title="Your checklist" actions={<span className="text-sm text-muted">{prog.done} / {prog.total}</span>}>
-              <LanChecklist
-                lanId={l.id}
-                steps={steps}
-                ticketBought={my.ticketBought}
-                canReportTicket={my.status === "going" || my.status === "waitlist"}
-              />
+            <Card title="Your attendance" actions={<StatusBadge status={my?.status} seat={seatOf.get(me.id)} />}>
+              <AttendanceButtons lanId={l.id} current={my?.status ?? null} disabled={!!closed || locked} />
+              {locked && !closed && <p className="mt-3 text-sm text-muted">{ATTENDANCE_LOCKED_MSG}</p>}
+              {my?.status === "waitlist" && (
+                <p className="mt-3 text-sm text-seat-taken">
+                  The LAN is full. You&apos;re on the waitlist and will get an email if a spot opens up.
+                </p>
+              )}
+              {closed && <p className="mt-3 text-sm text-muted">Sign-up is closed.</p>}
             </Card>
-          )}
-          <Card title="Dates">
-            <dl className="space-y-3 text-sm">
-              <DateRow label="Answer by" d={l.signupDeadline} now={now} />
-              <DateRow label="Buy ticket by" d={l.paymentDueDate} now={now} />
-              {l.price && (
-                <div className="flex justify-between">
-                  <dt className="text-muted">Ticket price</dt>
-                  <dd>{l.price}</dd>
-                </div>
-              )}
-              {my && (my.status === "going" || my.status === "waitlist") && l.paymentDueDate && (
-                <div className="flex justify-between">
-                  <dt className="text-muted">Your ticket</dt>
-                  <dd>
-                    {my.paid ? (
-                      <Pill tone="emerald">Confirmed</Pill>
-                    ) : my.ticketBought ? (
-                      <Pill tone="amber">Reported</Pill>
-                    ) : (
-                      <Pill tone="red">Open</Pill>
-                    )}
-                  </dd>
-                </div>
-              )}
-            </dl>
-          </Card>
 
+            {my && my.status !== "declined" && (
+              <Card title="Your checklist" actions={<span className="text-sm text-muted">{prog.done} / {prog.total}</span>}>
+                <LanChecklist
+                  lanId={l.id}
+                  steps={steps}
+                  ticketBought={my.ticketBought}
+                  canReportTicket={my.status === "going" || my.status === "waitlist"}
+                />
+              </Card>
+            )}
+            <Card title="Dates">
+              <dl className="space-y-3 text-sm">
+                <DateRow label="Answer by" d={l.signupDeadline} now={now} />
+                <DateRow label="Buy ticket by" d={l.paymentDueDate} now={now} />
+                {l.price && (
+                  <div className="flex justify-between">
+                    <dt className="text-muted">Ticket price</dt>
+                    <dd>{l.price}</dd>
+                  </div>
+                )}
+                {my && (my.status === "going" || my.status === "waitlist") && l.paymentDueDate && (
+                  <div className="flex justify-between">
+                    <dt className="text-muted">Your ticket</dt>
+                    <dd>
+                      {my.paid ? (
+                        <Pill tone="emerald">Confirmed</Pill>
+                      ) : my.ticketBought ? (
+                        <Pill tone="amber">Reported</Pill>
+                      ) : (
+                        <Pill tone="red">Open</Pill>
+                      )}
+                    </dd>
+                  </div>
+                )}
+              </dl>
+            </Card>
           </div>
 
           <div className="min-w-0 space-y-4 sm:space-y-6 lg:col-start-1 lg:row-start-1">
-          {l.description && (
-            <Card>
-              <p className="whitespace-pre-wrap text-fg/90">{l.description}</p>
-            </Card>
-          )}
+            {l.description && (
+              <Card>
+                <p className="whitespace-pre-wrap text-fg/90">{l.description}</p>
+              </Card>
+            )}
 
-          <Card
-            title="Our seats"
-            actions={
-              <span className="flex gap-2">
-                {picking && seats.length > 0 && <Pill tone="emerald">Pick your seat</Pill>}
-                {!published && !picking && seats.length > 0 && <Pill tone="amber">Not published yet</Pill>}
-              </span>
-            }
-          >
-            {seats.length > 0 && my?.status === "going" && (picking || mySeatLabel) && !my.paid && !my.ticketBought && (
-              <div className="mb-4">
-                <p className="text-sm text-warn">
-                  {mySeatLabel
-                    ? `You have seat ${mySeatLabel}. Tick "I have my ticket" in your checklist above.`
-                    : `Tick "I have my ticket" in your checklist above, then pick your seat.`}
+            {/* At a glance: links into the Seats and Attendees tabs. */}
+            <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
+              <Link href={`/lans/${l.id}?tab=seats`} scroll={false} className="group rounded-card border border-line bg-surface p-4 transition hover:border-bit/50 sm:p-5">
+                <p className="flex items-center justify-between text-xs font-medium uppercase tracking-wide text-muted">
+                  Your seat <span className="text-bit transition group-hover:translate-x-0.5" aria-hidden>→</span>
                 </p>
-              </div>
-            )}
-            {seats.length === 0 ? (
-              <p className="text-sm text-muted">The orgas haven&apos;t entered the group&apos;s seats yet.</p>
-            ) : published || isAdmin || picking ? (
-              <SeatMap
-                lanId={l.id}
-                rows={l.seatRows}
-                cols={l.seatCols}
-                meId={me.id}
-                mode={picking && my?.status === "going" && (my.ticketBought || my.paid) ? "pick" : "view"}
-                seats={seats.map((s) => ({ ...s, nick: s.userId ? (names.get(s.userId) ?? "?") : null }))}
-              />
-            ) : (
-              <p className="text-sm text-muted">
-                The group has {seats.length} seats ({seats[0]?.label}
-                {seats.length > 1 ? `–${seats[seats.length - 1]?.label}` : ""}). The orgas assign them after the deadline
-                and then publish the seat plan here.
-              </p>
-            )}
-          </Card>
-
-          <Card
-            title={`Attendees (${going.length}${l.capacity ? ` / ${l.capacity}` : ""})`}
-            actions={full && <Pill tone="red">Full · new sign-ups go on the waitlist</Pill>}
-          >
-            <AttendeeList title="Coming" list={going} profileBase={lanClan ? `/clans/${lanClan.slug}/members/` : null} names={names} seatOf={seatOf} showPaid={isAdmin} meId={me.id} />
-            <AttendeeList title="Waitlist" list={group("waitlist")} profileBase={lanClan ? `/clans/${lanClan.slug}/members/` : null} names={names} seatOf={seatOf} showPaid={isAdmin} meId={me.id} />
-            <AttendeeList title="Unsure" list={group("maybe")} profileBase={lanClan ? `/clans/${lanClan.slug}/members/` : null} names={names} seatOf={seatOf} showPaid={false} meId={me.id} />
-            {group("declined").length > 0 && (
-              <p className="mt-3 text-xs text-muted">{group("declined").length} can&apos;t make it.</p>
-            )}
-          </Card>
-          </div>
-
-          <div className="min-w-0 space-y-4 sm:space-y-6 lg:col-start-1 lg:row-start-2">
-          {my?.status === "going" && !published && seats.length > 0 && (
-            <Card title="Seat wishes">
-              <p className="mb-3 text-sm text-muted">
-                Tell the orgas where you&apos;d like to sit. They plan the seats after the deadline.
-              </p>
-              <SeatWishes
-                lanId={l.id}
-                people={rows
-                  .filter((r) => r.userId !== me.id && (r.status === "going" || r.status === "maybe" || r.status === "waitlist"))
-                  .map((r) => ({ id: r.userId, nick: names.get(r.userId) ?? "?" }))
-                  .sort((a, b) => a.nick.localeCompare(b.nick))}
-                seatLabels={[...seats].sort((a, b) => a.row - b.row || a.col - b.col).map((s) => s.label)}
-                initial={{
-                  near: my.wishNear ?? [],
-                  avoid: my.wishAvoid ?? [],
-                  position: my.wishPosition,
-                  seat: my.wishSeat,
-                  note: my.wishNote,
-                }}
-              />
-            </Card>
-          )}
-
-          <div className="grid items-start gap-4 sm:gap-6 md:grid-cols-2">
-          <Card title={orgaIds.length ? "Orgas" : "Contact"}>
-            <p className="mb-3 text-sm text-muted">Questions about this LAN? Ask the orgas.</p>
-            <ul className="space-y-2">
-              {orgas.map((o) => (
-                <li key={o.id} className="flex items-center justify-between gap-2 text-sm">
-                  <span>
-                    {lanClan ? (
-                      <Link href={`/clans/${lanClan.slug}/members/${o.id}`} className="font-medium text-fg hover:text-bit hover:underline">
-                        {orgaNames.get(o.id) ?? o.name}
-                      </Link>
-                    ) : (
-                      <span className="font-medium text-fg">{orgaNames.get(o.id) ?? o.name}</span>
-                    )}
-                    {orgaNames.get(o.id) !== o.name && <span className="text-faint"> · {o.name}</span>}
-                  </span>
-                  <a
-                    href={`mailto:${o.email}?subject=${encodeURIComponent(l.name)}`}
-                    className="text-bit hover:underline"
-                  >
-                    Email
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </Card>
-
-          <Card title={lanType ? `Your nick & ID at ${lanType.name}` : "Your nick & ID at this LAN"}>
-            <p className="mb-3 text-sm text-muted">
-              Shown as <strong className="text-fg">{myNick}</strong>.{" "}
-              {lanType
-                ? `The nick you set here is used for every ${lanType.name} event. `
-                : "The nick you set here is used for this LAN only. "}
-              Your default nick is on your{" "}
-              <Link href="/profile" className="text-bit hover:underline">
-                profile
+                <p className="mt-1 font-mono text-2xl font-bold text-fg">{seatOf.get(me.id) ?? mySeatLabel ?? "–"}</p>
+                <p className="mt-1 text-sm text-muted">
+                  {seats.length === 0
+                    ? "Seats not entered yet"
+                    : picking
+                      ? "Seat picking is open"
+                      : published
+                        ? `Seat plan published · ${seats.filter((s) => !s.userId && !s.locked).length} free`
+                        : "Seat plan not published yet"}
+                </p>
               </Link>
-              .
-            </p>
-            {lanType ? (
-              <NickManager nicks={myNicks} typeId={lanType.id} placeholder={`Your ${lanType.name} nick`} />
-            ) : (
-              <NickManager nicks={myNicks} lanId={l.id} />
-            )}
-            <div className="mt-4 border-t border-line pt-4">
-              <h3 className="mb-1 text-sm font-medium text-fg">{lanType ? `Your ${lanType.name} ID` : "Your ID at this LAN"}</h3>
-              <p className="mb-2 text-sm text-muted">
-                Optional: your user ID or ticket number on the LAN&apos;s own site, so the orgas can match you up. Only
-                orgas see it.
-              </p>
-              <LanIdForm value={myLanId} lanId={l.id} label={lanType ? `${lanType.name} ID` : "LAN ID"} />
+              <Link href={`/lans/${l.id}?tab=attendees`} scroll={false} className="group rounded-card border border-line bg-surface p-4 transition hover:border-bit/50 sm:p-5">
+                <p className="flex items-center justify-between text-xs font-medium uppercase tracking-wide text-muted">
+                  Who&apos;s coming <span className="text-bit transition group-hover:translate-x-0.5" aria-hidden>→</span>
+                </p>
+                <p className="mt-1 text-2xl font-bold text-fg">
+                  {going.length}
+                  {l.capacity ? <span className="text-base font-medium text-muted"> / {l.capacity}</span> : null}
+                </p>
+                <p className="mt-1 truncate text-sm text-muted">
+                  {going.length
+                    ? going.slice(0, 4).map((a) => names.get(a.userId)).join(", ") + (going.length > 4 ? ` +${going.length - 4}` : "")
+                    : "Nobody yet"}
+                  {group("waitlist").length > 0 && ` · ${group("waitlist").length} waiting`}
+                </p>
+              </Link>
             </div>
-          </Card>
-          </div>
+
+            <div className="grid items-start gap-4 sm:gap-6 md:grid-cols-2">
+              <Card title={orgaIds.length ? "Orgas" : "Contact"}>
+                <p className="mb-3 text-sm text-muted">Questions about this LAN? Ask the orgas.</p>
+                <ul className="space-y-2">
+                  {orgas.map((o) => (
+                    <li key={o.id} className="flex items-center justify-between gap-2 text-sm">
+                      <span>
+                        {lanClan ? (
+                          <Link href={`/clans/${lanClan.slug}/members/${o.id}`} className="font-medium text-fg hover:text-bit hover:underline">
+                            {orgaNames.get(o.id) ?? o.name}
+                          </Link>
+                        ) : (
+                          <span className="font-medium text-fg">{orgaNames.get(o.id) ?? o.name}</span>
+                        )}
+                        {orgaNames.get(o.id) !== o.name && <span className="text-faint"> · {o.name}</span>}
+                      </span>
+                      <a href={`mailto:${o.email}?subject=${encodeURIComponent(l.name)}`} className="text-bit hover:underline">
+                        Email
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+
+              <Card title={lanType ? `Your nick & ID at ${lanType.name}` : "Your nick & ID at this LAN"}>
+                <p className="mb-3 text-sm text-muted">
+                  Shown as <strong className="text-fg">{myNick}</strong>.{" "}
+                  {lanType
+                    ? `The nick you set here is used for every ${lanType.name} event. `
+                    : "The nick you set here is used for this LAN only. "}
+                  Your default nick is on your{" "}
+                  <Link href="/profile" className="text-bit hover:underline">
+                    profile
+                  </Link>
+                  .
+                </p>
+                {lanType ? (
+                  <NickManager nicks={myNicks} typeId={lanType.id} placeholder={`Your ${lanType.name} nick`} />
+                ) : (
+                  <NickManager nicks={myNicks} lanId={l.id} />
+                )}
+                <div className="mt-4 border-t border-line pt-4">
+                  <h3 className="mb-1 text-sm font-medium text-fg">{lanType ? `Your ${lanType.name} ID` : "Your ID at this LAN"}</h3>
+                  <p className="mb-2 text-sm text-muted">
+                    Optional: your user ID or ticket number on the LAN&apos;s own site, so the orgas can match you up. Only
+                    orgas see it.
+                  </p>
+                  <LanIdForm value={myLanId} lanId={l.id} label={lanType ? `${lanType.name} ID` : "LAN ID"} />
+                </div>
+              </Card>
+            </div>
           </div>
         </div>
       )}
     </div>
   );
 }
+
 
 function DateRow({ label, d, now }: { label: string; d: Date | null; now: Date }) {
   if (!d) return null;
@@ -457,13 +494,13 @@ function AttendeeList({
   return (
     <div className="mb-4">
       <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">{title} <span className="text-faint">{list.length}</span></h3>
-      <ul className="grid gap-1 sm:grid-cols-2">{(fold ? sorted.slice(0, FIRST) : sorted).map(item)}</ul>
+      <ul className="grid gap-1 sm:grid-cols-2 xl:grid-cols-3">{(fold ? sorted.slice(0, FIRST) : sorted).map(item)}</ul>
       {fold && (
         <details className="group mt-1">
           <summary className="cursor-pointer list-none py-2 text-sm text-bit hover:underline group-open:hidden">
             Show all {sorted.length}
           </summary>
-          <ul className="grid gap-1 sm:grid-cols-2">{sorted.slice(FIRST).map(item)}</ul>
+          <ul className="grid gap-1 sm:grid-cols-2 xl:grid-cols-3">{sorted.slice(FIRST).map(item)}</ul>
         </details>
       )}
     </div>
