@@ -1,17 +1,24 @@
+// Dates are shown Swiss style with a 24h clock: "Sat 14.11.2026, 18:00". Built by hand so the
+// browser/server locale can never switch it to AM/PM or month-first.
+const WD = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const p2 = (n: number) => String(n).padStart(2, "0");
+const dmy = (d: Date) => `${p2(d.getDate())}.${p2(d.getMonth() + 1)}.${d.getFullYear()}`;
+const hm = (d: Date) => `${p2(d.getHours())}:${p2(d.getMinutes())}`;
+
+/** "Sat 14.11.2026, 18:00" */
 export function fmtDate(d: Date | null | undefined) {
   if (!d) return "—";
-  return d.toLocaleString("en-GB", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return `${WD[d.getDay()]} ${dmy(d)}, ${hm(d)}`;
 }
 
+/** "14.11.2026" */
 export function fmtDay(d: Date) {
-  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  return dmy(d);
+}
+
+/** "14:00" */
+export function fmtTime(d: Date) {
+  return hm(d);
 }
 
 /** Value for <input type="datetime-local">, in server-local time. */
@@ -37,16 +44,14 @@ export function relative(d: Date, now = new Date()) {
   return "";
 }
 
-/** "Mon 21 Dec 2026" */
+/** "Sat 14.11.2026" */
 export function fmtWeekday(d: Date) {
-  return d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+  return `${WD[d.getDay()]} ${dmy(d)}`;
 }
 
-/** "Mon 21 Dec, 18:00 – Wed 23 Dec 2026, 16:00": the year once when both ends share it. */
+/** "Fri 11.12., 18:00 – Sun 13.12.2026, 16:00": the year once when both ends share it. */
 export function fmtRange(start: Date, end: Date) {
-  const time = (d: Date) => d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
-  const day = (d: Date, year: boolean) =>
-    d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", ...(year ? { year: "numeric" } : {}) });
   const sameYear = start.getFullYear() === end.getFullYear();
-  return `${day(start, !sameYear)}, ${time(start)} – ${day(end, true)}, ${time(end)}`;
+  const startDay = sameYear ? `${p2(start.getDate())}.${p2(start.getMonth() + 1)}.` : dmy(start);
+  return `${WD[start.getDay()]} ${startDay}, ${hm(start)} – ${WD[end.getDay()]} ${dmy(end)}, ${hm(end)}`;
 }
