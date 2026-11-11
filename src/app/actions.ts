@@ -133,7 +133,7 @@ const lanInput = z.object({
   reminderDays: z.coerce.number().int().min(0).max(60),
 });
 
-export type FormState = { error?: string } | undefined;
+export type FormState = { error?: string; ok?: boolean } | undefined;
 
 export async function saveLan(_: FormState, formData: FormData): Promise<FormState> {
   const id = (formData.get("id") as string) || null;

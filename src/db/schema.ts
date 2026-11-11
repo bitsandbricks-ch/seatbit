@@ -5,6 +5,7 @@ import {
   text,
   uniqueIndex,
   index,
+  type AnySQLiteColumn,
 } from "drizzle-orm/sqlite-core";
 
 const now = sql`(cast(unixepoch('subsecond') * 1000 as integer))`;
@@ -25,6 +26,11 @@ export const user = sqliteTable("user", {
   image: text("image"),
   role: text("role").default("member").notNull(), // "admin" | "member"
   emailReminders: integer("email_reminders", { mode: "boolean" }).default(true).notNull(),
+  // Guests: members an orga added who have no login yet. They belong to one clan
+  // and are taken over by a real account through their claim link.
+  isGuest: integer("is_guest", { mode: "boolean" }).default(false).notNull(),
+  guestClanId: text("guest_clan_id").references((): AnySQLiteColumn => clan.id, { onDelete: "cascade" }),
+  claimCode: text("claim_code").unique(),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" })
     .default(now)

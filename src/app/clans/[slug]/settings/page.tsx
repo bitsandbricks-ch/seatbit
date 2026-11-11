@@ -4,6 +4,9 @@ import { asc, eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import {
   addClanMember,
+  addGuest,
+  deleteGuest,
+  renewGuestLink,
   createInvite,
   deleteClan,
   deleteInvite,
@@ -13,6 +16,8 @@ import {
 import { ClanAvatar } from "@/components/clan-avatar";
 import { ClanForm } from "@/components/clan-form";
 import { AddMemberForm } from "@/components/add-member-form";
+import { CopyField } from "@/components/copy-field";
+import { GuestForm } from "@/components/guest-form";
 import { Tabs } from "@/components/tabs";
 import { Card, Pill, btnDanger, btnGhost, btnPrimary, btnSecondary } from "@/components/ui";
 import { appUrl } from "@/lib/mail";
@@ -47,10 +52,12 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
     .sort((a, b) => a.u.name.localeCompare(b.u.name));
   const pending = members.filter((m) => m.role === "pending");
   const active = members.filter((m) => m.role !== "pending");
+  const guests = active.filter((m) => m.u.isGuest);
   const inClan = new Set(members.map((m) => m.u.id));
   const others = db
     .select({ id: schema.user.id, name: schema.user.name, email: schema.user.email })
     .from(schema.user)
+    .where(eq(schema.user.isGuest, false))
     .orderBy(asc(schema.user.name))
     .all()
     .filter((u) => !inClan.has(u.id))
@@ -120,6 +127,29 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
           <Card title="Add an existing user">
             <AddMemberForm clanId={c.id} users={others} action={addClanMember} />
           </Card>
+          <Card title="Guests">
+            <p className="mb-3 text-sm text-zinc-400">
+              For people who aren&apos;t on Seatbit yet: add them by name, then sign them up for events and give them a seat
+              like anyone else. Send them their link: when they sign in with Discord through it, their account takes over
+              everything you set up for them.
+            </p>
+            {guests.length > 0 && (
+              <ul className="mb-4 space-y-3">
+                {guests.map(({ u }) => (
+                  <li key={u.id} className="space-y-1.5">
+                    <span className="block truncate text-sm font-medium">{u.name}</span>
+                    <span className="flex flex-wrap items-center gap-1">
+                      <CopyField value={`${appUrl}/claim/${u.claimCode}`} />
+                      <form action={renewGuestLink.bind(null, c.id, u.id)}>
+                        <button className={`${btnGhost} text-xs`}>New link</button>
+                      </form>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <GuestForm action={addGuest.bind(null, c.id)} />
+          </Card>
           <Card title={`Members (${active.length})`}>
             <ul className="divide-y divide-line">
               {active.map(({ u, role }) => (
@@ -127,10 +157,17 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
                   <span className="min-w-0">
                     <span className="block truncate font-medium">
                       {u.name} {role === "admin" && <Pill tone="emerald">admin</Pill>}
+                      {u.isGuest && <Pill>guest</Pill>}
                     </span>
-                    <span className="block truncate text-xs text-zinc-500">{u.email}</span>
+                    <span className="block truncate text-xs text-zinc-500">{u.isGuest ? "No login yet" : u.email}</span>
                   </span>
                   <span className="flex gap-1">
+                    {u.isGuest ? (
+                      <form action={deleteGuest.bind(null, c.id, u.id)}>
+                        <button className={`${btnGhost} text-xs text-red-300`}>Remove</button>
+                      </form>
+                    ) : (
+                    <>
                     <form action={setClanMemberRole.bind(null, c.id, u.id, role === "admin" ? "member" : "admin")}>
                       <button className={`${btnGhost} text-xs`}>{role === "admin" ? "Remove admin" : "Make admin"}</button>
                     </form>
@@ -138,6 +175,8 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
                       <form action={removeClanMember.bind(null, c.id, u.id)}>
                         <button className={`${btnGhost} text-xs text-red-300`}>Remove</button>
                       </form>
+                    )}
+                    </>
                     )}
                   </span>
                 </li>

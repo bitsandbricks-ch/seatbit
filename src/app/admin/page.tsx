@@ -124,16 +124,16 @@ export default async function AdminPage() {
               {users.map((u) => (
                 <tr key={u.id}>
                   <td className="py-2">{u.name}</td>
-                  <td className="text-zinc-400">{u.email}</td>
+                  <td className="text-zinc-400">{u.isGuest ? "guest, no login yet" : u.email}</td>
                   <td>
                     {u.role === "admin" ? (
                       <Pill tone="emerald">admin</Pill>
                     ) : (
-                      <Pill>member</Pill>
+                      <Pill>{u.isGuest ? "guest" : "member"}</Pill>
                     )}
                   </td>
                   <td className="text-right">
-                    {u.id !== me.id && (
+                    {u.id !== me.id && !u.isGuest && (
                       <form
                         action={setUserRole.bind(
                           null,
