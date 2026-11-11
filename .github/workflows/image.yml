@@ -42,6 +42,9 @@ jobs:
             type=ref,event=pr
             type=semver,pattern={{version}}
             type=sha,format=short
+            # main-YYYYMMDDHHmmss-<short sha> (UTC build time): sortable, so
+            # Oak's Flux ImagePolicy can follow the newest main build.
+            type=raw,value=main-{{date 'YYYYMMDDHHmmss' tz='UTC'}}-{{sha}},enable={{is_default_branch}}
       - uses: docker/build-push-action@v6
         with:
           context: .
