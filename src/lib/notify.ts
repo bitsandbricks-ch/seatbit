@@ -148,7 +148,8 @@ export async function notify(userOrId: User | string, n: Notice): Promise<Notify
       await sendMail(u.email, n.subject, n.text, n.html);
       email = true;
     } catch (e) {
-      console.error(`[mail] ${n.kind} to ${u.email} failed`, e);
+      // Constant format string: the address is user data and must not be read as printf placeholders.
+      console.error("[mail] %s to %s failed", n.kind, u.email, e);
     }
   }
   const dm = await sendDiscordDm(u, n);
