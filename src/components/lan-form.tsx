@@ -13,6 +13,8 @@ export type LanFormValues = {
   location: string;
   websiteUrl: string;
   ticketUrl: string;
+  /** The event's own seat plan, where members book their seat. Optional (older callers leave it out). */
+  externalPlanUrl?: string;
   startsAt: string;
   endsAt: string;
   signupDeadline: string;
@@ -50,6 +52,12 @@ export function LanForm({ values, types }: { values: LanFormValues; types: { id:
         </Field>
         <Field label="Ticket shop">
           <Input type="url" name="ticketUrl" defaultValue={values.ticketUrl} placeholder="https://" />
+        </Field>
+        <Field
+          label="Event seat plan"
+          hint="Where members book their seat on the event's own site (e.g. the lal.gg Sitzplan). The link changes every year, so set it per event."
+        >
+          <Input type="url" name="externalPlanUrl" defaultValue={values.externalPlanUrl ?? ""} placeholder="https://" />
         </Field>
         <DateField label="Starts" name="startsAt" value={values.startsAt} required />
         <DateField label="Ends" name="endsAt" value={values.endsAt} required defaultTime="16:00" />

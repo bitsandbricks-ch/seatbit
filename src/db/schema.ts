@@ -206,6 +206,11 @@ export const lan = sqliteTable("lan", {
   seatingOpen: integer("seating_open", { mode: "boolean" }).default(true).notNull(),
   // Optional self-pick step: while on (and the plan isn't final), members who are coming choose their own free seat.
   seatPicking: integer("seat_picking", { mode: "boolean" }).default(false).notNull(),
+  /**
+   * The event's own seat plan (e.g. lal.gg's DotLAN "Sitzplan" page), where each
+   * member books the seat the orgas gave them. Per event: the plan id changes every year.
+   */
+  externalPlanUrl: text("external_plan_url").default("").notNull(),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
 });
 
@@ -235,6 +240,8 @@ export const attendance = sqliteTable(
     /** Preferred seat label, e.g. "F7". */
     wishSeat: text("wish_seat").default("").notNull(),
     wishNote: text("wish_note").default("").notNull(),
+    /** Set by the attendee: "I booked my seat on the event's own seat plan". Cleared when their seat changes. */
+    seatBooked: integer("seat_booked", { mode: "boolean" }).default(false).notNull(),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" })
       .default(now)
@@ -320,7 +327,7 @@ export const seat = sqliteTable(
   ],
 );
 
-export const REMINDER_KINDS = ["signup", "payment", "event", "waitlist_promoted"] as const;
+export const REMINDER_KINDS = ["signup", "payment", "event", "waitlist_promoted", "games", "book_seat"] as const;
 export type ReminderKind = (typeof REMINDER_KINDS)[number];
 
 export const reminderLog = sqliteTable(
@@ -337,6 +344,71 @@ export const reminderLog = sqliteTable(
     sentAt: integer("sent_at", { mode: "timestamp_ms" }).default(now).notNull(),
   },
   (t) => [uniqueIndex("reminder_log_uq").on(t.lanId, t.userId, t.kind)],
+);
+
+export const SWAP_STATUSES = ["pending", "accepted", "declined", "approved", "rejected", "cancelled"] as const;
+export type SwapStatus = (typeof SWAP_STATUSES)[number];
+
+/**
+ * A member asks another seated member to swap seats. The other one accepts,
+ * then an orga approves and the seats are swapped ("pending" -> "accepted" -> "approved").
+ */
+export const seatSwap = sqliteTable(
+  "seat_swap",
+  {
+    id: id(),
+    lanId: text("lan_id")
+      .notNull()
+      .references(() => lan.id, { onDelete: "cascade" }),
+    fromUserId: text("from_user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    toUserId: text("to_user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    status: text("status").$type<SwapStatus>().default("pending").notNull(),
+    note: text("note").default("").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+    decidedAt: integer("decided_at", { mode: "timestamp_ms" }),
+  },
+  (t) => [index("seat_swap_lan_idx").on(t.lanId)],
+);
+
+// ---------- Games ----------
+
+/** A game someone suggested playing at a LAN. */
+export const game = sqliteTable(
+  "game",
+  {
+    id: id(),
+    lanId: text("lan_id")
+      .notNull()
+      .references(() => lan.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    /** Download size in GB, so people know what to install before they leave. */
+    sizeGb: integer("size_gb"),
+    /** Store or download page. */
+    url: text("url").default("").notNull(),
+    addedBy: text("added_by").references(() => user.id, { onDelete: "set null" }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  (t) => [index("game_lan_idx").on(t.lanId)],
+);
+
+/** A member's vote for a game and whether they installed it. */
+export const gameVote = sqliteTable(
+  "game_vote",
+  {
+    gameId: text("game_id")
+      .notNull()
+      .references(() => game.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    vote: integer("vote", { mode: "boolean" }).default(false).notNull(),
+    installed: integer("installed", { mode: "boolean" }).default(false).notNull(),
+  },
+  (t) => [uniqueIndex("game_vote_uq").on(t.gameId, t.userId)],
 );
 
 // ---------- Chat integrations ----------
@@ -487,6 +559,8 @@ export type Nickname = typeof nickname.$inferSelect;
 export type LanAccount = typeof lanAccount.$inferSelect;
 export type Seat = typeof seat.$inferSelect;
 export type TravelPost = typeof travelPost.$inferSelect;
+export type SeatSwap = typeof seatSwap.$inferSelect;
+export type Game = typeof game.$inferSelect;
 
 // ---------- Platform settings ----------
 

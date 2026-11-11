@@ -1,7 +1,7 @@
 import type { Attendance, Lan } from "@/db/schema";
 
 export type StepState = "done" | "pending" | "todo";
-export type ChecklistStep = { key: "going" | "nick" | "ticket" | "seat"; title: string; state: StepState; hint: string };
+export type ChecklistStep = { key: "going" | "nick" | "ticket" | "seat" | "book"; title: string; state: StepState; hint: string };
 
 /** The per-LAN to-do list for an attendee. */
 export function buildChecklist(input: {
@@ -68,6 +68,15 @@ export function buildChecklist(input: {
             : freeSeats === 0
               ? "The orgas will finalize the seat plan soon."
               : "Add seat wishes on the Seats tab. The orgas finalize the seat plan after the deadline.",
+    });
+  }
+  // The event's own seat plan (e.g. lal.gg): members book the seat they got there themselves.
+  if (lan.externalPlanUrl && lan.seatsPublishedAt && a?.status === "going" && seatLabel) {
+    steps.push({
+      key: "book",
+      title: `Book ${seatLabel} on the event site`,
+      state: a.seatBooked ? "done" : "todo",
+      hint: a.seatBooked ? "Booked." : "Reserve the same seat on the event's seat plan, then tick it off.",
     });
   }
   return steps;

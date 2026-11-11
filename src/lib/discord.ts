@@ -7,6 +7,7 @@ import { type ChatReminderKind, fmtWhen, lanFacts, lanLink, lanSummary } from ".
 import { ATTENDANCE_LOCKED_MSG, attendanceLocked, getLan, setAttendance, signupClosed } from "./lans";
 import { type Json, api, discordEnabled } from "./discord-api";
 import { getSetting } from "./settings";
+import { setSeatBooked } from "./seat-booking";
 import { appUrl } from "./mail";
 
 const { discordChannel, discordMessage, channelReminderLog, account, attendance, lan, user } = schema;
@@ -67,6 +68,18 @@ function attendanceButtons(l: Lan, disabled = false) {
   ];
 }
 
+/** "⏰ Next: buy ticket by Sat 14.11.2026, 18:00", or "" when nothing is due anymore. */
+function nextDeadline(l: Lan, now = new Date()) {
+  const next = (
+    [
+      ["Answer by", l.signupDeadline],
+      ["Buy ticket by", l.paymentDueDate],
+      ["Starts", l.startsAt],
+    ] as const
+  ).find(([, d]) => d && d > now);
+  return next ? `⏰ Next: ${next[0]} ${fmtWhen(next[1]!)}` : "";
+}
+
 /** The LAN announcement: details, live attendee list and attendance buttons. */
 export async function lanMessage(l: Lan) {
   const s = await lanSummary(l);
@@ -80,6 +93,13 @@ export async function lanMessage(l: Lan) {
   if (s.maybe.length) fields.push({ name: `Unsure (${s.maybe.length})`, value: list(s.maybe.map((g) => g.nick)), inline: false });
   if (s.waitlist.length)
     fields.push({ name: `Waitlist (${s.waitlist.length})`, value: list(s.waitlist.map((g) => g.nick)), inline: false });
+  // Live status: tickets, seat bookings and what's due next.
+  const status = [
+    s.going.length ? `🎟️ Tickets: **${s.going.length - s.goingNoTicket}/${s.going.length}**` : "",
+    s.seated ? `💺 Seats booked on the event site: **${s.booked}/${s.seated}**` : "",
+    nextDeadline(l),
+  ].filter(Boolean);
+  if (status.length) fields.push({ name: "Status", value: clip(status.join("\n"), 1024), inline: false });
   const c = l.clanId ? getClan(l.clanId) : undefined;
   const icon = c && avatarUrl(c);
   return {
@@ -176,6 +196,10 @@ export async function announceLan(lanId: string, onlyChannelId?: string) {
       const m = await api<{ id: string }>("POST", `/channels/${c.channelId}/messages`, msg);
       db.insert(discordMessage).values({ lanId, channelId: c.channelId, messageId: m.id }).run();
       posted++;
+      // Pin the live post so it's easy to find. Needs the "Pin Messages" permission; fine without.
+      await api("PUT", `/channels/${c.channelId}/pins/${m.id}`).catch((e) =>
+        console.warn(`[discord] couldn't pin in ${c.channelId}: ${(e as Error).message}`),
+      );
     } catch (e) {
       if (!forgetIfGone(c.channelId, e)) console.error("[discord] announce failed", e);
     }
@@ -360,6 +384,24 @@ export function handleInteraction(i: Interaction): { response: Json; later?: () 
       .slice(0, 25)
       .map((c) => ({ name: clip(c.name, 100), value: c.slug }));
     return { response: { type: 8, data: { choices } } };
+  }
+
+  // "I booked it" button in seat DMs: the member booked their seat on the event's own seat plan.
+  if (i.type === 3 && i.data?.custom_id?.startsWith("booked:")) {
+    const l = getLan(i.data.custom_id.slice("booked:".length));
+    if (!l) return { response: reply("This LAN doesn't exist anymore.") };
+    const me = seatbitUserFor(discordUser);
+    if (!me) return { response: notLinked() };
+    try {
+      const label = setSeatBooked(l.id, me.id, true);
+      return {
+        response: reply(`👍 Noted: you booked seat **${label}** for **${l.name}**. Thanks!`, {
+          components: [linkButton("Open in Seatbit", lanLink(l))],
+        }),
+      };
+    } catch (e) {
+      return { response: reply((e as Error).message, { components: [linkButton("Open in Seatbit", lanLink(l))] }) };
+    }
   }
 
   // Attendance button
