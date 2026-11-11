@@ -29,13 +29,6 @@
       "when": 1794393752495,
       "tag": "0003_discord",
       "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "6",
-      "when": 1794393801483,
-      "tag": "0004_platform_settings",
-      "breakpoints": true
     }
   ]
 }
