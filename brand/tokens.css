@@ -21,6 +21,7 @@
   --color-bit-hover: #5cefb5;
   --color-bit-deep: #0e9f6e;   /* accent on light backgrounds, logos on white */
   --color-bit-ink: #047857;    /* green text on light backgrounds (AA) */
+  --color-on-bit: #0b0b0f;     /* text on bit fills */
   --color-bit-soft: #2ee59d1f; /* tinted badge / selected background */
 
   /* Seat-map + status */
