@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AuthForm } from "@/components/auth-form";
+import { LegalNotice } from "@/components/legal-page";
 import { enabledProviders, signupOpen } from "@/lib/auth";
 import { getCurrentUser } from "@/lib/session";
 
@@ -20,5 +21,10 @@ export default async function RegisterPage({ searchParams }: PageProps<"/registe
       </div>
     );
   }
-  return <AuthForm mode="register" providers={enabledProviders()} next={next} />;
+  return (
+    <>
+      <AuthForm mode="register" providers={enabledProviders()} next={next} />
+      <LegalNotice />
+    </>
+  );
 }

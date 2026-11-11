@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Link from "next/link";
 import { Header } from "@/components/header";
 import "./globals.css";
 
@@ -18,7 +19,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col font-sans">
         <Header />
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">{children}</main>
-        <footer className="py-6 text-center text-xs text-zinc-600">Seatbit</footer>
+        <footer className="flex justify-center gap-4 py-6 text-xs text-zinc-600">
+          <span>Seatbit</span>
+          <Link href="/terms" className="hover:text-zinc-400">
+            Terms
+          </Link>
+          <Link href="/privacy" className="hover:text-zinc-400">
+            Privacy
+          </Link>
+        </footer>
       </body>
     </html>
   );
