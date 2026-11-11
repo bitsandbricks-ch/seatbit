@@ -8,6 +8,7 @@ import { db, schema } from "@/db";
 import { canManageClan, clanRole, getClan, saveAvatar, uniqueSlug } from "@/lib/clans";
 import { guestEmail } from "@/lib/guests";
 import { appUrl } from "@/lib/mail";
+import { missingServers, setServerInvite } from "@/lib/discord-invite";
 import { notify, notifyClanAdmins, notifyLater } from "@/lib/notify";
 import { requireClanManager, requireLanManager, requireUser } from "@/lib/session";
 import { adminSetAttendance, type FormState } from "./actions";
@@ -138,15 +139,18 @@ export async function setClanMemberRole(clanId: string, userId: string, role: "a
   revalidatePath("/", "layout");
   const c = getClan(clanId);
   if (wasPending && c) {
-    notifyLater(() =>
-      notify(userId, {
+    notifyLater(async () => {
+      // They may not be on the clan's Discord yet, so this also goes by mail, with the invite.
+      const invites = (await missingServers(userId, clanId)).map((sv) => sv.inviteUrl).filter(Boolean);
+      await notify(userId, {
         kind: "clan_approved",
         subject: `You're in: ${c.name}`,
-        text: `Your request to join ${c.name} was approved. Their LANs now show up in Seatbit.`,
+        text: `Your request to join ${c.name} was approved. Their LANs now show up in Seatbit.${
+          invites.length ? `\n\nJoin the clan's Discord: ${invites.join(" ")}` : ""
+        }\n\n${appUrl}/clans/${c.slug}`,
         url: `${appUrl}/clans/${c.slug}`,
-        dmOnly: true,
-      }),
-    );
+      });
+    });
   }
 }
 
@@ -333,4 +337,12 @@ export async function claimGuest(code: string) {
   revalidatePath("/", "layout");
   const c = g.guestClanId ? getClan(g.guestClanId) : null;
   redirect(c ? `/clans/${c.slug}` : "/");
+}
+
+/** Clan admins set the Discord invite link shown to members who aren't on the server. */
+export async function setClanDiscordInvite(clanId: string, guildId: string, formData: FormData) {
+  await requireClanManager(clanId);
+  const r = setServerInvite(clanId, guildId, String(formData.get("inviteUrl") ?? ""));
+  if (r.error) throw new Error(r.error);
+  revalidatePath("/clans", "layout");
 }

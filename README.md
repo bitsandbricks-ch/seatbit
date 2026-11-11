@@ -88,6 +88,8 @@ What it does, per clan:
 - `/lans` shows the server's clan's upcoming LANs and your status, privately, with answer buttons (in DMs: all your clans).
 - Orgas can re-post or post reminders by hand on the LAN's manage page; clan admins can unlink channels in clan settings.
 
+Clan members who aren't on the clan's Discord server see a "Join our Discord" button on the clan page (and get the link when their join request is approved). The bot creates the invite in the linked channel if it has "Create Invite" (included in the invite link from `npm run discord:register`); admins can paste their own under Clan settings → Discord & WhatsApp.
+
 Members are matched by their linked Discord account. Everyone signs in with Discord, so every member is matched automatically.
 
 ### WhatsApp

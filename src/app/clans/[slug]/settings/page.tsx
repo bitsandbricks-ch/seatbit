@@ -11,6 +11,7 @@ import {
   deleteClan,
   deleteInvite,
   removeClanMember,
+  setClanDiscordInvite,
   setClanMemberRole,
 } from "@/app/clan-actions";
 import { ClanAvatar } from "@/components/clan-avatar";
@@ -25,6 +26,7 @@ import { canManageClan, getClanBySlug } from "@/lib/clans";
 import { requireUser } from "@/lib/session";
 import { unlinkDiscordChannel } from "@/app/actions";
 import { discordEnabled, inviteUrl } from "@/lib/discord-api";
+import { clanServers } from "@/lib/discord-invite";
 
 const TABS = [
   { id: "general", label: "General" },
@@ -221,7 +223,7 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
   );
 }
 
-function ChatTab({ clanId }: { clanId: string }) {
+async function ChatTab({ clanId }: { clanId: string }) {
   const channels = db
     .select()
     .from(schema.discordChannel)
@@ -229,6 +231,7 @@ function ChatTab({ clanId }: { clanId: string }) {
     .orderBy(asc(schema.discordChannel.createdAt))
     .all();
   const invite = inviteUrl();
+  const servers = discordEnabled() && channels.length ? await clanServers(clanId) : [];
   return (
     <div className="space-y-5">
       <Card title="Discord bot">
@@ -285,6 +288,32 @@ function ChatTab({ clanId }: { clanId: string }) {
                   </li>
                 ))}
               </ul>
+            )}
+            {servers.length > 0 && (
+              <div className="space-y-3 border-t border-line pt-4">
+                <h3 className="font-semibold">Invite for members</h3>
+                <p className="text-muted">
+                  Members who aren&apos;t on your server see a &ldquo;Join our Discord&rdquo; button on the clan page, and get
+                  the link when their join request is approved. The bot creates the invite itself if it may (&ldquo;Create
+                  Invite&rdquo;), or paste your own.
+                </p>
+                {servers.map((sv) => (
+                  <form
+                    key={sv.guildId}
+                    action={setClanDiscordInvite.bind(null, clanId, sv.guildId)}
+                    className="flex flex-wrap items-center gap-2"
+                  >
+                    <span className="w-full text-xs text-faint">{sv.guildName || `Server ${sv.guildId}`}</span>
+                    <input
+                      name="inviteUrl"
+                      defaultValue={sv.inviteUrl ?? ""}
+                      placeholder="https://discord.gg/…"
+                      className="min-w-0 flex-1 rounded-md border border-line bg-raised px-3 py-1.5 font-mono text-xs"
+                    />
+                    <button className={btnSecondary}>Save</button>
+                  </form>
+                ))}
+              </div>
             )}
           </div>
         )}
