@@ -194,8 +194,8 @@ export function SeatMap({
   };
 
   const compact = zoom === "compact";
-  // Compact seats fit a 10-wide block on a 390px phone without scrolling.
-  const cell = compact ? "h-8 sm:h-10" : "h-[4.5rem]";
+  // Compact: big enough to tap (40px) on phones; long rows wrap instead. Large: room for label + nick.
+  const cell = compact ? "h-10" : "h-16 sm:h-[4.5rem]";
 
   // Seat width and seats per line from the available width; longer rows wrap (see below).
   useEffect(() => {
@@ -204,9 +204,10 @@ export function SeatMap({
     const measure = () => {
       const sm = window.matchMedia("(min-width: 640px)").matches;
       const g = sm ? 4 : 3;
-      const min = compact ? (sm ? 36 : 26) : 76;
-      const max = compact ? 52 : 128;
-      const avail = el.clientWidth - 20 - 4 - 12; // row letter, its gap, indent of wrapped lines
+      const min = compact ? 40 : sm ? 72 : 68;
+      const max = compact ? 56 : 112;
+      // Minus the padding that keeps selection rings visible, the row letter, its gap and the wrap indent.
+      const avail = el.clientWidth - 12 - 20 - 4 - 12;
       const cap = Math.max(1, Math.floor((avail + g) / (min + g)));
       setDims({ cap, w: Math.max(min, Math.min(max, Math.floor((avail + g) / cap - g))), g });
     };
@@ -303,7 +304,7 @@ export function SeatMap({
           <span aria-hidden className="absolute inset-x-1 bottom-0.5 h-[3px] rounded-full" style={{ background: s.color }} />
         )}
         {compact ? (
-          <span className={`w-full truncate font-mono leading-none ${taken ? "text-[11px] font-semibold" : "text-[10px]"}`}>{short}</span>
+          <span className={`w-full truncate font-mono text-xs leading-none ${taken ? "font-semibold" : ""}`}>{short}</span>
         ) : (
           <>
             <span className="font-mono text-[11px] leading-none opacity-75">
@@ -462,7 +463,7 @@ export function SeatMap({
               </p>
             )}
 
-            <div ref={wrapRef} data-seat-grid className={`scroll-mt-20 space-y-2 overflow-x-auto ${pending ? "opacity-70" : ""}`}>
+            <div ref={wrapRef} data-seat-grid className={`-mx-1.5 scroll-mt-20 space-y-2 overflow-x-auto p-1.5 ${pending ? "opacity-70" : ""}`}>
               {rowList.map((row) => {
                 const lines = linesFor(itemsFor(row));
                 return (
