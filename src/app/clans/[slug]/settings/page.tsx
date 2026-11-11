@@ -1,0 +1,226 @@
+import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
+import { asc, eq } from "drizzle-orm";
+import { db, schema } from "@/db";
+import {
+  addClanMember,
+  createInvite,
+  deleteClan,
+  deleteInvite,
+  removeClanMember,
+  setClanMemberRole,
+} from "@/app/clan-actions";
+import { ClanAvatar } from "@/components/clan-avatar";
+import { ClanForm } from "@/components/clan-form";
+import { AddMemberForm } from "@/components/add-member-form";
+import { Tabs } from "@/components/tabs";
+import { Card, Pill, btnDanger, btnGhost, btnPrimary, btnSecondary } from "@/components/ui";
+import { appUrl } from "@/lib/mail";
+import { canManageClan, getClanBySlug } from "@/lib/clans";
+import { requireUser } from "@/lib/session";
+
+const TABS = [
+  { id: "general", label: "General" },
+  { id: "members", label: "Members" },
+  { id: "types", label: "LAN types" },
+  { id: "invites", label: "Invite links" },
+];
+
+export default async function ClanSettingsPage({ params, searchParams }: PageProps<"/clans/[slug]/settings">) {
+  const { slug } = await params;
+  const sp = await searchParams;
+  const me = await requireUser();
+  const c = getClanBySlug(slug);
+  if (!c) notFound();
+  if (!canManageClan(me, c.id)) redirect(`/clans/${slug}`);
+  const tab = TABS.some((t) => t.id === sp.tab) ? (sp.tab as string) : "general";
+
+  const members = db
+    .select({ u: schema.user, role: schema.clanMember.role })
+    .from(schema.clanMember)
+    .innerJoin(schema.user, eq(schema.user.id, schema.clanMember.userId))
+    .where(eq(schema.clanMember.clanId, c.id))
+    .all()
+    .sort((a, b) => a.u.name.localeCompare(b.u.name));
+  const pending = members.filter((m) => m.role === "pending");
+  const active = members.filter((m) => m.role !== "pending");
+  const inClan = new Set(members.map((m) => m.u.id));
+  const others = db
+    .select({ id: schema.user.id, name: schema.user.name, email: schema.user.email })
+    .from(schema.user)
+    .orderBy(asc(schema.user.name))
+    .all()
+    .filter((u) => !inClan.has(u.id))
+    // Don't hand every user's full email address to clan admins.
+    .map((u) => ({ ...u, email: maskEmail(u.email) }));
+
+  return (
+    <div className="mx-auto max-w-3xl space-y-5">
+      <div className="flex items-center gap-3">
+        <ClanAvatar clan={c} size={48} />
+        <div className="min-w-0">
+          <Link href={`/clans/${c.slug}`} className="text-sm text-zinc-500 hover:text-zinc-300">
+            ← {c.name}
+          </Link>
+          <h1 className="text-2xl font-bold">Clan settings</h1>
+        </div>
+      </div>
+      <div className="sticky top-0 z-10 bg-ink/95 backdrop-blur">
+        <Tabs
+          tabs={TABS.map((t) => ({ ...t, badge: t.id === "members" && pending.length ? `${pending.length} waiting` : undefined }))}
+          active={tab}
+          hrefFor={(t) => `/clans/${c.slug}/settings?tab=${t}`}
+        />
+      </div>
+
+      {tab === "general" && (
+        <>
+          <Card>
+            <ClanForm
+              key={c.avatar ?? "none"}
+              clan={{ id: c.id, name: c.name, description: c.description, joinPolicy: c.joinPolicy, hasAvatar: !!c.avatar }}
+            />
+          </Card>
+          <Card title="Danger zone">
+            <p className="mb-3 text-sm text-zinc-400">Deletes the clan with all its events and LAN types.</p>
+            <form action={deleteClan.bind(null, c.id)}>
+              <button className={btnDanger}>Delete {c.name}</button>
+            </form>
+          </Card>
+        </>
+      )}
+
+      {tab === "members" && (
+        <>
+          {pending.length > 0 && (
+            <Card title="Waiting for approval">
+              <ul className="space-y-2">
+                {pending.map(({ u }) => (
+                  <li key={u.id} className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="min-w-0">
+                      <span className="block truncate font-medium">{u.name}</span>
+                      <span className="block truncate text-xs text-zinc-500">{u.email}</span>
+                    </span>
+                    <span className="flex gap-2">
+                      <form action={setClanMemberRole.bind(null, c.id, u.id, "member")}>
+                        <button className={btnPrimary}>Approve</button>
+                      </form>
+                      <form action={removeClanMember.bind(null, c.id, u.id)}>
+                        <button className={btnGhost}>Decline</button>
+                      </form>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
+          <Card title="Add an existing user">
+            <AddMemberForm clanId={c.id} users={others} action={addClanMember} />
+          </Card>
+          <Card title={`Members (${active.length})`}>
+            <ul className="divide-y divide-line">
+              {active.map(({ u, role }) => (
+                <li key={u.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                  <span className="min-w-0">
+                    <span className="block truncate font-medium">
+                      {u.name} {role === "admin" && <Pill tone="emerald">admin</Pill>}
+                    </span>
+                    <span className="block truncate text-xs text-zinc-500">{u.email}</span>
+                  </span>
+                  <span className="flex gap-1">
+                    <form action={setClanMemberRole.bind(null, c.id, u.id, role === "admin" ? "member" : "admin")}>
+                      <button className={`${btnGhost} text-xs`}>{role === "admin" ? "Remove admin" : "Make admin"}</button>
+                    </form>
+                    {u.id !== me.id && (
+                      <form action={removeClanMember.bind(null, c.id, u.id)}>
+                        <button className={`${btnGhost} text-xs text-red-300`}>Remove</button>
+                      </form>
+                    )}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        </>
+      )}
+
+      {tab === "types" && (
+        <TypesTab clanId={c.id} slug={c.slug} />
+      )}
+
+      {tab === "invites" && (
+        <Card title="Invite links">
+          <p className="mb-3 text-sm text-zinc-400">
+            Anyone with a link joins right away, without approval. Delete a link to stop it working.
+          </p>
+          <ul className="mb-4 space-y-2">
+            {db
+              .select()
+              .from(schema.clanInvite)
+              .where(eq(schema.clanInvite.clanId, c.id))
+              .all()
+              .map((i) => (
+                <li key={i.code} className="flex items-center gap-2">
+                  <input readOnly value={`${appUrl}/join/${i.code}`} className="min-w-0 flex-1 rounded-md border border-line bg-raised px-3 py-1.5 font-mono text-xs" />
+                  <form action={deleteInvite.bind(null, i.code)}>
+                    <button className={`${btnGhost} text-xs text-red-300`}>Delete</button>
+                  </form>
+                </li>
+              ))}
+          </ul>
+          <form action={createInvite.bind(null, c.id)}>
+            <button className={btnSecondary}>Create invite link</button>
+          </form>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+function TypesTab({ clanId, slug }: { clanId: string; slug: string }) {
+  const types = db.select().from(schema.lanType).where(eq(schema.lanType.clanId, clanId)).orderBy(asc(schema.lanType.name)).all();
+  return (
+    <Card
+      title="LAN types"
+      actions={
+        <Link href={`/clans/${slug}/types/new`} className={btnPrimary}>
+          Add type
+        </Link>
+      }
+    >
+      <p className="mb-3 text-sm text-zinc-400">
+        Recurring LAN parties like Lock &amp; Load or SwitzerLAN. Each year&apos;s event is created from its type, and
+        members keep one nick per type.
+      </p>
+      {types.length === 0 ? (
+        <p className="text-sm text-zinc-500">No LAN types yet.</p>
+      ) : (
+        <ul className="divide-y divide-line">
+          {types.map((t) => (
+            <li key={t.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+              <span className="min-w-0">
+                <span className="block font-medium">{t.name}</span>
+                <span className="block truncate text-xs text-zinc-500">
+                  {[t.location, t.price, t.seatSpec && `seats ${t.seatSpec}`].filter(Boolean).join(" · ") || "—"}
+                </span>
+              </span>
+              <span className="flex gap-1">
+                <Link href={`/clans/${slug}/types/${t.id}`} className={btnGhost}>
+                  Edit
+                </Link>
+                <Link href={`/clans/${slug}/lans/new?type=${t.id}`} className={btnSecondary}>
+                  New event
+                </Link>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  );
+}
+
+function maskEmail(e: string) {
+  const [local, domain] = e.split("@");
+  return `${local.slice(0, 2)}${"•".repeat(Math.max(1, local.length - 2))}@${domain ?? ""}`;
+}
