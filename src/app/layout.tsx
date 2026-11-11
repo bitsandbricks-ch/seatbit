@@ -8,7 +8,7 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 
 export const metadata: Metadata = {
   title: "Seatbit",
-  description: "Attendance, seats and nicknames for your LAN parties",
+  description: "Coordinate who in your group goes to which LAN party, tickets and seats",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -15,9 +15,9 @@ import {
   trimSeatGrid,
 } from "@/lib/lans";
 import { sendReminderNow } from "@/lib/reminders";
-import { requireAdmin, requireUser } from "@/lib/session";
+import { requireAdmin, requireLanManager, requireUser } from "@/lib/session";
 
-const { attendance, nickname, seat, lan, user } = schema;
+const { attendance, nickname, seat, lan, user, lanOrga } = schema;
 
 function mustGetLan(id: string) {
   const l = getLan(id);
@@ -27,7 +27,7 @@ function mustGetLan(id: string) {
 
 const lanPath = (id: string) => {
   revalidatePath(`/lans/${id}`);
-  revalidatePath(`/admin/lans/${id}`);
+  revalidatePath(`/lans/${id}/manage`);
   revalidatePath("/");
 };
 
@@ -150,6 +150,8 @@ const lanInput = z.object({
   name: z.string().trim().min(1).max(100),
   description: z.string().max(5000).default(""),
   location: z.string().max(200).default(""),
+  websiteUrl: z.union([z.literal(""), z.url().max(500)]).default(""),
+  ticketUrl: z.union([z.literal(""), z.url().max(500)]).default(""),
   startsAt: z.string().min(1).transform((v) => new Date(v)),
   endsAt: z.string().min(1).transform((v) => new Date(v)),
   signupDeadline: optDate,
@@ -169,8 +171,8 @@ const lanInput = z.object({
 export type FormState = { error?: string } | undefined;
 
 export async function saveLan(_: FormState, formData: FormData): Promise<FormState> {
-  await requireAdmin();
   const id = (formData.get("id") as string) || null;
+  const me = id ? await requireLanManager(id) : await requireAdmin();
   const parsed = lanInput.safeParse(
     Object.fromEntries([...formData.entries()].filter(([k]) => k !== "id")),
   );
@@ -191,6 +193,7 @@ export async function saveLan(_: FormState, formData: FormData): Promise<FormSta
   } else {
     const row = db.insert(lan).values(v).returning().get();
     lanId = row.id;
+    db.insert(lanOrga).values({ lanId: row.id, userId: me.id }).run();
     // Start with a full grid of seats; admins carve out aisles in the editor.
     const seats = [];
     for (let r = 0; r < v.seatRows; r++)
@@ -199,7 +202,7 @@ export async function saveLan(_: FormState, formData: FormData): Promise<FormSta
     if (seats.length) db.insert(seat).values(seats).run();
   }
   lanPath(lanId!);
-  redirect(`/admin/lans/${lanId}`);
+  redirect(`/lans/${lanId}/manage`);
 }
 
 export async function deleteLan(id: string) {
@@ -210,7 +213,7 @@ export async function deleteLan(id: string) {
 }
 
 export async function toggleSeatCell(lanId: string, row: number, col: number) {
-  await requireAdmin();
+  await requireLanManager(lanId);
   const l = mustGetLan(lanId);
   if (row >= l.seatRows || col >= l.seatCols) return;
   const s = db
@@ -224,9 +227,9 @@ export async function toggleSeatCell(lanId: string, row: number, col: number) {
 }
 
 export async function renameSeat(seatId: string, label: string) {
-  await requireAdmin();
   const s = db.select().from(seat).where(eq(seat.id, seatId)).get();
   if (!s) return;
+  await requireLanManager(s.lanId);
   const clean = label.trim().slice(0, 12);
   if (!clean) return;
   db.update(seat).set({ label: clean }).where(eq(seat.id, seatId)).run();
@@ -234,17 +237,17 @@ export async function renameSeat(seatId: string, label: string) {
 }
 
 export async function toggleSeatLock(seatId: string) {
-  await requireAdmin();
   const s = db.select().from(seat).where(eq(seat.id, seatId)).get();
   if (!s) return;
+  await requireLanManager(s.lanId);
   db.update(seat).set({ locked: !s.locked }).where(eq(seat.id, seatId)).run();
   lanPath(s.lanId);
 }
 
 export async function adminAssignSeat(seatId: string, userId: string | null) {
-  await requireAdmin();
   const s = db.select().from(seat).where(eq(seat.id, seatId)).get();
   if (!s) return;
+  await requireLanManager(s.lanId);
   db.transaction((tx) => {
     if (userId) {
       tx.update(seat)
@@ -258,7 +261,7 @@ export async function adminAssignSeat(seatId: string, userId: string | null) {
 }
 
 export async function adminSetAttendance(lanId: string, userId: string, status: AttendanceStatus) {
-  await requireAdmin();
+  await requireLanManager(lanId);
   if (!ATTENDANCE_STATUSES.includes(status)) throw new Error("Bad status");
   // Admins can override capacity.
   await setAttendance(mustGetLan(lanId), userId, status, { force: true });
@@ -266,7 +269,7 @@ export async function adminSetAttendance(lanId: string, userId: string, status: 
 }
 
 export async function adminRemoveAttendance(lanId: string, userId: string) {
-  await requireAdmin();
+  await requireLanManager(lanId);
   const l = mustGetLan(lanId);
   await setAttendance(l, userId, "declined", { force: true });
   db.delete(attendance)
@@ -276,17 +279,17 @@ export async function adminRemoveAttendance(lanId: string, userId: string) {
 }
 
 export async function adminSetPaid(attendanceId: string, paid: boolean) {
-  await requireAdmin();
   const a = db.select().from(attendance).where(eq(attendance.id, attendanceId)).get();
   if (!a) return;
+  await requireLanManager(a.lanId);
   db.update(attendance).set({ paid }).where(eq(attendance.id, attendanceId)).run();
   lanPath(a.lanId);
 }
 
 export async function adminSetNote(attendanceId: string, note: string) {
-  await requireAdmin();
   const a = db.select().from(attendance).where(eq(attendance.id, attendanceId)).get();
   if (!a) return;
+  await requireLanManager(a.lanId);
   db.update(attendance).set({ note: note.slice(0, 500) }).where(eq(attendance.id, attendanceId)).run();
   lanPath(a.lanId);
 }
@@ -295,7 +298,7 @@ export async function adminSendReminder(
   lanId: string,
   kind: "signup" | "payment" | "event",
 ): Promise<number> {
-  await requireAdmin();
+  await requireLanManager(lanId);
   return sendReminderNow(mustGetLan(lanId), kind);
 }
 
@@ -304,4 +307,52 @@ export async function setUserRole(userId: string, role: "admin" | "member") {
   if (userId === me.id && role !== "admin") throw new Error("You can't demote yourself");
   db.update(user).set({ role }).where(eq(user.id, userId)).run();
   revalidatePath("/admin");
+}
+
+export async function setMyTicketBought(lanId: string, bought: boolean) {
+  const me = await requireUser();
+  const a = db
+    .select()
+    .from(attendance)
+    .where(and(eq(attendance.lanId, lanId), eq(attendance.userId, me.id)))
+    .get();
+  if (!a) throw new Error("Say whether you're coming first");
+  db.update(attendance).set({ ticketBought: bought }).where(eq(attendance.id, a.id)).run();
+  lanPath(lanId);
+}
+
+export async function addOrga(lanId: string, userId: string) {
+  await requireLanManager(lanId);
+  db.insert(lanOrga).values({ lanId, userId }).onConflictDoNothing().run();
+  lanPath(lanId);
+}
+
+export async function removeOrga(lanId: string, userId: string) {
+  await requireLanManager(lanId);
+  db.delete(lanOrga)
+    .where(and(eq(lanOrga.lanId, lanId), eq(lanOrga.userId, userId)))
+    .run();
+  lanPath(lanId);
+}
+
+/** Fills a seat row; if it is already full, removes its unoccupied seats. */
+export async function toggleSeatRow(lanId: string, row: number) {
+  await requireLanManager(lanId);
+  const l = mustGetLan(lanId);
+  if (row < 0 || row >= l.seatRows) return;
+  const existing = db
+    .select()
+    .from(seat)
+    .where(and(eq(seat.lanId, lanId), eq(seat.row, row)))
+    .all();
+  if (existing.length < l.seatCols) {
+    const have = new Set(existing.map((s) => s.col));
+    const add = [];
+    for (let c = 0; c < l.seatCols; c++)
+      if (!have.has(c)) add.push({ lanId, row, col: c, label: seatLabel(row, c) });
+    if (add.length) db.insert(seat).values(add).run();
+  } else {
+    for (const s of existing) if (!s.userId) db.delete(seat).where(eq(seat.id, s.id)).run();
+  }
+  lanPath(lanId);
 }

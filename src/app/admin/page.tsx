@@ -20,7 +20,7 @@ export default async function AdminPage() {
         title="LANs"
         actions={
           <Link href="/admin/lans/new" className={btnPrimary}>
-            New LAN
+            Add LAN
           </Link>
         }
       >
@@ -33,7 +33,7 @@ export default async function AdminPage() {
                 <th className="py-2">Name</th>
                 <th>Date</th>
                 <th>Going</th>
-                <th>Unpaid</th>
+                <th>No ticket</th>
                 <th>No answer</th>
               </tr>
             </thead>
@@ -45,7 +45,7 @@ export default async function AdminPage() {
                 return (
                   <tr key={l.id}>
                     <td className="py-2">
-                      <Link href={`/admin/lans/${l.id}`} className="font-medium hover:text-emerald-400">
+                      <Link href={`/lans/${l.id}/manage`} className="font-medium hover:text-emerald-400">
                         {l.name}
                       </Link>
                       {l.endsAt < now && <span className="ml-2 text-xs text-zinc-500">past</span>}
@@ -55,7 +55,7 @@ export default async function AdminPage() {
                       {going.length}
                       {l.capacity ? ` / ${l.capacity}` : ""}
                     </td>
-                    <td>{l.paymentDueDate ? going.filter((x) => !x.paid).length : "—"}</td>
+                    <td>{l.paymentDueDate ? going.filter((x) => !x.paid && !x.ticketBought).length : "—"}</td>
                     <td>{users.filter((u) => !answered.has(u.id)).length}</td>
                   </tr>
                 );

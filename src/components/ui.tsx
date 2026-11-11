@@ -43,18 +43,25 @@ const statusStyles: Record<AttendanceStatus | "none", string> = {
   none: "bg-zinc-800 text-zinc-400 border-zinc-700",
 };
 const statusText: Record<AttendanceStatus | "none", string> = {
-  going: "Going",
+  going: "Attending",
   maybe: "Maybe",
   declined: "Not going",
-  waitlist: "Waitlist",
+  waitlist: "Waitlist · full",
   none: "No answer",
 };
 
-export function StatusBadge({ status }: { status: AttendanceStatus | null | undefined }) {
+/** A member's status at a LAN: no answer, attending, seat claimed, waitlist (full), maybe, not going. */
+export function StatusBadge({
+  status,
+  seat,
+}: {
+  status: AttendanceStatus | null | undefined;
+  seat?: string | null;
+}) {
   const s = status ?? "none";
   return (
-    <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${statusStyles[s]}`}>
-      {statusText[s]}
+    <span className={`inline-flex whitespace-nowrap rounded-full border px-2 py-0.5 text-xs font-medium ${statusStyles[s]}`}>
+      {s === "going" && seat ? `Seat ${seat}` : statusText[s]}
     </span>
   );
 }

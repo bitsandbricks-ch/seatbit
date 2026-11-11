@@ -19,8 +19,8 @@ function message(kind: ReminderKind, l: Lan, u: User) {
       };
     case "payment":
       return {
-        subject: `Payment due for ${l.name} on ${fmt(l.paymentDueDate!)}`,
-        text: `Hi ${u.name},\n\nyour payment${l.price ? ` of ${l.price}` : ""} for ${l.name} is due on ${fmt(l.paymentDueDate!)} and hasn't been marked as received yet.\n\n${link}`,
+        subject: `Buy your ticket for ${l.name} by ${fmt(l.paymentDueDate!)}`,
+        text: `Hi ${u.name},\n\nyou're going to ${l.name}, but haven't marked your ticket${l.price ? ` (${l.price})` : ""} as bought yet. Please buy it by ${fmt(l.paymentDueDate!)}${l.ticketUrl ? `:\n${l.ticketUrl}` : "."}\n\nThen tick it off in your checklist: ${link}`,
       };
     case "event":
       return {
@@ -46,7 +46,7 @@ function recipients(kind: ReminderKind, l: Lan): User[] {
     case "payment":
       return members.filter((m) => {
         const a = byUser.get(m.id);
-        return a && (a.status === "going" || a.status === "waitlist") && !a.paid;
+        return a && (a.status === "going" || a.status === "waitlist") && !a.paid && !a.ticketBought;
       });
     case "event":
       return members.filter((m) => byUser.get(m.id)?.status === "going");

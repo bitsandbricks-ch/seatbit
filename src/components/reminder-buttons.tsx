@@ -28,8 +28,8 @@ export function ReminderButtons({
           </button>
         )}
         {counts.payment !== null && (
-          <button disabled={pending || !counts.payment} className={btnSecondary} onClick={() => send("payment", "payment", counts.payment!)}>
-            Remind unpaid ({counts.payment})
+          <button disabled={pending || !counts.payment} className={btnSecondary} onClick={() => send("payment", "ticket", counts.payment!)}>
+            Remind without ticket ({counts.payment})
           </button>
         )}
         <button disabled={pending || !counts.event} className={btnSecondary} onClick={() => send("event", "event", counts.event)}>

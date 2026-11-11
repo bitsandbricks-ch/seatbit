@@ -15,13 +15,18 @@ export default async function NewLanPage() {
   deadline.setDate(deadline.getDate() - 14);
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <h1 className="text-2xl font-bold">New LAN</h1>
+      <div>
+        <h1 className="text-2xl font-bold">Add a LAN</h1>
+        <p className="mt-1 text-sm text-zinc-400">A LAN party the group wants to go to. You can change everything later.</p>
+      </div>
       <Card>
         <LanForm
           values={{
             name: "",
             description: "",
             location: "",
+            websiteUrl: "",
+            ticketUrl: "",
             startsAt: toInputValue(start),
             endsAt: toInputValue(end),
             signupDeadline: toInputValue(deadline),

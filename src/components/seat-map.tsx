@@ -7,7 +7,9 @@ import {
   renameSeat,
   toggleSeatCell,
   toggleSeatLock,
+  toggleSeatRow,
 } from "@/app/actions";
+import { rowLetter } from "@/lib/seat-labels";
 import { btnGhost, btnSecondary, input } from "./ui";
 
 export type SeatView = {
@@ -92,7 +94,7 @@ export function SeatMap({
             [
               ["assign", "Assign"],
               ["layout", "Seats / aisles"],
-              ["lock", "Lock"],
+              ["lock", "Hold"],
               ["rename", "Rename"],
             ] as [Tool, string][]
           ).map(([t, name]) => (
@@ -120,8 +122,8 @@ export function SeatMap({
             </select>
           )}
           <span className="text-xs text-zinc-500">
-            {tool === "layout" && "Click a cell to add or remove a seat."}
-            {tool === "lock" && "Locked seats can't be picked by members."}
+            {tool === "layout" && "Click a cell to add or remove a seat, or a row letter to fill or clear the whole row."}
+            {tool === "lock" && "Held seats can't be claimed by members. Orgas can still assign people to them."}
             {tool === "rename" && "Click a seat to change its label."}
           </span>
         </div>
@@ -132,7 +134,7 @@ export function SeatMap({
           {canPick
             ? mySeat
               ? `You're sitting at ${mySeat.label}. Click another free seat to move, or your own seat to leave it.`
-              : "Click a free seat to take it."
+              : "Click a free seat in our block to claim it."
             : "Seats can be picked by attendees who are going, while seating is open."}
         </p>
       )}
@@ -140,11 +142,29 @@ export function SeatMap({
       <div className={`overflow-x-auto pb-2 ${pending ? "opacity-60" : ""}`}>
         <div
           className="grid gap-1.5"
-          style={{ gridTemplateColumns: `repeat(${cols}, minmax(3.25rem, 1fr))`, minWidth: cols * 56 }}
+          style={{ gridTemplateColumns: `1.5rem repeat(${cols}, minmax(3.25rem, 1fr))`, minWidth: cols * 56 + 24 }}
         >
-          {Array.from({ length: rows * cols }, (_, i) => {
-            const row = Math.floor(i / cols);
-            const col = i % cols;
+          {Array.from({ length: rows * (cols + 1) }, (_, j) => {
+            const row = Math.floor(j / (cols + 1));
+            const col = (j % (cols + 1)) - 1;
+            const i = `${row}:${col}`;
+            if (col === -1) {
+              const letter = rowLetter(row);
+              return mode === "admin" && tool === "layout" ? (
+                <button
+                  key={i}
+                  onClick={() => run(() => toggleSeatRow(lanId, row))}
+                  className="h-14 rounded text-xs font-mono text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+                  title={`Fill or clear row ${letter}`}
+                >
+                  {letter}
+                </button>
+              ) : (
+                <div key={i} className="grid h-14 place-items-center text-xs font-mono text-zinc-600">
+                  {letter}
+                </div>
+              );
+            }
             const s = byPos.get(`${row}:${col}`);
             if (!s) {
               return mode === "admin" && tool === "layout" ? (
@@ -171,7 +191,7 @@ export function SeatMap({
               <button
                 key={i}
                 onClick={() => onCell(row, col, s)}
-                title={`${s.label}${s.nick ? ` · ${s.nick}` : ""}${s.locked ? " · locked" : ""}`}
+                title={`${s.label}${s.nick ? ` · ${s.nick}` : ""}${s.locked ? " · held" : ""}`}
                 className={`flex h-14 flex-col items-center justify-center overflow-hidden rounded border px-1 text-center ${cls}`}
               >
                 <span className="text-[10px] font-mono opacity-70">
@@ -189,7 +209,7 @@ export function SeatMap({
         <Legend cls="bg-zinc-800 border-zinc-700">Free</Legend>
         <Legend cls="bg-emerald-500 border-emerald-400">You</Legend>
         <Legend cls="bg-sky-500/20 border-sky-500/40">Taken</Legend>
-        <Legend cls="bg-zinc-800/50 border-zinc-700">Locked</Legend>
+        <Legend cls="bg-zinc-800/50 border-zinc-700">Held</Legend>
       </div>
       {error && <p className="text-sm text-red-400">{error}</p>}
     </div>

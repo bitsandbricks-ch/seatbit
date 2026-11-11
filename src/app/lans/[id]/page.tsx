@@ -8,7 +8,9 @@ import { SeatMap } from "@/components/seat-map";
 import { Card, Pill, StatusBadge, btnSecondary } from "@/components/ui";
 import { fmtDate, relative } from "@/lib/format";
 import { getDisplayNames, getLan, signupClosed } from "@/lib/lans";
-import { requireUser } from "@/lib/session";
+import { isLanManager, requireUser } from "@/lib/session";
+import { buildChecklist, progress } from "@/lib/checklist";
+import { LanChecklist } from "@/components/lan-checklist";
 
 const { attendance, seat, nickname } = schema;
 
@@ -28,13 +30,24 @@ export default async function LanPage({ params }: PageProps<"/lans/[id]">) {
   const my = rows.find((r) => r.userId === me.id);
   const seatOf = new Map(seats.filter((s) => s.userId).map((s) => [s.userId!, s.label]));
   const closed = signupClosed(l, now);
-  const isAdmin = me.role === "admin";
-
   const group = (st: string) =>
     rows
       .filter((r) => r.status === st)
       .sort((a, b) => (names.get(a.userId) ?? "").localeCompare(names.get(b.userId) ?? ""));
   const going = group("going");
+  const isAdmin = isLanManager(me, id);
+  const steps = buildChecklist({
+    lan: l,
+    attendance: my,
+    hasNick: myNicks.some((n) => n.lanId === null || n.lanId === id),
+    seatLabel: seatOf.get(me.id) ?? null,
+    hasSeatPlan: seats.length > 0,
+    freeSeats: seats.filter((s) => !s.userId && !s.locked).length,
+  });
+  const freeSeats = seats.filter((s) => !s.userId && !s.locked).length;
+  const full = l.capacity != null && going.length >= l.capacity;
+  const prog = progress(steps);
+
 
   return (
     <div className="space-y-6">
@@ -45,9 +58,23 @@ export default async function LanPage({ params }: PageProps<"/lans/[id]">) {
             {fmtDate(l.startsAt)} – {fmtDate(l.endsAt)}
             {l.location && <> · {l.location}</>}
           </p>
+          {(l.websiteUrl || l.ticketUrl) && (
+            <p className="mt-2 flex gap-4 text-sm">
+              {l.websiteUrl && (
+                <a href={l.websiteUrl} target="_blank" rel="noreferrer" className="text-emerald-400 hover:underline">
+                  Event website ↗
+                </a>
+              )}
+              {l.ticketUrl && (
+                <a href={l.ticketUrl} target="_blank" rel="noreferrer" className="text-emerald-400 hover:underline">
+                  Ticket shop ↗
+                </a>
+              )}
+            </p>
+          )}
         </div>
         {isAdmin && (
-          <Link href={`/admin/lans/${l.id}`} className={btnSecondary}>
+          <Link href={`/lans/${l.id}/manage`} className={btnSecondary}>
             Manage
           </Link>
         )}
@@ -62,8 +89,15 @@ export default async function LanPage({ params }: PageProps<"/lans/[id]">) {
           )}
 
           <Card
-            title="Seating plan"
-            actions={!l.seatingOpen && <Pill tone="amber">Seating closed</Pill>}
+            title="Our seats"
+            actions={
+              <span className="flex gap-2">
+                {!l.seatingOpen && <Pill tone="amber">Seating closed</Pill>}
+                {seats.length > 0 && (
+                  <Pill tone={freeSeats ? "zinc" : "red"}>{freeSeats ? `${freeSeats} seats free` : "No seats left"}</Pill>
+                )}
+              </span>
+            }
           >
             {seats.length === 0 ? (
               <p className="text-sm text-zinc-400">No seating plan yet.</p>
@@ -80,7 +114,10 @@ export default async function LanPage({ params }: PageProps<"/lans/[id]">) {
             )}
           </Card>
 
-          <Card title={`Attendees (${going.length}${l.capacity ? ` / ${l.capacity}` : ""})`}>
+          <Card
+            title={`Attendees (${going.length}${l.capacity ? ` / ${l.capacity}` : ""})`}
+            actions={full && <Pill tone="red">Full · new sign-ups go on the waitlist</Pill>}
+          >
             <AttendeeList title="Going" list={going} names={names} seatOf={seatOf} showPaid={isAdmin} meId={me.id} />
             <AttendeeList title="Waitlist" list={group("waitlist")} names={names} seatOf={seatOf} showPaid={isAdmin} meId={me.id} />
             <AttendeeList title="Maybe" list={group("maybe")} names={names} seatOf={seatOf} showPaid={false} meId={me.id} />
@@ -91,7 +128,17 @@ export default async function LanPage({ params }: PageProps<"/lans/[id]">) {
         </div>
 
         <div className="space-y-6">
-          <Card title="Your attendance" actions={<StatusBadge status={my?.status} />}>
+          {my && my.status !== "declined" && (
+            <Card title="Your checklist" actions={<span className="text-sm text-zinc-400">{prog.done} / {prog.total}</span>}>
+              <LanChecklist
+                lanId={l.id}
+                steps={steps}
+                ticketBought={my.ticketBought}
+                canReportTicket={my.status === "going" || my.status === "waitlist"}
+              />
+            </Card>
+          )}
+          <Card title="Your attendance" actions={<StatusBadge status={my?.status} seat={seatOf.get(me.id)} />}>
             <AttendanceButtons lanId={l.id} current={my?.status ?? null} disabled={!!closed} />
             {my?.status === "waitlist" && (
               <p className="mt-3 text-sm text-sky-300">
@@ -104,17 +151,25 @@ export default async function LanPage({ params }: PageProps<"/lans/[id]">) {
           <Card title="Dates">
             <dl className="space-y-3 text-sm">
               <DateRow label="Answer by" d={l.signupDeadline} now={now} />
-              <DateRow label="Payment due" d={l.paymentDueDate} now={now} />
+              <DateRow label="Buy ticket by" d={l.paymentDueDate} now={now} />
               {l.price && (
                 <div className="flex justify-between">
-                  <dt className="text-zinc-400">Price</dt>
+                  <dt className="text-zinc-400">Ticket price</dt>
                   <dd>{l.price}</dd>
                 </div>
               )}
               {my && (my.status === "going" || my.status === "waitlist") && l.paymentDueDate && (
                 <div className="flex justify-between">
-                  <dt className="text-zinc-400">Your payment</dt>
-                  <dd>{my.paid ? <Pill tone="emerald">Received</Pill> : <Pill tone="red">Open</Pill>}</dd>
+                  <dt className="text-zinc-400">Your ticket</dt>
+                  <dd>
+                    {my.paid ? (
+                      <Pill tone="emerald">Confirmed</Pill>
+                    ) : my.ticketBought ? (
+                      <Pill tone="amber">Reported</Pill>
+                    ) : (
+                      <Pill tone="red">Open</Pill>
+                    )}
+                  </dd>
                 </div>
               )}
             </dl>
@@ -181,7 +236,7 @@ function AttendeeList({
             <span className={a.userId === meId ? "font-semibold text-emerald-300" : ""}>{names.get(a.userId)}</span>
             <span className="flex gap-1">
               {seatOf.get(a.userId) && <Pill>{seatOf.get(a.userId)}</Pill>}
-              {showPaid && (a.paid ? <Pill tone="emerald">paid</Pill> : <Pill tone="red">unpaid</Pill>)}
+              {showPaid && (a.paid ? <Pill tone="emerald">ticket ok</Pill> : a.ticketBought ? <Pill tone="amber">reported</Pill> : <Pill tone="red">no ticket</Pill>)}
             </span>
           </li>
         ))}

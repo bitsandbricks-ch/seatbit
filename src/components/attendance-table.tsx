@@ -17,6 +17,7 @@ export type AttendanceRow = {
   email: string;
   status: AttendanceStatus;
   paid: boolean;
+  ticketBought: boolean;
   note: string;
   seat: string | null;
 };
@@ -58,7 +59,7 @@ export function AttendanceTable({
             <tr>
               <th className="py-2">Nick</th>
               <th>Status</th>
-              <th>Paid</th>
+              <th>Ticket</th>
               <th>Seat</th>
               <th>Note</th>
               <th />
@@ -96,8 +97,14 @@ export function AttendanceTable({
                     defaultChecked={r.paid}
                     onChange={(e) => run(() => adminSetPaid(r.id, e.target.checked))}
                     className="h-4 w-4 accent-emerald-500"
-                    aria-label="Paid"
+                    aria-label="Ticket confirmed"
+                    title="Ticket / payment confirmed"
                   />
+                  {r.ticketBought && !r.paid && (
+                    <span className="ml-2 text-xs text-amber-300" title="Says they bought a ticket, not confirmed yet">
+                      reported
+                    </span>
+                  )}
                 </td>
                 <td className="pr-2 font-mono text-xs">{r.seat ?? "—"}</td>
                 <td className="pr-2">

@@ -96,14 +96,18 @@ export const lan = sqliteTable("lan", {
   name: text("name").notNull(),
   description: text("description").default("").notNull(),
   location: text("location").default("").notNull(),
+  /** The event's own website (the LAN is run by someone else). */
+  websiteUrl: text("website_url").default("").notNull(),
+  /** Where members buy their ticket. */
+  ticketUrl: text("ticket_url").default("").notNull(),
   startsAt: integer("starts_at", { mode: "timestamp_ms" }).notNull(),
   endsAt: integer("ends_at", { mode: "timestamp_ms" }).notNull(),
-  /** Attendance must be decided by this date. */
+  /** Members must say whether they come by this date (e.g. before the group books its seat block). */
   signupDeadline: integer("signup_deadline", { mode: "timestamp_ms" }),
-  /** Payment is due by this date. */
+  /** Members must have bought their ticket by this date. */
   paymentDueDate: integer("payment_due_date", { mode: "timestamp_ms" }),
   price: text("price").default("").notNull(),
-  /** Max. attendees with status "going"; null = unlimited. */
+  /** Spots the group has at the event (e.g. size of the reserved seat block); null = unlimited. */
   capacity: integer("capacity"),
   /** Send due-date reminders this many days before a deadline. */
   reminderDays: integer("reminder_days").default(3).notNull(),
@@ -128,6 +132,9 @@ export const attendance = sqliteTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     status: text("status").$type<AttendanceStatus>().notNull(),
+    /** Set by the attendee: "I bought my ticket". */
+    ticketBought: integer("ticket_bought", { mode: "boolean" }).default(false).notNull(),
+    /** Set by an orga: payment / ticket confirmed. */
     paid: integer("paid", { mode: "boolean" }).default(false).notNull(),
     note: text("note").default("").notNull(),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
@@ -137,6 +144,21 @@ export const attendance = sqliteTable(
       .notNull(),
   },
   (t) => [uniqueIndex("attendance_lan_user_uq").on(t.lanId, t.userId)],
+);
+
+/** Organisers of a LAN: may edit its details, seats and attendance. */
+export const lanOrga = sqliteTable(
+  "lan_orga",
+  {
+    lanId: text("lan_id")
+      .notNull()
+      .references(() => lan.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  (t) => [uniqueIndex("lan_orga_uq").on(t.lanId, t.userId)],
 );
 
 /** Nicknames: lanId null = global nick, otherwise only for that LAN. */
@@ -167,7 +189,7 @@ export const seat = sqliteTable(
     col: integer("col").notNull(),
     label: text("label").notNull(),
     userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
-    /** Locked seats can only be assigned by admins. */
+    /** Held seats can't be claimed by members, only assigned by orgas. */
     locked: integer("locked", { mode: "boolean" }).default(false).notNull(),
   },
   (t) => [
