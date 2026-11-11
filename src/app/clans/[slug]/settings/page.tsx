@@ -193,10 +193,14 @@ function ChatTab({ clanId }: { clanId: string }) {
   return (
     <div className="space-y-5">
       <Card title="Discord bot">
-        {!discordEnabled ? (
+        {!discordEnabled() ? (
           <p className="text-sm text-zinc-400">
             The Discord bot isn&apos;t set up on this Seatbit yet. A platform admin needs to add the bot token and public
-            key (see README).
+            key in{" "}
+            <Link href="/admin/settings?tab=discord" className="text-bit hover:underline">
+              Platform settings
+            </Link>
+            .
           </p>
         ) : (
           <div className="space-y-4 text-sm">

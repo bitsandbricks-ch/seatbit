@@ -68,7 +68,7 @@ export default async function ProfilePage() {
       </div>
 
       <Card title="Sign-in methods">
-        <LinkedAccounts linked={accounts.map((a) => a.providerId)} available={enabledProviders} />
+        <LinkedAccounts linked={accounts.map((a) => a.providerId)} available={enabledProviders()} />
       </Card>
     </div>
   );

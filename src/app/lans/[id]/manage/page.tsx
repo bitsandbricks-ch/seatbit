@@ -299,10 +299,16 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
           <div className="space-y-5 text-sm">
             <div className="space-y-2">
               <h3 className="font-semibold text-zinc-200">Discord</h3>
-              {!discordEnabled ? (
+              {!discordEnabled() ? (
                 <p className="text-zinc-400">
-                  The Discord bot isn&apos;t set up. Add <code>DISCORD_BOT_TOKEN</code> and <code>DISCORD_PUBLIC_KEY</code> (see
-                  README).
+                  The Discord bot isn&apos;t set up.{" "}
+                  {me.role === "admin" ? (
+                    <Link href="/admin/settings?tab=discord" className="text-emerald-400 hover:underline">
+                      Add the bot token in the platform settings.
+                    </Link>
+                  ) : (
+                    "Ask a Seatbit admin to add the bot token in the platform settings."
+                  )}
                 </p>
               ) : discordChannels === 0 ? (
                 <p className="text-zinc-400">
@@ -331,7 +337,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
                   (pinging members who linked Discord).
                 </p>
               )}
-              {discordEnabled && discordChannels > 0 && (
+              {discordEnabled() && discordChannels > 0 && (
                 <DiscordButtons
                   lanId={l.id}
                   posted={discordPosts}

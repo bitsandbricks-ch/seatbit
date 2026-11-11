@@ -3,12 +3,12 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { and, eq } from "drizzle-orm";
-import { auth } from "./auth";
+import { getAuth } from "./auth";
 import { canManageClan, isClanMember } from "./clans";
 import { db, schema } from "@/db";
 
 export const getCurrentUser = cache(async () => {
-  const s = await auth.api.getSession({ headers: await headers() });
+  const s = await getAuth().api.getSession({ headers: await headers() });
   if (!s) return null;
   // Read fresh from DB so role changes apply immediately.
   return (await db.query.user.findFirst({ where: eq(schema.user.id, s.user.id) })) ?? null;
