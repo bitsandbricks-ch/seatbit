@@ -17,18 +17,79 @@ concurrency:
 
 env:
   IMAGE: ghcr.io/${{ github.repository }}
+  # Push on main/tags/manual runs; PRs only build (and warm their own cache).
+  PUSH: ${{ github.event_name != 'pull_request' }}
 
 jobs:
-  image:
-    name: Build${{ github.event_name != 'pull_request' && ' and push' || '' }}
-    runs-on: ubuntu-latest
+  build:
+    name: Build ${{ matrix.arch }}
+    # Each architecture builds natively (no QEMU emulation), in parallel.
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v4
-      - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
       - name: Log in to GHCR
-        if: github.event_name != 'pull_request'
+        # Also on same-repo PRs, so they can read the registry layer cache.
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE }}
+      - id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/${{ matrix.arch }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Push the per-arch image by digest only; the merge job tags the
+          # multi-arch manifest.
+          outputs: type=image,name=${{ env.IMAGE }},push-by-digest=true,name-canonical=true,push=${{ env.PUSH }}
+          # Layer cache: a per-arch cache image in GHCR, written by main builds
+          # (survives the 10 GB Actions cache eviction), plus the Actions cache
+          # for PR builds, which may not write to the registry.
+          cache-from: |
+            type=registry,ref=${{ env.IMAGE }}:buildcache-${{ matrix.arch }}
+            type=gha,scope=image-${{ matrix.arch }}
+          cache-to: ${{ env.PUSH == 'true' && format('type=registry,ref={0}:buildcache-{1},mode=max,image-manifest=true,oci-mediatypes=true', env.IMAGE, matrix.arch) || format('type=gha,scope=image-{0},mode=max', matrix.arch) }}
+      - name: Export digest
+        if: env.PUSH == 'true'
+        run: |
+          mkdir -p ${{ runner.temp }}/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "${{ runner.temp }}/digests/${digest#sha256:}"
+      - if: env.PUSH == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: digest-${{ matrix.arch }}
+          path: ${{ runner.temp }}/digests/*
+          retention-days: 1
+
+  merge:
+    name: Push multi-arch tags
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digest-*
+          merge-multiple: true
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -39,18 +100,16 @@ jobs:
           images: ${{ env.IMAGE }}
           tags: |
             type=ref,event=branch
-            type=ref,event=pr
             type=semver,pattern={{version}}
             type=sha,format=short
             # main-YYYYMMDDHHmmss-<short sha> (UTC build time): sortable, so
             # Oak's Flux ImagePolicy can follow the newest main build.
             type=raw,value=main-{{date 'YYYYMMDDHHmmss' tz='UTC'}}-{{sha}},enable={{is_default_branch}}
-      - uses: docker/build-push-action@v6
-        with:
-          context: .
-          platforms: linux/amd64,linux/arm64
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      - name: Create manifest list and push
+        working-directory: ${{ runner.temp }}/digests
+        run: |
+          docker buildx imagetools create \
+            $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf '${{ env.IMAGE }}@sha256:%s ' *)
+      - name: Inspect
+        run: docker buildx imagetools inspect ${{ env.IMAGE }}:${{ steps.meta.outputs.version }}
