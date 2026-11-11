@@ -3,9 +3,73 @@
 
 :root {
   color-scheme: dark;
+  accent-color: var(--color-bit);
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  /* Keep anchors and focused fields clear of the sticky header and the phone tab bar. */
+  scroll-padding-top: 4.5rem;
+  scroll-padding-bottom: 5.5rem;
 }
 
 body {
   background: var(--color-ink);
   color: var(--color-fg);
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--color-bit) 35%, transparent);
+  color: var(--color-fg);
+}
+
+/* Visible keyboard focus everywhere, in Bit Green. Mouse and touch don't show it. */
+:where(a, button, summary, [role="button"], [tabindex]):focus-visible {
+  outline: 2px solid var(--color-bit);
+  outline-offset: 2px;
+  border-radius: 0.375rem;
+}
+
+/* Bigger tap targets for checkboxes and radios. */
+input[type="checkbox"],
+input[type="radio"] {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+/*
+ * Phones: form fields at 16px, otherwise iOS Safari zooms into the page on focus.
+ * Unlayered on purpose so it wins over text-sm/text-xs utilities.
+ */
+@media (max-width: 639px) {
+  input:not([type="checkbox"], [type="radio"], [type="file"], [type="hidden"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+select {
+  cursor: pointer;
+}
+
+/* Sideways-scrolling tab bars hint that there's more by fading the edge. */
+.scroll-fade-x {
+  scrollbar-width: none;
+  mask-image: linear-gradient(to right, #000 calc(100% - 2rem), transparent);
+}
+.scroll-fade-x::-webkit-scrollbar {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -19,9 +19,11 @@ export default async function WelcomePage({ searchParams }: PageProps<"/welcome"
       .get()?.nick ?? me.name;
 
   return (
-    <div className="mx-auto max-w-sm space-y-6 rounded-card border border-line bg-surface p-6">
+    <div className="mx-auto max-w-sm space-y-6 rounded-card border border-line bg-surface p-5 sm:mt-6 sm:p-6">
       <div className="space-y-1">
-        <h1 className="text-xl font-semibold">Welcome to Seatbit</h1>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/brand/seatbit-mark.svg" alt="" className="mb-3 h-10 w-10" />
+        <h1 className="text-xl font-semibold tracking-tight">Welcome to Seatbit</h1>
         <p className="text-sm text-muted">
           Tell your clan who you are. Your name helps orgas book tickets, your nickname is what everyone sees.
         </p>
@@ -40,7 +42,7 @@ export default async function WelcomePage({ searchParams }: PageProps<"/welcome"
           <Input name="nick" defaultValue={nick.slice(0, 32)} required maxLength={32} autoComplete="nickname" />
         </Field>
         <input type="hidden" name="emailReminders" value={me.emailReminders ? "on" : ""} />
-        <p className="text-xs text-faint">Reminders go to {me.email}, the email on your Discord account.</p>
+        <p className="text-xs text-muted">Reminders go to {me.email}, the email on your Discord account.</p>
         <button className={`${btnPrimary} w-full`}>Continue</button>
       </form>
     </div>

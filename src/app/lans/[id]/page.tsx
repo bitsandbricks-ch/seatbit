@@ -5,8 +5,8 @@ import { db, schema } from "@/db";
 import { AttendanceButtons } from "@/components/attendance-buttons";
 import { NickManager } from "@/components/nick-manager";
 import { SeatMap } from "@/components/seat-map";
-import { Card, Pill, StatusBadge, btnSecondary } from "@/components/ui";
-import { fmtDate, relative } from "@/lib/format";
+import { Card, Pill, StatusBadge, btnGhost, btnSecondary } from "@/components/ui";
+import { fmtDate, fmtRange, relative } from "@/lib/format";
 import { getDisplayNames, getLan, pickNick, signupClosed } from "@/lib/lans";
 import { canViewLan, isLanManager, requireUser } from "@/lib/session";
 import { getClan } from "@/lib/clans";
@@ -138,28 +138,28 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
+      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
+        <div className="min-w-0">
           {lanClan && (
-            <Link href={`/clans/${lanClan.slug}`} className="mb-1 flex items-center gap-1.5 text-sm text-zinc-400 hover:text-zinc-200">
-              <ClanAvatar clan={lanClan} size={20} /> {lanClan.name}
+            <Link href={`/clans/${lanClan.slug}`} className="mb-1.5 inline-flex items-center gap-1.5 text-sm text-muted hover:text-fg">
+              <ClanAvatar clan={lanClan} size={20} /> <span className="truncate">{lanClan.name}</span>
             </Link>
           )}
-          <h1 className="text-2xl font-bold sm:text-3xl">{l.name}</h1>
-          <p className="mt-1 text-zinc-400">
-            {fmtDate(l.startsAt)} – {fmtDate(l.endsAt)}
-            {l.location && <> · {l.location}</>}
+          <h1 className="text-2xl font-bold tracking-tight text-balance sm:text-3xl">{l.name}</h1>
+          <p className="mt-1 text-sm text-muted sm:text-base">
+            {fmtRange(l.startsAt, l.endsAt)}
+            {l.location && <span className="block sm:inline"><span className="hidden sm:inline"> · </span>{l.location}</span>}
           </p>
           {(l.websiteUrl || l.ticketUrl) && (
-            <p className="mt-2 flex gap-4 text-sm">
+            <p className="mt-3 flex flex-wrap gap-2 text-sm">
               {l.websiteUrl && (
-                <a href={l.websiteUrl} target="_blank" rel="noreferrer" className="text-bit hover:underline">
-                  Event website ↗
+                <a href={l.websiteUrl} target="_blank" rel="noreferrer" className={`${btnGhost} border border-line !text-bit`}>
+                  Event website <span aria-hidden>↗</span>
                 </a>
               )}
               {l.ticketUrl && (
-                <a href={l.ticketUrl} target="_blank" rel="noreferrer" className="text-bit hover:underline">
-                  Ticket shop ↗
+                <a href={l.ticketUrl} target="_blank" rel="noreferrer" className={`${btnGhost} border border-line !text-bit`}>
+                  Ticket shop <span aria-hidden>↗</span>
                 </a>
               )}
             </p>
@@ -183,8 +183,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
       />
 
       {tab === "travel" && (
-        <div className="max-w-3xl">
-          <p className="mb-4 text-sm text-zinc-400">
+        <div>
+          <p className="mb-4 max-w-2xl text-sm text-muted">
             Share rides and places to sleep, grouped by town. Join a ride with free seats, or post where you need one from.
           </p>
           <TravelBoard lanId={l.id} posts={travelViews} meId={me.id} canPost={canTakePart} isManager={isAdmin} />
@@ -214,11 +214,63 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
       )}
 
       {tab === "overview" && (
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="order-2 min-w-0 space-y-6 lg:order-1 lg:col-span-2">
+        // Phones: your answer and checklist first, then the event, then the rest.
+        // Desktop: event on the left, your stuff in a sidebar on the right.
+        <div className="grid grid-cols-1 items-start gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_22rem]">
+          <div className="min-w-0 space-y-4 sm:space-y-6 lg:col-start-2 lg:row-span-2 lg:row-start-1">
+          <Card title="Your attendance" actions={<StatusBadge status={my?.status} seat={seatOf.get(me.id)} />}>
+            <AttendanceButtons lanId={l.id} current={my?.status ?? null} disabled={!!closed} />
+            {my?.status === "waitlist" && (
+              <p className="mt-3 text-sm text-seat-taken">
+                The LAN is full. You&apos;re on the waitlist and will get an email if a spot opens up.
+              </p>
+            )}
+            {closed && <p className="mt-3 text-sm text-muted">Sign-up is closed.</p>}
+          </Card>
+
+          {my && my.status !== "declined" && (
+            <Card title="Your checklist" actions={<span className="text-sm text-muted">{prog.done} / {prog.total}</span>}>
+              <LanChecklist
+                lanId={l.id}
+                steps={steps}
+                ticketBought={my.ticketBought}
+                canReportTicket={my.status === "going" || my.status === "waitlist"}
+              />
+            </Card>
+          )}
+          <Card title="Dates">
+            <dl className="space-y-3 text-sm">
+              <DateRow label="Answer by" d={l.signupDeadline} now={now} />
+              <DateRow label="Buy ticket by" d={l.paymentDueDate} now={now} />
+              {l.price && (
+                <div className="flex justify-between">
+                  <dt className="text-muted">Ticket price</dt>
+                  <dd>{l.price}</dd>
+                </div>
+              )}
+              {my && (my.status === "going" || my.status === "waitlist") && l.paymentDueDate && (
+                <div className="flex justify-between">
+                  <dt className="text-muted">Your ticket</dt>
+                  <dd>
+                    {my.paid ? (
+                      <Pill tone="emerald">Confirmed</Pill>
+                    ) : my.ticketBought ? (
+                      <Pill tone="amber">Reported</Pill>
+                    ) : (
+                      <Pill tone="red">Open</Pill>
+                    )}
+                  </dd>
+                </div>
+              )}
+            </dl>
+          </Card>
+
+          </div>
+
+          <div className="min-w-0 space-y-4 sm:space-y-6 lg:col-start-1 lg:row-start-1">
           {l.description && (
             <Card>
-              <p className="whitespace-pre-wrap text-zinc-300">{l.description}</p>
+              <p className="whitespace-pre-wrap text-fg/90">{l.description}</p>
             </Card>
           )}
 
@@ -231,7 +283,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
             }
           >
             {seats.length === 0 ? (
-              <p className="text-sm text-zinc-400">The orgas haven&apos;t entered the group&apos;s seats yet.</p>
+              <p className="text-sm text-muted">The orgas haven&apos;t entered the group&apos;s seats yet.</p>
             ) : published || isAdmin ? (
               <SeatMap
                 lanId={l.id}
@@ -242,7 +294,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
                 seats={seats.map((s) => ({ ...s, nick: s.userId ? (names.get(s.userId) ?? "?") : null }))}
               />
             ) : (
-              <p className="text-sm text-zinc-400">
+              <p className="text-sm text-muted">
                 The group has {seats.length} seats ({seats[0]?.label}
                 {seats.length > 1 ? `–${seats[seats.length - 1]?.label}` : ""}). The orgas assign them after the deadline
                 and then publish the seat plan here.
@@ -258,35 +310,15 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
             <AttendeeList title="Waitlist" list={group("waitlist")} names={names} seatOf={seatOf} showPaid={isAdmin} meId={me.id} />
             <AttendeeList title="Unsure" list={group("maybe")} names={names} seatOf={seatOf} showPaid={false} meId={me.id} />
             {group("declined").length > 0 && (
-              <p className="mt-3 text-xs text-zinc-500">{group("declined").length} can&apos;t make it.</p>
+              <p className="mt-3 text-xs text-muted">{group("declined").length} can&apos;t make it.</p>
             )}
           </Card>
-        </div>
+          </div>
 
-        <div className="order-1 min-w-0 space-y-6 lg:order-2">
-          {my && my.status !== "declined" && (
-            <Card title="Your checklist" actions={<span className="text-sm text-zinc-400">{prog.done} / {prog.total}</span>}>
-              <LanChecklist
-                lanId={l.id}
-                steps={steps}
-                ticketBought={my.ticketBought}
-                canReportTicket={my.status === "going" || my.status === "waitlist"}
-              />
-            </Card>
-          )}
-          <Card title="Your attendance" actions={<StatusBadge status={my?.status} seat={seatOf.get(me.id)} />}>
-            <AttendanceButtons lanId={l.id} current={my?.status ?? null} disabled={!!closed} />
-            {my?.status === "waitlist" && (
-              <p className="mt-3 text-sm text-seat-taken">
-                The LAN is full. You&apos;re on the waitlist and will get an email if a spot opens up.
-              </p>
-            )}
-            {closed && <p className="mt-3 text-sm text-zinc-400">Sign-up is closed.</p>}
-          </Card>
-
+          <div className="min-w-0 space-y-4 sm:space-y-6 lg:col-start-1 lg:row-start-2">
           {my?.status === "going" && !published && seats.length > 0 && (
             <Card title="Seat wishes">
-              <p className="mb-3 text-sm text-zinc-400">
+              <p className="mb-3 text-sm text-muted">
                 Tell the orgas where you&apos;d like to sit. They plan the seats after the deadline.
               </p>
               <SeatWishes
@@ -307,41 +339,15 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
             </Card>
           )}
 
-          <Card title="Dates">
-            <dl className="space-y-3 text-sm">
-              <DateRow label="Answer by" d={l.signupDeadline} now={now} />
-              <DateRow label="Buy ticket by" d={l.paymentDueDate} now={now} />
-              {l.price && (
-                <div className="flex justify-between">
-                  <dt className="text-zinc-400">Ticket price</dt>
-                  <dd>{l.price}</dd>
-                </div>
-              )}
-              {my && (my.status === "going" || my.status === "waitlist") && l.paymentDueDate && (
-                <div className="flex justify-between">
-                  <dt className="text-zinc-400">Your ticket</dt>
-                  <dd>
-                    {my.paid ? (
-                      <Pill tone="emerald">Confirmed</Pill>
-                    ) : my.ticketBought ? (
-                      <Pill tone="amber">Reported</Pill>
-                    ) : (
-                      <Pill tone="red">Open</Pill>
-                    )}
-                  </dd>
-                </div>
-              )}
-            </dl>
-          </Card>
-
+          <div className="grid items-start gap-4 sm:gap-6 md:grid-cols-2">
           <Card title={orgaIds.length ? "Orgas" : "Contact"}>
-            <p className="mb-3 text-sm text-zinc-400">Questions about this LAN? Ask the orgas.</p>
+            <p className="mb-3 text-sm text-muted">Questions about this LAN? Ask the orgas.</p>
             <ul className="space-y-2">
               {orgas.map((o) => (
                 <li key={o.id} className="flex items-center justify-between gap-2 text-sm">
                   <span>
-                    <span className="font-medium text-zinc-100">{orgaNames.get(o.id) ?? o.name}</span>
-                    {orgaNames.get(o.id) !== o.name && <span className="text-zinc-500"> · {o.name}</span>}
+                    <span className="font-medium text-fg">{orgaNames.get(o.id) ?? o.name}</span>
+                    {orgaNames.get(o.id) !== o.name && <span className="text-faint"> · {o.name}</span>}
                   </span>
                   <a
                     href={`mailto:${o.email}?subject=${encodeURIComponent(l.name)}`}
@@ -355,8 +361,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           </Card>
 
           <Card title={lanType ? `Your nick at ${lanType.name}` : "Your nick at this LAN"}>
-            <p className="mb-3 text-sm text-zinc-400">
-              Shown as <strong className="text-zinc-100">{myNick}</strong>.{" "}
+            <p className="mb-3 text-sm text-muted">
+              Shown as <strong className="text-fg">{myNick}</strong>.{" "}
               {lanType
                 ? `The nick you set here is used for every ${lanType.name} event. `
                 : "The nick you set here is used for this LAN only. "}
@@ -372,8 +378,9 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
               <NickManager nicks={myNicks} lanId={l.id} />
             )}
           </Card>
+          </div>
+          </div>
         </div>
-      </div>
       )}
     </div>
   );
@@ -384,10 +391,10 @@ function DateRow({ label, d, now }: { label: string; d: Date | null; now: Date }
   const past = d < now;
   return (
     <div className="flex justify-between gap-2">
-      <dt className="text-zinc-400">{label}</dt>
+      <dt className="text-muted">{label}</dt>
       <dd className="text-right">
         {fmtDate(d)}
-        <span className={`block text-xs ${past ? "text-zinc-500" : "text-amber-300"}`}>{relative(d, now)}</span>
+        <span className={`block text-xs ${past ? "text-faint" : "text-warn"}`}>{relative(d, now)}</span>
       </dd>
     </div>
   );
@@ -411,12 +418,12 @@ function AttendeeList({
   if (list.length === 0) return null;
   return (
     <div className="mb-4">
-      <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500">{title}</h3>
+      <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">{title} <span className="text-faint">{list.length}</span></h3>
       <ul className="grid gap-1 sm:grid-cols-2">
         {list.map((a) => (
-          <li key={a.id} className="flex items-center justify-between rounded bg-zinc-800/50 px-3 py-1.5 text-sm">
-            <span className={a.userId === meId ? "font-semibold text-bit" : ""}>{names.get(a.userId)}</span>
-            <span className="flex gap-1">
+          <li key={a.id} className="flex min-h-10 items-center justify-between gap-2 rounded-bit bg-raised/60 px-3 py-1.5 text-sm">
+            <span className={`truncate ${a.userId === meId ? "font-semibold text-bit" : ""}`}>{names.get(a.userId)}</span>
+            <span className="flex shrink-0 gap-1">
               {seatOf.get(a.userId) && <Pill>{seatOf.get(a.userId)}</Pill>}
               {showPaid && (a.paid ? <Pill tone="emerald">ticket ok</Pill> : a.ticketBought ? <Pill tone="amber">reported</Pill> : <Pill tone="red">no ticket</Pill>)}
             </span>

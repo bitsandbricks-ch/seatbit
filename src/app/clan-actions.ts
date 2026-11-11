@@ -9,8 +9,8 @@ import { canManageClan, clanRole, getClan, saveAvatar, uniqueSlug } from "@/lib/
 import { guestEmail } from "@/lib/guests";
 import { appUrl } from "@/lib/mail";
 import { notify, notifyClanAdmins, notifyLater } from "@/lib/notify";
-import { requireClanManager, requireUser } from "@/lib/session";
-import type { FormState } from "./actions";
+import { requireClanManager, requireLanManager, requireUser } from "@/lib/session";
+import { adminSetAttendance, type FormState } from "./actions";
 
 const { clan, clanMember, clanInvite } = schema;
 
@@ -206,9 +206,8 @@ const guestInput = z.object({
 
 const newClaimCode = () => crypto.randomUUID().replace(/-/g, "").slice(0, 16);
 
-/** Adds a member without a login, so orgas can sign them up and seat them. */
-export async function addGuest(clanId: string, _: FormState, formData: FormData): Promise<FormState> {
-  await requireClanManager(clanId);
+/** Creates a guest member of a clan from the form. Returns the guest's id, or an error. */
+function createGuest(clanId: string, formData: FormData): { id: string } | { error: string } {
   const parsed = guestInput.safeParse({
     firstName: formData.get("firstName"),
     lastName: formData.get("lastName") ?? "",
@@ -234,6 +233,26 @@ export async function addGuest(clanId: string, _: FormState, formData: FormData)
     tx.insert(clanMember).values({ clanId, userId: id, role: "member" }).run();
     if (nick) tx.insert(schema.nickname).values({ userId: id, nick, isPrimary: true }).run();
   });
+  return { id };
+}
+
+/** Adds a member without a login, so orgas can sign them up and seat them. */
+export async function addGuest(clanId: string, _: FormState, formData: FormData): Promise<FormState> {
+  await requireClanManager(clanId);
+  const r = createGuest(clanId, formData);
+  if ("error" in r) return r;
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+/** From an event's Attendees tab: adds a guest to the event's clan and signs them up as coming. */
+export async function addGuestToLan(lanId: string, _: FormState, formData: FormData): Promise<FormState> {
+  await requireLanManager(lanId);
+  const l = db.select({ clanId: schema.lan.clanId }).from(schema.lan).where(eq(schema.lan.id, lanId)).get();
+  if (!l?.clanId) return { error: "This event has no clan." };
+  const r = createGuest(l.clanId, formData);
+  if ("error" in r) return r;
+  await adminSetAttendance(lanId, r.id, "going");
   revalidatePath("/", "layout");
   return { ok: true };
 }

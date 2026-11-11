@@ -8,7 +8,7 @@ function ResetForm() {
   const token = useSearchParams().get("token");
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
-  if (!token) return <p className="text-sm text-red-400">This reset link is invalid or expired.</p>;
+  if (!token) return <p className="text-sm text-danger">This reset link is invalid or expired.</p>;
   return (
     <form
       className="space-y-4"
@@ -23,7 +23,7 @@ function ResetForm() {
       <Field label="New password">
         <Input name="password" type="password" minLength={8} required />
       </Field>
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
       <button className={`${btnPrimary} w-full`}>Set password</button>
     </form>
   );

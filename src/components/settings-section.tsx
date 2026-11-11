@@ -9,12 +9,12 @@ type Action = (prev: ActionResult, form: FormData) => Promise<ActionResult>;
 
 function SourceBadge({ s }: { s: SettingView }) {
   if (s.undecryptable)
-    return <span className="rounded bg-red-500/15 px-1.5 py-0.5 text-[11px] text-red-300">can&apos;t decrypt, re-enter</span>;
+    return <span className="rounded bg-danger/15 px-1.5 py-0.5 text-[11px] text-danger">can&apos;t decrypt, re-enter</span>;
   const map = {
     database: ["Saved here", "bg-bit-soft text-bit"],
-    env: [`From ${s.env}`, "bg-sky-500/15 text-sky-300"],
-    default: ["Default", "bg-zinc-800 text-zinc-400"],
-    unset: ["Not set", "bg-zinc-800 text-zinc-500"],
+    env: [`From ${s.env}`, "bg-seat-taken/15 text-seat-taken"],
+    default: ["Default", "bg-raised text-muted"],
+    unset: ["Not set", "bg-raised text-faint"],
   } as const;
   const [text, cls] = map[s.source];
   return <span className={`rounded px-1.5 py-0.5 text-[11px] ${cls}`}>{text}</span>;
@@ -35,7 +35,7 @@ function SettingField({ s }: { s: SettingView }) {
           placeholder={s.secretSet ? `•••••••• ${s.secretHint ?? ""} (leave empty to keep)` : "Not set"}
         />
         {s.source === "database" && (
-          <label className="mt-1 flex items-center gap-2 text-xs text-zinc-400">
+          <label className="mt-1 flex items-center gap-2 text-xs text-muted">
             <input type="checkbox" name={`clear:${s.key}`} className="accent-red-500" />
             Remove saved value{s.env ? ` (fall back to ${s.env})` : ""}
           </label>
@@ -83,9 +83,9 @@ function SettingField({ s }: { s: SettingView }) {
         <SourceBadge s={s} />
       </div>
       {control}
-      {s.help && <p className="mt-1 text-xs text-zinc-500">{s.help}</p>}
+      {s.help && <p className="mt-1 text-xs text-muted">{s.help}</p>}
       {s.updatedAt && (
-        <p className="mt-1 text-[11px] text-zinc-600">
+        <p className="mt-1 text-[11px] text-faint">
           Changed {new Date(s.updatedAt).toLocaleString("de-CH")}
           {s.updatedBy ? ` by ${s.updatedBy}` : ""}
         </p>
@@ -97,7 +97,7 @@ function SettingField({ s }: { s: SettingView }) {
 export function Result({ state }: { state: ActionResult }) {
   if (!state) return null;
   return (
-    <p aria-live="polite" className={`text-sm ${state.ok ? "text-bit" : "text-red-400"}`}>
+    <p aria-live="polite" className={`text-sm ${state.ok ? "text-bit" : "text-danger"}`}>
       {state.message}
     </p>
   );

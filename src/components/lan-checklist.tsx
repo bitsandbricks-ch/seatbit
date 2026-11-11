@@ -19,7 +19,7 @@ export function LanChecklist({
   const done = steps.filter((s) => s.state === "done").length;
   return (
     <div className="space-y-4">
-      <div className="h-1.5 overflow-hidden rounded-full bg-zinc-800">
+      <div className="h-1.5 overflow-hidden rounded-full bg-raised">
         <div className="h-full bg-bit transition-all" style={{ width: `${(done / steps.length) * 100}%` }} />
       </div>
       <ol className="space-y-3">
@@ -28,24 +28,24 @@ export function LanChecklist({
             <span
               className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-bold ${
                 s.state === "done"
-                  ? "bg-bit text-ink"
+                  ? "bg-bit text-on-bit"
                   : s.state === "pending"
-                    ? "bg-amber-400 text-ink"
-                    : "border border-zinc-600 text-zinc-400"
+                    ? "bg-warn text-on-bit"
+                    : "border border-line text-muted"
               }`}
             >
               {s.state === "done" ? "✓" : s.state === "pending" ? "…" : i + 1}
             </span>
             <div className="min-w-0 flex-1">
-              <p className={`text-sm font-medium ${s.state === "done" ? "text-zinc-400" : "text-zinc-100"}`}>
+              <p className={`text-sm font-medium ${s.state === "done" ? "text-muted" : "text-fg"}`}>
                 {s.title}
               </p>
-              {s.hint && <p className="text-xs text-zinc-500">{s.hint}</p>}
+              {s.hint && <p className="text-xs text-muted">{s.hint}</p>}
               {s.key === "ticket" && s.state !== "done" && canReportTicket && (
                 <button
                   disabled={pending}
                   onClick={() => start(() => setMyTicketBought(lanId, !ticketBought))}
-                  className={`${ticketBought ? btnGhost : btnSecondary} mt-1.5 !py-1 text-xs`}
+                  className={`${ticketBought ? btnGhost : btnSecondary} mt-2`}
                 >
                   {ticketBought ? "Undo: I haven't bought it" : "I bought my ticket"}
                 </button>

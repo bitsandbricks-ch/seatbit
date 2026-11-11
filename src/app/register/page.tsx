@@ -16,7 +16,7 @@ export default async function RegisterPage({ searchParams }: PageProps<"/registe
     return (
       <div className="mx-auto max-w-sm space-y-4 rounded-xl border border-line bg-surface p-6 text-sm">
         <h1 className="text-xl font-bold">Sign-ups are closed</h1>
-        <p className="text-zinc-400">New accounts can&apos;t be created right now. Ask a Seatbit admin to open sign-ups.</p>
+        <p className="text-muted">New accounts can&apos;t be created right now. Ask a Seatbit admin to open sign-ups.</p>
         <Link href="/login" className="text-bit hover:underline">
           Sign in with an existing account
         </Link>

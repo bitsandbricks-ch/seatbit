@@ -27,7 +27,7 @@ export async function Header() {
   return (
     <>
       <header className="sticky top-0 z-30 border-b border-line bg-ink/85 backdrop-blur supports-[backdrop-filter]:bg-ink/70">
-        <div className="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4">
+        <div className="mx-auto flex h-14 max-w-7xl items-center gap-6 px-4 sm:px-6">
           <Link href="/" className="flex shrink-0 items-center" aria-label="Seatbit home">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/brand/seatbit-logo.svg" alt="Seatbit" className="h-7 w-auto" />

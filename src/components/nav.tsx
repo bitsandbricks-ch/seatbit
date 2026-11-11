@@ -65,11 +65,13 @@ export function BottomNav({ items }: { items: NavItem[] }) {
               <Link
                 href={i.href}
                 aria-current={on ? "page" : undefined}
-                className={`flex flex-col items-center gap-0.5 pb-2 pt-2.5 text-[11px] font-medium transition ${
-                  on ? "text-bit" : "text-faint hover:text-muted"
+                className={`group flex min-h-14 flex-col items-center justify-center gap-1 pb-1.5 pt-2 text-[11px] font-medium transition active:scale-95 ${
+                  on ? "text-bit" : "text-muted hover:text-fg"
                 }`}
               >
-                <Icon name={i.icon} />
+                <span className={`grid h-7 w-12 place-items-center rounded-full transition ${on ? "bg-bit-soft" : ""}`}>
+                  <Icon name={i.icon} />
+                </span>
                 {i.label}
               </Link>
             </li>
