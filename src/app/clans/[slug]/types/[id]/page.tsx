@@ -26,7 +26,7 @@ export default async function EditLanTypePage({ params }: PageProps<"/clans/[slu
         <LanTypeForm values={{ ...t, clanId: c.id, capacity: t.capacity?.toString() ?? "" }} />
       </Card>
       <Card title="Delete type">
-        <p className="mb-3 text-sm text-zinc-400">
+        <p className="mb-3 text-sm text-muted">
           Events of this type are kept, but members&apos; nicks for this type are deleted.
         </p>
         <form action={deleteLanType.bind(null, t.id)}>

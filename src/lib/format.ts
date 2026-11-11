@@ -36,3 +36,17 @@ export function relative(d: Date, now = new Date()) {
   }
   return "";
 }
+
+/** "Mon 21 Dec 2026" */
+export function fmtWeekday(d: Date) {
+  return d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+}
+
+/** "Mon 21 Dec, 18:00 – Wed 23 Dec 2026, 16:00": the year once when both ends share it. */
+export function fmtRange(start: Date, end: Date) {
+  const time = (d: Date) => d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+  const day = (d: Date, year: boolean) =>
+    d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", ...(year ? { year: "numeric" } : {}) });
+  const sameYear = start.getFullYear() === end.getFullYear();
+  return `${day(start, !sameYear)}, ${time(start)} – ${day(end, true)}, ${time(end)}`;
+}

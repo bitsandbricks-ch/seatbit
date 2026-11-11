@@ -42,23 +42,23 @@ export default async function NewLanPage({ params, searchParams }: PageProps<"/c
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold">New event for {c.name}</h1>
-        <p className="mt-1 text-sm text-zinc-400">
+        <p className="mt-1 text-sm text-muted">
           An event the group wants to go to. Start from a LAN type to fill in its usual details and seats.
         </p>
       </div>
       {types.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 text-sm">
-          <span className="text-zinc-500">Start from:</span>
+          <span className="text-faint">Start from:</span>
           {types.map((x) => (
             <Link
               key={x.id}
               href={`/clans/${c.slug}/lans/new?type=${x.id}`}
-              className={`rounded-full border px-3 py-1 ${x.id === t?.id ? "border-bit text-bit" : "border-line text-zinc-300 hover:border-zinc-500"}`}
+              className={`rounded-full border px-3 py-1 ${x.id === t?.id ? "border-bit text-bit" : "border-line text-fg/90 hover:border-muted/50"}`}
             >
               {x.name}
             </Link>
           ))}
-          <Link href={`/clans/${c.slug}/lans/new`} className="text-zinc-500 hover:text-zinc-300">
+          <Link href={`/clans/${c.slug}/lans/new`} className="text-muted hover:text-fg">
             blank
           </Link>
         </div>
@@ -85,7 +85,7 @@ export default async function NewLanPage({ params, searchParams }: PageProps<"/c
           }}
         />
         {t?.seatSpec && (
-          <p className="mt-4 text-xs text-zinc-500">Seats {t.seatSpec} will be set up from the {t.name} type.</p>
+          <p className="mt-4 text-xs text-muted">Seats {t.seatSpec} will be set up from the {t.name} type.</p>
         )}
       </Card>
     </div>

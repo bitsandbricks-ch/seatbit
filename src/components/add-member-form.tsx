@@ -32,9 +32,9 @@ export function AddMemberForm({
       {hits.length > 0 && (
         <ul className="space-y-1">
           {hits.map((u) => (
-            <li key={u.id} className="flex items-center justify-between gap-2 rounded-md bg-zinc-800/50 px-3 py-1.5">
+            <li key={u.id} className="flex items-center justify-between gap-2 rounded-md bg-raised/60 px-3 py-1.5">
               <span className="min-w-0 truncate text-sm">
-                {u.name} <span className="text-zinc-500">{u.email}</span>
+                {u.name} <span className="text-faint">{u.email}</span>
               </span>
               <button
                 disabled={pending}
@@ -47,7 +47,7 @@ export function AddMemberForm({
           ))}
         </ul>
       )}
-      {q.trim().length >= 2 && hits.length === 0 && <p className="text-sm text-zinc-500">No user found.</p>}
+      {q.trim().length >= 2 && hits.length === 0 && <p className="text-sm text-muted">No user found.</p>}
     </div>
   );
 }

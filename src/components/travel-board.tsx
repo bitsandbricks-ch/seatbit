@@ -111,7 +111,7 @@ export function TravelBoard({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div role="tablist" className="inline-flex rounded-lg border border-line bg-zinc-900 p-1 text-sm">
+        <div role="tablist" className="inline-flex rounded-lg border border-line bg-raised p-1 text-sm">
           {(["ride", "sleep"] as const).map((k) => (
             <button
               key={k}
@@ -121,15 +121,15 @@ export function TravelBoard({
                 setKind(k);
                 setForm(null);
               }}
-              className={`rounded-md px-3 py-1.5 font-medium ${kind === k ? "bg-zinc-700 text-zinc-100" : "text-zinc-400 hover:text-zinc-200"}`}
+              className={`rounded-md px-3 py-1.5 font-medium ${kind === k ? "bg-line text-fg" : "text-muted hover:text-fg"}`}
             >
               {k === "ride" ? "Carpool" : "Sleeping"}
-              {count(k) > 0 && <span className="ml-1.5 text-xs text-zinc-400">{count(k)}</span>}
+              {count(k) > 0 && <span className="ml-1.5 text-xs text-muted">{count(k)}</span>}
             </button>
           ))}
         </div>
-        <p className="text-sm text-zinc-400">
-          <span className="text-bit">{free}</span> free {c.unit(free)} · <span className="text-amber-300">{looking}</span>{" "}
+        <p className="text-sm text-muted">
+          <span className="text-bit">{free}</span> free {c.unit(free)} · <span className="text-warn">{looking}</span>{" "}
           looking
         </p>
       </div>
@@ -157,17 +157,17 @@ export function TravelBoard({
           </div>
         )
       ) : (
-        <p className="rounded-md bg-zinc-800/50 px-3 py-2 text-sm text-zinc-400">
+        <p className="rounded-md bg-raised/60 px-3 py-2 text-sm text-muted">
           Say you&apos;re coming (or unsure) on the Overview tab to offer or ask for {kind === "ride" ? "a ride" : "a place to sleep"}.
         </p>
       )}
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
 
-      {sorted.length === 0 && <p className="text-sm text-zinc-400">{c.empty}</p>}
+      {sorted.length === 0 && <p className="text-sm text-muted">{c.empty}</p>}
 
       {sorted.map((g) => (
         <section key={townKey(g.town)}>
-          <h3 className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-zinc-500">
+          <h3 className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-faint">
             <span aria-hidden>📍</span> {g.town || "Somewhere"}
           </h3>
           <ul className="space-y-2">
@@ -179,22 +179,22 @@ export function TravelBoard({
                 <li
                   key={p.id}
                   className={`rounded-lg border px-3 py-2.5 text-sm ${
-                    p.mode === "offer" ? "border-bit/25 bg-bit-soft/40" : "border-amber-500/25 bg-amber-500/5"
+                    p.mode === "offer" ? "border-bit/25 bg-bit-soft/40" : "border-warn/25 bg-warn/5"
                   }`}
                 >
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p>
-                        <span className={`font-semibold ${mine ? "text-bit" : "text-zinc-100"}`}>{p.nick}</span>{" "}
-                        <span className="text-zinc-400">{p.mode === "offer" ? c.offerTitle : c.requestTitle}</span>
+                        <span className={`font-semibold ${mine ? "text-bit" : "text-fg"}`}>{p.nick}</span>{" "}
+                        <span className="text-muted">{p.mode === "offer" ? c.offerTitle : c.requestTitle}</span>
                         {p.notComing && (
                           <span className="ml-2">
                             <Pill tone="red">not coming anymore</Pill>
                           </span>
                         )}
                       </p>
-                      {p.whenText && <p className="text-zinc-300">{p.whenText}</p>}
-                      {p.note && <p className="text-zinc-400">{p.note}</p>}
+                      {p.whenText && <p className="text-fg/90">{p.whenText}</p>}
+                      {p.note && <p className="text-muted">{p.note}</p>}
                     </div>
                     <span className="shrink-0">
                       {p.mode === "offer" ? (
@@ -212,14 +212,14 @@ export function TravelBoard({
                   {p.mode === "offer" && p.spots.length > 0 && (
                     <ul className="mt-2 flex flex-wrap gap-1.5">
                       {p.spots.map((s) => (
-                        <li key={s.userId} className="inline-flex items-center gap-1 rounded-full bg-zinc-800 px-2 py-0.5 text-xs">
+                        <li key={s.userId} className="inline-flex items-center gap-1 rounded-full bg-raised px-2 py-0.5 text-xs">
                           <span className={s.userId === meId ? "text-bit" : ""}>{s.nick}</span>
                           {(canRemove || s.userId === meId) && (
                             <button
                               aria-label={`Remove ${s.nick}`}
                               disabled={pending}
                               onClick={() => run(() => leaveTravelOffer(p.id, s.userId))}
-                              className="text-zinc-500 hover:text-red-300"
+                              className="text-muted hover:text-danger"
                             >
                               ×
                             </button>
@@ -260,7 +260,7 @@ export function TravelBoard({
                     )}
                     {canRemove && (
                       <button
-                        className={`${btnGhost} text-red-300`}
+                        className={`${btnGhost} text-danger`}
                         disabled={pending}
                         onClick={() => run(() => deleteTravelPost(p.id))}
                       >
@@ -305,13 +305,13 @@ function PostForm({
   const listId = `towns-${kind}`;
   return (
     <form
-      className="space-y-3 rounded-lg border border-line bg-zinc-900/60 p-3"
+      className="space-y-3 rounded-lg border border-line bg-ink/40 p-3"
       onSubmit={(e) => {
         e.preventDefault();
         onSave({ kind, mode, ...v, places: Number(v.places) });
       }}
     >
-      <p className="font-medium text-zinc-100">{mode === "offer" ? c.offer : c.request}</p>
+      <p className="font-medium text-fg">{mode === "offer" ? c.offer : c.request}</p>
       <div className="grid gap-3 sm:grid-cols-[1fr_8rem]">
         <Field label={mode === "request" && kind === "ride" ? "From" : c.town}>
           <Input

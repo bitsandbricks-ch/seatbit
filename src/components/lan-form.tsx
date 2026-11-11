@@ -75,7 +75,7 @@ export function LanForm({ values, types }: { values: LanFormValues; types: { id:
       <Field label="Description">
         <textarea name="description" defaultValue={values.description} rows={4} className={input} />
       </Field>
-      {state?.error && <p className="text-sm text-red-400">{state.error}</p>}
+      {state?.error && <p className="text-sm text-danger">{state.error}</p>}
       <button disabled={pending} className={btnPrimary}>
         {values.id ? "Save changes" : "Add LAN"}
       </button>

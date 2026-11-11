@@ -42,11 +42,11 @@ export default async function ClanPage({ params }: PageProps<"/clans/[slug]">) {
       <div className="flex items-center gap-4">
         <ClanAvatar clan={c} size={72} />
         <div className="min-w-0 flex-1">
-          <h1 className="text-2xl font-bold">{c.name}</h1>
-          <p className="text-sm text-zinc-400">{members.length} members</p>
+          <h1 className="text-2xl font-bold tracking-tight text-balance sm:text-3xl">{c.name}</h1>
+          <p className="text-sm text-muted">{members.length} members</p>
         </div>
       </div>
-      {c.description && <p className="whitespace-pre-wrap text-zinc-300">{c.description}</p>}
+      {c.description && <p className="whitespace-pre-wrap text-fg/90">{c.description}</p>}
 
       <div className="flex flex-wrap gap-2">
         {isAdmin && (
@@ -66,8 +66,8 @@ export default async function ClanPage({ params }: PageProps<"/clans/[slug]">) {
         )}
         {role === "pending" && <Pill tone="amber">Waiting for an admin to approve you</Pill>}
         {role && (
-          <form action={leaveClan.bind(null, c.id)}>
-            <button className={btnGhost}>{role === "pending" ? "Cancel request" : "Leave clan"}</button>
+          <form action={leaveClan.bind(null, c.id)} className="sm:ml-auto">
+            <button className={`${btnGhost} hover:!text-danger`}>{role === "pending" ? "Cancel request" : "Leave clan"}</button>
           </form>
         )}
       </div>
@@ -75,14 +75,14 @@ export default async function ClanPage({ params }: PageProps<"/clans/[slug]">) {
       {(isMember || isAdmin) && (
         <Card title="Upcoming events">
           {lans.length === 0 ? (
-            <p className="text-sm text-zinc-400">Nothing planned yet.</p>
+            <p className="text-sm text-muted">Nothing planned yet. Admins add the next LAN with “New event”.</p>
           ) : (
             <ul className="space-y-1">
               {lans.map((l) => (
                 <li key={l.id}>
-                  <Link href={`/lans/${l.id}`} className="flex justify-between gap-2 rounded-md p-2 hover:bg-zinc-800/60">
+                  <Link href={`/lans/${l.id}`} className="-mx-2 flex min-h-12 items-center justify-between gap-2 rounded-md p-2 transition hover:bg-raised">
                     <span className="truncate font-medium">{l.name}</span>
-                    <span className="shrink-0 text-sm text-zinc-500">{fmtDay(l.startsAt)}</span>
+                    <span className="shrink-0 text-sm text-muted">{fmtDay(l.startsAt)}</span>
                   </Link>
                 </li>
               ))}
@@ -97,7 +97,7 @@ export default async function ClanPage({ params }: PageProps<"/clans/[slug]">) {
             .map((m) => ({ ...m, nick: pickNick(nicks.filter((n) => n.userId === m.u.id), { lanId: null, typeId: null }, m.u.name) }))
             .sort((a, b) => a.nick.localeCompare(b.nick))
             .map((m) => (
-              <li key={m.u.id} className="flex items-center justify-between rounded bg-zinc-800/50 px-3 py-1.5 text-sm">
+              <li key={m.u.id} className="flex min-h-10 items-center justify-between gap-2 rounded-bit bg-raised/60 px-3 py-1.5 text-sm">
                 <span className="truncate">{m.nick}</span>
                 {m.role === "admin" && <Pill tone="emerald">admin</Pill>}
               </li>

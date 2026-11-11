@@ -21,7 +21,7 @@ export function SeatSetup({
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <label className="block text-sm text-zinc-300" htmlFor="seat-spec">
+        <label className="block text-sm text-fg/90" htmlFor="seat-spec">
           Seats the event gave us
         </label>
         <div className="flex flex-wrap gap-2">
@@ -45,7 +45,7 @@ export function SeatSetup({
             Save seats
           </button>
         </div>
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-muted">
           Each letter becomes a row. Existing assignments are kept for seats that stay in the list.
         </p>
       </div>
@@ -77,12 +77,12 @@ export function SeatSetup({
             Re-plan everyone
           </button>
         </div>
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-muted">
           {unseated} coming without a seat · {free} free seats. The planner follows seat wishes (near, not next to,
           edge/middle, preferred seat) and seats people with a ticket first.
         </p>
       </div>
-      {msg && <p className={`text-sm ${msg.ok ? "text-bit" : "text-red-400"}`}>{msg.text}</p>}
+      {msg && <p className={`text-sm ${msg.ok ? "text-bit" : "text-danger"}`}>{msg.text}</p>}
     </div>
   );
 }

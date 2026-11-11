@@ -112,7 +112,7 @@ export function SeatMap({
               ))}
             </select>
           )}
-          <span className="text-xs text-zinc-500">
+          <span className="text-xs text-muted">
             {tool === "layout" && "Click a cell to add or remove a seat, or a row letter to fill or clear the whole row."}
             {tool === "lock" && "Held seats can't be claimed by members. Orgas can still assign people to them."}
             {tool === "rename" && "Click a seat to change its label."}
@@ -121,7 +121,7 @@ export function SeatMap({
       )}
 
       {mode === "view" && (
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-muted">
           {mySeat ? `You're at ${mySeat.label}.` : "The orgas assign the group's seats after the deadline."}
         </p>
       )}
@@ -142,13 +142,13 @@ export function SeatMap({
                 <button
                   key={i}
                   onClick={() => run(() => toggleSeatRow(lanId, row))}
-                  className="h-14 rounded text-xs font-mono text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+                  className="h-14 rounded text-xs font-mono text-muted hover:bg-raised hover:text-fg"
                   title={`Fill or clear row ${letter}`}
                 >
                   {letter}
                 </button>
               ) : (
-                <div key={i} className="grid h-14 place-items-center text-xs font-mono text-zinc-600">
+                <div key={i} className="grid h-14 place-items-center text-xs font-mono text-faint">
                   {letter}
                 </div>
               );
@@ -159,7 +159,7 @@ export function SeatMap({
                 <button
                   key={i}
                   onClick={() => onCell(row, col)}
-                  className="h-14 rounded border border-dashed border-line hover:border-zinc-600"
+                  className="h-14 rounded border border-dashed border-line hover:border-muted/50"
                   aria-label={`Add seat at row ${row + 1}, column ${col + 1}`}
                 />
               ) : (
@@ -173,8 +173,8 @@ export function SeatMap({
               : taken
                 ? "bg-seat-taken/20 text-seat-taken border-seat-taken/40"
                 : s.locked
-                  ? "bg-zinc-800/50 text-zinc-500 border-zinc-700 [background-image:repeating-linear-gradient(45deg,transparent,transparent_4px,rgba(255,255,255,.04)_4px,rgba(255,255,255,.04)_8px)]"
-                  : `bg-zinc-800 text-zinc-300 border-zinc-700 ${mode === "admin" ? "hover:border-bit" : ""}`;
+                  ? "bg-raised/60 text-faint border-line [background-image:repeating-linear-gradient(45deg,transparent,transparent_4px,rgba(255,255,255,.04)_4px,rgba(255,255,255,.04)_8px)]"
+                  : `bg-raised text-fg/90 border-line ${mode === "admin" ? "hover:border-bit" : ""}`;
             return (
               <button
                 key={i}
@@ -194,13 +194,13 @@ export function SeatMap({
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-4 text-xs text-zinc-500">
-        <Legend cls="bg-zinc-800 border-zinc-700">Free</Legend>
+      <div className="flex flex-wrap gap-4 text-xs text-muted">
+        <Legend cls="bg-raised border-line">Free</Legend>
         <Legend cls="bg-bit border-bit">You</Legend>
         <Legend cls="bg-seat-taken/20 border-seat-taken/40">Taken</Legend>
-        <Legend cls="bg-zinc-800/50 border-zinc-700">Held</Legend>
+        <Legend cls="bg-raised/60 border-line">Held</Legend>
       </div>
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
     </div>
   );
 }

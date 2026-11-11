@@ -64,7 +64,7 @@ export function AttendanceTable({
             className={`${filter === s ? btnSecondary + " !border-bit" : btnGhost} shrink-0 !rounded-full !py-1`}
           >
             {s === "all" ? "all" : statusLabel[s]}{" "}
-            <span className="text-zinc-500">{s === "all" ? rows.length : rows.filter((r) => r.status === s).length}</span>
+            <span className="text-faint">{s === "all" ? rows.length : rows.filter((r) => r.status === s).length}</span>
           </button>
         ))}
       </div>
@@ -82,12 +82,12 @@ export function AttendanceTable({
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <p className="truncate font-medium">{r.nick}</p>
-                <p className="truncate text-xs text-zinc-500">
+                <p className="truncate text-xs text-muted">
                   {r.name} · {r.email}
                 </p>
               </div>
               <button
-                className={`${btnGhost} shrink-0 !px-2 text-xs text-red-300`}
+                className={`${btnGhost} shrink-0 !px-2 text-xs text-danger`}
                 onClick={() =>
                   confirm(`Remove ${r.nick} from this LAN?`) && run(() => adminRemoveAttendance(lanId, r.userId))
                 }
@@ -97,7 +97,7 @@ export function AttendanceTable({
             </div>
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
               <label className="block">
-                <span className="mb-1 block text-[11px] uppercase tracking-wide text-zinc-500">Status</span>
+                <span className="mb-1 block text-[11px] uppercase tracking-wide text-faint">Status</span>
                 <select
                   key={r.status}
                   defaultValue={r.status}
@@ -112,7 +112,7 @@ export function AttendanceTable({
                 </select>
               </label>
               <label className="block">
-                <span className="mb-1 block text-[11px] uppercase tracking-wide text-zinc-500">Seat</span>
+                <span className="mb-1 block text-[11px] uppercase tracking-wide text-faint">Seat</span>
                 {r.status === "going" && seats.length > 0 ? (
                   <select
                     key={r.seatId ?? "none"}
@@ -131,7 +131,7 @@ export function AttendanceTable({
                       ))}
                   </select>
                 ) : (
-                  <span className="block py-1.5 font-mono text-sm text-zinc-500">{r.seat ?? "—"}</span>
+                  <span className="block py-1.5 font-mono text-sm text-muted">{r.seat ?? "—"}</span>
                 )}
               </label>
               <label className="col-span-2 flex items-center gap-2 rounded-md border border-line px-3 py-2 text-sm sm:col-span-1 sm:self-end">
@@ -148,7 +148,7 @@ export function AttendanceTable({
                 </span>
               </label>
               <label className="col-span-2 block sm:col-span-1">
-                <span className="mb-1 block text-[11px] uppercase tracking-wide text-zinc-500">Note</span>
+                <span className="mb-1 block text-[11px] uppercase tracking-wide text-faint">Note</span>
                 <input
                   defaultValue={r.note}
                   onBlur={(e) => e.target.value !== r.note && run(() => adminSetNote(r.id, e.target.value))}
@@ -159,7 +159,7 @@ export function AttendanceTable({
             </div>
           </li>
         ))}
-        {visible.length === 0 && <li className="py-6 text-center text-sm text-zinc-500">Nobody here.</li>}
+        {visible.length === 0 && <li className="py-6 text-center text-sm text-muted">Nobody here.</li>}
       </ul>
 
       {others.length > 0 && (
