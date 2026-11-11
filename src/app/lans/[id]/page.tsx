@@ -13,7 +13,7 @@ import { ATTENDANCE_LOCKED_MSG, attendanceLocked, getDisplayNames, getLan, pickN
 import { canViewLan, isLanManager, requireUser } from "@/lib/session";
 import { getClan } from "@/lib/clans";
 import { ClanAvatar } from "@/components/clan-avatar";
-import { buildChecklist, progress } from "@/lib/checklist";
+import { buildChecklist } from "@/lib/checklist";
 import { LanChecklist } from "@/components/lan-checklist";
 import { SeatWishes } from "@/components/seat-wishes";
 import { Tabs } from "@/components/tabs";
@@ -22,6 +22,14 @@ import { PackingList } from "@/components/gear-board";
 import { PACKING_ITEMS } from "@/lib/gear";
 
 const { attendance, seat, nickname } = schema;
+
+const ANSWER_TEXT: Record<string, string> = {
+  going: "You're coming",
+  maybe: "You're unsure",
+  declined: "You can't make it",
+  waitlist: "You're on the waitlist",
+  none: "No answer yet",
+};
 
 const TABS = ["overview", "seats", "attendees", "travel", "gear"] as const;
 
@@ -91,7 +99,6 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
     freeSeats: seats.filter((s) => !s.userId && !s.locked).length,
   });
   const full = l.capacity != null && going.length >= l.capacity;
-  const prog = progress(steps);
 
   // Travel: people who said they're not coming no longer count.
   const out = new Set(rows.filter((r) => r.status === "declined").map((r) => r.userId));
@@ -201,6 +208,39 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
         )}
       </div>
 
+      {/* Your answer and your checklist sit above the tabs, so they show on every tab. */}
+      <div className={`grid items-stretch gap-4 ${my && my.status !== "declined" ? "lg:grid-cols-[20rem_minmax(0,1fr)] 2xl:grid-cols-[22rem_minmax(0,1fr)]" : ""}`}>
+        <section aria-label="Your attendance" className="rounded-card border border-line bg-surface p-3 sm:p-4">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold text-fg">Your answer</h2>
+            <StatusBadge status={my?.status} seat={seatOf.get(me.id)} />
+          </div>
+          {locked || closed ? (
+            // Locked (ticket bought) or sign-up closed: just show the answer, no buttons.
+            <div>
+              <p className="text-lg font-semibold text-fg">{ANSWER_TEXT[my?.status ?? "none"]}</p>
+              <p className="mt-1 text-sm text-muted">{locked ? ATTENDANCE_LOCKED_MSG : "Sign-up is closed."}</p>
+            </div>
+          ) : (
+            <AttendanceButtons lanId={l.id} current={my?.status ?? null} disabled={false} />
+          )}
+          {my?.status === "waitlist" && (
+            <p className="mt-3 text-sm text-seat-taken">
+              The LAN is full. You&apos;re on the waitlist and will get an email if a spot opens up.
+            </p>
+          )}
+        </section>
+        {my && my.status !== "declined" && (
+          <LanChecklist
+            variant="strip"
+            lanId={l.id}
+            steps={steps}
+            ticketBought={my.ticketBought}
+            canReportTicket={my.status === "going" || my.status === "waitlist"}
+          />
+        )}
+      </div>
+
       <Tabs
         tabs={[
           { id: "overview", label: "Overview" },
@@ -233,8 +273,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           {seats.length > 0 && my?.status === "going" && (picking || mySeatLabel) && !my.paid && !my.ticketBought && (
             <p className="rounded-md border border-warn/30 bg-warn/10 px-3 py-2 text-sm text-warn">
               {mySeatLabel
-                ? `You have seat ${mySeatLabel}. Tick "I have my ticket" in your checklist on the Overview tab.`
-                : `Tick "I have my ticket" in your checklist on the Overview tab, then pick your seat.`}
+                ? `You have seat ${mySeatLabel}. Tick "I have my ticket" in your checklist above.`
+                : `Tick "I have my ticket" in your checklist above, then pick your seat.`}
             </p>
           )}
           {seats.length > 0 && (published || isAdmin || picking) ? (
@@ -280,31 +320,10 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
       )}
 
       {tab === "overview" && (
-        // Phones: your answer and checklist first, then the event, then the rest.
-        // Desktop: event on the left, your stuff in a sidebar on the right.
+        // Your answer and checklist are above the tabs. Desktop: event on the left, dates in a sidebar on the right.
+        // Phones: the event first, dates last.
         <div className="grid grid-cols-1 items-start gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_22rem]">
-          <div className="min-w-0 space-y-4 sm:space-y-6 lg:col-start-2 lg:row-span-2 lg:row-start-1">
-            <Card title="Your attendance" actions={<StatusBadge status={my?.status} seat={seatOf.get(me.id)} />}>
-              <AttendanceButtons lanId={l.id} current={my?.status ?? null} disabled={!!closed || locked} />
-              {locked && !closed && <p className="mt-3 text-sm text-muted">{ATTENDANCE_LOCKED_MSG}</p>}
-              {my?.status === "waitlist" && (
-                <p className="mt-3 text-sm text-seat-taken">
-                  The LAN is full. You&apos;re on the waitlist and will get an email if a spot opens up.
-                </p>
-              )}
-              {closed && <p className="mt-3 text-sm text-muted">Sign-up is closed.</p>}
-            </Card>
-
-            {my && my.status !== "declined" && (
-              <Card title="Your checklist" actions={<span className="text-sm text-muted">{prog.done} / {prog.total}</span>}>
-                <LanChecklist
-                  lanId={l.id}
-                  steps={steps}
-                  ticketBought={my.ticketBought}
-                  canReportTicket={my.status === "going" || my.status === "waitlist"}
-                />
-              </Card>
-            )}
+          <div className="order-last min-w-0 space-y-4 sm:space-y-6 lg:order-none lg:col-start-2 lg:row-span-2 lg:row-start-1">
             <Card title="Dates">
               <dl className="space-y-3 text-sm">
                 <DateRow label="Answer by" d={l.signupDeadline} now={now} />
