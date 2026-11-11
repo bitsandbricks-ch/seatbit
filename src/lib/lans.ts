@@ -98,6 +98,8 @@ export async function setAttendance(
       .run();
     await promoteFromWaitlist(l);
   }
+  // Keep the attendee list on Discord announcements current.
+  void import("./discord").then((d) => d.refreshLanMessagesSoon(l.id)).catch(() => {});
   return status;
 }
 

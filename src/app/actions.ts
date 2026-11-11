@@ -13,6 +13,7 @@ import {
   setAttendance,
   signupClosed,
 } from "@/lib/lans";
+import { announceLan, postReminderNow, refreshLanMessagesSoon, unlinkChannel } from "@/lib/discord";
 import { sendReminderNow } from "@/lib/reminders";
 import { planSeats } from "@/lib/seating";
 import { appUrl, sendMail } from "@/lib/mail";
@@ -152,6 +153,9 @@ export async function saveLan(_: FormState, formData: FormData): Promise<FormSta
     if (t?.seatSpec) applySeatSpec(row.id, t.seatSpec);
   }
   lanPath(lanId!);
+  // New LANs are announced in the Discord channels; edits update the existing posts.
+  if (id) refreshLanMessagesSoon(id);
+  else await announceLan(lanId!).catch((e) => console.error("[discord] announce failed", e));
   redirect(`/lans/${lanId}/manage`);
 }
 
@@ -254,6 +258,22 @@ export async function adminSendReminder(
 ): Promise<number> {
   await requireLanManager(lanId);
   return sendReminderNow(mustGetLan(lanId), kind);
+}
+
+export async function postLanToDiscord(lanId: string): Promise<number> {
+  await requireLanManager(lanId);
+  return announceLan(lanId);
+}
+
+export async function unlinkDiscordChannel(channelId: string) {
+  const me = await requireUser();
+  if (!unlinkChannel(me, channelId)) throw new Error("Not allowed");
+  revalidatePath("/clans", "layout");
+}
+
+export async function postDiscordReminder(lanId: string, kind: "signup" | "payment" | "event"): Promise<number> {
+  await requireLanManager(lanId);
+  return postReminderNow(mustGetLan(lanId), kind);
 }
 
 export async function setUserRole(userId: string, role: "admin" | "member") {

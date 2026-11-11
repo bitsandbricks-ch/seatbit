@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "discord:register": "tsx --env-file-if-exists=.env scripts/discord-register.ts"
   },
   "dependencies": {
     "better-auth": "^1.7.20",

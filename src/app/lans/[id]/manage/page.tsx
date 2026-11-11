@@ -15,6 +15,10 @@ import { isLanManager, requireUser } from "@/lib/session";
 import { OrgaManager } from "@/components/orga-manager";
 import { SeatSetup } from "@/components/seat-setup";
 import { Tabs } from "@/components/tabs";
+import { DiscordButtons, WhatsAppTexts } from "@/components/chat-panel";
+import { whatsappTexts } from "@/lib/announce";
+import { discordEnabled, inviteUrl } from "@/lib/discord-api";
+import { canManageClan, getClan } from "@/lib/clans";
 import { PublishSeats } from "@/components/publish-seats";
 import { checkWishes } from "@/lib/seating";
 
@@ -24,6 +28,7 @@ const TABS = [
   ["overview", "Overview"],
   ["attendees", "Attendees"],
   ["seats", "Seats"],
+  ["chat", "Discord & WhatsApp"],
   ["settings", "Settings"],
 ] as const;
 type Tab = (typeof TABS)[number][0];
@@ -64,6 +69,13 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
     .from(reminderLog)
     .where(and(eq(reminderLog.lanId, id)))
     .all();
+
+  const discordChannels = l.clanId
+    ? db.select().from(schema.discordChannel).where(eq(schema.discordChannel.clanId, l.clanId)).all().length
+    : 0;
+  const lanClan = l.clanId ? getClan(l.clanId) : undefined;
+  const discordPosts = db.select().from(schema.discordMessage).where(eq(schema.discordMessage.lanId, id)).all().length;
+  const invite = lanClan && canManageClan(me, lanClan.id) ? inviteUrl() : null;
 
   const wantsMail = (uid: string) => userById.get(uid)?.emailReminders;
   const undecided = users.filter(
@@ -280,6 +292,65 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
             </Card>
           )}
         </div>
+      )}
+
+      {tab === "chat" && (
+        <Card title="Discord & WhatsApp">
+          <div className="space-y-5 text-sm">
+            <div className="space-y-2">
+              <h3 className="font-semibold text-zinc-200">Discord</h3>
+              {!discordEnabled ? (
+                <p className="text-zinc-400">
+                  The Discord bot isn&apos;t set up. Add <code>DISCORD_BOT_TOKEN</code> and <code>DISCORD_PUBLIC_KEY</code> (see
+                  README).
+                </p>
+              ) : discordChannels === 0 ? (
+                <p className="text-zinc-400">
+                  {lanClan?.name ?? "This clan"} has no Discord channel yet.{" "}
+                  {invite && (
+                    <a href={invite} target="_blank" rel="noreferrer" className="text-emerald-400 hover:underline">
+                      Invite the bot
+                    </a>
+                  )}{" "}
+                  to your server, then run <code>/seatbit here</code> in the channel it should post in.
+                  {lanClan && invite && (
+                    <>
+                      {" "}
+                      Manage linked channels in{" "}
+                      <Link href={`/clans/${lanClan.slug}/settings?tab=chat`} className="text-emerald-400 hover:underline">
+                        clan settings
+                      </Link>
+                      .
+                    </>
+                  )}
+                </p>
+              ) : (
+                <p className="text-zinc-400">
+                  Posting to {discordChannels} channel(s); this LAN is posted in {discordPosts}. Members answer with the
+                  buttons under the post, the attendee list updates live, and deadline reminders are posted automatically
+                  (pinging members who linked Discord).
+                </p>
+              )}
+              {discordEnabled && discordChannels > 0 && (
+                <DiscordButtons
+                  lanId={l.id}
+                  posted={discordPosts}
+                  channels={discordChannels}
+                  kinds={[
+                    ...(l.signupDeadline ? [{ kind: "signup" as const, label: "Answer reminder" }] : []),
+                    ...(l.paymentDueDate ? [{ kind: "payment" as const, label: "Ticket reminder" }] : []),
+                    { kind: "event" as const, label: "Starts soon" },
+                  ]}
+                />
+              )}
+            </div>
+            <div className="space-y-2">
+              <h3 className="font-semibold text-zinc-200">WhatsApp</h3>
+              <p className="text-zinc-400">Ready-made messages for the community. Copy one and paste it into the group.</p>
+              <WhatsAppTexts texts={await whatsappTexts(l)} />
+            </div>
+          </div>
+        </Card>
       )}
 
       {tab === "settings" && (

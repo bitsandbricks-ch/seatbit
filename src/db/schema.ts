@@ -294,6 +294,57 @@ export const reminderLog = sqliteTable(
   (t) => [uniqueIndex("reminder_log_uq").on(t.lanId, t.userId, t.kind)],
 );
 
+// ---------- Chat integrations ----------
+
+/** Discord channels the bot posts a clan's LAN announcements and reminders to. A server belongs to one clan. */
+export const discordChannel = sqliteTable(
+  "discord_channel",
+  {
+    id: id(),
+    clanId: text("clan_id")
+      .notNull()
+      .references(() => clan.id, { onDelete: "cascade" }),
+    guildId: text("guild_id").notNull(),
+    channelId: text("channel_id").notNull().unique(),
+    /** Channel name when it was linked, for display only. */
+    channelName: text("channel_name").default("").notNull(),
+    /** Discord user id of whoever ran /seatbit here. */
+    addedBy: text("added_by"),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  (t) => [index("discord_channel_clan_idx").on(t.clanId), index("discord_channel_guild_idx").on(t.guildId)],
+);
+
+/** The announcement message for a LAN in a Discord channel, kept up to date with the attendee list. */
+export const discordMessage = sqliteTable(
+  "discord_message",
+  {
+    id: id(),
+    lanId: text("lan_id")
+      .notNull()
+      .references(() => lan.id, { onDelete: "cascade" }),
+    channelId: text("channel_id").notNull(),
+    messageId: text("message_id").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  (t) => [uniqueIndex("discord_message_lan_channel_uq").on(t.lanId, t.channelId)],
+);
+
+/** Reminders posted to chat channels, so each goes out once per LAN, channel and kind. */
+export const channelReminderLog = sqliteTable(
+  "channel_reminder_log",
+  {
+    id: id(),
+    lanId: text("lan_id")
+      .notNull()
+      .references(() => lan.id, { onDelete: "cascade" }),
+    channelId: text("channel_id").notNull(),
+    kind: text("kind").$type<ReminderKind>().notNull(),
+    sentAt: integer("sent_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  (t) => [uniqueIndex("channel_reminder_log_uq").on(t.lanId, t.channelId, t.kind)],
+);
+
 export type User = typeof user.$inferSelect;
 export type Lan = typeof lan.$inferSelect;
 export type LanType = typeof lanType.$inferSelect;
