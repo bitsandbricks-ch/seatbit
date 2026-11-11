@@ -9,6 +9,7 @@ import { Card, Pill, btnGhost, btnPrimary, btnSecondary } from "@/components/ui"
 import { fmtDay } from "@/lib/format";
 import { clanRole, getClanBySlug } from "@/lib/clans";
 import { pickNick } from "@/lib/lans";
+import { avatarData } from "@/lib/avatars";
 import { requireUser } from "@/lib/session";
 import { missingServers } from "@/lib/discord-invite";
 
@@ -127,6 +128,7 @@ export default async function ClanPage({ params }: PageProps<"/clans/[slug]">) {
               id: m.u.id,
               admin: m.role === "admin",
               nick: pickNick(nicks.filter((n) => n.userId === m.u.id), { lanId: null, typeId: null }, m.u.name),
+              avatar: avatarData(m.u),
             }))
             .sort((a, b) => a.nick.localeCompare(b.nick))}
         />

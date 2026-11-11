@@ -24,6 +24,7 @@ import { ClanMemberAdmin } from "@/components/clan-member-list";
 import { Card, btnDanger, btnGhost, btnPrimary, btnSecondary } from "@/components/ui";
 import { appUrl } from "@/lib/mail";
 import { personLabel } from "@/lib/names";
+import { avatarData } from "@/lib/avatars";
 import { canManageClan, getClanBySlug } from "@/lib/clans";
 import { requireUser } from "@/lib/session";
 import { unlinkDiscordChannel } from "@/app/actions";
@@ -195,6 +196,7 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
                 sub: u.isGuest ? (u.inviteEmail ? `No login yet · ${u.inviteEmail}` : "No login yet") : u.email,
                 role: role === "admin" ? "admin" : "member",
                 isGuest: u.isGuest,
+                avatar: avatarData(u),
               }))}
             />
           </Card>

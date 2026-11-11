@@ -8,6 +8,9 @@ import { LanIdForm } from "@/components/lan-id-form";
 import { pickLanAccount } from "@/lib/lan-accounts";
 import { SignOutButton } from "@/components/sign-out-button";
 import { Card, Field, Input, btnPrimary, btnSecondary } from "@/components/ui";
+import { Avatar } from "@/components/avatar";
+import { AppearanceForm } from "@/components/appearance-form";
+import { PROFILE_COLORS, PROFILE_ICONS, avatarData, initialsOf, userColor } from "@/lib/avatars";
 import { enabledProviders } from "@/lib/auth";
 import { requireUser } from "@/lib/session";
 import { missingServers } from "@/lib/discord-invite";
@@ -47,9 +50,7 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div className="flex items-center gap-4">
-        <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-bit-soft font-mono text-lg font-semibold uppercase text-bit">
-          {(defaultNick || me.firstName || me.name).slice(0, 2)}
-        </span>
+        <Avatar data={avatarData(me)} size={56} />
         <div className="min-w-0">
           <h1 className="truncate text-2xl font-bold tracking-tight">{defaultNick || me.name}</h1>
           <p className="truncate text-sm text-muted">
@@ -112,6 +113,18 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
             )}
           </form>
         )}
+      </Card>
+
+      <Card title="Avatar & colour">
+        <AppearanceForm
+          initial={{ style: me.avatarStyle, color: userColor(me), icon: me.icon }}
+          colors={PROFILE_COLORS}
+          icons={PROFILE_ICONS}
+          picture={avatarData({ ...me, avatarStyle: "picture" }).src}
+          hasUpload={!!me.avatarFile}
+          initials={initialsOf(me)}
+          name={defaultNick || me.name}
+        />
       </Card>
 
       {types.length > 0 && (

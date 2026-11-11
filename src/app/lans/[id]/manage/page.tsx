@@ -24,6 +24,7 @@ import { PublishSeats } from "@/components/publish-seats";
 import { checkWishes } from "@/lib/seating";
 import { getLanAccounts } from "@/lib/lan-accounts";
 import { personLabel } from "@/lib/names";
+import { avatarMap } from "@/lib/avatars";
 
 const { attendance, seat, user, reminderLog } = schema;
 
@@ -64,6 +65,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
     .all()
     .filter((u) => memberIds.has(u.id) || rows.some((r) => r.userId === u.id));
   const names = await getDisplayNames(id, users.map((u) => u.id));
+  const avatars = avatarMap(users);
   const lanIds = getLanAccounts(l, rows.map((r) => r.userId));
   const userById = new Map(users.map((u) => [u.id, u]));
   const seatOf = new Map(seats.filter((s) => s.userId).map((s) => [s.userId!, s.label]));
@@ -98,6 +100,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
         id: r.id,
         userId: r.userId,
         nick: names.get(r.userId) ?? u.name,
+        avatar: avatars.get(r.userId),
         name: u.name,
         email: u.isGuest ? (u.inviteEmail ? `guest, invited at ${u.inviteEmail}` : "guest, no login yet") : u.email,
         status: r.status,
@@ -248,7 +251,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
                 cols={l.seatCols}
                 meId={me.id}
                 mode="admin"
-                seats={seats.map((s) => ({ ...s, nick: s.userId ? (names.get(s.userId) ?? "?") : null }))}
+                seats={seats.map((s) => ({ ...s, nick: s.userId ? (names.get(s.userId) ?? "?") : null, color: s.userId ? (avatars.get(s.userId)?.color ?? null) : null }))}
                 assignable={going
                   .map((r) => {
                     const w = wishChecks.find((c) => c.userId === r.userId);

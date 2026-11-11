@@ -1,10 +1,11 @@
-/* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, asc, eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Attendance, Lan } from "@/db/schema";
 import { ClanAvatar } from "@/components/clan-avatar";
+import { Avatar } from "@/components/avatar";
+import { avatarData } from "@/lib/avatars";
 import { CopyField } from "@/components/copy-field";
 import { MemberAdminActions } from "@/components/member-admin-actions";
 import { Card, StatTile, Pill, StatusBadge } from "@/components/ui";
@@ -90,10 +91,7 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
         .get()
     : undefined;
   const role = membership.role === "admin" ? "admin" : "member";
-  const initials = [u.firstName, u.lastName]
-    .map((s) => s.trim()[0]?.toUpperCase())
-    .filter(Boolean)
-    .join("") || u.name.slice(0, 2).toUpperCase();
+  const avatar = avatarData(u);
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -102,17 +100,11 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
       </Link>
 
       <div className="flex items-center gap-4">
-        {u.image ? (
-          <img src={u.image} alt="" width={72} height={72} className="h-[72px] w-[72px] shrink-0 rounded-full object-cover" />
-        ) : (
-          <span className="grid h-[72px] w-[72px] shrink-0 place-items-center rounded-full bg-raised text-2xl font-bold text-bit">
-            {initials}
-          </span>
-        )}
+        <Avatar data={avatar} size={72} />
         <div className="min-w-0">
           <h1 className="text-2xl font-bold tracking-tight text-balance sm:text-3xl">{u.name}</h1>
           <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
-            {defaultNick && defaultNick !== u.name && <span className="font-medium text-bit">{defaultNick}</span>}
+            {defaultNick && defaultNick !== u.name && <span className="font-medium" style={{ color: avatar.color }}>{defaultNick}</span>}
             {role === "admin" && <Pill tone="emerald">admin</Pill>}
             {u.isGuest && <Pill>guest · no login yet</Pill>}
             <span>in the clan since {fmtWeekday(membership.createdAt)}</span>

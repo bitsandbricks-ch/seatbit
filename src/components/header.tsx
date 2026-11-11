@@ -5,6 +5,8 @@ import { LOGIN_METHODS } from "@/lib/auth";
 import { getCurrentUser } from "@/lib/session";
 import { BottomNav, TopNav, type NavItem } from "./nav";
 import { SignOutButton } from "./sign-out-button";
+import { Avatar } from "./avatar";
+import { avatarData } from "@/lib/avatars";
 
 export async function Header() {
   const me = await getCurrentUser();
@@ -41,9 +43,7 @@ export async function Header() {
                   className="flex min-w-0 items-center gap-2 rounded-full border border-line bg-surface py-1 pl-1 pr-3 text-sm text-fg transition hover:border-bit/60"
                   aria-label="Your profile"
                 >
-                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-bit-soft font-mono text-xs font-semibold uppercase text-bit">
-                    {display.slice(0, 2)}
-                  </span>
+                  <Avatar data={avatarData(me)} size={28} ring={false} />
                   <span className="max-w-[7rem] truncate">{display}</span>
                 </Link>
                 <span className="hidden sm:inline">

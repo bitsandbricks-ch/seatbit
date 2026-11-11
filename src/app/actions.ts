@@ -24,6 +24,7 @@ import { eventMailVars, renderTemplate } from "@/lib/mail-templates";
 import { canViewLan, requireAdmin, requireClanManager, requireLanManager, requireUser } from "@/lib/session";
 import { isClanMember } from "@/lib/clans";
 import { lanAccountScope, saveLanAccount } from "@/lib/lan-accounts";
+import { PROFILE_COLORS, PROFILE_ICONS, deleteUserAvatarFile, saveUserAvatar } from "@/lib/avatars";
 
 const { attendance, nickname, seat, lan, user, lanOrga, lanType } = schema;
 
@@ -120,6 +121,37 @@ export async function updateProfile(formData: FormData) {
     .run();
   if (formData.has("nick")) saveNick(me.id, String(formData.get("nick")));
   revalidatePath("/", "layout");
+}
+
+export type AppearanceState = { error?: string; ok?: boolean };
+
+/** Avatar style, uploaded picture, icon and personal colour. */
+export async function updateAppearance(_: AppearanceState, formData: FormData): Promise<AppearanceState> {
+  const me = await requireUser();
+  const style = z.enum(["picture", "icon", "initials"]).catch("picture").parse(formData.get("avatarStyle"));
+  const colorRaw = String(formData.get("color") ?? "");
+  const color = PROFILE_COLORS.some((c) => c.id === colorRaw) ? colorRaw : null;
+  const iconRaw = String(formData.get("icon") ?? "");
+  const icon = (PROFILE_ICONS as readonly string[]).includes(iconRaw) ? iconRaw : null;
+  const current = db.select({ avatarFile: user.avatarFile }).from(user).where(eq(user.id, me.id)).get();
+  let avatarFile = current?.avatarFile ?? null;
+  const file = formData.get("picture");
+  try {
+    if (file instanceof File && file.size > 0) {
+      const saved = await saveUserAvatar(me.id, file);
+      deleteUserAvatarFile(avatarFile);
+      avatarFile = saved;
+    } else if (formData.get("removePicture") === "on") {
+      deleteUserAvatarFile(avatarFile);
+      avatarFile = null;
+    }
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Upload failed" };
+  }
+  if (style === "icon" && !icon) return { error: "Pick an icon first." };
+  db.update(user).set({ avatarStyle: style, color, icon, avatarFile }).where(eq(user.id, me.id)).run();
+  revalidatePath("/", "layout");
+  return { ok: true };
 }
 
 /** Sends the member a test DM and shows on the profile whether it arrived, or why not. */
