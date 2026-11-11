@@ -22,6 +22,9 @@ import { Tabs } from "@/components/tabs";
 import { TravelBoard, type TravelPostView } from "@/components/travel-board";
 import { PackingList } from "@/components/gear-board";
 import { PACKING_ITEMS } from "@/lib/gear";
+import { GameList } from "@/components/game-list";
+import { GAMES_REMINDER_DAYS, listGames } from "@/lib/games";
+import { SeatSwapPanel, type SwapView } from "@/components/seat-swaps";
 
 const { attendance, seat, nickname } = schema;
 
@@ -33,7 +36,7 @@ const ANSWER_TEXT: Record<string, string> = {
   none: "No answer yet",
 };
 
-const TABS = ["overview", "seats", "attendees", "travel", "gear"] as const;
+const TABS = ["overview", "seats", "attendees", "travel", "gear", "games"] as const;
 
 export default async function LanPage({ params, searchParams }: PageProps<"/lans/[id]">) {
   const { id } = await params;
@@ -143,9 +146,55 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           .map((it) => ({ id: it.id, label: it.label, packed: it.packed }))
       : [];
 
+  const games = listGames(id, me.id);
+  const gameNames = tab === "games" ? Object.fromEntries(await getDisplayNames(id, [...new Set(games.flatMap((g) => g.voters))])) : {};
+  const gamesToInstall = games.filter((g) => g.votes > 0 && !g.myInstalled).length;
+
+  // Seat swaps: open requests I'm part of, and who I could swap with.
+  const swapRows =
+    published && mySeatLabel
+      ? db
+          .select()
+          .from(schema.seatSwap)
+          .where(and(eq(schema.seatSwap.lanId, id), inArray(schema.seatSwap.status, ["pending", "accepted"])))
+          .all()
+          .filter((s) => s.fromUserId === me.id || s.toUserId === me.id)
+      : [];
+  const seatLabelOf = new Map(seats.filter((s) => s.userId).map((s) => [s.userId!, s.label]));
+  const swaps: SwapView[] = swapRows.map((s) => ({
+    id: s.id,
+    fromUserId: s.fromUserId,
+    toUserId: s.toUserId,
+    fromNick: names.get(s.fromUserId) ?? "?",
+    toNick: names.get(s.toUserId) ?? "?",
+    fromSeat: seatLabelOf.get(s.fromUserId) ?? null,
+    toSeat: seatLabelOf.get(s.toUserId) ?? null,
+    status: s.status as SwapView["status"],
+    note: s.note,
+  }));
+  const swapCard = published && mySeatLabel && my?.status === "going" && (
+    <Card title="Swap seats">
+      <SeatSwapPanel
+        lanId={l.id}
+        meId={me.id}
+        mySeat={mySeatLabel}
+        swaps={swaps}
+        people={seats
+          .filter((s) => s.userId && s.userId !== me.id)
+          .map((s) => ({ id: s.userId!, nick: names.get(s.userId!) ?? "?", seat: s.label }))
+          .sort((a, b) => a.seat.localeCompare(b.seat, undefined, { numeric: true }))}
+      />
+    </Card>
+  );
+
   const profileBase = lanClan ? `/clans/${lanClan.slug}/members/` : null;
   const seatPills = (
-    <span className="flex gap-2">
+    <span className="flex flex-wrap items-center gap-2">
+      {l.externalPlanUrl && (
+        <a href={l.externalPlanUrl} target="_blank" rel="noreferrer" className="text-sm text-bit hover:underline">
+          Event seat plan <span aria-hidden>↗</span>
+        </a>
+      )}
       {picking && seats.length > 0 && <Pill tone="emerald">Pick your seat</Pill>}
       {!published && !picking && seats.length > 0 && <Pill tone="amber">Not published yet</Pill>}
     </span>
@@ -204,6 +253,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
             steps={steps}
             ticketBought={my.ticketBought}
             canReportTicket={my.status === "going" || my.status === "waitlist"}
+            planUrl={l.externalPlanUrl || undefined}
+            seatBooked={my.seatBooked}
           />
         )}
       </div>
@@ -215,6 +266,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           { id: "attendees", label: "Attendees", count: going.length },
           { id: "travel", label: "Travel", badge: openRequests ? `${openRequests} looking` : undefined },
           { id: "gear", label: "Packing list" },
+          { id: "games", label: "Games", badge: my?.status === "going" && gamesToInstall ? `${gamesToInstall} to install` : undefined },
         ]}
         active={tab}
         hrefFor={(t) => (t === "overview" ? `/lans/${l.id}` : `/lans/${l.id}?tab=${t}`)}
@@ -232,6 +284,20 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
       {tab === "gear" && (
         <div className="max-w-xl">
           <PackingList lanId={l.id} items={PACKING_ITEMS} packed={packed} own={ownItems} />
+        </div>
+      )}
+
+      {tab === "games" && (
+        <div className="max-w-3xl">
+          <GameList
+            lanId={l.id}
+            games={games}
+            meId={me.id}
+            canManage={isAdmin}
+            canAdd={canTakePart || isAdmin}
+            names={gameNames}
+            reminderDays={GAMES_REMINDER_DAYS}
+          />
         </div>
       )}
 
@@ -256,6 +322,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
               actions={seatPills}
             >
               {wishesCard}
+              {swapCard}
             </SeatMap>
           ) : (
             <div className="grid items-start gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_22rem]">

@@ -36,6 +36,8 @@ export type Notice = {
   dm?: string;
   /** Don't email, only DM (for small updates that aren't worth a mail). */
   dmOnly?: boolean;
+  /** Extra DM buttons next to "Open in Seatbit" (Discord button components, e.g. "I booked it"). */
+  buttons?: Record<string, unknown>[];
 };
 
 export type NotifyResult = { email: boolean; dm: boolean };
@@ -95,7 +97,18 @@ export async function trySendDiscordDm(u: Pick<User, "id" | "discordDms" | "isGu
           footer: { text: "Seatbit · turn these DMs off on your profile" },
         },
       ],
-      components: n.url ? [{ type: 1, components: [{ type: 2, style: 5, label: "Open in Seatbit", url: n.url }] }] : [],
+      components:
+        n.url || n.buttons?.length
+          ? [
+              {
+                type: 1,
+                components: [
+                  ...(n.buttons ?? []),
+                  ...(n.url ? [{ type: 2, style: 5, label: "Open in Seatbit", url: n.url }] : []),
+                ].slice(0, 5),
+              },
+            ]
+          : [],
       allowed_mentions: { parse: [] },
     });
     return { ok: true };
@@ -135,7 +148,8 @@ export async function notify(userOrId: User | string, n: Notice): Promise<Notify
       await sendMail(u.email, n.subject, n.text, n.html);
       email = true;
     } catch (e) {
-      console.error(`[mail] ${n.kind} to ${u.email} failed`, e);
+      // Constant format string: the address is user data and must not be read as printf placeholders.
+      console.error("[mail] %s to %s failed", n.kind, u.email, e);
     }
   }
   const dm = await sendDiscordDm(u, n);

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { deleteLan, setSeatPicking } from "@/app/actions";
 import { AttendanceTable } from "@/components/attendance-table";
@@ -25,6 +25,8 @@ import { PublishSeats } from "@/components/publish-seats";
 import { checkWishes } from "@/lib/seating";
 import { getLanAccounts } from "@/lib/lan-accounts";
 import { personLabel } from "@/lib/names";
+import { RemindToBookButton } from "@/components/seat-booking";
+import { SeatSwapApprovals, type SwapView } from "@/components/seat-swaps";
 
 const { attendance, seat, user, reminderLog } = schema;
 
@@ -111,6 +113,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
         lanAccount: lanIds.get(r.userId) ?? "",
         seat: seatOf.get(r.userId) ?? null,
         seatId: seats.find((s) => s.userId === r.userId)?.id ?? null,
+        seatBooked: l.externalPlanUrl && l.seatsPublishedAt ? r.seatBooked : null,
       };
     })
     .sort((a, b) => statusOrder[a.status] - statusOrder[b.status] || a.nick.localeCompare(b.nick));
@@ -134,6 +137,25 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
   const freeSeats = seats.filter((s) => !s.userId && !s.locked).length;
   const count = (st: string) => rows.filter((r) => r.status === st).length;
   const noAnswer = users.filter((u) => memberIds.has(u.id) && !inLan.has(u.id)).length;
+  const seatedGoing = going.filter((r) => seatOf.has(r.userId));
+  const bookedCount = seatedGoing.filter((r) => r.seatBooked).length;
+  const swaps: SwapView[] = db
+    .select()
+    .from(schema.seatSwap)
+    .where(and(eq(schema.seatSwap.lanId, id), inArray(schema.seatSwap.status, ["pending", "accepted"])))
+    .all()
+    .map((s) => ({
+      id: s.id,
+      fromUserId: s.fromUserId,
+      toUserId: s.toUserId,
+      fromNick: names.get(s.fromUserId) ?? "?",
+      toNick: names.get(s.toUserId) ?? "?",
+      fromSeat: seatOf.get(s.fromUserId) ?? null,
+      toSeat: seatOf.get(s.toUserId) ?? null,
+      status: s.status as SwapView["status"],
+      note: s.note,
+    }));
+  const swapsToApprove = swaps.filter((s) => s.status === "accepted").length;
 
   const seatCards = (
           <div className="grid items-start gap-5 lg:grid-cols-2">
@@ -164,6 +186,52 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
                     {l.seatPicking ? "Close seat picking" : "Let members pick their seats"}
                   </button>
                 </form>
+              )}
+            </Card>
+          )}
+          {swaps.length > 0 && (
+            <Card title="Seat swaps" actions={swapsToApprove > 0 && <Pill tone="amber">{swapsToApprove} to approve</Pill>}>
+              <p className="mb-3 text-sm text-muted">
+                Members asked each other to swap. Approving swaps the two seats and tells both.
+                {l.externalPlanUrl && " They then need to rebook on the event site."}
+              </p>
+              <SeatSwapApprovals swaps={swaps} />
+            </Card>
+          )}
+          {seats.length > 0 && l.seatsPublishedAt && (
+            <Card
+              title="Booking on the event site"
+              actions={l.externalPlanUrl ? <Pill tone={bookedCount === seatedGoing.length ? "emerald" : "amber"}>{bookedCount} / {seatedGoing.length} booked</Pill> : undefined}
+            >
+              {l.externalPlanUrl ? (
+                <div className="space-y-3 text-sm">
+                  <p className="text-muted">
+                    Everyone books their seat on the{" "}
+                    <a href={l.externalPlanUrl} target="_blank" rel="noreferrer" className="text-bit hover:underline">
+                      event&apos;s seat plan
+                    </a>{" "}
+                    themselves and ticks &ldquo;I booked it&rdquo; (on the event page or in the Discord DM). A new seat
+                    clears the tick.
+                  </p>
+                  {seatedGoing.length > bookedCount && (
+                    <p>
+                      <span className="text-faint">Not booked yet: </span>
+                      {seatedGoing
+                        .filter((r) => !r.seatBooked)
+                        .map((r) => `${names.get(r.userId) ?? "?"} (${seatOf.get(r.userId)})`)
+                        .join(", ")}
+                    </p>
+                  )}
+                  <RemindToBookButton lanId={l.id} open={seatedGoing.length - bookedCount} />
+                </div>
+              ) : (
+                <p className="text-sm text-muted">
+                  Add the event&apos;s seat plan link in{" "}
+                  <Link href={`/lans/${l.id}/manage?tab=settings`} className="text-bit hover:underline">
+                    Settings
+                  </Link>{" "}
+                  to track who booked their seat there.
+                </p>
               )}
             </Card>
           )}
@@ -235,9 +303,11 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
           badge:
             t === "attendees" && ticketsReported
               ? `${ticketsReported} to confirm`
-              : t === "seats" && going.length - seated > 0 && seats.length
-                ? `${going.length - seated} unseated`
-                : undefined,
+              : t === "seats" && swapsToApprove
+                ? `${swapsToApprove} swap${swapsToApprove > 1 ? "s" : ""} to approve`
+                : t === "seats" && going.length - seated > 0 && seats.length
+                  ? `${going.length - seated} unseated`
+                  : undefined,
         }))}
         active={tab}
         hrefFor={(t) => `/lans/${l.id}/manage?tab=${t}`}
@@ -427,6 +497,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
                 location: l.location,
                 websiteUrl: l.websiteUrl,
                 ticketUrl: l.ticketUrl,
+                externalPlanUrl: l.externalPlanUrl,
                 startsAt: toInputValue(l.startsAt),
                 endsAt: toInputValue(l.endsAt),
                 signupDeadline: toInputValue(l.signupDeadline),

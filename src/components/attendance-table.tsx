@@ -31,6 +31,8 @@ export type AttendanceRow = {
   lanAccount: string;
   seatId: string | null;
   seat: string | null;
+  /** Booked the seat on the event's own seat plan; null when the event has no seat plan link. */
+  seatBooked?: boolean | null;
   avatar?: AvatarData;
 };
 
@@ -49,6 +51,10 @@ const needs = {
   ticketOpen: { label: "Ticket not confirmed", test: (r: AttendanceRow) => r.status !== "declined" && !r.paid },
   ticketReported: { label: "Ticket reported, confirm it", test: (r: AttendanceRow) => r.ticketBought && !r.paid },
   noSeat: { label: "Coming, no seat yet", test: (r: AttendanceRow) => r.status === "going" && !r.seatId },
+  notBooked: {
+    label: "Seat not booked on event site",
+    test: (r: AttendanceRow) => r.status === "going" && !!r.seatId && r.seatBooked === false,
+  },
   noLanId: { label: "No LAN ID", test: (r: AttendanceRow) => r.status !== "declined" && !r.lanAccount },
   hasNote: { label: "Has a note", test: (r: AttendanceRow) => !!r.note },
 } satisfies Record<string, { label: string; test: (r: AttendanceRow) => boolean }>;
@@ -257,6 +263,11 @@ export function AttendanceTable({
                   </select>
                 ) : (
                   <span className="block py-1.5 font-mono text-sm text-muted">{r.seat ?? "—"}</span>
+                )}
+                {r.seat && r.seatBooked != null && (
+                  <span className={`mt-0.5 block text-[11px] ${r.seatBooked ? "text-bit" : "text-warn"}`}>
+                    {r.seatBooked ? "✓ booked on site" : "not booked on site"}
+                  </span>
                 )}
               </label>
               <label className="col-span-2 flex min-h-10 cursor-pointer items-center gap-2 rounded-md border border-line px-3 py-2 text-sm sm:col-span-1 sm:self-end lg:self-auto">

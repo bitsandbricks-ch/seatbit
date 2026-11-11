@@ -129,6 +129,12 @@ export async function runDueReminders(now = new Date()) {
       const sent = await send(kind, l, recipients(kind, l), true);
       if (sent) result.push({ lan: l.name, kind, sent });
     }
+    // "Install your games" a couple of days before the LAN, once per person.
+    const games = await import("./games");
+    if (games.gamesReminderDue(l, now)) {
+      const sent = await games.sendGamesReminder(l);
+      if (sent) result.push({ lan: l.name, kind: "games", sent });
+    }
     // Same reminders as a post in the configured Discord channels, once each.
     const { postDueChannelReminders, refreshLanMessages } = await import("./discord");
     try {

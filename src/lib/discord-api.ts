@@ -79,8 +79,8 @@ export async function registerCommands() {
 export function inviteUrl() {
   const id = appId();
   if (!id) return null;
-  // Create Invite, View Channel, Send Messages, Embed Links
-  const perms = (1 << 0) | (1 << 10) | (1 << 11) | (1 << 14);
+  // Create Invite, View Channel, Send Messages, Embed Links, Pin Messages (pins the live LAN post)
+  const perms = [0, 10, 11, 14, 51].reduce((p, bit) => p | (BigInt(1) << BigInt(bit)), BigInt(0));
   return `https://discord.com/oauth2/authorize?client_id=${id}&scope=bot+applications.commands&permissions=${perms}`;
 }
 
