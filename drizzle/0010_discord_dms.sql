@@ -1,0 +1,1 @@
+ALTER TABLE `user` ADD `discord_dms` integer DEFAULT true NOT NULL;
