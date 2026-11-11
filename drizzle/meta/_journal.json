@@ -64,6 +64,13 @@
       "when": 1794397478524,
       "tag": "0008_guests",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1794398516687,
+      "tag": "0009_travel_gear",
+      "breakpoints": true
     }
   ]
 }

@@ -353,6 +353,107 @@ export const channelReminderLog = sqliteTable(
   (t) => [uniqueIndex("channel_reminder_log_uq").on(t.lanId, t.channelId, t.kind)],
 );
 
+// ---------- Travel (carpools, sleeping spots) ----------
+
+export const TRAVEL_KINDS = ["ride", "sleep"] as const;
+export type TravelKind = (typeof TRAVEL_KINDS)[number];
+
+/**
+ * A member offers or asks for a ride or a place to sleep for a LAN, from/in a
+ * town. Offers have free places that others join (travel_spot).
+ */
+export const travelPost = sqliteTable(
+  "travel_post",
+  {
+    id: id(),
+    lanId: text("lan_id")
+      .notNull()
+      .references(() => lan.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    kind: text("kind").$type<TravelKind>().notNull(),
+    mode: text("mode").$type<"offer" | "request">().notNull(),
+    /** Ride: where the car leaves from. Sleep: where the place is. */
+    town: text("town").default("").notNull(),
+    /** Offer: free places. Request: people looking (e.g. 2 friends). */
+    places: integer("places").default(1).notNull(),
+    /** Free text, e.g. "Fri 16:00, back Sun evening". */
+    whenText: text("when_text").default("").notNull(),
+    note: text("note").default("").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  (t) => [index("travel_post_lan_idx").on(t.lanId)],
+);
+
+/** Someone who took a place in a ride or sleeping-spot offer. */
+export const travelSpot = sqliteTable(
+  "travel_spot",
+  {
+    id: id(),
+    postId: text("post_id")
+      .notNull()
+      .references(() => travelPost.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  (t) => [uniqueIndex("travel_spot_uq").on(t.postId, t.userId)],
+);
+
+// ---------- Gear ----------
+
+/** Shared gear the group needs at a LAN (switch, power strips, ...), set by orgas. */
+export const gearNeed = sqliteTable(
+  "gear_need",
+  {
+    id: id(),
+    lanId: text("lan_id")
+      .notNull()
+      .references(() => lan.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    qty: integer("qty").default(1).notNull(),
+    note: text("note").default("").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  (t) => [index("gear_need_lan_idx").on(t.lanId)],
+);
+
+/** What a member brings for the group: towards a need (needId) or an extra item (name). */
+export const gearPledge = sqliteTable(
+  "gear_pledge",
+  {
+    id: id(),
+    lanId: text("lan_id")
+      .notNull()
+      .references(() => lan.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    needId: text("need_id").references(() => gearNeed.id, { onDelete: "cascade" }),
+    name: text("name").default("").notNull(),
+    qty: integer("qty").default(1).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  (t) => [index("gear_pledge_lan_idx").on(t.lanId)],
+);
+
+/** A member's own packing list: items they ticked as packed. Private to them. */
+export const gearPacked = sqliteTable(
+  "gear_packed",
+  {
+    lanId: text("lan_id")
+      .notNull()
+      .references(() => lan.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    item: text("item").notNull(),
+  },
+  (t) => [uniqueIndex("gear_packed_uq").on(t.lanId, t.userId, t.item)],
+);
+
 export type User = typeof user.$inferSelect;
 export type Lan = typeof lan.$inferSelect;
 export type LanType = typeof lanType.$inferSelect;
@@ -360,6 +461,9 @@ export type Clan = typeof clan.$inferSelect;
 export type Attendance = typeof attendance.$inferSelect;
 export type Nickname = typeof nickname.$inferSelect;
 export type Seat = typeof seat.$inferSelect;
+export type TravelPost = typeof travelPost.$inferSelect;
+export type GearNeed = typeof gearNeed.$inferSelect;
+export type GearPledge = typeof gearPledge.$inferSelect;
 
 // ---------- Platform settings ----------
 
