@@ -91,6 +91,17 @@ Keep the `data/` directory (or `DATABASE_PATH`) on persistent storage, and set `
 
 Edit `src/db/schema.ts`, then run `npm run db:generate` to create a migration in `drizzle/`. It is applied on the next start.
 
-## Deploying
+## Container image
 
-A Dockerfile and Kubernetes manifests (single replica on a volume, ingress with TLS, reminder CronJob, nightly SQLite backups) are in [`deploy/k8s`](deploy/k8s/README.md). Images are built to `ghcr.io/bitsandbricks-ch/seatbit` by GitHub Actions.
+GitHub Actions builds a multi-arch image (amd64 + arm64) on every push to `main` and pushes it to `ghcr.io/bitsandbricks-ch/seatbit` as `:main` and `:sha-<short sha>` (tags `v1.2.3` also give `:1.2.3`).
+
+```sh
+docker run -p 3000:3000 -v seatbit-data:/data \
+  -e BETTER_AUTH_URL=https://seatbit.ch -e BETTER_AUTH_SECRET=$(openssl rand -base64 32) \
+  ghcr.io/bitsandbricks-ch/seatbit:main
+```
+
+- Runs as uid/gid 1001; the SQLite database is `/data/seatbit.db` (keep `/data` on a volume, one instance only).
+- Health check: `GET /api/health`. Migrations run on startup.
+- Online backup while running: `node scripts/backup.mjs` (writes to `BACKUP_DIR`, default `/backups`, keeps `BACKUP_KEEP_DAYS`, default 14).
+- Works with a read-only root filesystem if `/tmp` and `/app/.next/cache` are writable.

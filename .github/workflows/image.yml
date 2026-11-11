@@ -19,17 +19,6 @@ env:
   IMAGE: ghcr.io/${{ github.repository }}
 
 jobs:
-  manifests:
-    name: Validate k8s manifests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Render and validate
-        run: |
-          kustomize build deploy/k8s > rendered.yaml
-          curl -sSL https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz | tar xz
-          ./kubeconform -strict -summary rendered.yaml
-
   image:
     name: Build${{ github.event_name != 'pull_request' && ' and push' || '' }}
     runs-on: ubuntu-latest
