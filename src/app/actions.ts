@@ -15,9 +15,10 @@ import {
 } from "@/lib/lans";
 import { announceLan, postReminderNow, refreshLanMessagesSoon, unlinkChannel } from "@/lib/discord";
 import { sendReminderNow } from "@/lib/reminders";
-import { notifyLanChanged, notifyLater, notifySeatChanged } from "@/lib/notify";
+import { notify as notifyMember, notifyLanChanged, notifyLater, notifySeatChanged } from "@/lib/notify";
+import { appUrl } from "@/lib/mail";
 import { planSeats } from "@/lib/seating";
-import { appUrl, sendMail } from "@/lib/mail";
+import { eventMailVars, renderTemplate } from "@/lib/mail-templates";
 import { canViewLan, requireAdmin, requireClanManager, requireLanManager, requireUser } from "@/lib/session";
 import { isClanMember } from "@/lib/clans";
 import { lanAccountScope, saveLanAccount } from "@/lib/lan-accounts";
@@ -157,7 +158,7 @@ const lanInput = z.object({
   reminderDays: z.coerce.number().int().min(0).max(60),
 });
 
-export type FormState = { error?: string; ok?: boolean } | undefined;
+export type FormState = { error?: string; ok?: boolean; message?: string } | undefined;
 
 export async function saveLan(_: FormState, formData: FormData): Promise<FormState> {
   const id = (formData.get("id") as string) || null;
@@ -564,14 +565,16 @@ export async function publishSeats(lanId: string, notify: boolean): Promise<numb
     for (const { u } of rows) {
       const mine = seats.find((s) => s.userId === u.id);
       try {
-        await sendMail(
-          u.email,
-          mine ? `Your seat at ${l.name}: ${mine.label}` : `Seat plan for ${l.name} is out`,
-          `Hi ${u.name},\n\nthe seat plan for ${l.name} is published. ${
-            mine ? `You're sitting at ${mine.label}.` : "You don't have a seat yet, an orga will get back to you."
-          }\n\n${appUrl}/lans/${l.id}`,
-        );
-        sent++;
+        const r = await notifyMember(u, {
+          kind: "seatsPublished",
+          ...renderTemplate("seatsPublished", {
+            ...eventMailVars(l, u),
+            seat: mine?.label,
+            seatInfo: mine ? `You're sitting at ${mine.label}.` : "You don't have a seat yet, an orga will get back to you.",
+          }),
+          url: `${appUrl}/lans/${l.id}`,
+        });
+        if (r.email || r.dm) sent++;
       } catch (e) {
         console.error("[mail] failed", e);
       }

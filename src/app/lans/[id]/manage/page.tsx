@@ -22,6 +22,7 @@ import { canManageClan, getClan } from "@/lib/clans";
 import { PublishSeats } from "@/components/publish-seats";
 import { checkWishes } from "@/lib/seating";
 import { getLanAccounts } from "@/lib/lan-accounts";
+import { personLabel } from "@/lib/names";
 
 const { attendance, seat, user, reminderLog } = schema;
 
@@ -97,7 +98,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
         userId: r.userId,
         nick: names.get(r.userId) ?? u.name,
         name: u.name,
-        email: u.isGuest ? "guest, no login yet" : u.email,
+        email: u.isGuest ? (u.inviteEmail ? `guest, invited at ${u.inviteEmail}` : "guest, no login yet") : u.email,
         status: r.status,
         paid: r.paid,
         ticketBought: r.ticketBought,
@@ -218,7 +219,10 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
           lanId={l.id}
           rows={tableRows}
           seats={[...seats].sort((a, b) => a.row - b.row || a.col - b.col)}
-          others={users.filter((u) => !inLan.has(u.id) && memberIds.has(u.id)).map((u) => ({ id: u.id, name: names.get(u.id) ?? u.name }))}
+          others={users
+            .filter((u) => !inLan.has(u.id) && memberIds.has(u.id))
+            .map((u) => ({ id: u.id, name: personLabel(u, names.get(u.id)) }))
+            .sort((a, b) => a.name.localeCompare(b.name))}
         />
       )}
 
@@ -399,7 +403,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               orgas={orgaIds.map((uid) => ({ id: uid, name: names.get(uid) ?? userById.get(uid)?.name ?? "?" }))}
               candidates={users
                 .filter((u) => !orgaIds.includes(u.id) && memberIds.has(u.id))
-                .map((u) => ({ id: u.id, name: names.get(u.id) ?? u.name }))
+                .map((u) => ({ id: u.id, name: personLabel(u, names.get(u.id)) }))
                 .sort((a, b) => a.name.localeCompare(b.name))}
             />
           </Card>

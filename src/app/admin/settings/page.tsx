@@ -7,7 +7,10 @@ import { appUrl, mailTarget } from "@/lib/mail";
 import { requireAdmin } from "@/lib/session";
 import { LOGIN_METHODS } from "@/lib/auth";
 import { SETTING_GROUPS, type SettingGroup, canEncrypt, settingsForAdmin } from "@/lib/settings";
-import { saveSettings, sendTestMail, setupDiscordBot } from "./actions";
+import { MAIL_TEMPLATES, getTemplate, savedTemplates } from "@/lib/mail-templates";
+import type { FactRow } from "@/lib/mail-fill";
+import { MailTemplateEditor } from "@/components/mail-template-editor";
+import { resetMailTemplate, saveMailTemplate, saveSettings, sendTemplateTest, sendTestMail, setupDiscordBot } from "./actions";
 
 export const metadata = { title: "Platform settings · Seatbit" };
 
@@ -26,6 +29,7 @@ const TABS = [
   { id: "google", label: "Google" },
   { id: "general", label: "Sign-up & admins" },
   { id: "automation", label: "Reminders" },
+  { id: "templates", label: "Mail templates" },
   { id: "server", label: "Server" },
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
@@ -152,6 +156,8 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
 
       {tab === "automation" && section("automation", <Url label="Cron URL" value={`${appUrl}/api/cron/reminders`} />)}
 
+      {tab === "templates" && <TemplatesTab />}
+
       {tab === "server" && (
         <Card title="Server environment">
           <p className="-mt-2 mb-3 text-sm text-muted">
@@ -177,6 +183,42 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
           </dl>
         </Card>
       )}
+    </div>
+  );
+}
+
+function TemplatesTab() {
+  const saved = savedTemplates();
+  return (
+    <div className="space-y-5">
+      <p className="max-w-2xl text-sm text-muted">
+        The emails Seatbit sends. They all share one layout: the clan in the header, &quot;Hi name,&quot;, your text, a
+        box with the event facts, a button and a small print line. Change the wording to fit your clan; placeholders like{" "}
+        {"{firstName}"} are filled in for each person. Reset brings back the built-in text.
+      </p>
+      {MAIL_TEMPLATES.map((t) => {
+        const s = saved.get(t.id);
+        const defaults = { subject: t.subject, body: t.body, button: t.button, note: t.note };
+        return (
+          <Card key={t.id} title={t.title}>
+            <MailTemplateEditor
+              appUrl={appUrl}
+              t={{
+                id: t.id,
+                when: t.when,
+                vars: t.vars,
+                facts: t.facts.map((f) => [...f] as FactRow),
+                current: getTemplate(t.id),
+                defaults,
+                edited: !!s,
+              }}
+              save={saveMailTemplate.bind(null, t.id)}
+              reset={resetMailTemplate.bind(null, t.id)}
+              test={sendTemplateTest.bind(null, t.id)}
+            />
+          </Card>
+        );
+      })}
     </div>
   );
 }

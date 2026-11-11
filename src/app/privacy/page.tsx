@@ -45,7 +45,7 @@ export default function PrivacyPage() {
         <li>For each event: whether you are coming, unsure or not coming, whether you bought a ticket, whether an orga confirmed it, and any note you add</li>
         <li>Seat wishes (people you want to sit near or not next to, preferred position or seat) and the seat you are assigned</li>
         <li>Whether you are an orga of an event</li>
-        <li>If an orga adds you as a guest before you have an account: the name and nickname they enter, and your answers and seat for their events. When you open your claim link and sign in, this moves to your own account.</li>
+        <li>If an orga adds you as a guest before you have an account: the name, nickname and (if they have it) email address they enter, and your answers and seat for their events. The email is only used to send you the invite and to recognise you: when you sign in with a Discord account whose verified email matches, or through your claim link, this moves to your own account and the guest entry is deleted.</li>
         <li>Content clan admins enter: clan name, description and avatar, LAN types, events, invite links</li>
       </ul>
 

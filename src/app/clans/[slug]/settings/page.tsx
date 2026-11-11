@@ -6,25 +6,29 @@ import {
   addClanMember,
   addGuest,
   renewGuestLink,
+  setGuestEmail,
   createInvite,
   deleteClan,
   deleteInvite,
   removeClanMember,
+  setClanDiscordInvite,
   setClanMemberRole,
 } from "@/app/clan-actions";
 import { ClanAvatar } from "@/components/clan-avatar";
 import { ClanForm } from "@/components/clan-form";
 import { AddMemberForm } from "@/components/add-member-form";
 import { CopyField } from "@/components/copy-field";
-import { GuestForm } from "@/components/guest-form";
+import { GuestEmailForm, GuestForm } from "@/components/guest-form";
 import { Tabs } from "@/components/tabs";
 import { ClanMemberAdmin } from "@/components/clan-member-list";
 import { Card, btnDanger, btnGhost, btnPrimary, btnSecondary } from "@/components/ui";
 import { appUrl } from "@/lib/mail";
+import { personLabel } from "@/lib/names";
 import { canManageClan, getClanBySlug } from "@/lib/clans";
 import { requireUser } from "@/lib/session";
 import { unlinkDiscordChannel } from "@/app/actions";
 import { discordEnabled, inviteUrl } from "@/lib/discord-api";
+import { clanServers } from "@/lib/discord-invite";
 
 const TABS = [
   { id: "general", label: "General" },
@@ -53,7 +57,20 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
   const pending = members.filter((m) => m.role === "pending");
   const active = members.filter((m) => m.role !== "pending");
   const guests = active.filter((m) => m.u.isGuest);
-  const defaultNick = new Map(
+  const inClan = new Set(members.map((m) => m.u.id));
+  const others = db
+    .select({
+      id: schema.user.id,
+      name: schema.user.name,
+      firstName: schema.user.firstName,
+      lastName: schema.user.lastName,
+      email: schema.user.email,
+    })
+    .from(schema.user)
+    .where(eq(schema.user.isGuest, false))
+    .all()
+    .filter((u) => !inClan.has(u.id));
+  const defaultNicks = new Map(
     db
       .select({ userId: schema.nickname.userId, nick: schema.nickname.nick })
       .from(schema.nickname)
@@ -61,16 +78,10 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
       .all()
       .map((n) => [n.userId, n.nick]),
   );
-  const inClan = new Set(members.map((m) => m.u.id));
-  const others = db
-    .select({ id: schema.user.id, name: schema.user.name, email: schema.user.email })
-    .from(schema.user)
-    .where(eq(schema.user.isGuest, false))
-    .orderBy(asc(schema.user.name))
-    .all()
-    .filter((u) => !inClan.has(u.id))
-    // Don't hand every user's full email address to clan admins.
-    .map((u) => ({ ...u, email: maskEmail(u.email) }));
+  const candidates = others
+    // Shown as Name "Nick" Surname; don't hand every user's full email address to clan admins.
+    .map((u) => ({ id: u.id, name: personLabel(u, defaultNicks.get(u.id)), email: maskEmail(u.email) }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
@@ -133,19 +144,27 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
             </Card>
           )}
           <Card title="Add an existing user">
-            <AddMemberForm clanId={c.id} users={others} action={addClanMember} />
+            <AddMemberForm clanId={c.id} users={candidates} action={addClanMember} />
           </Card>
           <Card title="Guests">
             <p className="mb-3 text-sm text-muted">
               For people who aren&apos;t on Seatbit yet: add them by name, then sign them up for events and give them a seat
-              like anyone else. Send them their link: when they sign in with Discord through it, their account takes over
-              everything you set up for them.
+              like anyone else. With an email address, Seatbit mails them an invite, and signing in with a Discord account
+              on that address takes over everything you set up for them. Or send them their link yourself.
             </p>
             {guests.length > 0 && (
               <ul className="mb-4 space-y-3">
                 {guests.map(({ u }) => (
-                  <li key={u.id} className="space-y-1.5">
+                  <li key={u.id} className="space-y-1.5 rounded-md border border-line p-3">
                     <span className="block truncate text-sm font-medium">{u.name}</span>
+                    <span className="block text-xs text-faint">
+                      {u.inviteEmail
+                        ? u.invitedAt
+                          ? `Invited ${u.invitedAt.toLocaleDateString("de-CH")} at ${u.inviteEmail}`
+                          : u.inviteEmail
+                        : "No email yet"}
+                    </span>
+                    <GuestEmailForm key={u.inviteEmail ?? ""} action={setGuestEmail.bind(null, c.id, u.id)} email={u.inviteEmail} />
                     <span className="flex flex-wrap items-center gap-1">
                       <CopyField value={`${appUrl}/claim/${u.claimCode}`} />
                       <form action={renewGuestLink.bind(null, c.id, u.id)}>
@@ -165,8 +184,8 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
               members={active.map(({ u, role }) => ({
                 id: u.id,
                 name: u.name,
-                nick: defaultNick.get(u.id) ?? "",
-                sub: u.isGuest ? "No login yet" : u.email,
+                nick: defaultNicks.get(u.id) ?? "",
+                sub: u.isGuest ? (u.inviteEmail ? `No login yet · ${u.inviteEmail}` : "No login yet") : u.email,
                 role: role === "admin" ? "admin" : "member",
                 isGuest: u.isGuest,
               }))}
@@ -210,7 +229,7 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
   );
 }
 
-function ChatTab({ clanId }: { clanId: string }) {
+async function ChatTab({ clanId }: { clanId: string }) {
   const channels = db
     .select()
     .from(schema.discordChannel)
@@ -218,6 +237,7 @@ function ChatTab({ clanId }: { clanId: string }) {
     .orderBy(asc(schema.discordChannel.createdAt))
     .all();
   const invite = inviteUrl();
+  const servers = discordEnabled() && channels.length ? await clanServers(clanId) : [];
   return (
     <div className="space-y-5">
       <Card title="Discord bot">
@@ -274,6 +294,32 @@ function ChatTab({ clanId }: { clanId: string }) {
                   </li>
                 ))}
               </ul>
+            )}
+            {servers.length > 0 && (
+              <div className="space-y-3 border-t border-line pt-4">
+                <h3 className="font-semibold">Invite for members</h3>
+                <p className="text-muted">
+                  Members who aren&apos;t on your server see a &ldquo;Join our Discord&rdquo; button on the clan page, and get
+                  the link when their join request is approved. The bot creates the invite itself if it may (&ldquo;Create
+                  Invite&rdquo;), or paste your own.
+                </p>
+                {servers.map((sv) => (
+                  <form
+                    key={sv.guildId}
+                    action={setClanDiscordInvite.bind(null, clanId, sv.guildId)}
+                    className="flex flex-wrap items-center gap-2"
+                  >
+                    <span className="w-full text-xs text-faint">{sv.guildName || `Server ${sv.guildId}`}</span>
+                    <input
+                      name="inviteUrl"
+                      defaultValue={sv.inviteUrl ?? ""}
+                      placeholder="https://discord.gg/…"
+                      className="min-w-0 flex-1 rounded-md border border-line bg-raised px-3 py-1.5 font-mono text-xs"
+                    />
+                    <button className={btnSecondary}>Save</button>
+                  </form>
+                ))}
+              </div>
             )}
           </div>
         )}

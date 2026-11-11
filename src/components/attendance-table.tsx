@@ -320,11 +320,12 @@ export function AttendanceTable({
       )}
       <details className="rounded-card border border-line bg-surface p-3">
         <summary className="cursor-pointer text-sm font-medium">Add a guest without an account</summary>
-        <p className="mb-3 mt-2 text-sm text-zinc-400">
-          For people not on Seatbit yet. They&apos;re signed up as coming and can get a seat right away. Their personal link is
-          under Clan settings › Members: when they sign in with Discord through it, they take over this spot.
+        <p className="mb-3 mt-2 text-sm text-muted">
+          For people not on Seatbit yet. They&apos;re signed up as coming and can get a seat right away. Add their email
+          and Seatbit mails them an invite; signing in with Discord on that address takes over this spot. Their personal
+          link is also under Clan settings › Members.
         </p>
-        <GuestForm action={addGuestToLan.bind(null, lanId)} />
+        <GuestForm action={addGuestToLan.bind(null, lanId)} submitLabel="Add guest as coming" />
       </details>
     </div>
   );

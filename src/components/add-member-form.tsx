@@ -26,7 +26,7 @@ export function AddMemberForm({
         type="search"
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        placeholder="Search Seatbit users by name"
+        placeholder="Search Seatbit users by name or nick"
         className={input}
       />
       {hits.length > 0 && (

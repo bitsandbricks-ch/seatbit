@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { botIdentity, commands, discordEnabled, registerCommands } from "@/lib/discord-api";
 import { mailTarget, sendMail, verifySmtp } from "@/lib/mail";
+import { PREVIEW_VARS, type MailTemplateId, renderTemplate, resetTemplate, saveTemplate, templateDef } from "@/lib/mail-templates";
 import { requireAdmin } from "@/lib/session";
 import {
   SETTINGS,
@@ -90,5 +91,42 @@ export async function setupDiscordBot(): Promise<ActionResult> {
   } catch (e) {
     const m = errMsg(e);
     return done(false, m.includes("-> 401") ? "Discord rejected the bot token (401). Check it and save again." : m);
+  }
+}
+
+/** Saves an edited mail template. Parts equal to the default remove the override. */
+export async function saveMailTemplate(id: string, _prev: ActionResult, form: FormData): Promise<ActionResult> {
+  const me = await requireAdmin();
+  const part = (k: string) => String(form.get(k) ?? "");
+  const parts = { subject: part("subject"), body: part("body"), button: part("button"), note: part("note") };
+  if (Object.values(parts).some((v) => v.length > 8000)) return done(false, "That's too long for an email template.");
+  if (!parts.subject.trim() || !parts.body.trim()) return done(false, "Subject and text can't be empty.");
+  try {
+    saveTemplate(id, parts, me.id);
+  } catch (e) {
+    return done(false, errMsg(e));
+  }
+  revalidatePath("/admin/settings");
+  return done(true, "Saved.");
+}
+
+/** Brings back the built-in text of a mail template. */
+export async function resetMailTemplate(id: string): Promise<ActionResult> {
+  await requireAdmin();
+  resetTemplate(id);
+  revalidatePath("/admin/settings");
+  return done(true, "Back to the default text.");
+}
+
+/** Sends a template to the admin, filled with example values. */
+export async function sendTemplateTest(id: string): Promise<ActionResult> {
+  const me = await requireAdmin();
+  try {
+    templateDef(id);
+    const m = renderTemplate(id as MailTemplateId, { ...PREVIEW_VARS, firstName: me.firstName || me.name });
+    await sendMail(me.email, `[Test] ${m.subject}`, m.text, m.html);
+    return done(true, mailTarget().kind === "console" ? "No SMTP set up, so it went to the server log." : `Sent to ${me.email}.`);
+  } catch (e) {
+    return done(false, errMsg(e));
   }
 }

@@ -1,8 +1,10 @@
 import { fmtDate } from "./format";
-import { and, eq, gt } from "drizzle-orm";
+import { and, eq, gt, ne } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Lan, ReminderKind, User } from "@/db/schema";
-import { appUrl, sendMail } from "./mail";
+import { appUrl } from "./mail";
+import { notify } from "./notify";
+import { eventMailVars, renderTemplate } from "./mail-templates";
 
 const { lan, user, attendance, reminderLog } = schema;
 const DAY = 24 * 60 * 60 * 1000;
@@ -10,25 +12,27 @@ const DAY = 24 * 60 * 60 * 1000;
 const fmt = fmtDate;
 
 function message(kind: ReminderKind, l: Lan, u: User) {
-  const link = `${appUrl}/lans/${l.id}`;
+  const vars = eventMailVars(l, u);
   switch (kind) {
     case "signup":
-      return {
-        subject: `Are you coming to ${l.name}? Decide by ${fmt(l.signupDeadline!)}`,
-        text: `Hi ${u.name},\n\nyou haven't confirmed yet whether you're coming to ${l.name} (${fmt(l.startsAt)}, ${l.location || "location tbd"}).\n\nPlease let us know by ${fmt(l.signupDeadline!)}:\n${link}`,
-      };
+      return renderTemplate("reminderSignup", { ...vars, deadline: fmt(l.signupDeadline!) });
     case "payment":
-      return {
-        subject: `Buy your ticket for ${l.name} by ${fmt(l.paymentDueDate!)}`,
-        text: `Hi ${u.name},\n\nyou're going to ${l.name}, but haven't marked your ticket${l.price ? ` (${l.price})` : ""} as bought yet. Please buy it by ${fmt(l.paymentDueDate!)}${l.ticketUrl ? `:\n${l.ticketUrl}` : "."}\n\nThen tick it off in your checklist: ${link}`,
-      };
-    case "event":
-      return {
-        subject: `${l.name} starts soon`,
-        text: `Hi ${u.name},\n\n${l.name} starts on ${fmt(l.startsAt)}${l.location ? ` at ${l.location}` : ""}. See you there!\n\nYour seat and details: ${link}`,
-      };
+      return renderTemplate("reminderPayment", {
+        ...vars,
+        deadline: fmt(l.paymentDueDate!),
+        price: l.price,
+        ticketUrl: l.ticketUrl,
+      });
+    case "event": {
+      const s = db
+        .select({ label: schema.seat.label })
+        .from(schema.seat)
+        .where(and(eq(schema.seat.lanId, l.id), eq(schema.seat.userId, u.id)))
+        .get();
+      return renderTemplate("reminderEvent", { ...vars, seat: l.seatsPublishedAt ? s?.label : "" });
+    }
     default:
-      return { subject: l.name, text: link };
+      return { subject: l.name, text: vars.link };
   }
 }
 
@@ -38,7 +42,9 @@ function recipients(kind: ReminderKind, l: Lan): User[] {
     .select({ u: user })
     .from(user)
     .innerJoin(schema.clanMember, eq(schema.clanMember.userId, user.id))
-    .where(and(eq(user.emailReminders, true), eq(schema.clanMember.clanId, l.clanId ?? "")))
+    // Everyone in the clan: notify() mails only those with email reminders on and
+    // DMs those with Discord DMs on.
+    .where(and(eq(schema.clanMember.clanId, l.clanId ?? ""), ne(schema.clanMember.role, "pending")))
     .all()
     .map((r) => r.u);
   const rows = db.select().from(attendance).where(eq(attendance.lanId, l.id)).all();
@@ -80,7 +86,8 @@ async function send(kind: ReminderKind, l: Lan, users: User[], dedupe: boolean) 
     }
     const m = message(kind, l, u);
     try {
-      await sendMail(u.email, m.subject, m.text);
+      const r = await notify(u, { kind: "reminder", ...m, url: `${appUrl}/lans/${l.id}` });
+      if (!r.email && !r.dm) continue;
       db.insert(reminderLog)
         .values({ lanId: l.id, userId: u.id, kind })
         .onConflictDoUpdate({
