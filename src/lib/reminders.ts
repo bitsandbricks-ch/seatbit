@@ -2,8 +2,8 @@ import { fmtDate } from "./format";
 import { and, eq, gt } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Lan, ReminderKind, User } from "@/db/schema";
-import { appUrl, sendMail } from "./mail";
-import { renderTemplate } from "./mail-templates";
+import { sendMail } from "./mail";
+import { eventMailVars, renderTemplate } from "./mail-templates";
 
 const { lan, user, attendance, reminderLog } = schema;
 const DAY = 24 * 60 * 60 * 1000;
@@ -11,13 +11,7 @@ const DAY = 24 * 60 * 60 * 1000;
 const fmt = fmtDate;
 
 function message(kind: ReminderKind, l: Lan, u: User) {
-  const vars = {
-    firstName: u.firstName || u.name,
-    lan: l.name,
-    start: fmt(l.startsAt),
-    location: l.location,
-    link: `${appUrl}/lans/${l.id}`,
-  };
+  const vars = eventMailVars(l, u);
   switch (kind) {
     case "signup":
       return renderTemplate("reminderSignup", { ...vars, deadline: fmt(l.signupDeadline!) });
@@ -89,7 +83,7 @@ async function send(kind: ReminderKind, l: Lan, users: User[], dedupe: boolean) 
     }
     const m = message(kind, l, u);
     try {
-      await sendMail(u.email, m.subject, m.text);
+      await sendMail(u.email, m.subject, m.text, "html" in m ? m.html : undefined);
       db.insert(reminderLog)
         .values({ lanId: l.id, userId: u.id, kind })
         .onConflictDoUpdate({

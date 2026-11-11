@@ -45,7 +45,8 @@ function transport() {
  * Sends an email. Without an SMTP host (admin settings or env), the mail is
  * logged to the console instead, so local development works without a mail server.
  */
-export async function sendMail(to: string, subject: string, text: string) {
+/** `html` is optional: templated mails send HTML with `text` as the plain-text part. */
+export async function sendMail(to: string, subject: string, text: string, html?: string) {
   if (isGuestEmail(to)) return; // guests have no real address
   const t = transport();
   const from = getSetting("mail.from") ?? "Seatbit <noreply@localhost>";
@@ -53,7 +54,7 @@ export async function sendMail(to: string, subject: string, text: string) {
     console.log(`\n[mail] (no SMTP configured, not sent)\nTo: ${to}\nSubject: ${subject}\n\n${text}\n`);
     return;
   }
-  await t.sendMail({ from, to, subject, text });
+  await t.sendMail({ from, to, subject, text, ...(html && { html }) });
 }
 
 /** Checks the SMTP connection and login without sending anything. */

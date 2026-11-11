@@ -1,9 +1,7 @@
 import { and, asc, eq, inArray, isNull, or } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { AttendanceStatus, Lan, Nickname } from "@/db/schema";
-import { appUrl } from "./mail";
-import { sendTemplate } from "./mail-templates";
-import { fmtDate } from "./format";
+import { eventMailVars, sendTemplate } from "./mail-templates";
 
 const { attendance, nickname, seat, user, lan } = schema;
 
@@ -121,13 +119,7 @@ export async function promoteFromWaitlist(l: Lan) {
     if (free <= 0) break;
     db.update(attendance).set({ status: "going" }).where(eq(attendance.id, a.id)).run();
     free--;
-    await sendTemplate(u.email, "waitlistPromoted", {
-      firstName: u.firstName || u.name,
-      lan: l.name,
-      start: fmtDate(l.startsAt),
-      location: l.location,
-      link: `${appUrl}/lans/${l.id}`,
-    }).catch((e) => console.error("[mail] failed", e));
+    await sendTemplate(u.email, "waitlistPromoted", eventMailVars(l, u)).catch((e) => console.error("[mail] failed", e));
   }
 }
 
