@@ -34,9 +34,6 @@ export default async function NewLanPage() {
             price: "",
             capacity: "",
             reminderDays: 3,
-            seatRows: 4,
-            seatCols: 8,
-            seatingOpen: true,
           }}
         />
       </Card>

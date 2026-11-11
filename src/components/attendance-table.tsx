@@ -5,6 +5,7 @@ import {
   adminSetAttendance,
   adminSetNote,
   adminSetPaid,
+  adminSetSeatFor,
 } from "@/app/actions";
 import type { AttendanceStatus } from "@/db/schema";
 import { btnGhost, btnSecondary, input, StatusBadge } from "./ui";
@@ -19,6 +20,7 @@ export type AttendanceRow = {
   paid: boolean;
   ticketBought: boolean;
   note: string;
+  seatId: string | null;
   seat: string | null;
 };
 
@@ -28,8 +30,10 @@ export function AttendanceTable({
   lanId,
   rows,
   others,
+  seats,
 }: {
   lanId: string;
+  seats: { id: string; label: string; userId: string | null; locked: boolean }[];
   rows: AttendanceRow[];
   others: { id: string; name: string }[];
 }) {
@@ -106,7 +110,29 @@ export function AttendanceTable({
                     </span>
                   )}
                 </td>
-                <td className="pr-2 font-mono text-xs">{r.seat ?? "—"}</td>
+                <td className="pr-2">
+                  {r.status === "going" && seats.length > 0 ? (
+                    <select
+                      key={r.seatId ?? "none"}
+                      defaultValue={r.seatId ?? ""}
+                      onChange={(e) => run(() => adminSetSeatFor(lanId, r.userId, e.target.value || null))}
+                      className={`${input} !w-auto !py-1 font-mono`}
+                      aria-label={`Seat for ${r.nick}`}
+                    >
+                      <option value="">—</option>
+                      {seats
+                        .filter((s) => !s.userId || s.userId === r.userId)
+                        .map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.label}
+                            {s.locked ? " (held)" : ""}
+                          </option>
+                        ))}
+                    </select>
+                  ) : (
+                    <span className="font-mono text-xs">{r.seat ?? "—"}</span>
+                  )}
+                </td>
                 <td className="pr-2">
                   <input
                     defaultValue={r.note}

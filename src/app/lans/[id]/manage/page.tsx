@@ -13,6 +13,7 @@ import { getDisplayNames, getLan } from "@/lib/lans";
 import { dueKinds } from "@/lib/reminders";
 import { isLanManager, requireUser } from "@/lib/session";
 import { OrgaManager } from "@/components/orga-manager";
+import { SeatSetup } from "@/components/seat-setup";
 
 const { attendance, seat, user, reminderLog } = schema;
 
@@ -61,6 +62,7 @@ export default async function AdminLanPage({ params }: PageProps<"/lans/[id]/man
         ticketBought: r.ticketBought,
         note: r.note,
         seat: seatOf.get(r.userId) ?? null,
+        seatId: seats.find((s) => s.userId === r.userId)?.id ?? null,
       };
     })
     .sort((a, b) => statusOrder[a.status] - statusOrder[b.status] || a.nick.localeCompare(b.nick));
@@ -93,15 +95,25 @@ export default async function AdminLanPage({ params }: PageProps<"/lans/[id]/man
         <AttendanceTable
           lanId={l.id}
           rows={tableRows}
+          seats={[...seats].sort((a, b) => a.row - b.row || a.col - b.col)}
           others={users.filter((u) => !inLan.has(u.id)).map((u) => ({ id: u.id, name: names.get(u.id) ?? u.name }))}
         />
       </Card>
 
       <Card title="Our seat block">
         <p className="mb-3 text-sm text-zinc-400">
-          Lay out the seats the group has at this LAN. Use Rename to match the event&apos;s seat numbers, and Hold to keep
-          seats free for guests or late bookings.
+          Enter the seats the event gave the group, then assign them here or in the attendee list above. Hold keeps a
+          seat out of auto-assign, e.g. for a guest.
         </p>
+        <div className="mb-6">
+          <SeatSetup
+            lanId={l.id}
+            current={seatSpec(seats)}
+            unseated={going.filter((r) => !seatOf.has(r.userId)).length}
+            free={seats.filter((s) => !s.userId && !s.locked).length}
+          />
+        </div>
+        {seats.length > 0 && (
         <SeatMap
           lanId={l.id}
           rows={l.seatRows}
@@ -113,6 +125,7 @@ export default async function AdminLanPage({ params }: PageProps<"/lans/[id]/man
             .map((r) => ({ id: r.userId, nick: names.get(r.userId) ?? "?" }))
             .sort((a, b) => a.nick.localeCompare(b.nick))}
         />
+        )}
       </Card>
 
       <Card title="Reminders">
@@ -167,9 +180,6 @@ export default async function AdminLanPage({ params }: PageProps<"/lans/[id]/man
             price: l.price,
             capacity: l.capacity?.toString() ?? "",
             reminderDays: l.reminderDays,
-            seatRows: l.seatRows,
-            seatCols: l.seatCols,
-            seatingOpen: l.seatingOpen,
           }}
         />
       </Card>
@@ -197,4 +207,32 @@ export default async function AdminLanPage({ params }: PageProps<"/lans/[id]/man
       )}
     </div>
   );
+}
+
+/** Compact text form of the seat block, e.g. "F1-F20, G1-G4". */
+function seatSpec(seats: { label: string; row: number; col: number }[]) {
+  const parts: string[] = [];
+  const sorted = [...seats].sort((a, b) => a.row - b.row || a.col - b.col);
+  let start: { p: string; n: number } | null = null;
+  let prev: { p: string; n: number } | null = null;
+  const flush = () => {
+    if (start && prev) parts.push(start.n === prev.n ? `${start.p}${start.n}` : `${start.p}${start.n}-${prev.p}${prev.n}`);
+  };
+  for (const s of sorted) {
+    const m = s.label.match(/^([A-Za-z]*)(\d+)$/);
+    if (!m) {
+      flush();
+      start = prev = null;
+      parts.push(s.label);
+      continue;
+    }
+    const cur = { p: m[1], n: Number(m[2]) };
+    if (prev && prev.p === cur.p && cur.n === prev.n + 1) prev = cur;
+    else {
+      flush();
+      start = prev = cur;
+    }
+  }
+  flush();
+  return parts.join(", ");
 }

@@ -5,9 +5,8 @@ import type { AttendanceStatus } from "@/db/schema";
 import { btn } from "./ui";
 
 const options: { status: AttendanceStatus; label: string; active: string }[] = [
-  { status: "going", label: "I'm going", active: "bg-bit text-ink" },
-  { status: "maybe", label: "Maybe", active: "bg-amber-400 text-ink" },
-  { status: "declined", label: "Can't make it", active: "bg-zinc-600 text-white" },
+  { status: "going", label: "I'm coming", active: "bg-bit text-ink" },
+  { status: "declined", label: "Not coming", active: "bg-zinc-600 text-white" },
 ];
 
 export function AttendanceButtons({

@@ -92,7 +92,6 @@ export default async function LanPage({ params }: PageProps<"/lans/[id]">) {
             title="Our seats"
             actions={
               <span className="flex gap-2">
-                {!l.seatingOpen && <Pill tone="amber">Seating closed</Pill>}
                 {seats.length > 0 && (
                   <Pill tone={freeSeats ? "zinc" : "red"}>{freeSeats ? `${freeSeats} seats free` : "No seats left"}</Pill>
                 )}
@@ -100,15 +99,14 @@ export default async function LanPage({ params }: PageProps<"/lans/[id]">) {
             }
           >
             {seats.length === 0 ? (
-              <p className="text-sm text-zinc-400">No seating plan yet.</p>
+              <p className="text-sm text-zinc-400">The orgas haven&apos;t entered the group&apos;s seats yet.</p>
             ) : (
               <SeatMap
                 lanId={l.id}
                 rows={l.seatRows}
                 cols={l.seatCols}
                 meId={me.id}
-                mode="pick"
-                canPick={my?.status === "going" && l.seatingOpen}
+                mode="view"
                 seats={seats.map((s) => ({ ...s, nick: s.userId ? (names.get(s.userId) ?? "?") : null }))}
               />
             )}
