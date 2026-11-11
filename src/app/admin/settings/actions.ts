@@ -94,14 +94,15 @@ export async function setupDiscordBot(): Promise<ActionResult> {
   }
 }
 
-/** Saves an edited mail template. Text equal to the default removes the override. */
+/** Saves an edited mail template. Parts equal to the default remove the override. */
 export async function saveMailTemplate(id: string, _prev: ActionResult, form: FormData): Promise<ActionResult> {
   const me = await requireAdmin();
-  const subject = String(form.get("subject") ?? "");
-  const body = String(form.get("body") ?? "");
-  if (subject.length > 300 || body.length > 8000) return done(false, "That's too long for an email template.");
+  const part = (k: string) => String(form.get(k) ?? "");
+  const parts = { subject: part("subject"), body: part("body"), button: part("button"), note: part("note") };
+  if (Object.values(parts).some((v) => v.length > 8000)) return done(false, "That's too long for an email template.");
+  if (!parts.subject.trim() || !parts.body.trim()) return done(false, "Subject and text can't be empty.");
   try {
-    saveTemplate(id, subject, body, me.id);
+    saveTemplate(id, parts, me.id);
   } catch (e) {
     return done(false, errMsg(e));
   }
@@ -123,7 +124,7 @@ export async function sendTemplateTest(id: string): Promise<ActionResult> {
   try {
     templateDef(id);
     const m = renderTemplate(id as MailTemplateId, { ...PREVIEW_VARS, firstName: me.firstName || me.name });
-    await sendMail(me.email, `[Test] ${m.subject}`, m.text);
+    await sendMail(me.email, `[Test] ${m.subject}`, m.text, m.html);
     return done(true, mailTarget().kind === "console" ? "No SMTP set up, so it went to the server log." : `Sent to ${me.email}.`);
   } catch (e) {
     return done(false, errMsg(e));

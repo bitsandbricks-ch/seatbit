@@ -17,9 +17,7 @@ import { announceLan, postReminderNow, refreshLanMessagesSoon, unlinkChannel } f
 import { sendReminderNow } from "@/lib/reminders";
 import { notifyLanChanged, notifyLater, notifySeatChanged } from "@/lib/notify";
 import { planSeats } from "@/lib/seating";
-import { appUrl } from "@/lib/mail";
-import { sendTemplate } from "@/lib/mail-templates";
-import { fmtDate } from "@/lib/format";
+import { eventMailVars, sendTemplate } from "@/lib/mail-templates";
 import { canViewLan, requireAdmin, requireClanManager, requireLanManager, requireUser } from "@/lib/session";
 import { isClanMember } from "@/lib/clans";
 
@@ -536,11 +534,7 @@ export async function publishSeats(lanId: string, notify: boolean): Promise<numb
       const mine = seats.find((s) => s.userId === u.id);
       try {
         await sendTemplate(u.email, "seatsPublished", {
-          firstName: u.firstName || u.name,
-          lan: l.name,
-          start: fmtDate(l.startsAt),
-          location: l.location,
-          link: `${appUrl}/lans/${l.id}`,
+          ...eventMailVars(l, u),
           seat: mine?.label,
           seatInfo: mine ? `You're sitting at ${mine.label}.` : "You don't have a seat yet, an orga will get back to you.",
         });
