@@ -1,4 +1,5 @@
 import type { AttendanceStatus } from "@/db/schema";
+import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
 
 /**
@@ -9,7 +10,7 @@ export const btn =
   "inline-flex min-h-10 items-center justify-center gap-2 rounded-md px-3.5 py-2 text-sm font-medium transition select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bit active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 sm:min-h-9 sm:py-1.5";
 export const btnPrimary = `${btn} bg-bit text-on-bit hover:bg-bit-hover`;
 export const btnSecondary = `${btn} border border-line bg-raised text-fg hover:border-muted/40 hover:bg-line`;
-export const btnDanger = `${btn} bg-red-600/90 text-white hover:bg-red-500`;
+export const btnDanger = `${btn} bg-danger/90 text-white hover:bg-danger`;
 export const btnGhost = `${btn} text-muted hover:bg-raised hover:text-fg`;
 export const input =
   "w-full min-h-11 rounded-md border border-line bg-raised px-3 py-2 text-base text-fg placeholder:text-faint transition focus:border-bit focus:outline-none focus:ring-2 focus:ring-bit/25 disabled:opacity-60 sm:min-h-10 sm:text-sm";
@@ -94,28 +95,147 @@ export function Input(props: ComponentProps<"input">) {
   return <input {...props} className={`${input} ${props.className ?? ""}`} />;
 }
 
-/** Page title row: heading, optional subtitle and actions that wrap below on phones. */
+/*
+ * Page layout. Every page sits in the same container as the top bar (max-w-7xl,
+ * set once in the root layout), so titles, tabs and cards line up with the logo
+ * on every page and nothing jumps when you navigate. Pages never set their own
+ * max width. The only exceptions are single-card flows (sign in, welcome, claim,
+ * join), which use `cardPage`, and long text, which keeps a readable measure.
+ */
+
+/** Vertical rhythm between a page's blocks (header, tabs, cards). */
+export const stack = "space-y-4 sm:space-y-6";
+
+/** Wraps a page's content. */
+export function Page({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return <div className={`${stack} ${className}`}>{children}</div>;
+}
+
+/**
+ * Main column plus a side column on wide screens (stacked on phones, side column
+ * last). Use for detail and settings pages: main content left, secondary cards right.
+ */
+export const columns = "grid items-start gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_22rem]";
+
+export function Columns({ children, aside }: { children: ReactNode; aside?: ReactNode }) {
+  return (
+    <div className={columns}>
+      <div className={`min-w-0 ${stack}`}>{children}</div>
+      {aside && <div className={`min-w-0 ${stack}`}>{aside}</div>}
+    </div>
+  );
+}
+
+/** Two equal columns on wide screens. */
+export const halves = "grid items-start gap-4 sm:gap-6 lg:grid-cols-2";
+
+/**
+ * A single centred card for sign-in style flows (login, welcome, claim, join,
+ * password reset). Its title uses `cardPageTitle`.
+ */
+export const cardPage = "mx-auto w-full max-w-sm space-y-4 rounded-card border border-line bg-surface p-5 sm:mt-6 sm:p-6";
+export const cardPageTitle = "text-xl font-semibold tracking-tight";
+
+/**
+ * Page title row, the same on every page: an optional back link, an optional
+ * avatar, the title with a subtitle, and actions on the right (below on phones).
+ */
 export function PageHeader({
   title,
   subtitle,
   actions,
   eyebrow,
+  back,
+  avatar,
+  children,
 }: {
   title: ReactNode;
   subtitle?: ReactNode;
   actions?: ReactNode;
+  /** Small line above the title, e.g. the clan an event belongs to. */
   eyebrow?: ReactNode;
+  /** Link to the parent page, shown above the title as "← label". */
+  back?: { href: string; label: ReactNode };
+  /** Avatar or icon left of the title. */
+  avatar?: ReactNode;
+  /** Extra lines under the subtitle (meta, links), in the title column. */
+  children?: ReactNode;
 }) {
   return (
-    <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
-      <div className="min-w-0">
-        {eyebrow && <div className="mb-1">{eyebrow}</div>}
-        <h1 className="text-2xl font-bold tracking-tight text-balance sm:text-3xl">{title}</h1>
-        {subtitle && <p className="mt-1 text-sm text-muted sm:text-base">{subtitle}</p>}
+    <div className="space-y-3">
+      {back && (
+        <Link href={back.href} className="inline-flex max-w-full items-center gap-1.5 text-sm text-muted hover:text-fg">
+          <span aria-hidden>←</span>
+          <span className="truncate">{back.label}</span>
+        </Link>
+      )}
+      <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
+        <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+          {avatar && <div className="shrink-0">{avatar}</div>}
+          <div className="min-w-0">
+            {eyebrow && <div className="mb-1 text-sm text-muted">{eyebrow}</div>}
+            <h1 className="text-2xl font-bold tracking-tight text-balance sm:text-3xl">{title}</h1>
+            {subtitle && <div className="mt-1 text-sm text-muted sm:text-base">{subtitle}</div>}
+            {children && <div className="mt-2">{children}</div>}
+          </div>
+        </div>
+        {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
       </div>
-      {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
     </div>
   );
+}
+
+/**
+ * Segmented control: switches between a few views inside a card (Carpool /
+ * Sleeping, Compact / Large). Page sections use <Tabs> instead. Each option is a
+ * link (href) or a button (onClick).
+ */
+export function Segmented<T extends string>({
+  options,
+  value,
+  onChange,
+  label,
+}: {
+  options: { id: T; label: ReactNode; count?: number; href?: string }[];
+  value: T;
+  onChange?: (id: T) => void;
+  label?: string;
+}) {
+  return (
+    <div role="group" aria-label={label} className="inline-flex max-w-full overflow-x-auto rounded-lg border border-line bg-raised p-1 text-sm">
+      {options.map((o) => {
+        const on = o.id === value;
+        const cls = `inline-flex min-h-8 items-center gap-1.5 whitespace-nowrap rounded-md px-3 font-medium transition ${
+          on ? "bg-line text-fg shadow-sm" : "text-muted hover:text-fg"
+        }`;
+        const inner = (
+          <>
+            {o.label}
+            {o.count !== undefined && o.count > 0 && <span className="text-xs tabular-nums text-muted">{o.count}</span>}
+          </>
+        );
+        return o.href ? (
+          <Link key={o.id} href={o.href} scroll={false} aria-current={on ? "true" : undefined} className={cls}>
+            {inner}
+          </Link>
+        ) : (
+          <button key={o.id} type="button" aria-pressed={on} onClick={() => onChange?.(o.id)} className={cls}>
+            {inner}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Coloured notice line: info, warning or error above a page's content. */
+export function Notice({ tone = "info", children }: { tone?: "info" | "warn" | "danger"; children: ReactNode }) {
+  const tones = {
+    info: "border-line bg-raised text-fg/90",
+    warn: "border-warn/30 bg-warn/10 text-warn",
+    danger: "border-danger/30 bg-danger/10 text-danger",
+  };
+  return <div className={`rounded-card border p-3 text-sm ${tones[tone]}`}>{children}</div>;
 }
 
 const emptyIcons = {

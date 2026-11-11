@@ -3,16 +3,15 @@ import { notFound } from "next/navigation";
 import { and, asc, eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Attendance, Lan } from "@/db/schema";
-import { ClanAvatar } from "@/components/clan-avatar";
-import { Avatar } from "@/components/avatar";
-import { avatarData } from "@/lib/avatars";
 import { CopyField } from "@/components/copy-field";
 import { MemberAdminActions } from "@/components/member-admin-actions";
-import { Card, StatTile, Pill, StatusBadge } from "@/components/ui";
+import { Card, Page, PageHeader, Pill, StatTile, StatusBadge, columns, stack } from "@/components/ui";
 import { canManageClan, getClanBySlug, isClanMember } from "@/lib/clans";
 import { fmtDate, fmtWeekday } from "@/lib/format";
 import { pickNick } from "@/lib/lans";
 import { appUrl } from "@/lib/mail";
+import { Avatar } from "@/components/avatar";
+import { avatarData } from "@/lib/avatars";
 import { pct } from "@/lib/clan-stats";
 import { isLanManager, requireUser } from "@/lib/session";
 
@@ -94,23 +93,20 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
   const avatar = avatarData(u);
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
-      <Link href={`/clans/${c.slug}`} className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-fg">
-        <ClanAvatar clan={c} size={20} /> <span className="truncate">{c.name}</span>
-      </Link>
-
-      <div className="flex items-center gap-4">
-        <Avatar data={avatar} size={72} />
-        <div className="min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight text-balance sm:text-3xl">{u.name}</h1>
-          <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
+    <Page>
+      <PageHeader
+        back={{ href: `/clans/${c.slug}`, label: c.name }}
+        avatar={<Avatar data={avatar} size={56} />}
+        title={u.name}
+        subtitle={
+          <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
             {defaultNick && defaultNick !== u.name && <span className="font-medium" style={{ color: avatar.color }}>{defaultNick}</span>}
             {role === "admin" && <Pill tone="emerald">admin</Pill>}
             {u.isGuest && <Pill>guest · no login yet</Pill>}
             <span>in the clan since {fmtWeekday(membership.createdAt)}</span>
-          </p>
-        </div>
-      </div>
+          </span>
+        }
+      />
 
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <StatTile label="LANs attended" value={String(attended)} sub={past.length ? `of ${past.length} past` : "no past events"} />
@@ -122,8 +118,8 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
         />
       </div>
 
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
-        <div className="min-w-0 space-y-6">
+      <div className={columns}>
+        <div className={`min-w-0 ${stack}`}>
           <Card title="Upcoming events">
             {upcoming.length === 0 ? (
               <p className="text-sm text-muted">Nothing planned.</p>
@@ -140,7 +136,7 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
           </Card>
         </div>
 
-        <div className="min-w-0 space-y-6">
+        <div className={`min-w-0 ${stack}`}>
           <Card title="Nicks">
             <dl className="space-y-2 text-sm">
               <div className="flex justify-between gap-3">
@@ -209,7 +205,7 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
           )}
         </div>
       </div>
-    </div>
+    </Page>
   );
 }
 

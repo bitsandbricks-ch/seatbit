@@ -5,7 +5,7 @@ import { db, schema } from "@/db";
 import { joinClan, leaveClan } from "@/app/clan-actions";
 import { ClanAvatar } from "@/components/clan-avatar";
 import { ClanMemberGrid } from "@/components/clan-member-list";
-import { Card, Pill, btnGhost, btnPrimary, btnSecondary } from "@/components/ui";
+import { Card, Page, PageHeader, Pill, btnGhost, btnPrimary, btnSecondary, halves } from "@/components/ui";
 import { fmtDay } from "@/lib/format";
 import { clanRole, getClanBySlug } from "@/lib/clans";
 import { pickNick } from "@/lib/lans";
@@ -43,45 +43,39 @@ export default async function ClanPage({ params }: PageProps<"/clans/[slug]">) {
       : [];
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
-      <div className="flex items-center gap-4">
-        <ClanAvatar clan={c} size={72} />
-        <div className="min-w-0 flex-1">
-          <h1 className="text-2xl font-bold tracking-tight text-balance sm:text-3xl">{c.name}</h1>
-          <p className="text-sm text-muted">{members.length} members</p>
-        </div>
-      </div>
-      {c.description && <p className="whitespace-pre-wrap text-fg/90">{c.description}</p>}
-
-      <div className="flex flex-wrap gap-2">
-        {isAdmin && (
+    <Page>
+      <PageHeader
+        avatar={<ClanAvatar clan={c} size={56} />}
+        title={c.name}
+        subtitle={`${members.length} members`}
+        actions={
           <>
-            <Link href={`/clans/${c.slug}/lans/new`} className={btnPrimary}>
-              New event
-            </Link>
-            <Link href={`/clans/${c.slug}/stats`} className={btnSecondary}>
-              Stats
-            </Link>
-            <Link href={`/clans/${c.slug}/settings`} className={btnSecondary}>
-              Clan settings
-            </Link>
+            {isAdmin && (
+              <>
+                <Link href={`/clans/${c.slug}/stats`} className={btnSecondary}>
+                  Stats
+                </Link>
+                <Link href={`/clans/${c.slug}/settings`} className={btnSecondary}>
+                  Clan settings
+                </Link>
+                <Link href={`/clans/${c.slug}/lans/new`} className={btnPrimary}>
+                  <span aria-hidden>+</span> New event
+                </Link>
+              </>
+            )}
+            {!role && c.joinPolicy !== "invite" && (
+              <form action={joinClan.bind(null, c.id)}>
+                <button className={btnPrimary}>{c.joinPolicy === "open" ? "Join" : "Ask to join"}</button>
+              </form>
+            )}
+            {role === "pending" && <Pill tone="amber">Waiting for an admin to approve you</Pill>}
           </>
-        )}
-        {!role && c.joinPolicy !== "invite" && (
-          <form action={joinClan.bind(null, c.id)}>
-            <button className={btnPrimary}>{c.joinPolicy === "open" ? "Join" : "Ask to join"}</button>
-          </form>
-        )}
-        {role === "pending" && <Pill tone="amber">Waiting for an admin to approve you</Pill>}
-        {role && (
-          <form action={leaveClan.bind(null, c.id)} className="sm:ml-auto">
-            <button className={`${btnGhost} hover:!text-danger`}>{role === "pending" ? "Cancel request" : "Leave clan"}</button>
-          </form>
-        )}
-      </div>
+        }
+      />
+      {c.description && <p className="max-w-3xl whitespace-pre-wrap text-fg/90">{c.description}</p>}
 
       {discordInvites.length > 0 && (
-        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-[#5865F2]/40 bg-[#5865F2]/10 p-4">
+        <div className="flex flex-wrap items-center gap-3 rounded-card border border-[#5865F2]/40 bg-[#5865F2]/10 p-4">
           <p className="min-w-0 flex-1 text-sm">
             <span className="font-semibold">{c.name} is on Discord.</span>{" "}
             <span className="text-muted">Join the server for LAN news, reminders and to answer right from Discord.</span>
@@ -100,7 +94,7 @@ export default async function ClanPage({ params }: PageProps<"/clans/[slug]">) {
         </div>
       )}
 
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <div className={halves}>
       {(isMember || isAdmin) && (
         <Card title="Upcoming events">
           {lans.length === 0 ? (
@@ -134,6 +128,12 @@ export default async function ClanPage({ params }: PageProps<"/clans/[slug]">) {
         />
       </Card>
       </div>
-    </div>
+
+      {role && (
+        <form action={leaveClan.bind(null, c.id)} className="flex justify-end">
+          <button className={`${btnGhost} hover:!text-danger`}>{role === "pending" ? "Cancel request" : "Leave clan"}</button>
+        </form>
+      )}
+    </Page>
   );
 }

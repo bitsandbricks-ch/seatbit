@@ -6,7 +6,7 @@ import { ClanAvatar } from "@/components/clan-avatar";
 import { Avatar } from "@/components/avatar";
 import { getAvatars, type AvatarData } from "@/lib/avatars";
 import { EventTurnoutChart } from "@/components/event-turnout-chart";
-import { Card, StatTile, EmptyState, Pill } from "@/components/ui";
+import { Card, EmptyState, Page, PageHeader, Pill, StatTile } from "@/components/ui";
 import { canManageClan, getClanBySlug } from "@/lib/clans";
 import { clanStats, pct, type MemberStats } from "@/lib/clan-stats";
 import { fmtDay } from "@/lib/format";
@@ -49,16 +49,8 @@ export default async function ClanStatsPage({ params }: PageProps<"/clans/[slug]
   const unsure = withPast.filter((m) => m.stayedUnsure > 0).sort((a, b) => b.stayedUnsure - a.stayedUnsure).slice(0, 10);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
-      <div className="flex items-center gap-3">
-        <ClanAvatar clan={c} size={48} />
-        <div className="min-w-0">
-          <Link href={`/clans/${c.slug}`} className="text-sm text-muted hover:text-fg">
-            ← {c.name}
-          </Link>
-          <h1 className="text-2xl font-bold">Clan stats</h1>
-        </div>
-      </div>
+    <Page>
+      <PageHeader back={{ href: `/clans/${c.slug}`, label: c.name }} avatar={<ClanAvatar clan={c} size={56} />} title="Clan stats" />
 
       <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
         <StatTile label="Members" value={String(totalMembers)} sub={guests ? `${guests} guests without login` : "all with login"} />
@@ -175,7 +167,7 @@ export default async function ClanStatsPage({ params }: PageProps<"/clans/[slug]
             </p>
           </Card>
 
-          <div className="grid items-start gap-6 md:grid-cols-2">
+          <div className="grid items-start gap-4 sm:gap-6 md:grid-cols-2">
             <Card title="Most active">
               <MemberList
                 slug={c.slug}
@@ -242,7 +234,7 @@ export default async function ClanStatsPage({ params }: PageProps<"/clans/[slug]
           </div>
         </>
       )}
-    </div>
+    </Page>
   );
 }
 

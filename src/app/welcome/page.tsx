@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { and, eq, isNull } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { completeProfile } from "@/app/actions";
-import { Field, Input, btnPrimary } from "@/components/ui";
+import { Field, Input, btnPrimary, cardPage, cardPageTitle } from "@/components/ui";
 import { isProfileComplete, requireUser } from "@/lib/session";
 
 /** First login: ask for the real name and the gamer tag (Discord only gives us a display name). */
@@ -19,11 +19,11 @@ export default async function WelcomePage({ searchParams }: PageProps<"/welcome"
       .get()?.nick ?? me.name;
 
   return (
-    <div className="mx-auto max-w-sm space-y-6 rounded-card border border-line bg-surface p-5 sm:mt-6 sm:p-6">
+    <div className={`${cardPage} !space-y-6`}>
       <div className="space-y-1">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/brand/seatbit-mark.svg" alt="" className="mb-3 h-10 w-10" />
-        <h1 className="text-xl font-semibold tracking-tight">Welcome to Seatbit</h1>
+        <h1 className={cardPageTitle}>Welcome to Seatbit</h1>
         <p className="text-sm text-muted">
           Tell your clan who you are. Your name helps orgas book tickets, your nickname is what everyone sees.
         </p>
