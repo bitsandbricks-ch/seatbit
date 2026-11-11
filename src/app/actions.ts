@@ -1,6 +1,6 @@
 "use server";
 
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -468,6 +468,24 @@ export async function setSeatsFromList(lanId: string, spec: string): Promise<{ e
   const r = applySeatSpec(lanId, spec);
   if (!r.error) lanPath(lanId);
   return r;
+}
+
+/** Swaps the people on two seats of the same LAN (either may be empty, which moves one person). */
+export async function adminSwapSeats(seatA: string, seatB: string) {
+  const a = db.select().from(seat).where(eq(seat.id, seatA)).get();
+  const b = db.select().from(seat).where(eq(seat.id, seatB)).get();
+  if (!a || !b || a.id === b.id || a.lanId !== b.lanId) return;
+  await requireLanManager(a.lanId);
+  // (lan, user) is unique, so empty both seats first, then fill them crosswise.
+  db.transaction((tx) => {
+    tx.update(seat).set({ userId: null }).where(inArray(seat.id, [a.id, b.id])).run();
+    tx.update(seat).set({ userId: b.userId }).where(eq(seat.id, a.id)).run();
+    tx.update(seat).set({ userId: a.userId }).where(eq(seat.id, b.id)).run();
+  });
+  lanPath(a.lanId);
+  const l = mustGetLan(a.lanId);
+  if (a.userId) notifyLater(() => notifySeatChanged(l, a.userId!, b.label));
+  if (b.userId) notifyLater(() => notifySeatChanged(l, b.userId!, a.label));
 }
 
 /** Opens or closes the seat-picking phase, where members choose their own seat. */
