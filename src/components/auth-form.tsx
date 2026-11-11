@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { setNick } from "@/app/actions";
+import { LegalNotice } from "@/components/legal-page";
 import { authClient } from "@/lib/auth-client";
 import { btnPrimary, btnSecondary, Field, Input } from "./ui";
 
@@ -62,7 +63,7 @@ export function AuthForm({
   const anySocial = providers.discord || providers.google;
 
   return (
-    <div className="flex min-h-[calc(100dvh-14rem)] items-center justify-center">
+    <div className="flex min-h-[calc(100dvh-14rem)] flex-col items-center justify-center">
       <div className="w-full max-w-sm space-y-6 rounded-card border border-line bg-surface p-6">
         <div className="space-y-1">
           <h1 className="text-xl font-semibold">
@@ -205,6 +206,7 @@ export function AuthForm({
           </>
         )}
       </div>
+      <LegalNotice />
     </div>
   );
 }
