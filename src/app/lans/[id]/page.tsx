@@ -7,7 +7,7 @@ import { NickManager } from "@/components/nick-manager";
 import { SeatMap } from "@/components/seat-map";
 import { Card, Pill, StatusBadge, btnSecondary } from "@/components/ui";
 import { fmtDate, relative } from "@/lib/format";
-import { getDisplayNames, getLan, signupClosed } from "@/lib/lans";
+import { getDisplayNames, getLan, pickNick, signupClosed } from "@/lib/lans";
 import { isLanManager, requireUser } from "@/lib/session";
 import { buildChecklist, progress } from "@/lib/checklist";
 import { LanChecklist } from "@/components/lan-checklist";
@@ -24,6 +24,8 @@ export default async function LanPage({ params }: PageProps<"/lans/[id]">) {
   const rows = db.select().from(attendance).where(eq(attendance.lanId, id)).all();
   const seats = db.select().from(seat).where(eq(seat.lanId, id)).all();
   const myNicks = db.select().from(nickname).where(eq(nickname.userId, me.id)).all();
+  const lanType = l.typeId ? db.select().from(schema.lanType).where(eq(schema.lanType.id, l.typeId)).get() : undefined;
+  const myNick = pickNick(myNicks, { lanId: id, typeId: l.typeId }, me.name);
   const names = await getDisplayNames(id, [
     ...new Set([...rows.map((r) => r.userId), ...seats.flatMap((s) => (s.userId ? [s.userId] : []))]),
   ]);
@@ -39,7 +41,9 @@ export default async function LanPage({ params }: PageProps<"/lans/[id]">) {
   const steps = buildChecklist({
     lan: l,
     attendance: my,
-    hasNick: myNicks.some((n) => n.lanId === null || n.lanId === id),
+    hasNick: myNicks.some(
+      (n) => (n.lanId === null && n.typeId === null) || n.lanId === id || (!!l.typeId && n.typeId === l.typeId),
+    ),
     seatLabel: seatOf.get(me.id) ?? null,
     hasSeatPlan: seats.length > 0,
     freeSeats: seats.filter((s) => !s.userId && !s.locked).length,
@@ -173,26 +177,28 @@ export default async function LanPage({ params }: PageProps<"/lans/[id]">) {
             </dl>
           </Card>
 
-          <Card title="Your nick at this LAN">
+          <Card title={lanType ? `Your nick at ${lanType.name}` : "Your nick at this LAN"}>
             <p className="mb-3 text-sm text-zinc-400">
-              Shown as <strong className="text-zinc-100">{names.get(me.id) ?? myDisplay(myNicks, me.name)}</strong>.
-              Add a nick just for this LAN, or manage your default nicks on your{" "}
+              Shown as <strong className="text-zinc-100">{myNick}</strong>.{" "}
+              {lanType
+                ? `A nick added here is used for every ${lanType.name} event. `
+                : "A nick added here is used for this LAN only. "}
+              Your default nicks are on your{" "}
               <Link href="/profile" className="text-bit hover:underline">
                 profile
               </Link>
               .
             </p>
-            <NickManager nicks={myNicks} lanId={l.id} />
+            {lanType ? (
+              <NickManager nicks={myNicks} typeId={lanType.id} />
+            ) : (
+              <NickManager nicks={myNicks} lanId={l.id} />
+            )}
           </Card>
         </div>
       </div>
     </div>
   );
-}
-
-function myDisplay(nicks: { nick: string; isPrimary: boolean; lanId: string | null }[], name: string) {
-  const g = nicks.filter((n) => n.lanId === null);
-  return g.find((n) => n.isPrimary)?.nick ?? g[0]?.nick ?? name;
 }
 
 function DateRow({ label, d, now }: { label: string; d: Date | null; now: Date }) {

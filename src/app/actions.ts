@@ -17,7 +17,7 @@ import { announceLan, postReminderNow, refreshLanMessagesSoon } from "@/lib/disc
 import { sendReminderNow } from "@/lib/reminders";
 import { requireAdmin, requireLanManager, requireUser } from "@/lib/session";
 
-const { attendance, nickname, seat, lan, user, lanOrga } = schema;
+const { attendance, nickname, seat, lan, user, lanOrga, lanType } = schema;
 
 function mustGetLan(id: string) {
   const l = getLan(id);
@@ -45,22 +45,28 @@ export async function setMyAttendance(lanId: string, status: AttendanceStatus) {
 const nickInput = z.object({
   nick: z.string().trim().min(1).max(32),
   lanId: z.string().optional().transform((v) => v || null),
+  typeId: z.string().optional().transform((v) => v || null),
 });
+
+const sameScope = (a: { lanId: string | null; typeId: string | null }, b: typeof a) =>
+  a.lanId === b.lanId && a.typeId === b.typeId;
 
 export async function addNick(formData: FormData) {
   const me = await requireUser();
-  const { nick, lanId } = nickInput.parse({
+  const scope = nickInput.parse({
     nick: formData.get("nick"),
     lanId: formData.get("lanId") ?? undefined,
+    typeId: formData.get("typeId") ?? undefined,
   });
+  if (scope.lanId && scope.typeId) throw new Error("Pick one scope");
   const existing = db
     .select()
     .from(nickname)
     .where(eq(nickname.userId, me.id))
     .all()
-    .filter((n) => n.lanId === lanId);
+    .filter((n) => sameScope(n, scope));
   db.insert(nickname)
-    .values({ userId: me.id, lanId, nick, isPrimary: existing.length === 0 })
+    .values({ userId: me.id, lanId: scope.lanId, typeId: scope.typeId, nick: scope.nick, isPrimary: existing.length === 0 })
     .run();
   revalidatePath("/", "layout");
 }
@@ -76,7 +82,7 @@ export async function deleteNick(id: string) {
       .from(nickname)
       .where(eq(nickname.userId, me.id))
       .all()
-      .find((x) => x.lanId === n.lanId);
+      .find((x) => sameScope(x, n));
     if (next) db.update(nickname).set({ isPrimary: true }).where(eq(nickname.id, next.id)).run();
   }
   revalidatePath("/", "layout");
@@ -87,7 +93,7 @@ export async function setPrimaryNick(id: string) {
   const n = db.select().from(nickname).where(eq(nickname.id, id)).get();
   if (!n || n.userId !== me.id) return;
   for (const other of db.select().from(nickname).where(eq(nickname.userId, me.id)).all()) {
-    if (other.lanId !== n.lanId) continue;
+    if (!sameScope(other, n)) continue;
     db.update(nickname)
       .set({ isPrimary: other.id === id })
       .where(eq(nickname.id, other.id))
@@ -112,7 +118,13 @@ const optDate = z
   .transform((v) => (v ? new Date(v) : null))
   .refine((d) => d === null || !isNaN(d.getTime()), "Invalid date");
 
+const optId = z
+  .string()
+  .optional()
+  .transform((v) => v || null);
+
 const lanInput = z.object({
+  typeId: optId,
   name: z.string().trim().min(1).max(100),
   description: z.string().max(5000).default(""),
   location: z.string().max(200).default(""),
@@ -156,6 +168,8 @@ export async function saveLan(_: FormState, formData: FormData): Promise<FormSta
     const row = db.insert(lan).values(v).returning().get();
     lanId = row.id;
     db.insert(lanOrga).values({ lanId: row.id, userId: me.id }).run();
+    const t = v.typeId ? db.select().from(lanType).where(eq(lanType.id, v.typeId)).get() : undefined;
+    if (t?.seatSpec) applySeatSpec(row.id, t.seatSpec);
   }
   lanPath(lanId!);
   // New LANs are announced in the Discord channels; edits update the existing posts.
@@ -356,8 +370,7 @@ function parseSeatSpec(spec: string): string[][] {
 }
 
 /** Replaces the seat block with the given seat labels, keeping assignments for labels that remain. */
-export async function setSeatsFromList(lanId: string, spec: string): Promise<{ error?: string; count?: number }> {
-  await requireLanManager(lanId);
+function applySeatSpec(lanId: string, spec: string): { error?: string; count?: number } {
   let rows: string[][];
   try {
     rows = parseSeatSpec(spec);
@@ -384,8 +397,14 @@ export async function setSeatsFromList(lanId: string, spec: string): Promise<{ e
       .where(eq(lan.id, lanId))
       .run();
   });
-  lanPath(lanId);
   return { count: total };
+}
+
+export async function setSeatsFromList(lanId: string, spec: string): Promise<{ error?: string; count?: number }> {
+  await requireLanManager(lanId);
+  const r = applySeatSpec(lanId, spec);
+  if (!r.error) lanPath(lanId);
+  return r;
 }
 
 /** Assigns a seat to an attendee from the attendee list (seatId null = no seat). */
@@ -433,4 +452,51 @@ export async function adminAutoAssignSeats(lanId: string): Promise<number> {
   }
   lanPath(lanId);
   return n;
+}
+
+// ---------------- LAN types (templates) ----------------
+
+const lanTypeInput = z.object({
+  name: z.string().trim().min(1).max(100),
+  description: z.string().max(5000).default(""),
+  location: z.string().max(200).default(""),
+  websiteUrl: z.union([z.literal(""), z.url().max(500)]).default(""),
+  ticketUrl: z.union([z.literal(""), z.url().max(500)]).default(""),
+  price: z.string().max(50).default(""),
+  capacity: z
+    .string()
+    .optional()
+    .transform((v) => (v ? Number(v) : null))
+    .pipe(z.number().int().min(1).nullable()),
+  reminderDays: z.coerce.number().int().min(0).max(60),
+  seatSpec: z.string().max(500).default(""),
+});
+
+export async function saveLanType(_: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  const id = (formData.get("id") as string) || null;
+  const parsed = lanTypeInput.safeParse(
+    Object.fromEntries([...formData.entries()].filter(([k]) => k !== "id")),
+  );
+  if (!parsed.success) {
+    return { error: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join(", ") };
+  }
+  if (parsed.data.seatSpec) {
+    try {
+      parseSeatSpec(parsed.data.seatSpec);
+    } catch (e) {
+      return { error: (e as Error).message };
+    }
+  }
+  if (id) db.update(lanType).set(parsed.data).where(eq(lanType.id, id)).run();
+  else db.insert(lanType).values(parsed.data).run();
+  revalidatePath("/", "layout");
+  redirect("/admin/types");
+}
+
+export async function deleteLanType(id: string) {
+  await requireAdmin();
+  db.delete(lanType).where(eq(lanType.id, id)).run();
+  revalidatePath("/", "layout");
+  redirect("/admin/types");
 }

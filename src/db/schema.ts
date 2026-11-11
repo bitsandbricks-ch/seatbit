@@ -91,8 +91,25 @@ export const verification = sqliteTable(
 
 // ---------- App tables ----------
 
+/** A recurring LAN party (e.g. "Lock & Load") that yearly events are created from. */
+export const lanType = sqliteTable("lan_type", {
+  id: id(),
+  name: text("name").notNull(),
+  description: text("description").default("").notNull(),
+  location: text("location").default("").notNull(),
+  websiteUrl: text("website_url").default("").notNull(),
+  ticketUrl: text("ticket_url").default("").notNull(),
+  price: text("price").default("").notNull(),
+  capacity: integer("capacity"),
+  reminderDays: integer("reminder_days").default(3).notNull(),
+  /** Seats the group usually gets, e.g. "F1-F20". Copied into new events. */
+  seatSpec: text("seat_spec").default("").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+});
+
 export const lan = sqliteTable("lan", {
   id: id(),
+  typeId: text("type_id").references(() => lanType.id, { onDelete: "set null" }),
   name: text("name").notNull(),
   description: text("description").default("").notNull(),
   location: text("location").default("").notNull(),
@@ -161,7 +178,10 @@ export const lanOrga = sqliteTable(
   (t) => [uniqueIndex("lan_orga_uq").on(t.lanId, t.userId)],
 );
 
-/** Nicknames: lanId null = global nick, otherwise only for that LAN. */
+/**
+ * Nicknames. Scope: lanId set = one event only; typeId set = every event of
+ * that LAN type; both null = default nick everywhere.
+ */
 export const nickname = sqliteTable(
   "nickname",
   {
@@ -170,6 +190,7 @@ export const nickname = sqliteTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     lanId: text("lan_id").references(() => lan.id, { onDelete: "cascade" }),
+    typeId: text("type_id").references(() => lanType.id, { onDelete: "cascade" }),
     nick: text("nick").notNull(),
     isPrimary: integer("is_primary", { mode: "boolean" }).default(false).notNull(),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
@@ -261,6 +282,7 @@ export const channelReminderLog = sqliteTable(
 
 export type User = typeof user.$inferSelect;
 export type Lan = typeof lan.$inferSelect;
+export type LanType = typeof lanType.$inferSelect;
 export type Attendance = typeof attendance.$inferSelect;
 export type Nickname = typeof nickname.$inferSelect;
 export type Seat = typeof seat.$inferSelect;

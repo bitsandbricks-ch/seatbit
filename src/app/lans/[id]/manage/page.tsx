@@ -220,8 +220,10 @@ export default async function AdminLanPage({ params }: PageProps<"/lans/[id]/man
 
       <Card title="Details">
         <LanForm
+          types={db.select().from(schema.lanType).all()}
           values={{
             id: l.id,
+            typeId: l.typeId ?? "",
             name: l.name,
             description: l.description,
             location: l.location,

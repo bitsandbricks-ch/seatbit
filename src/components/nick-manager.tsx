@@ -2,9 +2,17 @@ import { addNick, deleteNick, setPrimaryNick } from "@/app/actions";
 import type { Nickname } from "@/db/schema";
 import { btnGhost, btnSecondary, input } from "./ui";
 
-/** Manage nicks for one scope: global (lanId null) or a single LAN. */
-export function NickManager({ nicks, lanId }: { nicks: Nickname[]; lanId: string | null }) {
-  const scoped = nicks.filter((n) => n.lanId === lanId);
+/** Manage nicks for one scope: default (no ids), a LAN type, or a single event. */
+export function NickManager({
+  nicks,
+  lanId = null,
+  typeId = null,
+}: {
+  nicks: Nickname[];
+  lanId?: string | null;
+  typeId?: string | null;
+}) {
+  const scoped = nicks.filter((n) => n.lanId === lanId && n.typeId === typeId);
   return (
     <div className="space-y-3">
       {scoped.length > 0 && (
@@ -31,6 +39,7 @@ export function NickManager({ nicks, lanId }: { nicks: Nickname[]; lanId: string
       )}
       <form action={addNick} className="flex gap-2">
         {lanId && <input type="hidden" name="lanId" value={lanId} />}
+        {typeId && <input type="hidden" name="typeId" value={typeId} />}
         <input name="nick" required maxLength={32} placeholder="Add a nick" className={input} />
         <button className={btnSecondary}>Add</button>
       </form>

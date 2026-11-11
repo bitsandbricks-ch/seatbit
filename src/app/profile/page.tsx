@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { updateProfile } from "@/app/actions";
 import { LinkedAccounts } from "@/components/linked-accounts";
@@ -10,6 +10,7 @@ import { requireUser } from "@/lib/session";
 export default async function ProfilePage() {
   const me = await requireUser();
   const nicks = db.select().from(schema.nickname).where(eq(schema.nickname.userId, me.id)).all();
+  const types = db.select().from(schema.lanType).orderBy(asc(schema.lanType.name)).all();
   const accounts = db
     .select({ providerId: schema.account.providerId })
     .from(schema.account)
@@ -36,10 +37,26 @@ export default async function ProfilePage() {
 
       <Card title="Default nicks">
         <p className="mb-3 text-sm text-zinc-400">
-          Your primary nick is shown at every LAN unless you set a different nick for that LAN on its page.
+          Your primary nick is shown at every LAN unless you set a nick for that LAN type below.
         </p>
-        <NickManager nicks={nicks} lanId={null} />
+        <NickManager nicks={nicks} />
       </Card>
+
+      {types.length > 0 && (
+        <Card title="Nicks per LAN type">
+          <p className="mb-4 text-sm text-zinc-400">
+            Used for every event of that type, e.g. every Lock &amp; Load. Leave empty to use your default nick.
+          </p>
+          <div className="space-y-5">
+            {types.map((t) => (
+              <div key={t.id}>
+                <h3 className="mb-2 text-sm font-medium text-zinc-200">{t.name}</h3>
+                <NickManager nicks={nicks} typeId={t.id} />
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       <Card title="Sign-in methods">
         <LinkedAccounts linked={accounts.map((a) => a.providerId)} available={enabledProviders} />

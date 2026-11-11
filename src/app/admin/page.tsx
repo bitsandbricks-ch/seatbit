@@ -19,9 +19,14 @@ export default async function AdminPage() {
       <Card
         title="LANs"
         actions={
-          <Link href="/admin/lans/new" className={btnPrimary}>
-            Add LAN
-          </Link>
+          <span className="flex gap-2">
+            <Link href="/admin/types" className={btnGhost}>
+              LAN types
+            </Link>
+            <Link href="/admin/lans/new" className={btnPrimary}>
+              Add LAN
+            </Link>
+          </span>
         }
       >
         {lans.length === 0 ? (
