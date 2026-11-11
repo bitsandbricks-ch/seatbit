@@ -31,6 +31,10 @@ export const user = sqliteTable("user", {
   isGuest: integer("is_guest", { mode: "boolean" }).default(false).notNull(),
   guestClanId: text("guest_clan_id").references((): AnySQLiteColumn => clan.id, { onDelete: "cascade" }),
   claimCode: text("claim_code").unique(),
+  // A guest's real email address, if the orgas know it: the invite goes there, and a
+  // Discord sign-in with this (verified) address takes the guest over automatically.
+  inviteEmail: text("invite_email"),
+  invitedAt: integer("invited_at", { mode: "timestamp_ms" }),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" })
     .default(now)

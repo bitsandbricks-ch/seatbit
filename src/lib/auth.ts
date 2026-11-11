@@ -4,6 +4,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { count } from "drizzle-orm";
 import { db, schema } from "@/db";
+import { claimGuestsByEmail } from "./guest-claim";
 import { sendMail } from "./mail";
 import { getBoolSetting, getSetting, settingsFingerprint } from "./settings";
 
@@ -102,6 +103,18 @@ function build() {
       },
     },
     databaseHooks: {
+      session: {
+        create: {
+          // Signing in with a verified email takes over guests the orgas invited with that address.
+          after: async (session) => {
+            try {
+              claimGuestsByEmail(session.userId);
+            } catch (e) {
+              console.error("[guests] auto-claim failed", e);
+            }
+          },
+        },
+      },
       user: {
         create: {
           // The first user, and anyone listed in the admin emails setting, becomes an admin.

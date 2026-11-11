@@ -7,7 +7,9 @@ import { appUrl, mailTarget } from "@/lib/mail";
 import { requireAdmin } from "@/lib/session";
 import { LOGIN_METHODS } from "@/lib/auth";
 import { SETTING_GROUPS, type SettingGroup, canEncrypt, settingsForAdmin } from "@/lib/settings";
-import { saveSettings, sendTestMail, setupDiscordBot } from "./actions";
+import { MAIL_TEMPLATES, savedTemplates } from "@/lib/mail-templates";
+import { MailTemplateEditor } from "@/components/mail-template-editor";
+import { resetMailTemplate, saveMailTemplate, saveSettings, sendTemplateTest, sendTestMail, setupDiscordBot } from "./actions";
 
 export const metadata = { title: "Platform settings · Seatbit" };
 
@@ -26,6 +28,7 @@ const TABS = [
   { id: "google", label: "Google" },
   { id: "general", label: "Sign-up & admins" },
   { id: "automation", label: "Reminders" },
+  { id: "templates", label: "Mail templates" },
   { id: "server", label: "Server" },
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
@@ -152,6 +155,8 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
 
       {tab === "automation" && section("automation", <Url label="Cron URL" value={`${appUrl}/api/cron/reminders`} />)}
 
+      {tab === "templates" && <TemplatesTab />}
+
       {tab === "server" && (
         <Card title="Server environment">
           <p className="-mt-2 mb-3 text-sm text-zinc-400">
@@ -177,6 +182,41 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
           </dl>
         </Card>
       )}
+    </div>
+  );
+}
+
+function TemplatesTab() {
+  const saved = savedTemplates();
+  return (
+    <div className="space-y-5">
+      <p className="max-w-2xl text-sm text-zinc-400">
+        The emails Seatbit sends. Change the wording to fit your clan; placeholders like {"{firstName}"} are filled in
+        for each person. Reset brings back the built-in text.
+      </p>
+      {MAIL_TEMPLATES.map((t) => {
+        const s = saved.get(t.id);
+        return (
+          <Card key={t.id} title={t.title}>
+            <MailTemplateEditor
+              t={{
+                id: t.id,
+                title: t.title,
+                when: t.when,
+                vars: t.vars,
+                subject: s?.subject ?? t.subject,
+                body: s?.body ?? t.body,
+                defaultSubject: t.subject,
+                defaultBody: t.body,
+                edited: !!s,
+              }}
+              save={saveMailTemplate.bind(null, t.id)}
+              reset={resetMailTemplate.bind(null, t.id)}
+              test={sendTemplateTest.bind(null, t.id)}
+            />
+          </Card>
+        );
+      })}
     </div>
   );
 }

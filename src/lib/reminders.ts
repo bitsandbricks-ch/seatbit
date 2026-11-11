@@ -2,6 +2,7 @@ import { and, eq, gt } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Lan, ReminderKind, User } from "@/db/schema";
 import { appUrl, sendMail } from "./mail";
+import { renderTemplate } from "./mail-templates";
 
 const { lan, user, attendance, reminderLog } = schema;
 const DAY = 24 * 60 * 60 * 1000;
@@ -10,25 +11,33 @@ const fmt = (d: Date) =>
   d.toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
 
 function message(kind: ReminderKind, l: Lan, u: User) {
-  const link = `${appUrl}/lans/${l.id}`;
+  const vars = {
+    firstName: u.firstName || u.name,
+    lan: l.name,
+    start: fmt(l.startsAt),
+    location: l.location,
+    link: `${appUrl}/lans/${l.id}`,
+  };
   switch (kind) {
     case "signup":
-      return {
-        subject: `Are you coming to ${l.name}? Decide by ${fmt(l.signupDeadline!)}`,
-        text: `Hi ${u.name},\n\nyou haven't confirmed yet whether you're coming to ${l.name} (${fmt(l.startsAt)}, ${l.location || "location tbd"}).\n\nPlease let us know by ${fmt(l.signupDeadline!)}:\n${link}`,
-      };
+      return renderTemplate("reminderSignup", { ...vars, deadline: fmt(l.signupDeadline!) });
     case "payment":
-      return {
-        subject: `Buy your ticket for ${l.name} by ${fmt(l.paymentDueDate!)}`,
-        text: `Hi ${u.name},\n\nyou're going to ${l.name}, but haven't marked your ticket${l.price ? ` (${l.price})` : ""} as bought yet. Please buy it by ${fmt(l.paymentDueDate!)}${l.ticketUrl ? `:\n${l.ticketUrl}` : "."}\n\nThen tick it off in your checklist: ${link}`,
-      };
-    case "event":
-      return {
-        subject: `${l.name} starts soon`,
-        text: `Hi ${u.name},\n\n${l.name} starts on ${fmt(l.startsAt)}${l.location ? ` at ${l.location}` : ""}. See you there!\n\nYour seat and details: ${link}`,
-      };
+      return renderTemplate("reminderPayment", {
+        ...vars,
+        deadline: fmt(l.paymentDueDate!),
+        price: l.price,
+        ticketUrl: l.ticketUrl,
+      });
+    case "event": {
+      const s = db
+        .select({ label: schema.seat.label })
+        .from(schema.seat)
+        .where(and(eq(schema.seat.lanId, l.id), eq(schema.seat.userId, u.id)))
+        .get();
+      return renderTemplate("reminderEvent", { ...vars, seat: l.seatsPublishedAt ? s?.label : "" });
+    }
     default:
-      return { subject: l.name, text: link };
+      return { subject: l.name, text: vars.link };
   }
 }
 

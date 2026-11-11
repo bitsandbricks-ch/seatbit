@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq, isNull } from "drizzle-orm";
 import { db, schema } from "@/db";
 import {
   addClanMember,
   addGuest,
   deleteGuest,
   renewGuestLink,
+  setGuestEmail,
   createInvite,
   deleteClan,
   deleteInvite,
@@ -17,10 +18,11 @@ import { ClanAvatar } from "@/components/clan-avatar";
 import { ClanForm } from "@/components/clan-form";
 import { AddMemberForm } from "@/components/add-member-form";
 import { CopyField } from "@/components/copy-field";
-import { GuestForm } from "@/components/guest-form";
+import { GuestEmailForm, GuestForm } from "@/components/guest-form";
 import { Tabs } from "@/components/tabs";
 import { Card, Pill, btnDanger, btnGhost, btnPrimary, btnSecondary } from "@/components/ui";
 import { appUrl } from "@/lib/mail";
+import { personLabel } from "@/lib/names";
 import { canManageClan, getClanBySlug } from "@/lib/clans";
 import { requireUser } from "@/lib/session";
 import { unlinkDiscordChannel } from "@/app/actions";
@@ -55,14 +57,29 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
   const guests = active.filter((m) => m.u.isGuest);
   const inClan = new Set(members.map((m) => m.u.id));
   const others = db
-    .select({ id: schema.user.id, name: schema.user.name, email: schema.user.email })
+    .select({
+      id: schema.user.id,
+      name: schema.user.name,
+      firstName: schema.user.firstName,
+      lastName: schema.user.lastName,
+      email: schema.user.email,
+    })
     .from(schema.user)
     .where(eq(schema.user.isGuest, false))
-    .orderBy(asc(schema.user.name))
     .all()
-    .filter((u) => !inClan.has(u.id))
-    // Don't hand every user's full email address to clan admins.
-    .map((u) => ({ ...u, email: maskEmail(u.email) }));
+    .filter((u) => !inClan.has(u.id));
+  const defaultNicks = new Map(
+    db
+      .select({ userId: schema.nickname.userId, nick: schema.nickname.nick })
+      .from(schema.nickname)
+      .where(and(isNull(schema.nickname.lanId), isNull(schema.nickname.typeId)))
+      .all()
+      .map((n) => [n.userId, n.nick]),
+  );
+  const candidates = others
+    // Shown as Name "Nick" Surname; don't hand every user's full email address to clan admins.
+    .map((u) => ({ id: u.id, name: personLabel(u, defaultNicks.get(u.id)), email: maskEmail(u.email) }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
@@ -125,19 +142,27 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
             </Card>
           )}
           <Card title="Add an existing user">
-            <AddMemberForm clanId={c.id} users={others} action={addClanMember} />
+            <AddMemberForm clanId={c.id} users={candidates} action={addClanMember} />
           </Card>
           <Card title="Guests">
             <p className="mb-3 text-sm text-zinc-400">
               For people who aren&apos;t on Seatbit yet: add them by name, then sign them up for events and give them a seat
-              like anyone else. Send them their link: when they sign in with Discord through it, their account takes over
-              everything you set up for them.
+              like anyone else. With an email address, Seatbit mails them an invite, and signing in with a Discord account
+              on that address takes over everything you set up for them. Or send them their link yourself.
             </p>
             {guests.length > 0 && (
               <ul className="mb-4 space-y-3">
                 {guests.map(({ u }) => (
-                  <li key={u.id} className="space-y-1.5">
+                  <li key={u.id} className="space-y-1.5 rounded-md border border-line p-3">
                     <span className="block truncate text-sm font-medium">{u.name}</span>
+                    <span className="block text-xs text-zinc-500">
+                      {u.inviteEmail
+                        ? u.invitedAt
+                          ? `Invited ${u.invitedAt.toLocaleDateString("de-CH")} at ${u.inviteEmail}`
+                          : u.inviteEmail
+                        : "No email yet"}
+                    </span>
+                    <GuestEmailForm key={u.inviteEmail ?? ""} action={setGuestEmail.bind(null, c.id, u.id)} email={u.inviteEmail} />
                     <span className="flex flex-wrap items-center gap-1">
                       <CopyField value={`${appUrl}/claim/${u.claimCode}`} />
                       <form action={renewGuestLink.bind(null, c.id, u.id)}>
@@ -159,7 +184,9 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
                       {u.name} {role === "admin" && <Pill tone="emerald">admin</Pill>}
                       {u.isGuest && <Pill>guest</Pill>}
                     </span>
-                    <span className="block truncate text-xs text-zinc-500">{u.isGuest ? "No login yet" : u.email}</span>
+                    <span className="block truncate text-xs text-zinc-500">
+                      {u.isGuest ? (u.inviteEmail ? `No login yet · ${u.inviteEmail}` : "No login yet") : u.email}
+                    </span>
                   </span>
                   <span className="flex gap-1">
                     {u.isGuest ? (

@@ -7,6 +7,7 @@ import { z } from "zod";
 import { db, schema } from "@/db";
 import { canManageClan, clanRole, getClan, saveAvatar, uniqueSlug } from "@/lib/clans";
 import { guestEmail } from "@/lib/guests";
+import { accountByEmail, mergeGuestInto, normEmail, sendGuestInvite } from "@/lib/guest-claim";
 import { requireClanManager, requireLanManager, requireUser } from "@/lib/session";
 import { adminSetAttendance, type FormState } from "./actions";
 
@@ -175,27 +176,50 @@ export async function addClanMember(clanId: string, userId: string) {
 
 const guestInput = z.object({
   firstName: z.string().trim().min(1).max(40),
-  lastName: z.string().trim().max(40).default(""),
+  lastName: z.string().trim().min(1).max(40),
   nick: z.string().trim().max(32).default(""),
+  email: z.union([z.literal(""), z.email().max(200)]).default(""),
 });
 
 const newClaimCode = () => crypto.randomUUID().replace(/-/g, "").slice(0, 16);
 
-/** Creates a guest member of a clan from the form. Returns the guest's id, or an error. */
-function createGuest(clanId: string, formData: FormData): { id: string } | { error: string } {
+type Created = { id: string; existing?: string } | { error: string };
+
+/**
+ * Creates a guest member of a clan from the form. When the email belongs to someone
+ * who already has a Seatbit account, that account is added to the clan instead.
+ */
+function createGuest(clanId: string, formData: FormData): Created {
   const parsed = guestInput.safeParse({
     firstName: formData.get("firstName"),
     lastName: formData.get("lastName") ?? "",
     nick: formData.get("nick") ?? "",
+    email: formData.get("email") ?? "",
   });
-  if (!parsed.success) return { error: "Give the guest at least a first name." };
-  const { firstName, lastName, nick } = parsed.data;
+  if (!parsed.success) {
+    const bad = new Set(parsed.error.issues.map((i) => i.path[0]));
+    return { error: bad.has("email") ? "That email address doesn't look right." : "Give the guest a first name and a surname." };
+  }
+  const { firstName, lastName, nick, email } = parsed.data;
+  if (email) {
+    const acc = accountByEmail(email);
+    if (acc) {
+      db.insert(clanMember)
+        .values({ clanId, userId: acc.id, role: "member" })
+        .onConflictDoUpdate({
+          target: [clanMember.clanId, clanMember.userId],
+          set: { role: sql`CASE WHEN ${clanMember.role} = 'pending' THEN 'member' ELSE ${clanMember.role} END` },
+        })
+        .run();
+      return { id: acc.id, existing: acc.name };
+    }
+  }
   const id = crypto.randomUUID();
   db.transaction((tx) => {
     tx.insert(schema.user)
       .values({
         id,
-        name: `${firstName} ${lastName}`.trim(),
+        name: `${firstName} ${lastName}`,
         firstName,
         lastName,
         email: guestEmail(id),
@@ -203,6 +227,7 @@ function createGuest(clanId: string, formData: FormData): { id: string } | { err
         isGuest: true,
         guestClanId: clanId,
         claimCode: newClaimCode(),
+        inviteEmail: email ? normEmail(email) : null,
       })
       .run();
     tx.insert(clanMember).values({ clanId, userId: id, role: "member" }).run();
@@ -211,25 +236,58 @@ function createGuest(clanId: string, formData: FormData): { id: string } | { err
   return { id };
 }
 
+const inviterName = (u: { firstName: string; name: string }) => u.firstName || u.name;
+
+/** What the orga sees after adding someone. */
+function addedMessage(r: { id: string; existing?: string }, invited: boolean, what: string) {
+  if (r.existing) return `${r.existing} already has a Seatbit account with that email, so we ${what} them instead of a guest.`;
+  return invited ? "Guest added. The invite mail is on its way." : "Guest added.";
+}
+
 /** Adds a member without a login, so orgas can sign them up and seat them. */
 export async function addGuest(clanId: string, _: FormState, formData: FormData): Promise<FormState> {
-  await requireClanManager(clanId);
+  const me = await requireClanManager(clanId);
   const r = createGuest(clanId, formData);
   if ("error" in r) return r;
+  const invited = !r.existing && (await sendGuestInvite(r.id, inviterName(me)).catch(() => false));
   revalidatePath("/", "layout");
-  return { ok: true };
+  return { ok: true, message: addedMessage(r, invited, "added") };
 }
 
 /** From an event's Attendees tab: adds a guest to the event's clan and signs them up as coming. */
 export async function addGuestToLan(lanId: string, _: FormState, formData: FormData): Promise<FormState> {
-  await requireLanManager(lanId);
+  const me = await requireLanManager(lanId);
   const l = db.select({ clanId: schema.lan.clanId }).from(schema.lan).where(eq(schema.lan.id, lanId)).get();
   if (!l?.clanId) return { error: "This event has no clan." };
   const r = createGuest(l.clanId, formData);
   if ("error" in r) return r;
   await adminSetAttendance(lanId, r.id, "going");
+  // After signing up, so the invite lists this event.
+  const invited = !r.existing && (await sendGuestInvite(r.id, inviterName(me)).catch(() => false));
   revalidatePath("/", "layout");
-  return { ok: true };
+  return { ok: true, message: addedMessage(r, invited, "signed up") };
+}
+
+/** Sets (or changes) a guest's email and sends them the invite. */
+export async function setGuestEmail(clanId: string, userId: string, _: FormState, formData: FormData): Promise<FormState> {
+  const me = await requireClanManager(clanId);
+  const g = requireGuestOf(clanId, userId);
+  const parsed = z.email().max(200).safeParse(String(formData.get("email") ?? "").trim());
+  if (!parsed.success) return { error: "That email address doesn't look right." };
+  const acc = accountByEmail(parsed.data);
+  if (acc) {
+    // They're on Seatbit already: hand everything over right away.
+    mergeGuestInto(g, acc.id);
+    revalidatePath("/", "layout");
+    return { ok: true, message: `${acc.name} already has an account with that email. Everything moved over to it.` };
+  }
+  db.update(schema.user).set({ inviteEmail: normEmail(parsed.data) }).where(eq(schema.user.id, userId)).run();
+  const sent = await sendGuestInvite(userId, inviterName(me)).catch((e) => {
+    console.error("[mail] guest invite failed", e);
+    return false;
+  });
+  revalidatePath("/", "layout");
+  return sent ? { ok: true, message: "Invite sent." } : { error: "Saved, but the mail couldn't be sent. Check the email settings." };
 }
 
 function requireGuestOf(clanId: string, userId: string) {
@@ -262,49 +320,7 @@ export async function claimGuest(code: string) {
   const me = await requireUser();
   const g = db.select().from(schema.user).where(eq(schema.user.claimCode, code)).get();
   if (!g?.isGuest) redirect("/");
-  const { attendance, seat, nickname, lanOrga } = schema;
-  db.transaction((tx) => {
-    for (const m of tx.select().from(clanMember).where(eq(clanMember.userId, g.id)).all()) {
-      const mine = tx.select().from(clanMember).where(and(eq(clanMember.clanId, m.clanId), eq(clanMember.userId, me.id))).get();
-      if (!mine) tx.update(clanMember).set({ userId: me.id }).where(and(eq(clanMember.clanId, m.clanId), eq(clanMember.userId, g.id))).run();
-      else if (mine.role === "pending")
-        tx.update(clanMember).set({ role: m.role }).where(and(eq(clanMember.clanId, m.clanId), eq(clanMember.userId, me.id))).run();
-    }
-    for (const a of tx.select().from(attendance).where(eq(attendance.userId, g.id)).all()) {
-      const mine = tx.select().from(attendance).where(and(eq(attendance.lanId, a.lanId), eq(attendance.userId, me.id))).get();
-      if (!mine) tx.update(attendance).set({ userId: me.id }).where(eq(attendance.id, a.id)).run();
-    }
-    for (const s of tx.select().from(seat).where(eq(seat.userId, g.id)).all()) {
-      const mine = tx.select().from(seat).where(and(eq(seat.lanId, s.lanId), eq(seat.userId, me.id))).get();
-      if (!mine) tx.update(seat).set({ userId: me.id }).where(eq(seat.id, s.id)).run();
-    }
-    const myNicks = tx.select().from(nickname).where(eq(nickname.userId, me.id)).all();
-    for (const n of tx.select().from(nickname).where(eq(nickname.userId, g.id)).all()) {
-      if (!myNicks.some((x) => x.lanId === n.lanId && x.typeId === n.typeId))
-        tx.update(nickname).set({ userId: me.id }).where(eq(nickname.id, n.id)).run();
-    }
-    for (const o of tx.select().from(lanOrga).where(eq(lanOrga.userId, g.id)).all()) {
-      const mine = tx.select().from(lanOrga).where(and(eq(lanOrga.lanId, o.lanId), eq(lanOrga.userId, me.id))).get();
-      if (!mine) tx.update(lanOrga).set({ userId: me.id }).where(and(eq(lanOrga.lanId, o.lanId), eq(lanOrga.userId, g.id))).run();
-    }
-    // Rides, sleeping spots and gear the orgas noted for the guest.
-    tx.update(schema.travelPost).set({ userId: me.id }).where(eq(schema.travelPost.userId, g.id)).run();
-    for (const sp of tx.select().from(schema.travelSpot).where(eq(schema.travelSpot.userId, g.id)).all()) {
-      const post = tx.select().from(schema.travelPost).where(eq(schema.travelPost.id, sp.postId)).get();
-      const mine = tx
-        .select()
-        .from(schema.travelSpot)
-        .where(and(eq(schema.travelSpot.postId, sp.postId), eq(schema.travelSpot.userId, me.id)))
-        .get();
-      if (mine || post?.userId === me.id) tx.delete(schema.travelSpot).where(eq(schema.travelSpot.id, sp.id)).run();
-      else tx.update(schema.travelSpot).set({ userId: me.id }).where(eq(schema.travelSpot.id, sp.id)).run();
-    }
-    tx.update(schema.gearPledge).set({ userId: me.id }).where(eq(schema.gearPledge.userId, g.id)).run();
-    // Seat wishes of others that name the guest now name the real account.
-    for (const col of ["wish_near", "wish_avoid"] as const)
-      tx.run(sql`UPDATE attendance SET ${sql.raw(col)} = replace(${sql.raw(col)}, ${`"${g.id}"`}, ${`"${me.id}"`}) WHERE ${sql.raw(col)} LIKE ${`%"${g.id}"%`}`);
-    tx.delete(schema.user).where(eq(schema.user.id, g.id)).run();
-  });
+  mergeGuestInto(g, me.id);
   revalidatePath("/", "layout");
   const c = g.guestClanId ? getClan(g.guestClanId) : null;
   redirect(c ? `/clans/${c.slug}` : "/");
