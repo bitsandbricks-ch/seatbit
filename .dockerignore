@@ -1,0 +1,14 @@
+.git
+.github
+.next
+node_modules
+data
+backups
+deploy
+*.md
+!README.md
+.env*
+!.env.example
+e2e
+test-results
+playwright-report

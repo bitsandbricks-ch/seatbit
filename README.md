@@ -90,3 +90,7 @@ Keep the `data/` directory (or `DATABASE_PATH`) on persistent storage, and set `
 ## Database changes
 
 Edit `src/db/schema.ts`, then run `npm run db:generate` to create a migration in `drizzle/`. It is applied on the next start.
+
+## Deploying
+
+A Dockerfile and Kubernetes manifests (single replica on a volume, ingress with TLS, reminder CronJob, nightly SQLite backups) are in [`deploy/k8s`](deploy/k8s/README.md). Images are built to `ghcr.io/bitsandbricks-ch/seatbit` by GitHub Actions.

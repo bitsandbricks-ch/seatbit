@@ -1,0 +1,67 @@
+# Nightly online SQLite backup into the seatbit-backups volume, keeping 14 days.
+# The data volume is ReadWriteOnce, so the job is pinned to the app pod's node.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: seatbit-backup
+spec:
+  schedule: "30 3 * * *"
+  timeZone: Europe/Zurich
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 900
+      template:
+        spec:
+          restartPolicy: Never
+          imagePullSecrets:
+            - name: ghcr-pull
+          affinity:
+            podAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - topologyKey: kubernetes.io/hostname
+                  labelSelector:
+                    matchLabels:
+                      app.kubernetes.io/name: seatbit
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001
+            runAsGroup: 1001
+            fsGroup: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: backup
+              image: ghcr.io/bitsandbricks-ch/seatbit:main
+              command: [node, scripts/backup.mjs]
+              env:
+                - name: DATABASE_PATH
+                  value: /data/seatbit.db
+                - name: BACKUP_DIR
+                  value: /backups
+                - name: BACKUP_KEEP_DAYS
+                  value: "14"
+              volumeMounts:
+                - name: data
+                  mountPath: /data
+                  readOnly: true
+                - name: backups
+                  mountPath: /backups
+              resources:
+                requests: { cpu: 10m, memory: 64Mi }
+                limits: { memory: 256Mi }
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: [ALL]
+          volumes:
+            - name: data
+              persistentVolumeClaim:
+                claimName: seatbit-data
+            - name: backups
+              persistentVolumeClaim:
+                claimName: seatbit-backups
