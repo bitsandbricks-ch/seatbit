@@ -11,13 +11,16 @@ ENV NEXT_TELEMETRY_DISABLED=1
 FROM base AS deps
 RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ \
   && rm -rf /var/lib/apt/lists/*
+# Only the manifests first, so this layer is reused until dependencies change.
 COPY package.json package-lock.json ./
-RUN npm ci
+# Cache mounts keep npm's download cache and Next's build cache between local
+# builds (in CI the registry layer cache does the heavy lifting).
+RUN --mount=type=cache,target=/root/.npm npm ci --prefer-offline --no-audit --no-fund
 
 FROM base AS build
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npm run build
+RUN --mount=type=cache,target=/app/.next/cache npm run build
 
 FROM base AS runner
 ENV NODE_ENV=production \
