@@ -5,11 +5,13 @@ import { db, schema } from "@/db";
 import type { Attendance, Lan } from "@/db/schema";
 import { CopyField } from "@/components/copy-field";
 import { MemberAdminActions } from "@/components/member-admin-actions";
-import { Avatar, Card, Page, PageHeader, Pill, StatTile, StatusBadge, columns, stack } from "@/components/ui";
+import { Card, Page, PageHeader, Pill, StatTile, StatusBadge, columns, stack } from "@/components/ui";
 import { canManageClan, getClanBySlug, isClanMember } from "@/lib/clans";
 import { fmtDate, fmtWeekday } from "@/lib/format";
 import { pickNick } from "@/lib/lans";
 import { appUrl } from "@/lib/mail";
+import { Avatar } from "@/components/avatar";
+import { avatarData } from "@/lib/avatars";
 import { pct } from "@/lib/clan-stats";
 import { isLanManager, requireUser } from "@/lib/session";
 
@@ -88,20 +90,17 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
         .get()
     : undefined;
   const role = membership.role === "admin" ? "admin" : "member";
-  const initials = [u.firstName, u.lastName]
-    .map((s) => s.trim()[0]?.toUpperCase())
-    .filter(Boolean)
-    .join("") || u.name.slice(0, 2).toUpperCase();
+  const avatar = avatarData(u);
 
   return (
     <Page>
       <PageHeader
         back={{ href: `/clans/${c.slug}`, label: c.name }}
-        avatar={<Avatar text={initials} image={u.image} size={56} />}
+        avatar={<Avatar data={avatar} size={56} />}
         title={u.name}
         subtitle={
           <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            {defaultNick && defaultNick !== u.name && <span className="font-medium text-bit">{defaultNick}</span>}
+            {defaultNick && defaultNick !== u.name && <span className="font-medium" style={{ color: avatar.color }}>{defaultNick}</span>}
             {role === "admin" && <Pill tone="emerald">admin</Pill>}
             {u.isGuest && <Pill>guest · no login yet</Pill>}
             <span>in the clan since {fmtWeekday(membership.createdAt)}</span>

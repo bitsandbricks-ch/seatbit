@@ -7,6 +7,8 @@ import { NickManager } from "@/components/nick-manager";
 import { LanIdForm } from "@/components/lan-id-form";
 import { getLanAccounts } from "@/lib/lan-accounts";
 import { SeatMap } from "@/components/seat-map";
+import { Avatar } from "@/components/avatar";
+import { getAvatars, type AvatarData } from "@/lib/avatars";
 import { Card, Page, Pill, StatusBadge } from "@/components/ui";
 import { fmtDate, relative } from "@/lib/format";
 import { ATTENDANCE_LOCKED_MSG, attendanceLocked, getDisplayNames, getLan, pickNick, signupClosed } from "@/lib/lans";
@@ -64,6 +66,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
   const spots = posts.length
     ? db.select().from(schema.travelSpot).where(inArray(schema.travelSpot.postId, posts.map((p) => p.id))).all()
     : [];
+  const avatars = getAvatars([...rows.map((r) => r.userId), ...seats.flatMap((s) => (s.userId ? [s.userId] : []))]);
   const names = await getDisplayNames(id, [
     ...new Set([
       ...rows.map((r) => r.userId),
@@ -248,7 +251,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
               cols={l.seatCols}
               meId={me.id}
               mode={picking && my?.status === "going" && (my.ticketBought || my.paid) ? "pick" : "view"}
-              seats={seats.map((s) => ({ ...s, nick: s.userId ? (names.get(s.userId) ?? "?") : null }))}
+              seats={seats.map((s) => ({ ...s, nick: s.userId ? (names.get(s.userId) ?? "?") : null, color: s.userId ? (avatars.get(s.userId)?.color ?? null) : null }))}
               title="Our seats"
               actions={seatPills}
             >
@@ -276,9 +279,9 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           title={`Attendees (${going.length}${l.capacity ? ` / ${l.capacity}` : ""})`}
           actions={full && <Pill tone="red">Full · new sign-ups go on the waitlist</Pill>}
         >
-          <AttendeeList title="Coming" list={going} profileBase={profileBase} names={names} seatOf={seatOf} showPaid={isAdmin} meId={me.id} />
-          <AttendeeList title="Waitlist" list={group("waitlist")} profileBase={profileBase} names={names} seatOf={seatOf} showPaid={isAdmin} meId={me.id} />
-          <AttendeeList title="Unsure" list={group("maybe")} profileBase={profileBase} names={names} seatOf={seatOf} showPaid={false} meId={me.id} />
+          <AttendeeList title="Coming" list={going} profileBase={profileBase} names={names} avatars={avatars} seatOf={seatOf} showPaid={isAdmin} meId={me.id} />
+          <AttendeeList title="Waitlist" list={group("waitlist")} profileBase={profileBase} names={names} avatars={avatars} seatOf={seatOf} showPaid={isAdmin} meId={me.id} />
+          <AttendeeList title="Unsure" list={group("maybe")} profileBase={profileBase} names={names} avatars={avatars} seatOf={seatOf} showPaid={false} meId={me.id} />
           {group("declined").length > 0 && <p className="mt-3 text-xs text-muted">{group("declined").length} can&apos;t make it.</p>}
         </Card>
       )}
@@ -438,7 +441,9 @@ function AttendeeList({
   showPaid,
   meId,
   profileBase,
+  avatars,
 }: {
+  avatars: Map<string, AvatarData>;
   /** "/clans/<slug>/members/" to link each name to the member's profile. */
   profileBase: string | null;
   title: string;
@@ -453,6 +458,8 @@ function AttendeeList({
   const FIRST = 12;
   const item = (a: (typeof list)[number]) => (
     <li key={a.id} className="flex min-h-10 items-center justify-between gap-2 rounded-bit bg-raised/60 px-3 py-1.5 text-sm">
+      <span className="flex min-w-0 items-center gap-2">
+      <Avatar data={avatars.get(a.userId)} size={22} />
       {profileBase ? (
         <Link
           href={`${profileBase}${a.userId}`}
@@ -463,6 +470,7 @@ function AttendeeList({
       ) : (
         <span className={`truncate ${a.userId === meId ? "font-semibold text-bit" : ""}`}>{names.get(a.userId)}</span>
       )}
+      </span>
       <span className="flex shrink-0 gap-1">
         {seatOf.get(a.userId) && <Pill>{seatOf.get(a.userId)}</Pill>}
         {showPaid && (a.paid ? <Pill tone="emerald">ticket ok</Pill> : a.ticketBought ? <Pill tone="amber">reported</Pill> : <Pill tone="red">no ticket</Pill>)}

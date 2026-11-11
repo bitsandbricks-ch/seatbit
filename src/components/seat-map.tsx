@@ -21,6 +21,8 @@ export type SeatView = {
   userId: string | null;
   locked: boolean;
   nick: string | null;
+  /** The seated member's personal colour, shown as a bar on the seat. */
+  color?: string | null;
 };
 
 /** Extra info orgas see about a person in the details pane. */
@@ -297,6 +299,9 @@ export function SeatMap({
         aria-pressed={isSel}
         className={`relative flex ${cell} w-full min-w-0 flex-col items-center justify-center overflow-hidden rounded-bit border px-0.5 text-center transition hover:brightness-125 ${tone} ${ring} ${dim ? "opacity-25" : ""} ${canDrag && taken ? "cursor-grab active:cursor-grabbing" : ""}`}
       >
+        {taken && s.color && (
+          <span aria-hidden className="absolute inset-x-1 bottom-0.5 h-[3px] rounded-full" style={{ background: s.color }} />
+        )}
         {compact ? (
           <span className={`w-full truncate font-mono leading-none ${taken ? "text-[11px] font-semibold" : "text-[10px]"}`}>{short}</span>
         ) : (

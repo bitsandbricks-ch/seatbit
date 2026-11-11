@@ -7,9 +7,12 @@ import { NickManager } from "@/components/nick-manager";
 import { LanIdForm } from "@/components/lan-id-form";
 import { pickLanAccount } from "@/lib/lan-accounts";
 import { SignOutButton } from "@/components/sign-out-button";
-import { Avatar, Card, Columns, Field, Input, Page, PageHeader, btnPrimary, btnSecondary } from "@/components/ui";
+import { Card, Columns, Field, Input, Page, PageHeader, btnPrimary, btnSecondary } from "@/components/ui";
 import { enabledProviders } from "@/lib/auth";
 import { requireUser } from "@/lib/session";
+import { Avatar } from "@/components/avatar";
+import { AppearanceForm } from "@/components/appearance-form";
+import { PROFILE_COLORS, PROFILE_ICONS, avatarData, initialsOf, userColor } from "@/lib/avatars";
 import { missingServers } from "@/lib/discord-invite";
 
 const DM_RESULT: Record<string, string> = {
@@ -47,7 +50,7 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
   return (
     <Page>
       <PageHeader
-        avatar={<Avatar text={defaultNick || me.firstName || me.name} size={56} />}
+        avatar={<Avatar data={avatarData(me)} size={56} />}
         title={defaultNick || me.name}
         subtitle={
           <span className="block truncate">
@@ -123,6 +126,18 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
             )}
           </form>
         )}
+      </Card>
+
+      <Card title="Avatar & colour">
+        <AppearanceForm
+          initial={{ style: me.avatarStyle, color: userColor(me), icon: me.icon }}
+          colors={PROFILE_COLORS}
+          icons={PROFILE_ICONS}
+          picture={avatarData({ ...me, avatarStyle: "picture" }).src}
+          hasUpload={!!me.avatarFile}
+          initials={initialsOf(me)}
+          name={defaultNick || me.name}
+        />
       </Card>
 
       {types.length > 0 && (

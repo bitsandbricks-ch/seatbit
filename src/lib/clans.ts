@@ -74,7 +74,7 @@ export const uploadsDir = path.join(
   "uploads",
 );
 
-const IMAGE_TYPES: Record<string, string> = {
+export const IMAGE_TYPES: Record<string, string> = {
   "image/png": "png",
   "image/jpeg": "jpg",
   "image/webp": "webp",

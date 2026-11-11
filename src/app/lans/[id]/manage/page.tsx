@@ -7,6 +7,7 @@ import { AttendanceTable } from "@/components/attendance-table";
 import { LanForm } from "@/components/lan-form";
 import { ReminderButtons } from "@/components/reminder-buttons";
 import { SeatMap } from "@/components/seat-map";
+import { avatarMap } from "@/lib/avatars";
 import { EventHeader } from "@/components/event-header";
 import { Card, Page, Pill, btnDanger, btnPrimary, btnSecondary } from "@/components/ui";
 import { fmtDate, relative, toInputValue } from "@/lib/format";
@@ -65,6 +66,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
     .all()
     .filter((u) => memberIds.has(u.id) || rows.some((r) => r.userId === u.id));
   const names = await getDisplayNames(id, users.map((u) => u.id));
+  const avatars = avatarMap(users);
   const lanIds = getLanAccounts(l, rows.map((r) => r.userId));
   const userById = new Map(users.map((u) => [u.id, u]));
   const seatOf = new Map(seats.filter((s) => s.userId).map((s) => [s.userId!, s.label]));
@@ -99,6 +101,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
         id: r.id,
         userId: r.userId,
         nick: names.get(r.userId) ?? u.name,
+        avatar: avatars.get(r.userId),
         name: u.name,
         email: u.isGuest ? (u.inviteEmail ? `guest, invited at ${u.inviteEmail}` : "guest, no login yet") : u.email,
         status: r.status,
@@ -323,7 +326,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
                 cols={l.seatCols}
                 meId={me.id}
                 mode="admin"
-                seats={seats.map((s) => ({ ...s, nick: s.userId ? (names.get(s.userId) ?? "?") : null }))}
+                seats={seats.map((s) => ({ ...s, nick: s.userId ? (names.get(s.userId) ?? "?") : null, color: s.userId ? (avatars.get(s.userId)?.color ?? null) : null }))}
                 assignable={going
                   .map((r) => {
                     const w = wishChecks.find((c) => c.userId === r.userId);

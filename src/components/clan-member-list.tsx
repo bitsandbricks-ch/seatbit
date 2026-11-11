@@ -4,11 +4,13 @@ import { useState, useTransition } from "react";
 import { deleteGuest, removeClanMember, setClanMemberRole } from "@/app/clan-actions";
 import { PagerBar, matches, usePager } from "./pager";
 import { Pill, btnGhost, btnSecondary, input } from "./ui";
+import { Avatar } from "./avatar";
+import type { AvatarData } from "@/lib/avatars";
 
 const PAGE_SIZE = 20;
 
 /** Members card on the clan page: nicks with search and pages. */
-export function ClanMemberGrid({ slug, members }: { slug: string; members: { id: string; nick: string; admin: boolean }[] }) {
+export function ClanMemberGrid({ slug, members }: { slug: string; members: { id: string; nick: string; admin: boolean; avatar?: AvatarData }[] }) {
   const [q, setQ] = useState("");
   const shown = members.filter((m) => !q || matches(m.nick, q));
   const pager = usePager(shown, 24);
@@ -34,7 +36,10 @@ export function ClanMemberGrid({ slug, members }: { slug: string; members: { id:
               href={`/clans/${slug}/members/${m.id}`}
               className="flex min-h-10 items-center justify-between gap-2 rounded-bit bg-raised/60 px-3 py-1.5 text-sm transition hover:bg-raised hover:text-bit"
             >
-              <span className="truncate">{m.nick}</span>
+              <span className="flex min-w-0 items-center gap-2">
+                <Avatar data={m.avatar} size={24} />
+                <span className="truncate">{m.nick}</span>
+              </span>
               {m.admin && <Pill tone="emerald">admin</Pill>}
             </Link>
           </li>
@@ -54,6 +59,7 @@ export type ClanMemberRow = {
   sub: string;
   role: "admin" | "member";
   isGuest: boolean;
+  avatar?: AvatarData;
 };
 
 type RoleFilter = "all" | "admin" | "member" | "guest";
@@ -126,6 +132,8 @@ export function ClanMemberAdmin({
       <ul className="divide-y divide-line">
         {pager.items.map((m) => (
           <li key={m.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+            <span className="flex min-w-0 items-center gap-3">
+            <Avatar data={m.avatar} size={32} />
             <span className="min-w-0">
               <span className="block truncate font-medium">
                 <Link href={`/clans/${slug}/members/${m.id}`} className="hover:text-bit hover:underline">
@@ -138,6 +146,7 @@ export function ClanMemberAdmin({
                 {m.nick && m.nick !== m.name && <span className="text-fg/80">{m.nick} · </span>}
                 {m.sub}
               </span>
+            </span>
             </span>
             <span className="flex gap-1">
               {m.isGuest ? (
