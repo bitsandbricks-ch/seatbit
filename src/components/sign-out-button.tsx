@@ -6,7 +6,7 @@ export function SignOutButton() {
   const router = useRouter();
   return (
     <button
-      className="rounded px-3 py-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+      className="rounded-md px-3 py-1.5 text-sm text-muted hover:bg-raised hover:text-fg"
       onClick={async () => {
         await authClient.signOut();
         router.push("/login");

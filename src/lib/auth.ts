@@ -72,6 +72,7 @@ function build() {
         google: {
           clientId: getSetting("google.clientId")!,
           clientSecret: getSetting("google.clientSecret")!,
+          mapProfileToUser: (p) => ({ firstName: p.given_name ?? "", lastName: p.family_name ?? "" }),
           disableImplicitSignUp: !open,
         },
       }),
@@ -83,6 +84,8 @@ function build() {
       additionalFields: {
         role: { type: "string", defaultValue: "member", input: false },
         emailReminders: { type: "boolean", defaultValue: true, input: false },
+        firstName: { type: "string", defaultValue: "", required: false },
+        lastName: { type: "string", defaultValue: "", required: false },
       },
     },
     databaseHooks: {
@@ -101,7 +104,7 @@ function build() {
   });
 }
 
-type Auth = ReturnType<typeof build>;
+export type Auth = ReturnType<typeof build>;
 const g = globalThis as unknown as { __seatbitAuth?: { fp: string; auth: Auth } };
 
 /**
