@@ -18,8 +18,8 @@ import { LanChecklist } from "@/components/lan-checklist";
 import { SeatWishes } from "@/components/seat-wishes";
 import { Tabs } from "@/components/tabs";
 import { TravelBoard, type TravelPostView } from "@/components/travel-board";
-import { PackingList, SharedGear } from "@/components/gear-board";
-import { GEAR_SUGGESTIONS, PACKING_ITEMS, lastGearSource } from "@/lib/gear";
+import { PackingList } from "@/components/gear-board";
+import { PACKING_ITEMS } from "@/lib/gear";
 
 const { attendance, seat, nickname } = schema;
 
@@ -56,15 +56,12 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
   const spots = posts.length
     ? db.select().from(schema.travelSpot).where(inArray(schema.travelSpot.postId, posts.map((p) => p.id))).all()
     : [];
-  const needs = db.select().from(schema.gearNeed).where(eq(schema.gearNeed.lanId, id)).all();
-  const pledges = db.select().from(schema.gearPledge).where(eq(schema.gearPledge.lanId, id)).all();
   const names = await getDisplayNames(id, [
     ...new Set([
       ...rows.map((r) => r.userId),
       ...seats.flatMap((s) => (s.userId ? [s.userId] : [])),
       ...posts.map((p) => p.userId),
       ...spots.map((s) => s.userId),
-      ...pledges.map((p) => p.userId),
     ]),
   ]);
   const my = rows.find((r) => r.userId === me.id);
@@ -92,7 +89,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
   const full = l.capacity != null && going.length >= l.capacity;
   const prog = progress(steps);
 
-  // Travel and gear: people who said they're not coming no longer count.
+  // Travel: people who said they're not coming no longer count.
   const out = new Set(rows.filter((r) => r.status === "declined").map((r) => r.userId));
   const isIn = (uid: string) => rows.some((r) => r.userId === uid) && !out.has(uid);
   const canTakePart = !!my && my.status !== "declined";
@@ -112,17 +109,6 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
       spots: spots.filter((s) => s.postId === p.id).map((s) => ({ userId: s.userId, nick: names.get(s.userId) ?? "?" })),
     }));
   const openRequests = posts.filter((p) => p.mode === "request" && isIn(p.userId)).length;
-  const needViews = needs
-    .sort((a, b) => +a.createdAt - +b.createdAt)
-    .map((n) => ({
-      id: n.id,
-      name: n.name,
-      qty: n.qty,
-      note: n.note,
-      pledges: pledges
-        .filter((p) => p.needId === n.id && isIn(p.userId))
-        .map((p) => ({ userId: p.userId, nick: names.get(p.userId) ?? "?", qty: p.qty })),
-    }));
   const packed =
     tab === "gear"
       ? db
@@ -132,12 +118,16 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           .all()
           .map((p) => p.item)
       : [];
-  const src = tab === "gear" && isAdmin && needs.length === 0 ? lastGearSource(id) : undefined;
-  const copyFrom = src
-    ? { id: src.id, name: src.name, count: db.select().from(schema.gearNeed).where(eq(schema.gearNeed.lanId, src.id)).all().length }
-    : undefined;
-  const gearMissing = needViews.filter((n) => n.pledges.reduce((s, p) => s + p.qty, 0) < n.qty).length;
-
+  const ownItems =
+    tab === "gear"
+      ? db
+          .select()
+          .from(schema.packingItem)
+          .where(and(eq(schema.packingItem.lanId, id), eq(schema.packingItem.userId, me.id)))
+          .all()
+          .sort((a, b) => +a.createdAt - +b.createdAt)
+          .map((it) => ({ id: it.id, label: it.label, packed: it.packed }))
+      : [];
 
   return (
     <div className="space-y-6">
@@ -179,7 +169,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
         tabs={[
           { id: "overview", label: "Overview" },
           { id: "travel", label: "Travel", badge: openRequests ? `${openRequests} looking` : undefined },
-          { id: "gear", label: "Gear", badge: gearMissing ? `${gearMissing} missing` : undefined },
+          { id: "gear", label: "Packing list" },
         ]}
         active={tab}
         hrefFor={(t) => (t === "overview" ? `/lans/${l.id}` : `/lans/${l.id}?tab=${t}`)}
@@ -195,24 +185,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
       )}
 
       {tab === "gear" && (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className="min-w-0 lg:col-span-2">
-            <SharedGear
-              lanId={l.id}
-              needs={needViews}
-              extras={pledges
-                .filter((p) => !p.needId && isIn(p.userId))
-                .map((p) => ({ id: p.id, userId: p.userId, nick: names.get(p.userId) ?? "?", name: p.name, qty: p.qty }))}
-              meId={me.id}
-              canPledge={canTakePart}
-              isManager={isAdmin}
-              suggestions={GEAR_SUGGESTIONS}
-              copyFrom={copyFrom}
-            />
-          </div>
-          <div className="min-w-0">
-            <PackingList lanId={l.id} items={PACKING_ITEMS} packed={packed} />
-          </div>
+        <div className="max-w-xl">
+          <PackingList lanId={l.id} items={PACKING_ITEMS} packed={packed} own={ownItems} />
         </div>
       )}
 

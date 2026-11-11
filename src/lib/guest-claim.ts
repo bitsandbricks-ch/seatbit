@@ -14,7 +14,7 @@ export const normEmail = (e: string) => e.trim().toLowerCase();
 
 /**
  * The real account `meId` takes over guest `g`: clan membership, attendance, seats,
- * nicks, orga roles, rides and gear move over, then the guest is deleted.
+ * nicks, orga roles, rides and sleeping spots move over, then the guest is deleted.
  * Where both have something for the same LAN, the real account's stays.
  * Empty first name / surname on the account are filled from the guest.
  */
@@ -55,7 +55,7 @@ export function mergeGuestInto(g: User, meId: string) {
       const mine = tx.select().from(lanOrga).where(and(eq(lanOrga.lanId, o.lanId), eq(lanOrga.userId, meId))).get();
       if (!mine) tx.update(lanOrga).set({ userId: meId }).where(and(eq(lanOrga.lanId, o.lanId), eq(lanOrga.userId, g.id))).run();
     }
-    // Rides, sleeping spots and gear the orgas noted for the guest.
+    // Rides and sleeping spots noted for the guest.
     tx.update(schema.travelPost).set({ userId: meId }).where(eq(schema.travelPost.userId, g.id)).run();
     for (const sp of tx.select().from(schema.travelSpot).where(eq(schema.travelSpot.userId, g.id)).all()) {
       const post = tx.select().from(schema.travelPost).where(eq(schema.travelPost.id, sp.postId)).get();
@@ -67,7 +67,6 @@ export function mergeGuestInto(g: User, meId: string) {
       if (mine || post?.userId === meId) tx.delete(schema.travelSpot).where(eq(schema.travelSpot.id, sp.id)).run();
       else tx.update(schema.travelSpot).set({ userId: meId }).where(eq(schema.travelSpot.id, sp.id)).run();
     }
-    tx.update(schema.gearPledge).set({ userId: meId }).where(eq(schema.gearPledge.userId, g.id)).run();
     // Seat wishes of others that name the guest now name the real account.
     for (const col of ["wish_near", "wish_avoid"] as const)
       tx.run(sql`UPDATE attendance SET ${sql.raw(col)} = replace(${sql.raw(col)}, ${`"${g.id}"`}, ${`"${meId}"`}) WHERE ${sql.raw(col)} LIKE ${`%"${g.id}"%`}`);

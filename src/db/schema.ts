@@ -434,41 +434,6 @@ export const travelSpot = sqliteTable(
 
 // ---------- Gear ----------
 
-/** Shared gear the group needs at a LAN (switch, power strips, ...), set by orgas. */
-export const gearNeed = sqliteTable(
-  "gear_need",
-  {
-    id: id(),
-    lanId: text("lan_id")
-      .notNull()
-      .references(() => lan.id, { onDelete: "cascade" }),
-    name: text("name").notNull(),
-    qty: integer("qty").default(1).notNull(),
-    note: text("note").default("").notNull(),
-    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
-  },
-  (t) => [index("gear_need_lan_idx").on(t.lanId)],
-);
-
-/** What a member brings for the group: towards a need (needId) or an extra item (name). */
-export const gearPledge = sqliteTable(
-  "gear_pledge",
-  {
-    id: id(),
-    lanId: text("lan_id")
-      .notNull()
-      .references(() => lan.id, { onDelete: "cascade" }),
-    userId: text("user_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    needId: text("need_id").references(() => gearNeed.id, { onDelete: "cascade" }),
-    name: text("name").default("").notNull(),
-    qty: integer("qty").default(1).notNull(),
-    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
-  },
-  (t) => [index("gear_pledge_lan_idx").on(t.lanId)],
-);
-
 /** A member's own packing list: items they ticked as packed. Private to them. */
 export const gearPacked = sqliteTable(
   "gear_packed",
@@ -484,6 +449,24 @@ export const gearPacked = sqliteTable(
   (t) => [uniqueIndex("gear_packed_uq").on(t.lanId, t.userId, t.item)],
 );
 
+/** Items a member added to their own packing list for a LAN. Private to them. */
+export const packingItem = sqliteTable(
+  "packing_item",
+  {
+    id: id(),
+    lanId: text("lan_id")
+      .notNull()
+      .references(() => lan.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    label: text("label").notNull(),
+    packed: integer("packed", { mode: "boolean" }).default(false).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  (t) => [index("packing_item_lan_user_idx").on(t.lanId, t.userId)],
+);
+
 export type User = typeof user.$inferSelect;
 export type Lan = typeof lan.$inferSelect;
 export type LanType = typeof lanType.$inferSelect;
@@ -493,8 +476,6 @@ export type Nickname = typeof nickname.$inferSelect;
 export type LanAccount = typeof lanAccount.$inferSelect;
 export type Seat = typeof seat.$inferSelect;
 export type TravelPost = typeof travelPost.$inferSelect;
-export type GearNeed = typeof gearNeed.$inferSelect;
-export type GearPledge = typeof gearPledge.$inferSelect;
 
 // ---------- Platform settings ----------
 
