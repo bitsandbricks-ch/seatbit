@@ -22,6 +22,7 @@ export default async function ProfilePage() {
     .from(schema.account)
     .where(eq(schema.account.userId, me.id))
     .all();
+  const hasDiscord = accounts.some((a) => a.providerId === "discord");
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -55,6 +56,15 @@ export default async function ProfilePage() {
             <span>
               Email reminders
               <span className="block text-xs text-muted">Deadlines, tickets and the day before a LAN, sent to {me.email}.</span>
+            </span>
+          </label>
+          <input type="hidden" name="discordDmsShown" value="1" />
+          <label className="flex items-start gap-2 text-sm">
+            <input type="checkbox" name="discordDms" defaultChecked={me.discordDms} className="mt-0.5 accent-bit" />
+            <span>
+              Send me Discord DMs when something changes for me: seat, seat plan, event details, reminders, clan
+              requests
+              {!hasDiscord && <span className="block text-xs text-faint">Link Discord below to get them.</span>}
             </span>
           </label>
           <button className={btnPrimary}>Save</button>
