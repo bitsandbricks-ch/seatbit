@@ -302,9 +302,9 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
             title={`Attendees (${going.length}${l.capacity ? ` / ${l.capacity}` : ""})`}
             actions={full && <Pill tone="red">Full · new sign-ups go on the waitlist</Pill>}
           >
-            <AttendeeList title="Coming" list={going} names={names} seatOf={seatOf} showPaid={isAdmin} meId={me.id} />
-            <AttendeeList title="Waitlist" list={group("waitlist")} names={names} seatOf={seatOf} showPaid={isAdmin} meId={me.id} />
-            <AttendeeList title="Unsure" list={group("maybe")} names={names} seatOf={seatOf} showPaid={false} meId={me.id} />
+            <AttendeeList title="Coming" list={going} profileBase={lanClan ? `/clans/${lanClan.slug}/members/` : null} names={names} seatOf={seatOf} showPaid={isAdmin} meId={me.id} />
+            <AttendeeList title="Waitlist" list={group("waitlist")} profileBase={lanClan ? `/clans/${lanClan.slug}/members/` : null} names={names} seatOf={seatOf} showPaid={isAdmin} meId={me.id} />
+            <AttendeeList title="Unsure" list={group("maybe")} profileBase={lanClan ? `/clans/${lanClan.slug}/members/` : null} names={names} seatOf={seatOf} showPaid={false} meId={me.id} />
             {group("declined").length > 0 && (
               <p className="mt-3 text-xs text-muted">{group("declined").length} can&apos;t make it.</p>
             )}
@@ -342,7 +342,13 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
               {orgas.map((o) => (
                 <li key={o.id} className="flex items-center justify-between gap-2 text-sm">
                   <span>
-                    <span className="font-medium text-fg">{orgaNames.get(o.id) ?? o.name}</span>
+                    {lanClan ? (
+                      <Link href={`/clans/${lanClan.slug}/members/${o.id}`} className="font-medium text-fg hover:text-bit hover:underline">
+                        {orgaNames.get(o.id) ?? o.name}
+                      </Link>
+                    ) : (
+                      <span className="font-medium text-fg">{orgaNames.get(o.id) ?? o.name}</span>
+                    )}
                     {orgaNames.get(o.id) !== o.name && <span className="text-faint"> · {o.name}</span>}
                   </span>
                   <a
@@ -411,7 +417,10 @@ function AttendeeList({
   seatOf,
   showPaid,
   meId,
+  profileBase,
 }: {
+  /** "/clans/<slug>/members/" to link each name to the member's profile. */
+  profileBase: string | null;
   title: string;
   list: (typeof attendance.$inferSelect)[];
   names: Map<string, string>;
@@ -424,7 +433,16 @@ function AttendeeList({
   const FIRST = 12;
   const item = (a: (typeof list)[number]) => (
     <li key={a.id} className="flex min-h-10 items-center justify-between gap-2 rounded-bit bg-raised/60 px-3 py-1.5 text-sm">
-      <span className={`truncate ${a.userId === meId ? "font-semibold text-bit" : ""}`}>{names.get(a.userId)}</span>
+      {profileBase ? (
+        <Link
+          href={`${profileBase}${a.userId}`}
+          className={`truncate hover:text-bit hover:underline ${a.userId === meId ? "font-semibold text-bit" : ""}`}
+        >
+          {names.get(a.userId)}
+        </Link>
+      ) : (
+        <span className={`truncate ${a.userId === meId ? "font-semibold text-bit" : ""}`}>{names.get(a.userId)}</span>
+      )}
       <span className="flex shrink-0 gap-1">
         {seatOf.get(a.userId) && <Pill>{seatOf.get(a.userId)}</Pill>}
         {showPaid && (a.paid ? <Pill tone="emerald">ticket ok</Pill> : a.ticketBought ? <Pill tone="amber">reported</Pill> : <Pill tone="red">no ticket</Pill>)}

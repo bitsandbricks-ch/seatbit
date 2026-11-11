@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import {
   adminRemoveAttendance,
@@ -69,7 +70,10 @@ export function AttendanceTable({
   rows,
   others,
   seats,
+  profileBase = null,
 }: {
+  /** "/clans/<slug>/members/" to link each nick to the member's profile. */
+  profileBase?: string | null;
   lanId: string;
   seats: { id: string; label: string; userId: string | null; locked: boolean }[];
   rows: AttendanceRow[];
@@ -186,7 +190,13 @@ export function AttendanceTable({
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <p className="truncate font-medium">
-                  {r.nick}
+                  {profileBase ? (
+                    <Link href={`${profileBase}${r.userId}`} className="hover:text-bit hover:underline">
+                      {r.nick}
+                    </Link>
+                  ) : (
+                    r.nick
+                  )}
                   {r.lanAccount && (
                     <span className="ml-2 font-mono text-xs font-normal text-muted lg:hidden">#{r.lanAccount}</span>
                   )}

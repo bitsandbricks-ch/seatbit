@@ -156,3 +156,14 @@ export function EmptyState({
 export function Skeleton({ className = "" }: { className?: string }) {
   return <div className={`animate-pulse rounded-md bg-raised ${className}`} aria-hidden />;
 }
+
+/** A headline number with a label above and a short note below. */
+export function StatTile({ label, value, sub }: { label: string; value: string; sub?: string }) {
+  return (
+    <div className="min-w-0 rounded-card border border-line bg-surface p-3 sm:p-4">
+      <div className="truncate text-xs text-muted">{label}</div>
+      <div className="mt-1 text-2xl font-bold tabular-nums sm:text-3xl">{value}</div>
+      {sub && <div className="truncate text-xs text-faint">{sub}</div>}
+    </div>
+  );
+}
