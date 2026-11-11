@@ -4,7 +4,7 @@ import { db, schema } from "@/db";
 import { joinClan } from "@/app/clan-actions";
 import { ClanAvatar } from "@/components/clan-avatar";
 import { ClanForm } from "@/components/clan-form";
-import { Card, PageHeader, Pill, btnPrimary, btnSecondary } from "@/components/ui";
+import { Card, Columns, EmptyState, Page, PageHeader, Pill, btnPrimary, btnSecondary } from "@/components/ui";
 import { requireUser } from "@/lib/session";
 
 export default async function ClansPage() {
@@ -18,9 +18,21 @@ export default async function ClansPage() {
   const others = clans.filter((c) => !myClans.includes(c));
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <Page>
       <PageHeader title="Clans" subtitle="Your clan sees its events together. Join one with an invite link from your orga, or start your own." />
-
+      <Columns
+        aside={
+          <Card title="Start a clan">
+            <p className="mb-4 text-sm text-muted">You become its admin and can invite your friends.</p>
+            <ClanForm />
+          </Card>
+        }
+      >
+      {myClans.length === 0 && others.length === 0 && (
+        <EmptyState icon="users" title="No clans yet">
+          Start one, or ask your orga for an invite link.
+        </EmptyState>
+      )}
       {myClans.length > 0 && (
         <Card title="Your clans">
           <ul className="space-y-2">
@@ -70,10 +82,7 @@ export default async function ClansPage() {
         </Card>
       )}
 
-      <Card title="Start a clan">
-        <p className="mb-4 text-sm text-muted">You become its admin and can invite your friends.</p>
-        <ClanForm />
-      </Card>
-    </div>
+      </Columns>
+    </Page>
   );
 }

@@ -21,7 +21,7 @@ import { CopyField } from "@/components/copy-field";
 import { GuestEmailForm, GuestForm } from "@/components/guest-form";
 import { Tabs } from "@/components/tabs";
 import { ClanMemberAdmin } from "@/components/clan-member-list";
-import { Card, btnDanger, btnGhost, btnPrimary, btnSecondary } from "@/components/ui";
+import { Card, Columns, Page, PageHeader, btnDanger, btnGhost, btnPrimary, btnSecondary } from "@/components/ui";
 import { appUrl } from "@/lib/mail";
 import { personLabel } from "@/lib/names";
 import { canManageClan, getClanBySlug } from "@/lib/clans";
@@ -84,43 +84,77 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
     .sort((a, b) => a.name.localeCompare(b.name));
 
   return (
-    <div className="mx-auto max-w-3xl space-y-5">
-      <div className="flex items-center gap-3">
-        <ClanAvatar clan={c} size={48} />
-        <div className="min-w-0">
-          <Link href={`/clans/${c.slug}`} className="text-sm text-muted hover:text-fg">
-            ← {c.name}
-          </Link>
-          <h1 className="text-2xl font-bold">Clan settings</h1>
-        </div>
-      </div>
-      <div className="sticky top-14 z-20 -mx-4 bg-ink/95 px-4 backdrop-blur sm:mx-0 sm:px-0">
-        <Tabs
-          tabs={TABS.map((t) => ({ ...t, badge: t.id === "members" && pending.length ? `${pending.length} waiting` : undefined }))}
-          active={tab}
-          hrefFor={(t) => `/clans/${c.slug}/settings?tab=${t}`}
-        />
-      </div>
+    <Page>
+      <PageHeader back={{ href: `/clans/${c.slug}`, label: c.name }} avatar={<ClanAvatar clan={c} size={56} />} title="Clan settings" />
+      <Tabs
+        tabs={TABS.map((t) => ({ ...t, badge: t.id === "members" && pending.length ? `${pending.length} waiting` : undefined }))}
+        active={tab}
+        hrefFor={(t) => `/clans/${c.slug}/settings?tab=${t}`}
+      />
 
       {tab === "general" && (
-        <>
+        <Columns
+          aside={
+            <Card title="Danger zone">
+              <p className="mb-3 text-sm text-muted">Deletes the clan with all its events and LAN types.</p>
+              <form action={deleteClan.bind(null, c.id)}>
+                <button className={btnDanger}>Delete clan</button>
+              </form>
+            </Card>
+          }
+        >
           <Card>
             <ClanForm
               key={c.avatar ?? "none"}
               clan={{ id: c.id, name: c.name, description: c.description, joinPolicy: c.joinPolicy, hasAvatar: !!c.avatar }}
             />
           </Card>
-          <Card title="Danger zone">
-            <p className="mb-3 text-sm text-muted">Deletes the clan with all its events and LAN types.</p>
-            <form action={deleteClan.bind(null, c.id)}>
-              <button className={btnDanger}>Delete {c.name}</button>
-            </form>
-          </Card>
-        </>
+        </Columns>
       )}
 
       {tab === "members" && (
-        <>
+        <Columns
+          aside={
+            <>
+              <Card title="Add an existing user">
+                <AddMemberForm clanId={c.id} users={candidates} action={addClanMember} />
+              </Card>
+              <Card title="Guests">
+                <p className="mb-3 text-sm text-muted">
+                  For people who aren&apos;t on Seatbit yet: add them by name, then sign them up for events and give them a seat
+                  like anyone else. With an email address, Seatbit mails them an invite, and signing in with a Discord account
+                  on that address takes over everything you set up for them. Or send them their link yourself.
+                </p>
+                {guests.length > 0 && (
+                  <ul className="mb-4 space-y-3">
+                    {guests.map(({ u }) => (
+                      <li key={u.id} className="space-y-1.5 rounded-md border border-line p-3">
+                        <Link href={`/clans/${c.slug}/members/${u.id}`} className="block truncate text-sm font-medium hover:text-bit hover:underline">
+                          {u.name}
+                        </Link>
+                        <span className="block text-xs text-faint">
+                          {u.inviteEmail
+                            ? u.invitedAt
+                              ? `Invited ${u.invitedAt.toLocaleDateString("de-CH")} at ${u.inviteEmail}`
+                              : u.inviteEmail
+                            : "No email yet"}
+                        </span>
+                        <GuestEmailForm key={u.inviteEmail ?? ""} action={setGuestEmail.bind(null, c.id, u.id)} email={u.inviteEmail} />
+                        <span className="flex flex-wrap items-center gap-1">
+                          <CopyField value={`${appUrl}/claim/${u.claimCode}`} />
+                          <form action={renewGuestLink.bind(null, c.id, u.id)}>
+                            <button className={`${btnGhost} text-xs`}>New link</button>
+                          </form>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <GuestForm action={addGuest.bind(null, c.id)} />
+              </Card>
+            </>
+          }
+        >
           {pending.length > 0 && (
             <Card title="Waiting for approval">
               <ul className="space-y-2">
@@ -143,42 +177,6 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
               </ul>
             </Card>
           )}
-          <Card title="Add an existing user">
-            <AddMemberForm clanId={c.id} users={candidates} action={addClanMember} />
-          </Card>
-          <Card title="Guests">
-            <p className="mb-3 text-sm text-muted">
-              For people who aren&apos;t on Seatbit yet: add them by name, then sign them up for events and give them a seat
-              like anyone else. With an email address, Seatbit mails them an invite, and signing in with a Discord account
-              on that address takes over everything you set up for them. Or send them their link yourself.
-            </p>
-            {guests.length > 0 && (
-              <ul className="mb-4 space-y-3">
-                {guests.map(({ u }) => (
-                  <li key={u.id} className="space-y-1.5 rounded-md border border-line p-3">
-                    <Link href={`/clans/${c.slug}/members/${u.id}`} className="block truncate text-sm font-medium hover:text-bit hover:underline">
-                      {u.name}
-                    </Link>
-                    <span className="block text-xs text-faint">
-                      {u.inviteEmail
-                        ? u.invitedAt
-                          ? `Invited ${u.invitedAt.toLocaleDateString("de-CH")} at ${u.inviteEmail}`
-                          : u.inviteEmail
-                        : "No email yet"}
-                    </span>
-                    <GuestEmailForm key={u.inviteEmail ?? ""} action={setGuestEmail.bind(null, c.id, u.id)} email={u.inviteEmail} />
-                    <span className="flex flex-wrap items-center gap-1">
-                      <CopyField value={`${appUrl}/claim/${u.claimCode}`} />
-                      <form action={renewGuestLink.bind(null, c.id, u.id)}>
-                        <button className={`${btnGhost} text-xs`}>New link</button>
-                      </form>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <GuestForm action={addGuest.bind(null, c.id)} />
-          </Card>
           <Card title={`Members (${active.length})`}>
             <p className="mb-3 text-sm text-muted">
               Admins manage the clan: settings, members, LAN types and every event. Use &ldquo;Make admin&rdquo; and
@@ -198,41 +196,45 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
               }))}
             />
           </Card>
-        </>
+        </Columns>
       )}
 
       {tab === "chat" && <ChatTab clanId={c.id} />}
 
       {tab === "types" && (
-        <TypesTab clanId={c.id} slug={c.slug} />
+        <Columns>
+          <TypesTab clanId={c.id} slug={c.slug} />
+        </Columns>
       )}
 
       {tab === "invites" && (
-        <Card title="Invite links">
-          <p className="mb-3 text-sm text-muted">
-            Anyone with a link joins right away, without approval. Delete a link to stop it working.
-          </p>
-          <ul className="mb-4 space-y-2">
-            {db
-              .select()
-              .from(schema.clanInvite)
-              .where(eq(schema.clanInvite.clanId, c.id))
-              .all()
-              .map((i) => (
-                <li key={i.code} className="flex items-center gap-2">
-                  <input readOnly value={`${appUrl}/join/${i.code}`} className="min-w-0 flex-1 rounded-md border border-line bg-raised px-3 py-1.5 font-mono text-xs" />
-                  <form action={deleteInvite.bind(null, i.code)}>
-                    <button className={`${btnGhost} text-xs text-danger`}>Delete</button>
-                  </form>
-                </li>
-              ))}
-          </ul>
-          <form action={createInvite.bind(null, c.id)}>
-            <button className={btnSecondary}>Create invite link</button>
-          </form>
-        </Card>
+        <Columns>
+          <Card title="Invite links">
+            <p className="mb-3 text-sm text-muted">
+              Anyone with a link joins right away, without approval. Delete a link to stop it working.
+            </p>
+            <ul className="mb-4 space-y-2">
+              {db
+                .select()
+                .from(schema.clanInvite)
+                .where(eq(schema.clanInvite.clanId, c.id))
+                .all()
+                .map((i) => (
+                  <li key={i.code} className="flex items-center gap-2">
+                    <input readOnly value={`${appUrl}/join/${i.code}`} className="min-w-0 flex-1 rounded-md border border-line bg-raised px-3 py-1.5 font-mono text-xs" />
+                    <form action={deleteInvite.bind(null, i.code)}>
+                      <button className={`${btnGhost} text-xs text-danger`}>Delete</button>
+                    </form>
+                  </li>
+                ))}
+            </ul>
+            <form action={createInvite.bind(null, c.id)}>
+              <button className={btnSecondary}>Create invite link</button>
+            </form>
+          </Card>
+        </Columns>
       )}
-    </div>
+    </Page>
   );
 }
 
@@ -246,7 +248,16 @@ async function ChatTab({ clanId }: { clanId: string }) {
   const invite = inviteUrl();
   const servers = discordEnabled() && channels.length ? await clanServers(clanId) : [];
   return (
-    <div className="space-y-5">
+    <Columns
+      aside={
+        <Card title="WhatsApp">
+          <p className="text-sm text-muted">
+            WhatsApp doesn&apos;t let bots post into groups or communities. Each LAN&apos;s manage page has ready-made
+            announcement and reminder texts to copy into your WhatsApp group.
+          </p>
+        </Card>
+      }
+    >
       <Card title="Discord bot">
         {!discordEnabled() ? (
           <p className="text-sm text-muted">
@@ -331,13 +342,7 @@ async function ChatTab({ clanId }: { clanId: string }) {
           </div>
         )}
       </Card>
-      <Card title="WhatsApp">
-        <p className="text-sm text-muted">
-          WhatsApp doesn&apos;t let bots post into groups or communities. Each LAN&apos;s manage page has ready-made
-          announcement and reminder texts to copy into your WhatsApp group.
-        </p>
-      </Card>
-    </div>
+    </Columns>
   );
 }
 

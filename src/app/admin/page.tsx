@@ -2,7 +2,7 @@ import Link from "next/link";
 import { desc } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { setUserRole } from "@/app/actions";
-import { Card, PageHeader, Pill, btnGhost, btnSecondary } from "@/components/ui";
+import { Card, Page, PageHeader, Pill, btnGhost, btnSecondary } from "@/components/ui";
 import { ClanAvatar } from "@/components/clan-avatar";
 import { fmtDay } from "@/lib/format";
 import { requireAdmin } from "@/lib/session";
@@ -21,7 +21,7 @@ export default async function AdminPage() {
   const now = new Date();
 
   return (
-    <div className="space-y-6">
+    <Page>
       <PageHeader
         title="Platform admin"
         subtitle="All clans, events and users on this Seatbit. Clan admins manage their own clan."
@@ -122,7 +122,7 @@ export default async function AdminPage() {
           ))}
         </ul>
       </Card>
-    </div>
+    </Page>
   );
 }
 

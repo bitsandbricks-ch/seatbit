@@ -2,7 +2,7 @@ import Link from "next/link";
 import { and, asc, desc, eq, gt, inArray, lte } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Lan } from "@/db/schema";
-import { EmptyState, PageHeader, Pill, StatusBadge, btnPrimary } from "@/components/ui";
+import { EmptyState, Page, PageHeader, Pill, StatusBadge, btnPrimary } from "@/components/ui";
 import { fmtDay, fmtWeekday, relative } from "@/lib/format";
 import { requireUser } from "@/lib/session";
 import { buildChecklist, progress } from "@/lib/checklist";
@@ -59,7 +59,7 @@ export default async function Home() {
   };
 
   return (
-    <div className="space-y-8">
+    <Page>
       <PageHeader
         title="Upcoming LANs"
         actions={
@@ -88,7 +88,7 @@ export default async function Home() {
         </EmptyState>
       )}
 
-      <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
+      <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
         {upcoming.map((l) => (
           <LanCard
             key={l.id}
@@ -117,7 +117,7 @@ export default async function Home() {
           </ul>
         </div>
       )}
-    </div>
+    </Page>
   );
 }
 
