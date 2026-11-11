@@ -1,8 +1,6 @@
 "use client";
-import { useTransition } from "react";
-import { setMyTicketBought } from "@/app/actions";
 import type { ChecklistStep } from "@/lib/checklist";
-import { btnSecondary, btnGhost } from "./ui";
+import { TicketConfirm } from "./ticket-confirm";
 
 export function LanChecklist({
   lanId,
@@ -15,7 +13,6 @@ export function LanChecklist({
   ticketBought: boolean;
   canReportTicket: boolean;
 }) {
-  const [pending, start] = useTransition();
   const done = steps.filter((s) => s.state === "done").length;
   return (
     <div className="space-y-4">
@@ -42,13 +39,9 @@ export function LanChecklist({
               </p>
               {s.hint && <p className="text-xs text-muted">{s.hint}</p>}
               {s.key === "ticket" && s.state !== "done" && canReportTicket && (
-                <button
-                  disabled={pending}
-                  onClick={() => start(() => setMyTicketBought(lanId, !ticketBought))}
-                  className={`${ticketBought ? btnGhost : btnSecondary} mt-2`}
-                >
-                  {ticketBought ? "Undo: I haven't bought it" : "I bought my ticket"}
-                </button>
+                <div className="mt-2">
+                  <TicketConfirm lanId={lanId} bought={ticketBought} confirmed={false} />
+                </div>
               )}
             </div>
           </li>

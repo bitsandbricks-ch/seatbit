@@ -4,6 +4,7 @@ import {
   adminAssignSeat,
   adminSetSeatFor,
   adminSwapSeats,
+  pickMySeat,
   renameSeat,
   toggleSeatCell,
   toggleSeatLock,
@@ -60,7 +61,8 @@ export function SeatMap({
   cols: number;
   seats: SeatView[];
   meId: string;
-  mode: "view" | "admin";
+  /** view: read only. pick: members choose their own free seat. admin: orga tools. */
+  mode: "view" | "pick" | "admin";
   assignable?: SeatPerson[];
 }) {
   const admin = mode === "admin";
@@ -237,6 +239,15 @@ export function SeatMap({
           </button>
         )}
       </div>
+
+      {mode === "pick" && (
+        <p className="text-sm text-muted">
+          {mySeat
+            ? `You're at ${mySeat.label}. Tap a free seat and "Move here" to change, or tap yours to give it up.`
+            : "Tap a free seat, then \"Take this seat\". The orgas can still move people before they publish the plan."}
+        </p>
+      )}
+      {error && <p className="text-sm text-danger">{error}</p>}
 
       {mode === "view" && (
         <p className="text-sm text-muted">
@@ -420,6 +431,8 @@ export function SeatMap({
                     person={selected.userId ? people.get(selected.userId) : undefined}
                     meId={meId}
                     admin={admin}
+                    picking={mode === "pick"}
+                    hasSeat={!!mySeat}
                     assignable={assignable}
                     seatOfUser={seatOfUser}
                     pending={pending}
@@ -432,7 +445,9 @@ export function SeatMap({
                   <p className="text-sm text-muted">
                     {admin
                       ? "Tap a seat to see who sits there, assign someone, swap, hold or rename it."
-                      : "Tap a seat to see who sits there."}
+                      : mode === "pick"
+                        ? "Tap a free seat to take it."
+                        : "Tap a seat to see who sits there."}
                   </p>
                 )}
               </div>
@@ -449,6 +464,8 @@ export function SeatMap({
                     person={selected.userId ? people.get(selected.userId) : undefined}
                     meId={meId}
                     admin={admin}
+                    picking={mode === "pick"}
+                    hasSeat={!!mySeat}
                     assignable={assignable}
                     seatOfUser={seatOfUser}
                     pending={pending}
@@ -475,6 +492,8 @@ function SeatDetails({
   person,
   meId,
   admin,
+  picking,
+  hasSeat,
   assignable,
   seatOfUser,
   pending,
@@ -487,6 +506,9 @@ function SeatDetails({
   person?: SeatPerson;
   meId: string;
   admin: boolean;
+  /** Seat-picking phase: members take a free seat themselves. */
+  picking: boolean;
+  hasSeat: boolean;
   assignable: SeatPerson[];
   seatOfUser: Map<string, SeatView>;
   pending: boolean;
@@ -555,6 +577,20 @@ function SeatDetails({
         </div>
       ) : (
         <p className="text-sm text-muted">{s.locked ? "Held, e.g. for a guest. Members can't get it automatically." : "Nobody sits here yet."}</p>
+      )}
+
+      {picking && (mine || (!s.userId && !s.locked)) && (
+        <div className="border-t border-line pt-3">
+          {mine ? (
+            <button type="button" disabled={pending} className={`${btnSecondary} w-full`} onClick={() => run(() => pickMySeat(lanId, null))}>
+              Give up my seat
+            </button>
+          ) : (
+            <button type="button" disabled={pending} className={`${btnPrimary} w-full`} onClick={() => run(() => pickMySeat(lanId, s.id))}>
+              {hasSeat ? "Move here" : "Take this seat"}
+            </button>
+          )}
+        </div>
       )}
 
       {admin && (

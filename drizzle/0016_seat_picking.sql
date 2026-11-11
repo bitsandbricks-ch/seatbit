@@ -1,0 +1,1 @@
+ALTER TABLE `lan` ADD `seat_picking` integer DEFAULT false NOT NULL;

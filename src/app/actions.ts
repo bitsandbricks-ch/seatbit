@@ -488,6 +488,38 @@ export async function adminSwapSeats(seatA: string, seatB: string) {
   if (b.userId) notifyLater(() => notifySeatChanged(l, b.userId!, a.label));
 }
 
+/** Opens or closes the seat-picking phase, where members choose their own seat. */
+export async function setSeatPicking(lanId: string, open: boolean) {
+  await requireLanManager(lanId);
+  db.update(lan).set({ seatPicking: open }).where(eq(lan.id, lanId)).run();
+  lanPath(lanId);
+}
+
+/**
+ * A member takes a free seat (or gives theirs up with seatId null) while seat
+ * picking is open and the plan isn't published. Held seats can't be picked.
+ * Orgas can still move anyone afterwards.
+ */
+export async function pickMySeat(lanId: string, seatId: string | null) {
+  const me = await requireUser();
+  const l = mustGetLan(lanId);
+  if (!l.seatPicking || l.seatsPublishedAt) throw new Error("Seat picking is closed. Ask an orga.");
+  const a = db.select().from(attendance).where(and(eq(attendance.lanId, lanId), eq(attendance.userId, me.id))).get();
+  if (a?.status !== "going") throw new Error("Say you're coming first.");
+  if (seatId && !a.ticketBought && !a.paid) throw new Error("Confirm you have your ticket first.");
+  db.transaction((tx) => {
+    if (seatId) {
+      const s = tx.select().from(seat).where(and(eq(seat.id, seatId), eq(seat.lanId, lanId))).get();
+      if (!s) throw new Error("That seat doesn't exist.");
+      if (s.locked) throw new Error(`${s.label} is held by the orgas.`);
+      if (s.userId && s.userId !== me.id) throw new Error(`${s.label} was just taken. Pick another one.`);
+    }
+    tx.update(seat).set({ userId: null }).where(and(eq(seat.lanId, lanId), eq(seat.userId, me.id))).run();
+    if (seatId) tx.update(seat).set({ userId: me.id }).where(eq(seat.id, seatId)).run();
+  });
+  lanPath(lanId);
+}
+
 /** Assigns a seat to an attendee from the attendee list (seatId null = no seat). */
 export async function adminSetSeatFor(lanId: string, userId: string, seatId: string | null) {
   await requireLanManager(lanId);
