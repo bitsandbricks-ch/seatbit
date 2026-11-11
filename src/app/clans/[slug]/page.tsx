@@ -4,6 +4,7 @@ import { and, asc, eq, gt } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { joinClan, leaveClan } from "@/app/clan-actions";
 import { ClanAvatar } from "@/components/clan-avatar";
+import { ClanMemberGrid } from "@/components/clan-member-list";
 import { Card, Pill, btnGhost, btnPrimary, btnSecondary } from "@/components/ui";
 import { fmtDay } from "@/lib/format";
 import { clanRole, getClanBySlug } from "@/lib/clans";
@@ -116,17 +117,15 @@ export default async function ClanPage({ params }: PageProps<"/clans/[slug]">) {
       )}
 
       <Card title={`Members (${members.length})`}>
-        <ul className="grid gap-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-          {members
-            .map((m) => ({ ...m, nick: pickNick(nicks.filter((n) => n.userId === m.u.id), { lanId: null, typeId: null }, m.u.name) }))
-            .sort((a, b) => a.nick.localeCompare(b.nick))
-            .map((m) => (
-              <li key={m.u.id} className="flex min-h-10 items-center justify-between gap-2 rounded-bit bg-raised/60 px-3 py-1.5 text-sm">
-                <span className="truncate">{m.nick}</span>
-                {m.role === "admin" && <Pill tone="emerald">admin</Pill>}
-              </li>
-            ))}
-        </ul>
+        <ClanMemberGrid
+          members={members
+            .map((m) => ({
+              id: m.u.id,
+              admin: m.role === "admin",
+              nick: pickNick(nicks.filter((n) => n.userId === m.u.id), { lanId: null, typeId: null }, m.u.name),
+            }))
+            .sort((a, b) => a.nick.localeCompare(b.nick))}
+        />
       </Card>
       </div>
     </div>

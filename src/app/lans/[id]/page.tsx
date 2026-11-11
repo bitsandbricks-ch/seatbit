@@ -4,6 +4,8 @@ import { and, eq, inArray } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { AttendanceButtons } from "@/components/attendance-buttons";
 import { NickManager } from "@/components/nick-manager";
+import { LanIdForm } from "@/components/lan-id-form";
+import { getLanAccounts } from "@/lib/lan-accounts";
 import { SeatMap } from "@/components/seat-map";
 import { Card, Pill, StatusBadge, btnGhost, btnSecondary } from "@/components/ui";
 import { fmtDate, fmtRange, relative } from "@/lib/format";
@@ -49,6 +51,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
         .map((r) => r.u);
   const orgaNames = await getDisplayNames(id, orgas.map((o) => o.id));
   const myNick = pickNick(myNicks, { lanId: id, typeId: l.typeId }, me.name);
+  const myLanId = getLanAccounts(l, [me.id]).get(me.id) ?? null;
   const posts = db.select().from(schema.travelPost).where(eq(schema.travelPost.lanId, id)).all();
   const spots = posts.length
     ? db.select().from(schema.travelSpot).where(inArray(schema.travelSpot.postId, posts.map((p) => p.id))).all()
@@ -334,7 +337,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
             </ul>
           </Card>
 
-          <Card title={lanType ? `Your nick at ${lanType.name}` : "Your nick at this LAN"}>
+          <Card title={lanType ? `Your nick & ID at ${lanType.name}` : "Your nick & ID at this LAN"}>
             <p className="mb-3 text-sm text-muted">
               Shown as <strong className="text-fg">{myNick}</strong>.{" "}
               {lanType
@@ -351,6 +354,14 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
             ) : (
               <NickManager nicks={myNicks} lanId={l.id} />
             )}
+            <div className="mt-4 border-t border-line pt-4">
+              <h3 className="mb-1 text-sm font-medium text-fg">{lanType ? `Your ${lanType.name} ID` : "Your ID at this LAN"}</h3>
+              <p className="mb-2 text-sm text-muted">
+                Optional: your user ID or ticket number on the LAN&apos;s own site, so the orgas can match you up. Only
+                orgas see it.
+              </p>
+              <LanIdForm value={myLanId} lanId={l.id} label={lanType ? `${lanType.name} ID` : "LAN ID"} />
+            </div>
           </Card>
           </div>
           </div>
@@ -390,20 +401,34 @@ function AttendeeList({
   meId: string;
 }) {
   if (list.length === 0) return null;
+  // Long lists show the first dozen; the rest folds out so the page stays short on phones.
+  const FIRST = 12;
+  const item = (a: (typeof list)[number]) => (
+    <li key={a.id} className="flex min-h-10 items-center justify-between gap-2 rounded-bit bg-raised/60 px-3 py-1.5 text-sm">
+      <span className={`truncate ${a.userId === meId ? "font-semibold text-bit" : ""}`}>{names.get(a.userId)}</span>
+      <span className="flex shrink-0 gap-1">
+        {seatOf.get(a.userId) && <Pill>{seatOf.get(a.userId)}</Pill>}
+        {showPaid && (a.paid ? <Pill tone="emerald">ticket ok</Pill> : a.ticketBought ? <Pill tone="amber">reported</Pill> : <Pill tone="red">no ticket</Pill>)}
+      </span>
+    </li>
+  );
+  // Me first, then by nick, so the folded part never hides your own row.
+  const sorted = [...list].sort(
+    (a, b) => Number(b.userId === meId) - Number(a.userId === meId) || (names.get(a.userId) ?? "").localeCompare(names.get(b.userId) ?? ""),
+  );
+  const fold = sorted.length > FIRST + 3;
   return (
     <div className="mb-4">
       <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">{title} <span className="text-faint">{list.length}</span></h3>
-      <ul className="grid gap-1 sm:grid-cols-2">
-        {list.map((a) => (
-          <li key={a.id} className="flex min-h-10 items-center justify-between gap-2 rounded-bit bg-raised/60 px-3 py-1.5 text-sm">
-            <span className={`truncate ${a.userId === meId ? "font-semibold text-bit" : ""}`}>{names.get(a.userId)}</span>
-            <span className="flex shrink-0 gap-1">
-              {seatOf.get(a.userId) && <Pill>{seatOf.get(a.userId)}</Pill>}
-              {showPaid && (a.paid ? <Pill tone="emerald">ticket ok</Pill> : a.ticketBought ? <Pill tone="amber">reported</Pill> : <Pill tone="red">no ticket</Pill>)}
-            </span>
-          </li>
-        ))}
-      </ul>
+      <ul className="grid gap-1 sm:grid-cols-2">{(fold ? sorted.slice(0, FIRST) : sorted).map(item)}</ul>
+      {fold && (
+        <details className="group mt-1">
+          <summary className="cursor-pointer list-none py-2 text-sm text-bit hover:underline group-open:hidden">
+            Show all {sorted.length}
+          </summary>
+          <ul className="grid gap-1 sm:grid-cols-2">{sorted.slice(FIRST).map(item)}</ul>
+        </details>
+      )}
     </div>
   );
 }

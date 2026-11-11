@@ -4,6 +4,8 @@ import { db, schema } from "@/db";
 import { updateProfile } from "@/app/actions";
 import { LinkedAccounts } from "@/components/linked-accounts";
 import { NickManager } from "@/components/nick-manager";
+import { LanIdForm } from "@/components/lan-id-form";
+import { pickLanAccount } from "@/lib/lan-accounts";
 import { SignOutButton } from "@/components/sign-out-button";
 import { Card, Field, Input, btnPrimary, btnSecondary } from "@/components/ui";
 import { enabledProviders } from "@/lib/auth";
@@ -12,6 +14,7 @@ import { requireUser } from "@/lib/session";
 export default async function ProfilePage() {
   const me = await requireUser();
   const nicks = db.select().from(schema.nickname).where(eq(schema.nickname.userId, me.id)).all();
+  const lanIds = db.select().from(schema.lanAccount).where(eq(schema.lanAccount.userId, me.id)).all();
   const defaultNick = nicks.find((n) => !n.lanId && !n.typeId)?.nick ?? "";
   const clanIds = myClans(me.id).map((c) => c.clan.id);
   const types = clanIds.length
@@ -72,15 +75,19 @@ export default async function ProfilePage() {
       </Card>
 
       {types.length > 0 && (
-        <Card title="Nicks per LAN type">
+        <Card title="Nicks and IDs per LAN type">
           <p className="mb-4 text-sm text-muted">
-            One nick per LAN type, used for every event of that type. Leave it empty to use your nickname.
+            One nick per LAN type, used for every event of that type. Leave it empty to use your nickname. Below it,
+            optionally your user ID or ticket number at that LAN (e.g. on lal.gg), so the orgas can match you up.
           </p>
           <div className="space-y-5">
             {types.map((t) => (
               <div key={t.id}>
                 <h3 className="mb-2 text-sm font-medium text-fg">{t.name}</h3>
                 <NickManager nicks={nicks} typeId={t.id} />
+                <div className="mt-2">
+                  <LanIdForm value={pickLanAccount(lanIds, { id: "", typeId: t.id })} typeId={t.id} label={`${t.name} ID`} />
+                </div>
               </div>
             ))}
           </div>
