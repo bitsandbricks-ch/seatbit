@@ -3,6 +3,7 @@ import { db, schema } from "@/db";
 import { updateProfile } from "@/app/actions";
 import { LinkedAccounts } from "@/components/linked-accounts";
 import { NickManager } from "@/components/nick-manager";
+import { SignOutButton } from "@/components/sign-out-button";
 import { Card, Field, Input, btnPrimary } from "@/components/ui";
 import { enabledProviders } from "@/lib/auth";
 import { requireUser } from "@/lib/session";
@@ -57,6 +58,10 @@ export default async function ProfilePage() {
           </div>
         </Card>
       )}
+
+      <div className="sm:hidden">
+        <SignOutButton />
+      </div>
 
       <Card title="Sign-in methods">
         <LinkedAccounts linked={accounts.map((a) => a.providerId)} available={enabledProviders} />

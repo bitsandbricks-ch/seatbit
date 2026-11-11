@@ -62,7 +62,7 @@ export default async function LanPage({ params }: PageProps<"/lans/[id]">) {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">{l.name}</h1>
+          <h1 className="text-2xl font-bold sm:text-3xl">{l.name}</h1>
           <p className="mt-1 text-zinc-400">
             {fmtDate(l.startsAt)} – {fmtDate(l.endsAt)}
             {l.location && <> · {l.location}</>}
@@ -89,8 +89,8 @@ export default async function LanPage({ params }: PageProps<"/lans/[id]">) {
         )}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="order-2 min-w-0 space-y-6 lg:order-1 lg:col-span-2">
           {l.description && (
             <Card>
               <p className="whitespace-pre-wrap text-zinc-300">{l.description}</p>
@@ -134,7 +134,7 @@ export default async function LanPage({ params }: PageProps<"/lans/[id]">) {
           </Card>
         </div>
 
-        <div className="space-y-6">
+        <div className="order-1 min-w-0 space-y-6 lg:order-2">
           {my && my.status !== "declined" && (
             <Card title="Your checklist" actions={<span className="text-sm text-zinc-400">{prog.done} / {prog.total}</span>}>
               <LanChecklist

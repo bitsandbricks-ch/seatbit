@@ -129,7 +129,7 @@ export function SeatMap({
       <div className={`overflow-x-auto pb-2 ${pending ? "opacity-60" : ""}`}>
         <div
           className="grid gap-1.5"
-          style={{ gridTemplateColumns: `1.5rem repeat(${cols}, minmax(3.25rem, 1fr))`, minWidth: cols * 56 + 24 }}
+          style={{ gridTemplateColumns: `1.25rem repeat(${cols}, minmax(2.75rem, 1fr))`, minWidth: cols * 48 + 20 }}
         >
           {Array.from({ length: rows * (cols + 1) }, (_, j) => {
             const row = Math.floor(j / (cols + 1));
