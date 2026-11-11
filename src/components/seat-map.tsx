@@ -1,0 +1,206 @@
+"use client";
+import { useState, useTransition } from "react";
+import {
+  adminAssignSeat,
+  pickSeat,
+  releaseMySeat,
+  renameSeat,
+  toggleSeatCell,
+  toggleSeatLock,
+} from "@/app/actions";
+import { btnGhost, btnSecondary, input } from "./ui";
+
+export type SeatView = {
+  id: string;
+  row: number;
+  col: number;
+  label: string;
+  userId: string | null;
+  locked: boolean;
+  nick: string | null;
+};
+
+type Tool = "layout" | "assign" | "lock" | "rename";
+
+export function SeatMap({
+  lanId,
+  rows,
+  cols,
+  seats,
+  meId,
+  mode,
+  canPick = false,
+  assignable = [],
+}: {
+  lanId: string;
+  rows: number;
+  cols: number;
+  seats: SeatView[];
+  meId: string;
+  mode: "pick" | "admin";
+  canPick?: boolean;
+  assignable?: { id: string; nick: string }[];
+}) {
+  const [pending, start] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const [tool, setTool] = useState<Tool>("assign");
+  const [assignee, setAssignee] = useState<string>("");
+  const byPos = new Map(seats.map((s) => [`${s.row}:${s.col}`, s]));
+  const mySeat = seats.find((s) => s.userId === meId);
+  const seatedIds = new Set(seats.map((s) => s.userId).filter(Boolean));
+
+  const run = (fn: () => Promise<unknown>) =>
+    start(async () => {
+      setError(null);
+      try {
+        await fn();
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Something went wrong");
+      }
+    });
+
+  function onCell(row: number, col: number, s?: SeatView) {
+    if (mode === "pick") {
+      if (!s || !canPick) return;
+      if (s.userId === meId) return run(() => releaseMySeat(lanId));
+      if (s.userId || s.locked) return;
+      return run(() => pickSeat(s.id));
+    }
+    // admin
+    if (tool === "layout") {
+      if (s?.userId && !confirm(`${s.label} is taken by ${s.nick}. Remove the seat anyway?`)) return;
+      return run(() => toggleSeatCell(lanId, row, col));
+    }
+    if (!s) return;
+    if (tool === "lock") return run(() => toggleSeatLock(s.id));
+    if (tool === "rename") {
+      const label = prompt("Seat label", s.label);
+      if (label) run(() => renameSeat(s.id, label));
+      return;
+    }
+    if (tool === "assign") {
+      if (s.userId && !assignee) return run(() => adminAssignSeat(s.id, null));
+      if (assignee) return run(() => adminAssignSeat(s.id, assignee));
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      {mode === "admin" && (
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          {(
+            [
+              ["assign", "Assign"],
+              ["layout", "Seats / aisles"],
+              ["lock", "Lock"],
+              ["rename", "Rename"],
+            ] as [Tool, string][]
+          ).map(([t, name]) => (
+            <button
+              key={t}
+              onClick={() => setTool(t)}
+              className={tool === t ? btnSecondary + " !border-emerald-500" : btnGhost}
+            >
+              {name}
+            </button>
+          ))}
+          {tool === "assign" && (
+            <select
+              value={assignee}
+              onChange={(e) => setAssignee(e.target.value)}
+              className={`${input} !w-auto`}
+            >
+              <option value="">Click a seat to clear it</option>
+              {assignable.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.nick}
+                  {seatedIds.has(a.id) ? " (seated)" : ""}
+                </option>
+              ))}
+            </select>
+          )}
+          <span className="text-xs text-zinc-500">
+            {tool === "layout" && "Click a cell to add or remove a seat."}
+            {tool === "lock" && "Locked seats can't be picked by members."}
+            {tool === "rename" && "Click a seat to change its label."}
+          </span>
+        </div>
+      )}
+
+      {mode === "pick" && (
+        <p className="text-sm text-zinc-400">
+          {canPick
+            ? mySeat
+              ? `You're sitting at ${mySeat.label}. Click another free seat to move, or your own seat to leave it.`
+              : "Click a free seat to take it."
+            : "Seats can be picked by attendees who are going, while seating is open."}
+        </p>
+      )}
+
+      <div className={`overflow-x-auto pb-2 ${pending ? "opacity-60" : ""}`}>
+        <div
+          className="grid gap-1.5"
+          style={{ gridTemplateColumns: `repeat(${cols}, minmax(3.25rem, 1fr))`, minWidth: cols * 56 }}
+        >
+          {Array.from({ length: rows * cols }, (_, i) => {
+            const row = Math.floor(i / cols);
+            const col = i % cols;
+            const s = byPos.get(`${row}:${col}`);
+            if (!s) {
+              return mode === "admin" && tool === "layout" ? (
+                <button
+                  key={i}
+                  onClick={() => onCell(row, col)}
+                  className="h-14 rounded border border-dashed border-zinc-800 hover:border-zinc-600"
+                  aria-label={`Add seat at row ${row + 1}, column ${col + 1}`}
+                />
+              ) : (
+                <div key={i} className="h-14" />
+              );
+            }
+            const mine = s.userId === meId;
+            const taken = !!s.userId;
+            const cls = mine
+              ? "bg-emerald-500 text-zinc-950 border-emerald-400"
+              : taken
+                ? "bg-sky-500/20 text-sky-200 border-sky-500/40"
+                : s.locked
+                  ? "bg-zinc-800/50 text-zinc-500 border-zinc-700 [background-image:repeating-linear-gradient(45deg,transparent,transparent_4px,rgba(255,255,255,.04)_4px,rgba(255,255,255,.04)_8px)]"
+                  : "bg-zinc-800 text-zinc-300 border-zinc-700 hover:border-emerald-500";
+            return (
+              <button
+                key={i}
+                onClick={() => onCell(row, col, s)}
+                title={`${s.label}${s.nick ? ` · ${s.nick}` : ""}${s.locked ? " · locked" : ""}`}
+                className={`flex h-14 flex-col items-center justify-center overflow-hidden rounded border px-1 text-center ${cls}`}
+              >
+                <span className="text-[10px] font-mono opacity-70">
+                  {s.label}
+                  {s.locked ? " 🔒" : ""}
+                </span>
+                <span className="w-full truncate text-xs font-medium">{s.nick ?? ""}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-4 text-xs text-zinc-500">
+        <Legend cls="bg-zinc-800 border-zinc-700">Free</Legend>
+        <Legend cls="bg-emerald-500 border-emerald-400">You</Legend>
+        <Legend cls="bg-sky-500/20 border-sky-500/40">Taken</Legend>
+        <Legend cls="bg-zinc-800/50 border-zinc-700">Locked</Legend>
+      </div>
+      {error && <p className="text-sm text-red-400">{error}</p>}
+    </div>
+  );
+}
+
+function Legend({ cls, children }: { cls: string; children: React.ReactNode }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className={`inline-block h-3 w-3 rounded-sm border ${cls}`} />
+      {children}
+    </span>
+  );
+}
