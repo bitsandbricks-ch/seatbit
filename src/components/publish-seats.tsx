@@ -27,7 +27,7 @@ export function PublishSeats({
   }
   return (
     <div className="space-y-3 text-sm">
-      <p className="text-zinc-400">
+      <p className="text-muted">
         Members only see the seat plan once you publish it. Until then they can send seat wishes.
         {unseated > 0 && <span className="text-warn"> {unseated} people coming still have no seat.</span>}
       </p>

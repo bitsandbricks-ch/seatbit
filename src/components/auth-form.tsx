@@ -53,20 +53,30 @@ export function AuthForm({
     router.refresh();
   }
 
-  const social = (provider: "discord" | "google") =>
-    authClient.signIn.social({
+  const [socialBusy, setSocialBusy] = useState<string | null>(null);
+  const social = (provider: "discord" | "google") => {
+    setSocialBusy(provider);
+    return authClient.signIn
+      .social({
       provider,
       callbackURL: next,
       newUserCallbackURL: `/welcome?next=${encodeURIComponent(next)}`,
-    });
+    })
+      .catch(() => setSocialBusy(null));
+  };
 
   const anySocial = providers.discord || providers.google;
 
   return (
-    <div className="flex min-h-[calc(100dvh-14rem)] flex-col items-center justify-center">
-      <div className="w-full max-w-sm space-y-6 rounded-card border border-line bg-surface p-6">
+    <div className="flex min-h-[calc(100dvh-14rem)] flex-col items-center justify-center gap-6">
+      <div className="flex flex-col items-center text-center">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/brand/seatbit-mark.svg" alt="" className="h-12 w-12" />
+        <p className="mt-3 text-balance text-sm text-muted">Who&apos;s coming, who&apos;s paid, who sits where.</p>
+      </div>
+      <div className="w-full max-w-sm space-y-6 rounded-card border border-line bg-surface p-5 sm:p-6">
         <div className="space-y-1">
-          <h1 className="text-xl font-semibold">
+          <h1 className="text-xl font-semibold tracking-tight">
             {mode === "login" ? "Sign in" : "Create an account"}
           </h1>
           {!providers.email && (
@@ -82,14 +92,19 @@ export function AuthForm({
             {providers.discord && (
               <button
                 onClick={() => social("discord")}
-                className={`${btnSecondary} w-full !border-[#5865F2] !bg-[#5865F2] !py-2.5 hover:!bg-[#4752c4]`}
+                disabled={!!socialBusy}
+                className={`${btnSecondary} min-h-12 w-full !border-[#5865F2] !bg-[#5865F2] text-base !text-white hover:!bg-[#4752c4]`}
               >
-                Continue with Discord
+                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden>
+                  <path d="M20.3 4.4A19.8 19.8 0 0 0 15.4 3l-.6 1.3a18.4 18.4 0 0 0-5.6 0L8.6 3a19.7 19.7 0 0 0-4.9 1.5C.6 9.1-.3 13.6.1 18a19.9 19.9 0 0 0 6 3l1.3-2a12.9 12.9 0 0 1-2-1l.5-.4a14.2 14.2 0 0 0 12.2 0l.5.4a12.9 12.9 0 0 1-2 1l1.3 2a19.8 19.8 0 0 0 6-3c.5-5.1-.8-9.5-3.6-13.6ZM8.3 15.3c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4Zm7.4 0c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4Z" />
+                </svg>
+                {socialBusy === "discord" ? "Opening Discord…" : "Continue with Discord"}
               </button>
             )}
             {providers.google && (
               <button
                 onClick={() => social("google")}
+                disabled={!!socialBusy}
                 className={`${btnSecondary} w-full`}
               >
                 Continue with Google
@@ -109,7 +124,7 @@ export function AuthForm({
         {providers.email && (
           <>
             {anySocial && (
-              <div className="flex items-center gap-3 text-xs text-faint">
+              <div className="flex items-center gap-3 text-xs text-muted">
                 <div className="h-px flex-1 bg-line" /> or{" "}
                 <div className="h-px flex-1 bg-line" />
               </div>
@@ -167,13 +182,13 @@ export function AuthForm({
                   }
                 />
               </Field>
-              {error && <p className="text-sm text-red-400">{error}</p>}
+              {error && <p className="text-sm text-danger">{error}</p>}
               <button disabled={busy} className={`${btnPrimary} w-full`}>
                 {mode === "login" ? "Sign in" : "Create account"}
               </button>
             </form>
 
-            <div className="flex justify-between text-sm text-zinc-400">
+            <div className="flex justify-between text-sm text-muted">
               {mode === "login" ? (
                 <>
                   <Link
@@ -182,11 +197,11 @@ export function AuthForm({
                         ? "/register"
                         : `/register?next=${encodeURIComponent(next)}`
                     }
-                    className="hover:text-zinc-200"
+                    className="hover:text-fg"
                   >
                     Create account
                   </Link>
-                  <Link href="/forgot-password" className="hover:text-zinc-200">
+                  <Link href="/forgot-password" className="hover:text-fg">
                     Forgot password?
                   </Link>
                 </>
@@ -197,7 +212,7 @@ export function AuthForm({
                       ? "/login"
                       : `/login?next=${encodeURIComponent(next)}`
                   }
-                  className="hover:text-zinc-200"
+                  className="hover:text-fg"
                 >
                   Already have an account? Sign in
                 </Link>

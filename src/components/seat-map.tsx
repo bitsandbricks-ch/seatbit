@@ -112,7 +112,7 @@ export function SeatMap({
               ))}
             </select>
           )}
-          <span className="text-xs text-zinc-500">
+          <span className="text-xs text-muted">
             {tool === "layout" && "Click a cell to add or remove a seat, or a row letter to fill or clear the whole row."}
             {tool === "lock" && "Held seats can't be claimed by members. Orgas can still assign people to them."}
             {tool === "rename" && "Click a seat to change its label."}
@@ -121,15 +121,20 @@ export function SeatMap({
       )}
 
       {mode === "view" && (
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-muted">
           {mySeat ? `You're at ${mySeat.label}.` : "The orgas assign the group's seats after the deadline."}
         </p>
       )}
 
-      <div className={`overflow-x-auto pb-2 ${pending ? "opacity-60" : ""}`}>
+      {/* Seats are wide enough for a whole nick (two lines if needed); on narrow screens the map scrolls sideways
+          and the row letters stay pinned on the left. */}
+      <div className={`-mx-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0 ${pending ? "opacity-60" : ""}`}>
         <div
-          className="grid gap-1.5"
-          style={{ gridTemplateColumns: `1.25rem repeat(${cols}, minmax(2.75rem, 1fr))`, minWidth: cols * 48 + 20 }}
+          className="grid gap-[var(--seat-gap)] [--seat-gap:0.375rem] [--seat-w:4.75rem] sm:[--seat-w:5.25rem] lg:[--seat-w:4.5rem] 2xl:[--seat-w:5rem]"
+          style={{
+            gridTemplateColumns: `1.25rem repeat(${cols}, minmax(var(--seat-w), 1fr))`,
+            minWidth: `calc(${cols} * (var(--seat-w) + var(--seat-gap)) + 1.25rem)`,
+          }}
         >
           {Array.from({ length: rows * (cols + 1) }, (_, j) => {
             const row = Math.floor(j / (cols + 1));
@@ -142,13 +147,13 @@ export function SeatMap({
                 <button
                   key={i}
                   onClick={() => run(() => toggleSeatRow(lanId, row))}
-                  className="h-14 rounded text-xs font-mono text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+                  className="sticky left-0 z-10 h-[4.5rem] rounded bg-surface text-xs font-mono text-muted hover:bg-raised hover:text-fg"
                   title={`Fill or clear row ${letter}`}
                 >
                   {letter}
                 </button>
               ) : (
-                <div key={i} className="grid h-14 place-items-center text-xs font-mono text-zinc-600">
+                <div key={i} className="sticky left-0 z-10 grid h-[4.5rem] place-items-center bg-surface text-xs font-mono text-muted">
                   {letter}
                 </div>
               );
@@ -159,48 +164,50 @@ export function SeatMap({
                 <button
                   key={i}
                   onClick={() => onCell(row, col)}
-                  className="h-14 rounded border border-dashed border-line hover:border-zinc-600"
+                  className="h-[4.5rem] rounded-bit border border-dashed border-line hover:border-muted/50"
                   aria-label={`Add seat at row ${row + 1}, column ${col + 1}`}
                 />
               ) : (
-                <div key={i} className="h-14" />
+                <div key={i} className="h-[4.5rem]" />
               );
             }
             const mine = s.userId === meId;
             const taken = !!s.userId;
             const cls = mine
-              ? "bg-bit text-ink border-bit"
+              ? "bg-bit text-on-bit border-bit"
               : taken
                 ? "bg-seat-taken/20 text-seat-taken border-seat-taken/40"
                 : s.locked
-                  ? "bg-zinc-800/50 text-zinc-500 border-zinc-700 [background-image:repeating-linear-gradient(45deg,transparent,transparent_4px,rgba(255,255,255,.04)_4px,rgba(255,255,255,.04)_8px)]"
-                  : `bg-zinc-800 text-zinc-300 border-zinc-700 ${mode === "admin" ? "hover:border-bit" : ""}`;
+                  ? "bg-raised/60 text-faint border-line [background-image:repeating-linear-gradient(45deg,transparent,transparent_4px,rgba(255,255,255,.04)_4px,rgba(255,255,255,.04)_8px)]"
+                  : `bg-raised text-fg/90 border-line ${mode === "admin" ? "hover:border-bit" : ""}`;
             return (
               <button
                 key={i}
                 disabled={mode === "view"}
                 onClick={() => onCell(row, col, s)}
                 title={`${s.label}${s.nick ? ` · ${s.nick}` : ""}${s.locked ? " · held" : ""}`}
-                className={`flex h-14 flex-col items-center justify-center overflow-hidden rounded border px-1 text-center ${cls}`}
+                className={`flex h-[4.5rem] flex-col items-center justify-center gap-0.5 overflow-hidden rounded-bit border px-1.5 text-center transition ${cls}`}
               >
-                <span className="text-[10px] font-mono opacity-70">
+                <span className="font-mono text-[11px] leading-none opacity-75">
                   {s.label}
                   {s.locked ? " 🔒" : ""}
                 </span>
-                <span className="w-full truncate text-xs font-medium">{s.nick ?? ""}</span>
+                {s.nick && (
+                  <span className="line-clamp-2 w-full text-xs font-semibold leading-tight [overflow-wrap:anywhere]">{s.nick}</span>
+                )}
               </button>
             );
           })}
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-4 text-xs text-zinc-500">
-        <Legend cls="bg-zinc-800 border-zinc-700">Free</Legend>
+      <div className="flex flex-wrap gap-4 text-xs text-muted">
+        <Legend cls="bg-raised border-line">Free</Legend>
         <Legend cls="bg-bit border-bit">You</Legend>
         <Legend cls="bg-seat-taken/20 border-seat-taken/40">Taken</Legend>
-        <Legend cls="bg-zinc-800/50 border-zinc-700">Held</Legend>
+        <Legend cls="bg-raised/60 border-line">Held</Legend>
       </div>
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
     </div>
   );
 }

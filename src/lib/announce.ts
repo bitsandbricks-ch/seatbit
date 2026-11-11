@@ -1,3 +1,4 @@
+import { fmtDate } from "./format";
 import { and, eq, ne } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Lan, User } from "@/db/schema";
@@ -6,8 +7,7 @@ import { appUrl } from "./mail";
 
 const { attendance, user, clanMember } = schema;
 
-export const fmtWhen = (d: Date) =>
-  d.toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+export const fmtWhen = fmtDate;
 
 export const lanLink = (l: Lan) => `${appUrl}/lans/${l.id}`;
 

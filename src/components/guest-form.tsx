@@ -23,7 +23,7 @@ export function GuestForm({ action }: { action: (s: FormState, f: FormData) => P
       <Field label="Nickname">
         <Input name="nick" maxLength={32} />
       </Field>
-      {state?.error && <p className="text-sm text-red-400">{state.error}</p>}
+      {state?.error && <p className="text-sm text-danger">{state.error}</p>}
       <button disabled={pending} className={btnSecondary}>
         Add guest
       </button>

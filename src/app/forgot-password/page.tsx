@@ -9,7 +9,7 @@ export default function ForgotPasswordPage() {
     <div className="mx-auto max-w-sm space-y-4 rounded-xl border border-line bg-surface p-6">
       <h1 className="text-xl font-semibold">Reset password</h1>
       {sent ? (
-        <p className="text-sm text-zinc-300">If that address has an account, a reset link is on its way.</p>
+        <p className="text-sm text-fg/90">If that address has an account, a reset link is on its way.</p>
       ) : (
         <form
           className="space-y-4"
