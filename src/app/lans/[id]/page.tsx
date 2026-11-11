@@ -9,7 +9,7 @@ import { getLanAccounts } from "@/lib/lan-accounts";
 import { SeatMap } from "@/components/seat-map";
 import { Avatar } from "@/components/avatar";
 import { getAvatars, type AvatarData } from "@/lib/avatars";
-import { Card, Page, Pill, StatusBadge } from "@/components/ui";
+import { Card, Columns, Page, Pill, StatusBadge } from "@/components/ui";
 import { fmtDate, relative } from "@/lib/format";
 import { ATTENDANCE_LOCKED_MSG, attendanceLocked, getDisplayNames, getLan, pickNick, signupClosed } from "@/lib/lans";
 import { canViewLan, isLanManager, requireUser } from "@/lib/session";
@@ -230,9 +230,9 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
       )}
 
       {tab === "gear" && (
-        <div className="max-w-xl">
+        <Columns>
           <PackingList lanId={l.id} items={PACKING_ITEMS} packed={packed} own={ownItems} />
-        </div>
+        </Columns>
       )}
 
       {tab === "seats" && (

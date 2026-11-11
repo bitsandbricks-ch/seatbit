@@ -169,7 +169,7 @@ export function PageHeader({
           <span className="truncate">{back.label}</span>
         </Link>
       )}
-      <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
+      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
         <div className="flex min-w-0 items-center gap-3 sm:gap-4">
           {avatar && <div className="shrink-0">{avatar}</div>}
           <div className="min-w-0">
