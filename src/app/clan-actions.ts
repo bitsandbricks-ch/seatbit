@@ -236,7 +236,7 @@ export async function renewGuestLink(clanId: string, userId: string) {
 
 /**
  * The signed-in user takes over a guest: clan membership, attendance, seats,
- * nicks and orga roles move to the real account, then the guest is deleted.
+ * nicks, orga roles, rides and gear move to the real account, then the guest is deleted.
  * Where both have something for the same LAN, the real account's stays.
  */
 export async function claimGuest(code: string) {
@@ -268,6 +268,19 @@ export async function claimGuest(code: string) {
       const mine = tx.select().from(lanOrga).where(and(eq(lanOrga.lanId, o.lanId), eq(lanOrga.userId, me.id))).get();
       if (!mine) tx.update(lanOrga).set({ userId: me.id }).where(and(eq(lanOrga.lanId, o.lanId), eq(lanOrga.userId, g.id))).run();
     }
+    // Rides, sleeping spots and gear the orgas noted for the guest.
+    tx.update(schema.travelPost).set({ userId: me.id }).where(eq(schema.travelPost.userId, g.id)).run();
+    for (const sp of tx.select().from(schema.travelSpot).where(eq(schema.travelSpot.userId, g.id)).all()) {
+      const post = tx.select().from(schema.travelPost).where(eq(schema.travelPost.id, sp.postId)).get();
+      const mine = tx
+        .select()
+        .from(schema.travelSpot)
+        .where(and(eq(schema.travelSpot.postId, sp.postId), eq(schema.travelSpot.userId, me.id)))
+        .get();
+      if (mine || post?.userId === me.id) tx.delete(schema.travelSpot).where(eq(schema.travelSpot.id, sp.id)).run();
+      else tx.update(schema.travelSpot).set({ userId: me.id }).where(eq(schema.travelSpot.id, sp.id)).run();
+    }
+    tx.update(schema.gearPledge).set({ userId: me.id }).where(eq(schema.gearPledge.userId, g.id)).run();
     // Seat wishes of others that name the guest now name the real account.
     for (const col of ["wish_near", "wish_avoid"] as const)
       tx.run(sql`UPDATE attendance SET ${sql.raw(col)} = replace(${sql.raw(col)}, ${`"${g.id}"`}, ${`"${me.id}"`}) WHERE ${sql.raw(col)} LIKE ${`%"${g.id}"%`}`);
