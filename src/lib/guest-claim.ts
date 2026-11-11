@@ -5,6 +5,7 @@ import type { User } from "@/db/schema";
 import { fmtDay } from "./format";
 import { appUrl } from "./mail";
 import { sendTemplate } from "./mail-templates";
+import { notifyClanAdmins, notifyLater } from "./notify";
 
 const { clanMember, attendance, seat, nickname, lanOrga } = schema;
 
@@ -70,6 +71,21 @@ export function mergeGuestInto(g: User, meId: string) {
       tx.run(sql`UPDATE attendance SET ${sql.raw(col)} = replace(${sql.raw(col)}, ${`"${g.id}"`}, ${`"${meId}"`}) WHERE ${sql.raw(col)} LIKE ${`%"${g.id}"%`}`);
     tx.delete(schema.user).where(eq(schema.user.id, g.id)).run();
   });
+  // Let the clan admins know the guest now has a real account.
+  if (g.guestClanId) {
+    const clanId = g.guestClanId;
+    notifyLater(async () => {
+      const me = db.select().from(schema.user).where(eq(schema.user.id, meId)).get();
+      const c = db.select().from(schema.clan).where(eq(schema.clan.id, clanId)).get();
+      if (!me || !c) return;
+      await notifyClanAdmins(clanId, {
+        kind: "guest_claimed",
+        subject: `${g.name} claimed their guest profile`,
+        text: `${g.name} signed up and took over their guest profile in ${c.name}. They're now ${me.name}, with their events, seat and nick.`,
+        url: `${appUrl}/clans/${c.slug}/settings?tab=members`,
+      });
+    });
+  }
 }
 
 /**
