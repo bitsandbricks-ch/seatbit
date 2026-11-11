@@ -240,7 +240,17 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
                 mode="admin"
                 seats={seats.map((s) => ({ ...s, nick: s.userId ? (names.get(s.userId) ?? "?") : null }))}
                 assignable={going
-                  .map((r) => ({ id: r.userId, nick: names.get(r.userId) ?? "?" }))
+                  .map((r) => {
+                    const w = wishChecks.find((c) => c.userId === r.userId);
+                    return {
+                      id: r.userId,
+                      nick: names.get(r.userId) ?? "?",
+                      name: userById.get(r.userId)?.name,
+                      lanAccount: lanIds.get(r.userId) || undefined,
+                      ticket: r.paid ? ("ok" as const) : r.ticketBought ? ("reported" as const) : ("open" as const),
+                      wishes: w ? { ok: w.ok, missed: w.missed } : undefined,
+                    };
+                  })
                   .sort((a, b) => a.nick.localeCompare(b.nick))}
               />
             </Card>

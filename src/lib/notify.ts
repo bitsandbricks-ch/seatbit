@@ -1,3 +1,4 @@
+import { fmtDate } from "./format";
 import { and, eq, inArray, ne } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Lan, User } from "@/db/schema";
@@ -141,7 +142,7 @@ export function notifyLater(task: () => Promise<unknown>) {
 }
 
 const lanUrl = (l: Lan) => `${appUrl}/lans/${l.id}`;
-const fmt = (d: Date) => d.toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
+const fmt = fmtDate;
 
 // ---------- Event helpers ----------
 
