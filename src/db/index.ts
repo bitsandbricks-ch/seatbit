@@ -13,9 +13,32 @@ function create() {
   sqlite.pragma("journal_mode = WAL");
   sqlite.pragma("foreign_keys = ON");
   const db = drizzle(sqlite, { schema });
-  migrate(db, { migrationsFolder: path.join(process.cwd(), "drizzle") });
-  backfillDefaultClan(sqlite);
+  withMigrationLock(() => {
+    migrate(db, { migrationsFolder: path.join(process.cwd(), "drizzle") });
+    backfillDefaultClan(sqlite);
+  });
   return db;
+}
+
+/**
+ * Several processes can open a fresh database at once (e.g. `next build`
+ * workers collecting page data). Without a lock they race on the first
+ * migration ("table already exists"). An exclusive transaction on a small lock
+ * database makes them take turns; the later ones then find nothing to migrate.
+ */
+function withMigrationLock(fn: () => void) {
+  const lock = new Database(`${dbFile}.migrate-lock`);
+  try {
+    lock.pragma("busy_timeout = 60000");
+    lock.exec("BEGIN EXCLUSIVE");
+    try {
+      fn();
+    } finally {
+      lock.exec("COMMIT");
+    }
+  } finally {
+    lock.close();
+  }
 }
 
 /**

@@ -25,7 +25,7 @@ export function LegalPage({ title, children }: { title: string; children: ReactN
 /** "By continuing you agree to ..." line under the sign-in and sign-up forms. */
 export function LegalNotice() {
   return (
-    <p className="mx-auto mt-4 max-w-sm text-center text-xs text-zinc-500">
+    <p className="mx-auto mt-4 w-full max-w-sm text-center text-xs text-zinc-500">
       By continuing you agree to the{" "}
       <Link href="/terms" className="text-zinc-400 underline hover:text-zinc-200">
         Terms of Service

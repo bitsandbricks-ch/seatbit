@@ -50,6 +50,20 @@
       "when": 1794395481535,
       "tag": "0006_platform_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1794395959973,
+      "tag": "0007_profile_names",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1794397478524,
+      "tag": "0008_guests",
+      "breakpoints": true
     }
   ]
 }

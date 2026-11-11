@@ -5,6 +5,7 @@ import { Card } from "@/components/ui";
 import { inviteUrl } from "@/lib/discord-api";
 import { appUrl, mailTarget } from "@/lib/mail";
 import { requireAdmin } from "@/lib/session";
+import { LOGIN_METHODS } from "@/lib/auth";
 import { SETTING_GROUPS, type SettingGroup, canEncrypt, settingsForAdmin } from "@/lib/settings";
 import { saveSettings, sendTestMail, setupDiscordBot } from "./actions";
 
@@ -32,7 +33,9 @@ type TabId = (typeof TABS)[number]["id"];
 export default async function SettingsPage({ searchParams }: PageProps<"/admin/settings">) {
   await requireAdmin();
   const { tab: rawTab } = await searchParams;
-  const tab: TabId = TABS.some((t) => t.id === rawTab) ? (rawTab as TabId) : "mail";
+  // Google login is switched off in code (LOGIN_METHODS), so its settings tab is hidden.
+  const tabs = TABS.filter((t) => t.id !== "google" || LOGIN_METHODS.google);
+  const tab: TabId = tabs.some((t) => t.id === rawTab) ? (rawTab as TabId) : "mail";
   const all = settingsForAdmin();
   const fields = (g: SettingGroup) => all.filter((s) => s.group === g);
   const keySource = process.env.SETTINGS_ENCRYPTION_KEY
@@ -81,7 +84,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
       )}
 
       <Tabs
-        tabs={TABS.map((t) => ({
+        tabs={tabs.map((t) => ({
           ...t,
           badge: all.some((x) => x.group === t.id && x.undecryptable) ? "!" : undefined,
         }))}

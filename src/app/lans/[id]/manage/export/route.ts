@@ -31,7 +31,7 @@ export async function GET(_: Request, { params }: RouteContext<"/lans/[id]/manag
         seatOf.get(r.userId) ?? "",
         names.get(r.userId) ?? "",
         u?.name ?? "",
-        u?.email ?? "",
+        u && !u.isGuest ? u.email : "",
         r.status,
         r.paid ? "confirmed" : r.ticketBought ? "reported" : "open",
         r.note,

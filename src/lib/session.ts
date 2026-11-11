@@ -14,11 +14,15 @@ export const getCurrentUser = cache(async () => {
   return (await db.query.user.findFirst({ where: eq(schema.user.id, s.user.id) })) ?? null;
 });
 
-export async function requireUser() {
+/** Signed-in user. Until they've given first name and surname (e.g. right after a Discord sign-up) they're sent to /welcome. */
+export async function requireUser(opts?: { allowIncomplete?: boolean }) {
   const u = await getCurrentUser();
   if (!u) redirect("/login");
+  if (!opts?.allowIncomplete && !isProfileComplete(u)) redirect("/welcome");
   return u;
 }
+
+export const isProfileComplete = (u: { firstName: string; lastName: string }) => !!(u.firstName && u.lastName);
 
 export async function requireAdmin() {
   const u = await requireUser();

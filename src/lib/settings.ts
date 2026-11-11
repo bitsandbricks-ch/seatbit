@@ -66,7 +66,7 @@ export const SETTINGS: SettingDef[] = [
     kind: "bool",
     env: "SIGNUP_OPEN",
     default: "true",
-    help: "When off, only existing members can sign in (with email, Discord or Google).",
+    help: "When off, only people who already have an account can sign in.",
   },
   {
     key: "auth.adminEmails",

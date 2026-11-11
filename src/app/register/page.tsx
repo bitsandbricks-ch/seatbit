@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AuthForm } from "@/components/auth-form";
-import { LegalNotice } from "@/components/legal-page";
 import { enabledProviders, signupOpen } from "@/lib/auth";
 import { getCurrentUser } from "@/lib/session";
 
@@ -10,6 +9,9 @@ export default async function RegisterPage({ searchParams }: PageProps<"/registe
   // Only allow same-site paths.
   const next = typeof raw === "string" && raw.startsWith("/") && !raw.startsWith("//") ? raw : "/";
   if (await getCurrentUser()) redirect(next);
+  const providers = enabledProviders();
+  // Without email sign-up, Discord's button both signs in and creates accounts: one page is enough.
+  if (!providers.email) redirect(next === "/" ? "/login" : `/login?next=${encodeURIComponent(next)}`);
   if (!signupOpen()) {
     return (
       <div className="mx-auto max-w-sm space-y-4 rounded-xl border border-line bg-surface p-6 text-sm">
@@ -21,10 +23,5 @@ export default async function RegisterPage({ searchParams }: PageProps<"/registe
       </div>
     );
   }
-  return (
-    <>
-      <AuthForm mode="register" providers={enabledProviders()} next={next} />
-      <LegalNotice />
-    </>
-  );
+  return <AuthForm mode="register" providers={providers} next={next} />;
 }
