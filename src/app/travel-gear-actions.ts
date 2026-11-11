@@ -7,9 +7,9 @@ import { db, schema } from "@/db";
 import { TRAVEL_KINDS } from "@/db/schema";
 import { getLan } from "@/lib/lans";
 import { PACKING_ITEMS } from "@/lib/gear";
-import { canViewLan, isLanManager, requireLanManager, requireUser } from "@/lib/session";
+import { canViewLan, isLanManager, requireUser } from "@/lib/session";
 
-const { attendance, travelPost, travelSpot, gearNeed, gearPledge, gearPacked } = schema;
+const { attendance, travelPost, travelSpot, gearPacked, packingItem } = schema;
 
 const refresh = (lanId: string) => revalidatePath(`/lans/${lanId}`);
 
@@ -127,78 +127,6 @@ export async function takeAlong(requestId: string, offerId: string) {
 
 // ---------------- Gear ----------------
 
-const needInput = z.object({
-  name: z.string().trim().min(1, "Enter an item").max(40),
-  qty: z.coerce.number().int().min(1).max(99),
-  note: z.string().trim().max(100).default(""),
-});
-
-/** Orgas: add or edit a piece of shared gear the group needs. */
-export async function saveGearNeed(lanId: string, input: z.input<typeof needInput>, needId?: string) {
-  await requireLanManager(lanId);
-  const v = needInput.parse(input);
-  if (needId) db.update(gearNeed).set(v).where(and(eq(gearNeed.id, needId), eq(gearNeed.lanId, lanId))).run();
-  else db.insert(gearNeed).values({ lanId, ...v }).run();
-  refresh(lanId);
-}
-
-export async function deleteGearNeed(needId: string) {
-  const n = db.select().from(gearNeed).where(eq(gearNeed.id, needId)).get();
-  if (!n) return;
-  await requireLanManager(n.lanId);
-  db.delete(gearNeed).where(eq(gearNeed.id, needId)).run();
-  refresh(n.lanId);
-}
-
-/** Orgas: copy the shared-gear list from an earlier event (usually the last one of the same LAN type). */
-export async function copyGearNeeds(lanId: string, fromLanId: string) {
-  await requireLanManager(lanId);
-  const from = getLan(fromLanId);
-  const to = getLan(lanId);
-  if (!from || !to || from.clanId !== to.clanId) throw new Error("LAN not found");
-  const have = new Set(
-    db.select().from(gearNeed).where(eq(gearNeed.lanId, lanId)).all().map((n) => n.name.toLowerCase()),
-  );
-  const rows = db
-    .select()
-    .from(gearNeed)
-    .where(eq(gearNeed.lanId, fromLanId))
-    .all()
-    .filter((n) => !have.has(n.name.toLowerCase()));
-  if (rows.length) db.insert(gearNeed).values(rows.map((n) => ({ lanId, name: n.name, qty: n.qty, note: n.note }))).run();
-  refresh(lanId);
-}
-
-/** How many of a shared item the member brings. 0 removes the pledge. */
-export async function setGearPledge(needId: string, qty: number) {
-  const n = db.select().from(gearNeed).where(eq(gearNeed.id, needId)).get();
-  if (!n) throw new Error("Not found");
-  const me = await requireAttendee(n.lanId);
-  const q = z.number().int().min(0).max(99).parse(qty);
-  db.transaction((tx) => {
-    tx.delete(gearPledge).where(and(eq(gearPledge.needId, needId), eq(gearPledge.userId, me.id))).run();
-    if (q > 0) tx.insert(gearPledge).values({ lanId: n.lanId, userId: me.id, needId, qty: q }).run();
-  });
-  refresh(n.lanId);
-}
-
-/** Something extra a member brings for the group that isn't on the list (beamer, coffee machine, ...). */
-export async function addGearExtra(lanId: string, name: string, qty: number) {
-  const me = await requireAttendee(lanId);
-  const v = needInput.pick({ name: true, qty: true }).parse({ name, qty });
-  db.insert(gearPledge).values({ lanId, userId: me.id, needId: null, ...v }).run();
-  refresh(lanId);
-}
-
-export async function deleteGearPledge(pledgeId: string) {
-  const me = await requireUser();
-  const p = db.select().from(gearPledge).where(eq(gearPledge.id, pledgeId)).get();
-  if (!p) return;
-  if (p.userId !== me.id && !isLanManager(me, p.lanId)) throw new Error("Not yours");
-  db.delete(gearPledge).where(eq(gearPledge.id, pledgeId)).run();
-  refresh(p.lanId);
-}
-
 /** Tick or untick an item on the member's own packing list. */
 export async function setPacked(lanId: string, item: string, packed: boolean) {
   const me = await requireUser();
@@ -210,4 +138,34 @@ export async function setPacked(lanId: string, item: string, packed: boolean) {
       .where(and(eq(gearPacked.lanId, lanId), eq(gearPacked.userId, me.id), eq(gearPacked.item, item)))
       .run();
   refresh(lanId);
+}
+
+const itemLabel = z.string().trim().min(1, "Enter an item").max(40);
+
+/** Add an item of your own to your packing list. */
+export async function addPackingItem(lanId: string, label: string) {
+  const me = await requireUser();
+  if (!canViewLan(me, lanId)) throw new Error("LAN not found");
+  db.insert(packingItem).values({ lanId, userId: me.id, label: itemLabel.parse(label) }).run();
+  refresh(lanId);
+}
+
+function mustGetMyItem(userId: string, itemId: string) {
+  const it = db.select().from(packingItem).where(eq(packingItem.id, itemId)).get();
+  if (!it || it.userId !== userId) throw new Error("Not found");
+  return it;
+}
+
+export async function setPackingItemPacked(itemId: string, packed: boolean) {
+  const me = await requireUser();
+  const it = mustGetMyItem(me.id, itemId);
+  db.update(packingItem).set({ packed }).where(eq(packingItem.id, it.id)).run();
+  refresh(it.lanId);
+}
+
+export async function deletePackingItem(itemId: string) {
+  const me = await requireUser();
+  const it = mustGetMyItem(me.id, itemId);
+  db.delete(packingItem).where(eq(packingItem.id, it.id)).run();
+  refresh(it.lanId);
 }
