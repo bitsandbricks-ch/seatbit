@@ -7,7 +7,9 @@ import {
   adminSetPaid,
   adminSetSeatFor,
 } from "@/app/actions";
+import { addGuestToLan } from "@/app/clan-actions";
 import type { AttendanceStatus } from "@/db/schema";
+import { GuestForm } from "./guest-form";
 import { btnGhost, btnSecondary, input } from "./ui";
 
 export type AttendanceRow = {
@@ -186,6 +188,14 @@ export function AttendanceTable({
           </button>
         </div>
       )}
+      <details className="rounded-card border border-line bg-surface p-3">
+        <summary className="cursor-pointer text-sm font-medium">Add a guest without an account</summary>
+        <p className="mb-3 mt-2 text-sm text-zinc-400">
+          For people not on Seatbit yet. They&apos;re signed up as coming and can get a seat right away. Their personal link is
+          under Clan settings › Members: when they sign in with Discord through it, they take over this spot.
+        </p>
+        <GuestForm action={addGuestToLan.bind(null, lanId)} />
+      </details>
     </div>
   );
 }
