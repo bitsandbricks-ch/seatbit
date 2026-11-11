@@ -34,7 +34,13 @@ function message(kind: ReminderKind, l: Lan, u: User) {
 
 /** Who a reminder kind applies to for a LAN. */
 function recipients(kind: ReminderKind, l: Lan): User[] {
-  const members = db.select().from(user).where(eq(user.emailReminders, true)).all();
+  const members = db
+    .select({ u: user })
+    .from(user)
+    .innerJoin(schema.clanMember, eq(schema.clanMember.userId, user.id))
+    .where(and(eq(user.emailReminders, true), eq(schema.clanMember.clanId, l.clanId ?? "")))
+    .all()
+    .map((r) => r.u);
   const rows = db.select().from(attendance).where(eq(attendance.lanId, l.id)).all();
   const byUser = new Map(rows.map((r) => [r.userId, r]));
   switch (kind) {

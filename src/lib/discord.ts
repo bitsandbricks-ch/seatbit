@@ -1,13 +1,14 @@
 import crypto from "node:crypto";
-import { and, asc, eq, gt } from "drizzle-orm";
+import { and, asc, eq, gt, inArray } from "drizzle-orm";
 import { db, schema } from "@/db";
-import type { AttendanceStatus, Lan } from "@/db/schema";
+import type { AttendanceStatus, Clan, Lan } from "@/db/schema";
+import { avatarUrl, canManageClan, getClan, isClanMember, myClans } from "./clans";
 import { type ChatReminderKind, fmtWhen, lanFacts, lanLink, lanSummary } from "./announce";
 import { getLan, setAttendance, signupClosed } from "./lans";
 import { type Json, api, discordEnabled } from "./discord-api";
 import { appUrl } from "./mail";
 
-const { discordChannel, discordMessage, channelReminderLog, account, attendance, lan } = schema;
+const { discordChannel, discordMessage, channelReminderLog, account, attendance, lan, clan, user } = schema;
 
 const appId = process.env.DISCORD_CLIENT_ID;
 
@@ -78,9 +79,12 @@ export async function lanMessage(l: Lan) {
   if (s.maybe.length) fields.push({ name: `Unsure (${s.maybe.length})`, value: list(s.maybe.map((g) => g.nick)), inline: false });
   if (s.waitlist.length)
     fields.push({ name: `Waitlist (${s.waitlist.length})`, value: list(s.waitlist.map((g) => g.nick)), inline: false });
+  const c = l.clanId ? getClan(l.clanId) : undefined;
+  const icon = c && avatarUrl(c);
   return {
     embeds: [
       {
+        author: c ? { name: clip(c.name, 256), url: `${appUrl}/clans/${c.slug}`, icon_url: icon ? `${appUrl}${icon}` : undefined } : undefined,
         title: clip(l.name, 256),
         url: lanLink(l),
         description: clip(l.description, 1500) || undefined,
@@ -134,8 +138,10 @@ async function reminderMessage(kind: ChatReminderKind, l: Lan) {
 
 // ---------- Posting ----------
 
-export function listChannels() {
-  return db.select().from(discordChannel).orderBy(asc(discordChannel.createdAt)).all();
+/** Channels linked to a clan (a LAN only goes to its own clan's channels). */
+export function listChannels(clanId: string | null) {
+  if (!clanId) return [];
+  return db.select().from(discordChannel).where(eq(discordChannel.clanId, clanId)).orderBy(asc(discordChannel.createdAt)).all();
 }
 
 /** Drops a channel the bot can no longer reach (deleted, or bot kicked). */
@@ -163,7 +169,7 @@ export async function announceLan(lanId: string, onlyChannelId?: string) {
     db.select().from(discordMessage).where(eq(discordMessage.lanId, lanId)).all().map((m) => m.channelId),
   );
   let posted = 0;
-  for (const c of listChannels()) {
+  for (const c of listChannels(l.clanId)) {
     if (existing.has(c.channelId) || (onlyChannelId && c.channelId !== onlyChannelId)) continue;
     try {
       const m = await api<{ id: string }>("POST", `/channels/${c.channelId}/messages`, msg);
@@ -216,7 +222,7 @@ export async function postReminderNow(l: Lan, kind: ChatReminderKind) {
   const msg = await reminderMessage(kind, l);
   if (!msg) return 0;
   let sent = 0;
-  for (const c of listChannels()) {
+  for (const c of listChannels(l.clanId)) {
     try {
       await api("POST", `/channels/${c.channelId}/messages`, msg);
       db.insert(channelReminderLog)
@@ -247,7 +253,7 @@ export async function postDueChannelReminders(kinds: ChatReminderKind[], l: Lan)
         .all()
         .map((r) => r.channelId),
     );
-    const todo = listChannels().filter((c) => !done.has(c.channelId));
+    const todo = listChannels(l.clanId).filter((c) => !done.has(c.channelId));
     if (todo.length === 0) continue;
     const msg = await reminderMessage(kind, l);
     if (!msg) continue;
@@ -266,15 +272,18 @@ export async function postDueChannelReminders(kinds: ChatReminderKind[], l: Lan)
 
 // ---------- Slash commands & buttons ----------
 
+type Option = { name: string; type?: number; value?: string; focused?: boolean; options?: Option[] };
+
 type Interaction = {
   type: number;
   id: string;
   token: string;
   guild_id?: string;
   channel_id?: string;
+  channel?: { name?: string };
   member?: { user: { id: string } };
   user?: { id: string };
-  data?: { name?: string; custom_id?: string; options?: { name: string }[] };
+  data?: { name?: string; custom_id?: string; options?: Option[] };
 };
 
 const EPHEMERAL = 64;
@@ -282,6 +291,7 @@ const reply = (content: string, extra: Json = {}) => ({
   type: 4,
   data: { content, flags: EPHEMERAL, allowed_mentions: { parse: [] }, ...extra },
 });
+const linkButton = (label: string, url: string) => ({ type: 1, components: [{ type: 2, style: 5, label, url }] });
 
 const statusLabel: Record<AttendanceStatus, string> = {
   going: "✅ You're in",
@@ -290,19 +300,45 @@ const statusLabel: Record<AttendanceStatus, string> = {
   waitlist: "⏳ It's full, you're on the waitlist",
 };
 
+/** The Seatbit user behind a Discord account, if they linked it. */
 function seatbitUserFor(discordUserId: string) {
-  return db
+  const userId = db
     .select()
     .from(account)
     .where(and(eq(account.providerId, "discord"), eq(account.accountId, discordUserId)))
     .get()?.userId;
+  return userId ? db.select().from(user).where(eq(user.id, userId)).get() : undefined;
 }
 
 const notLinked = () =>
-  reply(
-    "I don't know who you are in Seatbit yet. Sign in with Discord, or link Discord on your profile, then try again.",
-    { components: [{ type: 1, components: [{ type: 2, style: 5, label: "Link Discord", url: `${appUrl}/profile` }] }] },
-  );
+  reply("I don't know who you are in Seatbit yet. Sign in with Discord, or link Discord on your profile, then try again.", {
+    components: [linkButton("Link Discord", `${appUrl}/profile`)],
+  });
+
+/** The clan a Discord server is linked to (all its channels share one clan). */
+function clanForGuild(guildId: string | undefined): Clan | undefined {
+  if (!guildId) return undefined;
+  const ch = db.select().from(discordChannel).where(eq(discordChannel.guildId, guildId)).get();
+  return ch ? getClan(ch.clanId) : undefined;
+}
+
+/** Clans this user may link a server to. */
+function manageableClans(u: { id: string; role: string }) {
+  if (u.role === "admin") return db.select().from(clan).orderBy(asc(clan.name)).all();
+  return myClans(u.id)
+    .filter((m) => m.role === "admin")
+    .map((m) => m.clan);
+}
+
+const upcomingLans = (clanIds: string[]) =>
+  clanIds.length
+    ? db
+        .select()
+        .from(lan)
+        .where(and(gt(lan.endsAt, new Date()), inArray(lan.clanId, clanIds)))
+        .orderBy(asc(lan.startsAt))
+        .all()
+    : [];
 
 /**
  * Handles a verified interaction. Returns the immediate response, plus an
@@ -313,6 +349,18 @@ export function handleInteraction(i: Interaction): { response: Json; later?: () 
 
   const discordUser = i.member?.user.id ?? i.user?.id ?? "";
   const editReply = (body: Json) => api("PATCH", `/webhooks/${appId}/${i.token}/messages/@original`, body);
+  const sub = i.data?.options?.[0];
+
+  // Autocomplete for /seatbit here clan:<…>
+  if (i.type === 4 && i.data?.name === "seatbit") {
+    const me = seatbitUserFor(discordUser);
+    const q = (sub?.options?.find((o) => o.focused)?.value ?? "").toLowerCase();
+    const choices = (me ? manageableClans(me) : [])
+      .filter((c) => c.name.toLowerCase().includes(q) || c.slug.includes(q))
+      .slice(0, 25)
+      .map((c) => ({ name: clip(c.name, 100), value: c.slug }));
+    return { response: { type: 8, data: { choices } } };
+  }
 
   // Attendance button
   if (i.type === 3 && i.data?.custom_id?.startsWith("att:")) {
@@ -321,17 +369,25 @@ export function handleInteraction(i: Interaction): { response: Json; later?: () 
     if (!l) return { response: reply("This LAN doesn't exist anymore.") };
     if (signupClosed(l)) return { response: reply("Sign-up for this LAN is closed. Ask an orga if something changed.") };
     if (!["going", "maybe", "declined"].includes(status)) return { response: reply("Unknown button.") };
-    const userId = seatbitUserFor(discordUser);
-    if (!userId) return { response: notLinked() };
+    const me = seatbitUserFor(discordUser);
+    if (!me) return { response: notLinked() };
+    if (!l.clanId || !isClanMember(me.id, l.clanId)) {
+      const c = l.clanId ? getClan(l.clanId) : undefined;
+      return {
+        response: reply(`This LAN is for members of **${c?.name ?? "another clan"}**. Ask to join the clan in Seatbit first.`, {
+          components: c ? [linkButton("Open clan", `${appUrl}/clans/${c.slug}`)] : [],
+        }),
+      };
+    }
     return {
       response: { type: 5, data: { flags: EPHEMERAL } }, // "thinking…", answered below
       later: async () => {
         try {
-          const stored = await setAttendance(l, userId, status);
-          const extra = stored === "going" ? ` Tick off your ticket in Seatbit once you have it.` : "";
+          const stored = await setAttendance(l, me.id, status);
+          const extra = stored === "going" ? " Tick off your ticket in Seatbit once you have it." : "";
           await editReply({
             content: `${statusLabel[stored]} for **${l.name}**.${extra}`,
-            components: [{ type: 1, components: [{ type: 2, style: 5, label: "Open in Seatbit", url: lanLink(l) }] }],
+            components: [linkButton("Open in Seatbit", lanLink(l))],
           });
         } catch (e) {
           console.error("[discord] attendance failed", e);
@@ -341,61 +397,97 @@ export function handleInteraction(i: Interaction): { response: Json; later?: () 
     };
   }
 
-  // /lans
+  // /lans: this server's clan, or (in DMs / unlinked servers) all of your clans
   if (i.type === 2 && i.data?.name === "lans") {
-    const userId = seatbitUserFor(discordUser);
-    const upcoming = db.select().from(lan).where(gt(lan.endsAt, new Date())).orderBy(asc(lan.startsAt)).all().slice(0, 5);
-    if (upcoming.length === 0) return { response: reply("No upcoming LANs right now.") };
-    const mine = userId
-      ? new Map(db.select().from(attendance).where(eq(attendance.userId, userId)).all().map((a) => [a.lanId, a.status]))
+    const me = seatbitUserFor(discordUser);
+    const serverClan = clanForGuild(i.guild_id);
+    const clanIds = serverClan ? [serverClan.id] : me ? myClans(me.id).filter((m) => m.role !== "pending").map((m) => m.clan.id) : [];
+    if (!serverClan && !me) return { response: notLinked() };
+    const upcoming = upcomingLans(clanIds).slice(0, 5);
+    if (upcoming.length === 0) return { response: reply(`No upcoming LANs${serverClan ? ` for ${serverClan.name}` : ""} right now.`) };
+    const mine = me
+      ? new Map(db.select().from(attendance).where(eq(attendance.userId, me.id)).all().map((a) => [a.lanId, a.status]))
       : new Map<string, AttendanceStatus>();
-    const label: Record<string, string> = { going: "going", maybe: "unsure", declined: "not going", waitlist: "waitlist" };
+    const label: Record<string, string> = { going: "coming", maybe: "unsure", declined: "not coming", waitlist: "waitlist" };
     const lines = upcoming.map(
-      (l) => `**[${l.name}](<${lanLink(l)}>)** · ${fmtWhen(l.startsAt)}${userId ? ` · you: ${label[mine.get(l.id) ?? ""] ?? "no answer"}` : ""}`,
+      (l) => `**[${l.name}](<${lanLink(l)}>)** · ${fmtWhen(l.startsAt)}${me ? ` · you: ${label[mine.get(l.id) ?? ""] ?? "no answer"}` : ""}`,
     );
     return {
-      response: reply(
-        lines.join("\n") + (userId ? "" : "\n\n-# Link Discord on your Seatbit profile to answer from here."),
-        { components: upcoming.filter((l) => !signupClosed(l)).slice(0, 4).map((l) => ({
-          type: 1,
-          components: [
-            { type: 2, style: 3, label: clip(`Coming: ${l.name}`, 80), custom_id: `att:${l.id}:going` },
-            { type: 2, style: 2, label: "Unsure", custom_id: `att:${l.id}:maybe` },
-            { type: 2, style: 4, label: "Not coming", custom_id: `att:${l.id}:declined` },
-          ],
-        })) },
-      ),
+      response: reply(lines.join("\n") + (me ? "" : "\n\n-# Link Discord on your Seatbit profile to answer from here."), {
+        components: upcoming
+          .filter((l) => !signupClosed(l))
+          .slice(0, 4)
+          .map((l) => ({
+            type: 1,
+            components: [
+              { type: 2, style: 3, label: clip(`Coming: ${l.name}`, 80), custom_id: `att:${l.id}:going` },
+              { type: 2, style: 2, label: "Unsure", custom_id: `att:${l.id}:maybe` },
+              { type: 2, style: 4, label: "Not coming", custom_id: `att:${l.id}:declined` },
+            ],
+          })),
+      }),
     };
   }
 
-  // /seatbit here|stop|announce (Manage Server only, enforced by Discord)
+  // /seatbit here|stop|announce (Discord only shows it to members with Manage Server)
   if (i.type === 2 && i.data?.name === "seatbit") {
-    const sub = i.data.options?.[0]?.name;
     if (!i.guild_id || !i.channel_id) return { response: reply("Use this in a server channel.") };
+    const guildId = i.guild_id;
     const channelId = i.channel_id;
-    if (sub === "here") {
+
+    if (sub?.name === "here") {
+      const me = seatbitUserFor(discordUser);
+      if (!me) return { response: notLinked() };
+      const mine = manageableClans(me);
+      if (mine.length === 0) {
+        return {
+          response: reply("You need to be an admin of a clan in Seatbit to link this server. Create one or ask your clan admin.", {
+            components: [linkButton("Open Seatbit", appUrl)],
+          }),
+        };
+      }
+      const wanted = sub.options?.find((o) => o.name === "clan")?.value;
+      const target = wanted ? mine.find((c) => c.slug === wanted) : mine.length === 1 ? mine[0] : undefined;
+      if (!target) {
+        return {
+          response: reply(
+            wanted
+              ? "You can't manage that clan."
+              : `You manage several clans. Pick one: \`/seatbit here clan:\` (${mine.map((c) => c.name).join(", ")}).`,
+          ),
+        };
+      }
+      const existing = clanForGuild(guildId);
+      if (existing && existing.id !== target.id) {
+        return {
+          response: reply(`This server is already linked to **${existing.name}**. Run \`/seatbit stop\` in its channels first.`),
+        };
+      }
       db.insert(discordChannel)
-        .values({ guildId: i.guild_id, channelId, addedBy: discordUser })
-        .onConflictDoNothing()
+        .values({ clanId: target.id, guildId, channelId, channelName: i.channel?.name ?? "", addedBy: discordUser })
+        .onConflictDoUpdate({ target: discordChannel.channelId, set: { clanId: target.id, channelName: i.channel?.name ?? "" } })
         .run();
       return {
-        response: reply("👍 I'll post new LANs, deadline reminders and live attendee lists in this channel. Use `/seatbit announce` to post the current upcoming LANs."),
+        response: reply(
+          `👍 This channel now gets **${target.name}**'s new LANs, deadline reminders and live attendee lists. Use \`/seatbit announce\` to post the upcoming ones now.`,
+        ),
       };
     }
-    if (sub === "stop") {
+
+    if (sub?.name === "stop") {
       db.delete(discordChannel).where(eq(discordChannel.channelId, channelId)).run();
       db.delete(discordMessage).where(eq(discordMessage.channelId, channelId)).run();
       return { response: reply("OK, I won't post in this channel anymore.") };
     }
-    if (sub === "announce") {
+
+    if (sub?.name === "announce") {
       const known = db.select().from(discordChannel).where(eq(discordChannel.channelId, channelId)).get();
       if (!known) return { response: reply("Run `/seatbit here` in this channel first.") };
       return {
         response: { type: 5, data: { flags: EPHEMERAL } },
         later: async () => {
-          const upcoming = db.select().from(lan).where(gt(lan.endsAt, new Date())).orderBy(asc(lan.startsAt)).all();
           let n = 0;
-          for (const l of upcoming) n += await announceLan(l.id, channelId);
+          for (const l of upcomingLans([known.clanId])) n += await announceLan(l.id, channelId);
           await editReply({ content: n ? `Posted ${n} LAN(s).` : "All upcoming LANs are already posted here." });
         },
       };
@@ -403,4 +495,13 @@ export function handleInteraction(i: Interaction): { response: Json; later?: () 
   }
 
   return { response: reply("Unknown command.") };
+}
+
+/** Unlinks a channel from Seatbit (clan settings). Checks the caller may manage the channel's clan. */
+export function unlinkChannel(u: { id: string; role: string }, channelId: string) {
+  const ch = db.select().from(discordChannel).where(eq(discordChannel.channelId, channelId)).get();
+  if (!ch || !canManageClan(u, ch.clanId)) return false;
+  db.delete(discordChannel).where(eq(discordChannel.channelId, channelId)).run();
+  db.delete(discordMessage).where(eq(discordMessage.channelId, channelId)).run();
+  return true;
 }

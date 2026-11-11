@@ -13,9 +13,12 @@ import {
   setAttendance,
   signupClosed,
 } from "@/lib/lans";
-import { announceLan, postReminderNow, refreshLanMessagesSoon } from "@/lib/discord";
+import { announceLan, postReminderNow, refreshLanMessagesSoon, unlinkChannel } from "@/lib/discord";
 import { sendReminderNow } from "@/lib/reminders";
-import { requireAdmin, requireLanManager, requireUser } from "@/lib/session";
+import { planSeats } from "@/lib/seating";
+import { appUrl, sendMail } from "@/lib/mail";
+import { canViewLan, requireAdmin, requireClanManager, requireLanManager, requireUser } from "@/lib/session";
+import { isClanMember } from "@/lib/clans";
 
 const { attendance, nickname, seat, lan, user, lanOrga, lanType } = schema;
 
@@ -36,6 +39,7 @@ const lanPath = (id: string) => {
 export async function setMyAttendance(lanId: string, status: AttendanceStatus) {
   const me = await requireUser();
   const l = mustGetLan(lanId);
+  if (!canViewLan(me, lanId)) throw new Error("Join the clan first");
   if (!ATTENDANCE_STATUSES.includes(status) || status === "waitlist") throw new Error("Bad status");
   if (signupClosed(l)) throw new Error("Sign-up for this LAN is closed");
   await setAttendance(l, me.id, status);
@@ -118,15 +122,21 @@ export type FormState = { error?: string } | undefined;
 
 export async function saveLan(_: FormState, formData: FormData): Promise<FormState> {
   const id = (formData.get("id") as string) || null;
-  const me = id ? await requireLanManager(id) : await requireAdmin();
+  const clanId = id ? mustGetLan(id).clanId : String(formData.get("clanId") ?? "");
+  if (!clanId) return { error: "Pick a clan." };
+  const me = id ? await requireLanManager(id) : await requireClanManager(clanId);
   const parsed = lanInput.safeParse(
-    Object.fromEntries([...formData.entries()].filter(([k]) => k !== "id")),
+    Object.fromEntries([...formData.entries()].filter(([k]) => k !== "id" && k !== "clanId")),
   );
   if (!parsed.success) {
     return { error: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join(", ") };
   }
   const v = parsed.data;
   if (v.endsAt <= v.startsAt) return { error: "The end must be after the start." };
+  if (v.typeId) {
+    const t = db.select().from(lanType).where(eq(lanType.id, v.typeId)).get();
+    if (t?.clanId !== clanId) return { error: "That LAN type belongs to another clan." };
+  }
 
   let lanId = id;
   if (id) {
@@ -136,7 +146,7 @@ export async function saveLan(_: FormState, formData: FormData): Promise<FormSta
       await promoteFromWaitlist(mustGetLan(id));
     }
   } else {
-    const row = db.insert(lan).values(v).returning().get();
+    const row = db.insert(lan).values({ ...v, clanId }).returning().get();
     lanId = row.id;
     db.insert(lanOrga).values({ lanId: row.id, userId: me.id }).run();
     const t = v.typeId ? db.select().from(lanType).where(eq(lanType.id, v.typeId)).get() : undefined;
@@ -150,10 +160,12 @@ export async function saveLan(_: FormState, formData: FormData): Promise<FormSta
 }
 
 export async function deleteLan(id: string) {
-  await requireAdmin();
+  const l = mustGetLan(id);
+  if (!l.clanId) await requireAdmin();
+  else await requireClanManager(l.clanId);
   db.delete(lan).where(eq(lan.id, id)).run();
   revalidatePath("/");
-  redirect("/admin");
+  redirect("/");
 }
 
 export async function toggleSeatCell(lanId: string, row: number, col: number) {
@@ -206,6 +218,8 @@ export async function adminAssignSeat(seatId: string, userId: string | null) {
 
 export async function adminSetAttendance(lanId: string, userId: string, status: AttendanceStatus) {
   await requireLanManager(lanId);
+  const cid = mustGetLan(lanId).clanId;
+  if (cid && !isClanMember(userId, cid)) throw new Error("Not a member of this clan");
   if (!ATTENDANCE_STATUSES.includes(status)) throw new Error("Bad status");
   // Admins can override capacity.
   await setAttendance(mustGetLan(lanId), userId, status, { force: true });
@@ -251,6 +265,12 @@ export async function postLanToDiscord(lanId: string): Promise<number> {
   return announceLan(lanId);
 }
 
+export async function unlinkDiscordChannel(channelId: string) {
+  const me = await requireUser();
+  if (!unlinkChannel(me, channelId)) throw new Error("Not allowed");
+  revalidatePath("/clans", "layout");
+}
+
 export async function postDiscordReminder(lanId: string, kind: "signup" | "payment" | "event"): Promise<number> {
   await requireLanManager(lanId);
   return postReminderNow(mustGetLan(lanId), kind);
@@ -277,6 +297,8 @@ export async function setMyTicketBought(lanId: string, bought: boolean) {
 
 export async function addOrga(lanId: string, userId: string) {
   await requireLanManager(lanId);
+  const cid = mustGetLan(lanId).clanId;
+  if (cid && !isClanMember(userId, cid)) throw new Error("Not a member of this clan");
   db.insert(lanOrga).values({ lanId, userId }).onConflictDoNothing().run();
   lanPath(lanId);
 }
@@ -391,38 +413,117 @@ export async function adminSetSeatFor(lanId: string, userId: string, seatId: str
   lanPath(lanId);
 }
 
-/**
- * Fills free (not held) seats, in seat order, with attendees who are going
- * and have no seat yet. Attendees with a confirmed or reported ticket go first.
- */
-export async function adminAutoAssignSeats(lanId: string): Promise<number> {
-  await requireLanManager(lanId);
-  const seats = db.select().from(seat).where(eq(seat.lanId, lanId)).all();
-  const seated = new Set(seats.map((s) => s.userId).filter(Boolean));
-  const free = seats
-    .filter((s) => !s.userId && !s.locked)
-    .sort((a, b) => a.row - b.row || a.col - b.col);
-  const waiting = db
+function planPeople(lanId: string) {
+  return db
     .select()
     .from(attendance)
     .where(and(eq(attendance.lanId, lanId), eq(attendance.status, "going")))
     .all()
-    .filter((a) => !seated.has(a.userId))
-    .sort(
-      (a, b) =>
-        Number(b.paid) - Number(a.paid) ||
-        Number(b.ticketBought) - Number(a.ticketBought) ||
-        a.createdAt.getTime() - b.createdAt.getTime(),
-    );
-  let n = 0;
-  for (const a of waiting) {
-    const s = free.shift();
-    if (!s) break;
-    db.update(seat).set({ userId: a.userId }).where(eq(seat.id, s.id)).run();
-    n++;
+    .map((a) => ({
+      userId: a.userId,
+      near: a.wishNear ?? [],
+      avoid: a.wishAvoid ?? [],
+      position: a.wishPosition,
+      seat: a.wishSeat,
+      priority: a.paid ? 2 : a.ticketBought ? 1 : 0,
+      order: a.createdAt.getTime(),
+    }));
+}
+
+/**
+ * Seats attendees who are coming, using their seat wishes. "fill" only seats
+ * people without a seat; "replan" first clears every seat that isn't held.
+ * People with a confirmed or reported ticket go first.
+ */
+export async function adminAutoAssignSeats(lanId: string, mode: "fill" | "replan" = "fill"): Promise<number> {
+  await requireLanManager(lanId);
+  if (mode === "replan") {
+    db.update(seat)
+      .set({ userId: null })
+      .where(and(eq(seat.lanId, lanId), eq(seat.locked, false)))
+      .run();
+  }
+  const seats = db.select().from(seat).where(eq(seat.lanId, lanId)).all();
+  const everyone = planPeople(lanId);
+  const seated = new Set(seats.map((s) => s.userId).filter(Boolean));
+  const plan = planSeats(seats, everyone.filter((p) => !seated.has(p.userId)), everyone);
+  db.transaction((tx) => {
+    for (const [userId, seatId] of plan) tx.update(seat).set({ userId }).where(eq(seat.id, seatId)).run();
+  });
+  lanPath(lanId);
+  return plan.size;
+}
+
+const wishInput = z.object({
+  near: z.array(z.string()).max(10),
+  avoid: z.array(z.string()).max(10),
+  position: z.enum(["any", "edge", "middle"]),
+  seat: z.string().trim().max(12),
+  note: z.string().trim().max(300),
+});
+
+export async function setMySeatWishes(lanId: string, input: z.input<typeof wishInput>) {
+  const me = await requireUser();
+  const l = mustGetLan(lanId);
+  if (l.seatsPublishedAt) throw new Error("The seat plan is already published. Ask an orga.");
+  const w = wishInput.parse(input);
+  const a = db
+    .select()
+    .from(attendance)
+    .where(and(eq(attendance.lanId, lanId), eq(attendance.userId, me.id)))
+    .get();
+  if (!a) throw new Error("Say you're coming first");
+  db.update(attendance)
+    .set({
+      wishNear: w.near.filter((x) => x !== me.id),
+      wishAvoid: w.avoid.filter((x) => x !== me.id && !w.near.includes(x)),
+      wishPosition: w.position,
+      wishSeat: w.seat.toUpperCase(),
+      wishNote: w.note,
+    })
+    .where(eq(attendance.id, a.id))
+    .run();
+  lanPath(lanId);
+}
+
+/** Makes the seat plan visible to members; optionally emails everyone coming their seat. */
+export async function publishSeats(lanId: string, notify: boolean): Promise<number> {
+  await requireLanManager(lanId);
+  const l = mustGetLan(lanId);
+  db.update(lan).set({ seatsPublishedAt: new Date() }).where(eq(lan.id, lanId)).run();
+  let sent = 0;
+  if (notify) {
+    const rows = db
+      .select({ a: attendance, u: user })
+      .from(attendance)
+      .innerJoin(user, eq(user.id, attendance.userId))
+      .where(and(eq(attendance.lanId, lanId), eq(attendance.status, "going")))
+      .all();
+    const seats = db.select().from(seat).where(eq(seat.lanId, lanId)).all();
+    for (const { u } of rows) {
+      const mine = seats.find((s) => s.userId === u.id);
+      try {
+        await sendMail(
+          u.email,
+          mine ? `Your seat at ${l.name}: ${mine.label}` : `Seat plan for ${l.name} is out`,
+          `Hi ${u.name},\n\nthe seat plan for ${l.name} is published. ${
+            mine ? `You're sitting at ${mine.label}.` : "You don't have a seat yet, an orga will get back to you."
+          }\n\n${appUrl}/lans/${l.id}`,
+        );
+        sent++;
+      } catch (e) {
+        console.error("[mail] failed", e);
+      }
+    }
   }
   lanPath(lanId);
-  return n;
+  return sent;
+}
+
+export async function unpublishSeats(lanId: string) {
+  await requireLanManager(lanId);
+  db.update(lan).set({ seatsPublishedAt: null }).where(eq(lan.id, lanId)).run();
+  lanPath(lanId);
 }
 
 // ---------------- LAN types (templates) ----------------
@@ -444,10 +545,13 @@ const lanTypeInput = z.object({
 });
 
 export async function saveLanType(_: FormState, formData: FormData): Promise<FormState> {
-  await requireAdmin();
   const id = (formData.get("id") as string) || null;
+  const existing = id ? db.select().from(lanType).where(eq(lanType.id, id)).get() : undefined;
+  const clanId = existing?.clanId ?? String(formData.get("clanId") ?? "");
+  if (!clanId) return { error: "Pick a clan." };
+  await requireClanManager(clanId);
   const parsed = lanTypeInput.safeParse(
-    Object.fromEntries([...formData.entries()].filter(([k]) => k !== "id")),
+    Object.fromEntries([...formData.entries()].filter(([k]) => k !== "id" && k !== "clanId")),
   );
   if (!parsed.success) {
     return { error: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join(", ") };
@@ -460,14 +564,20 @@ export async function saveLanType(_: FormState, formData: FormData): Promise<For
     }
   }
   if (id) db.update(lanType).set(parsed.data).where(eq(lanType.id, id)).run();
-  else db.insert(lanType).values(parsed.data).run();
+  else db.insert(lanType).values({ ...parsed.data, clanId }).run();
   revalidatePath("/", "layout");
-  redirect("/admin/types");
+  redirect(`/clans/${clanSlug(clanId)}/settings?tab=types`);
 }
 
 export async function deleteLanType(id: string) {
-  await requireAdmin();
+  const t = db.select().from(lanType).where(eq(lanType.id, id)).get();
+  if (!t?.clanId) return;
+  await requireClanManager(t.clanId);
   db.delete(lanType).where(eq(lanType.id, id)).run();
   revalidatePath("/", "layout");
-  redirect("/admin/types");
+  redirect(`/clans/${clanSlug(t.clanId)}/settings?tab=types`);
+}
+
+function clanSlug(clanId: string) {
+  return db.select({ slug: schema.clan.slug }).from(schema.clan).where(eq(schema.clan.id, clanId)).get()?.slug ?? "";
 }

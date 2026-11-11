@@ -26,8 +26,22 @@
     {
       "idx": 3,
       "version": "6",
-      "when": 1794393752495,
-      "tag": "0003_discord",
+      "when": 1794394294863,
+      "tag": "0003_seat_wishes",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1794394804671,
+      "tag": "0004_clans",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1794395233963,
+      "tag": "0005_discord",
       "breakpoints": true
     }
   ]

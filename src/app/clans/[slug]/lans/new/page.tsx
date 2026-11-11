@@ -1,17 +1,34 @@
 import Link from "next/link";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { Card } from "@/components/ui";
 import { LanForm } from "@/components/lan-form";
 import { toInputValue } from "@/lib/format";
-import { requireAdmin } from "@/lib/session";
+import { requireUser } from "@/lib/session";
+import { canManageClan, getClanBySlug } from "@/lib/clans";
+import { notFound, redirect } from "next/navigation";
 
-export default async function NewLanPage({ searchParams }: PageProps<"/admin/lans/new">) {
-  await requireAdmin();
+export default async function NewLanPage({ params, searchParams }: PageProps<"/clans/[slug]/lans/new">) {
+  const { slug } = await params;
+  const me = await requireUser();
+  const c = getClanBySlug(slug);
+  if (!c) notFound();
+  if (!canManageClan(me, c.id)) redirect(`/clans/${slug}`);
   const { type } = await searchParams;
-  const types = db.select().from(schema.lanType).orderBy(asc(schema.lanType.name)).all();
+  const types = db
+    .select()
+    .from(schema.lanType)
+    .where(eq(schema.lanType.clanId, c.id))
+    .orderBy(asc(schema.lanType.name))
+    .all();
   const t =
-    typeof type === "string" ? db.select().from(schema.lanType).where(eq(schema.lanType.id, type)).get() : undefined;
+    typeof type === "string"
+      ? db
+          .select()
+          .from(schema.lanType)
+          .where(and(eq(schema.lanType.id, type), eq(schema.lanType.clanId, c.id)))
+          .get()
+      : undefined;
 
   const start = new Date();
   start.setDate(start.getDate() + 30);
@@ -24,7 +41,7 @@ export default async function NewLanPage({ searchParams }: PageProps<"/admin/lan
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Add a LAN</h1>
+        <h1 className="text-2xl font-bold">New event for {c.name}</h1>
         <p className="mt-1 text-sm text-zinc-400">
           An event the group wants to go to. Start from a LAN type to fill in its usual details and seats.
         </p>
@@ -35,13 +52,13 @@ export default async function NewLanPage({ searchParams }: PageProps<"/admin/lan
           {types.map((x) => (
             <Link
               key={x.id}
-              href={`/admin/lans/new?type=${x.id}`}
+              href={`/clans/${c.slug}/lans/new?type=${x.id}`}
               className={`rounded-full border px-3 py-1 ${x.id === t?.id ? "border-bit text-bit" : "border-line text-zinc-300 hover:border-zinc-500"}`}
             >
               {x.name}
             </Link>
           ))}
-          <Link href="/admin/lans/new" className="text-zinc-500 hover:text-zinc-300">
+          <Link href={`/clans/${c.slug}/lans/new`} className="text-zinc-500 hover:text-zinc-300">
             blank
           </Link>
         </div>
@@ -51,6 +68,7 @@ export default async function NewLanPage({ searchParams }: PageProps<"/admin/lan
           key={t?.id ?? "blank"}
           types={types}
           values={{
+            clanId: c.id,
             typeId: t?.id ?? "",
             name: t ? `${t.name} ${start.getFullYear()}` : "",
             description: t?.description ?? "",

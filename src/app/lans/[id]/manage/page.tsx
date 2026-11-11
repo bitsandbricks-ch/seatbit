@@ -7,7 +7,7 @@ import { AttendanceTable } from "@/components/attendance-table";
 import { LanForm } from "@/components/lan-form";
 import { ReminderButtons } from "@/components/reminder-buttons";
 import { SeatMap } from "@/components/seat-map";
-import { Card, btnDanger, btnSecondary } from "@/components/ui";
+import { Card, Pill, btnDanger, btnSecondary } from "@/components/ui";
 import { fmtDate, relative, toInputValue } from "@/lib/format";
 import { getDisplayNames, getLan } from "@/lib/lans";
 import { dueKinds } from "@/lib/reminders";
@@ -18,6 +18,9 @@ import { Tabs } from "@/components/tabs";
 import { DiscordButtons, WhatsAppTexts } from "@/components/chat-panel";
 import { whatsappTexts } from "@/lib/announce";
 import { discordEnabled, inviteUrl } from "@/lib/discord-api";
+import { canManageClan, getClan } from "@/lib/clans";
+import { PublishSeats } from "@/components/publish-seats";
+import { checkWishes } from "@/lib/seating";
 
 const { attendance, seat, user, reminderLog } = schema;
 
@@ -42,7 +45,21 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
 
   const rows = db.select().from(attendance).where(eq(attendance.lanId, id)).all();
   const seats = db.select().from(seat).where(eq(seat.lanId, id)).all();
-  const users = db.select().from(user).all();
+  const memberIds = new Set(
+    db
+      .select({ userId: schema.clanMember.userId, role: schema.clanMember.role })
+      .from(schema.clanMember)
+      .where(eq(schema.clanMember.clanId, l.clanId ?? ""))
+      .all()
+      .filter((m) => m.role !== "pending")
+      .map((m) => m.userId),
+  );
+  // Clan members, plus anyone who already has an attendance row (e.g. left the clan later).
+  const users = db
+    .select()
+    .from(user)
+    .all()
+    .filter((u) => memberIds.has(u.id) || rows.some((r) => r.userId === u.id));
   const names = await getDisplayNames(id, users.map((u) => u.id));
   const userById = new Map(users.map((u) => [u.id, u]));
   const seatOf = new Map(seats.filter((s) => s.userId).map((s) => [s.userId!, s.label]));
@@ -53,13 +70,16 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
     .where(and(eq(reminderLog.lanId, id)))
     .all();
 
-  const discordChannels = db.select().from(schema.discordChannel).all().length;
+  const discordChannels = l.clanId
+    ? db.select().from(schema.discordChannel).where(eq(schema.discordChannel.clanId, l.clanId)).all().length
+    : 0;
+  const lanClan = l.clanId ? getClan(l.clanId) : undefined;
   const discordPosts = db.select().from(schema.discordMessage).where(eq(schema.discordMessage.lanId, id)).all().length;
-  const invite = me.role === "admin" ? inviteUrl() : null;
+  const invite = lanClan && canManageClan(me, lanClan.id) ? inviteUrl() : null;
 
   const wantsMail = (uid: string) => userById.get(uid)?.emailReminders;
   const undecided = users.filter(
-    (u) => u.emailReminders && (!inLan.has(u.id) || rows.find((r) => r.userId === u.id)?.status === "maybe"),
+    (u) => u.emailReminders && memberIds.has(u.id) && (!inLan.has(u.id) || rows.find((r) => r.userId === u.id)?.status === "maybe"),
   ).length;
   const unpaid = rows.filter(
     (r) => (r.status === "going" || r.status === "waitlist") && !r.paid && !r.ticketBought && wantsMail(r.userId),
@@ -87,13 +107,24 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
     .sort((a, b) => statusOrder[a.status] - statusOrder[b.status] || a.nick.localeCompare(b.nick));
 
   const due = dueKinds(l);
+  const planPeople = going.map((r) => ({
+    userId: r.userId,
+    near: r.wishNear ?? [],
+    avoid: r.wishAvoid ?? [],
+    position: r.wishPosition,
+    seat: r.wishSeat,
+    priority: 0,
+    order: 0,
+  }));
+  const wishChecks = checkWishes(seats, planPeople, (uid) => names.get(uid) ?? "?");
+  const wishNotes = going.filter((r) => r.wishNote);
   const now = new Date();
   const ticketsConfirmed = going.filter((r) => r.paid).length;
   const ticketsReported = going.filter((r) => !r.paid && r.ticketBought).length;
   const seated = going.filter((r) => seatOf.has(r.userId)).length;
   const freeSeats = seats.filter((s) => !s.userId && !s.locked).length;
   const count = (st: string) => rows.filter((r) => r.status === st).length;
-  const noAnswer = users.filter((u) => !inLan.has(u.id)).length;
+  const noAnswer = users.filter((u) => memberIds.has(u.id) && !inLan.has(u.id)).length;
 
   return (
     <div className="space-y-5">
@@ -184,7 +215,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
           lanId={l.id}
           rows={tableRows}
           seats={[...seats].sort((a, b) => a.row - b.row || a.col - b.col)}
-          others={users.filter((u) => !inLan.has(u.id)).map((u) => ({ id: u.id, name: names.get(u.id) ?? u.name }))}
+          others={users.filter((u) => !inLan.has(u.id) && memberIds.has(u.id)).map((u) => ({ id: u.id, name: names.get(u.id) ?? u.name }))}
         />
       )}
 
@@ -202,6 +233,49 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               free={freeSeats}
             />
           </Card>
+          {seats.length > 0 && (
+            <Card title="Publish">
+              <PublishSeats
+                lanId={l.id}
+                publishedAt={l.seatsPublishedAt ? fmtDate(l.seatsPublishedAt) : null}
+                unseated={going.length - seated}
+              />
+            </Card>
+          )}
+          {wishChecks.length > 0 && (
+            <Card title="Seat wishes">
+              <ul className="space-y-2 text-sm">
+                {wishChecks.map((w) => (
+                  <li key={w.userId} className="flex flex-wrap gap-1.5">
+                    <span className="mr-1 font-medium">{names.get(w.userId)}</span>
+                    {w.ok.map((t) => (
+                      <Pill key={t} tone="emerald">
+                        ✓ {t}
+                      </Pill>
+                    ))}
+                    {w.missed.map((t) => (
+                      <Pill key={t} tone="red">
+                        ✗ {t}
+                      </Pill>
+                    ))}
+                  </li>
+                ))}
+              </ul>
+              {wishNotes.length > 0 && (
+                <div className="mt-4 border-t border-line pt-3">
+                  <p className="mb-2 text-xs uppercase tracking-wide text-zinc-500">Notes</p>
+                  <ul className="space-y-1 text-sm">
+                    {wishNotes.map((r) => (
+                      <li key={r.id}>
+                        <span className="font-medium">{names.get(r.userId)}:</span>{" "}
+                        <span className="text-zinc-300">{r.wishNote}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </Card>
+          )}
           {seats.length > 0 && (
             <Card>
               <SeatMap
@@ -232,13 +306,23 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
                 </p>
               ) : discordChannels === 0 ? (
                 <p className="text-zinc-400">
-                  No channel yet.{" "}
+                  {lanClan?.name ?? "This clan"} has no Discord channel yet.{" "}
                   {invite && (
                     <a href={invite} target="_blank" rel="noreferrer" className="text-emerald-400 hover:underline">
                       Invite the bot
                     </a>
                   )}{" "}
                   to your server, then run <code>/seatbit here</code> in the channel it should post in.
+                  {lanClan && invite && (
+                    <>
+                      {" "}
+                      Manage linked channels in{" "}
+                      <Link href={`/clans/${lanClan.slug}/settings?tab=chat`} className="text-emerald-400 hover:underline">
+                        clan settings
+                      </Link>
+                      .
+                    </>
+                  )}
                 </p>
               ) : (
                 <p className="text-zinc-400">
@@ -273,7 +357,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
         <div className="space-y-5">
           <Card title="Details">
             <LanForm
-              types={db.select().from(schema.lanType).all()}
+              types={db.select().from(schema.lanType).where(eq(schema.lanType.clanId, l.clanId ?? "")).all()}
               values={{
                 id: l.id,
                 typeId: l.typeId ?? "",
@@ -301,7 +385,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               lanId={l.id}
               orgas={orgaIds.map((uid) => ({ id: uid, name: names.get(uid) ?? userById.get(uid)?.name ?? "?" }))}
               candidates={users
-                .filter((u) => !orgaIds.includes(u.id))
+                .filter((u) => !orgaIds.includes(u.id) && memberIds.has(u.id))
                 .map((u) => ({ id: u.id, name: names.get(u.id) ?? u.name }))
                 .sort((a, b) => a.name.localeCompare(b.name))}
             />

@@ -91,9 +91,55 @@ export const verification = sqliteTable(
 
 // ---------- App tables ----------
 
+/** A clan / group of friends. Everything (LAN types, events) belongs to one clan. */
+export const clan = sqliteTable("clan", {
+  id: id(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  description: text("description").default("").notNull(),
+  /** File name of the uploaded avatar in the uploads dir, or null. */
+  avatar: text("avatar"),
+  /**
+   * "approval": anyone can ask to join, an admin approves; "open": anyone joins
+   * directly; "invite": only with an invite link. Invite links always work.
+   */
+  joinPolicy: text("join_policy").$type<"approval" | "open" | "invite">().default("approval").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+});
+
+/** "pending" = asked to join, waiting for an admin. */
+export const CLAN_ROLES = ["admin", "member", "pending"] as const;
+export type ClanRole = (typeof CLAN_ROLES)[number];
+
+export const clanMember = sqliteTable(
+  "clan_member",
+  {
+    clanId: text("clan_id")
+      .notNull()
+      .references(() => clan.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    role: text("role").$type<ClanRole>().default("member").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  (t) => [uniqueIndex("clan_member_uq").on(t.clanId, t.userId), index("clan_member_user_idx").on(t.userId)],
+);
+
+/** Invite links: anyone with the code can join the clan as a member. */
+export const clanInvite = sqliteTable("clan_invite", {
+  code: text("code").primaryKey(),
+  clanId: text("clan_id")
+    .notNull()
+    .references(() => clan.id, { onDelete: "cascade" }),
+  createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+});
+
 /** A recurring LAN party (e.g. "Lock & Load") that yearly events are created from. */
 export const lanType = sqliteTable("lan_type", {
   id: id(),
+  clanId: text("clan_id").references(() => clan.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   description: text("description").default("").notNull(),
   location: text("location").default("").notNull(),
@@ -109,6 +155,7 @@ export const lanType = sqliteTable("lan_type", {
 
 export const lan = sqliteTable("lan", {
   id: id(),
+  clanId: text("clan_id").references(() => clan.id, { onDelete: "cascade" }),
   typeId: text("type_id").references(() => lanType.id, { onDelete: "set null" }),
   name: text("name").notNull(),
   description: text("description").default("").notNull(),
@@ -130,6 +177,8 @@ export const lan = sqliteTable("lan", {
   reminderDays: integer("reminder_days").default(3).notNull(),
   seatRows: integer("seat_rows").default(6).notNull(),
   seatCols: integer("seat_cols").default(10).notNull(),
+  /** When the orgas published the seat plan; members only see seats after this. */
+  seatsPublishedAt: integer("seats_published_at", { mode: "timestamp_ms" }),
   /** Whether attendees may pick their own seats. */
   seatingOpen: integer("seating_open", { mode: "boolean" }).default(true).notNull(),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
@@ -154,6 +203,13 @@ export const attendance = sqliteTable(
     /** Set by an orga: payment / ticket confirmed. */
     paid: integer("paid", { mode: "boolean" }).default(false).notNull(),
     note: text("note").default("").notNull(),
+    /** Seat wishes: user ids to sit near / not next to (JSON arrays). */
+    wishNear: text("wish_near", { mode: "json" }).$type<string[]>().default([]).notNull(),
+    wishAvoid: text("wish_avoid", { mode: "json" }).$type<string[]>().default([]).notNull(),
+    wishPosition: text("wish_position").$type<"any" | "edge" | "middle">().default("any").notNull(),
+    /** Preferred seat label, e.g. "F7". */
+    wishSeat: text("wish_seat").default("").notNull(),
+    wishNote: text("wish_note").default("").notNull(),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" })
       .default(now)
@@ -240,15 +296,24 @@ export const reminderLog = sqliteTable(
 
 // ---------- Chat integrations ----------
 
-/** Discord channels the bot posts LAN announcements and reminders to. */
-export const discordChannel = sqliteTable("discord_channel", {
-  id: id(),
-  guildId: text("guild_id").notNull(),
-  channelId: text("channel_id").notNull().unique(),
-  /** Discord user id of whoever ran /seatbit setup. */
-  addedBy: text("added_by"),
-  createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
-});
+/** Discord channels the bot posts a clan's LAN announcements and reminders to. A server belongs to one clan. */
+export const discordChannel = sqliteTable(
+  "discord_channel",
+  {
+    id: id(),
+    clanId: text("clan_id")
+      .notNull()
+      .references(() => clan.id, { onDelete: "cascade" }),
+    guildId: text("guild_id").notNull(),
+    channelId: text("channel_id").notNull().unique(),
+    /** Channel name when it was linked, for display only. */
+    channelName: text("channel_name").default("").notNull(),
+    /** Discord user id of whoever ran /seatbit here. */
+    addedBy: text("added_by"),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  (t) => [index("discord_channel_clan_idx").on(t.clanId), index("discord_channel_guild_idx").on(t.guildId)],
+);
 
 /** The announcement message for a LAN in a Discord channel, kept up to date with the attendee list. */
 export const discordMessage = sqliteTable(
@@ -283,6 +348,7 @@ export const channelReminderLog = sqliteTable(
 export type User = typeof user.$inferSelect;
 export type Lan = typeof lan.$inferSelect;
 export type LanType = typeof lanType.$inferSelect;
+export type Clan = typeof clan.$inferSelect;
 export type Attendance = typeof attendance.$inferSelect;
 export type Nickname = typeof nickname.$inferSelect;
 export type Seat = typeof seat.$inferSelect;

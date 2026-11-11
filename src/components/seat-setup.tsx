@@ -49,22 +49,38 @@ export function SeatSetup({
           Each letter becomes a row. Existing assignments are kept for seats that stay in the list.
         </p>
       </div>
-      <div className="flex flex-wrap items-center gap-3">
-        <button
-          disabled={pending || unseated === 0 || free === 0}
-          className={btnSecondary}
-          onClick={() =>
-            start(async () => {
-              const n = await adminAutoAssignSeats(lanId);
-              setMsg({ ok: true, text: `Assigned ${n} seat(s).` });
-            })
-          }
-        >
-          Auto-assign free seats
-        </button>
-        <span className="text-xs text-zinc-500">
-          {unseated} going without a seat · {free} free seats. People with a ticket go first.
-        </span>
+      <div className="space-y-2">
+        <div className="flex flex-wrap gap-2">
+          <button
+            disabled={pending || unseated === 0 || free === 0}
+            className={btnSecondary}
+            onClick={() =>
+              start(async () => {
+                const n = await adminAutoAssignSeats(lanId, "fill");
+                setMsg({ ok: true, text: `Assigned ${n} seat(s).` });
+              })
+            }
+          >
+            Fill free seats
+          </button>
+          <button
+            disabled={pending}
+            className={btnSecondary}
+            onClick={() => {
+              if (!confirm("Re-plan all seats that aren't held? Current assignments will change.")) return;
+              start(async () => {
+                const n = await adminAutoAssignSeats(lanId, "replan");
+                setMsg({ ok: true, text: `Planned ${n} seat(s) from scratch.` });
+              });
+            }}
+          >
+            Re-plan everyone
+          </button>
+        </div>
+        <p className="text-xs text-zinc-500">
+          {unseated} coming without a seat · {free} free seats. The planner follows seat wishes (near, not next to,
+          edge/middle, preferred seat) and seats people with a ticket first.
+        </p>
       </div>
       {msg && <p className={`text-sm ${msg.ok ? "text-bit" : "text-red-400"}`}>{msg.text}</p>}
     </div>

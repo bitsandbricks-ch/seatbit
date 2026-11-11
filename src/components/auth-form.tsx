@@ -8,7 +8,9 @@ import { btnPrimary, btnSecondary, Field, Input } from "./ui";
 export function AuthForm({
   mode,
   providers,
+  next = "/",
 }: {
+  next?: string;
   mode: "login" | "register";
   providers: { discord: boolean; google: boolean };
 }) {
@@ -29,12 +31,12 @@ export function AuthForm({
         : await authClient.signUp.email({ email, password, name: String(f.get("name")) });
     setBusy(false);
     if (res.error) return setError(res.error.message ?? "Something went wrong");
-    router.push("/");
+    router.push(next);
     router.refresh();
   }
 
   const social = (provider: "discord" | "google") =>
-    authClient.signIn.social({ provider, callbackURL: "/" });
+    authClient.signIn.social({ provider, callbackURL: next });
 
   const anySocial = providers.discord || providers.google;
 
@@ -90,7 +92,7 @@ export function AuthForm({
       <div className="flex justify-between text-sm text-zinc-400">
         {mode === "login" ? (
           <>
-            <Link href="/register" className="hover:text-zinc-200">
+            <Link href={next === "/" ? "/register" : `/register?next=${encodeURIComponent(next)}`} className="hover:text-zinc-200">
               Create account
             </Link>
             <Link href="/forgot-password" className="hover:text-zinc-200">
@@ -98,7 +100,7 @@ export function AuthForm({
             </Link>
           </>
         ) : (
-          <Link href="/login" className="hover:text-zinc-200">
+          <Link href={next === "/" ? "/login" : `/login?next=${encodeURIComponent(next)}`} className="hover:text-zinc-200">
             Already have an account? Sign in
           </Link>
         )}

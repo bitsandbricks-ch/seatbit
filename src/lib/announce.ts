@@ -1,10 +1,10 @@
-import { eq } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Lan, User } from "@/db/schema";
 import { getDisplayNames } from "./lans";
 import { appUrl } from "./mail";
 
-const { attendance, user } = schema;
+const { attendance, user, clanMember } = schema;
 
 export const fmtWhen = (d: Date) =>
   d.toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
@@ -23,7 +23,14 @@ export type LanSummary = {
 
 /** Who is coming, who hasn't answered and who still needs a ticket, with display nicks. */
 export async function lanSummary(l: Lan): Promise<LanSummary> {
-  const members = db.select().from(user).all();
+  // Only the LAN's clan counts (pending join requests don't).
+  const members = db
+    .select({ u: user })
+    .from(user)
+    .innerJoin(clanMember, eq(clanMember.userId, user.id))
+    .where(and(eq(clanMember.clanId, l.clanId ?? ""), ne(clanMember.role, "pending")))
+    .all()
+    .map((r) => r.u);
   const rows = db.select().from(attendance).where(eq(attendance.lanId, l.id)).all();
   const names = await getDisplayNames(l.id, members.map((m) => m.id));
   const byUser = new Map(rows.map((r) => [r.userId, r]));

@@ -48,9 +48,16 @@ export const commands = [
     default_member_permissions: String(1 << 5), // Manage Server
     dm_permission: false,
     options: [
-      { type: 1, name: "here", description: "Post LAN announcements and reminders in this channel" },
+      {
+        type: 1,
+        name: "here",
+        description: "Post your clan's LAN announcements and reminders in this channel",
+        options: [
+          { type: 3, name: "clan", description: "Only needed if you manage several clans", required: false, autocomplete: true },
+        ],
+      },
       { type: 1, name: "stop", description: "Stop posting in this channel" },
-      { type: 1, name: "announce", description: "Post all upcoming LANs in this channel now" },
+      { type: 1, name: "announce", description: "Post your clan's upcoming LANs in this channel now" },
     ],
   },
 ];

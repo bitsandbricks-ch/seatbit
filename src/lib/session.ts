@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 import { and, eq } from "drizzle-orm";
 import { auth } from "./auth";
+import { canManageClan, isClanMember } from "./clans";
 import { db, schema } from "@/db";
 
 export const getCurrentUser = cache(async () => {
@@ -25,9 +26,11 @@ export async function requireAdmin() {
   return u;
 }
 
-/** Global admins and the LAN's orgas may manage a LAN. */
+/** Platform admins, admins of the LAN's clan and the LAN's orgas may manage a LAN. */
 export function isLanManager(u: { id: string; role: string }, lanId: string) {
   if (u.role === "admin") return true;
+  const l = db.select({ clanId: schema.lan.clanId }).from(schema.lan).where(eq(schema.lan.id, lanId)).get();
+  if (l?.clanId && canManageClan(u, l.clanId)) return true;
   return !!db
     .select()
     .from(schema.lanOrga)
@@ -38,5 +41,19 @@ export function isLanManager(u: { id: string; role: string }, lanId: string) {
 export async function requireLanManager(lanId: string) {
   const u = await requireUser();
   if (!isLanManager(u, lanId)) throw new Error("Only orgas of this LAN can do that");
+  return u;
+}
+
+/** Clan members (and platform admins) may see a LAN and answer for it. */
+export function canViewLan(u: { id: string; role: string }, lanId: string) {
+  if (u.role === "admin") return true;
+  const l = db.select({ clanId: schema.lan.clanId }).from(schema.lan).where(eq(schema.lan.id, lanId)).get();
+  if (!l) return false;
+  return (l.clanId && isClanMember(u.id, l.clanId)) || isLanManager(u, lanId);
+}
+
+export async function requireClanManager(clanId: string) {
+  const u = await requireUser();
+  if (!canManageClan(u, clanId)) throw new Error("Only clan admins can do that");
   return u;
 }

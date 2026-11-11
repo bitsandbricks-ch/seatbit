@@ -5,6 +5,7 @@ import { Field, Input, btnPrimary, input } from "./ui";
 
 export type LanFormValues = {
   id?: string;
+  clanId?: string;
   typeId: string;
   name: string;
   description: string;
@@ -25,6 +26,7 @@ export function LanForm({ values, types }: { values: LanFormValues; types: { id:
   return (
     <form action={action} className="space-y-5">
       {values.id && <input type="hidden" name="id" value={values.id} />}
+      {values.clanId && <input type="hidden" name="clanId" value={values.clanId} />}
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="LAN type" hint="Members' nicks for this type carry over to every event of it.">
           <select name="typeId" defaultValue={values.typeId} className={input}>
