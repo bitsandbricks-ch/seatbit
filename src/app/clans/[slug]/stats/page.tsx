@@ -148,7 +148,7 @@ export default async function ClanStatsPage({ params }: PageProps<"/clans/[slug]
                           {e.seats ? (
                             <>
                               {e.seatsAssigned} <span className="text-faint">/ {e.seats}</span>
-                              {e.lan.seatsPublishedAt && <span className="block text-xs text-faint">published</span>}
+                              {e.lan.seatsPublishedAt && <span className="block text-xs text-faint">final</span>}
                             </>
                           ) : (
                             "–"

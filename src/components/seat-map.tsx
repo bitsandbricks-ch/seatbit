@@ -69,7 +69,7 @@ export function SeatMap({
   /** view: read only. pick: members choose their own free seat. admin: orga tools. */
   mode: "view" | "pick" | "admin";
   assignable?: SeatPerson[];
-  /** Card title and header extras (e.g. a "not published" pill). */
+  /** Card title and header extras (e.g. a "not final" pill). */
   title?: ReactNode;
   actions?: ReactNode;
   /** Shown under the map in the left column, next to the details panel. */
@@ -436,7 +436,7 @@ export function SeatMap({
               <p className="text-sm text-muted">
                 {mySeat
                   ? `You're at ${mySeat.label}. Tap a free seat and "Move here" to change, or tap yours to give it up.`
-                  : "Tap a free seat, then \"Take this seat\". The orgas can still move people before they publish the plan."}
+                  : "Tap a free seat, then \"Take this seat\". The orgas check and finalize the plan afterwards."}
               </p>
             )}
             {mode === "view" && (

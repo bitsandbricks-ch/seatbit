@@ -200,11 +200,11 @@ export const lan = sqliteTable("lan", {
   reminderDays: integer("reminder_days").default(3).notNull(),
   seatRows: integer("seat_rows").default(6).notNull(),
   seatCols: integer("seat_cols").default(10).notNull(),
-  /** When the orgas published the seat plan; members only see seats after this. */
+  /** When the orgas finalized the seat plan (the last seat step, also after self pick); members only see seats after this. */
   seatsPublishedAt: integer("seats_published_at", { mode: "timestamp_ms" }),
   /** Whether attendees may pick their own seats. */
   seatingOpen: integer("seating_open", { mode: "boolean" }).default(true).notNull(),
-  // Seat-picking phase: while on (and the plan isn't published), members who are coming choose their own free seat.
+  // Optional self-pick step: while on (and the plan isn't final), members who are coming choose their own free seat.
   seatPicking: integer("seat_picking", { mode: "boolean" }).default(false).notNull(),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
 });

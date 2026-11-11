@@ -88,7 +88,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
   const going = group("going");
   const isAdmin = isLanManager(me, id);
   const published = !!l.seatsPublishedAt;
-  // Seat-picking phase: members choose their own seat until the orgas publish the plan.
+  // Optional self-pick step: members choose their own seat until the orgas finalize the plan.
   const picking = l.seatPicking && !published;
   const mySeatLabel = published || picking ? (seats.find((s) => s.userId === me.id)?.label ?? null) : null;
   const steps = buildChecklist({
@@ -147,7 +147,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
   const seatPills = (
     <span className="flex gap-2">
       {picking && seats.length > 0 && <Pill tone="emerald">Pick your seat</Pill>}
-      {!published && !picking && seats.length > 0 && <Pill tone="amber">Not published yet</Pill>}
+      {published ? <Pill tone="emerald">Final</Pill> : seats.length > 0 && <Pill tone="amber">Not final yet</Pill>}
     </span>
   );
   const wishesCard = my?.status === "going" && !published && seats.length > 0 && (
@@ -264,7 +264,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
                   <p className="text-sm text-muted">
                     {seats.length === 0
                       ? "The orgas haven't entered the group's seats yet."
-                      : `The group has ${seats.length} seats (${seats[0]?.label}${seats.length > 1 ? `–${seats[seats.length - 1]?.label}` : ""}). The orgas assign them after the deadline and then publish the seat plan here.`}
+                      : `The group has ${seats.length} seats (${seats[0]?.label}${seats.length > 1 ? `–${seats[seats.length - 1]?.label}` : ""}). The orgas assign them after the deadline and then finalize the seat plan here.`}
                   </p>
                 </Card>
                 {wishesCard}
@@ -336,11 +336,13 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
                 <p className="mt-1 text-sm text-muted">
                   {seats.length === 0
                     ? "Seats not entered yet"
-                    : picking
-                      ? "Seat picking is open"
-                      : published
-                        ? `Seat plan published · ${seats.filter((s) => !s.userId && !s.locked).length} free`
-                        : "Seat plan not published yet"}
+                    : published
+                      ? `Seat plan final · ${seats.filter((s) => !s.userId && !s.locked).length} free`
+                      : picking
+                        ? mySeatLabel
+                          ? "Not final yet · orgas finalize the plan"
+                          : "Self pick is on · take a free seat"
+                        : "Orgas finalize the seat plan soon"}
                 </p>
               </Link>
               <Link href={`/lans/${l.id}?tab=attendees`} scroll={false} className="group rounded-card border border-line bg-surface p-4 transition hover:border-bit/50 sm:p-5">
