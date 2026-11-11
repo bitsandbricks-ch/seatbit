@@ -179,7 +179,7 @@ export default async function AdminLanPage({ params }: PageProps<"/lans/[id]/man
               <p className="text-zinc-400">
                 The Discord bot isn&apos;t set up.{" "}
                 {me.role === "admin" ? (
-                  <Link href="/admin/settings#discord" className="text-emerald-400 hover:underline">
+                  <Link href="/admin/settings?tab=discord" className="text-emerald-400 hover:underline">
                     Add the bot token in the platform settings.
                   </Link>
                 ) : (
