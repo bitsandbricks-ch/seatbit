@@ -1,0 +1,159 @@
+"use client";
+import { useState, useTransition } from "react";
+import { deleteGuest, removeClanMember, setClanMemberRole } from "@/app/clan-actions";
+import { PagerBar, matches, usePager } from "./pager";
+import { Pill, btnGhost, btnSecondary, input } from "./ui";
+
+const PAGE_SIZE = 20;
+
+/** Members card on the clan page: nicks with search and pages. */
+export function ClanMemberGrid({ members }: { members: { id: string; nick: string; admin: boolean }[] }) {
+  const [q, setQ] = useState("");
+  const shown = members.filter((m) => !q || matches(m.nick, q));
+  const pager = usePager(shown, 24);
+  return (
+    <div className="space-y-3">
+      {members.length > 12 && (
+        <input
+          value={q}
+          onChange={(e) => {
+            setQ(e.target.value);
+            pager.reset();
+          }}
+          placeholder={`Search ${members.length} members`}
+          className={input}
+          type="search"
+          aria-label="Search members"
+        />
+      )}
+      <ul className="grid gap-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+        {pager.items.map((m) => (
+          <li key={m.id} className="flex min-h-10 items-center justify-between gap-2 rounded-bit bg-raised/60 px-3 py-1.5 text-sm">
+            <span className="truncate">{m.nick}</span>
+            {m.admin && <Pill tone="emerald">admin</Pill>}
+          </li>
+        ))}
+        {shown.length === 0 && <li className="py-4 text-center text-sm text-muted">Nobody matches “{q}”.</li>}
+      </ul>
+      <PagerBar pager={pager} noun="members" />
+    </div>
+  );
+}
+
+export type ClanMemberRow = {
+  id: string;
+  name: string;
+  nick: string;
+  /** Email, or "No login yet" for guests. */
+  sub: string;
+  role: "admin" | "member";
+  isGuest: boolean;
+};
+
+type RoleFilter = "all" | "admin" | "member" | "guest";
+const roleFilters: { id: RoleFilter; label: string; test: (m: ClanMemberRow) => boolean }[] = [
+  { id: "all", label: "all", test: () => true },
+  { id: "admin", label: "admins", test: (m) => m.role === "admin" },
+  { id: "member", label: "members", test: (m) => m.role === "member" && !m.isGuest },
+  { id: "guest", label: "guests", test: (m) => m.isGuest },
+];
+
+/** Clan settings › Members: search, role filter and pages, with the admin actions per person. */
+export function ClanMemberAdmin({ clanId, meId, members }: { clanId: string; meId: string; members: ClanMemberRow[] }) {
+  const [q, setQ] = useState("");
+  const [role, setRole] = useState<RoleFilter>("all");
+  const [pending, start] = useTransition();
+  const [error, setError] = useState("");
+  const test = roleFilters.find((f) => f.id === role)!.test;
+  const shown = members.filter((m) => test(m) && (!q || matches(`${m.name} ${m.nick} ${m.sub}`, q)));
+  const pager = usePager(shown, PAGE_SIZE);
+  const run = (fn: () => Promise<unknown>) =>
+    start(async () => {
+      setError("");
+      try {
+        await fn();
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Something went wrong");
+      }
+    });
+
+  return (
+    <div className={`space-y-3 ${pending ? "opacity-70" : ""}`}>
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 text-sm sm:mx-0 sm:flex-wrap sm:px-0">
+        {roleFilters.map((f) => (
+          <button
+            key={f.id}
+            type="button"
+            onClick={() => {
+              setRole(f.id);
+              pager.reset();
+            }}
+            className={`${role === f.id ? btnSecondary + " !border-bit" : btnGhost} shrink-0 !rounded-full !py-1`}
+          >
+            {f.label} <span className="text-faint">{members.filter(f.test).length}</span>
+          </button>
+        ))}
+      </div>
+      <input
+        value={q}
+        onChange={(e) => {
+          setQ(e.target.value);
+          pager.reset();
+        }}
+        placeholder="Search name, nick or email"
+        className={input}
+        type="search"
+        aria-label="Search members"
+      />
+      {error && <p className="text-sm text-danger">{error}</p>}
+      <ul className="divide-y divide-line">
+        {pager.items.map((m) => (
+          <li key={m.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+            <span className="min-w-0">
+              <span className="block truncate font-medium">
+                {m.name} {m.role === "admin" && <Pill tone="emerald">admin</Pill>}
+                {m.isGuest && <Pill>guest</Pill>}
+              </span>
+              <span className="block truncate text-xs text-muted">
+                {m.nick && m.nick !== m.name && <span className="text-fg/80">{m.nick} · </span>}
+                {m.sub}
+              </span>
+            </span>
+            <span className="flex gap-1">
+              {m.isGuest ? (
+                <button
+                  type="button"
+                  className={`${btnGhost} text-xs text-danger`}
+                  onClick={() => confirm(`Remove the guest ${m.name}?`) && run(() => deleteGuest(clanId, m.id))}
+                >
+                  Remove
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className={`${btnGhost} text-xs`}
+                    onClick={() => run(() => setClanMemberRole(clanId, m.id, m.role === "admin" ? "member" : "admin"))}
+                  >
+                    {m.role === "admin" ? "Remove admin" : "Make admin"}
+                  </button>
+                  {m.id !== meId && (
+                    <button
+                      type="button"
+                      className={`${btnGhost} text-xs text-danger`}
+                      onClick={() => confirm(`Remove ${m.name} from the clan?`) && run(() => removeClanMember(clanId, m.id))}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </>
+              )}
+            </span>
+          </li>
+        ))}
+        {shown.length === 0 && <li className="py-6 text-center text-sm text-muted">Nobody matches.</li>}
+      </ul>
+      <PagerBar pager={pager} noun="members" />
+    </div>
+  );
+}

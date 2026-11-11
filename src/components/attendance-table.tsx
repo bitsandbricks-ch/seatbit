@@ -3,6 +3,7 @@ import { useState, useTransition } from "react";
 import {
   adminRemoveAttendance,
   adminSetAttendance,
+  adminSetLanId,
   adminSetNote,
   adminSetPaid,
   adminSetSeatFor,
@@ -10,6 +11,7 @@ import {
 import { addGuestToLan } from "@/app/clan-actions";
 import type { AttendanceStatus } from "@/db/schema";
 import { GuestForm } from "./guest-form";
+import { PagerBar, matches, usePager } from "./pager";
 import { btnGhost, btnSecondary, input } from "./ui";
 
 export type AttendanceRow = {
@@ -22,6 +24,8 @@ export type AttendanceRow = {
   paid: boolean;
   ticketBought: boolean;
   note: string;
+  /** Participant number/ID at the LAN (lal.gg user ID, ticket number, ...), "" when not given. */
+  lanAccount: string;
   seatId: string | null;
   seat: string | null;
 };
@@ -33,6 +37,32 @@ const statusLabel: Record<AttendanceStatus, string> = {
   maybe: "unsure",
   declined: "not coming",
 };
+const statusOrder: Record<AttendanceStatus, number> = { going: 0, waitlist: 1, maybe: 2, declined: 3 };
+
+/** Extra "who still needs something" filters on top of the status chips. */
+const needs = {
+  all: { label: "Everyone", test: () => true },
+  ticketOpen: { label: "Ticket not confirmed", test: (r: AttendanceRow) => r.status !== "declined" && !r.paid },
+  ticketReported: { label: "Ticket reported, confirm it", test: (r: AttendanceRow) => r.ticketBought && !r.paid },
+  noSeat: { label: "Coming, no seat yet", test: (r: AttendanceRow) => r.status === "going" && !r.seatId },
+  noLanId: { label: "No LAN ID", test: (r: AttendanceRow) => r.status !== "declined" && !r.lanAccount },
+  hasNote: { label: "Has a note", test: (r: AttendanceRow) => !!r.note },
+} satisfies Record<string, { label: string; test: (r: AttendanceRow) => boolean }>;
+type Need = keyof typeof needs;
+
+const byText = (a: string | null, b: string | null) =>
+  (a ?? "\uffff").localeCompare(b ?? "\uffff", undefined, { numeric: true, sensitivity: "base" });
+const sorts = {
+  status: { label: "Status", cmp: (a: AttendanceRow, b: AttendanceRow) => statusOrder[a.status] - statusOrder[b.status] || byText(a.nick, b.nick) },
+  nick: { label: "Nick", cmp: (a: AttendanceRow, b: AttendanceRow) => byText(a.nick, b.nick) },
+  name: { label: "Name", cmp: (a: AttendanceRow, b: AttendanceRow) => byText(a.name, b.name) },
+  seat: { label: "Seat", cmp: (a: AttendanceRow, b: AttendanceRow) => byText(a.seat, b.seat) || byText(a.nick, b.nick) },
+  lanId: { label: "LAN ID", cmp: (a: AttendanceRow, b: AttendanceRow) => byText(a.lanAccount || null, b.lanAccount || null) || byText(a.nick, b.nick) },
+} satisfies Record<string, { label: string; cmp: (a: AttendanceRow, b: AttendanceRow) => number }>;
+type Sort = keyof typeof sorts;
+
+const PAGE_SIZE = 20;
+const cols = "lg:grid-cols-[minmax(0,1.5fr)_9rem_6.5rem_11rem_8rem_minmax(0,1fr)_4.5rem]";
 
 export function AttendanceTable({
   lanId,
@@ -48,13 +78,17 @@ export function AttendanceTable({
   const [pending, start] = useTransition();
   const [addUser, setAddUser] = useState("");
   const [filter, setFilter] = useState<AttendanceStatus | "all">("all");
+  const [need, setNeed] = useState<Need>("all");
+  const [sort, setSort] = useState<Sort>("status");
   const run = (fn: () => Promise<unknown>) => start(async () => void (await fn()));
-  const shown = rows.filter((r) => filter === "all" || r.status === filter);
 
   const [q, setQ] = useState("");
-  const visible = shown.filter(
-    (r) => !q || `${r.nick} ${r.name} ${r.email}`.toLowerCase().includes(q.toLowerCase()),
-  );
+  const visible = rows
+    .filter((r) => (filter === "all" || r.status === filter) && needs[need].test(r))
+    .filter((r) => !q || matches(`${r.nick} ${r.name} ${r.email} ${r.lanAccount} ${r.seat ?? ""} ${r.note}`, q))
+    .sort(sorts[sort].cmp);
+  const pager = usePager(visible, PAGE_SIZE);
+  const narrowed = filter !== "all" || need !== "all" || q !== "";
 
   return (
     <div className={`space-y-4 ${pending ? "opacity-70" : ""}`}>
@@ -62,7 +96,10 @@ export function AttendanceTable({
         {(["all", ...statuses] as const).map((s) => (
           <button
             key={s}
-            onClick={() => setFilter(s)}
+            onClick={() => {
+              setFilter(s);
+              pager.reset();
+            }}
             className={`${filter === s ? btnSecondary + " !border-bit" : btnGhost} shrink-0 !rounded-full !py-1`}
           >
             {s === "all" ? "all" : statusLabel[s]}{" "}
@@ -70,32 +107,90 @@ export function AttendanceTable({
           </button>
         ))}
       </div>
-      <input
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        placeholder="Search nick, name or email"
-        className={input}
-        type="search"
-      />
+      <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
+        <input
+          value={q}
+          onChange={(e) => {
+            setQ(e.target.value);
+            pager.reset();
+          }}
+          placeholder="Search nick, name, email, LAN ID, seat or note"
+          className={input}
+          type="search"
+          aria-label="Search attendees"
+        />
+        <div className="grid grid-cols-2 gap-2 sm:contents">
+          <select
+            value={need}
+            onChange={(e) => {
+              setNeed(e.target.value as Need);
+              pager.reset();
+            }}
+            className={`${input} sm:!w-auto`}
+            aria-label="Only show"
+          >
+            {Object.entries(needs).map(([k, v]) => (
+              <option key={k} value={k}>
+                {k === "all" ? "Show: everyone" : `${v.label} (${rows.filter(v.test).length})`}
+              </option>
+            ))}
+          </select>
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as Sort)}
+            className={`${input} sm:!w-auto`}
+            aria-label="Sort by"
+          >
+            {Object.entries(sorts).map(([k, v]) => (
+              <option key={k} value={k}>
+                Sort: {v.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+      {narrowed && (
+        <p className="flex flex-wrap items-center gap-2 text-sm text-muted">
+          {visible.length} of {rows.length} shown
+          <button
+            type="button"
+            className={`${btnGhost} !min-h-0 !px-2 !py-0.5 text-xs`}
+            onClick={() => {
+              setFilter("all");
+              setNeed("all");
+              setQ("");
+              pager.reset();
+            }}
+          >
+            Clear filters
+          </button>
+        </p>
+      )}
 
       {/* Phones: one card per person. Desktop: one row per person in a table-like list. */}
       <ul className="space-y-2 lg:space-y-0 lg:divide-y lg:divide-line lg:overflow-hidden lg:rounded-card lg:border lg:border-line lg:bg-surface">
-        <li aria-hidden className="hidden gap-3 bg-raised/40 px-4 py-2 text-[11px] font-medium uppercase tracking-wide text-muted lg:grid lg:grid-cols-[minmax(0,1.5fr)_9rem_6.5rem_12rem_minmax(0,1fr)_4.5rem]">
+        <li aria-hidden className={`hidden gap-3 bg-raised/40 px-4 py-2 text-[11px] font-medium uppercase tracking-wide text-muted lg:grid ${cols}`}>
           <span>Member</span>
           <span>Status</span>
           <span>Seat</span>
           <span>Ticket</span>
+          <span>LAN ID</span>
           <span>Note</span>
           <span />
         </li>
-        {visible.map((r) => (
+        {pager.items.map((r) => (
           <li
             key={r.id}
-            className="rounded-card border border-line bg-surface p-3 lg:grid lg:grid-cols-[minmax(0,1.5fr)_9rem_6.5rem_12rem_minmax(0,1fr)_4.5rem] lg:items-center lg:gap-3 lg:rounded-none lg:border-0 lg:bg-transparent lg:px-4 lg:py-2 lg:hover:bg-raised/30"
+            className={`rounded-card border border-line bg-surface p-3 lg:grid ${cols} lg:items-center lg:gap-3 lg:rounded-none lg:border-0 lg:bg-transparent lg:px-4 lg:py-2 lg:hover:bg-raised/30`}
           >
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <p className="truncate font-medium">{r.nick}</p>
+                <p className="truncate font-medium">
+                  {r.nick}
+                  {r.lanAccount && (
+                    <span className="ml-2 font-mono text-xs font-normal text-muted lg:hidden">#{r.lanAccount}</span>
+                  )}
+                </p>
                 <p className="truncate text-xs text-muted">
                   {r.name} · {r.email}
                 </p>
@@ -161,7 +256,21 @@ export function AttendanceTable({
                   {r.ticketBought && !r.paid && <span className="ml-1 text-xs text-warn">(reported)</span>}
                 </span>
               </label>
-              <label className="col-span-2 block sm:col-span-1">
+              <label className="block">
+                <span className="mb-1 block text-[11px] uppercase tracking-wide text-muted lg:sr-only">LAN ID</span>
+                <input
+                  key={r.lanAccount}
+                  defaultValue={r.lanAccount}
+                  onBlur={(e) =>
+                    e.target.value.trim() !== r.lanAccount && run(() => adminSetLanId(lanId, r.userId, e.target.value))
+                  }
+                  maxLength={40}
+                  className={`${input} !py-1.5 font-mono`}
+                  placeholder="—"
+                  aria-label={`LAN ID of ${r.nick}`}
+                />
+              </label>
+              <label className="block sm:col-span-4 lg:col-span-1">
                 <span className="mb-1 block text-[11px] uppercase tracking-wide text-muted lg:sr-only">Note</span>
                 <input
                   defaultValue={r.note}
@@ -172,7 +281,7 @@ export function AttendanceTable({
               </label>
             </div>
             <button
-              className={`${btnGhost} hidden !px-2 text-xs hover:!text-danger lg:inline-flex`}
+              className={`${btnGhost} !hidden !px-2 text-xs hover:!text-danger lg:!inline-flex`}
               onClick={() =>
                 confirm(`Remove ${r.nick} from this LAN?`) && run(() => adminRemoveAttendance(lanId, r.userId))
               }
@@ -183,6 +292,7 @@ export function AttendanceTable({
         ))}
         {visible.length === 0 && <li className="py-6 text-center text-sm text-muted">Nobody here.</li>}
       </ul>
+      <PagerBar pager={pager} />
 
       {others.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 border-t border-line pt-4">

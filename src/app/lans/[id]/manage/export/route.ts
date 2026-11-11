@@ -2,10 +2,11 @@ import { eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { getDisplayNames, getLan } from "@/lib/lans";
 import { getCurrentUser, isLanManager } from "@/lib/session";
+import { getLanAccounts } from "@/lib/lan-accounts";
 
 const csv = (v: string) => (/[",\n;]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
 
-/** CSV of the group for this LAN (seat, nick, name, email, status, ticket), e.g. to send to the event's organisers. */
+/** CSV of the group for this LAN (seat, nick, LAN ID, name, email, status, ticket), e.g. to send to the event's organisers. */
 export async function GET(_: Request, { params }: RouteContext<"/lans/[id]/manage/export">) {
   const { id } = await params;
   const me = await getCurrentUser();
@@ -16,10 +17,11 @@ export async function GET(_: Request, { params }: RouteContext<"/lans/[id]/manag
   const seats = db.select().from(schema.seat).where(eq(schema.seat.lanId, id)).all();
   const users = new Map(db.select().from(schema.user).all().map((u) => [u.id, u]));
   const names = await getDisplayNames(id, rows.map((r) => r.userId));
+  const lanIds = getLanAccounts(l, rows.map((r) => r.userId));
   const seatOf = new Map(seats.filter((s) => s.userId).map((s) => [s.userId!, s.label]));
 
   const order = { going: 0, waitlist: 1, maybe: 2, declined: 3 };
-  const lines = [["seat", "nick", "name", "email", "status", "ticket", "note"].join(",")];
+  const lines = [["seat", "nick", "lan_id", "name", "email", "status", "ticket", "note"].join(",")];
   for (const r of rows.sort(
     (a, b) =>
       order[a.status] - order[b.status] ||
@@ -30,6 +32,7 @@ export async function GET(_: Request, { params }: RouteContext<"/lans/[id]/manag
       [
         seatOf.get(r.userId) ?? "",
         names.get(r.userId) ?? "",
+        lanIds.get(r.userId) ?? "",
         u?.name ?? "",
         u && !u.isGuest ? u.email : "",
         r.status,

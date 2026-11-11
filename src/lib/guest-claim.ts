@@ -3,6 +3,7 @@ import { and, asc, eq, gt, inArray, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { User } from "@/db/schema";
 import { fmtDay } from "./format";
+import { moveLanAccounts } from "./lan-accounts";
 import { appUrl } from "./mail";
 import { sendTemplate } from "./mail-templates";
 import { notifyClanAdmins, notifyLater } from "./notify";
@@ -49,6 +50,7 @@ export function mergeGuestInto(g: User, meId: string) {
       if (!myNicks.some((x) => x.lanId === n.lanId && x.typeId === n.typeId))
         tx.update(nickname).set({ userId: meId }).where(eq(nickname.id, n.id)).run();
     }
+    moveLanAccounts(tx, g.id, meId);
     for (const o of tx.select().from(lanOrga).where(eq(lanOrga.userId, g.id)).all()) {
       const mine = tx.select().from(lanOrga).where(and(eq(lanOrga.lanId, o.lanId), eq(lanOrga.userId, meId))).get();
       if (!mine) tx.update(lanOrga).set({ userId: meId }).where(and(eq(lanOrga.lanId, o.lanId), eq(lanOrga.userId, g.id))).run();
