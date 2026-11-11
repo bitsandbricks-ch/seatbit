@@ -322,6 +322,10 @@ export const discordChannel = sqliteTable(
     channelId: text("channel_id").notNull().unique(),
     /** Channel name when it was linked, for display only. */
     channelName: text("channel_name").default("").notNull(),
+    /** Server name, filled in when the bot first creates an invite. */
+    guildName: text("guild_name").default("").notNull(),
+    /** Invite link to the server for clan members who aren't on it yet (set by an admin, or created by the bot). */
+    inviteUrl: text("invite_url").default("").notNull(),
     /** Discord user id of whoever ran /seatbit here. */
     addedBy: text("added_by"),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),

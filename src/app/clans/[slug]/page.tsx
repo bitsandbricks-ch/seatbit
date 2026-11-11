@@ -9,6 +9,7 @@ import { fmtDay } from "@/lib/format";
 import { clanRole, getClanBySlug } from "@/lib/clans";
 import { pickNick } from "@/lib/lans";
 import { requireUser } from "@/lib/session";
+import { missingServers } from "@/lib/discord-invite";
 
 export default async function ClanPage({ params }: PageProps<"/clans/[slug]">) {
   const { slug } = await params;
@@ -27,6 +28,8 @@ export default async function ClanPage({ params }: PageProps<"/clans/[slug]">) {
     .all()
     .filter((m) => m.role !== "pending");
   const nicks = db.select().from(schema.nickname).all();
+  // Members who aren't on the clan's Discord server(s) yet get an invite.
+  const discordInvites = isMember ? await missingServers(me.id, c.id) : [];
   const lans =
     isMember || isAdmin
       ? db
@@ -71,6 +74,26 @@ export default async function ClanPage({ params }: PageProps<"/clans/[slug]">) {
           </form>
         )}
       </div>
+
+      {discordInvites.length > 0 && (
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-[#5865F2]/40 bg-[#5865F2]/10 p-4">
+          <p className="min-w-0 flex-1 text-sm">
+            <span className="font-semibold">{c.name} is on Discord.</span>{" "}
+            <span className="text-muted">Join the server for LAN news, reminders and to answer right from Discord.</span>
+          </p>
+          {discordInvites.map((sv) => (
+            <a
+              key={sv.guildId}
+              href={sv.inviteUrl!}
+              target="_blank"
+              rel="noreferrer"
+              className={`${btnPrimary} !bg-[#5865F2] !text-white hover:!bg-[#4752c4]`}
+            >
+              Join {discordInvites.length > 1 && sv.guildName ? sv.guildName : "our Discord"}
+            </a>
+          ))}
+        </div>
+      )}
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
       {(isMember || isAdmin) && (

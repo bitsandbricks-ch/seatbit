@@ -75,11 +75,12 @@ export async function registerCommands() {
   return api("PUT", `/applications/${id}/commands`, commands);
 }
 
-/** Bot invite link with the permissions it needs (view channel, send messages, embed links). */
+/** Bot invite link with the permissions it needs. */
 export function inviteUrl() {
   const id = appId();
   if (!id) return null;
-  const perms = (1 << 10) | (1 << 11) | (1 << 14);
+  // Create Invite, View Channel, Send Messages, Embed Links
+  const perms = (1 << 0) | (1 << 10) | (1 << 11) | (1 << 14);
   return `https://discord.com/oauth2/authorize?client_id=${id}&scope=bot+applications.commands&permissions=${perms}`;
 }
 
