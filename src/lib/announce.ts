@@ -1,0 +1,106 @@
+import { eq } from "drizzle-orm";
+import { db, schema } from "@/db";
+import type { Lan, User } from "@/db/schema";
+import { getDisplayNames } from "./lans";
+import { appUrl } from "./mail";
+
+const { attendance, user } = schema;
+
+export const fmtWhen = (d: Date) =>
+  d.toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+
+export const lanLink = (l: Lan) => `${appUrl}/lans/${l.id}`;
+
+export type LanSummary = {
+  going: { userId: string; nick: string }[];
+  maybe: { userId: string; nick: string }[];
+  waitlist: { userId: string; nick: string }[];
+  /** Members who haven't answered or said maybe. */
+  undecided: User[];
+  /** Attendees (going or waitlist) without a ticket. */
+  noTicket: User[];
+};
+
+/** Who is coming, who hasn't answered and who still needs a ticket, with display nicks. */
+export async function lanSummary(l: Lan): Promise<LanSummary> {
+  const members = db.select().from(user).all();
+  const rows = db.select().from(attendance).where(eq(attendance.lanId, l.id)).all();
+  const names = await getDisplayNames(l.id, members.map((m) => m.id));
+  const byUser = new Map(rows.map((r) => [r.userId, r]));
+  const withNick = (status: string) =>
+    rows
+      .filter((r) => r.status === status)
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+      .map((r) => ({ userId: r.userId, nick: names.get(r.userId) ?? "?" }));
+  return {
+    going: withNick("going").sort((a, b) => a.nick.localeCompare(b.nick)),
+    maybe: withNick("maybe").sort((a, b) => a.nick.localeCompare(b.nick)),
+    waitlist: withNick("waitlist"),
+    undecided: members.filter((m) => {
+      const a = byUser.get(m.id);
+      return !a || a.status === "maybe";
+    }),
+    noTicket: members.filter((m) => {
+      const a = byUser.get(m.id);
+      return a && (a.status === "going" || a.status === "waitlist") && !a.paid && !a.ticketBought;
+    }),
+  };
+}
+
+/** Key facts of a LAN as "label: value" lines (empty values left out). */
+export function lanFacts(l: Lan): [string, string][] {
+  const facts: [string, string][] = [
+    ["When", `${fmtWhen(l.startsAt)} – ${fmtWhen(l.endsAt)}`],
+    ["Where", l.location],
+    ["Ticket", [l.price, l.ticketUrl].filter(Boolean).join(" · ")],
+    ["Answer by", l.signupDeadline ? fmtWhen(l.signupDeadline) : ""],
+    ["Ticket by", l.paymentDueDate ? fmtWhen(l.paymentDueDate) : ""],
+  ];
+  return facts.filter(([, v]) => v);
+}
+
+export type ChatReminderKind = "signup" | "payment" | "event";
+
+/** Plain-text messages for pasting into WhatsApp (uses *bold*, which WhatsApp renders). */
+export async function whatsappTexts(l: Lan) {
+  const s = await lanSummary(l);
+  const link = lanLink(l);
+  const spots = l.capacity ? ` (${s.going.length}/${l.capacity} spots taken)` : ` (${s.going.length} going)`;
+  const facts = lanFacts(l)
+    .map(([k, v]) => `${k}: ${v}`)
+    .join("\n");
+
+  const announce = [
+    `🎮 *${l.name}*`,
+    l.description ? l.description.trim().slice(0, 500) : null,
+    facts,
+    `Who's in so far${spots}: ${s.going.map((g) => g.nick).join(", ") || "nobody yet"}`,
+    `Say if you're coming and grab a seat: ${link}`,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+
+  const texts: { kind: "announce" | ChatReminderKind; label: string; text: string }[] = [
+    { kind: "announce", label: "Announcement", text: announce },
+  ];
+  if (l.signupDeadline) {
+    texts.push({
+      kind: "signup",
+      label: "Answer reminder",
+      text: `⏰ *${l.name}*: please say if you're coming by *${fmtWhen(l.signupDeadline)}*. ${s.undecided.length} of us haven't answered yet.\n\nGoing so far${spots}: ${s.going.map((g) => g.nick).join(", ") || "nobody yet"}\n\n${link}`,
+    });
+  }
+  if (l.paymentDueDate) {
+    texts.push({
+      kind: "payment",
+      label: "Ticket reminder",
+      text: `🎟️ *${l.name}*: buy your ticket by *${fmtWhen(l.paymentDueDate)}*${l.ticketUrl ? ` (${l.ticketUrl})` : ""} and tick it off in Seatbit. ${s.noTicket.length} still open.\n\n${link}`,
+    });
+  }
+  texts.push({
+    kind: "event",
+    label: "Starts soon",
+    text: `🚀 *${l.name}* starts ${fmtWhen(l.startsAt)}${l.location ? ` at ${l.location}` : ""}. Check your seat: ${link}`,
+  });
+  return texts;
+}

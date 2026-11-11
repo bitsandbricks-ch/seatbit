@@ -38,6 +38,29 @@ Buttons only appear when the matching client ID and secret are set.
 - **Discord**: create an app at https://discord.com/developers/applications, OAuth2 redirect: `<BETTER_AUTH_URL>/api/auth/callback/discord`
 - **Google**: create an OAuth client at https://console.cloud.google.com/apis/credentials, redirect: `<BETTER_AUTH_URL>/api/auth/callback/google`
 
+### Discord bot
+
+The bot uses the same Discord application as the login. It runs inside the app (Discord sends button clicks and slash commands to Seatbit over HTTPS), so there is no extra process to host.
+
+1. In the Discord developer portal, open your app:
+   - **Bot**: reset/copy the token into `DISCORD_BOT_TOKEN`.
+   - **General Information**: copy the public key into `DISCORD_PUBLIC_KEY`, and set **Interactions Endpoint URL** to `<BETTER_AUTH_URL>/api/discord/interactions` (the app must be running and reachable for Discord to accept it).
+2. Run `npm run discord:register` once. It registers the slash commands and prints the invite link for the bot.
+3. Invite the bot to each server, then run `/seatbit here` in the channel it should post in (needs "Manage Server").
+
+What it does:
+
+- Posts every new LAN as an announcement with **I'm in / Maybe / Can't make it** buttons. The attendee list on the post updates live, also when people answer on the website. `/seatbit announce` posts the current upcoming LANs in a channel.
+- Posts the answer, ticket and "starts tomorrow" reminders in the channel when they're due (same schedule as the emails), pinging the members they apply to.
+- `/lans` shows each member their upcoming LANs and status, privately, with answer buttons.
+- Orgas can re-post or post reminders by hand on the LAN's manage page.
+
+Members are matched by their linked Discord account. Anyone who signed up with email can link Discord on their profile.
+
+### WhatsApp
+
+WhatsApp's official API can't post into regular groups or communities, so there is no bot. Instead the LAN's manage page has ready-made announcement and reminder texts with a copy button and a "Share via WhatsApp" link, to paste into the community.
+
 ### Reminders
 
 The server checks for due reminders every `REMINDER_INTERVAL_MINUTES` (default 60). If you host somewhere without a long-running process, set it to `0` and call the endpoint from a cron job instead:

@@ -14,6 +14,7 @@ import {
   signupClosed,
   trimSeatGrid,
 } from "@/lib/lans";
+import { announceLan, postReminderNow, refreshLanMessagesSoon } from "@/lib/discord";
 import { sendReminderNow } from "@/lib/reminders";
 import { requireAdmin, requireLanManager, requireUser } from "@/lib/session";
 
@@ -202,6 +203,9 @@ export async function saveLan(_: FormState, formData: FormData): Promise<FormSta
     if (seats.length) db.insert(seat).values(seats).run();
   }
   lanPath(lanId!);
+  // New LANs are announced in the Discord channels; edits update the existing posts.
+  if (id) refreshLanMessagesSoon(id);
+  else await announceLan(lanId!).catch((e) => console.error("[discord] announce failed", e));
   redirect(`/lans/${lanId}/manage`);
 }
 
@@ -300,6 +304,16 @@ export async function adminSendReminder(
 ): Promise<number> {
   await requireLanManager(lanId);
   return sendReminderNow(mustGetLan(lanId), kind);
+}
+
+export async function postLanToDiscord(lanId: string): Promise<number> {
+  await requireLanManager(lanId);
+  return announceLan(lanId);
+}
+
+export async function postDiscordReminder(lanId: string, kind: "signup" | "payment" | "event"): Promise<number> {
+  await requireLanManager(lanId);
+  return postReminderNow(mustGetLan(lanId), kind);
 }
 
 export async function setUserRole(userId: string, role: "admin" | "member") {

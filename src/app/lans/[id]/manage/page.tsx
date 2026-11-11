@@ -13,6 +13,9 @@ import { getDisplayNames, getLan } from "@/lib/lans";
 import { dueKinds } from "@/lib/reminders";
 import { isLanManager, requireUser } from "@/lib/session";
 import { OrgaManager } from "@/components/orga-manager";
+import { DiscordButtons, WhatsAppTexts } from "@/components/chat-panel";
+import { whatsappTexts } from "@/lib/announce";
+import { discordEnabled, inviteUrl } from "@/lib/discord-api";
 
 const { attendance, seat, user, reminderLog } = schema;
 
@@ -36,6 +39,10 @@ export default async function AdminLanPage({ params }: PageProps<"/lans/[id]/man
     .from(reminderLog)
     .where(and(eq(reminderLog.lanId, id)))
     .all();
+
+  const discordChannels = db.select().from(schema.discordChannel).all().length;
+  const discordPosts = db.select().from(schema.discordMessage).where(eq(schema.discordMessage.lanId, id)).all().length;
+  const invite = me.role === "admin" ? inviteUrl() : null;
 
   const wantsMail = (uid: string) => userById.get(uid)?.emailReminders;
   const undecided = users.filter(
@@ -148,6 +155,53 @@ export default async function AdminLanPage({ params }: PageProps<"/lans/[id]/man
               </ul>
             </details>
           )}
+        </div>
+      </Card>
+
+      <Card title="Discord & WhatsApp">
+        <div className="space-y-5 text-sm">
+          <div className="space-y-2">
+            <h3 className="font-semibold text-zinc-200">Discord</h3>
+            {!discordEnabled ? (
+              <p className="text-zinc-400">
+                The Discord bot isn&apos;t set up. Add <code>DISCORD_BOT_TOKEN</code> and <code>DISCORD_PUBLIC_KEY</code> (see
+                README).
+              </p>
+            ) : discordChannels === 0 ? (
+              <p className="text-zinc-400">
+                No channel yet.{" "}
+                {invite && (
+                  <a href={invite} target="_blank" rel="noreferrer" className="text-emerald-400 hover:underline">
+                    Invite the bot
+                  </a>
+                )}{" "}
+                to your server, then run <code>/seatbit here</code> in the channel it should post in.
+              </p>
+            ) : (
+              <p className="text-zinc-400">
+                Posting to {discordChannels} channel(s); this LAN is posted in {discordPosts}. Members answer with the
+                buttons under the post, the attendee list updates live, and deadline reminders are posted automatically
+                (pinging members who linked Discord).
+              </p>
+            )}
+            {discordEnabled && discordChannels > 0 && (
+              <DiscordButtons
+                lanId={l.id}
+                posted={discordPosts}
+                channels={discordChannels}
+                kinds={[
+                  ...(l.signupDeadline ? [{ kind: "signup" as const, label: "Answer reminder" }] : []),
+                  ...(l.paymentDueDate ? [{ kind: "payment" as const, label: "Ticket reminder" }] : []),
+                  { kind: "event" as const, label: "Starts soon" },
+                ]}
+              />
+            )}
+          </div>
+          <div className="space-y-2">
+            <h3 className="font-semibold text-zinc-200">WhatsApp</h3>
+            <p className="text-zinc-400">Ready-made messages for the community. Copy one and paste it into the group.</p>
+            <WhatsAppTexts texts={await whatsappTexts(l)} />
+          </div>
         </div>
       </Card>
 
