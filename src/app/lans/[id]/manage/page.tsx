@@ -7,9 +7,9 @@ import { AttendanceTable } from "@/components/attendance-table";
 import { LanForm } from "@/components/lan-form";
 import { ReminderButtons } from "@/components/reminder-buttons";
 import { SeatMap } from "@/components/seat-map";
-import { ClanAvatar } from "@/components/clan-avatar";
-import { Card, Page, PageHeader, Pill, btnDanger, btnPrimary, btnSecondary } from "@/components/ui";
-import { fmtDate, fmtRange, relative, toInputValue } from "@/lib/format";
+import { EventHeader } from "@/components/event-header";
+import { Card, Page, Pill, btnDanger, btnPrimary, btnSecondary } from "@/components/ui";
+import { fmtDate, relative, toInputValue } from "@/lib/format";
 import { getDisplayNames, getLan } from "@/lib/lans";
 import { dueKinds } from "@/lib/reminders";
 import { isLanManager, requireUser } from "@/lib/session";
@@ -27,10 +27,11 @@ import { personLabel } from "@/lib/names";
 
 const { attendance, seat, user, reminderLog } = schema;
 
+// Same order as the event page (Overview, Seats, Attendees), then the orga-only tabs.
 const TABS = [
   ["overview", "Overview"],
-  ["attendees", "Attendees"],
   ["seats", "Seats"],
+  ["attendees", "Attendees"],
   ["chat", "Discord & WhatsApp"],
   ["settings", "Settings"],
 ] as const;
@@ -131,137 +132,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
   const count = (st: string) => rows.filter((r) => r.status === st).length;
   const noAnswer = users.filter((u) => memberIds.has(u.id) && !inLan.has(u.id)).length;
 
-  return (
-    <Page>
-      <PageHeader
-        back={{ href: `/lans/${l.id}`, label: "Back to event" }}
-        title={l.name}
-        subtitle={fmtRange(l.startsAt, l.endsAt)}
-        actions={
-          <a href={`/lans/${l.id}/manage/export`} className={btnSecondary}>
-            Export CSV
-          </a>
-        }
-      >
-        {lanClan && (
-          <Link href={`/clans/${lanClan.slug}`} className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-fg">
-            <ClanAvatar clan={lanClan} size={20} />
-            <span className="truncate">
-              Managed by <span className="text-fg">{lanClan.name}</span>
-            </span>
-          </Link>
-        )}
-      </PageHeader>
-
-      <Tabs
-        tabs={TABS.map(([t, label]) => ({
-          id: t,
-          label,
-          badge:
-            t === "attendees" && ticketsReported
-              ? `${ticketsReported} to confirm`
-              : t === "seats" && going.length - seated > 0 && seats.length
-                ? `${going.length - seated} unseated`
-                : undefined,
-        }))}
-        active={tab}
-        hrefFor={(t) => `/lans/${l.id}/manage?tab=${t}`}
-      />
-
-      {tab === "overview" && (
-        <div className="space-y-5">
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            <Stat label="Coming" value={`${going.length}${l.capacity ? ` / ${l.capacity}` : ""}`} sub={`${count("waitlist")} waitlist`} href={`/lans/${l.id}/manage?tab=attendees`} />
-            <Stat label="Unsure / no answer" value={`${count("maybe")} / ${noAnswer}`} sub={`${count("declined")} not coming`} href={`/lans/${l.id}/manage?tab=attendees`} />
-            <Stat label="Tickets" value={`${ticketsConfirmed} / ${going.length}`} sub={`${ticketsReported} to confirm`} href={`/lans/${l.id}/manage?tab=attendees`} />
-            <Stat label="Seats" value={`${seated} / ${going.length}`} sub={seats.length ? `${freeSeats} free of ${seats.length}` : "no seats yet"} href={`/lans/${l.id}/manage?tab=seats`} />
-          </div>
-
-          <Card title="Dates">
-            <dl className="grid gap-3 text-sm sm:grid-cols-3">
-              <DateItem label="Answer by" d={l.signupDeadline} now={now} />
-              <DateItem label="Buy ticket by" d={l.paymentDueDate} now={now} />
-              <DateItem label="Starts" d={l.startsAt} now={now} />
-            </dl>
-          </Card>
-
-          <Card title="Reminders">
-            <div className="space-y-4 text-sm">
-              <p className="text-muted">
-                Sent automatically {l.reminderDays} day(s) before the answer deadline (to undecided members) and the
-                ticket deadline (to attendees without a ticket), and the day before the LAN (to everyone coming). Each
-                one goes out once per person.
-              </p>
-              {due.length > 0 && <p className="text-warn">Reminder window open: {due.join(", ")}.</p>}
-              <ReminderButtons
-                lanId={l.id}
-                counts={{
-                  signup: l.signupDeadline ? undecided : null,
-                  payment: l.paymentDueDate ? unpaid : null,
-                  event: going.filter((r) => wantsMail(r.userId)).length,
-                }}
-              />
-              {reminders.length > 0 && (
-                <details>
-                  <summary className="cursor-pointer text-muted">Sent reminders ({reminders.length})</summary>
-                  <ul className="mt-2 space-y-1 text-xs text-muted">
-                    {reminders
-                      .sort((a, b) => b.sentAt.getTime() - a.sentAt.getTime())
-                      .map((r) => (
-                        <li key={r.id}>
-                          {fmtDate(r.sentAt)} · {r.kind} · {names.get(r.userId) ?? "?"}
-                        </li>
-                      ))}
-                  </ul>
-                </details>
-              )}
-            </div>
-          </Card>
-        </div>
-      )}
-
-      {tab === "attendees" && (
-        <AttendanceTable
-          lanId={l.id}
-          profileBase={lanClan ? `/clans/${lanClan.slug}/members/` : null}
-          rows={tableRows}
-          seats={[...seats].sort((a, b) => a.row - b.row || a.col - b.col)}
-          others={users
-            .filter((u) => !inLan.has(u.id) && memberIds.has(u.id))
-            .map((u) => ({ id: u.id, name: personLabel(u, names.get(u.id)) }))
-            .sort((a, b) => a.name.localeCompare(b.name))}
-        />
-      )}
-
-      {tab === "seats" && (
-        // The seat plan is the main tool, so it gets the full width on top; setup, publishing and wishes sit below,
-        // side by side on wide screens.
-        <div className="space-y-5">
-          {seats.length > 0 && (
-            <Card title="Seat plan">
-              <SeatMap
-                lanId={l.id}
-                rows={l.seatRows}
-                cols={l.seatCols}
-                meId={me.id}
-                mode="admin"
-                seats={seats.map((s) => ({ ...s, nick: s.userId ? (names.get(s.userId) ?? "?") : null }))}
-                assignable={going
-                  .map((r) => {
-                    const w = wishChecks.find((c) => c.userId === r.userId);
-                    return {
-                      id: r.userId,
-                      nick: names.get(r.userId) ?? "?",
-                      name: userById.get(r.userId)?.name,
-                      lanAccount: lanIds.get(r.userId) || undefined,
-                      ticket: r.paid ? ("ok" as const) : r.ticketBought ? ("reported" as const) : ("open" as const),
-                      wishes: w ? { ok: w.ok, missed: w.missed } : undefined,
-                    };
-                  })
-                  .sort((a, b) => a.nick.localeCompare(b.nick))}
-              />
-            </Card>
-          )}
+  const seatCards = (
           <div className="grid items-start gap-5 lg:grid-cols-2">
           <Card title="Our seats">
             <p className="mb-4 text-sm text-muted">
@@ -337,6 +208,141 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
             </Card>
           )}
           </div>
+  );
+
+  return (
+    <Page>
+      <EventHeader
+        lan={l}
+        clan={lanClan}
+        mode="manage"
+        canManage
+        tab={tab}
+        actions={
+          <a href={`/lans/${l.id}/manage/export`} className={btnSecondary}>
+            Export CSV
+          </a>
+        }
+      />
+
+      <Tabs
+        tabs={TABS.map(([t, label]) => ({
+          id: t,
+          label,
+          badge:
+            t === "attendees" && ticketsReported
+              ? `${ticketsReported} to confirm`
+              : t === "seats" && going.length - seated > 0 && seats.length
+                ? `${going.length - seated} unseated`
+                : undefined,
+        }))}
+        active={tab}
+        hrefFor={(t) => `/lans/${l.id}/manage?tab=${t}`}
+      />
+
+      {tab === "overview" && (
+        // Same shape as the event page: the main things on the left, dates in a sidebar on the right.
+        <div className="grid grid-cols-1 items-start gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_22rem]">
+          <div className="order-last space-y-4 sm:space-y-6 lg:order-none lg:col-start-2 lg:row-start-1">
+            <Card title="Dates">
+              <dl className="space-y-3 text-sm">
+                <DateItem label="Answer by" d={l.signupDeadline} now={now} />
+                <DateItem label="Buy ticket by" d={l.paymentDueDate} now={now} />
+                <DateItem label="Starts" d={l.startsAt} now={now} />
+              </dl>
+              <Link href={`/lans/${l.id}/manage?tab=settings`} className="mt-4 inline-block text-sm text-bit hover:underline">
+                Change dates
+              </Link>
+            </Card>
+          </div>
+          <div className="min-w-0 space-y-4 sm:space-y-6 lg:col-start-1 lg:row-start-1">
+          <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+            <Stat label="Coming" value={`${going.length}${l.capacity ? ` / ${l.capacity}` : ""}`} sub={`${count("waitlist")} waitlist`} href={`/lans/${l.id}/manage?tab=attendees`} />
+            <Stat label="Unsure / no answer" value={`${count("maybe")} / ${noAnswer}`} sub={`${count("declined")} not coming`} href={`/lans/${l.id}/manage?tab=attendees`} />
+            <Stat label="Tickets" value={`${ticketsConfirmed} / ${going.length}`} sub={`${ticketsReported} to confirm`} href={`/lans/${l.id}/manage?tab=attendees`} />
+            <Stat label="Seats" value={`${seated} / ${going.length}`} sub={seats.length ? `${freeSeats} free of ${seats.length}` : "no seats yet"} href={`/lans/${l.id}/manage?tab=seats`} />
+          </div>
+
+          <Card title="Reminders">
+            <div className="space-y-4 text-sm">
+              <p className="text-muted">
+                Sent automatically {l.reminderDays} day(s) before the answer deadline (to undecided members) and the
+                ticket deadline (to attendees without a ticket), and the day before the LAN (to everyone coming). Each
+                one goes out once per person.
+              </p>
+              {due.length > 0 && <p className="text-warn">Reminder window open: {due.join(", ")}.</p>}
+              <ReminderButtons
+                lanId={l.id}
+                counts={{
+                  signup: l.signupDeadline ? undecided : null,
+                  payment: l.paymentDueDate ? unpaid : null,
+                  event: going.filter((r) => wantsMail(r.userId)).length,
+                }}
+              />
+              {reminders.length > 0 && (
+                <details>
+                  <summary className="cursor-pointer text-muted">Sent reminders ({reminders.length})</summary>
+                  <ul className="mt-2 space-y-1 text-xs text-muted">
+                    {reminders
+                      .sort((a, b) => b.sentAt.getTime() - a.sentAt.getTime())
+                      .map((r) => (
+                        <li key={r.id}>
+                          {fmtDate(r.sentAt)} · {r.kind} · {names.get(r.userId) ?? "?"}
+                        </li>
+                      ))}
+                  </ul>
+                </details>
+              )}
+            </div>
+          </Card>
+          </div>
+        </div>
+      )}
+
+      {tab === "attendees" && (
+        <AttendanceTable
+          lanId={l.id}
+          profileBase={lanClan ? `/clans/${lanClan.slug}/members/` : null}
+          rows={tableRows}
+          seats={[...seats].sort((a, b) => a.row - b.row || a.col - b.col)}
+          others={users
+            .filter((u) => !inLan.has(u.id) && memberIds.has(u.id))
+            .map((u) => ({ id: u.id, name: personLabel(u, names.get(u.id)) }))
+            .sort((a, b) => a.name.localeCompare(b.name))}
+        />
+      )}
+
+      {tab === "seats" && (
+        // The seat plan is the main tool: map on the left with setup, publishing and wishes below it, and the seat
+        // details panel in its own column on the right (desktop).
+        <div className="space-y-5">
+          {seats.length > 0 ? (
+              <SeatMap
+                lanId={l.id}
+                rows={l.seatRows}
+                cols={l.seatCols}
+                meId={me.id}
+                mode="admin"
+                seats={seats.map((s) => ({ ...s, nick: s.userId ? (names.get(s.userId) ?? "?") : null }))}
+                assignable={going
+                  .map((r) => {
+                    const w = wishChecks.find((c) => c.userId === r.userId);
+                    return {
+                      id: r.userId,
+                      nick: names.get(r.userId) ?? "?",
+                      name: userById.get(r.userId)?.name,
+                      lanAccount: lanIds.get(r.userId) || undefined,
+                      ticket: r.paid ? ("ok" as const) : r.ticketBought ? ("reported" as const) : ("open" as const),
+                      wishes: w ? { ok: w.ok, missed: w.missed } : undefined,
+                    };
+                  })
+                  .sort((a, b) => a.nick.localeCompare(b.nick))}
+              >
+                {seatCards}
+              </SeatMap>
+          ) : (
+            seatCards
+          )}
         </div>
       )}
 
@@ -468,15 +474,16 @@ function Stat({ label, value, sub, href }: { label: string; value: string; sub: 
 
 function DateItem({ label, d, now }: { label: string; d: Date | null; now: Date }) {
   return (
-    <div>
-      <dt className="text-xs uppercase tracking-wide text-faint">{label}</dt>
-      <dd>
+    <div className="flex justify-between gap-2">
+      <dt className="text-muted">{label}</dt>
+      <dd className="text-right">
         {d ? (
           <>
-            {fmtDate(d)} <span className={d < now ? "text-faint" : "text-warn"}>({relative(d, now)})</span>
+            {fmtDate(d)}
+            <span className={`block text-xs ${d < now ? "text-faint" : "text-warn"}`}>{relative(d, now)}</span>
           </>
         ) : (
-          <span className="text-faint">—</span>
+          <span className="text-faint">not set</span>
         )}
       </dd>
     </div>

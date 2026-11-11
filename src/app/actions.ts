@@ -9,12 +9,13 @@ import { ATTENDANCE_STATUSES, type AttendanceStatus } from "@/db/schema";
 import {
   getLan,
   promoteFromWaitlist,
-  seatLabel,
   setAttendance,
   signupClosed,
   ATTENDANCE_LOCKED_MSG,
   attendanceLocked,
 } from "@/lib/lans";
+import { parseSeatLabel } from "@/lib/seat-layout";
+import { rowLetter } from "@/lib/seat-labels";
 import { announceLan, postReminderNow, refreshLanMessagesSoon, unlinkChannel } from "@/lib/discord";
 import { sendReminderNow } from "@/lib/reminders";
 import { notify as notifyMember, notifyLanChanged, notifyLater, notifySeatChanged, trySendDiscordDm } from "@/lib/notify";
@@ -230,24 +231,48 @@ export async function deleteLan(id: string) {
 export async function toggleSeatCell(lanId: string, row: number, col: number) {
   await requireLanManager(lanId);
   const l = mustGetLan(lanId);
-  if (row < 0 || col < 0 || row >= l.seatRows || col >= l.seatCols) return;
+  // One cell past the end of a row adds the next number.
+  if (row < 0 || col < 0 || row >= l.seatRows || col > Math.max(l.seatCols, 999)) return;
   const s = db
     .select()
     .from(seat)
     .where(and(eq(seat.lanId, lanId), eq(seat.row, row), eq(seat.col, col)))
     .get();
   if (s) db.delete(seat).where(eq(seat.id, s.id)).run();
-  else db.insert(seat).values({ lanId, row, col, label: seatLabel(row, col) }).run();
+  else {
+    db.insert(seat).values({ lanId, row, col, label: `${rowLetterIn(lanId, row)}${col + 1}` }).run();
+    if (col >= l.seatCols) db.update(lan).set({ seatCols: col + 1 }).where(eq(lan.id, lanId)).run();
+  }
   lanPath(lanId);
 }
 
-export async function renameSeat(seatId: string, label: string) {
+/** The letter of a row in a LAN's seat block (rows are one letter each). */
+function rowLetterIn(lanId: string, row: number) {
+  const any = db.select().from(seat).where(and(eq(seat.lanId, lanId), eq(seat.row, row))).get();
+  return (any && parseSeatLabel(any.label)?.letter) ?? rowLetter(row);
+}
+
+export async function renameSeat(seatId: string, label: string): Promise<{ error?: string } | void> {
   const s = db.select().from(seat).where(eq(seat.id, seatId)).get();
   if (!s) return;
   await requireLanManager(s.lanId);
-  const clean = label.trim().slice(0, 12);
-  if (!clean) return;
-  db.update(seat).set({ label: clean }).where(eq(seat.id, seatId)).run();
+  const p = parseSeatLabel(label);
+  if (!p) return { error: "Use a row letter and a number, e.g. F12." };
+  const clean = `${p.letter}${p.num}`;
+  // Each letter is one row: join the row that already has this letter, keep a row of its own, or start a new one.
+  const others = db.select().from(seat).where(eq(seat.lanId, s.lanId)).all().filter((x) => x.id !== s.id);
+  const sameLetter = others.find((x) => parseSeatLabel(x.label)?.letter === p.letter);
+  const alone = !others.some((x) => x.row === s.row);
+  const row = sameLetter ? sameLetter.row : alone ? s.row : Math.max(-1, ...others.map((x) => x.row)) + 1;
+  const col = p.num - 1;
+  if (others.some((x) => x.row === row && x.col === col)) return { error: `${clean} already exists. Each seat number can only be there once.` };
+  db.update(seat).set({ label: clean, row, col }).where(eq(seat.id, seatId)).run();
+  const l = mustGetLan(s.lanId);
+  if (row >= l.seatRows || col >= l.seatCols)
+    db.update(lan)
+      .set({ seatRows: Math.max(l.seatRows, row + 1), seatCols: Math.max(l.seatCols, col + 1) })
+      .where(eq(lan.id, s.lanId))
+      .run();
   lanPath(s.lanId);
 }
 
@@ -395,7 +420,7 @@ export async function toggleSeatRow(lanId: string, row: number) {
     const have = new Set(existing.map((s) => s.col));
     const add = [];
     for (let c = 0; c < l.seatCols; c++)
-      if (!have.has(c)) add.push({ lanId, row, col: c, label: seatLabel(row, c) });
+      if (!have.has(c)) add.push({ lanId, row, col: c, label: `${rowLetterIn(lanId, row)}${c + 1}` });
     if (add.length) db.insert(seat).values(add).run();
   } else {
     for (const s of existing) if (!s.userId) db.delete(seat).where(eq(seat.id, s.id)).run();
@@ -420,6 +445,7 @@ function parseSeatSpec(spec: string): string[][] {
     } else {
       throw new Error(`Can't read "${raw}". Use e.g. F1-F20 or F1, F2, G5.`);
     }
+    if (!prefix) throw new Error(`"${raw}" needs its row letter, e.g. F1-F20.`);
     if (to < from) [from, to] = [to, from];
     if (to - from > 200) throw new Error(`"${raw}" is too many seats`);
     const row = rows.get(prefix) ?? [];
@@ -448,15 +474,17 @@ function applySeatSpec(lanId: string, spec: string): { error?: string; count?: n
   );
   db.transaction((tx) => {
     tx.delete(seat).where(eq(seat.lanId, lanId)).run();
+    // Each seat sits at its number, so gaps in the numbering (F1-F20, F25-F30) stay visible.
     const values = rows.flatMap((labels, r) =>
-      labels.map((label, c) => {
+      labels.map((label) => {
         const prev = old.get(label);
+        const c = (parseSeatLabel(label)?.num ?? 1) - 1;
         return { lanId, row: r, col: c, label, userId: prev?.userId ?? null, locked: prev?.locked ?? false };
       }),
     );
     tx.insert(seat).values(values).run();
     tx.update(lan)
-      .set({ seatRows: rows.length, seatCols: Math.max(...rows.map((r) => r.length)) })
+      .set({ seatRows: rows.length, seatCols: Math.max(...values.map((v) => v.col + 1)) })
       .where(eq(lan.id, lanId))
       .run();
   });
@@ -500,7 +528,18 @@ export async function setSeatPicking(lanId: string, open: boolean) {
  * picking is open and the plan isn't published. Held seats can't be picked.
  * Orgas can still move anyone afterwards.
  */
-export async function pickMySeat(lanId: string, seatId: string | null) {
+export async function pickMySeat(lanId: string, seatId: string | null): Promise<{ error?: string }> {
+  await requireUser(); // outside the try: a sign-in redirect must not be caught
+  try {
+    await pickMySeatOrThrow(lanId, seatId);
+    return {};
+  } catch (e) {
+    // Production builds hide thrown messages from the client, so hand them back.
+    return { error: e instanceof Error ? e.message : "Something went wrong" };
+  }
+}
+
+async function pickMySeatOrThrow(lanId: string, seatId: string | null) {
   const me = await requireUser();
   const l = mustGetLan(lanId);
   if (!l.seatPicking || l.seatsPublishedAt) throw new Error("Seat picking is closed. Ask an orga.");

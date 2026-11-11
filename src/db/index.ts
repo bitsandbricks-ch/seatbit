@@ -4,6 +4,7 @@ import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import fs from "node:fs";
 import path from "node:path";
 import * as schema from "./schema";
+import { normalizeSeatLayout } from "../lib/seat-layout";
 
 const dbFile = process.env.DATABASE_PATH ?? path.join(process.cwd(), "data", "lan.db");
 
@@ -16,6 +17,7 @@ function create() {
   withMigrationLock(() => {
     migrate(db, { migrationsFolder: path.join(process.cwd(), "drizzle") });
     backfillDefaultClan(sqlite);
+    normalizeSeatLayout(sqlite);
   });
   return db;
 }

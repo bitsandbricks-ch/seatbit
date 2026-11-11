@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState, useTransition, type DragEvent } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition, type DragEvent, type ReactNode } from "react";
 import {
   adminAssignSeat,
   adminSetSeatFor,
@@ -11,7 +11,7 @@ import {
   toggleSeatRow,
 } from "@/app/actions";
 import { rowLetter } from "@/lib/seat-labels";
-import { Pill, btnGhost, btnPrimary, btnSecondary, input } from "./ui";
+import { Card, Pill, btnGhost, btnPrimary, btnSecondary, input } from "./ui";
 
 export type SeatView = {
   id: string;
@@ -55,6 +55,9 @@ export function SeatMap({
   meId,
   mode,
   assignable = [],
+  title = "Seat plan",
+  actions,
+  children,
 }: {
   lanId: string;
   rows: number;
@@ -64,6 +67,11 @@ export function SeatMap({
   /** view: read only. pick: members choose their own free seat. admin: orga tools. */
   mode: "view" | "pick" | "admin";
   assignable?: SeatPerson[];
+  /** Card title and header extras (e.g. a "not published" pill). */
+  title?: ReactNode;
+  actions?: ReactNode;
+  /** Shown under the map in the left column, next to the details panel. */
+  children?: ReactNode;
 }) {
   const admin = mode === "admin";
   const [pending, start] = useTransition();
@@ -75,6 +83,9 @@ export function SeatMap({
   const [layout, setLayout] = useState(false);
   const [query, setQuery] = useState("");
   const [dragOver, setDragOver] = useState<string | null>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  // Measured seat size and how many seats fit on one line (long rows wrap).
+  const [dims, setDims] = useState({ cap: 999, w: 40, g: 4 });
 
   useEffect(() => {
     try {
@@ -120,7 +131,8 @@ export function SeatMap({
     start(async () => {
       setError(null);
       try {
-        await fn();
+        const r = await fn();
+        if (r && typeof r === "object" && "error" in r && typeof r.error === "string") setError(r.error);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Something went wrong");
       }
@@ -182,312 +194,403 @@ export function SeatMap({
   const compact = zoom === "compact";
   // Compact seats fit a 10-wide block on a 390px phone without scrolling.
   const cell = compact ? "h-8 sm:h-10" : "h-[4.5rem]";
-  const colW = compact ? "minmax(var(--seat-min), 1fr)" : "minmax(4.75rem, 1fr)";
-  const maxW = compact ? `${cols * 3.25 + 1.5}rem` : undefined;
+
+  // Seat width and seats per line from the available width; longer rows wrap (see below).
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const measure = () => {
+      const sm = window.matchMedia("(min-width: 640px)").matches;
+      const g = sm ? 4 : 3;
+      const min = compact ? (sm ? 36 : 26) : 76;
+      const max = compact ? 52 : 128;
+      const avail = el.clientWidth - 20 - 4 - 12; // row letter, its gap, indent of wrapped lines
+      const cap = Math.max(1, Math.floor((avail + g) / (min + g)));
+      setDims({ cap, w: Math.max(min, Math.min(max, Math.floor((avail + g) / cap - g))), g });
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [compact]);
 
   const hint = layout
-    ? "Tap a cell to add or remove a seat, or a row letter to fill or clear the row."
+    ? "Tap a dashed cell to add that seat, a seat to remove it, or a row letter to fill or clear the row."
     : swapFrom
       ? `Tap the seat to swap ${byId.get(swapFrom)?.label} with, or a free seat to move there.`
       : placing
         ? `Tap a seat for ${people.get(placing)?.nick ?? "them"}.`
         : null;
 
-  return (
-    <div className={`space-y-3 ${pending ? "cursor-progress" : ""}`}>
-      {/* Toolbar: search, zoom, orga layout mode */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative min-w-0 flex-1 basis-40">
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Find someone"
-            aria-label="Find someone on the seat plan"
-            className={`${input} !min-h-9 pl-8`}
-          />
-          <svg viewBox="0 0 24 24" className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden>
-            <circle cx="11" cy="11" r="6" />
-            <path d="m20 20-4.5-4.5" />
-          </svg>
-        </div>
-        <div role="group" aria-label="Seat size" className="inline-flex rounded-md border border-line bg-raised p-0.5 text-xs">
-          {(["compact", "large"] as Zoom[]).map((z) => (
-            <button
-              key={z}
-              type="button"
-              onClick={() => setZoom(z)}
-              aria-pressed={zoom === z}
-              className={`min-h-8 rounded px-2.5 font-medium capitalize transition ${zoom === z ? "bg-line text-fg" : "text-muted hover:text-fg"}`}
-            >
-              {z}
-            </button>
-          ))}
-        </div>
-        {admin && (
-          <button
-            type="button"
-            onClick={() => {
-              setLayout(!layout);
-              setSelectedId(null);
-              setSwapFrom(null);
-              setPlacing(null);
-            }}
-            aria-pressed={layout}
-            className={`${layout ? btnSecondary + " !border-bit" : btnGhost} !min-h-9`}
-          >
-            {layout ? "Done editing seats" : "Edit seats"}
-          </button>
-        )}
-      </div>
+  const rowLetterOf = (row: number) => seats.find((x) => x.row === row)?.label.match(/^[A-Za-z]+/)?.[0] ?? rowLetter(row);
 
-      {mode === "pick" && (
-        <p className="text-sm text-muted">
-          {mySeat
-            ? `You're at ${mySeat.label}. Tap a free seat and "Move here" to change, or tap yours to give it up.`
-            : "Tap a free seat, then \"Take this seat\". The orgas can still move people before they publish the plan."}
-        </p>
-      )}
-      {error && <p className="text-sm text-danger">{error}</p>}
+  /** The row letter, as a button in "Edit seats" mode (fills or clears the row). */
+  const rowLabel = (row: number, wrapped: boolean) => {
+    const first = seats.find((x) => x.row === row);
+    const letter = first?.label.match(/^[A-Za-z]+/)?.[0] ?? rowLetter(row);
+    return admin && layout ? (
+      <button
+        type="button"
+        onClick={() => run(() => toggleSeatRow(lanId, row))}
+        className={`${wrapped ? "self-stretch border-r-2 border-line" : cell} w-5 shrink-0 rounded font-mono text-xs text-muted hover:bg-raised hover:text-fg`}
+        title={`Fill or clear row ${letter}`}
+      >
+        {letter}
+      </button>
+    ) : (
+      <div className={`${wrapped && first ? "self-stretch rounded-l border-r-2 border-line" : cell} grid w-5 shrink-0 place-items-center font-mono text-[11px] text-faint`}>{first ? letter : ""}</div>
+    );
+  };
 
-      {mode === "view" && (
-        <p className="text-sm text-muted">
-          {mySeat ? (
-            <>
-              You&apos;re at <strong className="font-mono text-bit">{mySeat.label}</strong>. Tap a seat to see who sits there.
-            </>
-          ) : (
-            "The orgas assign the group's seats after the deadline."
-          )}
-        </p>
-      )}
-      {q && (
-        <p className="text-xs text-muted" aria-live="polite">
-          {matchCount ? `${matchCount} match${matchCount > 1 ? "es" : ""} highlighted` : "Nobody found on the plan"}
-        </p>
-      )}
-      {hint && (
-        <p className="flex flex-wrap items-center gap-2 rounded-md border border-bit/30 bg-bit-soft px-3 py-2 text-sm text-fg" aria-live="polite">
-          {hint}
-          {(swapFrom || placing) && (
-            <button type="button" className="ml-auto text-sm text-muted underline hover:text-fg" onClick={() => (setSwapFrom(null), setPlacing(null))}>
-              Cancel
-            </button>
-          )}
-        </p>
-      )}
-
-      <div className={compact ? "grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_17rem]" : "space-y-4"}>
-        <div className="min-w-0 space-y-3">
-          <div className={`overflow-x-auto pb-1 ${pending ? "opacity-70" : ""}`}>
-            <div
-              data-seat-grid
-              className="grid scroll-mt-20 gap-[3px] [--seat-min:1.625rem] sm:gap-1 sm:[--seat-min:2.25rem]"
-              style={{
-                gridTemplateColumns: `1.25rem repeat(${cols}, ${colW})`,
-                maxWidth: maxW,
-                minWidth: compact ? undefined : `calc(${cols} * 5rem + 1.25rem)`,
-              }}
-            >
-              {Array.from({ length: rows * (cols + 1) }, (_, j) => {
-                const row = Math.floor(j / (cols + 1));
-                const col = (j % (cols + 1)) - 1;
-                const key = `${row}:${col}`;
-                if (col === -1) {
-                  const first = seats.find((x) => x.row === row);
-                  const letter = first?.label.match(/^[A-Za-z]+/)?.[0] ?? rowLetter(row);
-                  return admin && layout ? (
-                    <button
-                      key={key}
-                      onClick={() => run(() => toggleSeatRow(lanId, row))}
-                      className={`${cell} rounded font-mono text-xs text-muted hover:bg-raised hover:text-fg`}
-                      title={`Fill or clear row ${letter}`}
-                    >
-                      {letter}
-                    </button>
-                  ) : (
-                    <div key={key} className={`${cell} grid place-items-center font-mono text-[11px] text-faint`}>
-                      {first ? letter : ""}
-                    </div>
-                  );
-                }
-                const s = byPos.get(key);
-                if (!s) {
-                  return admin && layout ? (
-                    <button
-                      key={key}
-                      onClick={() => onCell(row, col)}
-                      className={`${cell} rounded-bit border border-dashed border-line hover:border-muted/50`}
-                      aria-label={`Add seat at row ${row + 1}, column ${col + 1}`}
-                    />
-                  ) : (
-                    <div key={key} className={cell} />
-                  );
-                }
-                const mine = s.userId === meId;
-                const taken = !!s.userId;
-                const isSel = selectedId === s.id || swapFrom === s.id;
-                const hit = q && matches(s);
-                const dim = q && !hit;
-                const tone = mine
-                  ? "bg-bit text-on-bit border-bit"
-                  : taken
-                    ? "bg-seat-taken/20 text-seat-taken border-seat-taken/40"
-                    : s.locked
-                      ? "bg-raised/60 text-faint border-line [background-image:repeating-linear-gradient(45deg,transparent,transparent_3px,rgba(255,255,255,.05)_3px,rgba(255,255,255,.05)_6px)]"
-                      : "bg-raised text-muted border-line";
-                const ring = isSel
-                  ? "ring-2 ring-fg ring-offset-2 ring-offset-surface"
-                  : hit
-                    ? "ring-2 ring-warn ring-offset-1 ring-offset-surface"
-                    : dragOver === s.id
-                      ? "ring-2 ring-bit"
-                      : "";
-                const short = s.nick ? s.nick.slice(0, 3) : s.label;
-                return (
-                  <button
-                    key={key}
-                    type="button"
-                    data-seat={s.id}
-                    onClick={() => onCell(row, col, s)}
-                    draggable={canDrag && taken}
-                    onDragStart={(e) => onDragStartSeat(e, s)}
-                    onDragOver={canDrag ? (e) => (e.preventDefault(), setDragOver(s.id)) : undefined}
-                    onDragLeave={canDrag ? () => setDragOver(null) : undefined}
-                    onDrop={canDrag ? (e) => onDrop(e, s) : undefined}
-                    title={`${s.label}${s.nick ? ` · ${s.nick}` : ""}${s.locked ? " · held" : ""}`}
-                    aria-label={`Seat ${s.label}${s.nick ? `, ${s.nick}` : ", free"}${s.locked ? ", held" : ""}`}
-                    aria-pressed={isSel}
-                    className={`relative flex ${cell} min-w-0 flex-col items-center justify-center overflow-hidden rounded-bit border px-0.5 text-center transition hover:brightness-125 ${tone} ${ring} ${dim ? "opacity-25" : ""} ${canDrag && taken ? "cursor-grab active:cursor-grabbing" : ""}`}
-                  >
-                    {compact ? (
-                      <span className={`w-full truncate font-mono leading-none ${taken ? "text-[11px] font-semibold" : "text-[10px]"}`}>
-                        {short}
-                      </span>
-                    ) : (
-                      <>
-                        <span className="font-mono text-[11px] leading-none opacity-75">
-                          {s.label}
-                          {s.locked ? " 🔒" : ""}
-                        </span>
-                        {s.nick && (
-                          <span className="mt-0.5 line-clamp-2 w-full text-xs font-semibold leading-tight [overflow-wrap:anywhere]">{s.nick}</span>
-                        )}
-                      </>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
-            <Legend cls="bg-raised border-line">Free</Legend>
-            <Legend cls="bg-bit border-bit">You</Legend>
-            <Legend cls="bg-seat-taken/20 border-seat-taken/40">Taken</Legend>
-            <Legend cls="bg-raised/60 border-line">Held</Legend>
-          </div>
-          {error && <p className="text-sm text-danger">{error}</p>}
-
-          {admin && !layout && unseated.length > 0 && (
-            <div>
-              <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-muted">
-                Not seated yet <span className="text-faint">{unseated.length}</span>
-              </p>
-              <ul className="flex flex-wrap gap-1.5">
-                {unseated.map((p) => (
-                  <li key={p.id}>
-                    <button
-                      type="button"
-                      draggable
-                      onDragStart={(e) => onDragStartPerson(e, p.id)}
-                      onClick={() => {
-                        setPlacing(placing === p.id ? null : p.id);
-                        setSwapFrom(null);
-                        setSelectedId(null);
-                      }}
-                      aria-pressed={placing === p.id}
-                      className={`min-h-8 cursor-grab rounded-full border px-3 text-xs font-medium transition ${
-                        placing === p.id ? "border-bit bg-bit-soft text-bit" : "border-line bg-raised text-fg hover:border-muted/40"
-                      }`}
-                    >
-                      {p.nick}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-1.5 hidden text-xs text-faint lg:block">Drag a name onto a seat, or a seated person onto another seat to swap.</p>
-            </div>
-          )}
-        </div>
-
-        {/* Details: side panel on wide screens (compact zoom), bottom sheet on phones. */}
-        {!layout && (
+  const renderCell = (row: number, col: number) => {
+    const key = `${row}:${col}`;
+    const s = byPos.get(key);
+    if (!s) {
+      return admin && layout ? (
+        <button
+          key={key}
+          type="button"
+          onClick={() => onCell(row, col)}
+          className={`${cell} w-full rounded-bit border border-dashed border-line font-mono text-[10px] text-faint hover:border-muted/50 hover:text-muted`}
+          aria-label={`Add seat ${rowLetterOf(row)}${col + 1}`}
+          title={`Add ${rowLetterOf(row)}${col + 1}`}
+        >
+          {compact ? "+" : `${rowLetterOf(row)}${col + 1}`}
+        </button>
+      ) : (
+        <div key={key} className={`${cell} w-full`} />
+      );
+    }
+    const mine = s.userId === meId;
+    const taken = !!s.userId;
+    const isSel = selectedId === s.id || swapFrom === s.id;
+    const hit = q && matches(s);
+    const dim = q && !hit;
+    const tone = mine
+      ? "bg-bit text-on-bit border-bit"
+      : taken
+        ? "bg-seat-taken/20 text-seat-taken border-seat-taken/40"
+        : s.locked
+          ? "bg-raised/60 text-faint border-line [background-image:repeating-linear-gradient(45deg,transparent,transparent_3px,rgba(255,255,255,.05)_3px,rgba(255,255,255,.05)_6px)]"
+          : "bg-raised text-muted border-line";
+    const ring = isSel
+      ? "ring-2 ring-fg ring-offset-2 ring-offset-surface"
+      : hit
+        ? "ring-2 ring-warn ring-offset-1 ring-offset-surface"
+        : dragOver === s.id
+          ? "ring-2 ring-bit"
+          : "";
+    const short = s.nick ? s.nick.slice(0, 3) : s.label;
+    return (
+      <button
+        key={key}
+        type="button"
+        data-seat={s.id}
+        onClick={() => onCell(row, col, s)}
+        draggable={canDrag && taken}
+        onDragStart={(e) => onDragStartSeat(e, s)}
+        onDragOver={canDrag ? (e) => (e.preventDefault(), setDragOver(s.id)) : undefined}
+        onDragLeave={canDrag ? () => setDragOver(null) : undefined}
+        onDrop={canDrag ? (e) => onDrop(e, s) : undefined}
+        title={`${s.label}${s.nick ? ` · ${s.nick}` : ""}${s.locked ? " · held" : ""}`}
+        aria-label={`Seat ${s.label}${s.nick ? `, ${s.nick}` : ", free"}${s.locked ? ", held" : ""}`}
+        aria-pressed={isSel}
+        className={`relative flex ${cell} w-full min-w-0 flex-col items-center justify-center overflow-hidden rounded-bit border px-0.5 text-center transition hover:brightness-125 ${tone} ${ring} ${dim ? "opacity-25" : ""} ${canDrag && taken ? "cursor-grab active:cursor-grabbing" : ""}`}
+      >
+        {compact ? (
+          <span className={`w-full truncate font-mono leading-none ${taken ? "text-[11px] font-semibold" : "text-[10px]"}`}>{short}</span>
+        ) : (
           <>
-            <aside className={compact ? "hidden lg:block" : "hidden"}>
-              <div className="sticky top-20 rounded-card border border-line bg-raised/30 p-4">
-                {selected ? (
-                  <SeatDetails
-                    key={selected.id}
-                    seat={selected}
-                    person={selected.userId ? people.get(selected.userId) : undefined}
-                    meId={meId}
-                    admin={admin}
-                    picking={mode === "pick"}
-                    hasSeat={!!mySeat}
-                    assignable={assignable}
-                    seatOfUser={seatOfUser}
-                    pending={pending}
-                    onClose={() => setSelectedId(null)}
-                    onSwap={() => setSwapFrom(selected.id)}
-                    run={run}
-                    lanId={lanId}
-                  />
-                ) : (
-                  <p className="text-sm text-muted">
-                    {admin
-                      ? "Tap a seat to see who sits there, assign someone, swap, hold or rename it."
-                      : mode === "pick"
-                        ? "Tap a free seat to take it."
-                        : "Tap a seat to see who sits there."}
-                  </p>
-                )}
-              </div>
-            </aside>
-            {selected && (
-              <div
-                className={`fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-40 sm:bottom-4 sm:left-auto sm:right-4 sm:w-80 ${compact ? "lg:hidden" : ""}`}
-              >
-                <div className="max-h-[70dvh] overflow-y-auto rounded-t-card border border-line bg-surface p-4 pt-2 shadow-2xl shadow-black/70 sm:rounded-card sm:pt-4">
-                  <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-line sm:hidden" aria-hidden />
-                  <SeatDetails
-                    key={selected.id}
-                    seat={selected}
-                    person={selected.userId ? people.get(selected.userId) : undefined}
-                    meId={meId}
-                    admin={admin}
-                    picking={mode === "pick"}
-                    hasSeat={!!mySeat}
-                    assignable={assignable}
-                    seatOfUser={seatOfUser}
-                    pending={pending}
-                    onClose={() => setSelectedId(null)}
-                    onSwap={() => {
-                      setSwapFrom(selected.id);
-                      setSelectedId(null);
-                    }}
-                    run={run}
-                    lanId={lanId}
-                  />
-                </div>
-              </div>
+            <span className="font-mono text-[11px] leading-none opacity-75">
+              {s.label}
+              {s.locked ? " 🔒" : ""}
+            </span>
+            {s.nick && (
+              <span className="mt-0.5 line-clamp-2 w-full text-xs font-semibold leading-tight [overflow-wrap:anywhere]">{s.nick}</span>
             )}
           </>
         )}
+      </button>
+    );
+  };
+
+  // Each letter is one row; seats sit at their number (col = number - 1). Between number ranges of one row
+  // (e.g. F1-F20, F25-F30) a narrow gap marker shows the seats that aren't ours. In "Edit seats" every number
+  // gets a cell, so missing ones can be added.
+  type Item = { kind: "seat" | "empty"; col: number } | { kind: "gap"; from: number; to: number };
+  const maxRow = Math.max(rows - 1, ...seats.map((x) => x.row));
+  const rowList = Array.from({ length: maxRow + 1 }, (_, r) => r).filter((r) => layout || seats.some((x) => x.row === r));
+  const itemsFor = (row: number): Item[] => {
+    const inRow = seats.filter((x) => x.row === row).sort((a, b) => a.col - b.col);
+    if (admin && layout) {
+      // Every number up to one past the row's last seat (an empty row gets the block's width).
+      const last = inRow.length ? inRow.at(-1)!.col + 1 : cols - 1;
+      return Array.from({ length: last + 1 }, (_, c) => ({ kind: inRow.some((x) => x.col === c) ? "seat" : "empty", col: c }));
+    }
+    const out: Item[] = [];
+    inRow.forEach((x, i) => {
+      const prev = inRow[i - 1];
+      if (prev && x.col - prev.col > 1) out.push({ kind: "gap", from: prev.col + 2, to: x.col });
+      out.push({ kind: "seat", col: x.col });
+    });
+    return out;
+  };
+  const unit = (it: Item) => (it.kind === "gap" ? 0.5 : 1);
+  /** Splits a row into lines of about equal length that each fit the width. */
+  const linesFor = (items: Item[]): Item[][] => {
+    const total = items.reduce((n, it) => n + unit(it), 0);
+    const limit = Math.min(dims.cap, Math.ceil(total / Math.ceil(total / dims.cap)));
+    const lines: Item[][] = [[]];
+    let acc = 0;
+    for (const it of items) {
+      if (lines.at(-1)!.length && acc + unit(it) > limit + 1e-6) {
+        lines.push([]);
+        acc = 0;
+      }
+      lines.at(-1)!.push(it);
+      acc += unit(it);
+    }
+    return lines;
+  };
+  const anyGap = !layout && rowList.some((r) => itemsFor(r).some((it) => it.kind === "gap"));
+
+  const details = (onSwap: () => void) =>
+    selected && (
+      <SeatDetails
+        key={selected.id}
+        seat={selected}
+        person={selected.userId ? people.get(selected.userId) : undefined}
+        meId={meId}
+        admin={admin}
+        picking={mode === "pick"}
+        hasSeat={!!mySeat}
+        assignable={assignable}
+        seatOfUser={seatOfUser}
+        pending={pending}
+        onClose={() => setSelectedId(null)}
+        onSwap={onSwap}
+        run={run}
+        lanId={lanId}
+      />
+    );
+
+  return (
+    // Desktop: the map on the left, the details panel in its own column on the right of the page.
+    // Phones and tablets: the details open as a bottom sheet.
+    <div className={`grid items-start gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_22rem] ${pending ? "cursor-progress" : ""}`}>
+      <div className="min-w-0 space-y-4 sm:space-y-6">
+        <Card title={title} actions={actions}>
+          <div className="space-y-3">
+            {/* Toolbar: search, zoom, orga layout mode */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative min-w-0 flex-1 basis-40">
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Find someone"
+                  aria-label="Find someone on the seat plan"
+                  className={`${input} !min-h-9 pl-8`}
+                />
+                <svg viewBox="0 0 24 24" className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden>
+                  <circle cx="11" cy="11" r="6" />
+                  <path d="m20 20-4.5-4.5" />
+                </svg>
+              </div>
+              <div role="group" aria-label="Seat size" className="inline-flex rounded-md border border-line bg-raised p-0.5 text-xs">
+                {(["compact", "large"] as Zoom[]).map((z) => (
+                  <button
+                    key={z}
+                    type="button"
+                    onClick={() => setZoom(z)}
+                    aria-pressed={zoom === z}
+                    className={`min-h-8 rounded px-2.5 font-medium capitalize transition ${zoom === z ? "bg-line text-fg" : "text-muted hover:text-fg"}`}
+                  >
+                    {z}
+                  </button>
+                ))}
+              </div>
+              {admin && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLayout(!layout);
+                    setSelectedId(null);
+                    setSwapFrom(null);
+                    setPlacing(null);
+                  }}
+                  aria-pressed={layout}
+                  className={`${layout ? btnSecondary + " !border-bit" : btnGhost} !min-h-9`}
+                >
+                  {layout ? "Done editing seats" : "Edit seats"}
+                </button>
+              )}
+            </div>
+
+            {mode === "pick" && (
+              <p className="text-sm text-muted">
+                {mySeat
+                  ? `You're at ${mySeat.label}. Tap a free seat and "Move here" to change, or tap yours to give it up.`
+                  : "Tap a free seat, then \"Take this seat\". The orgas can still move people before they publish the plan."}
+              </p>
+            )}
+            {mode === "view" && (
+              <p className="text-sm text-muted">
+                {mySeat ? (
+                  <>
+                    You&apos;re at <strong className="font-mono text-bit">{mySeat.label}</strong>. Tap a seat to see who sits there.
+                  </>
+                ) : (
+                  "The orgas assign the group's seats after the deadline."
+                )}
+              </p>
+            )}
+            {q && (
+              <p className="text-xs text-muted" aria-live="polite">
+                {matchCount ? `${matchCount} match${matchCount > 1 ? "es" : ""} highlighted` : "Nobody found on the plan"}
+              </p>
+            )}
+            {hint && (
+              <p className="flex flex-wrap items-center gap-2 rounded-md border border-bit/30 bg-bit-soft px-3 py-2 text-sm text-fg" aria-live="polite">
+                {hint}
+                {(swapFrom || placing) && (
+                  <button type="button" className="ml-auto text-sm text-muted underline hover:text-fg" onClick={() => (setSwapFrom(null), setPlacing(null))}>
+                    Cancel
+                  </button>
+                )}
+              </p>
+            )}
+
+            <div ref={wrapRef} data-seat-grid className={`scroll-mt-20 space-y-2 overflow-x-auto ${pending ? "opacity-70" : ""}`}>
+              {rowList.map((row) => {
+                const lines = linesFor(itemsFor(row));
+                return (
+                  <div key={row} role="group" aria-label={`Row ${rowLetterOf(row)}`} className="flex items-start gap-1">
+                    {rowLabel(row, lines.length > 1)}
+                    <div className="min-w-0 flex-1" style={{ display: "grid", rowGap: dims.g }}>
+                      {lines.map((line, i) => (
+                        <div key={i} className={`flex ${i > 0 ? "ml-3" : ""}`} style={{ gap: dims.g }}>
+                          {line.map((it) =>
+                            it.kind === "gap" ? (
+                              <div
+                                key={`g${it.from}`}
+                                className={`${cell} grid shrink-0 place-items-center`}
+                                style={{ width: dims.w / 2 }}
+                                title={`${rowLetterOf(row)}${it.from}${it.to > it.from ? `–${rowLetterOf(row)}${it.to}` : ""} aren't ours`}
+                                aria-hidden
+                              >
+                                <span className="h-3/5 border-l-2 border-dotted border-faint/60" />
+                              </div>
+                            ) : (
+                              <div key={it.col} className="shrink-0" style={{ width: dims.w }}>
+                                {renderCell(row, it.col)}
+                              </div>
+                            ),
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
+              <Legend cls="bg-raised border-line">Free</Legend>
+              <Legend cls="bg-bit border-bit">You</Legend>
+              <Legend cls="bg-seat-taken/20 border-seat-taken/40">Taken</Legend>
+              <Legend cls="bg-raised/60 border-line">Held</Legend>
+              {anyGap && (
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="inline-block h-3 border-l-2 border-dotted border-faint/60" />
+                  Not our seats
+                </span>
+              )}
+            </div>
+            {error && <p className="text-sm text-danger">{error}</p>}
+
+            {admin && !layout && unseated.length > 0 && (
+              <div>
+                <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-muted">
+                  Not seated yet <span className="text-faint">{unseated.length}</span>
+                </p>
+                <ul className="flex flex-wrap gap-1.5">
+                  {unseated.map((p) => (
+                    <li key={p.id}>
+                      <button
+                        type="button"
+                        draggable
+                        onDragStart={(e) => onDragStartPerson(e, p.id)}
+                        onClick={() => {
+                          setPlacing(placing === p.id ? null : p.id);
+                          setSwapFrom(null);
+                          setSelectedId(null);
+                        }}
+                        aria-pressed={placing === p.id}
+                        className={`min-h-8 cursor-grab rounded-full border px-3 text-xs font-medium transition ${
+                          placing === p.id ? "border-bit bg-bit-soft text-bit" : "border-line bg-raised text-fg hover:border-muted/40"
+                        }`}
+                      >
+                        {p.nick}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-1.5 hidden text-xs text-faint lg:block">Drag a name onto a seat, or a seated person onto another seat to swap.</p>
+              </div>
+            )}
+          </div>
+        </Card>
+        {children}
       </div>
+
+      {/* Details panel: its own column on desktop, sticky while the page scrolls. */}
+      <aside className="hidden lg:sticky lg:top-20 lg:block">
+        <div className="rounded-card border border-line bg-surface p-4 sm:p-5">
+          {layout ? (
+            <p className="text-sm text-muted">
+              Editing seats. Each letter is one row and every number has a cell: tap a dashed cell to add that seat, a
+              seat to remove it, or a row letter to fill or clear the whole row. For new rows or many seats at once, use
+              the seat list below. Click <strong className="text-fg">Done editing seats</strong> when you&apos;re finished.
+            </p>
+          ) : selected ? (
+            details(() => setSwapFrom(selected.id))
+          ) : (
+            <div className="space-y-2 text-sm text-muted">
+              <p className="text-[11px] font-medium uppercase tracking-wide">Seat details</p>
+              <p>
+                {admin
+                  ? "Tap a seat to see who sits there, assign someone, swap, hold or rename it."
+                  : mode === "pick"
+                    ? "Tap a free seat to take it."
+                    : "Tap a seat to see who sits there."}
+              </p>
+              {mySeat && (
+                <p>
+                  Your seat: <strong className="font-mono text-bit">{mySeat.label}</strong>
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      </aside>
+
+      {/* Phones and tablets: bottom sheet. */}
+      {selected && !layout && (
+        <div className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-40 sm:bottom-4 sm:left-auto sm:right-4 sm:w-80 lg:hidden">
+          <div className="max-h-[70dvh] overflow-y-auto rounded-t-card border border-line bg-surface p-4 pt-2 shadow-2xl shadow-black/70 sm:rounded-card sm:pt-4">
+            <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-line sm:hidden" aria-hidden />
+            {details(() => {
+              setSwapFrom(selected.id);
+              setSelectedId(null);
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
 
 function SeatDetails({
   seat: s,
