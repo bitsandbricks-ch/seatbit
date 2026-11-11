@@ -9,7 +9,7 @@ export function LinkedAccounts({
   available,
 }: {
   linked: string[];
-  available: { discord: boolean; google: boolean };
+  available: { discord: boolean; google: boolean; email?: boolean };
 }) {
   return (
     <div className="space-y-3">

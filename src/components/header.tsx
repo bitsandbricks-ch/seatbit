@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { and, eq, isNull } from "drizzle-orm";
 import { db, schema } from "@/db";
+import { LOGIN_METHODS } from "@/lib/auth";
 import { getCurrentUser } from "@/lib/session";
 import { BottomNav, TopNav, type NavItem } from "./nav";
 import { SignOutButton } from "./sign-out-button";
@@ -51,11 +52,16 @@ export async function Header() {
               </>
             ) : (
               <>
-                <Link className="rounded-md px-3 py-1.5 text-sm text-muted hover:text-fg" href="/login">
-                  Sign in
-                </Link>
-                <Link className="rounded-md bg-bit px-3 py-1.5 text-sm font-medium text-ink hover:bg-bit-hover" href="/register">
-                  Register
+                {LOGIN_METHODS.email && (
+                  <Link className="rounded-md px-3 py-1.5 text-sm text-muted hover:text-fg" href="/login">
+                    Sign in
+                  </Link>
+                )}
+                <Link
+                  className="rounded-md bg-bit px-3 py-1.5 text-sm font-medium text-ink hover:bg-bit-hover"
+                  href={LOGIN_METHODS.email ? "/register" : "/login"}
+                >
+                  {LOGIN_METHODS.email ? "Register" : "Sign in"}
                 </Link>
               </>
             )}

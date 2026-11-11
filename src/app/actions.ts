@@ -81,7 +81,7 @@ const personName = z.string().trim().min(1).max(40);
 
 /** First name, surname and the user's own nickname (gamer tag, independent of events). */
 export async function updateProfile(formData: FormData) {
-  const me = await requireUser();
+  const me = await requireUser({ allowIncomplete: true });
   const firstName = personName.parse(formData.get("firstName"));
   const lastName = personName.parse(formData.get("lastName"));
   const emailReminders = formData.get("emailReminders") === "on";
@@ -91,6 +91,13 @@ export async function updateProfile(formData: FormData) {
     .run();
   if (formData.has("nick")) saveNick(me.id, String(formData.get("nick")));
   revalidatePath("/", "layout");
+}
+
+/** First-login form: saves the names and nickname, then continues to the app. */
+export async function completeProfile(formData: FormData) {
+  await updateProfile(formData);
+  const next = String(formData.get("next") ?? "/");
+  redirect(next.startsWith("/") && !next.startsWith("//") ? next : "/");
 }
 
 // ---------------- Admin actions ----------------

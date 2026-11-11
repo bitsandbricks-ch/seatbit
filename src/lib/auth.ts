@@ -23,11 +23,23 @@ function adminEmails() {
     .filter(Boolean);
 }
 
-/** Which social login buttons to show. */
+/**
+ * Login methods Seatbit offers. Discord only for now (decided 2026-11-11). Google
+ * and email/password still work in code: set them to true to bring them back.
+ * ALLOW_EMAIL_LOGIN=1 turns email login on for local development and tests.
+ */
+export const LOGIN_METHODS = {
+  discord: true,
+  google: false,
+  email: process.env.ALLOW_EMAIL_LOGIN === "1",
+};
+
+/** Which login methods are on and configured. */
 export function enabledProviders() {
   return {
-    discord: !!(getSetting("discord.clientId") && getSetting("discord.clientSecret")),
-    google: !!(getSetting("google.clientId") && getSetting("google.clientSecret")),
+    discord: LOGIN_METHODS.discord && !!(getSetting("discord.clientId") && getSetting("discord.clientSecret")),
+    google: LOGIN_METHODS.google && !!(getSetting("google.clientId") && getSetting("google.clientSecret")),
+    email: LOGIN_METHODS.email,
   };
 }
 
@@ -49,7 +61,7 @@ function build() {
       },
     }),
     emailAndPassword: {
-      enabled: true,
+      enabled: LOGIN_METHODS.email,
       minPasswordLength: 8,
       disableSignUp: !open,
       sendResetPassword: async ({ user, url }) => {
@@ -65,6 +77,7 @@ function build() {
         discord: {
           clientId: getSetting("discord.clientId")!,
           clientSecret: getSetting("discord.clientSecret")!,
+          // Discord asks for "identify" and "email" by default; the email is used for reminders.
           disableImplicitSignUp: !open,
         },
       }),

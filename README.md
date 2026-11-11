@@ -11,13 +11,13 @@ Seatbit helps a clan or group of friends coordinate going to LAN parties run by 
 - **Seat block**: a grid of the seats the group has. Orgas fill/clear rows, add/remove single seats for aisles, rename seats to match the event's numbering, hold seats for guests, and assign people. Members claim their own seat while seating is open.
 - **CSV export** of the group (seat, nick, name, email, status, ticket) to hand to the event's organisers.
 - **Nicknames**: several nicks per user, a primary default, and separate nicks per LAN.
-- **Login** with email & password, Discord or Google (accounts with the same email are linked). The first user to sign up becomes global admin.
+- **Login with Discord.** The Discord login asks for the account's email, which is used for reminders. On first login members give their first name, surname and nickname (gamer tag). The first user to sign up becomes global admin. Google and email/password login are switched off for now; turn them back on in `LOGIN_METHODS` in `src/lib/auth.ts`. `ALLOW_EMAIL_LOGIN=1` enables email login for local development and tests.
 
 Brand assets and guidelines are in `brand/` (see `brand/BRAND.md`).
 
 ## Platform settings
 
-Global admins can configure the platform under **Admin → Platform settings** (`/admin/settings`) without touching the server: SMTP mail relay (with a "send test mail" button), Discord login and bot credentials (with a "check bot & register slash commands" button), Google login, sign-up on/off, admin emails, the reminder interval and the cron secret.
+Global admins can configure the platform under **Admin → Platform settings** (`/admin/settings`) without touching the server: SMTP mail relay (with a "send test mail" button), Discord login and bot credentials (with a "check bot & register slash commands" button), sign-up on/off, admin emails, the reminder interval and the cron secret.
 
 - A value saved there wins over the matching environment variable. Clearing it falls back to the env var, then to the default. Each field shows where its current value comes from.
 - Passwords, client secrets and tokens are encrypted (AES-256-GCM) before they are stored, and are never shown again; the page only shows whether one is set and its last four characters.
@@ -64,7 +64,7 @@ What it does, per clan:
 - `/lans` shows the server's clan's upcoming LANs and your status, privately, with answer buttons (in DMs: all your clans).
 - Orgas can re-post or post reminders by hand on the LAN's manage page; clan admins can unlink channels in clan settings.
 
-Members are matched by their linked Discord account. Anyone who signed up with email can link Discord on their profile.
+Members are matched by their linked Discord account. Everyone signs in with Discord, so every member is matched automatically.
 
 ### WhatsApp
 
