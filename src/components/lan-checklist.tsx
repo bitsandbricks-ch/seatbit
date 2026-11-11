@@ -1,17 +1,23 @@
 "use client";
 import type { ChecklistStep } from "@/lib/checklist";
 import { TicketConfirm } from "./ticket-confirm";
+import { BookedToggle } from "./seat-booking";
 
 export function LanChecklist({
   lanId,
   steps,
   ticketBought,
   canReportTicket,
+  planUrl,
+  seatBooked = false,
 }: {
   lanId: string;
   steps: ChecklistStep[];
   ticketBought: boolean;
   canReportTicket: boolean;
+  /** The event's own seat plan, for the "book your seat" step. */
+  planUrl?: string;
+  seatBooked?: boolean;
 }) {
   const done = steps.filter((s) => s.state === "done").length;
   return (
@@ -38,6 +44,11 @@ export function LanChecklist({
                 {s.title}
               </p>
               {s.hint && <p className="text-xs text-muted">{s.hint}</p>}
+              {s.key === "book" && planUrl && (
+                <div className="mt-2">
+                  <BookedToggle lanId={lanId} booked={seatBooked} planUrl={planUrl} />
+                </div>
+              )}
               {s.key === "ticket" && s.state !== "done" && canReportTicket && (
                 <div className="mt-2">
                   <TicketConfirm lanId={lanId} bought={ticketBought} confirmed={false} />

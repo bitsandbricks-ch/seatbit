@@ -24,6 +24,7 @@ import { eventMailVars, renderTemplate } from "@/lib/mail-templates";
 import { canViewLan, requireAdmin, requireClanManager, requireLanManager, requireUser } from "@/lib/session";
 import { isClanMember } from "@/lib/clans";
 import { lanAccountScope, saveLanAccount } from "@/lib/lan-accounts";
+import { bookedButton, bookingLine, clearSeatBooked } from "@/lib/seat-booking";
 
 const { attendance, nickname, seat, lan, user, lanOrga, lanType } = schema;
 
@@ -162,6 +163,7 @@ const lanInput = z.object({
   location: z.string().max(200).default(""),
   websiteUrl: z.union([z.literal(""), z.url().max(500)]).default(""),
   ticketUrl: z.union([z.literal(""), z.url().max(500)]).default(""),
+  externalPlanUrl: z.union([z.literal(""), z.url().max(500)]).default(""),
   startsAt: z.string().min(1).transform((v) => new Date(v)),
   endsAt: z.string().min(1).transform((v) => new Date(v)),
   signupDeadline: optDate,
@@ -263,6 +265,7 @@ export async function adminAssignSeat(seatId: string, userId: string | null) {
   const s = db.select().from(seat).where(eq(seat.id, seatId)).get();
   if (!s) return;
   await requireLanManager(s.lanId);
+  if (s.userId !== userId) clearSeatBooked(s.lanId, [s.userId, userId]);
   db.transaction((tx) => {
     if (userId) {
       tx.update(seat)
@@ -300,6 +303,7 @@ export async function adminSetPaid(attendanceId: string, paid: boolean) {
   if (!a) return;
   await requireLanManager(a.lanId);
   db.update(attendance).set({ paid }).where(eq(attendance.id, attendanceId)).run();
+  refreshLanMessagesSoon(a.lanId);
   lanPath(a.lanId);
 }
 
@@ -362,6 +366,7 @@ export async function setMyTicketBought(lanId: string, bought: boolean) {
   if (!a) throw new Error("Say whether you're coming first");
   if (a.paid) throw new Error("An orga already confirmed your ticket. Ask them if something changed.");
   db.update(attendance).set({ ticketBought: bought }).where(eq(attendance.id, a.id)).run();
+  refreshLanMessagesSoon(lanId);
   lanPath(lanId);
 }
 
@@ -476,6 +481,7 @@ export async function adminSwapSeats(seatA: string, seatB: string) {
   const b = db.select().from(seat).where(eq(seat.id, seatB)).get();
   if (!a || !b || a.id === b.id || a.lanId !== b.lanId) return;
   await requireLanManager(a.lanId);
+  clearSeatBooked(a.lanId, [a.userId, b.userId]);
   // (lan, user) is unique, so empty both seats first, then fill them crosswise.
   db.transaction((tx) => {
     tx.update(seat).set({ userId: null }).where(inArray(seat.id, [a.id, b.id])).run();
@@ -517,12 +523,16 @@ export async function pickMySeat(lanId: string, seatId: string | null) {
     tx.update(seat).set({ userId: null }).where(and(eq(seat.lanId, lanId), eq(seat.userId, me.id))).run();
     if (seatId) tx.update(seat).set({ userId: me.id }).where(eq(seat.id, seatId)).run();
   });
+  clearSeatBooked(lanId, [me.id]);
   lanPath(lanId);
 }
 
 /** Assigns a seat to an attendee from the attendee list (seatId null = no seat). */
 export async function adminSetSeatFor(lanId: string, userId: string, seatId: string | null) {
   await requireLanManager(lanId);
+  const before = db.select().from(seat).where(and(eq(seat.lanId, lanId), eq(seat.userId, userId))).get();
+  const target = seatId ? db.select().from(seat).where(eq(seat.id, seatId)).get() : undefined;
+  if (before?.id !== seatId) clearSeatBooked(lanId, [userId, target?.userId]);
   db.transaction((tx) => {
     tx.update(seat)
       .set({ userId: null })
@@ -572,6 +582,8 @@ export async function adminAutoAssignSeats(lanId: string, mode: "fill" | "replan
   db.transaction((tx) => {
     for (const [userId, seatId] of plan) tx.update(seat).set({ userId }).where(eq(seat.id, seatId)).run();
   });
+  // Replanning can move anyone; filling only seats people who had none.
+  clearSeatBooked(lanId, mode === "replan" ? everyone.map((p) => p.userId) : [...plan.keys()]);
   lanPath(lanId);
   // After the plan is out, tell people whose seat changed.
   const l = mustGetLan(lanId);
@@ -638,9 +650,15 @@ export async function publishSeats(lanId: string, notify: boolean): Promise<numb
           ...renderTemplate("seatsPublished", {
             ...eventMailVars(l, u),
             seat: mine?.label,
-            seatInfo: mine ? `You're sitting at ${mine.label}.` : "You don't have a seat yet, an orga will get back to you.",
+            seatInfo: mine
+              ? [`You're sitting at ${mine.label}.`, bookingLine(l, mine.label)].filter(Boolean).join(" ")
+              : "You don't have a seat yet, an orga will get back to you.",
           }),
           url: `${appUrl}/lans/${l.id}`,
+          buttons:
+            mine && l.externalPlanUrl
+              ? [bookedButton(l.id), { type: 2, style: 5, label: "Event seat plan", url: l.externalPlanUrl }]
+              : undefined,
         });
         if (r.email || r.dm) sent++;
       } catch (e) {

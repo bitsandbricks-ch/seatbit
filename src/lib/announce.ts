@@ -19,6 +19,11 @@ export type LanSummary = {
   undecided: User[];
   /** Attendees (going or waitlist) without a ticket. */
   noTicket: User[];
+  /** Going without a ticket (neither reported nor confirmed). */
+  goingNoTicket: number;
+  /** Going with a seat, and how many of them booked it on the event site. */
+  seated: number;
+  booked: number;
 };
 
 /** Who is coming, who hasn't answered and who still needs a ticket, with display nicks. */
@@ -39,7 +44,20 @@ export async function lanSummary(l: Lan): Promise<LanSummary> {
       .filter((r) => r.status === status)
       .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
       .map((r) => ({ userId: r.userId, nick: names.get(r.userId) ?? "?" }));
+  const seatedIds = new Set(
+    db
+      .select({ userId: schema.seat.userId })
+      .from(schema.seat)
+      .where(eq(schema.seat.lanId, l.id))
+      .all()
+      .map((s) => s.userId),
+  );
+  const goingRows = rows.filter((r) => r.status === "going");
+  const seatedRows = l.seatsPublishedAt && l.externalPlanUrl ? goingRows.filter((r) => seatedIds.has(r.userId)) : [];
   return {
+    goingNoTicket: goingRows.filter((r) => !r.paid && !r.ticketBought).length,
+    seated: seatedRows.length,
+    booked: seatedRows.filter((r) => r.seatBooked).length,
     going: withNick("going").sort((a, b) => a.nick.localeCompare(b.nick)),
     maybe: withNick("maybe").sort((a, b) => a.nick.localeCompare(b.nick)),
     waitlist: withNick("waitlist"),
