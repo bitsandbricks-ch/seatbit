@@ -6,8 +6,11 @@ FROM node:22-bookworm-slim AS base
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# better-sqlite3 ships prebuilt binaries for linux x64/arm64, so no compiler is needed.
+# better-sqlite3 compiles its native addon on install (node-gyp), so the deps
+# stage needs build tools. They don't end up in the final image.
 FROM base AS deps
+RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ \
+  && rm -rf /var/lib/apt/lists/*
 COPY package.json package-lock.json ./
 RUN npm ci
 
