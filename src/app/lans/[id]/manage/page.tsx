@@ -7,9 +7,9 @@ import { AttendanceTable } from "@/components/attendance-table";
 import { LanForm } from "@/components/lan-form";
 import { ReminderButtons } from "@/components/reminder-buttons";
 import { SeatMap } from "@/components/seat-map";
-import { ClanAvatar } from "@/components/clan-avatar";
+import { EventHeader } from "@/components/event-header";
 import { Card, Pill, btnDanger, btnPrimary, btnSecondary } from "@/components/ui";
-import { fmtDate, fmtRange, relative, toInputValue } from "@/lib/format";
+import { fmtDate, relative, toInputValue } from "@/lib/format";
 import { getDisplayNames, getLan } from "@/lib/lans";
 import { dueKinds } from "@/lib/reminders";
 import { isLanManager, requireUser } from "@/lib/session";
@@ -27,10 +27,11 @@ import { personLabel } from "@/lib/names";
 
 const { attendance, seat, user, reminderLog } = schema;
 
+// Same order as the event page (Overview, Seats, Attendees), then the orga-only tabs.
 const TABS = [
   ["overview", "Overview"],
-  ["attendees", "Attendees"],
   ["seats", "Seats"],
+  ["attendees", "Attendees"],
   ["chat", "Discord & WhatsApp"],
   ["settings", "Settings"],
 ] as const;
@@ -211,26 +212,18 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <Link href={`/lans/${l.id}`} className="-ml-1 inline-flex min-h-8 items-center gap-1 rounded-md px-1 text-sm text-muted hover:text-fg">
-            <span aria-hidden>←</span> Back to event
-          </Link>
-          <h1 className="truncate text-2xl font-bold tracking-tight sm:text-3xl">{l.name}</h1>
-          <p className="text-sm text-muted">{fmtRange(l.startsAt, l.endsAt)}</p>
-          {lanClan && (
-            <Link href={`/clans/${lanClan.slug}`} className="mt-1.5 inline-flex items-center gap-1.5 text-sm text-muted hover:text-fg">
-              <ClanAvatar clan={lanClan} size={20} />
-              <span className="truncate">
-                Managed by <span className="text-fg">{lanClan.name}</span>
-              </span>
-            </Link>
-          )}
-        </div>
-        <a href={`/lans/${l.id}/manage/export`} className={btnSecondary}>
-          Export CSV
-        </a>
-      </div>
+      <EventHeader
+        lan={l}
+        clan={lanClan}
+        mode="manage"
+        canManage
+        tab={tab}
+        actions={
+          <a href={`/lans/${l.id}/manage/export`} className={btnSecondary}>
+            Export CSV
+          </a>
+        }
+      />
 
       <div className="sticky top-14 z-20 -mx-4 bg-ink/95 px-4 backdrop-blur sm:mx-0 sm:px-0">
         <Tabs
@@ -250,21 +243,27 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
       </div>
 
       {tab === "overview" && (
-        <div className="space-y-5">
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        // Same shape as the event page: the main things on the left, dates in a sidebar on the right.
+        <div className="grid grid-cols-1 items-start gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_22rem]">
+          <div className="order-last space-y-4 sm:space-y-6 lg:order-none lg:col-start-2 lg:row-start-1">
+            <Card title="Dates">
+              <dl className="space-y-3 text-sm">
+                <DateItem label="Answer by" d={l.signupDeadline} now={now} />
+                <DateItem label="Buy ticket by" d={l.paymentDueDate} now={now} />
+                <DateItem label="Starts" d={l.startsAt} now={now} />
+              </dl>
+              <Link href={`/lans/${l.id}/manage?tab=settings`} className="mt-4 inline-block text-sm text-bit hover:underline">
+                Change dates
+              </Link>
+            </Card>
+          </div>
+          <div className="min-w-0 space-y-4 sm:space-y-6 lg:col-start-1 lg:row-start-1">
+          <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
             <Stat label="Coming" value={`${going.length}${l.capacity ? ` / ${l.capacity}` : ""}`} sub={`${count("waitlist")} waitlist`} href={`/lans/${l.id}/manage?tab=attendees`} />
             <Stat label="Unsure / no answer" value={`${count("maybe")} / ${noAnswer}`} sub={`${count("declined")} not coming`} href={`/lans/${l.id}/manage?tab=attendees`} />
             <Stat label="Tickets" value={`${ticketsConfirmed} / ${going.length}`} sub={`${ticketsReported} to confirm`} href={`/lans/${l.id}/manage?tab=attendees`} />
             <Stat label="Seats" value={`${seated} / ${going.length}`} sub={seats.length ? `${freeSeats} free of ${seats.length}` : "no seats yet"} href={`/lans/${l.id}/manage?tab=seats`} />
           </div>
-
-          <Card title="Dates">
-            <dl className="grid gap-3 text-sm sm:grid-cols-3">
-              <DateItem label="Answer by" d={l.signupDeadline} now={now} />
-              <DateItem label="Buy ticket by" d={l.paymentDueDate} now={now} />
-              <DateItem label="Starts" d={l.startsAt} now={now} />
-            </dl>
-          </Card>
 
           <Card title="Reminders">
             <div className="space-y-4 text-sm">
@@ -298,6 +297,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               )}
             </div>
           </Card>
+          </div>
         </div>
       )}
 
@@ -476,15 +476,16 @@ function Stat({ label, value, sub, href }: { label: string; value: string; sub: 
 
 function DateItem({ label, d, now }: { label: string; d: Date | null; now: Date }) {
   return (
-    <div>
-      <dt className="text-xs uppercase tracking-wide text-faint">{label}</dt>
-      <dd>
+    <div className="flex justify-between gap-2">
+      <dt className="text-muted">{label}</dt>
+      <dd className="text-right">
         {d ? (
           <>
-            {fmtDate(d)} <span className={d < now ? "text-faint" : "text-warn"}>({relative(d, now)})</span>
+            {fmtDate(d)}
+            <span className={`block text-xs ${d < now ? "text-faint" : "text-warn"}`}>{relative(d, now)}</span>
           </>
         ) : (
-          <span className="text-faint">—</span>
+          <span className="text-faint">not set</span>
         )}
       </dd>
     </div>

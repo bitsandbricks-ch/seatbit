@@ -90,9 +90,10 @@ function ChecklistStrip({
         </div>
         <span className={`text-sm ${all ? "font-medium text-bit" : "text-muted"}`}>{all ? "All set" : `${done} / ${steps.length}`}</span>
       </div>
-      <ol className={`grid grid-cols-2 gap-x-4 gap-y-3 ${steps.length >= 4 ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
+      <ol className={`grid gap-x-4 gap-y-3 sm:grid-cols-2 ${steps.length >= 4 ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
         {steps.map((s, i) => (
-          <li key={s.key} className="flex gap-2.5">
+          // Phones: only the steps still open, so the strip stays short above the tabs.
+          <li key={s.key} className={`${s.state === "done" && !all ? "hidden sm:flex" : "flex"} gap-2.5`}>
             <StepIcon s={s} i={i} />
             <div className="min-w-0 flex-1">
               <p className={`text-sm font-medium leading-6 ${s.state === "done" ? "text-muted" : "text-fg"}`}>{s.title}</p>

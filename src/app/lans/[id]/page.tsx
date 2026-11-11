@@ -7,12 +7,12 @@ import { NickManager } from "@/components/nick-manager";
 import { LanIdForm } from "@/components/lan-id-form";
 import { getLanAccounts } from "@/lib/lan-accounts";
 import { SeatMap } from "@/components/seat-map";
-import { Card, Pill, StatusBadge, btnGhost, btnSecondary } from "@/components/ui";
-import { fmtDate, fmtRange, relative } from "@/lib/format";
+import { Card, Pill, StatusBadge } from "@/components/ui";
+import { fmtDate, relative } from "@/lib/format";
 import { ATTENDANCE_LOCKED_MSG, attendanceLocked, getDisplayNames, getLan, pickNick, signupClosed } from "@/lib/lans";
 import { canViewLan, isLanManager, requireUser } from "@/lib/session";
 import { getClan } from "@/lib/clans";
-import { ClanAvatar } from "@/components/clan-avatar";
+import { EventHeader } from "@/components/event-header";
 import { buildChecklist } from "@/lib/checklist";
 import { LanChecklist } from "@/components/lan-checklist";
 import { SeatWishes } from "@/components/seat-wishes";
@@ -170,43 +170,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
-        <div className="min-w-0">
-          {lanClan && (
-            <Link href={`/clans/${lanClan.slug}`} className="mb-1.5 inline-flex items-center gap-1.5 text-sm text-muted hover:text-fg">
-              <ClanAvatar clan={lanClan} size={20} />
-              <span className="truncate">
-                <span className="text-faint">Event of </span>
-                <span className="text-fg">{lanClan.name}</span>
-              </span>
-            </Link>
-          )}
-          <h1 className="text-2xl font-bold tracking-tight text-balance sm:text-3xl">{l.name}</h1>
-          <p className="mt-1 text-sm text-muted sm:text-base">
-            {fmtRange(l.startsAt, l.endsAt)}
-            {l.location && <span className="block sm:inline"><span className="hidden sm:inline"> · </span>{l.location}</span>}
-          </p>
-          {(l.websiteUrl || l.ticketUrl) && (
-            <p className="mt-3 flex flex-wrap gap-2 text-sm">
-              {l.websiteUrl && (
-                <a href={l.websiteUrl} target="_blank" rel="noreferrer" className={`${btnGhost} border border-line !text-bit`}>
-                  Event website <span aria-hidden>↗</span>
-                </a>
-              )}
-              {l.ticketUrl && (
-                <a href={l.ticketUrl} target="_blank" rel="noreferrer" className={`${btnGhost} border border-line !text-bit`}>
-                  Ticket shop <span aria-hidden>↗</span>
-                </a>
-              )}
-            </p>
-          )}
-        </div>
-        {isAdmin && (
-          <Link href={`/lans/${l.id}/manage`} className={btnSecondary}>
-            Manage
-          </Link>
-        )}
-      </div>
+      <EventHeader lan={l} clan={lanClan} mode="view" canManage={isAdmin} tab={tab} />
 
       {/* Your answer and your checklist sit above the tabs, so they show on every tab. */}
       <div className={`grid items-stretch gap-4 ${my && my.status !== "declined" ? "lg:grid-cols-[20rem_minmax(0,1fr)] 2xl:grid-cols-[22rem_minmax(0,1fr)]" : ""}`}>
