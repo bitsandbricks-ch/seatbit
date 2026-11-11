@@ -2,7 +2,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { authClient } from "@/lib/auth-client";
-import { btnPrimary, Field, Input } from "@/components/ui";
+import { btnPrimary, cardPage, cardPageTitle, Field, Input } from "@/components/ui";
 
 function ResetForm() {
   const token = useSearchParams().get("token");
@@ -31,8 +31,8 @@ function ResetForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <div className="mx-auto max-w-sm space-y-4 rounded-xl border border-line bg-surface p-6">
-      <h1 className="text-xl font-semibold">Choose a new password</h1>
+    <div className={cardPage}>
+      <h1 className={cardPageTitle}>Choose a new password</h1>
       <Suspense>
         <ResetForm />
       </Suspense>

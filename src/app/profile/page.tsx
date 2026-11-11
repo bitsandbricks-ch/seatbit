@@ -7,7 +7,7 @@ import { NickManager } from "@/components/nick-manager";
 import { LanIdForm } from "@/components/lan-id-form";
 import { pickLanAccount } from "@/lib/lan-accounts";
 import { SignOutButton } from "@/components/sign-out-button";
-import { Card, Field, Input, btnPrimary, btnSecondary } from "@/components/ui";
+import { Avatar, Card, Columns, Field, Input, Page, PageHeader, btnPrimary, btnSecondary } from "@/components/ui";
 import { enabledProviders } from "@/lib/auth";
 import { requireUser } from "@/lib/session";
 import { missingServers } from "@/lib/discord-invite";
@@ -45,19 +45,28 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
     dmParam === "cant_dm" ? (await Promise.all(clanIds.map((id) => missingServers(me.id, id)))).flat() : [];
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div className="flex items-center gap-4">
-        <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-bit-soft font-mono text-lg font-semibold uppercase text-bit">
-          {(defaultNick || me.firstName || me.name).slice(0, 2)}
-        </span>
-        <div className="min-w-0">
-          <h1 className="truncate text-2xl font-bold tracking-tight">{defaultNick || me.name}</h1>
-          <p className="truncate text-sm text-muted">
+    <Page>
+      <PageHeader
+        avatar={<Avatar text={defaultNick || me.firstName || me.name} size={56} />}
+        title={defaultNick || me.name}
+        subtitle={
+          <span className="block truncate">
             {me.name} · {me.email}
-          </p>
-        </div>
-      </div>
-
+          </span>
+        }
+      />
+      <Columns
+        aside={
+          <>
+            <Card title="Sign-in methods">
+              <LinkedAccounts linked={accounts.map((a) => a.providerId)} available={enabledProviders()} />
+            </Card>
+            <div className="sm:hidden">
+              <SignOutButton className={`${btnSecondary} w-full`} />
+            </div>
+          </>
+        }
+      >
       <Card title="Account">
         <form action={updateProfile} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
@@ -79,12 +88,14 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
             </span>
           </label>
           <input type="hidden" name="discordDmsShown" value="1" />
-          <label className="flex items-start gap-2 text-sm">
-            <input type="checkbox" name="discordDms" defaultChecked={me.discordDms} className="mt-0.5 accent-bit" />
+          <label className="flex cursor-pointer items-start gap-3 rounded-md border border-line bg-raised/40 p-3 text-sm">
+            <input type="checkbox" name="discordDms" defaultChecked={me.discordDms} className="mt-0.5" />
             <span>
-              Send me Discord DMs when something changes for me: seat, seat plan, event details, reminders, clan
-              requests
-              {!hasDiscord && <span className="block text-xs text-faint">Link Discord below to get them.</span>}
+              Discord DMs
+              <span className="block text-xs text-muted">
+                When something changes for me: seat, seat plan, event details, reminders, clan requests.
+                {!hasDiscord && " Link Discord under Sign-in methods to get them."}
+              </span>
             </span>
           </label>
           <button className={btnPrimary}>Save</button>
@@ -134,13 +145,7 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
         </Card>
       )}
 
-      <Card title="Sign-in methods">
-        <LinkedAccounts linked={accounts.map((a) => a.providerId)} available={enabledProviders()} />
-      </Card>
-
-      <div className="sm:hidden">
-        <SignOutButton className={`${btnSecondary} w-full`} />
-      </div>
-    </div>
+      </Columns>
+    </Page>
   );
 }

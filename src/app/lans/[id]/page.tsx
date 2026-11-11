@@ -7,7 +7,7 @@ import { NickManager } from "@/components/nick-manager";
 import { LanIdForm } from "@/components/lan-id-form";
 import { getLanAccounts } from "@/lib/lan-accounts";
 import { SeatMap } from "@/components/seat-map";
-import { Card, Pill, StatusBadge } from "@/components/ui";
+import { Card, Page, Pill, StatusBadge } from "@/components/ui";
 import { fmtDate, relative } from "@/lib/format";
 import { ATTENDANCE_LOCKED_MSG, attendanceLocked, getDisplayNames, getLan, pickNick, signupClosed } from "@/lib/lans";
 import { canViewLan, isLanManager, requireUser } from "@/lib/session";
@@ -169,7 +169,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
   );
 
   return (
-    <div className="space-y-6">
+    <Page>
       <EventHeader lan={l} clan={lanClan} mode="view" canManage={isAdmin} tab={tab} />
 
       {/* Your answer and your checklist sit above the tabs, so they show on every tab. */}
@@ -209,7 +209,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
         tabs={[
           { id: "overview", label: "Overview" },
           { id: "seats", label: "Seats", badge: picking && seats.length > 0 ? "pick yours" : undefined },
-          { id: "attendees", label: `Attendees ${going.length}` },
+          { id: "attendees", label: "Attendees", count: going.length },
           { id: "travel", label: "Travel", badge: openRequests ? `${openRequests} looking` : undefined },
           { id: "gear", label: "Packing list" },
         ]}
@@ -411,7 +411,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           </div>
         </div>
       )}
-    </div>
+    </Page>
   );
 }
 

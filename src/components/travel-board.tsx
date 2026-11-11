@@ -9,7 +9,7 @@ import {
   type TravelInput,
 } from "@/app/travel-gear-actions";
 import type { TravelKind } from "@/db/schema";
-import { Field, Input, Pill, btnGhost, btnPrimary, btnSecondary } from "./ui";
+import { Field, Input, Pill, Segmented, btnGhost, btnPrimary, btnSecondary } from "./ui";
 
 export type TravelPostView = {
   id: string;
@@ -111,23 +111,15 @@ export function TravelBoard({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div role="tablist" className="inline-flex rounded-lg border border-line bg-raised p-1 text-sm">
-          {(["ride", "sleep"] as const).map((k) => (
-            <button
-              key={k}
-              role="tab"
-              aria-selected={kind === k}
-              onClick={() => {
-                setKind(k);
-                setForm(null);
-              }}
-              className={`rounded-md px-3 py-1.5 font-medium ${kind === k ? "bg-line text-fg" : "text-muted hover:text-fg"}`}
-            >
-              {k === "ride" ? "Carpool" : "Sleeping"}
-              {count(k) > 0 && <span className="ml-1.5 text-xs text-muted">{count(k)}</span>}
-            </button>
-          ))}
-        </div>
+        <Segmented
+          label="Travel"
+          value={kind}
+          onChange={(k) => {
+            setKind(k);
+            setForm(null);
+          }}
+          options={(["ride", "sleep"] as const).map((k) => ({ id: k, label: k === "ride" ? "Carpool" : "Sleeping", count: count(k) }))}
+        />
         <p className="text-sm text-muted">
           <span className="text-bit">{free}</span> free {c.unit(free)} · <span className="text-warn">{looking}</span>{" "}
           looking

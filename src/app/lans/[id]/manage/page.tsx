@@ -8,7 +8,7 @@ import { LanForm } from "@/components/lan-form";
 import { ReminderButtons } from "@/components/reminder-buttons";
 import { SeatMap } from "@/components/seat-map";
 import { EventHeader } from "@/components/event-header";
-import { Card, Pill, btnDanger, btnPrimary, btnSecondary } from "@/components/ui";
+import { Card, Page, Pill, btnDanger, btnPrimary, btnSecondary } from "@/components/ui";
 import { fmtDate, relative, toInputValue } from "@/lib/format";
 import { getDisplayNames, getLan } from "@/lib/lans";
 import { dueKinds } from "@/lib/reminders";
@@ -211,7 +211,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
   );
 
   return (
-    <div className="space-y-5">
+    <Page>
       <EventHeader
         lan={l}
         clan={lanClan}
@@ -225,22 +225,20 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
         }
       />
 
-      <div className="sticky top-14 z-20 -mx-4 bg-ink/95 px-4 backdrop-blur sm:mx-0 sm:px-0">
-        <Tabs
-          tabs={TABS.map(([t, label]) => ({
-            id: t,
-            label,
-            badge:
-              t === "attendees" && ticketsReported
-                ? `${ticketsReported} to confirm`
-                : t === "seats" && going.length - seated > 0 && seats.length
-                  ? `${going.length - seated} unseated`
-                  : undefined,
-          }))}
-          active={tab}
-          hrefFor={(t) => `/lans/${l.id}/manage?tab=${t}`}
-        />
-      </div>
+      <Tabs
+        tabs={TABS.map(([t, label]) => ({
+          id: t,
+          label,
+          badge:
+            t === "attendees" && ticketsReported
+              ? `${ticketsReported} to confirm`
+              : t === "seats" && going.length - seated > 0 && seats.length
+                ? `${going.length - seated} unseated`
+                : undefined,
+        }))}
+        active={tab}
+        hrefFor={(t) => `/lans/${l.id}/manage?tab=${t}`}
+      />
 
       {tab === "overview" && (
         // Same shape as the event page: the main things on the left, dates in a sidebar on the right.
@@ -460,7 +458,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
           )}
         </div>
       )}
-    </div>
+    </Page>
   );
 }
 
