@@ -23,7 +23,7 @@ export function Card({
   className?: string;
 }) {
   return (
-    <section className={`rounded-xl border border-line bg-surface p-5 ${className}`}>
+    <section className={`min-w-0 rounded-card border border-line bg-surface p-4 sm:p-5 ${className}`}>
       {(title || actions) && (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           {title && <h2 className="text-lg font-semibold text-zinc-100">{title}</h2>}
@@ -44,7 +44,7 @@ const statusStyles: Record<AttendanceStatus | "none", string> = {
 };
 const statusText: Record<AttendanceStatus | "none", string> = {
   going: "Attending",
-  maybe: "Maybe",
+  maybe: "Unsure",
   declined: "Not going",
   waitlist: "Waitlist · full",
   none: "No answer",

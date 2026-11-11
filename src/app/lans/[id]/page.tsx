@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { AttendanceButtons } from "@/components/attendance-buttons";
 import { NickManager } from "@/components/nick-manager";
@@ -25,6 +25,11 @@ export default async function LanPage({ params }: PageProps<"/lans/[id]">) {
   const seats = db.select().from(seat).where(eq(seat.lanId, id)).all();
   const myNicks = db.select().from(nickname).where(eq(nickname.userId, me.id)).all();
   const lanType = l.typeId ? db.select().from(schema.lanType).where(eq(schema.lanType.id, l.typeId)).get() : undefined;
+  const orgaIds = db.select().from(schema.lanOrga).where(eq(schema.lanOrga.lanId, id)).all().map((o) => o.userId);
+  const orgas = orgaIds.length
+    ? db.select().from(schema.user).where(inArray(schema.user.id, orgaIds)).all()
+    : db.select().from(schema.user).where(eq(schema.user.role, "admin")).all();
+  const orgaNames = await getDisplayNames(id, orgas.map((o) => o.id));
   const myNick = pickNick(myNicks, { lanId: id, typeId: l.typeId }, me.name);
   const names = await getDisplayNames(id, [
     ...new Set([...rows.map((r) => r.userId), ...seats.flatMap((s) => (s.userId ? [s.userId] : []))]),
@@ -57,7 +62,7 @@ export default async function LanPage({ params }: PageProps<"/lans/[id]">) {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">{l.name}</h1>
+          <h1 className="text-2xl font-bold sm:text-3xl">{l.name}</h1>
           <p className="mt-1 text-zinc-400">
             {fmtDate(l.startsAt)} – {fmtDate(l.endsAt)}
             {l.location && <> · {l.location}</>}
@@ -84,8 +89,8 @@ export default async function LanPage({ params }: PageProps<"/lans/[id]">) {
         )}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="order-2 min-w-0 space-y-6 lg:order-1 lg:col-span-2">
           {l.description && (
             <Card>
               <p className="whitespace-pre-wrap text-zinc-300">{l.description}</p>
@@ -120,16 +125,16 @@ export default async function LanPage({ params }: PageProps<"/lans/[id]">) {
             title={`Attendees (${going.length}${l.capacity ? ` / ${l.capacity}` : ""})`}
             actions={full && <Pill tone="red">Full · new sign-ups go on the waitlist</Pill>}
           >
-            <AttendeeList title="Going" list={going} names={names} seatOf={seatOf} showPaid={isAdmin} meId={me.id} />
+            <AttendeeList title="Coming" list={going} names={names} seatOf={seatOf} showPaid={isAdmin} meId={me.id} />
             <AttendeeList title="Waitlist" list={group("waitlist")} names={names} seatOf={seatOf} showPaid={isAdmin} meId={me.id} />
-            <AttendeeList title="Maybe" list={group("maybe")} names={names} seatOf={seatOf} showPaid={false} meId={me.id} />
+            <AttendeeList title="Unsure" list={group("maybe")} names={names} seatOf={seatOf} showPaid={false} meId={me.id} />
             {group("declined").length > 0 && (
               <p className="mt-3 text-xs text-zinc-500">{group("declined").length} can&apos;t make it.</p>
             )}
           </Card>
         </div>
 
-        <div className="space-y-6">
+        <div className="order-1 min-w-0 space-y-6 lg:order-2">
           {my && my.status !== "declined" && (
             <Card title="Your checklist" actions={<span className="text-sm text-zinc-400">{prog.done} / {prog.total}</span>}>
               <LanChecklist
@@ -177,20 +182,40 @@ export default async function LanPage({ params }: PageProps<"/lans/[id]">) {
             </dl>
           </Card>
 
+          <Card title={orgaIds.length ? "Orgas" : "Contact"}>
+            <p className="mb-3 text-sm text-zinc-400">Questions about this LAN? Ask the orgas.</p>
+            <ul className="space-y-2">
+              {orgas.map((o) => (
+                <li key={o.id} className="flex items-center justify-between gap-2 text-sm">
+                  <span>
+                    <span className="font-medium text-zinc-100">{orgaNames.get(o.id) ?? o.name}</span>
+                    {orgaNames.get(o.id) !== o.name && <span className="text-zinc-500"> · {o.name}</span>}
+                  </span>
+                  <a
+                    href={`mailto:${o.email}?subject=${encodeURIComponent(l.name)}`}
+                    className="text-bit hover:underline"
+                  >
+                    Email
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </Card>
+
           <Card title={lanType ? `Your nick at ${lanType.name}` : "Your nick at this LAN"}>
             <p className="mb-3 text-sm text-zinc-400">
               Shown as <strong className="text-zinc-100">{myNick}</strong>.{" "}
               {lanType
-                ? `A nick added here is used for every ${lanType.name} event. `
-                : "A nick added here is used for this LAN only. "}
-              Your default nicks are on your{" "}
+                ? `The nick you set here is used for every ${lanType.name} event. `
+                : "The nick you set here is used for this LAN only. "}
+              Your default nick is on your{" "}
               <Link href="/profile" className="text-bit hover:underline">
                 profile
               </Link>
               .
             </p>
             {lanType ? (
-              <NickManager nicks={myNicks} typeId={lanType.id} />
+              <NickManager nicks={myNicks} typeId={lanType.id} placeholder={`Your ${lanType.name} nick`} />
             ) : (
               <NickManager nicks={myNicks} lanId={l.id} />
             )}

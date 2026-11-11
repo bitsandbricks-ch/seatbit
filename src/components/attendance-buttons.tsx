@@ -6,6 +6,7 @@ import { btn } from "./ui";
 
 const options: { status: AttendanceStatus; label: string; active: string }[] = [
   { status: "going", label: "I'm coming", active: "bg-bit text-ink" },
+  { status: "maybe", label: "Unsure", active: "bg-amber-400 text-ink" },
   { status: "declined", label: "Not coming", active: "bg-zinc-600 text-white" },
 ];
 

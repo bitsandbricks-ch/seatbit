@@ -59,7 +59,7 @@ The bot uses the same Discord application as the login. It runs inside the app (
 
 What it does:
 
-- Posts every new LAN as an announcement with **I'm in / Maybe / Can't make it** buttons. The attendee list on the post updates live, also when people answer on the website. `/seatbit announce` posts the current upcoming LANs in a channel.
+- Posts every new LAN as an announcement with **Coming / Unsure / Not coming** buttons. The attendee list on the post updates live, also when people answer on the website. `/seatbit announce` posts the current upcoming LANs in a channel.
 - Posts the answer, ticket and "starts tomorrow" reminders in the channel when they're due (same schedule as the emails), pinging the members they apply to.
 - `/lans` shows each member their upcoming LANs and status, privately, with answer buttons.
 - Orgas can re-post or post reminders by hand on the LAN's manage page.

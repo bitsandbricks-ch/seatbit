@@ -57,9 +57,9 @@ function attendanceButtons(l: Lan, disabled = false) {
     {
       type: 1,
       components: [
-        btn("going", "I'm in", 3),
-        btn("maybe", "Maybe", 2),
-        btn("declined", "Can't make it", 4),
+        btn("going", "Coming", 3),
+        btn("maybe", "Unsure", 2),
+        btn("declined", "Not coming", 4),
         { type: 2, style: 5, label: "Open in Seatbit", url: lanLink(l) },
       ],
     },
@@ -72,11 +72,11 @@ export async function lanMessage(l: Lan) {
   const closed = !!signupClosed(l);
   const fields = lanFacts(l).map(([name, value]) => ({ name, value: clip(value, 1024), inline: true }));
   fields.push({
-    name: `Going (${s.going.length}${l.capacity ? `/${l.capacity}` : ""})`,
+    name: `Coming (${s.going.length}${l.capacity ? `/${l.capacity}` : ""})`,
     value: list(s.going.map((g) => g.nick)),
     inline: false,
   });
-  if (s.maybe.length) fields.push({ name: `Maybe (${s.maybe.length})`, value: list(s.maybe.map((g) => g.nick)), inline: false });
+  if (s.maybe.length) fields.push({ name: `Unsure (${s.maybe.length})`, value: list(s.maybe.map((g) => g.nick)), inline: false });
   if (s.waitlist.length)
     fields.push({ name: `Waitlist (${s.waitlist.length})`, value: list(s.waitlist.map((g) => g.nick)), inline: false });
   return {
@@ -286,7 +286,7 @@ const reply = (content: string, extra: Json = {}) => ({
 
 const statusLabel: Record<AttendanceStatus, string> = {
   going: "✅ You're in",
-  maybe: "🤔 Marked as maybe",
+  maybe: "🤔 Marked as unsure",
   declined: "❌ Marked as not coming",
   waitlist: "⏳ It's full, you're on the waitlist",
 };
@@ -350,7 +350,7 @@ export function handleInteraction(i: Interaction): { response: Json; later?: () 
     const mine = userId
       ? new Map(db.select().from(attendance).where(eq(attendance.userId, userId)).all().map((a) => [a.lanId, a.status]))
       : new Map<string, AttendanceStatus>();
-    const label: Record<string, string> = { going: "going", maybe: "maybe", declined: "not going", waitlist: "waitlist" };
+    const label: Record<string, string> = { going: "going", maybe: "unsure", declined: "not going", waitlist: "waitlist" };
     const lines = upcoming.map(
       (l) => `**[${l.name}](<${lanLink(l)}>)** · ${fmtWhen(l.startsAt)}${userId ? ` · you: ${label[mine.get(l.id) ?? ""] ?? "no answer"}` : ""}`,
     );
@@ -360,9 +360,9 @@ export function handleInteraction(i: Interaction): { response: Json; later?: () 
         { components: upcoming.filter((l) => !signupClosed(l)).slice(0, 4).map((l) => ({
           type: 1,
           components: [
-            { type: 2, style: 3, label: clip(`In: ${l.name}`, 80), custom_id: `att:${l.id}:going` },
-            { type: 2, style: 2, label: "Maybe", custom_id: `att:${l.id}:maybe` },
-            { type: 2, style: 4, label: "Can't", custom_id: `att:${l.id}:declined` },
+            { type: 2, style: 3, label: clip(`Coming: ${l.name}`, 80), custom_id: `att:${l.id}:going` },
+            { type: 2, style: 2, label: "Unsure", custom_id: `att:${l.id}:maybe` },
+            { type: 2, style: 4, label: "Not coming", custom_id: `att:${l.id}:declined` },
           ],
         })) },
       ),

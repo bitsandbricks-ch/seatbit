@@ -8,7 +8,7 @@ import {
   adminSetSeatFor,
 } from "@/app/actions";
 import type { AttendanceStatus } from "@/db/schema";
-import { btnGhost, btnSecondary, input, StatusBadge } from "./ui";
+import { btnGhost, btnSecondary, input } from "./ui";
 
 export type AttendanceRow = {
   id: string;
@@ -25,6 +25,12 @@ export type AttendanceRow = {
 };
 
 const statuses: AttendanceStatus[] = ["going", "waitlist", "maybe", "declined"];
+const statusLabel: Record<AttendanceStatus, string> = {
+  going: "coming",
+  waitlist: "waitlist",
+  maybe: "unsure",
+  declined: "not coming",
+};
 
 export function AttendanceTable({
   lanId,
@@ -43,127 +49,122 @@ export function AttendanceTable({
   const run = (fn: () => Promise<unknown>) => start(async () => void (await fn()));
   const shown = rows.filter((r) => filter === "all" || r.status === filter);
 
+  const [q, setQ] = useState("");
+  const visible = shown.filter(
+    (r) => !q || `${r.nick} ${r.name} ${r.email}`.toLowerCase().includes(q.toLowerCase()),
+  );
+
   return (
     <div className={`space-y-4 ${pending ? "opacity-70" : ""}`}>
-      <div className="flex flex-wrap items-center gap-2 text-sm">
-        <span className="text-zinc-500">Show</span>
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 text-sm sm:mx-0 sm:flex-wrap sm:px-0">
         {(["all", ...statuses] as const).map((s) => (
           <button
             key={s}
             onClick={() => setFilter(s)}
-            className={filter === s ? `${btnSecondary} !py-1` : `${btnGhost} !py-1`}
+            className={`${filter === s ? btnSecondary + " !border-bit" : btnGhost} shrink-0 !rounded-full !py-1`}
           >
-            {s} ({s === "all" ? rows.length : rows.filter((r) => r.status === s).length})
+            {s === "all" ? "all" : statusLabel[s]}{" "}
+            <span className="text-zinc-500">{s === "all" ? rows.length : rows.filter((r) => r.status === s).length}</span>
           </button>
         ))}
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="text-left text-xs uppercase text-zinc-500">
-            <tr>
-              <th className="py-2">Nick</th>
-              <th>Status</th>
-              <th>Ticket</th>
-              <th>Seat</th>
-              <th>Note</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-zinc-800">
-            {shown.map((r) => (
-              <tr key={r.id}>
-                <td className="py-2 pr-2">
-                  <div className="font-medium">{r.nick}</div>
-                  <div className="text-xs text-zinc-500">
-                    {r.name} · {r.email}
-                  </div>
-                </td>
-                <td className="pr-2">
+      <input
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        placeholder="Search nick, name or email"
+        className={input}
+        type="search"
+      />
+
+      <ul className="space-y-2">
+        {visible.map((r) => (
+          <li key={r.id} className="rounded-card border border-line bg-surface p-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="truncate font-medium">{r.nick}</p>
+                <p className="truncate text-xs text-zinc-500">
+                  {r.name} · {r.email}
+                </p>
+              </div>
+              <button
+                className={`${btnGhost} shrink-0 !px-2 text-xs text-red-300`}
+                onClick={() =>
+                  confirm(`Remove ${r.nick} from this LAN?`) && run(() => adminRemoveAttendance(lanId, r.userId))
+                }
+              >
+                Remove
+              </button>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <label className="block">
+                <span className="mb-1 block text-[11px] uppercase tracking-wide text-zinc-500">Status</span>
+                <select
+                  key={r.status}
+                  defaultValue={r.status}
+                  onChange={(e) => run(() => adminSetAttendance(lanId, r.userId, e.target.value as AttendanceStatus))}
+                  className={`${input} !py-1.5`}
+                >
+                  {statuses.map((s) => (
+                    <option key={s} value={s}>
+                      {statusLabel[s]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-[11px] uppercase tracking-wide text-zinc-500">Seat</span>
+                {r.status === "going" && seats.length > 0 ? (
                   <select
-                    key={r.status}
-                    defaultValue={r.status}
-                    onChange={(e) =>
-                      run(() => adminSetAttendance(lanId, r.userId, e.target.value as AttendanceStatus))
-                    }
-                    className={`${input} !w-auto !py-1`}
+                    key={r.seatId ?? "none"}
+                    defaultValue={r.seatId ?? ""}
+                    onChange={(e) => run(() => adminSetSeatFor(lanId, r.userId, e.target.value || null))}
+                    className={`${input} !py-1.5 font-mono`}
                   >
-                    {statuses.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
+                    <option value="">—</option>
+                    {seats
+                      .filter((s) => !s.userId || s.userId === r.userId)
+                      .map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.label}
+                          {s.locked ? " (held)" : ""}
+                        </option>
+                      ))}
                   </select>
-                </td>
-                <td className="pr-2">
-                  <input
-                    type="checkbox"
-                    key={String(r.paid)}
-                    defaultChecked={r.paid}
-                    onChange={(e) => run(() => adminSetPaid(r.id, e.target.checked))}
-                    className="h-4 w-4 accent-bit"
-                    aria-label="Ticket confirmed"
-                    title="Ticket / payment confirmed"
-                  />
-                  {r.ticketBought && !r.paid && (
-                    <span className="ml-2 text-xs text-amber-300" title="Says they bought a ticket, not confirmed yet">
-                      reported
-                    </span>
-                  )}
-                </td>
-                <td className="pr-2">
-                  {r.status === "going" && seats.length > 0 ? (
-                    <select
-                      key={r.seatId ?? "none"}
-                      defaultValue={r.seatId ?? ""}
-                      onChange={(e) => run(() => adminSetSeatFor(lanId, r.userId, e.target.value || null))}
-                      className={`${input} !w-auto !py-1 font-mono`}
-                      aria-label={`Seat for ${r.nick}`}
-                    >
-                      <option value="">—</option>
-                      {seats
-                        .filter((s) => !s.userId || s.userId === r.userId)
-                        .map((s) => (
-                          <option key={s.id} value={s.id}>
-                            {s.label}
-                            {s.locked ? " (held)" : ""}
-                          </option>
-                        ))}
-                    </select>
-                  ) : (
-                    <span className="font-mono text-xs">{r.seat ?? "—"}</span>
-                  )}
-                </td>
-                <td className="pr-2">
-                  <input
-                    defaultValue={r.note}
-                    onBlur={(e) => e.target.value !== r.note && run(() => adminSetNote(r.id, e.target.value))}
-                    className={`${input} !py-1`}
-                    placeholder="—"
-                  />
-                </td>
-                <td className="text-right">
-                  <button
-                    className={`${btnGhost} text-xs text-red-300`}
-                    onClick={() => confirm(`Remove ${r.nick} from this LAN?`) && run(() => adminRemoveAttendance(lanId, r.userId))}
-                  >
-                    Remove
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {shown.length === 0 && (
-              <tr>
-                <td colSpan={6} className="py-4 text-center text-zinc-500">
-                  Nobody here yet.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                ) : (
+                  <span className="block py-1.5 font-mono text-sm text-zinc-500">{r.seat ?? "—"}</span>
+                )}
+              </label>
+              <label className="col-span-2 flex items-center gap-2 rounded-md border border-line px-3 py-2 text-sm sm:col-span-1 sm:self-end">
+                <input
+                  type="checkbox"
+                  key={String(r.paid)}
+                  defaultChecked={r.paid}
+                  onChange={(e) => run(() => adminSetPaid(r.id, e.target.checked))}
+                  className="h-5 w-5 accent-bit"
+                />
+                <span>
+                  Ticket ok
+                  {r.ticketBought && !r.paid && <span className="ml-1 text-xs text-warn">(reported)</span>}
+                </span>
+              </label>
+              <label className="col-span-2 block sm:col-span-1">
+                <span className="mb-1 block text-[11px] uppercase tracking-wide text-zinc-500">Note</span>
+                <input
+                  defaultValue={r.note}
+                  onBlur={(e) => e.target.value !== r.note && run(() => adminSetNote(r.id, e.target.value))}
+                  className={`${input} !py-1.5`}
+                  placeholder="—"
+                />
+              </label>
+            </div>
+          </li>
+        ))}
+        {visible.length === 0 && <li className="py-6 text-center text-sm text-zinc-500">Nobody here.</li>}
+      </ul>
+
       {others.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 border-t border-line pt-4">
-          <select value={addUser} onChange={(e) => setAddUser(e.target.value)} className={`${input} !w-auto`}>
+          <select value={addUser} onChange={(e) => setAddUser(e.target.value)} className={`${input} min-w-0 flex-1 sm:!w-auto sm:flex-none`}>
             <option value="">Add a member…</option>
             {others.map((o) => (
               <option key={o.id} value={o.id}>
@@ -181,20 +182,10 @@ export function AttendanceTable({
               })
             }
           >
-            Add as going
+            Add as coming
           </button>
         </div>
       )}
-      <StatusLegend />
     </div>
-  );
-}
-
-function StatusLegend() {
-  return (
-    <p className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
-      <StatusBadge status="going" /> counts toward capacity. <StatusBadge status="waitlist" /> moves up automatically
-      when someone drops out. Admins can override capacity.
-    </p>
   );
 }

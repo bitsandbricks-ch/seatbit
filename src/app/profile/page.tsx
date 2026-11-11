@@ -3,6 +3,7 @@ import { db, schema } from "@/db";
 import { updateProfile } from "@/app/actions";
 import { LinkedAccounts } from "@/components/linked-accounts";
 import { NickManager } from "@/components/nick-manager";
+import { SignOutButton } from "@/components/sign-out-button";
 import { Card, Field, Input, btnPrimary } from "@/components/ui";
 import { enabledProviders } from "@/lib/auth";
 import { requireUser } from "@/lib/session";
@@ -35,9 +36,9 @@ export default async function ProfilePage() {
         </form>
       </Card>
 
-      <Card title="Default nicks">
+      <Card title="Default nick">
         <p className="mb-3 text-sm text-zinc-400">
-          Your primary nick is shown at every LAN unless you set a nick for that LAN type below.
+          Shown at every LAN unless you set a nick for that LAN type below.
         </p>
         <NickManager nicks={nicks} />
       </Card>
@@ -45,7 +46,7 @@ export default async function ProfilePage() {
       {types.length > 0 && (
         <Card title="Nicks per LAN type">
           <p className="mb-4 text-sm text-zinc-400">
-            Used for every event of that type, e.g. every Lock &amp; Load. Leave empty to use your default nick.
+            One nick per LAN type, used for every event of that type. Leave it empty to use your default nick.
           </p>
           <div className="space-y-5">
             {types.map((t) => (
@@ -57,6 +58,10 @@ export default async function ProfilePage() {
           </div>
         </Card>
       )}
+
+      <div className="sm:hidden">
+        <SignOutButton />
+      </div>
 
       <Card title="Sign-in methods">
         <LinkedAccounts linked={accounts.map((a) => a.providerId)} available={enabledProviders()} />
