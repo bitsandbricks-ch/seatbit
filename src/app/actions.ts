@@ -17,7 +17,9 @@ import { announceLan, postReminderNow, refreshLanMessagesSoon, unlinkChannel } f
 import { sendReminderNow } from "@/lib/reminders";
 import { notifyLanChanged, notifyLater, notifySeatChanged } from "@/lib/notify";
 import { planSeats } from "@/lib/seating";
-import { appUrl, sendMail } from "@/lib/mail";
+import { appUrl } from "@/lib/mail";
+import { sendTemplate } from "@/lib/mail-templates";
+import { fmtDate } from "@/lib/format";
 import { canViewLan, requireAdmin, requireClanManager, requireLanManager, requireUser } from "@/lib/session";
 import { isClanMember } from "@/lib/clans";
 
@@ -136,7 +138,7 @@ const lanInput = z.object({
   reminderDays: z.coerce.number().int().min(0).max(60),
 });
 
-export type FormState = { error?: string; ok?: boolean } | undefined;
+export type FormState = { error?: string; ok?: boolean; message?: string } | undefined;
 
 export async function saveLan(_: FormState, formData: FormData): Promise<FormState> {
   const id = (formData.get("id") as string) || null;
@@ -533,13 +535,15 @@ export async function publishSeats(lanId: string, notify: boolean): Promise<numb
     for (const { u } of rows) {
       const mine = seats.find((s) => s.userId === u.id);
       try {
-        await sendMail(
-          u.email,
-          mine ? `Your seat at ${l.name}: ${mine.label}` : `Seat plan for ${l.name} is out`,
-          `Hi ${u.name},\n\nthe seat plan for ${l.name} is published. ${
-            mine ? `You're sitting at ${mine.label}.` : "You don't have a seat yet, an orga will get back to you."
-          }\n\n${appUrl}/lans/${l.id}`,
-        );
+        await sendTemplate(u.email, "seatsPublished", {
+          firstName: u.firstName || u.name,
+          lan: l.name,
+          start: fmtDate(l.startsAt),
+          location: l.location,
+          link: `${appUrl}/lans/${l.id}`,
+          seat: mine?.label,
+          seatInfo: mine ? `You're sitting at ${mine.label}.` : "You don't have a seat yet, an orga will get back to you.",
+        });
         sent++;
       } catch (e) {
         console.error("[mail] failed", e);

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { botIdentity, commands, discordEnabled, registerCommands } from "@/lib/discord-api";
 import { mailTarget, sendMail, verifySmtp } from "@/lib/mail";
+import { PREVIEW_VARS, type MailTemplateId, renderTemplate, resetTemplate, saveTemplate, templateDef } from "@/lib/mail-templates";
 import { requireAdmin } from "@/lib/session";
 import {
   SETTINGS,
@@ -90,5 +91,41 @@ export async function setupDiscordBot(): Promise<ActionResult> {
   } catch (e) {
     const m = errMsg(e);
     return done(false, m.includes("-> 401") ? "Discord rejected the bot token (401). Check it and save again." : m);
+  }
+}
+
+/** Saves an edited mail template. Text equal to the default removes the override. */
+export async function saveMailTemplate(id: string, _prev: ActionResult, form: FormData): Promise<ActionResult> {
+  const me = await requireAdmin();
+  const subject = String(form.get("subject") ?? "");
+  const body = String(form.get("body") ?? "");
+  if (subject.length > 300 || body.length > 8000) return done(false, "That's too long for an email template.");
+  try {
+    saveTemplate(id, subject, body, me.id);
+  } catch (e) {
+    return done(false, errMsg(e));
+  }
+  revalidatePath("/admin/settings");
+  return done(true, "Saved.");
+}
+
+/** Brings back the built-in text of a mail template. */
+export async function resetMailTemplate(id: string): Promise<ActionResult> {
+  await requireAdmin();
+  resetTemplate(id);
+  revalidatePath("/admin/settings");
+  return done(true, "Back to the default text.");
+}
+
+/** Sends a template to the admin, filled with example values. */
+export async function sendTemplateTest(id: string): Promise<ActionResult> {
+  const me = await requireAdmin();
+  try {
+    templateDef(id);
+    const m = renderTemplate(id as MailTemplateId, { ...PREVIEW_VARS, firstName: me.firstName || me.name });
+    await sendMail(me.email, `[Test] ${m.subject}`, m.text);
+    return done(true, mailTarget().kind === "console" ? "No SMTP set up, so it went to the server log." : `Sent to ${me.email}.`);
+  } catch (e) {
+    return done(false, errMsg(e));
   }
 }

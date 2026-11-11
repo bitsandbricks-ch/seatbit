@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "d053815c-7a08-4d86-ba9f-c7c832473a42",
+  "id": "61aa41aa-da9e-49cd-8351-afe54323a4c1",
   "prevId": "81933bc5-4435-470b-98eb-5ff888972daf",
   "tables": {
     "account": {
@@ -665,22 +665,6 @@
         },
         "channel_name": {
           "name": "channel_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "''"
-        },
-        "guild_name": {
-          "name": "guild_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "''"
-        },
-        "invite_url": {
-          "name": "invite_url",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -2126,6 +2110,20 @@
         "claim_code": {
           "name": "claim_code",
           "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "invite_email": {
+          "name": "invite_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "invited_at": {
+          "name": "invited_at",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
