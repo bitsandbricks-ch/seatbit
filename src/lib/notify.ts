@@ -29,8 +29,10 @@ export type Notice = {
   text: string;
   /** Link for the DM button, e.g. the LAN page. */
   url?: string;
-  /** HTML version of the mail (from renderTemplate); the DM always uses `text`. */
+  /** HTML version of the mail (from renderTemplate). */
   html?: string;
+  /** Discord-markdown DM text (from renderTemplate). Without it the DM is made from `text`. */
+  dm?: string;
   /** Don't email, only DM (for small updates that aren't worth a mail). */
   dmOnly?: boolean;
 };
@@ -52,12 +54,16 @@ function discordIdOf(userId: string) {
 
 const clip = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
 
-/** Drops the greeting line and any trailing bare link (the DM has a button for it). */
-function dmBody(text: string, url?: string) {
-  let t = text.replace(/^Hi [^\n]*,\s*\n+/, "");
+/**
+ * DM text from a plain mail text: drops the greeting, the mail footer and the
+ * bare link, then adds the link back as a visible "Open in Seatbit" link.
+ */
+export function dmBody(text: string, url?: string) {
+  let t = text.replace(/^Hi [^\n]*,\s*\n+/, "").replace(/\n*--\n[\s\S]*$/, "");
   if (url) t = t.split(url).join("").replace(/\n*(Details|Your seat and details|Pick your seat|Link):?\s*$/i, "");
   t = t.trim();
-  return t.charAt(0).toUpperCase() + t.slice(1);
+  t = t.charAt(0).toUpperCase() + t.slice(1);
+  return url ? `${t}\n\n[Open in Seatbit](${url})` : t;
 }
 
 /** Why a DM couldn't be sent, so the profile test button and the logs can say it plainly. */
@@ -83,7 +89,7 @@ export async function trySendDiscordDm(u: Pick<User, "id" | "discordDms" | "isGu
         {
           title: clip(n.subject, 256),
           url: n.url,
-          description: clip(dmBody(n.text, n.url), 4000),
+          description: clip(n.dm ?? dmBody(n.text, n.url), 4000),
           color: 0x10b981,
           footer: { text: "Seatbit · turn these DMs off on your profile" },
         },
