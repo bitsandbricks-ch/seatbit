@@ -4,6 +4,7 @@
   <a href="https://github.com/bitsandbricks-ch/seatbit/actions/workflows/ci.yml"><img src="https://github.com/bitsandbricks-ch/seatbit/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://bitsandbricks-ch.github.io/seatbit/"><img src="https://github.com/bitsandbricks-ch/seatbit/actions/workflows/docs.yml/badge.svg" alt="Docs"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-2ee59d" alt="License: AGPL-3.0"></a>
+  <a href="https://buymeacoffee.com/bitsandbricks"><img src="https://img.shields.io/badge/buy%20me%20a%20coffee-bitsandbricks-2ee59d?logo=buymeacoffee&logoColor=white" alt="Buy Me a Coffee"></a>
 </p>
 
 Seatbit helps a clan or group of friends go to LAN parties run by others (think SwitzerLAN or Lock & Load, with 30+ people): who's coming, who has bought a ticket, who sits where in the group's seat block, who drives whom and what to install before you leave. Self-host it with one container.
@@ -70,10 +71,6 @@ npm run dev
 ```
 
 Stack: Next.js (App Router) · Better Auth · SQLite with Drizzle · Tailwind CSS · Nodemailer. See [CONTRIBUTING.md](CONTRIBUTING.md); AI coding agents follow [AGENTS.md](AGENTS.md). Security issues: [SECURITY.md](SECURITY.md).
-
-## Support
-
-If Seatbit is useful to you, you can [buy me a coffee](https://buymeacoffee.com/bitsandbricks).
 
 ## License
 
