@@ -18,6 +18,8 @@ import { personLabel } from "@/lib/names";
 import { InterestsForm } from "@/components/event-extras";
 import { YourData } from "@/components/delete-account";
 import { checkDeletion } from "@/lib/account";
+import { SocialsForm } from "@/components/socials";
+import { profileLink } from "@/lib/profile-link";
 
 const DM_RESULT: Record<string, string> = {
   ok: "Test DM sent. Check your Discord DMs from the Seatbit bot.",
@@ -157,6 +159,13 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
         />
       </Card>
 
+      <Card title="Socials">
+        <p className="mb-4 text-sm text-muted">
+          Your gaming and social accounts, so the others can add you. Members of your clans see them on your profile.
+        </p>
+        <SocialsForm values={me.socials ?? {}} />
+      </Card>
+
       {types.length > 0 && (
         <Card title="Events I hear about">
           <p className="mb-4 text-sm text-muted">
@@ -183,7 +192,8 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
         <Card title="Nicks and IDs per LAN type">
           <p className="mb-4 text-sm text-muted">
             One nick per LAN type, used for every event of that type. Leave it empty to use your nickname. Below it,
-            optionally your user ID or ticket number at that LAN (e.g. on lal.gg), so the orgas can match you up.
+            optionally your user ID or ticket number at that LAN (e.g. on lal.gg), so the orgas can match you up. Where
+            the LAN type has a profile link, your clan sees the link to your profile on the event&apos;s site.
           </p>
           <div className="space-y-5">
             {types.map((t) => (
@@ -193,6 +203,7 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
                 <div className="mt-2">
                   <LanIdForm value={pickLanAccount(lanIds, { id: "", typeId: t.id })} typeId={t.id} label={`${t.name} ID`} />
                 </div>
+                <ProfileLinkHint url={profileLink(t.profileUrl, pickLanAccount(lanIds, { id: "", typeId: t.id }))} pattern={t.profileUrl} />
               </div>
             ))}
           </div>
@@ -201,5 +212,24 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
 
       </Columns>
     </Page>
+  );
+}
+
+/** Under a LAN ID: the profile link it builds, or that the LAN type has one. */
+function ProfileLinkHint({ url, pattern }: { url: string | null; pattern: string }) {
+  if (!pattern) return null;
+  return (
+    <p className="mt-1.5 truncate text-xs text-muted">
+      {url ? (
+        <>
+          Your profile:{" "}
+          <a href={url} target="_blank" rel="noreferrer" className="text-bit hover:underline">
+            {url}
+          </a>
+        </>
+      ) : (
+        "Add your ID to link your profile on the event's site."
+      )}
+    </p>
   );
 }

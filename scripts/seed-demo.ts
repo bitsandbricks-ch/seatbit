@@ -24,6 +24,13 @@ export const DEMO_PASSWORD = "seatbit-demo";
 const s = schema;
 const DAY = 24 * 60 * 60 * 1000;
 
+/** Some members filled in their socials (made-up handles). */
+const SOCIALS: Record<string, Record<string, string>> = {
+  alex: { discord: "blitz.alex", steam: "blitz_demo", battlenet: "Blitz#2741", twitch: "blitz_demo" },
+  anna: { discord: "novafox", steam: "novafox_demo", riot: "NovaFox#EUW", epic: "NovaFox" },
+  chiara: { discord: "pixel.chiara", steam: "pixel_demo", faceit: "pixel_demo", youtube: "pixel_demo" },
+};
+
 type Person = { key: string; first: string; last: string; nick: string; color: string; icon?: string };
 
 // The first one is the platform admin, clan admin and orga; "anna" is the member the screenshots follow.
@@ -88,6 +95,7 @@ export async function seedDemo({ force = false, discord = false } = {}) {
           avatarStyle: p.icon ? "icon" : "initials",
           icon: p.icon ?? null,
           color: p.color,
+          socials: SOCIALS[p.key] ?? {},
           createdAt: new Date(Date.now() - (400 - i) * DAY),
         })
         .run();
@@ -197,6 +205,7 @@ export async function seedDemo({ force = false, discord = false } = {}) {
           capacity: 20,
           seatSpec: "F1-F16, F19-F22",
           discordMode: "thread",
+          profileUrl: "https://example.com/lakeside-lan/user/?id={id}",
         },
         {
           id: mountain,
@@ -216,6 +225,8 @@ export async function seedDemo({ force = false, discord = false } = {}) {
     tx.insert(s.nickname).values({ userId: ids.anna, typeId: lakeside, nick: "NovaFox" }).run();
     tx.insert(s.lanAccount).values({ userId: ids.anna, typeId: lakeside, value: "48213" }).run();
     tx.insert(s.lanAccount).values({ userId: ids.alex, typeId: lakeside, value: "40977" }).run();
+    for (const [key, value] of [["ben", "41250"], ["chiara", "39804"], ["elena", "45117"], ["lea", "42369"]])
+      tx.insert(s.lanAccount).values({ userId: ids[key], typeId: lakeside, value }).run();
 
     // ---------- Events ----------
     const start = friday(30, 18);

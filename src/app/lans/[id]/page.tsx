@@ -5,6 +5,7 @@ import { db, schema } from "@/db";
 import { AttendanceButtons } from "@/components/attendance-buttons";
 import { NickManager } from "@/components/nick-manager";
 import { LanIdForm } from "@/components/lan-id-form";
+import { profileLink, profilePattern } from "@/lib/profile-link";
 import { getLanAccounts } from "@/lib/lan-accounts";
 import { SeatMap } from "@/components/seat-map";
 import { Avatar } from "@/components/avatar";
@@ -69,6 +70,17 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
   const orgaNames = await getDisplayNames(id, orgas.map((o) => o.id));
   const myNick = pickNick(myNicks, { lanId: id, typeId: l.typeId }, me.name);
   const myLanId = getLanAccounts(l, [me.id]).get(me.id) ?? null;
+  // Each attendee's profile on the event's site, when the event or its type has a link pattern.
+  const pattern = profilePattern(l, lanType);
+  const profiles = new Map(
+    pattern
+      ? [...getLanAccounts(l, rows.map((r) => r.userId))].flatMap(([uid, v]) => {
+          const href = profileLink(pattern, v);
+          return href ? [[uid, href] as const] : [];
+        })
+      : [],
+  );
+  const myProfile = profiles.get(me.id) ?? null;
   const posts = db.select().from(schema.travelPost).where(eq(schema.travelPost.lanId, id)).all();
   const spots = posts.length
     ? db.select().from(schema.travelSpot).where(inArray(schema.travelSpot.postId, posts.map((p) => p.id))).all()
@@ -429,9 +441,9 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           title={`Attendees (${going.length}${l.capacity ? ` / ${l.capacity}` : ""})`}
           actions={full && <Pill tone="red">Full · new sign-ups go on the waitlist</Pill>}
         >
-          <AttendeeList title="Coming" list={going} profileBase={profileBase} names={names} verified={verified} avatars={avatars} seatOf={seatOf} showPaid={isAdmin} meId={me.id} />
-          <AttendeeList title="Waitlist" list={group("waitlist")} profileBase={profileBase} names={names} verified={verified} avatars={avatars} seatOf={seatOf} showPaid={isAdmin} meId={me.id} />
-          <AttendeeList title="Unsure" list={group("maybe")} profileBase={profileBase} names={names} verified={verified} avatars={avatars} seatOf={seatOf} showPaid={false} meId={me.id} />
+          <AttendeeList title="Coming" list={going} profileBase={profileBase} names={names} verified={verified} avatars={avatars} profiles={profiles} seatOf={seatOf} showPaid={isAdmin} meId={me.id} />
+          <AttendeeList title="Waitlist" list={group("waitlist")} profileBase={profileBase} names={names} verified={verified} avatars={avatars} profiles={profiles} seatOf={seatOf} showPaid={isAdmin} meId={me.id} />
+          <AttendeeList title="Unsure" list={group("maybe")} profileBase={profileBase} names={names} verified={verified} avatars={avatars} profiles={profiles} seatOf={seatOf} showPaid={false} meId={me.id} />
           {group("declined").length > 0 && <p className="mt-3 text-xs text-muted">{group("declined").length} can&apos;t make it.</p>}
         </Card>
       )}
@@ -570,10 +582,20 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
                 <div className="mt-4 border-t border-line pt-4">
                   <h3 className="mb-1 text-sm font-medium text-fg">{lanType ? `Your ${lanType.name} ID` : "Your ID at this LAN"}</h3>
                   <p className="mb-2 text-sm text-muted">
-                    Optional: your user ID or ticket number on the LAN&apos;s own site, so the orgas can match you up. Only
-                    orgas see it.
+                    Optional: your user ID or ticket number on the LAN&apos;s own site, so the orgas can match you up.
+                    {pattern
+                      ? " The attendee list links it to your profile there."
+                      : " Only orgas see it."}
                   </p>
                   <LanIdForm value={myLanId} lanId={l.id} label={lanType ? `${lanType.name} ID` : "LAN ID"} />
+                  {myProfile && (
+                    <p className="mt-1.5 truncate text-xs text-muted">
+                      Your profile:{" "}
+                      <a href={myProfile} target="_blank" rel="noreferrer" className="text-bit hover:underline">
+                        {myProfile}
+                      </a>
+                    </p>
+                  )}
                 </div>
               </Card>
             </div>
@@ -609,8 +631,11 @@ function AttendeeList({
   meId,
   profileBase,
   avatars,
+  profiles,
 }: {
   avatars: Map<string, AvatarData>;
+  /** Links to each attendee's profile on the event's own site. */
+  profiles: Map<string, string>;
   /** "/clans/<slug>/members/" to link each name to the member's profile. */
   profileBase: string | null;
   title: string;
@@ -641,6 +666,17 @@ function AttendeeList({
       {verified.has(a.userId) && <Verified />}
       </span>
       <span className="flex shrink-0 gap-1">
+        {profiles.get(a.userId) && (
+          <a
+            href={profiles.get(a.userId)}
+            target="_blank"
+            rel="noreferrer"
+            title="Profile on the event's site"
+            className="rounded-full border border-line px-2 py-0.5 text-xs text-bit hover:border-bit/50 hover:underline"
+          >
+            Profile ↗
+          </a>
+        )}
         {seatOf.get(a.userId) && <Pill>{seatOf.get(a.userId)}</Pill>}
         {showPaid && (a.paid ? <Pill tone="emerald">ticket ok</Pill> : a.ticketBought ? <Pill tone="amber">reported</Pill> : <Pill tone="red">no ticket</Pill>)}
       </span>

@@ -44,7 +44,7 @@ When the group's spots are full, new *Coming* answers go on the **waitlist**. Wh
 
 ## Nick and LAN ID
 
-On the Overview tab you can set a nick for this LAN type (used for every event of that type) and your **user ID or ticket number** on the event's own site, so orgas can match you up. Only orgas see the ID. The same values are on your [profile](accounts.md#profile).
+On the Overview tab you can set a nick for this LAN type (used for every event of that type) and your **user ID or ticket number** on the event's own site, so orgas can match you up. Only orgas see the ID, unless the event has a [profile link](clans.md#profile-links): then the attendee list links your profile on the event's site. The same values are on your [profile](accounts.md#profile).
 
 ## Tickets
 
@@ -59,4 +59,4 @@ Reminders go to people coming without a ticket before the *buy ticket by* date. 
 
 ![Attendees](../screenshots/desktop-manage-attendees.png){ .shot }
 
-**Export CSV** downloads the group (seat, nick, name, email, status, ticket, LAN ID) for the event's organisers. It opens in Excel and Numbers with umlauts and accents intact.
+**Export CSV** downloads the group (seat, nick, name, email, status, ticket, LAN ID, and the profile link when the event has one) for the event's organisers. It opens in Excel and Numbers with umlauts and accents intact.

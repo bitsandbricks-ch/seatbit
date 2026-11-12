@@ -82,11 +82,22 @@ A **LAN type** describes a LAN party you go to regularly, e.g. *Lock & Load* or 
 | Seats | The seats you usually get, e.g. `F1-F20`. |
 | Usual length | In hours, e.g. Fri 18:00 to Sun 16:00 = 46. Sets the event's end. |
 | Answer by | Days before the start members must answer (default 30). |
+| Member profile link | Optional. A member's profile on the event's own site, with `{id}` where their LAN ID goes, e.g. `https://example.com/user/?id={id}`. See [Profile links](#profile-links). |
 | Discord | Where the bot posts these events, their reminders and news: the linked channel, a thread per event or a channel per event. See [Discord](discord.md#thread-or-channel-per-event). |
 
 Members set a nick and their user ID **per LAN type**, so they enter their name for the event's own site once, not every year.
 
 ![LAN types](../screenshots/desktop-lan-types.png){ .shot }
+
+### Profile links
+
+Many LAN sites have a public page per participant, e.g. `https://example.com/user/?id=4039`. Put that link into the LAN type's **Member profile link** with `{id}` instead of the number: `https://example.com/user/?id={id}`. Seatbit then builds each member's link from the LAN ID they entered and shows a **Profile ↗** link:
+
+- next to each name in the event's **Attendees** tab (all members see it),
+- in *Manage → Attendees*, on the seat plan's details pane and in the CSV export,
+- on the member's clan profile and their own profile.
+
+An event can have its own link (event *Settings*); empty means the LAN type's. Without a profile link, LAN IDs stay visible to orgas, admins and the member only.
 
 ## Stats
 

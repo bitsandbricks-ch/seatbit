@@ -38,15 +38,16 @@ The **LANs** tab lists the upcoming events of all your clans, with the date, how
 | **Email reminders**, **Discord DMs** | Switch either off. DMs need a linked Discord account. |
 | **Events I hear about** | Per clan: all new events, or only certain LAN types. One-off events always count. |
 | **Avatar and colour** | Discord picture, uploaded picture, emoji or initials. The colour is the ring around your avatar and your seat on the plan. |
-| **Nicks and IDs per LAN type** | A nick for every event of a LAN type (e.g. your name on the event's own site) and your user ID or ticket number there. Only orgas see the ID. |
+| **Socials** | Discord, Steam, Battle.net, Epic Games, Riot ID, EA app, Ubisoft Connect, Xbox, PlayStation, FACEIT, Twitch and YouTube. Fill in what you like; members of your clans see them on your profile, with links where the service has profile pages. |
+| **Nicks and IDs per LAN type** | A nick for every event of a LAN type (e.g. your name on the event's own site) and your user ID or ticket number there. Only orgas see the ID, unless the LAN type has a [profile link](clans.md#profile-links). |
 | **Sign-in methods** | Link Discord if you signed in another way. |
 
 **Nick priority:** event nick, then LAN type nick, then your default nick.
 
 ## Your data
 
-- **Download my data** gives you a JSON file with everything Seatbit stores about you: profile, sign-in methods, nicks, LAN IDs, clans, every event answer with seat and seat wishes, rides, packing lists, games, swap requests and the audit log entries about you.
-- **Delete my account** (type `DELETE` to confirm) signs you out and deletes your name, email, picture, Discord link, nicks, LAN IDs, clan memberships, orga roles, rides and packing lists, plus answers and seats for upcoming events (the waitlist moves up). Past events keep an anonymous *Deleted member* with only the answer, so history and stats still add up.
+- **Download my data** gives you a JSON file with everything Seatbit stores about you: profile, socials, sign-in methods, nicks, LAN IDs, clans, every event answer with seat and seat wishes, rides, packing lists, games, swap requests and the audit log entries about you.
+- **Delete my account** (type `DELETE` to confirm) signs you out and deletes your name, email, picture, Discord link, socials, nicks, LAN IDs, clan memberships, orga roles, rides and packing lists, plus answers and seats for upcoming events (the waitlist moves up). Past events keep an anonymous *Deleted member* with only the answer, so history and stats still add up.
 
 ![Delete my account](../screenshots/phone-profile-delete.png){ .shot width="300" }
 

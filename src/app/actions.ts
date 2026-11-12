@@ -29,6 +29,8 @@ import { eventMailVars, renderTemplate } from "@/lib/mail-templates";
 import { canViewLan, requireAdmin, requireClanPermission, requireLanManager, requireUser } from "@/lib/session";
 import { isClanMember } from "@/lib/clans";
 import { lanAccountScope, saveLanAccount } from "@/lib/lan-accounts";
+import { validProfileUrl } from "@/lib/profile-link";
+import { cleanSocials } from "@/lib/socials";
 import { bookedButton, bookingLine, clearSeatBooked } from "@/lib/seat-booking";
 import { PROFILE_COLORS, PROFILE_ICONS, deleteUserAvatarFile, saveUserAvatar } from "@/lib/avatars";
 import { audit, auditLan, changedFields } from "@/lib/audit";
@@ -131,6 +133,17 @@ export async function updateProfile(formData: FormData) {
   revalidatePath("/", "layout");
 }
 
+/** Gaming and social handles on the member's profile. Empty fields are dropped. */
+export async function updateSocials(_: AppearanceState, formData: FormData): Promise<AppearanceState> {
+  const me = await requireUser();
+  db.update(user)
+    .set({ socials: cleanSocials(Object.fromEntries(formData.entries())) })
+    .where(eq(user.id, me.id))
+    .run();
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
 export type AppearanceState = { error?: string; ok?: boolean };
 
 /** Avatar style, uploaded picture, icon and personal colour. */
@@ -195,6 +208,14 @@ const optId = z
   .optional()
   .transform((v) => v || null);
 
+/** Profile link pattern: empty, or an http(s) URL with {id} in it. */
+const profileUrlInput = z
+  .string()
+  .trim()
+  .max(500)
+  .default("")
+  .refine((v) => !v || validProfileUrl(v), "use a full https:// link with {id} where the LAN ID goes");
+
 const lanInput = z.object({
   typeId: optId,
   name: z.string().trim().min(1).max(100),
@@ -203,6 +224,7 @@ const lanInput = z.object({
   websiteUrl: z.union([z.literal(""), z.url().max(500)]).default(""),
   ticketUrl: z.union([z.literal(""), z.url().max(500)]).default(""),
   externalPlanUrl: z.union([z.literal(""), z.url().max(500)]).default(""),
+  profileUrl: profileUrlInput,
   startsAt: optDate,
   endsAt: optDate,
   interestCheck: z
@@ -236,6 +258,7 @@ const LAN_FIELD_LABELS: Partial<Record<keyof typeof lan.$inferSelect, string>> =
   websiteUrl: "website",
   ticketUrl: "ticket link",
   externalPlanUrl: "seat plan link",
+  profileUrl: "profile link",
   startsAt: "dates",
   endsAt: "dates",
   dateTbd: "dates",
@@ -890,6 +913,7 @@ const lanTypeInput = z.object({
     .transform((v) => (v ? Number(v) : null))
     .pipe(z.number().int().min(0).max(365).nullable()),
   discordMode: z.enum(DISCORD_MODES).default("channel"),
+  profileUrl: profileUrlInput,
 });
 
 export async function saveLanType(_: FormState, formData: FormData): Promise<FormState> {

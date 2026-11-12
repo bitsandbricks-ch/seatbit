@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { db, schema } from "@/db";
+import { profileLink, profilePattern } from "@/lib/profile-link";
 import type { Attendance } from "@/db/schema";
 import { deleteLan } from "@/app/actions";
 import { AttendanceTable } from "@/components/attendance-table";
@@ -79,6 +80,10 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
   const names = new Map([...people].map(([uid, n]) => [uid, n.full]));
   const avatars = avatarMap(users);
   const lanIds = getLanAccounts(l, rows.map((r) => r.userId));
+  const profilePat = profilePattern(
+    l,
+    l.typeId ? db.select().from(schema.lanType).where(eq(schema.lanType.id, l.typeId)).get() : null,
+  );
   const userById = new Map(users.map((u) => [u.id, u]));
   const seatOf = new Map(seats.filter((s) => s.userId).map((s) => [s.userId!, s.label]));
   const inLan = new Set(rows.map((r) => r.userId));
@@ -120,6 +125,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
         ticketBought: r.ticketBought,
         note: r.note,
         lanAccount: lanIds.get(r.userId) ?? "",
+        profileUrl: profileLink(profilePat, lanIds.get(r.userId)),
         seat: seatOf.get(r.userId) ?? null,
         seatId: seats.find((s) => s.userId === r.userId)?.id ?? null,
         seatBooked: l.externalPlanUrl && l.seatsPublishedAt ? r.seatBooked : null,
@@ -500,6 +506,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
                       id: r.userId,
                       name: names.get(r.userId) ?? "?",
                       lanAccount: lanIds.get(r.userId) || undefined,
+                      profileUrl: profileLink(profilePat, lanIds.get(r.userId)) ?? undefined,
                       ticket: r.paid ? ("ok" as const) : r.ticketBought ? ("reported" as const) : ("open" as const),
                       wishes: w ? { ok: w.ok, missed: w.missed } : undefined,
                     };
@@ -594,6 +601,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
                 websiteUrl: l.websiteUrl,
                 ticketUrl: l.ticketUrl,
                 externalPlanUrl: l.externalPlanUrl,
+                profileUrl: l.profileUrl,
                 startsAt: toInputValue(l.startsAt),
                 endsAt: toInputValue(l.endsAt),
                 signupDeadline: toInputValue(l.signupDeadline),
