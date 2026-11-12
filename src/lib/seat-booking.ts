@@ -45,6 +45,7 @@ export function unbookedSeated(l: Lan): { u: User; label: string }[] {
 
 /** Reminds everyone with an unbooked seat (orga button). Returns how many got it. */
 export async function remindToBook(l: Lan) {
+  if (!l.publishedAt) return 0;
   let sent = 0;
   for (const { u, label } of unbookedSeated(l)) {
     const r = await notify(u, {

@@ -168,7 +168,7 @@ const fmt = fmtDate;
 
 /** Tells a member their seat changed (only once the seat plan is published). */
 export async function notifySeatChanged(l: Lan, userId: string, label: string | null) {
-  if (!l.seatsPublishedAt) return;
+  if (!l.seatsPublishedAt || !l.publishedAt) return;
   await notify(userId, {
     kind: "seat_changed",
     subject: label ? `Your seat at ${l.name} is now ${label}` : `You no longer have a seat at ${l.name}`,
@@ -203,7 +203,7 @@ export function lanChanges(before: Lan, after: Lan) {
 /** Tells everyone coming, unsure or on the waitlist what changed about a LAN. */
 export async function notifyLanChanged(before: Lan, after: Lan) {
   const changes = lanChanges(before, after);
-  if (changes.length === 0 || after.endsAt < new Date()) return 0;
+  if (changes.length === 0 || after.endsAt < new Date() || !after.publishedAt) return 0;
   const rows = db
     .select({ u: user })
     .from(attendance)

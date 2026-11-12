@@ -1,4 +1,4 @@
-import { asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, isNotNull } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Attendance, AttendanceStatus, Lan } from "@/db/schema";
 
@@ -53,7 +53,12 @@ export type MemberStats = {
 
 /** Everything the clan stats page needs, computed in memory (clans are small). */
 export function clanStats(clanId: string, now = new Date()) {
-  const lans = db.select().from(lan).where(eq(lan.clanId, clanId)).orderBy(asc(lan.startsAt)).all();
+  const lans = db
+    .select()
+    .from(lan)
+    .where(and(eq(lan.clanId, clanId), isNotNull(lan.publishedAt)))
+    .orderBy(asc(lan.startsAt))
+    .all();
   const members = db
     .select({ u: user, role: clanMember.role, joinedAt: clanMember.createdAt })
     .from(clanMember)

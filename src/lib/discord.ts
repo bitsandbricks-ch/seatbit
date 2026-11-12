@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { and, asc, eq, gt, inArray } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, isNotNull } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { AttendanceStatus, Clan, Lan } from "@/db/schema";
 import { avatarUrl, canManageClan, getClan, isClanMember, myClans } from "./clans";
@@ -184,7 +184,8 @@ function forgetIfGone(channelId: string, e: unknown) {
 export async function announceLan(lanId: string, onlyChannelId?: string) {
   if (!discordEnabled()) return 0;
   const l = getLan(lanId);
-  if (!l) return 0;
+  // Drafts stay off Discord until an orga publishes them.
+  if (!l?.publishedAt) return 0;
   const msg = await lanMessage(l);
   const existing = new Set(
     db.select().from(discordMessage).where(eq(discordMessage.lanId, lanId)).all().map((m) => m.channelId),
@@ -359,7 +360,7 @@ const upcomingLans = (clanIds: string[]) =>
     ? db
         .select()
         .from(lan)
-        .where(and(gt(lan.endsAt, new Date()), inArray(lan.clanId, clanIds)))
+        .where(and(gt(lan.endsAt, new Date()), inArray(lan.clanId, clanIds), isNotNull(lan.publishedAt)))
         .orderBy(asc(lan.startsAt))
         .all()
     : [];
