@@ -49,6 +49,7 @@ Safeguards, whatever the setting:
 
 - On the website only clan members can claim, never someone still waiting for approval. On Discord, someone who isn't a member yet can ask (see [On Discord](#on-discord)), but that always needs an admin.
 - One open claim per member.
+- A guest someone else already asked for (waiting for an admin), or that an orga tied to another Discord member with `/guest`, isn't offered to anyone else, on the website or on Discord.
 - A guest with an email address, or a guest made clan admin, always needs an admin's OK.
 - A name is no proof: check before you approve (the request shows their email and why it was suggested).
 - Declined claims and guests marked *Not me* aren't suggested again.
