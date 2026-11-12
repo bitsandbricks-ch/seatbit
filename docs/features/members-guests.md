@@ -68,7 +68,7 @@ The [Seatbit bot](discord.md) does both directions in a server linked to the cla
 
 ![Taking over a guest after /claim on Discord](../screenshots/phone-discord-claim.png){ .shot width="300" }
 
-**Orgas: `/guest member:<@someone> guest:<name>`.** Needs a Seatbit role that manages members (admin or recruiter); no Discord permission needed.
+**Orgas: `/guest guest:<name> member:<name>`.** Needs a Seatbit role that manages members (admin or recruiter); no Discord permission needed. `guest` lists only guests nobody asked for or got linked to yet. `member` searches the Discord server as you type (before you type, by the guest's first name) and leaves out bots and people who are already in the clan on Seatbit.
 
 - If that person already has Seatbit with Discord linked, the guest moves to their account at once and they get a DM.
 - Otherwise the bot DMs them the guest's claim link, and their first sign-in with that Discord account (or linking Discord on their profile) takes the guest over automatically, like the verified email invite. The guest list shows *Discord member linked*. Running `/guest` again for the same person moves the link to the new guest.

@@ -64,8 +64,9 @@ export const commands = [
     type: 1,
     dm_permission: false,
     options: [
-      { type: 6, name: "member", description: "The Discord member", required: true },
       { type: 3, name: "guest", description: "The guest in Seatbit", required: true, autocomplete: true },
+      // Not a native user picker: that lists the whole server. Seatbit suggests only people not in the clan yet.
+      { type: 3, name: "member", description: "The Discord member (type to search)", required: true, autocomplete: true },
     ],
   },
   {
