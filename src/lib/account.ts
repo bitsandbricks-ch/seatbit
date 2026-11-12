@@ -47,7 +47,7 @@ export function checkDeletion(userId: string): DeletionCheck {
       .all();
     if (others.some((o) => o.role === "admin")) continue;
     // Guests can't log in and pending people aren't in yet, so they can't take over.
-    if (others.some((o) => !o.isGuest && o.role === "member")) blockingClans.push(c);
+    if (others.some((o) => !o.isGuest && o.role !== "pending")) blockingClans.push(c);
     else clansToDelete.push(c);
   }
   let lastPlatformAdmin = false;

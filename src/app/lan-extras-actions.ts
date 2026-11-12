@@ -1,6 +1,7 @@
 "use server";
 
 import { and, eq, inArray, ne, or } from "drizzle-orm";
+import { rolesWith } from "@/lib/clan-roles";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db, schema } from "@/db";
@@ -55,7 +56,7 @@ export async function adminRemindToBook(lanId: string): Promise<number> {
 
 const OPEN = ["pending", "accepted"] as const;
 
-/** Orgas of a LAN, or the clan admins when it has none. They approve swaps. */
+/** Orgas of a LAN, or the clan admins and event managers when it has none. They approve swaps. */
 function orgasOf(l: Lan) {
   const ids = db.select().from(lanOrga).where(eq(lanOrga.lanId, l.id)).all().map((o) => o.userId);
   if (ids.length) return db.select().from(user).where(inArray(user.id, ids)).all();
@@ -63,7 +64,7 @@ function orgasOf(l: Lan) {
     .select({ u: user })
     .from(clanMember)
     .innerJoin(user, eq(user.id, clanMember.userId))
-    .where(and(eq(clanMember.clanId, l.clanId ?? ""), eq(clanMember.role, "admin")))
+    .where(and(eq(clanMember.clanId, l.clanId ?? ""), inArray(clanMember.role, rolesWith("events"))))
     .all()
     .map((r) => r.u);
 }

@@ -7,12 +7,27 @@ Manage people under **Clan settings → Members**.
 - **Waiting for approval:** people who asked to join (join mode *Approval*). Approve or decline.
 - **Guest claims:** members who say they're one of your guests. See [below](#members-claiming-a-guest).
 - **Add an existing user:** search Seatbit users by name or nick and add them directly.
-- **Make admin / Remove admin:** a clan always keeps at least one admin.
-- **Remove** takes someone out of the clan.
+- **Role:** pick a role per person (admins only). A clan always keeps at least one admin.
+- **Remove** takes someone out of the clan. Recruiters can remove plain members; people with a role only an admin can remove.
+
+Admins and recruiters get a Discord DM when someone asks to join.
+
+## Roles
+
+Each member has one clan role. Admins change it in the role menu of the member list, or on the member's profile under **Clan role**, where every role says what it may do. The member gets a message when they get a role.
+
+![Clan role on a member's profile](../screenshots/desktop-member-role.png){ .shot }
+
+- **Admin:** everything, including clan settings, Discord, roles and deleting the clan.
+- **Event manager:** creates and runs every clan event and edits LAN types. Good for the people who book tickets and seats each year.
+- **Recruiter:** approves join requests, adds members and guests, manages invite links.
+- **Member:** answers for events. Can still be an orga of single events.
+
+Event managers and recruiters also see the clan's stats and audit log. When an event has no orgas of its own, its admins and event managers approve seat swaps and are listed as its contacts.
 
 ## Audit log
 
-**Clan settings → Audit log** lists the changes orgas and admins made in the clan and its events: seat moves, swaps, auto-assign and finalizing the plan, changed answers, confirmed tickets, orga and admin roles, join approvals, guest edits, publishing, cancelling and event edits. Filter by kind of change or by event. Members' own answers aren't listed, and entries are kept for a year. Only clan admins see it.
+**Clan settings → Audit log** lists the changes orgas and admins made in the clan and its events: seat moves, swaps, auto-assign and finalizing the plan, changed answers, confirmed tickets, orga and clan roles, join approvals, guest edits, publishing, cancelling and event edits. Filter by kind of change or by event. Members' own answers aren't listed, and entries are kept for a year. Admins, event managers and recruiters see it.
 
 ![Audit log](../screenshots/desktop-clan-audit-log.png){ .shot }
 
@@ -37,7 +52,7 @@ What happens next depends on **Clan settings → General → Can members claim g
 
 | Setting | What happens when a member says "That's me" |
 | --- | --- |
-| **An admin confirms each claim** (default) | The request shows up under **Members → Guest claims**, and clan admins get a mail and Discord DM. **Approve** moves everything over; **Decline** tells them. |
+| **An admin confirms each claim** (default) | The request shows up under **Members → Guest claims**, and clan admins and recruiters get a Discord DM. **Approve** moves everything over; **Decline** tells them. |
 | **Same name or nick moves over right away** | A guest with the same name or nick moves over at once. Picking any other guest still needs an admin. |
 | **Only with the guest's own link** | Members can't claim guests. Use the email invite or the claim link above. |
 

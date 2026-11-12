@@ -42,7 +42,7 @@ Seatbit is free, open-source software ([AGPL-3.0](https://github.com/bitsandbric
 - **Tickets:** members tick off "I bought my ticket", orgas confirm it. Deadlines for answering and buying, with email and Discord reminders.
 - **Seats:** the orgas enter the seats the group got (e.g. `F1-F20`), members send seat wishes or pick their own seat, the orgas finalize the plan, and everyone books their seat on the event's own site.
 - **Travel, packing lists and games:** offer or ask for rides and sleeping places, keep a private packing list, vote on games and tick off what you installed.
-- **Clans:** several clans on one instance, each with admins, members, guests (people without an account yet), invite links and its own Discord server.
+- **Clans:** several clans on one instance, each with roles (admin, event manager, recruiter, member), guests (people without an account yet), invite links and its own Discord server.
 - **Discord bot:** announcements with answer buttons, live attendee lists, reminders, DMs and slash commands.
 - **Mobile-first**, with a proper desktop layout. Dates are 24h ("Sat 14.11.2026, 18:00").
 

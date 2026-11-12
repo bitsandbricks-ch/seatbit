@@ -18,7 +18,7 @@ import {
 } from "@/app/clan-actions";
 import type { User } from "@/db/schema";
 import { Avatar } from "@/components/avatar";
-import { ClanHeader, CLAN_MANAGE_TABS } from "@/components/clan-header";
+import { ClanHeader, manageTabsFor } from "@/components/clan-header";
 import { ClanForm } from "@/components/clan-form";
 import { AddMemberForm } from "@/components/add-member-form";
 import { CopyField } from "@/components/copy-field";
@@ -28,7 +28,8 @@ import { Card, Columns, Page, btnDanger, btnGhost, btnPrimary, btnSecondary } fr
 import { appUrl } from "@/lib/mail";
 import { getDefaultNames } from "@/lib/lans";
 import { avatarData } from "@/lib/avatars";
-import { canManageClan, clanRole, getClanBySlug } from "@/lib/clans";
+import { clanPerms, clanRole, getClanBySlug } from "@/lib/clans";
+import { MEMBER_ROLES, ROLE_INFO, isMemberRole } from "@/lib/clan-roles";
 import { fmtDate } from "@/lib/format";
 import { requireUser } from "@/lib/session";
 import { unlinkDiscordChannel } from "@/app/actions";
@@ -44,8 +45,10 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
   const me = await requireUser();
   const c = getClanBySlug(slug);
   if (!c) notFound();
-  if (!canManageClan(me, c.id)) redirect(`/clans/${slug}`);
-  const tab = (CLAN_MANAGE_TABS as readonly string[]).includes(sp.tab as string) ? (sp.tab as string) : "general";
+  const perms = clanPerms(me, c.id);
+  const allowed: string[] = manageTabsFor(perms);
+  if (!allowed.length) redirect(`/clans/${slug}`);
+  const tab = allowed.includes(sp.tab as string) ? (sp.tab as string) : allowed[0];
 
   const members = db
     .select({ u: schema.user, role: schema.clanMember.role })
@@ -87,7 +90,7 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
 
   return (
     <Page>
-      <ClanHeader clan={c} role={clanRole(me.id, c.id)} canManage mode="manage" tab={tab} />
+      <ClanHeader clan={c} role={clanRole(me.id, c.id)} perms={perms} mode="manage" tab={tab} />
 
       {tab === "general" && (
         <Columns
@@ -112,6 +115,7 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
       {tab === "members" && (
         <Columns
           aside={
+            <>
             <Card title="Add an existing user">
               <p className="mb-3 text-sm text-muted">
                 Someone already on Seatbit. For people without an account, add a{" "}
@@ -122,6 +126,8 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
               </p>
               <AddMemberForm clanId={c.id} users={candidates} action={addClanMember} />
             </Card>
+            <RolesCard />
+            </>
           }
         >
           {pending.length > 0 && (
@@ -182,19 +188,21 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
           )}
           <Card title={`Members (${active.length - guests.length})`}>
             <p className="mb-3 text-sm text-muted">
-              Admins manage the clan: settings, members, LAN types and every event. Use &ldquo;Make admin&rdquo; and
-              &ldquo;Remove admin&rdquo; here or on a member&apos;s profile. A clan always keeps at least one admin.
+              {perms.has("roles")
+                ? "Give members a role here or on their profile. A clan always keeps at least one admin."
+                : "Only admins change roles. You can remove members without a role."}
             </p>
             <ClanMemberAdmin
               clanId={c.id}
               slug={c.slug}
               meId={me.id}
+              canSetRoles={perms.has("roles")}
               members={active.filter(({ u }) => !u.isGuest).map(({ u, role }) => ({
                 id: u.id,
                 name: fullName(u),
                 nick: people.get(u.id)?.nick ?? "",
                 sub: u.isGuest ? (u.inviteEmail ? `No login yet · ${u.inviteEmail}` : "No login yet") : u.email,
-                role: role === "admin" ? "admin" : "member",
+                role: isMemberRole(role) ? role : "member",
                 isGuest: u.isGuest,
                 avatar: avatarData(u),
               }))}
@@ -522,6 +530,23 @@ function LogTab({ clanId, slug, sp }: { clanId: string; slug: string; sp: Record
         href={(f) => `/clans/${slug}/settings?${auditQuery(f, { tab: "log" })}`}
         events={auditedEvents(clanId)}
       />
+    </Card>
+  );
+}
+
+/** What each role may do, next to the member list. */
+function RolesCard() {
+  return (
+    <Card title="Roles">
+      <dl className="space-y-2.5 text-sm">
+        {MEMBER_ROLES.map((r) => (
+          <div key={r}>
+            <dt className="font-medium">{ROLE_INFO[r].label}</dt>
+            <dd className="text-muted">{ROLE_INFO[r].description}</dd>
+          </div>
+        ))}
+      </dl>
+      <p className="mt-3 text-xs text-faint">Orgas of a single event are set on the event&apos;s manage page.</p>
     </Card>
   );
 }

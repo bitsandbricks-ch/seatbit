@@ -9,7 +9,8 @@ import { ClanHeader, CLAN_VIEW_TABS } from "@/components/clan-header";
 import { ClanMemberGrid } from "@/components/clan-member-list";
 import { Card, Columns, EmptyState, Notice, Page, Pill, StatusBadge, btnGhost, btnPrimary, btnSecondary } from "@/components/ui";
 import { lanDay, lanRange } from "@/lib/format";
-import { canManageClan, clanRole, getClanBySlug } from "@/lib/clans";
+import { clanPerms, clanRole, getClanBySlug } from "@/lib/clans";
+import { MANAGE_TAB_PERMS, isMemberRole } from "@/lib/clan-roles";
 import { pickNick } from "@/lib/lans";
 import { personLabel } from "@/lib/names";
 import { avatarData } from "@/lib/avatars";
@@ -24,9 +25,11 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
   const c = getClanBySlug(slug);
   if (!c) notFound();
   const role = clanRole(me.id, c.id);
-  const isMember = role === "admin" || role === "member";
-  const canManage = canManageClan(me, c.id);
-  const seesEvents = isMember || canManage;
+  const isMember = isMemberRole(role);
+  const perms = clanPerms(me, c.id);
+  const canEvents = perms.has("events");
+  const canMembers = perms.has("members");
+  const seesEvents = isMember || canEvents;
   const tabs: string[] = CLAN_VIEW_TABS.filter((t) => t !== "stats" && (t !== "events" || seesEvents));
   const tab = tabs.includes(sp.tab as string) ? (sp.tab as string) : "overview";
 
@@ -42,7 +45,7 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
     .filter((m) => m.role !== "pending")
     .map((m) => ({
       id: m.u.id,
-      admin: m.role === "admin",
+      role: isMemberRole(m.role) ? m.role : ("member" as const),
       guest: m.u.isGuest,
       name: personLabel(m.u, pickNick(nicks.filter((n) => n.userId === m.u.id), { lanId: null, typeId: null }, m.u.name)),
       avatar: avatarData(m.u),
@@ -104,7 +107,7 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
   const guestMatch = mySuggestions.find((s) => s.match && !s.status);
   const myClaim = mySuggestions.find((s) => s.status === "pending");
   const hasGuests = claiming && tab === "members" && unclaimedGuests(c.id).length > 0;
-  const openClaims = canManage
+  const openClaims = canMembers
     ? db
         .select({ id: schema.guestClaim.id })
         .from(schema.guestClaim)
@@ -115,6 +118,19 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
   // Members who aren't on the clan's Discord server(s) yet get an invite.
   const discordInvites = isMember && tab === "overview" ? await missingServers(me.id, c.id) : [];
 
+  const adminLinks = (
+    [
+      { tab: "general", label: "Clan settings", sub: "Name, avatar, who can join" },
+      { tab: "members", label: "Members & requests", sub: pending ? `${pending} waiting` : perms.has("roles") ? "Roles, add people" : "Add people" },
+      { tab: "guests", label: "Guests", sub: "People without a login yet" },
+      { tab: "types", label: "LAN types", sub: "Templates for yearly events" },
+      { tab: "invites", label: "Invite links", sub: "Let people join right away" },
+      { tab: "chat", label: "Discord & WhatsApp", sub: "Bot, channels, invites" },
+    ] as const
+  )
+    .filter((l) => perms.has(MANAGE_TAB_PERMS[l.tab]))
+    .map((l) => ({ ...l, href: l.tab === "general" ? `/clans/${c.slug}/settings` : `/clans/${c.slug}/settings?tab=${l.tab}` }));
+
   const leave = role && (
     <form action={leaveClan.bind(null, c.id)} className="flex justify-end">
       <button className={`${btnGhost} hover:!text-danger`}>{role === "pending" ? "Cancel request" : "Leave clan"}</button>
@@ -123,9 +139,9 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
 
   return (
     <Page>
-      <ClanHeader clan={c} role={role} canManage={canManage} mode="view" tab={tab} />
+      <ClanHeader clan={c} role={role} perms={perms} mode="view" tab={tab} />
 
-      {canManage && pending + openClaims > 0 && (
+      {canMembers && pending + openClaims > 0 && (
         <Notice tone="warn">
           <span className="flex flex-wrap items-center justify-between gap-2">
             <span>
@@ -202,17 +218,10 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
                   )}
                 </ul>
               </Card>
-              {canManage && (
-                <Card title="Admin">
+              {adminLinks.length > 0 && (
+                <Card title={perms.has("settings") ? "Admin" : "Manage"}>
                   <ul className="-mx-2 text-sm">
-                    {[
-                      { href: `/clans/${c.slug}/settings`, label: "Clan settings", sub: "Name, avatar, who can join" },
-                      { href: `/clans/${c.slug}/settings?tab=members`, label: "Members & requests", sub: pending ? `${pending} waiting` : "Roles, add people" },
-                      { href: `/clans/${c.slug}/settings?tab=guests`, label: "Guests", sub: "People without a login yet" },
-                      { href: `/clans/${c.slug}/settings?tab=types`, label: "LAN types", sub: "Templates for yearly events" },
-                      { href: `/clans/${c.slug}/settings?tab=invites`, label: "Invite links", sub: "Let people join right away" },
-                      { href: `/clans/${c.slug}/settings?tab=chat`, label: "Discord & WhatsApp", sub: "Bot, channels, invites" },
-                    ].map((l) => (
+                    {adminLinks.map((l) => (
                       <li key={l.href}>
                         <Link href={l.href} className="flex min-h-11 items-center justify-between gap-2 rounded-md px-2 py-1.5 transition hover:bg-raised">
                           <span className="min-w-0">
@@ -265,14 +274,14 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
               icon="calendar"
               title="Nothing planned yet"
               action={
-                canManage && (
+                canEvents && (
                   <Link href={`/clans/${c.slug}/lans/new`} className={btnPrimary}>
                     <span aria-hidden>+</span> New event
                   </Link>
                 )
               }
             >
-              {canManage ? "Add the next LAN the clan is going to." : "Your admins add the next LAN here."}
+              {canEvents ? "Add the next LAN the clan is going to." : "Your admins add the next LAN here."}
             </EmptyState>
           ) : (
             <>
@@ -299,7 +308,7 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
           <Card
             title="Upcoming"
             actions={
-              canManage && (
+              canEvents && (
                 <Link href={`/clans/${c.slug}/lans/new`} className={btnSecondary}>
                   <span aria-hidden>+</span> New event
                 </Link>
@@ -318,7 +327,7 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
         <Card
           title={`Members (${members.length})`}
           actions={
-            canManage && (
+            canMembers && (
               <span className="flex flex-wrap gap-2">
                 <Link href={`/clans/${c.slug}/settings?tab=guests`} className={btnGhost}>
                   Guests

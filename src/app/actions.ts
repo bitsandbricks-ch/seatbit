@@ -25,7 +25,7 @@ import { notify as notifyMember, notifyLanChanged, notifyLater, notifySeatChange
 import { appUrl } from "@/lib/mail";
 import { planSeats } from "@/lib/seating";
 import { eventMailVars, renderTemplate } from "@/lib/mail-templates";
-import { canViewLan, requireAdmin, requireClanManager, requireLanManager, requireUser } from "@/lib/session";
+import { canViewLan, requireAdmin, requireClanPermission, requireLanManager, requireUser } from "@/lib/session";
 import { isClanMember } from "@/lib/clans";
 import { lanAccountScope, saveLanAccount } from "@/lib/lan-accounts";
 import { bookedButton, bookingLine, clearSeatBooked } from "@/lib/seat-booking";
@@ -250,7 +250,7 @@ export async function saveLan(_: FormState, formData: FormData): Promise<FormSta
   const id = (formData.get("id") as string) || null;
   const clanId = id ? mustGetLan(id).clanId : String(formData.get("clanId") ?? "");
   if (!clanId) return { error: "Pick a clan." };
-  const me = id ? await requireLanManager(id) : await requireClanManager(clanId);
+  const me = id ? await requireLanManager(id) : await requireClanPermission(clanId, "events");
   const parsed = lanInput.safeParse(
     Object.fromEntries([...formData.entries()].filter(([k]) => k !== "id" && k !== "clanId")),
   );
@@ -323,7 +323,7 @@ function requirePublished(l: { publishedAt: Date | null }) {
 
 export async function deleteLan(id: string) {
   const l = mustGetLan(id);
-  const me = l.clanId ? await requireClanManager(l.clanId) : await requireAdmin();
+  const me = l.clanId ? await requireClanPermission(l.clanId, "events") : await requireAdmin();
   db.delete(lan).where(eq(lan.id, id)).run();
   audit({ actorId: me.id, action: "event.delete", clanId: l.clanId, data: { event: l.name } });
   revalidatePath("/");
@@ -895,7 +895,7 @@ export async function saveLanType(_: FormState, formData: FormData): Promise<For
   const existing = id ? db.select().from(lanType).where(eq(lanType.id, id)).get() : undefined;
   const clanId = existing?.clanId ?? String(formData.get("clanId") ?? "");
   if (!clanId) return { error: "Pick a clan." };
-  const me = await requireClanManager(clanId);
+  const me = await requireClanPermission(clanId, "events");
   const parsed = lanTypeInput.safeParse(
     Object.fromEntries([...formData.entries()].filter(([k]) => k !== "id" && k !== "clanId")),
   );
@@ -919,7 +919,7 @@ export async function saveLanType(_: FormState, formData: FormData): Promise<For
 export async function deleteLanType(id: string) {
   const t = db.select().from(lanType).where(eq(lanType.id, id)).get();
   if (!t?.clanId) return;
-  const me = await requireClanManager(t.clanId);
+  const me = await requireClanPermission(t.clanId, "events");
   db.delete(lanType).where(eq(lanType.id, id)).run();
   audit({ actorId: me.id, action: "type.delete", clanId: t.clanId, data: { type: t.name } });
   revalidatePath("/", "layout");
