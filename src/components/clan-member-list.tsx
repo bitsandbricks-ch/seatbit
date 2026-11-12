@@ -9,11 +9,17 @@ import type { AvatarData } from "@/lib/avatars";
 
 const PAGE_SIZE = 20;
 
-/** Members card on the clan page: nicks with search and pages. */
-export function ClanMemberGrid({ slug, members }: { slug: string; members: { id: string; nick: string; admin: boolean; avatar?: AvatarData }[] }) {
+/** Members tab on the clan page: everyone with avatar, nick and name, with search and pages. */
+export function ClanMemberGrid({
+  slug,
+  members,
+}: {
+  slug: string;
+  members: { id: string; nick: string; name?: string; admin: boolean; guest?: boolean; avatar?: AvatarData }[];
+}) {
   const [q, setQ] = useState("");
-  const shown = members.filter((m) => !q || matches(m.nick, q));
-  const pager = usePager(shown, 24);
+  const shown = members.filter((m) => !q || matches(`${m.nick} ${m.name ?? ""}`, q));
+  const pager = usePager(shown, 48);
   return (
     <div className="space-y-3">
       {members.length > 12 && (
@@ -29,22 +35,28 @@ export function ClanMemberGrid({ slug, members }: { slug: string; members: { id:
           aria-label="Search members"
         />
       )}
-      <ul className="grid gap-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+      <ul className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
         {pager.items.map((m) => (
           <li key={m.id}>
             <Link
               href={`/clans/${slug}/members/${m.id}`}
-              className="flex min-h-10 items-center justify-between gap-2 rounded-bit bg-raised/60 px-3 py-1.5 text-sm transition hover:bg-raised hover:text-bit"
+              className="flex min-h-14 items-center justify-between gap-2 rounded-bit bg-raised/60 px-3 py-2 text-sm transition hover:bg-raised"
             >
-              <span className="flex min-w-0 items-center gap-2">
-                <Avatar data={m.avatar} size={24} />
-                <span className="truncate">{m.nick}</span>
+              <span className="flex min-w-0 items-center gap-3">
+                <Avatar data={m.avatar} size={36} />
+                <span className="min-w-0">
+                  <span className="block truncate font-medium">{m.nick}</span>
+                  {m.name && m.name !== m.nick && <span className="block truncate text-xs text-muted">{m.name}</span>}
+                </span>
               </span>
-              {m.admin && <Pill tone="emerald">admin</Pill>}
+              <span className="flex shrink-0 gap-1">
+                {m.admin && <Pill tone="emerald">admin</Pill>}
+                {m.guest && <Pill>guest</Pill>}
+              </span>
             </Link>
           </li>
         ))}
-        {shown.length === 0 && <li className="py-4 text-center text-sm text-muted">Nobody matches “{q}”.</li>}
+        {shown.length === 0 && <li className="py-4 text-center text-sm text-muted sm:col-span-full">Nobody matches “{q}”.</li>}
       </ul>
       <PagerBar pager={pager} noun="members" />
     </div>
@@ -62,12 +74,11 @@ export type ClanMemberRow = {
   avatar?: AvatarData;
 };
 
-type RoleFilter = "all" | "admin" | "member" | "guest";
+type RoleFilter = "all" | "admin" | "member";
 const roleFilters: { id: RoleFilter; label: string; test: (m: ClanMemberRow) => boolean }[] = [
   { id: "all", label: "all", test: () => true },
   { id: "admin", label: "admins", test: (m) => m.role === "admin" },
   { id: "member", label: "members", test: (m) => m.role === "member" && !m.isGuest },
-  { id: "guest", label: "guests", test: (m) => m.isGuest },
 ];
 
 /** Clan settings › Members: search, role filter and pages, with the admin actions per person. */

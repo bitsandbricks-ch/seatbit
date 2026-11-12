@@ -43,7 +43,7 @@ Phone (390 px) and desktop (1440 px) shots of the main pages are in [`docs/scree
 
 ![Orga seat plan on desktop](docs/screenshots/desktop-manage-seats.png)
 
-More: [LAN list](docs/screenshots/desktop-lans.png) · [event overview](docs/screenshots/desktop-event.png) · [event attendees](docs/screenshots/desktop-event-attendees.png) · [attendees](docs/screenshots/desktop-manage-attendees.png) · [clan](docs/screenshots/desktop-clan.png) · [admin](docs/screenshots/desktop-admin.png) · [clan (phone)](docs/screenshots/phone-clan.png) · [profile (phone)](docs/screenshots/phone-profile.png)
+More: [LAN list](docs/screenshots/desktop-lans.png) · [event overview](docs/screenshots/desktop-event.png) · [event attendees](docs/screenshots/desktop-event-attendees.png) · [attendees](docs/screenshots/desktop-manage-attendees.png) · [clan](docs/screenshots/desktop-clan.png) · [admin](docs/screenshots/desktop-admin.png) · [clan manage](docs/screenshots/desktop-clan-manage.png) · [clan (phone)](docs/screenshots/phone-clan.png) · [clan guests (phone)](docs/screenshots/phone-clan-guests.png) · [profile (phone)](docs/screenshots/phone-profile.png)
 
 ## Platform settings
 
