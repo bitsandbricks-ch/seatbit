@@ -54,6 +54,8 @@ jobs:
           context: .
           platforms: linux/${{ matrix.arch }}
           labels: ${{ steps.meta.outputs.labels }}
+          # Shown in the footer; on PRs the branch head, not the merge commit.
+          build-args: GIT_COMMIT=${{ github.event.pull_request.head.sha || github.sha }}
           # Push the per-arch image by digest only; the merge job tags the
           # multi-arch manifest.
           outputs: type=image,name=${{ env.IMAGE }},push-by-digest=true,name-canonical=true,push=${{ env.PUSH }}

@@ -20,6 +20,10 @@ RUN --mount=type=cache,target=/root/.npm npm ci --prefer-offline --no-audit --no
 FROM base AS build
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# Commit for the footer (.git isn't in the build context). Declared after COPY
+# so a new value only reruns the build step, which reruns anyway.
+ARG GIT_COMMIT=""
+ENV GIT_COMMIT=$GIT_COMMIT
 RUN --mount=type=cache,target=/app/.next/cache npm run build
 
 FROM base AS runner

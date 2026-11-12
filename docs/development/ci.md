@@ -22,6 +22,8 @@ Dependabot opens weekly npm updates (minor and patch grouped) and monthly GitHub
 | `:sha-<short sha>` | A specific commit. |
 | `:1.2.3` | Releases, from `v1.2.3` tags. |
 
+The image workflow passes the commit as the `GIT_COMMIT` build arg (on pull requests the branch head). `next.config.ts` bakes it in as `SEATBIT_COMMIT`, and the root layout shows and links it.
+
 ## Docs site
 
 The docs are built with [MkDocs Material](https://squidfunk.github.io/mkdocs-material/) from `docs/` and `mkdocs.yml` and published to GitHub Pages from `main`. See [Writing docs](../contributing/docs.md).
