@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { deleteLan, setSeatPicking } from "@/app/actions";
 import { AttendanceTable } from "@/components/attendance-table";
@@ -27,6 +27,7 @@ import { getLanAccounts } from "@/lib/lan-accounts";
 import { personLabel } from "@/lib/names";
 import { RemindToBookButton } from "@/components/seat-booking";
 import { SeatSwapApprovals, type SwapView } from "@/components/seat-swaps";
+import { CancelEvent, CopyNextYear, DeleteNewsButton, NewsComposer } from "@/components/event-extras";
 
 const { attendance, seat, user, reminderLog } = schema;
 
@@ -156,6 +157,12 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
       note: s.note,
     }));
   const swapsToApprove = swaps.filter((s) => s.status === "accepted").length;
+  const news = db
+    .select()
+    .from(schema.lanNews)
+    .where(eq(schema.lanNews.lanId, id))
+    .orderBy(desc(schema.lanNews.createdAt))
+    .all();
 
   const seatCards = (
           <div className="grid items-start gap-5 lg:grid-cols-2">
@@ -321,7 +328,14 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               <dl className="space-y-3 text-sm">
                 <DateItem label="Answer by" d={l.signupDeadline} now={now} />
                 <DateItem label="Buy ticket by" d={l.paymentDueDate} now={now} />
-                <DateItem label="Starts" d={l.startsAt} now={now} />
+                {l.dateTbd ? (
+                  <div className="flex justify-between gap-2">
+                    <dt className="text-muted">Starts</dt>
+                    <dd className="text-right text-faint">{l.dateHint || "not set yet"}</dd>
+                  </div>
+                ) : (
+                  <DateItem label="Starts" d={l.startsAt} now={now} />
+                )}
               </dl>
               <Link href={`/lans/${l.id}/manage?tab=settings`} className="mt-4 inline-block text-sm text-bit hover:underline">
                 Change dates
@@ -335,6 +349,35 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
             <Stat label="Tickets" value={`${ticketsConfirmed} / ${going.length}`} sub={`${ticketsReported} to confirm`} href={`/lans/${l.id}/manage?tab=attendees`} />
             <Stat label="Seats" value={`${seated} / ${going.length}`} sub={seats.length ? `${freeSeats} free of ${seats.length}` : "no seats yet"} href={`/lans/${l.id}/manage?tab=seats`} />
           </div>
+
+          <Card title="News for attendees">
+            <NewsComposer lanId={l.id} published={!!l.publishedAt} />
+            {news.length > 0 && (
+              <ul className="mt-4 space-y-3 border-t border-line pt-4">
+                {news.slice(0, 5).map((n) => (
+                  <li key={n.id} className="text-sm">
+                    <p className="whitespace-pre-wrap text-fg/90">{n.text}</p>
+                    <p className="mt-1 flex items-center gap-3 text-xs text-faint">
+                      {n.authorId ? (names.get(n.authorId) ?? "Orga") : "Orga"} · {fmtDate(n.createdAt)}
+                      <DeleteNewsButton id={n.id} />
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+
+          {going.some((r) => r.arrivedAt) && (
+            <Card title="Check-in">
+              <p className="text-sm">
+                <span className="font-semibold text-fg">{going.filter((r) => r.arrivedAt).length}</span>
+                <span className="text-muted"> of {going.length} here.</span>{" "}
+                <span className="text-muted">
+                  On the way: {going.filter((r) => !r.arrivedAt).map((r) => names.get(r.userId) ?? "?").join(", ") || "nobody"}
+                </span>
+              </p>
+            </Card>
+          )}
 
           <Card title="Reminders">
             <div className="space-y-4 text-sm">
@@ -507,6 +550,9 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
                 price: l.price,
                 capacity: l.capacity?.toString() ?? "",
                 reminderDays: l.reminderDays,
+                interestCheck: l.interestCheck,
+                dateTbd: l.dateTbd,
+                dateHint: l.dateHint,
               }}
             />
           </Card>
@@ -524,6 +570,20 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
                 .sort((a, b) => a.name.localeCompare(b.name))}
             />
           </Card>
+
+          <Card title="Next year">
+            <p className="mb-3 text-sm text-muted">
+              Copy this event as a new draft one year later: details, links, deadlines, seat block (empty) and orgas. The
+              event&apos;s own seat plan link is left out, it changes every year.
+            </p>
+            <CopyNextYear lanId={l.id} />
+          </Card>
+
+          {!l.cancelledAt && (
+            <Card title="Cancel">
+              <CancelEvent lanId={l.id} published={!!l.publishedAt} />
+            </Card>
+          )}
 
           {me.role === "admin" && (
             <Card title="Danger zone">

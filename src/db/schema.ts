@@ -144,6 +144,11 @@ export const clanMember = sqliteTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     role: text("role").$type<ClanRole>().default("member").notNull(),
+    /**
+     * Which of the clan's events the member wants to hear about: null = all of them, otherwise the
+     * LAN type ids they care about. Events without a type always count. Drives "new event" notices.
+     */
+    interestTypes: text("interest_types", { mode: "json" }).$type<string[] | null>(),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
   },
   (t) => [uniqueIndex("clan_member_uq").on(t.clanId, t.userId), index("clan_member_user_idx").on(t.userId)],
@@ -216,6 +221,22 @@ export const lan = sqliteTable("lan", {
    * notified (no Discord post, no reminders) until it's published.
    */
   publishedAt: integer("published_at", { mode: "timestamp_ms" }),
+  /** A draft with this set goes live by itself at that time. */
+  publishAt: integer("publish_at", { mode: "timestamp_ms" }),
+  /**
+   * Optional first phase: members only say whether they're interested, before sign-up, tickets and
+   * seats. An orga then opens sign-up (sets it false).
+   */
+  interestCheck: integer("interest_check", { mode: "boolean" }).default(false).notNull(),
+  /**
+   * The date isn't fixed yet (only allowed during the interest check). startsAt/endsAt then hold a
+   * placeholder for sorting; show `dateHint` (e.g. "spring 2027") instead.
+   */
+  dateTbd: integer("date_tbd", { mode: "boolean" }).default(false).notNull(),
+  dateHint: text("date_hint").default("").notNull(),
+  /** Cancelled events stay visible (greyed out) but take no answers and send no reminders. */
+  cancelledAt: integer("cancelled_at", { mode: "timestamp_ms" }),
+  cancelReason: text("cancel_reason").default("").notNull(),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
 });
 
@@ -247,6 +268,8 @@ export const attendance = sqliteTable(
     wishNote: text("wish_note").default("").notNull(),
     /** Set by the attendee: "I booked my seat on the event's own seat plan". Cleared when their seat changes. */
     seatBooked: integer("seat_booked", { mode: "boolean" }).default(false).notNull(),
+    /** Checked in at the venue on the day ("I'm here"). */
+    arrivedAt: integer("arrived_at", { mode: "timestamp_ms" }),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" })
       .default(now)
@@ -332,7 +355,17 @@ export const seat = sqliteTable(
   ],
 );
 
-export const REMINDER_KINDS = ["signup", "payment", "event", "waitlist_promoted", "games", "book_seat"] as const;
+export const REMINDER_KINDS = [
+  "signup",
+  "payment",
+  "event",
+  "waitlist_promoted",
+  "games",
+  "book_seat",
+  "published",
+  "signup_open",
+  "cancelled",
+] as const;
 export type ReminderKind = (typeof REMINDER_KINDS)[number];
 
 export const reminderLog = sqliteTable(
@@ -581,3 +614,38 @@ export const appSetting = sqliteTable("app_setting", {
   updatedBy: text("updated_by").references(() => user.id, { onDelete: "set null" }),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" }).default(now).notNull(),
 });
+
+export const INTEREST_ANSWERS = ["yes", "maybe", "no"] as const;
+export type InterestAnswer = (typeof INTEREST_ANSWERS)[number];
+
+/** Answers during an event's interest check (before sign-up opens). */
+export const lanInterest = sqliteTable(
+  "lan_interest",
+  {
+    id: id(),
+    lanId: text("lan_id")
+      .notNull()
+      .references(() => lan.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    answer: text("answer").$type<InterestAnswer>().notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  (t) => [uniqueIndex("lan_interest_uq").on(t.lanId, t.userId)],
+);
+
+/** Short updates from the orgas to everyone at an event ("doors open 10:00"). */
+export const lanNews = sqliteTable(
+  "lan_news",
+  {
+    id: id(),
+    lanId: text("lan_id")
+      .notNull()
+      .references(() => lan.id, { onDelete: "cascade" }),
+    authorId: text("author_id").references(() => user.id, { onDelete: "set null" }),
+    text: text("text").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  (t) => [index("lan_news_lan_idx").on(t.lanId)],
+);

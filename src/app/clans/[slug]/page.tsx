@@ -6,7 +6,7 @@ import { joinClan, leaveClan } from "@/app/clan-actions";
 import { ClanAvatar } from "@/components/clan-avatar";
 import { ClanMemberGrid } from "@/components/clan-member-list";
 import { Card, Page, PageHeader, Pill, btnGhost, btnPrimary, btnSecondary, halves } from "@/components/ui";
-import { fmtDay } from "@/lib/format";
+import { lanDay } from "@/lib/format";
 import { clanRole, getClanBySlug } from "@/lib/clans";
 import { pickNick } from "@/lib/lans";
 import { avatarData } from "@/lib/avatars";
@@ -110,8 +110,10 @@ export default async function ClanPage({ params }: PageProps<"/clans/[slug]">) {
                     <span className="flex min-w-0 items-center gap-2">
                       <span className="truncate font-medium">{l.name}</span>
                       {!l.publishedAt && <Pill tone="amber">Draft</Pill>}
+                      {l.cancelledAt && <Pill tone="red">Cancelled</Pill>}
+                      {l.interestCheck && !l.cancelledAt && <Pill tone="emerald">Interest check</Pill>}
                     </span>
-                    <span className="shrink-0 text-sm text-muted">{fmtDay(l.startsAt)}</span>
+                    <span className="shrink-0 text-sm text-muted">{lanDay(l)}</span>
                   </Link>
                 </li>
               ))}

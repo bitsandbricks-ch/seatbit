@@ -7,7 +7,7 @@ import { CopyField } from "@/components/copy-field";
 import { MemberAdminActions } from "@/components/member-admin-actions";
 import { Card, Page, PageHeader, Pill, StatTile, StatusBadge, columns, stack } from "@/components/ui";
 import { canManageClan, getClanBySlug, isClanMember } from "@/lib/clans";
-import { fmtDate, fmtWeekday } from "@/lib/format";
+import { fmtDate, fmtWeekday, lanWeekday } from "@/lib/format";
 import { pickNick } from "@/lib/lans";
 import { appUrl } from "@/lib/mail";
 import { Avatar } from "@/components/avatar";
@@ -238,7 +238,7 @@ function EventList({
             <span className="min-w-0">
               <span className="block truncate font-medium">{l.name}</span>
               <span className="block truncate text-xs text-muted">
-                {fmtWeekday(l.startsAt)}
+                {lanWeekday(l)}
                 {typeName && ` · ${typeName}`}
                 {a?.status === "going" && ` · as ${nick}`}
               </span>

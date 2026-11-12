@@ -4,7 +4,7 @@ import { db, schema } from "@/db";
 import { setUserRole } from "@/app/actions";
 import { Card, Page, PageHeader, Pill, btnGhost, btnSecondary } from "@/components/ui";
 import { ClanAvatar } from "@/components/clan-avatar";
-import { fmtDay } from "@/lib/format";
+import { lanDay } from "@/lib/format";
 import { requireAdmin } from "@/lib/session";
 
 export default async function AdminPage() {
@@ -84,7 +84,7 @@ export default async function AdminPage() {
                         {isPast && <span className="ml-2 text-xs font-normal text-faint">past</span>}
                       </span>
                       <span className="block text-xs text-muted">
-                        {fmtDay(l.startsAt)} · {clans.find((c) => c.id === l.clanId)?.name ?? "No clan"}
+                        {lanDay(l)} · {clans.find((c) => c.id === l.clanId)?.name ?? "No clan"}
                       </span>
                     </span>
                     <span className="flex gap-1.5">

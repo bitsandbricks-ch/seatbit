@@ -18,6 +18,7 @@ import { parseSeatLabel } from "@/lib/seat-layout";
 import { rowLetter } from "@/lib/seat-labels";
 import { announceLan, postReminderNow, refreshLanMessagesSoon, unlinkChannel } from "@/lib/discord";
 import { sendReminderNow } from "@/lib/reminders";
+import { publishEvent } from "@/lib/event-notices";
 import { notify as notifyMember, notifyLanChanged, notifyLater, notifySeatChanged, trySendDiscordDm } from "@/lib/notify";
 import { appUrl } from "@/lib/mail";
 import { planSeats } from "@/lib/seating";
@@ -197,8 +198,17 @@ const lanInput = z.object({
   websiteUrl: z.union([z.literal(""), z.url().max(500)]).default(""),
   ticketUrl: z.union([z.literal(""), z.url().max(500)]).default(""),
   externalPlanUrl: z.union([z.literal(""), z.url().max(500)]).default(""),
-  startsAt: z.string().min(1).transform((v) => new Date(v)),
-  endsAt: z.string().min(1).transform((v) => new Date(v)),
+  startsAt: optDate,
+  endsAt: optDate,
+  interestCheck: z
+    .string()
+    .optional()
+    .transform((v) => v === "on"),
+  dateTbd: z
+    .string()
+    .optional()
+    .transform((v) => v === "on"),
+  dateHint: z.string().trim().max(60).default(""),
   signupDeadline: optDate,
   paymentDueDate: optDate,
   price: z.string().max(50).default(""),
@@ -223,8 +233,22 @@ export async function saveLan(_: FormState, formData: FormData): Promise<FormSta
   if (!parsed.success) {
     return { error: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join(", ") };
   }
-  const v = parsed.data;
-  if (v.endsAt <= v.startsAt) return { error: "The end must be after the start." };
+  const { startsAt, endsAt, interestCheck, dateTbd: tbd, ...rest } = parsed.data;
+  // On edit the interest check only ends with "Open sign-up", so the form can't switch it.
+  const inInterest = id ? mustGetLan(id).interestCheck : interestCheck;
+  const dateTbd = inInterest && tbd;
+  let dates: { startsAt: Date; endsAt: Date };
+  if (dateTbd) {
+    // Placeholder dates (for sorting and "upcoming"); the page shows the hint instead.
+    const keep = id ? mustGetLan(id) : null;
+    const s = keep && !keep.dateTbd ? keep.startsAt : new Date(Date.now() + 365 * 24 * 3600 * 1000);
+    dates = { startsAt: s, endsAt: keep && !keep.dateTbd ? keep.endsAt : new Date(s.getTime() + 2 * 24 * 3600 * 1000) };
+  } else {
+    if (!startsAt || !endsAt) return { error: "Set when the event starts and ends." };
+    if (endsAt <= startsAt) return { error: "The end must be after the start." };
+    dates = { startsAt, endsAt };
+  }
+  const v = { ...rest, ...dates, dateTbd, ...(id ? {} : { interestCheck: inInterest }) };
   if (v.typeId) {
     const t = db.select().from(lanType).where(eq(lanType.id, v.typeId)).get();
     if (t?.clanId !== clanId) return { error: "That LAN type belongs to another clan." };
@@ -258,10 +282,7 @@ export async function saveLan(_: FormState, formData: FormData): Promise<FormSta
  */
 export async function publishLan(lanId: string) {
   await requireLanManager(lanId);
-  const l = mustGetLan(lanId);
-  if (l.publishedAt) return;
-  db.update(lan).set({ publishedAt: new Date() }).where(eq(lan.id, lanId)).run();
-  await announceLan(lanId).catch((e) => console.error("[discord] announce failed", e));
+  await publishEvent(lanId);
   lanPath(lanId);
   revalidatePath("/clans", "layout");
 }

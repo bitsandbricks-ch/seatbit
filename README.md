@@ -4,6 +4,12 @@ Seatbit helps a clan or group of friends coordinate going to LAN parties run by 
 
 - **LANs**: each event the group goes to, with dates, location, event website, ticket shop link, ticket price and the number of group spots.
 - **Drafts**: a new LAN starts as a draft that only its orgas and the clan admins see. Nothing goes out while it's a draft (no Discord post, no reminders, no DMs). *Publish event* in the banner at the top shows it to the clan, posts the Discord announcement and starts the reminders. Events created before drafts existed count as published.
+- **Interest check** (optional first phase): members only say *I'd come / Maybe / Not this time*, before sign-up, tickets and seats. The date can stay open with a rough hint ("spring 2027"). *Open sign-up* ends it and tells everyone interested (except those who said no). Discord shows interest buttons meanwhile.
+- **Scheduled publish**: pick a time on a draft and it goes live by itself (checked every minute).
+- **New-event message**: publishing sends interested members a mail/DM. Each member picks per clan in their profile whether they hear about all events or only certain LAN types (one-off events always count).
+- **Cancel / next year**: orgas can cancel an event (everyone who answered is told, the Discord post turns red; undo is possible) or copy it as next year's draft (dates +1 year, seat block, orgas).
+- **Orga news**: short updates on the event page, sent by mail/DM to everyone coming, unsure or on the waitlist.
+- **Check-in**: on the day, people coming tap *I'm here*; everyone sees who is still on the way.
 - **Orgas per LAN**: the members who coordinate the group for that event. Only they (and global admins) can edit the LAN, the seat block and attendance. Any orga can add co-orgas.
 - **Attendance**: members answer *going / maybe / can't make it*. When the group's spots are full, new sign-ups go on a **waitlist** and move up automatically (with an email) when someone drops out.
 - **Member checklist per LAN**: sign up, set nickname, buy ticket (members tick it off, orgas confirm), claim a seat. Progress shows on the LAN list.

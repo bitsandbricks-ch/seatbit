@@ -1,4 +1,4 @@
-import { fmtDate } from "./format";
+import { fmtDate, lanStart } from "./format";
 import { and, eq, ne } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Lan, User } from "@/db/schema";
@@ -75,7 +75,7 @@ export async function lanSummary(l: Lan): Promise<LanSummary> {
 /** Key facts of a LAN as "label: value" lines (empty values left out). */
 export function lanFacts(l: Lan): [string, string][] {
   const facts: [string, string][] = [
-    ["When", `${fmtWhen(l.startsAt)} – ${fmtWhen(l.endsAt)}`],
+    ["When", l.dateTbd ? lanStart(l) : `${fmtWhen(l.startsAt)} – ${fmtWhen(l.endsAt)}`],
     ["Where", l.location],
     ["Ticket", [l.price, l.ticketUrl].filter(Boolean).join(" · ")],
     ["Answer by", l.signupDeadline ? fmtWhen(l.signupDeadline) : ""],
