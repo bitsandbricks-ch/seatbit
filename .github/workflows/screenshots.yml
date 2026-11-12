@@ -1,0 +1,53 @@
+name: Screenshots
+
+# Keeps docs/screenshots/ current: after UI changes land on main, render every
+# page from the demo data and open (or update) a pull request when an image
+# changed. Pictures that only differ by rendering noise are left alone.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "public/**"
+      - "brand/**"
+      - "drizzle/**"
+      - "scripts/seed-demo.ts"
+      - "scripts/screenshots.ts"
+      - "package-lock.json"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: screenshots
+  cancel-in-progress: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+        env:
+          DATABASE_PATH: ${{ runner.temp }}/build.db
+      - run: npx playwright install --with-deps chromium
+      - run: npm run screenshots
+      - name: Open pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: bot/screenshots
+          delete-branch: true
+          add-paths: docs/screenshots/*.png
+          commit-message: "Update screenshots"
+          title: "Update screenshots"
+          body: |
+            The UI changed on `main`, so these screenshots were regenerated from the demo data (`npm run screenshots`).
+            Check the images and merge to keep the README and docs current.
+          labels: documentation

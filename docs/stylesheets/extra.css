@@ -1,0 +1,30 @@
+/* Seatbit brand colours (see brand/tokens.css). */
+[data-md-color-scheme="slate"] {
+  --md-default-bg-color: #0b0b0f;
+  --md-default-bg-color--light: #16161d;
+  --md-code-bg-color: #16161d;
+  --md-footer-bg-color: #0b0b0f;
+  --md-footer-bg-color--dark: #0b0b0f;
+  --md-primary-fg-color: #0b0b0f;
+  --md-primary-fg-color--light: #16161d;
+  --md-primary-fg-color--dark: #0b0b0f;
+  --md-primary-bg-color: #f4f4f5;
+  --md-accent-fg-color: #5cefb5;
+  --md-typeset-a-color: #2ee59d;
+}
+.md-header, .md-tabs { border-bottom: 1px solid #2a2a35; }
+
+/* Screenshots: rounded, with a subtle border, never wider than the text. */
+.md-typeset img.shot {
+  border: 1px solid #2a2a35;
+  border-radius: 0.6rem;
+}
+.md-typeset .phones {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+.md-typeset .phones figure { margin: 0; }
+.md-typeset .phones img { width: 100%; }
+.md-typeset .phones figcaption { font-size: 0.7rem; color: #a1a1aa; }

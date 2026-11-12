@@ -54,8 +54,9 @@ type Shot = {
 
 const seat = (label: string) => async (page: Page) => {
   await page.locator(`[aria-label^="Seat ${label},"], [aria-label="Seat ${label}"]`).first().click();
-  // Show the whole seat card below the sticky header and tabs.
+  // Phones: show the whole seat card below the sticky header and tabs.
   await page.evaluate(() => {
+    if (window.innerWidth > 640) return;
     const grid = document.querySelector("[data-seat-grid]");
     const card = grid?.parentElement?.closest("section, [class*='rounded-card']") ?? grid;
     if (card) window.scrollTo({ top: card.getBoundingClientRect().top + window.scrollY - 140, behavior: "instant" });
@@ -154,6 +155,8 @@ async function main() {
     // Fake Discord app, so the login button and Discord settings show up. Nothing talks to Discord.
     DISCORD_CLIENT_ID: "1234567890123456789",
     DISCORD_CLIENT_SECRET: "screenshots-only",
+    DISCORD_BOT_TOKEN: "screenshots-only-not-a-real-token",
+    DISCORD_PUBLIC_KEY: "0".repeat(64),
     // Example operator, so the legal pages look like a configured instance.
     LEGAL_OPERATOR_NAME: "Example Gaming Club",
     LEGAL_OPERATOR_ADDRESS: "Example Street 1, 6000 Lucerne, Switzerland",
@@ -165,7 +168,7 @@ async function main() {
     SMTP_URL: "",
   };
 
-  run("npx", ["tsx", "scripts/seed-demo.ts"], env, true);
+  run("npx", ["tsx", "scripts/seed-demo.ts", "--discord"], env, true);
   const sessions = createSessions(dbFile, ["alex", "anna"]);
 
   // Own process group, so stopping it also stops the Next.js worker processes.
@@ -218,7 +221,14 @@ async function main() {
       await page.addStyleTag({ content: "*, *::before, *::after { caret-color: transparent !important; }" });
       await page.mouse.move(0, 0);
       if (shot.act) await shot.act(page);
-      const png = await page.screenshot({ fullPage: !!shot.full, animations: "disabled" });
+      if (shot.full) {
+        // Grow the window to the whole page instead of using fullPage, so fixed bars (phone tab bar) stay at the bottom.
+        const height = await page.evaluate(() => document.documentElement.scrollHeight);
+        await page.setViewportSize({ width: DEVICES[device].viewport.width, height: Math.min(height, 6000) });
+        await page.evaluate(() => window.scrollTo(0, 0));
+        await page.waitForTimeout(200);
+      }
+      const png = await page.screenshot({ animations: "disabled" });
       const file = path.join(OUT, `${shot.name}.png`);
       if (fs.existsSync(file) && samePicture(fs.readFileSync(file), png)) {
         console.log(`  ${shot.name} (unchanged)`);

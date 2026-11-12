@@ -11,7 +11,8 @@
  *
  * Every demo user signs in with <first name>@example.com and the password
  * "seatbit-demo" (needs ALLOW_EMAIL_LOGIN=1). The script refuses to run on a
- * database that already has users, unless --force is given.
+ * database that already has users, unless --force is given. With --discord the
+ * users get (fake) Discord accounts instead of passwords, as on a real instance.
  */
 import { hashPassword } from "better-auth/crypto";
 import { count } from "drizzle-orm";
@@ -59,7 +60,8 @@ function friday(minDays: number, hh: number) {
   return d;
 }
 
-export async function seedDemo({ force = false } = {}) {
+/** `discord`: give the demo users Discord accounts instead of passwords (used for the screenshots). */
+export async function seedDemo({ force = false, discord = false } = {}) {
   const [{ n }] = db.select({ n: count() }).from(s.user).all();
   if (n > 0 && !force) {
     throw new Error("The database already has users. Use an empty DATABASE_PATH, or pass --force to add the demo data anyway.");
@@ -89,14 +91,12 @@ export async function seedDemo({ force = false } = {}) {
         })
         .run();
       tx.insert(s.account)
-        .values({
-          id: `demo-acc-${p.key}`,
-          accountId: id,
-          providerId: "credential",
-          userId: id,
-          password,
-          updatedAt: new Date(),
-        })
+        .values(
+          discord
+            ? // Looks like a Discord sign-in (for screenshots); nobody can log in with it.
+              { id: `demo-acc-${p.key}`, accountId: `10000000000000${String(1000 + i)}`, providerId: "discord", userId: id, scope: "identify,email", updatedAt: new Date() }
+            : { id: `demo-acc-${p.key}`, accountId: id, providerId: "credential", userId: id, password, updatedAt: new Date() },
+        )
         .run();
       tx.insert(s.nickname).values({ userId: id, nick: p.nick, isPrimary: true }).run();
     });
@@ -408,7 +408,7 @@ function range(letter: string, from: number, to: number) {
 
 // Run directly: `npm run seed [-- --force]`.
 if (process.argv[1]?.match(/seed-demo\.[tj]s$/)) {
-  seedDemo({ force: process.argv.includes("--force") })
+  seedDemo({ force: process.argv.includes("--force"), discord: process.argv.includes("--discord") })
     .then((r) => {
       console.log(`Demo data added: ${r.users} people in "Pixel Pirates", 3 events.`);
       console.log(`Sign in with alex@example.com (admin and orga) or anna@example.com (member), password "${r.password}".`);

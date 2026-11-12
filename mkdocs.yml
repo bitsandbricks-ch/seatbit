@@ -1,0 +1,73 @@
+site_name: Seatbit
+site_description: Coordinate who in your clan goes to which LAN party, tickets and seats. Self-hostable.
+site_url: https://bitsandbricks-ch.github.io/seatbit/
+repo_url: https://github.com/bitsandbricks-ch/seatbit
+repo_name: bitsandbricks-ch/seatbit
+edit_uri: edit/main/docs/
+copyright: Seatbit is free software under the GNU AGPL-3.0 · Powered by <a href="https://bitsandbricks.ch">bitsandbricks.ch</a>
+
+docs_dir: docs
+exclude_docs: |
+  requirements.txt
+
+theme:
+  name: material
+  logo: assets/logo.svg
+  favicon: assets/favicon.svg
+  palette:
+    scheme: slate
+    primary: custom
+    accent: custom
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - navigation.indexes
+    - search.highlight
+    - content.code.copy
+    - content.action.edit
+    - toc.follow
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+
+nav:
+  - Home: index.md
+  - Members:
+      - Getting started: members/index.md
+      - Events: members/events.md
+      - Seats: members/seats.md
+      - Travel, packing and games: members/extras.md
+      - Your profile: members/profile.md
+  - Orgas and clan admins:
+      - Your clan: orgas/index.md
+      - Members and guests: orgas/members.md
+      - Events: orgas/events.md
+      - Seat plan: orgas/seats.md
+      - Discord and WhatsApp: orgas/discord.md
+  - Self-hosting:
+      - Overview: self-hosting/index.md
+      - Install with Docker: self-hosting/docker.md
+      - Configuration: self-hosting/configuration.md
+      - Discord app and bot: self-hosting/discord.md
+      - Email: self-hosting/email.md
+      - Operator, privacy and terms: self-hosting/legal.md
+      - Platform admin: admins/index.md
+      - Backups and upgrades: self-hosting/operations.md
+  - Development:
+      - Contributing: development/index.md
+      - Screenshots: development/screenshots.md

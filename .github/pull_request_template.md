@@ -8,7 +8,7 @@
 
 ## Checklist
 
-- [ ] `npm run lint`, `npx tsc --noEmit` and `npm run build` pass
+- [ ] `npm run lint`, `npm run typecheck` and `npm run build` pass
 - [ ] Tested on a phone-sized and a desktop-sized window (UI changes)
 - [ ] New migration has the next free number and runs on an existing database (schema changes)
 - [ ] Docs in `docs/` updated for user-facing or setup changes

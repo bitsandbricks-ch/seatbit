@@ -26,7 +26,7 @@ Open http://localhost:3000. The first account becomes the platform admin. The SQ
 
 ## Making changes
 
-- **Code style:** TypeScript, React server components and server actions (Next.js App Router). Run `npm run lint` and `npx tsc --noEmit` before you push. Note that this is a recent Next.js version; read `node_modules/next/dist/docs/` when an API looks unfamiliar (see `AGENTS.md`).
+- **Code style:** TypeScript, React server components and server actions (Next.js App Router). Run `npm run lint`, `npm run typecheck` and `npm run build` before you push. Note that this is a recent Next.js version; read `node_modules/next/dist/docs/` when an API looks unfamiliar (see `AGENTS.md`).
 - **UI:** mobile-first, but also check the desktop layout. Use the shared components in `src/components/ui.tsx` and the brand tokens (`brand/tokens.css`), never raw colours. Dates are always 24h, Swiss style ("Sat 14.11.2026, 18:00"), via `src/lib/format.ts`.
 - **Database:** edit `src/db/schema.ts`, then `npm run db:generate`. Migrations in `drizzle/` run on startup. Check the file number: it must be the next free one.
 - **Settings:** a new instance-wide setting goes into `SETTINGS` in `src/lib/settings.ts`, so admins can change it in the UI and it can still be set by env var.
