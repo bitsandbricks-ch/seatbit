@@ -38,6 +38,9 @@ export const user = sqliteTable("user", {
   // Discord sign-in with this (verified) address takes the guest over automatically.
   inviteEmail: text("invite_email"),
   invitedAt: integer("invited_at", { mode: "timestamp_ms" }),
+  // The Discord user an orga said this guest is (via the bot): their Discord sign-in
+  // takes the guest over automatically.
+  guestDiscordId: text("guest_discord_id"),
   // How the member is shown: "picture" = their uploaded picture, else the Discord
   // picture, else initials; "icon" = an emoji on their colour; "initials".
   avatarStyle: text("avatar_style").$type<"picture" | "icon" | "initials">().default("picture").notNull(),

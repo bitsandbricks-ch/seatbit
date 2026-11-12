@@ -12,7 +12,8 @@ import { guestEmail } from "@/lib/guests";
 import { LAN_ID_MAX } from "@/lib/lan-accounts";
 import {
   accountByEmail,
-  canClaimDirectly,
+  claimOrRequestGuest,
+  discordTicketState,
   guestSuggestions,
   mergeGuestInto,
   normEmail,
@@ -525,6 +526,16 @@ export async function claimGuest(code: string) {
   redirect(c ? `/clans/${c.slug}` : "/");
 }
 
+/** "That's me" on the sign-in link from the bot's /claim (people who had no Seatbit account yet). */
+export async function claimGuestFromDiscord(token: string) {
+  const me = await requireUser();
+  const st = discordTicketState(token, me);
+  if (st.kind !== "ok") redirect(`/claim/discord/${token}`);
+  const r = claimOrRequestGuest(st.clan, st.claim, me, "discord");
+  revalidatePath("/", "layout");
+  redirect(r === "claimed" ? `/clans/${st.clan.slug}?claimed=1` : `/claim/discord/${token}`);
+}
+
 /** Clan admins set the Discord invite link shown to members who aren't on the server. */
 export async function setClanDiscordInvite(clanId: string, guildId: string, formData: FormData) {
   await requireClanPermission(clanId, "settings");
@@ -554,40 +565,9 @@ export async function claimGuestAsMember(clanId: string, guestId: string) {
   const { me, c } = await requireClaimingMember(clanId);
   const s = guestSuggestions(clanId, me.id).find((x) => x.guest.id === guestId);
   if (!s) throw new Error("That guest was taken over already");
-  const g = s.guest;
-  if (canClaimDirectly(c.guestClaims, s, clanRole(g.id, clanId))) {
-    audit({ actorId: me.id, action: "guest.claimed", clanId, data: { guest: g.name, match: s.match } });
-    mergeGuestInto(g, me.id);
-    revalidatePath("/", "layout");
-    redirect(`/clans/${c.slug}?claimed=1`);
-  }
-  // One open request per member and clan: you can only be one of the guests.
-  db.transaction((tx) => {
-    tx.delete(schema.guestClaim)
-      .where(and(eq(schema.guestClaim.clanId, clanId), eq(schema.guestClaim.userId, me.id), eq(schema.guestClaim.status, "pending")))
-      .run();
-    tx.insert(schema.guestClaim)
-      .values({ clanId, guestId, userId: me.id, match: s.match, status: "pending" })
-      .onConflictDoUpdate({
-        target: [schema.guestClaim.guestId, schema.guestClaim.userId],
-        set: { status: "pending", match: s.match, createdAt: new Date() },
-      })
-      .run();
-  });
-  audit({ actorId: me.id, action: "guest.claim_request", clanId, targetUserId: me.id, data: { guest: g.name, match: s.match } });
-  const who = inviterName(me);
-  notifyLater(() =>
-    notifyClanAdmins(clanId, {
-      kind: "guest_claim_request",
-      subject: `${who} says they're ${g.name}`,
-      text: `${who} asked to take over the guest ${g.name} in ${c.name}${
-        s.match ? ` (same ${s.match})` : ""
-      }. Check it's really them, then approve or decline it in the clan's member list.`,
-      url: `${appUrl}/clans/${c.slug}/settings?tab=members`,
-    }),
-  );
+  const r = claimOrRequestGuest(c, s, me);
   revalidatePath("/", "layout");
-  redirect(`/clans/${c.slug}/claim`);
+  redirect(r === "claimed" ? `/clans/${c.slug}?claimed=1` : `/clans/${c.slug}/claim`);
 }
 
 /** "Not me": stops suggesting this guest to the member. */

@@ -49,6 +49,26 @@ export const commands = [
     type: 1,
   },
   {
+    name: "claim",
+    description: "Take over the guest profile your clan's orgas made for you",
+    type: 1,
+    dm_permission: false,
+    options: [
+      { type: 3, name: "guest", description: "Only needed if I don't find you by name", required: false, autocomplete: true },
+    ],
+  },
+  {
+    // Seatbit checks the caller may manage the clan's members; no Discord permission needed.
+    name: "guest",
+    description: "Orgas: tell Seatbit which Discord member a guest is, so they take it over",
+    type: 1,
+    dm_permission: false,
+    options: [
+      { type: 6, name: "member", description: "The Discord member", required: true },
+      { type: 3, name: "guest", description: "The guest in Seatbit", required: true, autocomplete: true },
+    ],
+  },
+  {
     name: "seatbit",
     description: "Seatbit bot settings for this server",
     type: 1,

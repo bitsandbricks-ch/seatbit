@@ -26,7 +26,8 @@ export type NoticeKind =
   | "guest_claimed"
   | "guest_claim_request"
   | "guest_claim_approved"
-  | "guest_claim_declined";
+  | "guest_claim_declined"
+  | "guest_linked";
 
 export type Notice = {
   kind: NoticeKind;
@@ -41,6 +42,8 @@ export type Notice = {
   dm?: string;
   /** Don't email, only DM (for small updates that aren't worth a mail). */
   dmOnly?: boolean;
+  /** DM footer; the default points to the DM switch on the profile. */
+  footer?: string;
   /** Extra DM buttons next to "Open in Seatbit" (Discord button components, e.g. "I booked it"). */
   buttons?: Record<string, unknown>[];
 };
@@ -86,6 +89,12 @@ export async function trySendDiscordDm(u: Pick<User, "id" | "discordDms" | "isGu
   if (!discordEnabled()) return { ok: false, problem: "bot_not_set_up" };
   const discordId = discordIdOf(u.id);
   if (!discordId) return { ok: false, problem: "no_discord" };
+  return dmDiscordUser(discordId, n);
+}
+
+/** DMs a Discord user by id, Seatbit account or not (e.g. someone an orga linked a guest to). */
+export async function dmDiscordUser(discordId: string, n: Notice): Promise<DmResult> {
+  if (!discordEnabled()) return { ok: false, problem: "bot_not_set_up" };
   try {
     let channelId = dmChannels.get(discordId);
     if (!channelId) {
@@ -99,7 +108,7 @@ export async function trySendDiscordDm(u: Pick<User, "id" | "discordDms" | "isGu
           url: n.url,
           description: clip(n.dm ?? dmBody(n.text, n.url), 4000),
           color: 0x10b981,
-          footer: { text: "Seatbit · turn these DMs off on your profile" },
+          footer: { text: n.footer ?? "Seatbit · turn these DMs off on your profile" },
         },
       ],
       components:

@@ -194,6 +194,7 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
                     <Row label="Invite">
                       {u.invitedAt ? `mailed ${fmtDate(u.invitedAt)}` : u.inviteEmail ? "not sent yet" : "no email, send the link"}
                     </Row>
+                    <Row label="Discord">{u.guestDiscordId ? "linked, takes over at their first sign-in" : "not linked (/guest in Discord)"}</Row>
                   </>
                 ) : (
                   <>

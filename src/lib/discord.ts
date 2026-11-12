@@ -10,10 +10,15 @@ import { type Json, api, discordEnabled } from "./discord-api";
 import { getSetting } from "./settings";
 import { setSeatBooked } from "./seat-booking";
 import { appUrl } from "./mail";
+import { audit } from "./audit";
+import { claimOrRequestGuest, discordClaimTicket, guestSuggestions, mergeGuestInto, unclaimedGuests } from "./guest-claim";
+import { nameMatches } from "./names";
+import { dmDiscordUser, notify, notifyLater } from "./notify";
 
 const { discordChannel, discordMessage, channelReminderLog, account, attendance, lan, user } = schema;
 
 const appId = () => getSetting("discord.clientId");
+const profileComplete = (u: { firstName: string; lastName: string }) => !!(u.firstName && u.lastName);
 
 // ---------- Request verification ----------
 
@@ -354,10 +359,17 @@ type Interaction = {
   guild_id?: string;
   channel_id?: string;
   channel?: { name?: string };
-  member?: { user: { id: string } };
-  user?: { id: string };
-  data?: { name?: string; custom_id?: string; options?: Option[] };
+  member?: { user: DiscordUser; nick?: string | null };
+  user?: DiscordUser;
+  data?: {
+    name?: string;
+    custom_id?: string;
+    options?: Option[];
+    resolved?: { users?: Record<string, DiscordUser>; members?: Record<string, { nick?: string | null }> };
+  };
 };
+
+type DiscordUser = { id: string; username?: string; global_name?: string | null; bot?: boolean };
 
 const EPHEMERAL = 64;
 const reply = (content: string, extra: Json = {}) => ({
@@ -422,6 +434,18 @@ export function handleInteraction(i: Interaction): { response: Json; later?: () 
   const discordUser = i.member?.user.id ?? i.user?.id ?? "";
   const editReply = (body: Json) => api("PATCH", `/webhooks/${appId()}/${i.token}/messages/@original`, body);
   const sub = i.data?.options?.[0];
+
+  // Autocomplete for /claim guest:<…> and /guest guest:<…>: the server's clan's guests nobody took over yet.
+  if (i.type === 4 && (i.data?.name === "claim" || i.data?.name === "guest")) {
+    const c = clanForGuild(i.guild_id);
+    const q = String(i.data.options?.find((o) => o.focused)?.value ?? "");
+    const choices = (c ? unclaimedGuests(c.id) : [])
+      .filter((g) => !q || nameMatches(g.name, q))
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .slice(0, 25)
+      .map((g) => ({ name: clip(g.name, 100), value: g.id }));
+    return { response: { type: 8, data: { choices } } };
+  }
 
   // Autocomplete for /seatbit here clan:<…>
   if (i.type === 4 && i.data?.name === "seatbit") {
@@ -507,6 +531,18 @@ export function handleInteraction(i: Interaction): { response: Json; later?: () 
       },
     };
   }
+
+  // /claim [guest:<…>], and the "That's me" buttons it shows
+  if (i.type === 2 && i.data?.name === "claim") {
+    const wanted = i.data.options?.find((o) => o.name === "guest")?.value;
+    return claimCommand(i, wanted ? String(wanted) : undefined);
+  }
+  if (i.type === 3 && i.data?.custom_id?.startsWith("claim:")) {
+    return claimCommand(i, i.data.custom_id.slice("claim:".length));
+  }
+
+  // /guest member:<@…> guest:<…>: an orga says who a guest is
+  if (i.type === 2 && i.data?.name === "guest") return linkGuestCommand(i, editReply);
 
   // /lans: this server's clan, or (in DMs / unlinked servers) all of your clans
   if (i.type === 2 && i.data?.name === "lans") {
@@ -606,6 +642,147 @@ export function handleInteraction(i: Interaction): { response: Json; later?: () 
   }
 
   return { response: reply("Unknown command.") };
+}
+
+// ---------- Guest claims ----------
+
+/** The names someone goes by on Discord: server nick, display name and username. */
+function discordNames(u: DiscordUser | undefined, nick?: string | null) {
+  return [nick, u?.global_name, u?.username].filter((n): n is string => !!n);
+}
+
+/**
+ * /claim and its buttons. Without a guest: lists the guests that look like the caller.
+ * With one: takes it over (or asks the admins) when the caller has a Seatbit account,
+ * else hands them a sign-in link that carries the claim over.
+ */
+function claimCommand(i: Interaction, guestId?: string): { response: Json } {
+  const c = clanForGuild(i.guild_id);
+  if (!c) return { response: reply("This server isn't linked to a clan in Seatbit yet. Ask your clan admin to run `/seatbit here`.") };
+  if (c.guestClaims === "off")
+    return { response: reply(`In **${c.name}**, guests are taken over through their own link. Ask an admin for yours.`) };
+  const du = i.member?.user ?? i.user;
+  const discordUser = du?.id ?? "";
+  const me = seatbitUserFor(discordUser);
+  const names = discordNames(du, i.member?.nick);
+  const all = guestSuggestions(c.id, me?.id ?? null, names);
+  const openClan = linkButton("Open clan", `${appUrl}/clans/${c.slug}`);
+
+  if (!guestId) {
+    if (!all.length) return { response: reply(`**${c.name}** has no guests waiting to be taken over.`, { components: [openClan] }) };
+    const matches = all.filter((s) => s.match && s.status !== "dismissed").slice(0, 5);
+    if (!matches.length)
+      return {
+        response: reply(`I didn't find a guest in **${c.name}** with your name or nick. Pick yours with \`/claim guest:\`.`),
+      };
+    const lines = matches.map(
+      (s) => `• **${s.guest.name}** (same ${s.match})${s.status === "pending" ? " · waiting for an admin" : s.status === "declined" ? " · an admin said no" : ""}`,
+    );
+    return {
+      response: reply(`These guests in **${c.name}** look like you:\n${lines.join("\n")}\n\nIs one of them you?`, {
+        components: [
+          {
+            type: 1,
+            components: matches.map((s) => ({ type: 2, style: 3, label: clip(`That's me: ${s.guest.name}`, 80), custom_id: `claim:${s.guest.id}` })),
+          },
+        ],
+      }),
+    };
+  }
+
+  const s = all.find((x) => x.guest.id === guestId);
+  if (!s) return { response: reply("That guest was taken over already, or belongs to another clan.", { components: [openClan] }) };
+  const g = s.guest;
+
+  if (!me) {
+    // No Seatbit account behind this Discord user yet: the link signs them in and continues there.
+    const ticket = discordClaimTicket({ d: discordUser, g: g.id, c: c.id, m: s.match });
+    return {
+      response: reply(
+        `Sign in to Seatbit with this Discord account to take over **${g.name}** in **${c.name}**. The link works for 24 hours.`,
+        { components: [linkButton("Sign in and take it over", `${appUrl}/claim/discord/${ticket}`)] },
+      ),
+    };
+  }
+  if (s.status === "pending")
+    return { response: reply(`You already asked to take over **${g.name}**. An admin of **${c.name}** will confirm it.`) };
+  if (!profileComplete(me))
+    return {
+      response: reply("Finish your Seatbit profile first (first name and surname), then try again.", {
+        components: [linkButton("Open Seatbit", `${appUrl}/welcome`)],
+      }),
+    };
+  const r = claimOrRequestGuest(c, s, me, "discord");
+  return {
+    response: reply(
+      r === "claimed"
+        ? `🎉 Done: **${g.name}** is you now. Their events, seat and nicks moved to your account.`
+        : `👍 Asked the admins of **${c.name}** to confirm you're **${g.name}**. I'll DM you when they did.`,
+      { components: [openClan] },
+    ),
+  };
+}
+
+/**
+ * /guest member:<@…> guest:<…>: an orga ties a guest to a Discord member. If that member
+ * already has Seatbit, the guest moves over now; otherwise their Discord sign-in takes it
+ * over, and the bot DMs them the claim link.
+ */
+function linkGuestCommand(i: Interaction, editReply: (body: Json) => Promise<unknown>): { response: Json; later?: () => Promise<void> } {
+  const c = clanForGuild(i.guild_id);
+  if (!c) return { response: reply("This server isn't linked to a clan in Seatbit yet. Run `/seatbit here` first.") };
+  const me = seatbitUserFor(i.member?.user.id ?? i.user?.id ?? "");
+  if (!me) return { response: notLinked() };
+  if (!clanCan(me, c.id, "members")) return { response: reply(`Only admins of **${c.name}** who manage members can do this.`) };
+  const targetId = String(i.data?.options?.find((o) => o.name === "member")?.value ?? "");
+  const guestId = String(i.data?.options?.find((o) => o.name === "guest")?.value ?? "");
+  const target = i.data?.resolved?.users?.[targetId];
+  if (!targetId || target?.bot) return { response: reply("Pick a person, not a bot.") };
+  const g = unclaimedGuests(c.id).find((x) => x.id === guestId);
+  if (!g) return { response: reply(`That isn't a guest of **${c.name}** anymore. Pick one from the list.`) };
+  const mention = `<@${targetId}>`;
+  const existing = seatbitUserFor(targetId);
+
+  if (existing && !existing.isGuest) {
+    audit({ actorId: me.id, action: "guest.merged", clanId: c.id, targetUserId: existing.id, data: { guest: g.name, via: "discord" } });
+    mergeGuestInto(g, existing.id);
+    notifyLater(() =>
+      notify(existing.id, {
+        kind: "guest_linked",
+        subject: `You took over ${g.name} in ${c.name}`,
+        text: `An admin of ${c.name} said you're ${g.name}. Their events, seats and nicks are yours now.\n\n${appUrl}/clans/${c.slug}`,
+        url: `${appUrl}/clans/${c.slug}`,
+      }),
+    );
+    return { response: reply(`👍 Done: ${mention} already has Seatbit, so **${g.name}** moved to their account.`) };
+  }
+
+  // One guest per Discord member and clan: a new link replaces an older one.
+  db.update(user)
+    .set({ guestDiscordId: null })
+    .where(and(eq(user.guestClanId, c.id), eq(user.guestDiscordId, targetId)))
+    .run();
+  db.update(user).set({ guestDiscordId: targetId }).where(eq(user.id, g.id)).run();
+  audit({ actorId: me.id, action: "guest.discord_link", clanId: c.id, targetUserId: g.id, data: { guest: g.name } });
+  const link = `${appUrl}/claim/${g.claimCode}`;
+  return {
+    response: { type: 5, data: { flags: EPHEMERAL } },
+    later: async () => {
+      const dm = await dmDiscordUser(targetId, {
+        kind: "guest_linked",
+        subject: `Your spot in ${c.name} is waiting`,
+        text: `The orgas of ${c.name} added you to Seatbit as ${g.name}. Sign in with this Discord account to see your events, tickets and seat.`,
+        url: link,
+        footer: "Seatbit · sent because an orga of your clan linked you",
+      });
+      await editReply({
+        content: dm.ok
+          ? `👍 Linked: ${mention} is **${g.name}**. I DMed them the link; signing in to Seatbit with Discord takes the guest over.`
+          : `👍 Linked: ${mention} is **${g.name}**. Signing in to Seatbit with Discord takes the guest over. I couldn't DM them, so send them this link: ${link}`,
+        allowed_mentions: { parse: [] },
+      }).catch((e) => console.error("[discord] guest link reply failed", e));
+    },
+  };
 }
 
 /** Unlinks a channel from Seatbit (clan settings). Checks the caller may manage the channel's clan. */
