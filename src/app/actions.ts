@@ -14,6 +14,7 @@ import {
   ATTENDANCE_LOCKED_MSG,
   attendanceLocked,
   interestSwitch,
+  addClanAdminsAsOrgas,
 } from "@/lib/lans";
 import { parseSeatLabel } from "@/lib/seat-layout";
 import { rowLetter } from "@/lib/seat-labels";
@@ -292,6 +293,7 @@ export async function saveLan(_: FormState, formData: FormData): Promise<FormSta
     const row = db.insert(lan).values({ ...v, clanId }).returning().get();
     lanId = row.id;
     db.insert(lanOrga).values({ lanId: row.id, userId: me.id }).run();
+    addClanAdminsAsOrgas(row.id, clanId);
     auditLan(row, me.id, "event.create");
     const t = v.typeId ? db.select().from(lanType).where(eq(lanType.id, v.typeId)).get() : undefined;
     if (t?.seatSpec) applySeatSpec(row.id, t.seatSpec);
@@ -879,6 +881,12 @@ const lanTypeInput = z.object({
     .pipe(z.number().int().min(1).nullable()),
   reminderDays: z.coerce.number().int().min(0).max(60),
   seatSpec: z.string().max(500).default(""),
+  durationHours: z.coerce.number().int().min(1).max(24 * 14),
+  answerDaysBefore: z
+    .string()
+    .optional()
+    .transform((v) => (v ? Number(v) : null))
+    .pipe(z.number().int().min(0).max(365).nullable()),
 });
 
 export async function saveLanType(_: FormState, formData: FormData): Promise<FormState> {

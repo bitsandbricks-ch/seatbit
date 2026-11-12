@@ -5,7 +5,7 @@ A **clan** is your group: its members, the LAN types you go to every year, the e
 There are two roles:
 
 - **Clan admins** manage the clan: settings, members, LAN types and every event of the clan.
-- **Orgas** are set per event. They edit that event, its attendance and seats. Any orga can add co-orgas. Clan admins can always manage every event.
+- **Orgas** are set per event. They edit that event, its attendance and seats. Any orga can add co-orgas. Whoever creates an event and all clan admins become its orgas automatically.
 
 ## Create a clan
 
@@ -33,7 +33,7 @@ Open the clan and switch to **Manage**. The tabs:
 
 ## LAN types
 
-A **LAN type** describes a LAN party you go to regularly, e.g. *Lock & Load* or *SwitzerLAN*: location, website, ticket shop, price, how many spots the group usually gets, and the seats you usually get (e.g. `F1-F20`). New events are created from a type and copy all of this.
+A **LAN type** describes a LAN party you go to regularly, e.g. *Lock & Load* or *SwitzerLAN*: location, website, ticket shop, price, how many spots the group usually gets, and the seats you usually get (e.g. `F1-F20`). New events are created from a type and copy all of this. The type also sets the event's **usual length** in hours (e.g. Fri 18:00 to Sun 16:00 = 46) and how many days before the start members must **answer by** (default 30), so the dates fill themselves in.
 
 Members set a nick and their user ID **per LAN type**, so they only enter their lal.gg name once, not every year.
 

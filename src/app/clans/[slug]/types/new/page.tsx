@@ -27,6 +27,8 @@ export default async function NewLanTypePage({ params }: PageProps<"/clans/[slug
             capacity: "",
             reminderDays: 3,
             seatSpec: "",
+            durationHours: 46,
+            answerDaysBefore: "30",
           }}
         />
       </Card>

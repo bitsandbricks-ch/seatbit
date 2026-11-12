@@ -4,8 +4,12 @@ import { btnGhost, btnPrimary } from "./ui";
 
 /**
  * Date and time picker, always 24h (the browser's own datetime-local input
- * shows AM/PM for English locales). The form value stays the same as before,
- * "YYYY-MM-DDTHH:MM" in server-local time, so the server actions don't change.
+ * shows AM/PM for English locales). The form value stays "YYYY-MM-DDTHH:MM" in
+ * server-local time, so the server actions don't change.
+ *
+ * The field is a normal text box: type "14.11.2026 18:00" (or "14.11. 18", "14.11.26 1800"),
+ * or copy the text from one date field and paste it into another. The calendar
+ * button opens a month view with quick times.
  */
 
 const WEEKDAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
@@ -19,6 +23,32 @@ function parse(v: string): Parts | null {
   const r = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(v);
   return r ? { y: +r[1], m: +r[2] - 1, d: +r[3], hh: +r[4], mm: +r[5] } : null;
 }
+/**
+ * Reads what people type or paste: "Sat 14.11.2026, 18:00", "14.11.26 18", "14.11. 1800",
+ * "14/11/2026 18.30" or "2026-11-14T18:00". A missing year means the next such date;
+ * a missing time uses `fallback`.
+ */
+export function parseTyped(text: string, fallback: { hh: number; mm: number }, now = new Date()): Parts | null {
+  const t = text.trim();
+  if (!t) return null;
+  const iso = parse(t);
+  if (iso) return iso;
+  const m = /(\d{1,2})[./-](\d{1,2})[./-]?(\d{2,4})?\s*,?\s*(?:(\d{1,2})(?:[:.h]?(\d{2}))?)?\s*$/.exec(t);
+  if (!m) return null;
+  const d = +m[1];
+  const mo = +m[2] - 1;
+  let y = m[3] ? +m[3] : now.getFullYear();
+  if (m[3] && m[3].length === 2) y += 2000;
+  const hh = m[4] !== undefined ? +m[4] : fallback.hh;
+  const mm = m[5] !== undefined ? +m[5] : m[4] !== undefined ? 0 : fallback.mm;
+  if (mo < 0 || mo > 11 || hh > 23 || mm > 59) return null;
+  const date = new Date(y, mo, d);
+  if (date.getMonth() !== mo) return null; // e.g. 31.02.
+  // No year given and the date already passed this year: next year.
+  if (!m[3] && date < new Date(now.getFullYear(), now.getMonth(), now.getDate())) y += 1;
+  return { y, m: mo, d, hh, mm };
+}
+
 const serialize = (p: Parts) => `${p.y}-${pad(p.m + 1)}-${pad(p.d)}T${pad(p.hh)}:${pad(p.mm)}`;
 
 /** "Sat 14.11.2026, 18:00" */
@@ -29,21 +59,41 @@ export function formatPickerValue(v: string) {
   return `${wd} ${pad(p.d)}.${pad(p.m + 1)}.${p.y}, ${pad(p.hh)}:${pad(p.mm)}`;
 }
 
+/** "14.11.2026 18:00": the editable text form. */
+const editText = (v: string) => {
+  const p = parse(v);
+  return p ? `${pad(p.d)}.${pad(p.m + 1)}.${p.y} ${pad(p.hh)}:${pad(p.mm)}` : "";
+};
+
+const QUICK_TIMES = ["10:00", "12:00", "14:00", "16:00", "18:00", "20:00", "23:59"];
+
 export function DateTimePicker({
   name,
   defaultValue = "",
+  value: controlled,
+  onChange,
   required,
   defaultTime = "18:00",
   placeholder = "Pick a date",
 }: {
   name: string;
   defaultValue?: string;
+  /** Controlled value ("YYYY-MM-DDTHH:MM" or ""), e.g. when another field fills this one in. */
+  value?: string;
+  onChange?: (value: string) => void;
   required?: boolean;
   /** Time used when someone picks a day before setting a time. */
   defaultTime?: string;
   placeholder?: string;
 }) {
-  const [value, setValue] = useState(defaultValue);
+  const [own, setOwn] = useState(defaultValue);
+  const value = controlled ?? own;
+  const setValue = (v: string) => {
+    if (controlled === undefined) setOwn(v);
+    onChange?.(v);
+  };
+  const [text, setText] = useState<string | null>(null); // while typing
+  const [bad, setBad] = useState(false);
   const [open, setOpen] = useState(false);
   const current = parse(value);
   const today = new Date();
@@ -114,23 +164,65 @@ export function DateTimePicker({
         aria-hidden
         className="pointer-events-none absolute inset-0 opacity-0"
       />
-      <button
-        type="button"
-        onClick={() => (open ? setOpen(false) : openPicker())}
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        aria-controls={popId}
-        className={`flex min-h-11 w-full items-center gap-2.5 rounded-md border bg-raised px-3 py-2 text-left text-base transition sm:min-h-10 sm:text-sm ${
-          open ? "border-bit ring-2 ring-bit/25" : "border-line hover:border-muted/40"
+      <div
+        className={`flex min-h-11 w-full items-center rounded-md border bg-raised transition sm:min-h-10 ${
+          bad ? "border-danger" : open ? "border-bit ring-2 ring-bit/25" : "border-line hover:border-muted/40"
         }`}
       >
-        <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-muted" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-          <path d="M7 3v3M17 3v3M4 9h16M5 6h14a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1Z" />
-        </svg>
-        <span className={`flex-1 truncate ${value ? "font-mono text-fg" : "text-faint"}`}>
-          {value ? formatPickerValue(value) : placeholder}
-        </span>
-      </button>
+        <input
+          type="text"
+          inputMode="text"
+          autoComplete="off"
+          aria-label={placeholder}
+          title="Type or paste e.g. 14.11.2026 18:00"
+          placeholder={placeholder}
+          value={text ?? (value ? formatPickerValue(value) : "")}
+          onFocus={(e) => {
+            setText(editText(value));
+            requestAnimationFrame(() => e.target.select());
+          }}
+          onChange={(e) => {
+            setText(e.target.value);
+            setBad(false);
+          }}
+          onBlur={() => {
+            if (text === null) return;
+            const t = text.trim();
+            if (!t) {
+              if (!required) setValue("");
+            } else {
+              const p = parseTyped(t, { hh: dh, mm: dm });
+              if (p) {
+                setValue(serialize(p));
+                setView({ y: p.y, m: p.m });
+              } else setBad(true);
+            }
+            setText(null);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              (e.target as HTMLInputElement).blur();
+            }
+            if (e.key === "ArrowDown" && !open) openPicker();
+          }}
+          className="min-w-0 flex-1 bg-transparent px-3 py-2 font-mono text-base text-fg placeholder:font-sans placeholder:text-faint focus:outline-none sm:text-sm"
+        />
+        <button
+          type="button"
+          onClick={() => (open ? setOpen(false) : openPicker())}
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          aria-controls={popId}
+          aria-label="Open calendar"
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-r-md text-muted hover:text-fg"
+        >
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M7 3v3M17 3v3M4 9h16M5 6h14a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1Z" />
+          </svg>
+        </button>
+      </div>
+      {bad && <span className="mt-1 block text-xs text-danger">Write it like 14.11.2026 18:00</span>}
 
       {open && (
         <div
@@ -207,6 +299,24 @@ export function DateTimePicker({
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {QUICK_TIMES.map((qt) => {
+              const [h, mi] = qt.split(":").map(Number);
+              const on = current?.hh === h && current?.mm === mi;
+              return (
+                <button
+                  key={qt}
+                  type="button"
+                  onClick={() => setPart({ hh: h, mm: mi })}
+                  aria-pressed={on}
+                  className={`rounded-bit border px-2 py-1 font-mono text-xs ${on ? "border-bit bg-bit-soft text-fg" : "border-line text-muted hover:text-fg"}`}
+                >
+                  {qt}
+                </button>
+              );
+            })}
           </div>
 
           <div className="mt-3 flex items-center justify-between gap-2">

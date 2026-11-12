@@ -30,8 +30,63 @@ export type LanFormValues = {
   interestSwitch?: "free" | "on-locked" | "off-locked";
 };
 
-export function LanForm({ values, types }: { values: LanFormValues; types: { id: string; name: string }[] }) {
+type TypeOption = { id: string; name: string; durationHours?: number; answerDaysBefore?: number | null };
+
+const toLocal = (d: Date) => {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+};
+const fromLocal = (v: string) => (v ? new Date(v) : null);
+const valid = (d: Date | null): d is Date => !!d && !isNaN(d.getTime());
+
+export function LanForm({ values, types }: { values: LanFormValues; types: TypeOption[] }) {
   const [state, action, pending] = useActionState<FormState, FormData>(saveLan, undefined);
+  const [typeId, setTypeId] = useState(values.typeId);
+  const [startsAt, setStartsAt] = useState(values.startsAt);
+  const [endsAt, setEndsAt] = useState(values.endsAt);
+  const [deadline, setDeadline] = useState(values.signupDeadline);
+  const [ticketBy, setTicketBy] = useState(values.paymentDueDate);
+  const [filled, setFilled] = useState<string | null>(null);
+  const type = types.find((t) => t.id === typeId);
+
+  /**
+   * A new start moves the other dates with it: when they were set, by the same amount (keeps the
+   * event's length and the deadlines' distance); otherwise from the LAN type's usual length and
+   * "answer by" days.
+   */
+  const changeStart = (v: string) => {
+    const prev = fromLocal(startsAt);
+    const next = fromLocal(v);
+    setStartsAt(v);
+    if (!valid(next)) return;
+    const shift = (s: string) => {
+      const d = fromLocal(s);
+      return valid(prev) && valid(d) ? toLocal(new Date(d.getTime() + next.getTime() - prev.getTime())) : "";
+    };
+    const done: string[] = [];
+    const end = shift(endsAt) || toLocal(new Date(next.getTime() + (type?.durationHours ?? 46) * 3600_000));
+    if (end !== endsAt) {
+      setEndsAt(end);
+      done.push("end");
+    }
+    let dl = shift(deadline);
+    const days = type ? type.answerDaysBefore : 30;
+    if (!dl && days != null) {
+      const d = new Date(next.getTime() - days * 86_400_000);
+      d.setHours(23, 59, 0, 0);
+      dl = toLocal(d);
+    }
+    if (dl && dl !== deadline) {
+      setDeadline(dl);
+      done.push("answer by");
+    }
+    const tb = shift(ticketBy);
+    if (tb && tb !== ticketBy) {
+      setTicketBy(tb);
+      done.push("ticket by");
+    }
+    setFilled(done.length ? `Moved ${done.join(", ")} along with the start.` : null);
+  };
   const [interest, setInterest] = useState(!!values.interestCheck);
   const [tbd, setTbd] = useState(!!values.dateTbd);
   // The date may stay open only during the interest check.
@@ -76,7 +131,7 @@ export function LanForm({ values, types }: { values: LanFormValues; types: { id:
       )}
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="LAN type" hint="Members' nicks for this type carry over to every event of it.">
-          <select name="typeId" defaultValue={values.typeId} className={input}>
+          <select name="typeId" value={typeId} onChange={(e) => setTypeId(e.target.value)} className={input}>
             <option value="">None (one-off)</option>
             {types.map((t) => (
               <option key={t.id} value={t.id}>
@@ -109,21 +164,30 @@ export function LanForm({ values, types }: { values: LanFormValues; types: { id:
           </Field>
         ) : (
           <>
-            <DateField label="Starts" name="startsAt" value={values.startsAt} required />
-            <DateField label="Ends" name="endsAt" value={values.endsAt} required defaultTime="16:00" />
+            <DateField
+              label="Starts"
+              name="startsAt"
+              value={startsAt}
+              onChange={changeStart}
+              required
+              hint={filled ?? "Type or paste e.g. 14.11.2026 18:00, or open the calendar. The other dates follow."}
+            />
+            <DateField label="Ends" name="endsAt" value={endsAt} onChange={setEndsAt} required defaultTime="16:00" />
           </>
         )}
         <DateField
           label="Answer by"
           name="signupDeadline"
-          value={values.signupDeadline}
+          value={deadline}
+          onChange={setDeadline}
           hint="When members must say if they come, e.g. before you book the group's seats. Undecided members get a reminder."
           defaultTime="23:59"
         />
         <DateField
           label="Buy ticket by"
           name="paymentDueDate"
-          value={values.paymentDueDate}
+          value={ticketBy}
+          onChange={setTicketBy}
           hint="Attendees without a ticket get a reminder before this."
           defaultTime="23:59"
         />
@@ -153,6 +217,7 @@ function DateField({
   label,
   name,
   value,
+  onChange,
   hint,
   required,
   defaultTime,
@@ -160,6 +225,7 @@ function DateField({
   label: string;
   name: string;
   value: string;
+  onChange: (v: string) => void;
   hint?: string;
   required?: boolean;
   defaultTime?: string;
@@ -167,7 +233,7 @@ function DateField({
   return (
     <div>
       <span className={labelCls}>{label}</span>
-      <DateTimePicker name={name} defaultValue={value} required={required} defaultTime={defaultTime} placeholder={required ? "Pick a date" : "No deadline"} />
+      <DateTimePicker name={name} value={value} onChange={onChange} required={required} defaultTime={defaultTime} placeholder={required ? "Pick a date" : "No deadline"} />
       {hint && <span className="mt-1.5 block text-xs text-muted">{hint}</span>}
     </div>
   );

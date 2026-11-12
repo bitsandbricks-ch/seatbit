@@ -205,3 +205,15 @@ export function interestSwitch(l: Lan): InterestSwitch {
   const answered = db.select({ id: attendance.id }).from(attendance).where(eq(attendance.lanId, l.id)).get();
   return answered ? "off-locked" : "free";
 }
+
+/** Makes every admin of the clan an orga of the event (new events and next year's copies). */
+export function addClanAdminsAsOrgas(lanId: string, clanId: string | null) {
+  if (!clanId) return;
+  const admins = db
+    .select({ userId: schema.clanMember.userId })
+    .from(schema.clanMember)
+    .where(and(eq(schema.clanMember.clanId, clanId), eq(schema.clanMember.role, "admin")))
+    .all();
+  const have = new Set(db.select().from(schema.lanOrga).where(eq(schema.lanOrga.lanId, lanId)).all().map((o) => o.userId));
+  for (const a of admins) if (!have.has(a.userId)) db.insert(schema.lanOrga).values({ lanId, userId: a.userId }).run();
+}
