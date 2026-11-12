@@ -19,7 +19,10 @@ Seatbit uses **one Discord application** for both the "Continue with Discord" lo
 
 ![Discord settings](../screenshots/desktop-admin-discord.png){ .shot }
 
-The page also shows the **bot invite link**. Clan admins find the same link in their clan settings, add the bot to their server and run `/seatbit here` there (see [Discord and WhatsApp](../features/discord.md)). The invite asks for the permissions the bot uses: send messages and embeds, pin messages, create invites, and use slash commands.
+The page also shows the **bot invite link**. Clan admins find the same link in their clan settings, add the bot to their server and run `/seatbit here` there (see [Discord and WhatsApp](../features/discord.md)). The invite asks for the permissions the bot uses: send messages and embeds, pin messages, create invites, create public threads and send messages in them (a thread per event), manage channels (only used for a channel per event), and use slash commands.
+
+!!! note "Servers that added the bot before threads and event channels"
+    The bot keeps working without the new permissions: it then posts reminders and news in the linked channel instead. To use threads or a channel per event, give the bot's role *Create Public Threads*, *Send Messages in Threads* and *Manage Channels* in the server settings, or add the bot again with the new invite link.
 
 ## Privacy
 

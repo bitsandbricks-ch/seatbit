@@ -29,6 +29,7 @@ export default async function NewLanTypePage({ params }: PageProps<"/clans/[slug
             seatSpec: "",
             durationHours: 46,
             answerDaysBefore: "30",
+            discordMode: "channel",
           }}
         />
       </Card>

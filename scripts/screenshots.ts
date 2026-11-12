@@ -157,6 +157,7 @@ const SHOTS: Shot[] = [
   { name: "desktop-clan-guests", who: "alex", path: `${CLAN}/settings?tab=guests` },
   { name: "desktop-clan-discord", who: "alex", path: `${CLAN}/settings?tab=chat` },
   { name: "desktop-lan-types", who: "alex", path: `${CLAN}/settings?tab=types` },
+  { name: "desktop-lan-type-edit", who: "alex", path: `${CLAN}/types/demo-type-lakeside` },
   { name: "desktop-clan-audit-log", who: "alex", path: `${CLAN}/settings?tab=log` },
   { name: "desktop-admin-audit-log", who: "alex", path: "/admin/log" },
   { name: "desktop-profile", who: "alex", path: "/profile" },

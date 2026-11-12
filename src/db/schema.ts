@@ -8,6 +8,7 @@ import {
   type AnySQLiteColumn,
 } from "drizzle-orm/sqlite-core";
 import type { ClanRole } from "../lib/clan-roles";
+import type { DiscordMode } from "../lib/discord-modes";
 
 const now = sql`(cast(unixepoch('subsecond') * 1000 as integer))`;
 const id = () =>
@@ -238,6 +239,8 @@ export const lanType = sqliteTable("lan_type", {
   durationHours: integer("duration_hours").default(46).notNull(),
   /** "Answer by" this many days before the start; null = no answer deadline by default. */
   answerDaysBefore: integer("answer_days_before").default(30),
+  /** Where the Discord bot puts each event of this type: see DISCORD_MODES. */
+  discordMode: text("discord_mode").$type<DiscordMode>().default("channel").notNull(),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
 });
 
@@ -552,6 +555,10 @@ export const discordMessage = sqliteTable(
       .references(() => lan.id, { onDelete: "cascade" }),
     channelId: text("channel_id").notNull(),
     messageId: text("message_id").notNull(),
+    /** Thread started on the post: reminders and news go there. */
+    threadId: text("thread_id"),
+    /** Channel the bot made for this event: the post lives there, and reminders and news too. */
+    eventChannelId: text("event_channel_id"),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
   },
   (t) => [uniqueIndex("discord_message_lan_channel_uq").on(t.lanId, t.channelId)],
