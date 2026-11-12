@@ -71,6 +71,10 @@ npm run dev
 
 Stack: Next.js (App Router) · Better Auth · SQLite with Drizzle · Tailwind CSS · Nodemailer. See [CONTRIBUTING.md](CONTRIBUTING.md); AI coding agents follow [AGENTS.md](AGENTS.md). Security issues: [SECURITY.md](SECURITY.md).
 
+## Support
+
+If Seatbit is useful to you, you can [buy me a coffee](https://buymeacoffee.com/bitsandbricks).
+
 ## License
 
 Seatbit is free software under the [GNU Affero General Public License v3.0](LICENSE), with [additional terms](NOTICE.md): keep the "Powered by bitsandbricks.ch" and "Source" links when you run it for others. Brand assets and guidelines are in [`brand/`](brand/BRAND.md).
