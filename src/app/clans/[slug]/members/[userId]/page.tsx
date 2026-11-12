@@ -5,6 +5,8 @@ import { db, schema } from "@/db";
 import type { Attendance, Lan } from "@/db/schema";
 import { CopyField } from "@/components/copy-field";
 import { MemberAdminActions } from "@/components/member-admin-actions";
+import { GuestEditForm } from "@/components/guest-form";
+import { updateGuest } from "@/app/clan-actions";
 import { Card, Page, PageHeader, Pill, StatTile, StatusBadge, columns, stack } from "@/components/ui";
 import { canManageClan, getClanBySlug, isClanMember } from "@/lib/clans";
 import { fmtDate, fmtWeekday } from "@/lib/format";
@@ -99,7 +101,7 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
   return (
     <Page>
       <PageHeader
-        back={{ href: `/clans/${c.slug}`, label: c.name }}
+        back={{ href: `/clans/${c.slug}?tab=members`, label: c.name }}
         avatar={<Avatar data={avatar} size={56} />}
         title={personLabel(u, defaultNick)}
         subtitle={
@@ -140,6 +142,24 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
         </div>
 
         <div className={`min-w-0 ${stack}`}>
+          {u.isGuest && isManager && (
+            <Card title="Edit guest">
+              <p className="mb-3 text-sm text-muted">
+                {u.firstName || u.name} hasn&apos;t claimed this spot yet, so admins keep the details up to date. It all
+                carries over when they sign in.
+              </p>
+              <GuestEditForm
+                action={updateGuest.bind(null, c.id, u.id)}
+                guest={{ firstName: u.firstName, lastName: u.lastName, nick: defaultNick, email: u.inviteEmail ?? "" }}
+                types={types.map((t) => ({
+                  id: t.id,
+                  name: t.name,
+                  nick: nicks.find((n) => n.typeId === t.id && !n.lanId)?.nick ?? "",
+                  lanId: lanAccounts.find((a) => a.typeId === t.id && !a.lanId)?.value ?? "",
+                }))}
+              />
+            </Card>
+          )}
           <Card title="Nicks">
             <dl className="space-y-2 text-sm">
               <div className="flex justify-between gap-3">

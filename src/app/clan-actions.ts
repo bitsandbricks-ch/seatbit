@@ -1,12 +1,13 @@
 "use server";
 
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db, schema } from "@/db";
 import { canManageClan, clanRole, getClan, saveAvatar, uniqueSlug } from "@/lib/clans";
 import { guestEmail } from "@/lib/guests";
+import { LAN_ID_MAX } from "@/lib/lan-accounts";
 import { accountByEmail, mergeGuestInto, normEmail, sendGuestInvite } from "@/lib/guest-claim";
 import { appUrl } from "@/lib/mail";
 import { missingServers, setServerInvite } from "@/lib/discord-invite";
@@ -319,6 +320,79 @@ export async function setGuestEmail(clanId: string, userId: string, _: FormState
   });
   revalidatePath("/", "layout");
   return sent ? { ok: true, message: "Invite sent." } : { error: "Saved, but the mail couldn't be sent. Check the email settings." };
+}
+
+const guestEdit = z.object({
+  firstName: z.string().trim().min(1).max(40),
+  lastName: z.string().trim().min(1).max(40),
+  nick: z.string().trim().max(32),
+  email: z.union([z.literal(""), z.email().max(200)]),
+});
+
+/**
+ * Clan admins edit a guest who hasn't claimed their spot yet: name, default nick, nick and LAN ID per LAN
+ * type, and email. A new email sends the invite (or hands everything over if that address has an account).
+ */
+export async function updateGuest(clanId: string, userId: string, _: FormState, formData: FormData): Promise<FormState> {
+  const me = await requireClanManager(clanId);
+  const g = requireGuestOf(clanId, userId);
+  const parsed = guestEdit.safeParse({
+    firstName: formData.get("firstName") ?? "",
+    lastName: formData.get("lastName") ?? "",
+    nick: formData.get("nick") ?? "",
+    email: String(formData.get("email") ?? "").trim(),
+  });
+  if (!parsed.success) {
+    const bad = new Set(parsed.error.issues.map((i) => i.path[0]));
+    if (bad.has("email")) return { error: "That email address doesn't look right." };
+    if (bad.has("nick")) return { error: "Nicks can be up to 32 characters." };
+    return { error: "A guest needs a first name and a surname." };
+  }
+  const { firstName, lastName, nick, email } = parsed.data;
+  const types = db.select({ id: schema.lanType.id }).from(schema.lanType).where(eq(schema.lanType.clanId, clanId)).all();
+  const nicks = db.select().from(schema.nickname).where(eq(schema.nickname.userId, userId)).all();
+
+  db.transaction((tx) => {
+    tx.update(schema.user).set({ firstName, lastName, name: `${firstName} ${lastName}` }).where(eq(schema.user.id, userId)).run();
+    const setNick = (typeId: string | null, value: string) => {
+      for (const n of nicks) if (!n.lanId && n.typeId === typeId) tx.delete(schema.nickname).where(eq(schema.nickname.id, n.id)).run();
+      if (value) tx.insert(schema.nickname).values({ userId, typeId, nick: value, isPrimary: true }).run();
+    };
+    setNick(null, nick);
+    for (const t of types) {
+      if (formData.has(`nick_${t.id}`)) setNick(t.id, String(formData.get(`nick_${t.id}`)).trim().slice(0, 32));
+      if (formData.has(`lanId_${t.id}`)) {
+        const value = String(formData.get(`lanId_${t.id}`)).trim().slice(0, LAN_ID_MAX);
+        tx.delete(schema.lanAccount)
+          .where(and(eq(schema.lanAccount.userId, userId), eq(schema.lanAccount.typeId, t.id), isNull(schema.lanAccount.lanId)))
+          .run();
+        if (value) tx.insert(schema.lanAccount).values({ userId, typeId: t.id, value }).run();
+      }
+    }
+  });
+
+  let message = "Saved.";
+  const newEmail = email ? normEmail(email) : null;
+  if (newEmail !== (g.inviteEmail ?? null)) {
+    if (!newEmail) {
+      db.update(schema.user).set({ inviteEmail: null, invitedAt: null }).where(eq(schema.user.id, userId)).run();
+    } else {
+      const acc = accountByEmail(newEmail);
+      if (acc) {
+        mergeGuestInto({ ...g, firstName, lastName, name: `${firstName} ${lastName}` }, acc.id);
+        revalidatePath("/", "layout");
+        return { ok: true, message: `${acc.name} already has an account with that email. Everything moved over to it.` };
+      }
+      db.update(schema.user).set({ inviteEmail: newEmail }).where(eq(schema.user.id, userId)).run();
+      const sent = await sendGuestInvite(userId, inviterName(me)).catch((e) => {
+        console.error("[mail] guest invite failed", e);
+        return false;
+      });
+      message = sent ? "Saved. The invite mail is on its way." : "Saved, but the invite mail couldn't be sent. Check the email settings.";
+    }
+  }
+  revalidatePath("/", "layout");
+  return { ok: true, message };
 }
 
 function requireGuestOf(clanId: string, userId: string) {
