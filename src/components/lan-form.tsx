@@ -26,6 +26,8 @@ export type LanFormValues = {
   interestCheck?: boolean;
   dateTbd?: boolean;
   dateHint?: string;
+  /** Edit only: whether the interest check may be switched here (see interestSwitch). */
+  interestSwitch?: "free" | "on-locked" | "off-locked";
 };
 
 export function LanForm({ values, types }: { values: LanFormValues; types: { id: string; name: string }[] }) {
@@ -38,7 +40,7 @@ export function LanForm({ values, types }: { values: LanFormValues; types: { id:
     <form action={action} className="space-y-5">
       {values.id && <input type="hidden" name="id" value={values.id} />}
       {values.clanId && <input type="hidden" name="clanId" value={values.clanId} />}
-      {!values.id ? (
+      {(values.interestSwitch ?? "free") === "free" ? (
         <label className="flex cursor-pointer items-start gap-3 rounded-md border border-line bg-raised/40 p-3 text-sm">
           <input
             type="checkbox"
@@ -56,7 +58,12 @@ export function LanForm({ values, types }: { values: LanFormValues; types: { id:
           </span>
         </label>
       ) : (
-        interest && <input type="hidden" name="interestCheck" value="on" />
+        <p className="rounded-md border border-line bg-raised/40 p-3 text-xs text-muted">
+          {values.interestSwitch === "on-locked"
+            ? "This event is in its interest check. End it with “Open sign-up” at the top of the page."
+            : "Sign-up is open and members have answered, so it can't go back to an interest check."}
+          {interest && <input type="hidden" name="interestCheck" value="on" />}
+        </p>
       )}
       {interest && (
         <label className="flex cursor-pointer items-start gap-3 rounded-md border border-line bg-raised/40 p-3 text-sm">

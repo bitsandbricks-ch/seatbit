@@ -21,7 +21,7 @@ Publishing shows the event to the clan, posts the Discord announcement with answ
 
 ## Interest check
 
-Not sure yet if the group goes, or when? Turn on the **interest check**: members only answer *I'd come / Maybe / Not this time*, nothing binding. The date can stay open with a rough hint like "Spring 2027". When you've decided, set the date and click **Open sign-up**: everyone who was interested (except those who said no) is told, and the normal answers, tickets and seats start.
+Not sure yet if the group goes, or when? Turn on the **interest check** (when creating the event, or later under *Settings* while it's a draft or nobody has answered yet): members only answer *I'd come / Maybe / Not this time*, nothing binding. The date can stay open with a rough hint like "Spring 2027". When you've decided, set the date and click **Open sign-up**: everyone who was interested (except those who said no) is told, and the normal answers, tickets and seats start.
 
 ![Interest check, orga view](../screenshots/desktop-interest-manage.png){ .shot }
 

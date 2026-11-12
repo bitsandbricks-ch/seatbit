@@ -191,3 +191,17 @@ export function seatView<S extends { userId: string | null }>(
     color: s.userId ? (avatars.get(s.userId)?.color ?? null) : null,
   };
 }
+
+/**
+ * Whether the edit form may switch the interest check on or off:
+ * - drafts: freely
+ * - published and in the interest check: only "Open sign-up" ends it
+ * - published with sign-up open: only while nobody has answered yet
+ */
+export type InterestSwitch = "free" | "on-locked" | "off-locked";
+export function interestSwitch(l: Lan): InterestSwitch {
+  if (!l.publishedAt) return "free";
+  if (l.interestCheck) return "on-locked";
+  const answered = db.select({ id: attendance.id }).from(attendance).where(eq(attendance.lanId, l.id)).get();
+  return answered ? "off-locked" : "free";
+}
