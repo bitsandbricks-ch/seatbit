@@ -40,7 +40,7 @@ A value saved in the platform settings wins over the environment variable. Clear
 | Hosting location, governing law | `LEGAL_HOSTING_LOCATION`, `LEGAL_GOVERNING_LAW` | |
 | Own Terms of Service / Privacy Policy URL | `LEGAL_TERMS_URL`, `LEGAL_PRIVACY_URL` | built-in pages |
 | Source code URL (footer "Source") | `SOURCE_URL` | this repository |
-| **Supporters** (see [Supporter payments](supporters.md)) | | |
+| **Supporters** (see [Stripe](stripe.md)) | | |
 | Supporter payments on/off | `BILLING_ENABLED` | `false` |
 | Stripe secret key, webhook signing secret | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | |
 | Annual and monthly price ID | `STRIPE_PRICE_ANNUAL`, `STRIPE_PRICE_MONTHLY` | |

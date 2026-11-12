@@ -18,15 +18,51 @@ theme:
     scheme: slate
     primary: custom
     accent: custom
+  icon:
+    repo: fontawesome/brands/github
   features:
+    - navigation.tabs
+    - navigation.tabs.sticky
     - navigation.sections
+    - navigation.indexes
+    - navigation.path
+    - navigation.instant
+    - navigation.tracking
     - navigation.top
     - navigation.footer
-    - navigation.indexes
+    - search.suggest
     - search.highlight
+    - search.share
+    - toc.follow
     - content.code.copy
     - content.action.edit
-    - toc.follow
+    - content.tabs.link
+
+plugins:
+  - search
+  # Old URLs from before the docs were split into Features / Installation /
+  # Development / Contributing keep working.
+  - redirects:
+      redirect_maps:
+        members/index.md: features/accounts.md
+        members/events.md: features/attendance.md
+        members/seats.md: features/seats.md
+        members/extras.md: features/travel-packing.md
+        members/profile.md: features/accounts.md
+        orgas/index.md: features/clans.md
+        orgas/members.md: features/members-guests.md
+        orgas/events.md: features/events.md
+        orgas/seats.md: features/seats.md
+        orgas/discord.md: features/discord.md
+        admins/index.md: features/admin.md
+        self-hosting/index.md: installation/index.md
+        self-hosting/docker.md: installation/docker.md
+        self-hosting/configuration.md: installation/configuration.md
+        self-hosting/discord.md: installation/discord.md
+        self-hosting/email.md: installation/email.md
+        self-hosting/legal.md: installation/legal.md
+        self-hosting/supporters.md: installation/stripe.md
+        self-hosting/operations.md: installation/operations.md
 
 extra_css:
   - stylesheets/extra.css
@@ -36,39 +72,66 @@ markdown_extensions:
   - attr_list
   - md_in_html
   - tables
+  - def_list
   - toc:
       permalink: true
   - pymdownx.details
   - pymdownx.superfences
   - pymdownx.highlight
   - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.tasklist:
+      custom_checkbox: true
   - pymdownx.tabbed:
       alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
 
 nav:
   - Home: index.md
-  - Members:
-      - Getting started: members/index.md
-      - Events: members/events.md
-      - Seats: members/seats.md
-      - Travel, packing, games and food: members/extras.md
-      - Your profile: members/profile.md
-  - Orgas and clan admins:
-      - Your clan: orgas/index.md
-      - Members and guests: orgas/members.md
-      - Events: orgas/events.md
-      - Seat plan: orgas/seats.md
-      - Discord and WhatsApp: orgas/discord.md
-  - Self-hosting:
-      - Overview: self-hosting/index.md
-      - Install with Docker: self-hosting/docker.md
-      - Configuration: self-hosting/configuration.md
-      - Discord app and bot: self-hosting/discord.md
-      - Email: self-hosting/email.md
-      - Operator, privacy and terms: self-hosting/legal.md
-      - Supporter payments: self-hosting/supporters.md
-      - Platform admin: admins/index.md
-      - Backups and upgrades: self-hosting/operations.md
+  - Features:
+      - features/index.md
+      - Basics:
+          - Accounts and profile: features/accounts.md
+          - Clans and roles: features/clans.md
+          - Members and guests: features/members-guests.md
+      - Events:
+          - Event lifecycle: features/events.md
+          - Attendance and tickets: features/attendance.md
+          - Seats: features/seats.md
+          - Reminders and who's missing: features/reminders.md
+      - At the LAN:
+          - Travel and packing list: features/travel-packing.md
+          - Games: features/games.md
+          - Food orders: features/food.md
+      - Integrations:
+          - Discord and WhatsApp: features/discord.md
+      - Administration:
+          - Audit log: features/audit-log.md
+          - Supporter badge: features/supporters.md
+          - Platform admin: features/admin.md
+  - Installation:
+      - installation/index.md
+      - Run it:
+          - Docker: installation/docker.md
+          - Kubernetes: installation/kubernetes.md
+          - Configuration: installation/configuration.md
+      - Set up:
+          - Discord app and bot: installation/discord.md
+          - Email: installation/email.md
+          - Operator, privacy and terms: installation/legal.md
+          - Stripe (supporter payments): installation/stripe.md
+      - Operate:
+          - Backups, upgrades and admin CLI: installation/operations.md
   - Development:
-      - Contributing: development/index.md
+      - development/index.md
+      - Architecture: development/architecture.md
+      - Database and migrations: development/database.md
       - Screenshots: development/screenshots.md
+      - CI and releases: development/ci.md
+  - Contributing:
+      - contributing/index.md
+      - Code guidelines: contributing/guidelines.md
+      - Writing docs: contributing/docs.md
+      - AI coding agents: contributing/agents.md

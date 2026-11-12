@@ -1,16 +1,10 @@
-# Supporter payments (Stripe)
+# Stripe (supporter payments)
 
 Seatbit is free, with every feature, for every clan. If you host an instance for others, you can let clans **support** it with a voluntary yearly (or monthly) payment through [Stripe](https://stripe.com). Supporters get a small badge on their clan and a thank-you; nothing else changes. There are no plans, limits or locked features.
 
 This is **off by default**. Until you turn it on, nobody sees anything about payments: no card in the clan settings, no badge, no payments section in the terms or privacy policy. Most self-hosters never need it.
 
-## What clan admins see
-
-With payments on, clan admins get a **Support Seatbit** card in their clan settings (*Manage → General*). The annual option comes first, to keep fees low; the monthly one is there if you set a monthly price. Paying opens Stripe Checkout, with whatever payment methods you turned on in Stripe (card, TWINT, Apple Pay, Google Pay).
-
-![Support card in the clan settings](../screenshots/desktop-clan-support.png){ .shot }
-
-A Supporter clan shows a **Supporter** badge next to its name, and its members see a short thank-you on the clan overview. Admins see until when it's paid and a **Manage or cancel** button, which opens the Stripe customer portal (change the payment method, receipts, cancel). A cancelled subscription keeps the badge until the end of the paid period. Deleting a clan cancels its subscription right away.
+What clan admins and members see is described in [Supporter badge](../features/supporters.md).
 
 ![A Supporter clan](../screenshots/desktop-clan-settings.png){ .shot }
 

@@ -1,6 +1,6 @@
-# Self-hosting
+# Installation
 
-Seatbit is one Node.js process with a SQLite database. Run it as a container on any machine with Docker, a small VPS or a Kubernetes cluster.
+Run your own Seatbit instance. Seatbit is one Node.js process with a SQLite database, shipped as a container image for amd64 and arm64. It runs on any machine with Docker, a small VPS or a Kubernetes cluster.
 
 ## What you need
 
@@ -11,10 +11,11 @@ Seatbit is one Node.js process with a SQLite database. Run it as a container on 
 
 ## Steps
 
-1. [Install with Docker](docker.md): start the container with a few environment variables.
+1. Start the container with [Docker](docker.md) or on [Kubernetes](kubernetes.md) with a few [environment variables](configuration.md).
 2. Sign in with Discord. **The first account becomes platform admin.**
 3. Open **Admin → Platform settings** and set up [email](email.md), the [Discord bot](discord.md) and the [operator details for the privacy policy and terms](legal.md).
-4. Create your clan and invite your people.
+4. Create your clan and invite your people. See [Clans and roles](../features/clans.md).
+5. Set up [backups](operations.md#backups).
 
 ![Platform settings](../screenshots/desktop-admin-discord.png){ .shot }
 

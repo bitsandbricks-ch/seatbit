@@ -1,4 +1,4 @@
-# Install with Docker
+# Docker
 
 Images are built for every change on `main` and published to the GitHub Container Registry for amd64 and arm64:
 
@@ -53,10 +53,7 @@ The container runs as uid/gid **1001**: make sure `./data` and `./backups` belon
 - Health check: `GET /api/health` returns `{"ok":true}`.
 - Works with a read-only root filesystem if `/tmp` and `/app/.next/cache` are writable.
 - Behind a reverse proxy, forward the `Host` header and `X-Forwarded-Proto`; `BETTER_AUTH_URL` must be the public HTTPS URL.
-
-## Kubernetes
-
-Use the same image with a Deployment (1 replica, `Recreate` strategy), a PersistentVolumeClaim on `/data`, the env vars from a Secret, and readiness/liveness probes on `/api/health`. For backups, run `node scripts/backup.mjs` from a CronJob that mounts the same volume (see [Backups and upgrades](operations.md)).
+- All variables: [Configuration](configuration.md). Next: [Discord app and bot](discord.md).
 
 ## Without Docker
 
@@ -67,4 +64,4 @@ cp .env.example .env.local   # fill in the values
 node .next/standalone/server.js
 ```
 
-Node.js 22 is required. Copy `.next/static` and `public` next to the standalone server as the [Dockerfile](https://github.com/bitsandbricks-ch/seatbit/blob/main/Dockerfile) does.
+Node.js 22 is required. Run it as a service (e.g. systemd) and keep `DATABASE_PATH` on persistent storage. Copy `.next/static` and `public` next to the standalone server as the [Dockerfile](https://github.com/bitsandbricks-ch/seatbit/blob/main/Dockerfile) does.

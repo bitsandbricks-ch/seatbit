@@ -9,48 +9,28 @@
 
 Seatbit helps a clan or group of friends go to LAN parties run by others (think SwitzerLAN or Lock & Load, with 30+ people): who's coming, who has bought a ticket, who sits where in the group's seat block, who drives whom and what to install before you leave. Self-host it with one container.
 
-**📖 Documentation: [bitsandbricks-ch.github.io/seatbit](https://bitsandbricks-ch.github.io/seatbit/)** · [for members](docs/members/index.md) · [for orgas](docs/orgas/index.md) · [self-hosting](docs/self-hosting/index.md)
+**📖 Documentation: [bitsandbricks-ch.github.io/seatbit](https://bitsandbricks-ch.github.io/seatbit/)**
 
-## Features
-
-- **Event lifecycle:** drafts, publish now or at a set time, an optional **interest check** before dates are fixed, orga news, cancel, "copy for next year" and check-in on the day.
-- **Attendance** with *coming / unsure / not coming*, answer deadlines and an automatic **waitlist** when the group's spots are full.
-- **Tickets:** members tick off their ticket, orgas confirm; buy-by deadline with reminders.
-- **Seat plan** of the group's block (e.g. `F1-F16, F19-F22`): seat wishes, optional self pick, orgas edit right in the map (assign, swap, hold, drag & drop, auto-assign), finalize, then everyone books their seat on the event's own site. Seat swaps with orga approval.
-- **Travel** (rides and places to sleep), private **packing lists**, **games** with votes and install tracking, and **food orders** at the LAN (everyone adds their pizza, one person orders and ticks who paid).
-- **Audit log** of what orgas and admins changed (seats, answers, tickets, roles, guests, publish/cancel), for clan admins and platform admins.
-- **Your data:** members download everything as JSON and can delete their account themselves; past events keep an anonymous "Deleted member".
-- **Who's missing** for orgas: who still owes an answer, a ticket, a nick or a seat booking, with one-tap nudges by Discord DM or mail.
-- **Clans** with admins, join modes (open, approval, invite links), **guests** for people without an account, LAN types as templates for yearly events, and clan stats.
-- **Discord bot:** announcements with answer buttons and a live attendee list, reminders, DMs, `/lans`. **WhatsApp:** ready-to-paste texts.
-- **Email reminders** with admin-editable templates. **Login with Discord.**
-- **Self-hosting:** all settings (SMTP, Discord, operator details for the privacy policy and terms) in the browser, single container, SQLite.
-- **Optional Supporter payments** for hosted instances: clans can support the operator with a voluntary yearly or monthly Stripe payment (card, TWINT, Apple Pay, Google Pay) and get a badge. No limits or paid features; off by default.
-- Mobile-first with a good desktop layout; 24h dates ("Sat 14.11.2026, 18:00").
-
-## Screenshots
-
-Generated from demo data on every UI change (see [docs/development/screenshots.md](docs/development/screenshots.md)).
-
-| LANs | Event | Seat plan | Seat picking |
-| --- | --- | --- | --- |
-| <img src="docs/screenshots/phone-lans.png" width="200" alt="LAN list on a phone"> | <img src="docs/screenshots/phone-event.png" width="200" alt="Event page on a phone"> | <img src="docs/screenshots/phone-seat-plan.png" width="200" alt="Seat plan with the details sheet"> | <img src="docs/screenshots/phone-seat-picking.png" width="200" alt="A member picking a free seat"> |
-
-| Travel | Packing list | Games | Orga: seats |
-| --- | --- | --- | --- |
-| <img src="docs/screenshots/phone-travel.png" width="200" alt="Travel tab"> | <img src="docs/screenshots/phone-packing-list.png" width="200" alt="Packing list"> | <img src="docs/screenshots/phone-games.png" width="200" alt="Games"> | <img src="docs/screenshots/phone-manage-seats.png" width="200" alt="Orga seat editing on a phone"> |
-
-| Food orders | Orga: who's missing |
+| | |
 | --- | --- |
-| <img src="docs/screenshots/phone-food.png" width="200" alt="Food tab with a pizza order"> | <img src="docs/screenshots/phone-manage-missing.png" width="200" alt="Who's missing with nudge buttons"> |
+| [**Features**](https://bitsandbricks-ch.github.io/seatbit/features/) | Events, attendance, seats, clans and guests, travel, games, food, Discord bot, audit log |
+| [**Installation**](https://bitsandbricks-ch.github.io/seatbit/installation/) | Docker, Kubernetes, configuration, Discord app, email, Stripe, operator details |
+| [**Development**](https://bitsandbricks-ch.github.io/seatbit/development/) | Local setup with demo data, architecture, migrations, screenshots, CI |
+| [**Contributing**](https://bitsandbricks-ch.github.io/seatbit/contributing/) | Pull request flow, code guidelines, docs, AI agents |
 
-![Seats tab on desktop](docs/screenshots/desktop-event-seats.png)
+## Highlights
 
-![Orga attendee list on desktop](docs/screenshots/desktop-manage-attendees.png)
+- **Attendance and tickets:** coming / unsure / not coming, waitlist, deadlines with email and Discord reminders, orgas confirm tickets.
+- **Seat plan** of the group's block (e.g. `F1-F16, F19-F22`): seat wishes, self pick, drag and drop planner, then everyone books the same seat on the event's own site.
+- **At the LAN:** rides and places to sleep, private packing lists, game votes, food orders.
+- **Clans** with roles, guests, invite links and a **Discord bot** with answer buttons.
+- **Self-hosted:** one container, SQLite, every setting in the browser.
 
-More in [`docs/screenshots/`](docs/screenshots/).
+| LANs | Event | Seat plan | Orga: who's missing |
+| --- | --- | --- | --- |
+| <img src="docs/screenshots/phone-lans.png" width="200" alt="LAN list on a phone"> | <img src="docs/screenshots/phone-event.png" width="200" alt="Event page on a phone"> | <img src="docs/screenshots/phone-seat-plan.png" width="200" alt="Seat plan with the details sheet"> | <img src="docs/screenshots/phone-manage-missing.png" width="200" alt="Who's missing with nudge buttons"> |
 
-## Quick start (self-hosting)
+## Quick start
 
 ```sh
 docker run -d -p 3000:3000 -v seatbit-data:/data \
@@ -60,18 +40,9 @@ docker run -d -p 3000:3000 -v seatbit-data:/data \
   ghcr.io/bitsandbricks-ch/seatbit:main
 ```
 
-Sign in with Discord (the first account becomes admin), then set up email, the Discord bot and your operator details under **Admin → Platform settings**. Full guide: [Self-hosting](docs/self-hosting/index.md) · [Configuration](docs/self-hosting/configuration.md) · [Discord app and bot](docs/self-hosting/discord.md) · [Operator, privacy and terms](docs/self-hosting/legal.md).
+Sign in with Discord (the first account becomes admin), then follow the [installation guide](https://bitsandbricks-ch.github.io/seatbit/installation/).
 
-## Development
-
-```sh
-npm install
-cp .env.example .env.local   # set ALLOW_EMAIL_LOGIN=1
-npm run seed                 # demo data: alex@example.com / anna@example.com, password seatbit-demo
-npm run dev
-```
-
-Stack: Next.js (App Router) · Better Auth · SQLite with Drizzle · Tailwind CSS · Nodemailer. See [CONTRIBUTING.md](CONTRIBUTING.md); AI coding agents follow [AGENTS.md](AGENTS.md). Security issues: [SECURITY.md](SECURITY.md).
+For development: `npm install`, `npm run seed`, `npm run dev`; see [Development](https://bitsandbricks-ch.github.io/seatbit/development/). Contributions are welcome: [CONTRIBUTING.md](CONTRIBUTING.md); AI coding agents follow [AGENTS.md](AGENTS.md). Security issues: [SECURITY.md](SECURITY.md).
 
 ## License
 

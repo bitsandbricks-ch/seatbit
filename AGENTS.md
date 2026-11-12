@@ -35,7 +35,7 @@ A self-hostable web app that helps a clan coordinate going to LAN parties run by
 
 ## Docs and screenshots
 
-- A user-facing or setup change must update `docs/` in the same pull request (user guide, orga guide, admin or self-hosting pages). New settings go into `docs/self-hosting/configuration.md`.
+- A user-facing or setup change must update `docs/` in the same pull request: `docs/features/` (one page per feature), `docs/installation/` (self-hosting), `docs/development/` or `docs/contributing/`. New settings go into `docs/installation/configuration.md`. New pages go into `nav` in `mkdocs.yml`; moved pages get a redirect. See `docs/contributing/docs.md`.
 - Screenshots in `docs/screenshots/` are **generated**, never edited by hand. `npm run build && npm run screenshots` rebuilds all of them from the demo data in `scripts/seed-demo.ts`; `SCREENSHOTS_ONLY=phone-event,desktop-admin` rebuilds some. If you add a page or a tab, add a shot to `scripts/screenshots.ts` and use it in the docs. If a page needs new demo data, extend the seed.
 - You don't have to commit regenerated screenshots: after a merge to `main`, the `Screenshots` workflow regenerates them and opens a pull request when they changed. Commit them yourself when the docs you write depend on a new shot.
 
