@@ -1,0 +1,421 @@
+/**
+ * Fills an empty database with demo data: one clan, three LAN events (one
+ * past, one with a final seat plan, one where members pick their own seats),
+ * members, a guest, nicknames, seats, travel offers, packing lists and games.
+ *
+ * Used for local development and by scripts/screenshots.ts, so the docs
+ * screenshots always show the same people. Dates are relative to today.
+ *
+ *   npm run seed                       # uses DATABASE_PATH or ./data/lan.db
+ *   DATABASE_PATH=/tmp/demo.db npm run seed
+ *
+ * Every demo user signs in with <first name>@example.com and the password
+ * "seatbit-demo" (needs ALLOW_EMAIL_LOGIN=1). The script refuses to run on a
+ * database that already has users, unless --force is given.
+ */
+import { hashPassword } from "better-auth/crypto";
+import { count } from "drizzle-orm";
+import { db, schema } from "../src/db";
+
+export const DEMO_PASSWORD = "seatbit-demo";
+
+const s = schema;
+const DAY = 24 * 60 * 60 * 1000;
+
+type Person = { key: string; first: string; last: string; nick: string; color: string; icon?: string };
+
+// The first one is the platform admin, clan admin and orga; "anna" is the member the screenshots follow.
+const PEOPLE: Person[] = [
+  { key: "alex", first: "Alex", last: "Brunner", nick: "Blitz", color: "#6c8cff", icon: "🧙" },
+  { key: "anna", first: "Anna", last: "Frei", nick: "Nova", color: "#f472b6", icon: "🦊" },
+  { key: "ben", first: "Ben", last: "Huber", nick: "Byte", color: "#2dd4bf" },
+  { key: "chiara", first: "Chiara", last: "Rossi", nick: "Pixel", color: "#ffa94d", icon: "👾" },
+  { key: "david", first: "David", last: "Meier", nick: "Dex", color: "#a3e635" },
+  { key: "elena", first: "Elena", last: "Schmid", nick: "Echo", color: "#a78bfa", icon: "🎧" },
+  { key: "finn", first: "Finn", last: "Weber", nick: "Frost", color: "#94a3b8" },
+  { key: "gina", first: "Gina", last: "Baumann", nick: "Glitch", color: "#e879f9", icon: "⚡" },
+  { key: "jonas", first: "Jonas", last: "Graf", nick: "Jinx", color: "#ff7a6b" },
+  { key: "lea", first: "Lea", last: "Fischer", nick: "Lynx", color: "#f2cc4a", icon: "🐱" },
+  { key: "marco", first: "Marco", last: "Bianchi", nick: "Mako", color: "#2dd4bf" },
+  { key: "nina", first: "Nina", last: "Wolf", nick: "Nyx", color: "#a78bfa", icon: "🐺" },
+  { key: "oliver", first: "Oliver", last: "Steiner", nick: "Orbit", color: "#6c8cff", icon: "🚀" },
+  { key: "paula", first: "Paula", last: "Zimmermann", nick: "Pulse", color: "#ff7a6b" },
+  { key: "rafael", first: "Rafael", last: "Kunz", nick: "Rex", color: "#a3e635", icon: "🐉" },
+  { key: "sara", first: "Sara", last: "Lang", nick: "Sparky", color: "#ffa94d" },
+  { key: "tim", first: "Tim", last: "Roth", nick: "Turbo", color: "#94a3b8" },
+];
+
+/** `days` from today at hh:mm local time, so times of day are always the same. */
+function at(days: number, hh: number, mm = 0) {
+  const d = new Date(Date.now() + days * DAY);
+  d.setHours(hh, mm, 0, 0);
+  return d;
+}
+
+/** The Friday at least `minDays` from today, `hh`:00. */
+function friday(minDays: number, hh: number) {
+  const d = at(minDays, hh);
+  while (d.getDay() !== 5) d.setTime(d.getTime() + DAY);
+  return d;
+}
+
+export async function seedDemo({ force = false } = {}) {
+  const [{ n }] = db.select({ n: count() }).from(s.user).all();
+  if (n > 0 && !force) {
+    throw new Error("The database already has users. Use an empty DATABASE_PATH, or pass --force to add the demo data anyway.");
+  }
+
+  const password = await hashPassword(DEMO_PASSWORD);
+  const ids: Record<string, string> = {};
+
+  db.transaction((tx) => {
+    // ---------- Users ----------
+    PEOPLE.forEach((p, i) => {
+      const id = `demo-${p.key}`;
+      ids[p.key] = id;
+      tx.insert(s.user)
+        .values({
+          id,
+          name: `${p.first} ${p.last}`,
+          firstName: p.first,
+          lastName: p.last,
+          email: `${p.key}@example.com`,
+          emailVerified: true,
+          role: i === 0 ? "admin" : "member",
+          avatarStyle: p.icon ? "icon" : "initials",
+          icon: p.icon ?? null,
+          color: p.color,
+          createdAt: new Date(Date.now() - (400 - i) * DAY),
+        })
+        .run();
+      tx.insert(s.account)
+        .values({
+          id: `demo-acc-${p.key}`,
+          accountId: id,
+          providerId: "credential",
+          userId: id,
+          password,
+          updatedAt: new Date(),
+        })
+        .run();
+      tx.insert(s.nickname).values({ userId: id, nick: p.nick, isPrimary: true }).run();
+    });
+
+    // ---------- Clan ----------
+    const clanId = "demo-clan";
+    tx.insert(s.clan)
+      .values({
+        id: clanId,
+        name: "Pixel Pirates",
+        slug: "pixel-pirates",
+        description: "A bunch of friends from Lucerne who go to two or three LAN parties a year. Bring snacks.",
+        joinPolicy: "approval",
+        createdAt: new Date(Date.now() - 400 * DAY),
+      })
+      .run();
+    for (const p of PEOPLE) {
+      const role = p.key === "alex" || p.key === "ben" ? "admin" : p.key === "tim" ? "pending" : "member";
+      tx.insert(s.clanMember).values({ clanId, userId: ids[p.key], role }).run();
+    }
+    tx.insert(s.clanInvite).values({ code: "demo-invite", clanId, createdBy: ids.alex }).run();
+
+    // A guest: someone the orgas added who has no account yet.
+    ids.yannick = "demo-yannick";
+    tx.insert(s.user)
+      .values({
+        id: ids.yannick,
+        name: "Yannick Moser",
+        firstName: "Yannick",
+        lastName: "Moser",
+        email: `${ids.yannick}@guest.seatbit.invalid`,
+        isGuest: true,
+        guestClanId: clanId,
+        claimCode: "demo-claim-yannick",
+        avatarStyle: "initials",
+        color: "#f2cc4a",
+      })
+      .run();
+    tx.insert(s.nickname).values({ userId: ids.yannick, nick: "Yeti", isPrimary: true }).run();
+    tx.insert(s.clanMember).values({ clanId, userId: ids.yannick, role: "member" }).run();
+
+    // ---------- LAN types ----------
+    const lakeside = "demo-type-lakeside";
+    const mountain = "demo-type-mountain";
+    tx.insert(s.lanType)
+      .values([
+        {
+          id: lakeside,
+          clanId,
+          name: "Lakeside LAN",
+          description: "Big weekend LAN in a sports hall by the lake. We always get a block in row F.",
+          location: "Sports hall, Lakeside",
+          websiteUrl: "https://example.com/lakeside-lan",
+          ticketUrl: "https://example.com/lakeside-lan/tickets",
+          price: "CHF 65",
+          capacity: 20,
+          seatSpec: "F1-F16, F19-F22",
+        },
+        {
+          id: mountain,
+          clanId,
+          name: "Mountain Mayhem",
+          description: "Small cosy LAN in a mountain hut. Sleeping in the hut is included.",
+          location: "Mountain hut, Alpstadt",
+          websiteUrl: "https://example.com/mountain-mayhem",
+          ticketUrl: "https://example.com/mountain-mayhem/tickets",
+          price: "CHF 90 incl. food",
+          capacity: 12,
+          seatSpec: "A1-A6, B1-B6",
+        },
+      ])
+      .run();
+    // Anna uses another nick at Lakeside LAN, and her participant number there.
+    tx.insert(s.nickname).values({ userId: ids.anna, typeId: lakeside, nick: "NovaFox" }).run();
+    tx.insert(s.lanAccount).values({ userId: ids.anna, typeId: lakeside, value: "48213" }).run();
+    tx.insert(s.lanAccount).values({ userId: ids.alex, typeId: lakeside, value: "40977" }).run();
+
+    // ---------- Events ----------
+    const start = friday(30, 18);
+    const end = new Date(start.getTime() + 2 * DAY - 4 * 60 * 60 * 1000); // Sunday 14:00
+    const mmStart = friday(110, 17);
+    const lastYearStart = friday(-335, 18);
+    const events = {
+      lakeside: "demo-lan-lakeside",
+      mountain: "demo-lan-mountain",
+      past: "demo-lan-lakeside-past",
+    };
+    tx.insert(s.lan)
+      .values([
+        {
+          id: events.lakeside,
+          clanId,
+          typeId: lakeside,
+          name: `Lakeside LAN ${start.getFullYear()}`,
+          description: "Our big one. Doors open Friday 18:00. Please book the seat the orgas gave you on the event's seat plan.",
+          location: "Sports hall, Lakeside",
+          websiteUrl: "https://example.com/lakeside-lan",
+          ticketUrl: "https://example.com/lakeside-lan/tickets",
+          startsAt: start,
+          endsAt: end,
+          signupDeadline: at(5, 20),
+          paymentDueDate: at(12, 20),
+          price: "CHF 65",
+          capacity: 20,
+          seatRows: 1,
+          seatCols: 22,
+          seatsPublishedAt: at(-1, 21),
+          seatingOpen: true,
+          externalPlanUrl: "https://example.com/lakeside-lan/seatplan",
+          createdAt: at(-40, 12),
+        },
+        {
+          id: events.mountain,
+          clanId,
+          typeId: mountain,
+          name: `Mountain Mayhem ${mmStart.getFullYear()}`,
+          description: "Hut LAN with fondue on Saturday. Pick your own seat until the orgas close the plan.",
+          location: "Mountain hut, Alpstadt",
+          websiteUrl: "https://example.com/mountain-mayhem",
+          ticketUrl: "https://example.com/mountain-mayhem/tickets",
+          startsAt: mmStart,
+          endsAt: new Date(mmStart.getTime() + 2 * DAY),
+          signupDeadline: at(60, 20),
+          paymentDueDate: at(80, 20),
+          price: "CHF 90 incl. food",
+          capacity: 12,
+          seatRows: 2,
+          seatCols: 6,
+          seatPicking: true,
+          createdAt: at(-5, 12),
+        },
+        {
+          id: events.past,
+          clanId,
+          typeId: lakeside,
+          name: `Lakeside LAN ${lastYearStart.getFullYear()}`,
+          location: "Sports hall, Lakeside",
+          startsAt: lastYearStart,
+          endsAt: new Date(lastYearStart.getTime() + 2 * DAY),
+          price: "CHF 60",
+          capacity: 16,
+          seatRows: 1,
+          seatCols: 16,
+          seatsPublishedAt: new Date(lastYearStart.getTime() - 7 * DAY),
+          createdAt: new Date(lastYearStart.getTime() - 60 * DAY),
+        },
+      ])
+      .run();
+    tx.insert(s.lanOrga)
+      .values([
+        { lanId: events.lakeside, userId: ids.alex },
+        { lanId: events.lakeside, userId: ids.ben },
+        { lanId: events.mountain, userId: ids.alex },
+        { lanId: events.past, userId: ids.alex },
+      ])
+      .run();
+
+    // ---------- Lakeside LAN: attendance and final seat plan ----------
+    type A = { status: "going" | "maybe" | "declined" | "waitlist"; ticket?: boolean; paid?: boolean; booked?: boolean; seat?: string };
+    const lakesideAtt: Record<string, A> = {
+      alex: { status: "going", ticket: true, paid: true, booked: true, seat: "F8" },
+      anna: { status: "going", ticket: true, paid: true, seat: "F9" },
+      ben: { status: "going", ticket: true, paid: true, booked: true, seat: "F7" },
+      chiara: { status: "going", ticket: true, paid: true, booked: true, seat: "F10" },
+      david: { status: "going", ticket: true, paid: true, booked: true, seat: "F1" },
+      elena: { status: "going", ticket: true, paid: false, seat: "F11" },
+      finn: { status: "going", ticket: true, paid: true, booked: true, seat: "F2" },
+      gina: { status: "going", ticket: true, paid: true, seat: "F12" },
+      jonas: { status: "going", ticket: false, seat: "F3" },
+      lea: { status: "going", ticket: true, paid: true, booked: true, seat: "F13" },
+      marco: { status: "going", ticket: true, paid: false, seat: "F4" },
+      nina: { status: "going", ticket: true, paid: true, booked: true, seat: "F19" },
+      oliver: { status: "maybe" },
+      paula: { status: "going", ticket: false },
+      rafael: { status: "declined" },
+      sara: { status: "maybe" },
+      yannick: { status: "going", ticket: true, paid: true, seat: "F20" },
+    };
+    const seatOwner = new Map<string, string>();
+    for (const [key, a] of Object.entries(lakesideAtt)) {
+      tx.insert(s.attendance)
+        .values({
+          lanId: events.lakeside,
+          userId: ids[key],
+          status: a.status,
+          ticketBought: !!a.ticket,
+          paid: !!a.paid,
+          seatBooked: !!a.booked,
+          wishNear: key === "anna" ? [ids.chiara, ids.alex] : key === "chiara" ? [ids.anna] : [],
+          wishPosition: key === "david" ? "edge" : "any",
+          wishNote: key === "anna" ? "Next to Pixel please, we share a power strip." : "",
+          note: key === "paula" ? "Ticket comes with my next salary." : "",
+        })
+        .run();
+      if (a.seat) seatOwner.set(a.seat, ids[key]);
+    }
+    const lakesideSeats = [...range("F", 1, 16), ...range("F", 19, 22)];
+    for (const label of lakesideSeats) {
+      const num = Number(label.slice(1));
+      tx.insert(s.seat)
+        .values({
+          lanId: events.lakeside,
+          row: 0,
+          col: num - 1,
+          label,
+          userId: seatOwner.get(label) ?? null,
+          locked: label === "F14",
+        })
+        .run();
+    }
+    // Chiara asked Gina to swap; Gina accepted, waiting for an orga.
+    tx.insert(s.seatSwap)
+      .values({ lanId: events.lakeside, fromUserId: ids.chiara, toUserId: ids.gina, status: "accepted", note: "Want to sit at the end of the row" })
+      .run();
+
+    // ---------- Mountain Mayhem: self pick is open ----------
+    const mmAtt: Record<string, A> = {
+      alex: { status: "going", ticket: true, seat: "A3" },
+      anna: { status: "going", ticket: true },
+      ben: { status: "going", ticket: true, seat: "A4" },
+      chiara: { status: "going", ticket: true, seat: "B2" },
+      elena: { status: "maybe" },
+      lea: { status: "going", ticket: true, seat: "B3" },
+      nina: { status: "going", ticket: false },
+      rafael: { status: "going", ticket: true, seat: "A1" },
+    };
+    const mmOwner = new Map<string, string>();
+    for (const [key, a] of Object.entries(mmAtt)) {
+      tx.insert(s.attendance)
+        .values({ lanId: events.mountain, userId: ids[key], status: a.status, ticketBought: !!a.ticket })
+        .run();
+      if (a.seat) mmOwner.set(a.seat, ids[key]);
+    }
+    for (const [rowIdx, letter] of ["A", "B"].entries()) {
+      for (const label of range(letter, 1, 6)) {
+        tx.insert(s.seat)
+          .values({ lanId: events.mountain, row: rowIdx, col: Number(label.slice(1)) - 1, label, userId: mmOwner.get(label) ?? null })
+          .run();
+      }
+    }
+
+    // ---------- Last year's Lakeside LAN (for clan stats) ----------
+    const pastGoing = ["alex", "anna", "ben", "chiara", "david", "finn", "jonas", "lea", "marco", "rafael"];
+    pastGoing.forEach((key, i) => {
+      tx.insert(s.attendance)
+        .values({ lanId: events.past, userId: ids[key], status: "going", ticketBought: true, paid: true, seatBooked: true })
+        .run();
+      tx.insert(s.seat).values({ lanId: events.past, row: 0, col: i, label: `F${i + 1}`, userId: ids[key] }).run();
+    });
+    for (const key of ["elena", "gina"]) {
+      tx.insert(s.attendance).values({ lanId: events.past, userId: ids[key], status: "declined" }).run();
+    }
+
+    // ---------- Travel ----------
+    const ride = "demo-ride-alex";
+    tx.insert(s.travelPost)
+      .values([
+        { id: ride, lanId: events.lakeside, userId: ids.alex, kind: "ride", mode: "offer", town: "Lucerne", places: 3, whenText: "Fri 15:00, back Sun 15:00", note: "Big boot, room for 3 PCs." },
+        { id: "demo-ride-lea", lanId: events.lakeside, userId: ids.lea, kind: "ride", mode: "offer", town: "Zug", places: 2, whenText: "Fri 16:30" },
+        { id: "demo-ride-req", lanId: events.lakeside, userId: ids.marco, kind: "ride", mode: "request", town: "Lucerne", places: 1, whenText: "Fri afternoon", note: "Only a laptop" },
+        { id: "demo-sleep-gina", lanId: events.lakeside, userId: ids.gina, kind: "sleep", mode: "offer", town: "Lakeside", places: 2, note: "Sofa bed at my aunt's, 10 min walk" },
+        { id: "demo-sleep-req", lanId: events.lakeside, userId: ids.elena, kind: "sleep", mode: "request", town: "Lakeside", places: 1, whenText: "Fri and Sat night" },
+      ])
+      .run();
+    tx.insert(s.travelSpot).values([{ postId: ride, userId: ids.anna }, { postId: ride, userId: ids.chiara }]).run();
+
+    // ---------- Anna's packing list ----------
+    for (const item of ["pc", "screen", "power", "keyboard", "mouse", "headset", "ticket"]) {
+      tx.insert(s.gearPacked).values({ lanId: events.lakeside, userId: ids.anna, item }).run();
+    }
+    tx.insert(s.packingItem)
+      .values([
+        { lanId: events.lakeside, userId: ids.anna, label: "Spare USB-C cable", packed: true },
+        { lanId: events.lakeside, userId: ids.anna, label: "Earplugs", packed: false },
+        { lanId: events.lakeside, userId: ids.anna, label: "Card game for breaks", packed: false },
+      ])
+      .run();
+
+    // ---------- Games ----------
+    const games = [
+      { id: "demo-game-cs", name: "Counter-Strike 2", sizeGb: 35, voters: ["alex", "ben", "chiara", "david", "finn", "jonas", "marco", "anna"], installed: ["alex", "ben", "david", "anna"] },
+      { id: "demo-game-aoe", name: "Age of Empires II: DE", sizeGb: 30, voters: ["anna", "lea", "gina", "alex", "elena"], installed: ["lea", "gina"] },
+      { id: "demo-game-tm", name: "Trackmania", sizeGb: 8, voters: ["finn", "nina", "chiara", "anna"], installed: ["nina", "chiara", "anna"] },
+      { id: "demo-game-r6", name: "Rainbow Six Siege", sizeGb: 85, voters: ["david", "jonas"], installed: [] as string[] },
+    ];
+    for (const g of games) {
+      tx.insert(s.game)
+        .values({ id: g.id, lanId: events.lakeside, name: g.name, sizeGb: g.sizeGb, url: "https://example.com/games", addedBy: ids[g.voters[0]] })
+        .run();
+      const everyone = new Set([...g.voters, ...g.installed]);
+      for (const key of everyone) {
+        tx.insert(s.gameVote).values({ gameId: g.id, userId: ids[key], vote: g.voters.includes(key), installed: g.installed.includes(key) }).run();
+      }
+    }
+
+    // A second, open clan Anna isn't in, so the clan list has something to join.
+    tx.insert(s.clan)
+      .values({ id: "demo-clan-2", name: "Lag Legends", slug: "lag-legends", description: "Retro LAN fans from Bern. Everyone welcome.", joinPolicy: "open" })
+      .run();
+    tx.insert(s.clanMember).values({ clanId: "demo-clan-2", userId: ids.rafael, role: "admin" }).run();
+  });
+
+  return { users: PEOPLE.length + 1, password: DEMO_PASSWORD };
+}
+
+function range(letter: string, from: number, to: number) {
+  return Array.from({ length: to - from + 1 }, (_, i) => `${letter}${from + i}`);
+}
+
+// Run directly: `npm run seed [-- --force]`.
+if (process.argv[1]?.match(/seed-demo\.[tj]s$/)) {
+  seedDemo({ force: process.argv.includes("--force") })
+    .then((r) => {
+      console.log(`Demo data added: ${r.users} people in "Pixel Pirates", 3 events.`);
+      console.log(`Sign in with alex@example.com (admin and orga) or anna@example.com (member), password "${r.password}".`);
+      console.log("Email login needs ALLOW_EMAIL_LOGIN=1.");
+    })
+    .catch((e) => {
+      console.error(e instanceof Error ? e.message : e);
+      process.exit(1);
+    });
+}

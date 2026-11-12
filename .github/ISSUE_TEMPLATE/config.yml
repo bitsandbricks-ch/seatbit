@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Documentation
+    url: https://bitsandbricks-ch.github.io/seatbit/
+    about: Self-hosting, configuration, the Discord bot and how-tos for members and orgas.
+  - name: Report a security problem
+    url: https://github.com/bitsandbricks-ch/seatbit/security/advisories/new
+    about: Please report vulnerabilities privately, not as an issue.
