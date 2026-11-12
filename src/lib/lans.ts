@@ -2,6 +2,7 @@ import { and, asc, eq, inArray, isNull, or } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { AttendanceStatus, Lan, Nickname } from "@/db/schema";
 import { appUrl } from "./mail";
+import { personLabel } from "./names";
 import { eventMailVars, renderTemplate } from "./mail-templates";
 import { notify } from "./notify";
 
@@ -27,9 +28,12 @@ export function pickNick(
   );
 }
 
-/** Map userId -> display nick for a LAN. */
-export async function getDisplayNames(lanId: string, userIds: string[]) {
-  const map = new Map<string, string>();
+/** A member's name at a LAN: the nick alone (tight spots) and the full Name "Nick" Surname. */
+export type PersonName = { nick: string; full: string };
+
+/** Map userId -> nick and full display name for a LAN (nick: event > LAN type > default). */
+export async function getNames(lanId: string, userIds: string[]) {
+  const map = new Map<string, PersonName>();
   if (userIds.length === 0) return map;
   const typeId = getLan(lanId)?.typeId ?? null;
   const users = db.select().from(user).where(inArray(user.id, userIds)).all();
@@ -48,9 +52,38 @@ export async function getDisplayNames(lanId: string, userIds: string[]) {
     )
     .all();
   for (const u of users) {
-    map.set(u.id, pickNick(nicks.filter((n) => n.userId === u.id), { lanId, typeId }, u.name));
+    const nick = pickNick(nicks.filter((n) => n.userId === u.id), { lanId, typeId }, u.name);
+    map.set(u.id, { nick, full: personLabel(u, nick) });
   }
   return map;
+}
+
+/** Map userId -> nick and full name outside a LAN (clan pages, stats, invites): default nick only. */
+export function getDefaultNames(userIds: string[]) {
+  const map = new Map<string, PersonName>();
+  const ids = [...new Set(userIds)];
+  if (ids.length === 0) return map;
+  const users = db.select().from(user).where(inArray(user.id, ids)).all();
+  const nicks = db
+    .select()
+    .from(nickname)
+    .where(and(inArray(nickname.userId, ids), isNull(nickname.lanId), isNull(nickname.typeId)))
+    .all();
+  for (const u of users) {
+    const nick = pickNick(nicks.filter((n) => n.userId === u.id), { lanId: null, typeId: null }, u.name);
+    map.set(u.id, { nick, full: personLabel(u, nick) });
+  }
+  return map;
+}
+
+/** Map userId -> how the member is shown at a LAN: Mike "Reyki" Keller. */
+export async function getDisplayNames(lanId: string, userIds: string[]) {
+  return new Map([...(await getNames(lanId, userIds))].map(([id, n]) => [id, n.full]));
+}
+
+/** Map userId -> just the nick at a LAN, for places with no room for the full name. */
+export async function getNicks(lanId: string, userIds: string[]) {
+  return new Map([...(await getNames(lanId, userIds))].map(([id, n]) => [id, n.nick]));
 }
 
 export function goingCount(lanId: string) {
@@ -141,4 +174,19 @@ export async function promoteFromWaitlist(l: Lan) {
 
 export function getLan(id: string) {
   return db.select().from(lan).where(eq(lan.id, id)).get();
+}
+
+/** A seat as the seat map shows it: short nick for the cell, full name for the details pane. */
+export function seatView<S extends { userId: string | null }>(
+  s: S,
+  people: Map<string, PersonName>,
+  avatars: Map<string, { color: string }>,
+) {
+  const p = s.userId ? people.get(s.userId) : undefined;
+  return {
+    ...s,
+    nick: s.userId ? (p?.nick ?? "?") : null,
+    name: s.userId ? (p?.full ?? "?") : null,
+    color: s.userId ? (avatars.get(s.userId)?.color ?? null) : null,
+  };
 }

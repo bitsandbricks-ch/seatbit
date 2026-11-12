@@ -9,6 +9,7 @@ import { Card, Page, PageHeader, Pill, StatTile, StatusBadge, columns, stack } f
 import { canManageClan, getClanBySlug, isClanMember } from "@/lib/clans";
 import { fmtDate, fmtWeekday } from "@/lib/format";
 import { pickNick } from "@/lib/lans";
+import { personLabel } from "@/lib/names";
 import { appUrl } from "@/lib/mail";
 import { Avatar } from "@/components/avatar";
 import { avatarData } from "@/lib/avatars";
@@ -97,10 +98,9 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
       <PageHeader
         back={{ href: `/clans/${c.slug}`, label: c.name }}
         avatar={<Avatar data={avatar} size={56} />}
-        title={u.name}
+        title={personLabel(u, defaultNick)}
         subtitle={
           <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            {defaultNick && defaultNick !== u.name && <span className="font-medium" style={{ color: avatar.color }}>{defaultNick}</span>}
             {role === "admin" && <Pill tone="emerald">admin</Pill>}
             {u.isGuest && <Pill>guest · no login yet</Pill>}
             <span>in the clan since {fmtWeekday(membership.createdAt)}</span>

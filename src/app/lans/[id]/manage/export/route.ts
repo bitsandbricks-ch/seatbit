@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/db";
-import { getDisplayNames, getLan } from "@/lib/lans";
+import { getLan, getNicks } from "@/lib/lans";
 import { getCurrentUser, isLanManager } from "@/lib/session";
 import { getLanAccounts } from "@/lib/lan-accounts";
 
@@ -16,7 +16,7 @@ export async function GET(_: Request, { params }: RouteContext<"/lans/[id]/manag
   const rows = db.select().from(schema.attendance).where(eq(schema.attendance.lanId, id)).all();
   const seats = db.select().from(schema.seat).where(eq(schema.seat.lanId, id)).all();
   const users = new Map(db.select().from(schema.user).all().map((u) => [u.id, u]));
-  const names = await getDisplayNames(id, rows.map((r) => r.userId));
+  const nicks = await getNicks(id, rows.map((r) => r.userId));
   const lanIds = getLanAccounts(l, rows.map((r) => r.userId));
   const seatOf = new Map(seats.filter((s) => s.userId).map((s) => [s.userId!, s.label]));
 
@@ -31,7 +31,7 @@ export async function GET(_: Request, { params }: RouteContext<"/lans/[id]/manag
     lines.push(
       [
         seatOf.get(r.userId) ?? "",
-        names.get(r.userId) ?? "",
+        nicks.get(r.userId) ?? "",
         lanIds.get(r.userId) ?? "",
         u?.name ?? "",
         u && !u.isGuest ? u.email : "",

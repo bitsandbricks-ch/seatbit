@@ -19,7 +19,7 @@ export function GameList({
   meId: string;
   canManage: boolean;
   canAdd: boolean;
-  /** userId -> nick, for the voter list. */
+  /** userId -> full name, for the voter list. */
   names: Record<string, string>;
   reminderDays: number;
 }) {

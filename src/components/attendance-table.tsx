@@ -63,11 +63,11 @@ type Need = keyof typeof needs;
 const byText = (a: string | null, b: string | null) =>
   (a ?? "\uffff").localeCompare(b ?? "\uffff", undefined, { numeric: true, sensitivity: "base" });
 const sorts = {
-  status: { label: "Status", cmp: (a: AttendanceRow, b: AttendanceRow) => statusOrder[a.status] - statusOrder[b.status] || byText(a.nick, b.nick) },
+  status: { label: "Status", cmp: (a: AttendanceRow, b: AttendanceRow) => statusOrder[a.status] - statusOrder[b.status] || byText(a.name, b.name) },
   nick: { label: "Nick", cmp: (a: AttendanceRow, b: AttendanceRow) => byText(a.nick, b.nick) },
   name: { label: "Name", cmp: (a: AttendanceRow, b: AttendanceRow) => byText(a.name, b.name) },
-  seat: { label: "Seat", cmp: (a: AttendanceRow, b: AttendanceRow) => byText(a.seat, b.seat) || byText(a.nick, b.nick) },
-  lanId: { label: "LAN ID", cmp: (a: AttendanceRow, b: AttendanceRow) => byText(a.lanAccount || null, b.lanAccount || null) || byText(a.nick, b.nick) },
+  seat: { label: "Seat", cmp: (a: AttendanceRow, b: AttendanceRow) => byText(a.seat, b.seat) || byText(a.name, b.name) },
+  lanId: { label: "LAN ID", cmp: (a: AttendanceRow, b: AttendanceRow) => byText(a.lanAccount || null, b.lanAccount || null) || byText(a.name, b.name) },
 } satisfies Record<string, { label: string; cmp: (a: AttendanceRow, b: AttendanceRow) => number }>;
 type Sort = keyof typeof sorts;
 
@@ -203,24 +203,24 @@ export function AttendanceTable({
                 <p className="truncate font-medium">
                   {profileBase ? (
                     <Link href={`${profileBase}${r.userId}`} className="hover:text-bit hover:underline">
-                      {r.nick}
+                      {r.name}
                     </Link>
                   ) : (
-                    r.nick
+                    r.name
                   )}
                   {r.lanAccount && (
                     <span className="ml-2 font-mono text-xs font-normal text-muted lg:hidden">#{r.lanAccount}</span>
                   )}
                 </p>
                 <p className="truncate text-xs text-muted">
-                  {r.name} · {r.email}
+                  {r.email}
                 </p>
               </div>
               </div>
               <button
                 className={`${btnGhost} shrink-0 !px-2 text-xs !text-danger lg:hidden`}
                 onClick={() =>
-                  confirm(`Remove ${r.nick} from this LAN?`) && run(() => adminRemoveAttendance(lanId, r.userId))
+                  confirm(`Remove ${r.name} from this LAN?`) && run(() => adminRemoveAttendance(lanId, r.userId))
                 }
               >
                 Remove
@@ -294,7 +294,7 @@ export function AttendanceTable({
                   maxLength={40}
                   className={`${input} !py-1.5 font-mono`}
                   placeholder="—"
-                  aria-label={`LAN ID of ${r.nick}`}
+                  aria-label={`LAN ID of ${r.name}`}
                 />
               </label>
               <label className="block sm:col-span-4 lg:col-span-1">
@@ -310,7 +310,7 @@ export function AttendanceTable({
             <button
               className={`${btnGhost} !hidden !px-2 text-xs hover:!text-danger lg:!inline-flex`}
               onClick={() =>
-                confirm(`Remove ${r.nick} from this LAN?`) && run(() => adminRemoveAttendance(lanId, r.userId))
+                confirm(`Remove ${r.name} from this LAN?`) && run(() => adminRemoveAttendance(lanId, r.userId))
               }
             >
               Remove

@@ -11,7 +11,7 @@ import { Avatar } from "@/components/avatar";
 import { getAvatars, type AvatarData } from "@/lib/avatars";
 import { Card, Columns, Page, Pill, StatusBadge } from "@/components/ui";
 import { fmtDate, relative } from "@/lib/format";
-import { ATTENDANCE_LOCKED_MSG, attendanceLocked, getDisplayNames, getLan, pickNick, signupClosed } from "@/lib/lans";
+import { ATTENDANCE_LOCKED_MSG, attendanceLocked, getDisplayNames, getLan, getNames, pickNick, seatView, signupClosed } from "@/lib/lans";
 import { canViewLan, isLanManager, requireUser } from "@/lib/session";
 import { getClan } from "@/lib/clans";
 import { EventHeader } from "@/components/event-header";
@@ -70,7 +70,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
     ? db.select().from(schema.travelSpot).where(inArray(schema.travelSpot.postId, posts.map((p) => p.id))).all()
     : [];
   const avatars = getAvatars([...rows.map((r) => r.userId), ...seats.flatMap((s) => (s.userId ? [s.userId] : []))]);
-  const names = await getDisplayNames(id, [
+  const people = await getNames(id, [
     ...new Set([
       ...rows.map((r) => r.userId),
       ...seats.flatMap((s) => (s.userId ? [s.userId] : [])),
@@ -78,6 +78,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
       ...spots.map((s) => s.userId),
     ]),
   ]);
+  // Full "Name "Nick" Surname" everywhere; the bare nick only inside small seat cells.
+  const names = new Map([...people].map(([uid, n]) => [uid, n.full]));
   const my = rows.find((r) => r.userId === me.id);
   const seatOf = new Map(
     seats.filter((s) => s.userId && (l.seatsPublishedAt || isLanManager(me, id))).map((s) => [s.userId!, s.label]),
@@ -115,7 +117,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
     .map((p) => ({
       id: p.id,
       userId: p.userId,
-      nick: names.get(p.userId) ?? "?",
+      name: names.get(p.userId) ?? "?",
       kind: p.kind,
       mode: p.mode,
       town: p.town,
@@ -123,7 +125,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
       whenText: p.whenText,
       note: p.note,
       notComing: !isIn(p.userId),
-      spots: spots.filter((s) => s.postId === p.id).map((s) => ({ userId: s.userId, nick: names.get(s.userId) ?? "?" })),
+      spots: spots.filter((s) => s.postId === p.id).map((s) => ({ userId: s.userId, name: names.get(s.userId) ?? "?" })),
     }));
   const openRequests = posts.filter((p) => p.mode === "request" && isIn(p.userId)).length;
   const packed =
@@ -165,8 +167,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
     id: s.id,
     fromUserId: s.fromUserId,
     toUserId: s.toUserId,
-    fromNick: names.get(s.fromUserId) ?? "?",
-    toNick: names.get(s.toUserId) ?? "?",
+    fromName: names.get(s.fromUserId) ?? "?",
+    toName: names.get(s.toUserId) ?? "?",
     fromSeat: seatLabelOf.get(s.fromUserId) ?? null,
     toSeat: seatLabelOf.get(s.toUserId) ?? null,
     status: s.status as SwapView["status"],
@@ -181,7 +183,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
         swaps={swaps}
         people={seats
           .filter((s) => s.userId && s.userId !== me.id)
-          .map((s) => ({ id: s.userId!, nick: names.get(s.userId!) ?? "?", seat: s.label }))
+          .map((s) => ({ id: s.userId!, name: names.get(s.userId!) ?? "?", seat: s.label }))
           .sort((a, b) => a.seat.localeCompare(b.seat, undefined, { numeric: true }))}
       />
     </Card>
@@ -206,8 +208,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
         lanId={l.id}
         people={rows
           .filter((r) => r.userId !== me.id && (r.status === "going" || r.status === "maybe" || r.status === "waitlist"))
-          .map((r) => ({ id: r.userId, nick: names.get(r.userId) ?? "?" }))
-          .sort((a, b) => a.nick.localeCompare(b.nick))}
+          .map((r) => ({ id: r.userId, name: names.get(r.userId) ?? "?" }))
+          .sort((a, b) => a.name.localeCompare(b.name))}
         seatLabels={[...seats].sort((a, b) => a.row - b.row || a.col - b.col).map((s) => s.label)}
         initial={{
           near: my.wishNear ?? [],
@@ -317,7 +319,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
               cols={l.seatCols}
               meId={me.id}
               mode={picking && my?.status === "going" && (my.ticketBought || my.paid) ? "pick" : "view"}
-              seats={seats.map((s) => ({ ...s, nick: s.userId ? (names.get(s.userId) ?? "?") : null, color: s.userId ? (avatars.get(s.userId)?.color ?? null) : null }))}
+              seats={seats.map((s) => seatView(s, people, avatars))}
               title="Our seats"
               actions={seatPills}
             >
@@ -443,7 +445,6 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
                         ) : (
                           <span className="font-medium text-fg">{orgaNames.get(o.id) ?? o.name}</span>
                         )}
-                        {orgaNames.get(o.id) !== o.name && <span className="text-faint"> · {o.name}</span>}
                       </span>
                       <a href={`mailto:${o.email}?subject=${encodeURIComponent(l.name)}`} className="text-bit hover:underline">
                         Email
@@ -546,7 +547,7 @@ function AttendeeList({
       </span>
     </li>
   );
-  // Me first, then by nick, so the folded part never hides your own row.
+  // Me first, then by name, so the folded part never hides your own row.
   const sorted = [...list].sort(
     (a, b) => Number(b.userId === meId) - Number(a.userId === meId) || (names.get(a.userId) ?? "").localeCompare(names.get(b.userId) ?? ""),
   );
