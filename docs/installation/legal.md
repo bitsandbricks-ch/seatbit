@@ -20,7 +20,7 @@ Under **Admin → Platform settings → Operator & legal** (or with the `LEGAL_*
 
 Until the name and contact email are set, the legal pages and the admin page show a warning.
 
-If you turn on [Supporter payments](supporters.md), the terms get a payments section (with your **Refund policy**) and the privacy policy names Stripe.
+If you turn on [Supporter payments](stripe.md), the terms get a payments section (with your **Refund policy**) and the privacy policy names Stripe.
 
 ## Use your own documents
 

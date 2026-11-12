@@ -28,3 +28,8 @@
 .md-typeset .phones figure { margin: 0; }
 .md-typeset .phones img { width: 100%; }
 .md-typeset .phones figcaption { font-size: 0.7rem; color: #a1a1aa; }
+
+/* Home page: the four sections as a 2x2 grid on wider screens. */
+@media screen and (min-width: 45em) {
+  .md-typeset .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

@@ -1,6 +1,6 @@
 # Contributing to Seatbit
 
-Thanks for helping! Seatbit is a small project, so a short issue or pull request is always welcome: bug reports, ideas, docs fixes and code.
+Thanks for helping! Seatbit is a small project, so a short issue or pull request is always welcome: bug reports, ideas, docs fixes and code. The same guide, with more detail on the stack and the pull request flow, is in the docs under [Development](https://bitsandbricks-ch.github.io/seatbit/development/) and [Contributing](https://bitsandbricks-ch.github.io/seatbit/contributing/).
 
 ## Before you start
 
@@ -30,8 +30,8 @@ Open http://localhost:3000. The first account becomes the platform admin. The SQ
 - **UI:** mobile-first, but also check the desktop layout. Use the shared components in `src/components/ui.tsx` and the brand tokens (`brand/tokens.css`), never raw colours. Dates are always 24h, Swiss style ("Sat 14.11.2026, 18:00"), via `src/lib/format.ts`.
 - **Database:** edit `src/db/schema.ts`, then `npm run db:generate`. Migrations in `drizzle/` run on startup. Check the file number: it must be the next free one.
 - **Settings:** a new instance-wide setting goes into `SETTINGS` in `src/lib/settings.ts`, so admins can change it in the UI and it can still be set by env var.
-- **Docs:** user-facing changes need a docs update in `docs/` (MkDocs). Preview with `pip install -r docs/requirements.txt && mkdocs serve`.
-- **Screenshots:** they are generated, don't edit them by hand. `npm run screenshots` rebuilds them from the demo data (see [docs/development/screenshots.md](docs/development/screenshots.md)). After a merge to `main`, CI regenerates them and opens a pull request if anything changed. If you add a page, add it to `scripts/screenshots.ts`.
+- **Docs:** user-facing changes need a docs update in `docs/` (MkDocs: Features, Installation, Development, Contributing). Preview with `pip install -r docs/requirements.txt && mkdocs serve`. See [Writing docs](docs/contributing/docs.md).
+- **Screenshots:** they are generated, don't edit them by hand. `npm run screenshots` rebuilds them from the demo data (see [Screenshots](docs/development/screenshots.md)). After a merge to `main`, CI regenerates them and opens a pull request if anything changed. If you add a page, add it to `scripts/screenshots.ts`.
 
 ## Pull requests
 

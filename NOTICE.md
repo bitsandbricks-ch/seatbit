@@ -16,7 +16,7 @@ If you run Seatbit, or a modified version of it, for other people:
 
 ## You are the operator of your instance
 
-The authors of Seatbit don't run your instance and are not responsible for it. The built-in Terms of Service and Privacy Policy are a template: fill in your own operator details and check that the texts fit how you run Seatbit, or link your own documents. See [docs/self-hosting/legal.md](docs/self-hosting/legal.md).
+The authors of Seatbit don't run your instance and are not responsible for it. The built-in Terms of Service and Privacy Policy are a template: fill in your own operator details and check that the texts fit how you run Seatbit, or link your own documents. See [docs/installation/legal.md](docs/installation/legal.md).
 
 ## Third-party software
 

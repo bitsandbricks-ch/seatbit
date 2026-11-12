@@ -1,60 +1,63 @@
 ---
 hide:
   - navigation
+  - toc
 ---
 
-# Seatbit
+# Seatbit documentation
 
-**Seatbit helps a clan or group of friends go to LAN parties together**: who's coming, who has bought a ticket, who sits where in the group's seat block, who drives whom, and what to install before you leave. It is made for groups of 10 to 50+ people going to LANs run by others (think SwitzerLAN or Lock & Load), not for running a LAN yourself.
+Seatbit is a self-hostable web app that helps a clan coordinate going to **LAN parties run by others**: who's coming, tickets, the group's seat block, travel, packing lists, games and food, plus a Discord bot. It is not a tool for running a LAN.
 
-Seatbit is free, open-source software ([AGPL-3.0](https://github.com/bitsandbricks-ch/seatbit/blob/main/LICENSE)). Run your own instance with one container, or join an instance someone else runs.
+<div class="grid cards two" markdown>
 
-<div class="phones" markdown>
-<figure markdown>
+-   :material-view-grid-outline:{ .lg .middle } **Features**
 
-![Upcoming LANs on a phone](screenshots/phone-lans.png){ .shot }
+    ---
 
-<figcaption>Your upcoming LANs</figcaption>
-</figure>
-<figure markdown>
+    What Seatbit does, page by page: events, attendance, seats, clans, guests, Discord and more. For members, orgas and admins.
 
-![Event page](screenshots/phone-event.png){ .shot }
+    [:octicons-arrow-right-24: Features](features/index.md)
 
-<figcaption>Answer, checklist and event details</figcaption>
-</figure>
-<figure markdown>
+-   :material-server-outline:{ .lg .middle } **Installation**
 
-![Seat plan](screenshots/phone-seat-plan.png){ .shot }
+    ---
 
-<figcaption>The group's seat plan</figcaption>
-</figure>
-<figure markdown>
+    Run your own instance: Docker or Kubernetes, configuration, the Discord app, email, Stripe and your operator details.
 
-![Travel tab](screenshots/phone-travel.png){ .shot }
+    [:octicons-arrow-right-24: Installation](installation/index.md)
 
-<figcaption>Rides and places to sleep</figcaption>
-</figure>
-</div>
+-   :material-code-braces:{ .lg .middle } **Development**
 
-## What it does
+    ---
 
-- **Attendance:** members answer *coming / unsure / not coming* on the website or with a button in Discord. When the group's spots are full, new people go on a waitlist and move up automatically.
-- **Tickets:** members tick off "I bought my ticket", orgas confirm it. Deadlines for answering and buying, with email and Discord reminders.
-- **Seats:** the orgas enter the seats the group got (e.g. `F1-F20`), members send seat wishes or pick their own seat, the orgas finalize the plan, and everyone books their seat on the event's own site.
-- **Travel, packing lists and games:** offer or ask for rides and sleeping places, keep a private packing list, vote on games and tick off what you installed.
-- **Clans:** several clans on one instance, each with roles (admin, event manager, recruiter, member), guests (people without an account yet), invite links and its own Discord server.
-- **Discord bot:** announcements with answer buttons, live attendee lists, reminders, DMs and slash commands.
-- **Mobile-first**, with a proper desktop layout. Dates are 24h ("Sat 14.11.2026, 18:00").
+    Local setup with demo data, the stack, database migrations, generated screenshots and CI.
 
-![Seat plan on desktop](screenshots/desktop-event-seats.png){ .shot }
+    [:octicons-arrow-right-24: Development](development/index.md)
 
-## Where to start
+-   :material-source-pull:{ .lg .middle } **Contributing**
 
-<div class="grid cards" markdown>
+    ---
 
-- **I'm a member** of a clan that uses Seatbit → [Getting started](members/index.md)
-- **I organise** our group's trips → [Your clan](orgas/index.md)
-- **I want to run Seatbit** for my group → [Self-hosting](self-hosting/index.md)
-- **I want to help** build it → [Contributing](development/index.md)
+    How to propose a change, code guidelines, writing docs and the rules for AI coding agents.
+
+    [:octicons-arrow-right-24: Contributing](contributing/index.md)
 
 </div>
+
+## Concepts
+
+| Term | Meaning |
+| --- | --- |
+| **Instance** | One Seatbit installation, run by an **operator**. Hosts any number of clans. |
+| **Clan** | Your group: members, roles, LAN types, events and its Discord server. A clan only sees its own events. See [Clans and roles](features/clans.md). |
+| **LAN type** | A template for a LAN party you go to regularly (e.g. *Lock & Load*): location, links, usual spots, seats and length. See [LAN types](features/clans.md#lan-types). |
+| **Event** | One edition of a LAN the group attends, usually created from a LAN type. See [Event lifecycle](features/events.md). |
+| **Orga** | A member who runs a single event: attendance, tickets, seats. Clan admins and event managers can run every event. |
+| **Spots** | How many people the group can bring. When full, new answers go on a waitlist. |
+| **Seat block** | The seats the event gave the group, e.g. `F1-F16, F19-F22`. See [Seats](features/seats.md). |
+| **Guest** | A person without a Seatbit account, added by orgas, who can take over the guest later. See [Guests](features/members-guests.md#guests). |
+| **Platform admin** | Runs the instance: platform settings, all clans and users. See [Platform admin](features/admin.md). |
+
+![The seat plan of an event](screenshots/desktop-event-seats.png){ .shot }
+
+Seatbit is free software under the [GNU AGPL-3.0](https://github.com/bitsandbricks-ch/seatbit/blob/main/LICENSE). Source code, issues and releases are on [GitHub](https://github.com/bitsandbricks-ch/seatbit).
