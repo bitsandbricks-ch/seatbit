@@ -14,6 +14,7 @@ import { Avatar } from "@/components/avatar";
 import { AppearanceForm } from "@/components/appearance-form";
 import { PROFILE_COLORS, PROFILE_ICONS, avatarData, initialsOf, userColor } from "@/lib/avatars";
 import { missingServers } from "@/lib/discord-invite";
+import { personLabel } from "@/lib/names";
 import { InterestsForm } from "@/components/event-extras";
 
 const DM_RESULT: Record<string, string> = {
@@ -54,10 +55,10 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
     <Page>
       <PageHeader
         avatar={<Avatar data={avatarData(me)} size={56} />}
-        title={defaultNick || me.name}
+        title={personLabel(me, defaultNick)}
         subtitle={
           <span className="block truncate">
-            {me.name} · {me.email}
+            {me.email}
           </span>
         }
       />

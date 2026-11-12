@@ -20,7 +20,10 @@ export type SeatView = {
   label: string;
   userId: string | null;
   locked: boolean;
+  /** Nick of the seated member, short enough for a seat cell. */
   nick: string | null;
+  /** Full name of the seated member: Mike "Reyki" Keller. */
+  name?: string | null;
   /** The seated member's personal colour, shown as a bar on the seat. */
   color?: string | null;
 };
@@ -28,8 +31,8 @@ export type SeatView = {
 /** Extra info orgas see about a person in the details pane. */
 export type SeatPerson = {
   id: string;
-  nick: string;
-  name?: string;
+  /** Full name: Mike "Reyki" Keller. */
+  name: string;
   lanAccount?: string;
   ticket?: "ok" | "reported" | "open";
   wishes?: { ok: string[]; missed: string[] };
@@ -69,7 +72,7 @@ export function SeatMap({
   /** view: read only. pick: members choose their own free seat. admin: orga tools. */
   mode: "view" | "pick" | "admin";
   assignable?: SeatPerson[];
-  /** Card title and header extras (e.g. a "not published" pill). */
+  /** Card title and header extras (e.g. a "not final" pill). */
   title?: ReactNode;
   actions?: ReactNode;
   /** Shown under the map in the left column, next to the details panel. */
@@ -115,7 +118,7 @@ export function SeatMap({
     !q ||
     s.label.toLowerCase() === q ||
     (!!s.nick && s.nick.toLowerCase().includes(q)) ||
-    (!!s.userId && (people.get(s.userId)?.name ?? "").toLowerCase().includes(q));
+    (!!s.name && s.name.toLowerCase().includes(q));
   const matchCount = q ? seats.filter(matches).length : 0;
 
   useEffect(() => {
@@ -152,7 +155,7 @@ export function SeatMap({
 
   function onCell(row: number, col: number, s?: SeatView) {
     if (admin && layout) {
-      if (s?.userId && !confirm(`${s.label} is taken by ${s.nick}. Remove the seat anyway?`)) return;
+      if (s?.userId && !confirm(`${s.label} is taken by ${s.name ?? s.nick}. Remove the seat anyway?`)) return;
       return run(() => toggleSeatCell(lanId, row, col));
     }
     if (!s) return;
@@ -222,7 +225,7 @@ export function SeatMap({
     : swapFrom
       ? `Tap the seat to swap ${byId.get(swapFrom)?.label} with, or a free seat to move there.`
       : placing
-        ? `Tap a seat for ${people.get(placing)?.nick ?? "them"}.`
+        ? `Tap a seat for ${people.get(placing)?.name ?? "them"}.`
         : null;
 
   const rowLetterOf = (row: number) => seats.find((x) => x.row === row)?.label.match(/^[A-Za-z]+/)?.[0] ?? rowLetter(row);
@@ -295,8 +298,8 @@ export function SeatMap({
         onDragOver={canDrag ? (e) => (e.preventDefault(), setDragOver(s.id)) : undefined}
         onDragLeave={canDrag ? () => setDragOver(null) : undefined}
         onDrop={canDrag ? (e) => onDrop(e, s) : undefined}
-        title={`${s.label}${s.nick ? ` · ${s.nick}` : ""}${s.locked ? " · held" : ""}`}
-        aria-label={`Seat ${s.label}${s.nick ? `, ${s.nick}` : ", free"}${s.locked ? ", held" : ""}`}
+        title={`${s.label}${s.nick ? ` · ${s.name ?? s.nick}` : ""}${s.locked ? " · held" : ""}`}
+        aria-label={`Seat ${s.label}${s.nick ? `, ${s.name ?? s.nick}` : ", free"}${s.locked ? ", held" : ""}`}
         aria-pressed={isSel}
         className={`relative flex ${cell} w-full min-w-0 flex-col items-center justify-center overflow-hidden rounded-bit border px-0.5 text-center transition hover:brightness-125 ${tone} ${ring} ${dim ? "opacity-25" : ""} ${canDrag && taken ? "cursor-grab active:cursor-grabbing" : ""}`}
       >
@@ -433,7 +436,7 @@ export function SeatMap({
               <p className="text-sm text-muted">
                 {mySeat
                   ? `You're at ${mySeat.label}. Tap a free seat and "Move here" to change, or tap yours to give it up.`
-                  : "Tap a free seat, then \"Take this seat\". The orgas can still move people before they publish the plan."}
+                  : "Tap a free seat, then \"Take this seat\". The orgas check and finalize the plan afterwards."}
               </p>
             )}
             {mode === "view" && (
@@ -533,7 +536,7 @@ export function SeatMap({
                           placing === p.id ? "border-bit bg-bit-soft text-bit" : "border-line bg-raised text-fg hover:border-muted/40"
                         }`}
                       >
-                        {p.nick}
+                        {p.name}
                       </button>
                     </li>
                   ))}
@@ -649,8 +652,7 @@ function SeatDetails({
 
       {s.userId ? (
         <div className="rounded-md bg-raised/60 p-3">
-          <p className={`text-lg font-semibold leading-tight [overflow-wrap:anywhere] ${mine ? "text-bit" : ""}`}>{s.nick}</p>
-          {person?.name && <p className="text-sm text-muted">{person.name}</p>}
+          <p className={`text-lg font-semibold leading-tight [overflow-wrap:anywhere] ${mine ? "text-bit" : ""}`}>{s.name ?? s.nick}</p>
           {person?.lanAccount && (
             <p className="mt-1 text-xs text-muted">
               Event account: <span className="font-mono text-fg">{person.lanAccount}</span>
@@ -709,7 +711,7 @@ function SeatDetails({
                 .filter((p) => p.id !== s.userId)
                 .map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.nick}
+                    {p.name}
                     {seatOfUser.get(p.id) ? ` (now ${seatOfUser.get(p.id)!.label})` : ""}
                   </option>
                 ))}

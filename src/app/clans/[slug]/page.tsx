@@ -9,6 +9,7 @@ import { Card, Page, PageHeader, Pill, btnGhost, btnPrimary, btnSecondary, halve
 import { lanDay } from "@/lib/format";
 import { clanRole, getClanBySlug } from "@/lib/clans";
 import { pickNick } from "@/lib/lans";
+import { personLabel } from "@/lib/names";
 import { avatarData } from "@/lib/avatars";
 import { requireUser, visibleLans } from "@/lib/session";
 import { missingServers } from "@/lib/discord-invite";
@@ -129,10 +130,10 @@ export default async function ClanPage({ params }: PageProps<"/clans/[slug]">) {
             .map((m) => ({
               id: m.u.id,
               admin: m.role === "admin",
-              nick: pickNick(nicks.filter((n) => n.userId === m.u.id), { lanId: null, typeId: null }, m.u.name),
+              name: personLabel(m.u, pickNick(nicks.filter((n) => n.userId === m.u.id), { lanId: null, typeId: null }, m.u.name)),
               avatar: avatarData(m.u),
             }))
-            .sort((a, b) => a.nick.localeCompare(b.nick))}
+            .sort((a, b) => a.name.localeCompare(b.name))}
         />
       </Card>
       </div>

@@ -6,6 +6,7 @@ import { Card, Page, PageHeader, Pill, btnGhost, btnSecondary } from "@/componen
 import { ClanAvatar } from "@/components/clan-avatar";
 import { lanDay } from "@/lib/format";
 import { requireAdmin } from "@/lib/session";
+import { getDefaultNames } from "@/lib/lans";
 
 export default async function AdminPage() {
   const me = await requireAdmin();
@@ -15,6 +16,7 @@ export default async function AdminPage() {
     .orderBy(desc(schema.lan.startsAt))
     .all();
   const users = db.select().from(schema.user).orderBy(schema.user.name).all();
+  const people = getDefaultNames(users.map((u) => u.id));
   const clans = db.select().from(schema.clan).orderBy(schema.clan.name).all();
   const members = db.select().from(schema.clanMember).all();
   const att = db.select().from(schema.attendance).all();
@@ -108,7 +110,7 @@ export default async function AdminPage() {
             <li key={u.id} className="flex min-h-12 items-center justify-between gap-3 py-2">
               <span className="min-w-0">
                 <span className="flex items-center gap-2">
-                  <span className="truncate font-medium">{u.name}</span>
+                  <span className="truncate font-medium">{people.get(u.id)?.full ?? u.name}</span>
                   {u.role === "admin" ? <Pill tone="emerald">admin</Pill> : u.isGuest ? <Pill>guest</Pill> : null}
                 </span>
                 <span className="block truncate text-xs text-muted">{u.isGuest ? "Guest, no login yet" : u.email}</span>

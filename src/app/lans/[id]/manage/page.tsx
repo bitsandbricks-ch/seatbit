@@ -2,16 +2,17 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { db, schema } from "@/db";
-import { deleteLan, setSeatPicking } from "@/app/actions";
+import type { Attendance } from "@/db/schema";
+import { deleteLan } from "@/app/actions";
 import { AttendanceTable } from "@/components/attendance-table";
 import { LanForm } from "@/components/lan-form";
 import { ReminderButtons } from "@/components/reminder-buttons";
 import { SeatMap } from "@/components/seat-map";
 import { avatarMap } from "@/lib/avatars";
 import { EventHeader } from "@/components/event-header";
-import { Card, Page, Pill, btnDanger, btnPrimary, btnSecondary } from "@/components/ui";
+import { Card, Page, Pill, btnDanger, btnSecondary } from "@/components/ui";
 import { fmtDate, relative, toInputValue } from "@/lib/format";
-import { getDisplayNames, getLan } from "@/lib/lans";
+import { getLan, getNames, seatView } from "@/lib/lans";
 import { dueKinds } from "@/lib/reminders";
 import { isLanManager, requireUser } from "@/lib/session";
 import { OrgaManager } from "@/components/orga-manager";
@@ -21,15 +22,17 @@ import { DiscordButtons, WhatsAppTexts } from "@/components/chat-panel";
 import { whatsappTexts } from "@/lib/announce";
 import { discordEnabled, inviteUrl } from "@/lib/discord-api";
 import { canManageClan, getClan } from "@/lib/clans";
-import { PublishSeats } from "@/components/publish-seats";
+import { SeatFlow } from "@/components/seat-flow";
 import { checkWishes } from "@/lib/seating";
 import { getLanAccounts } from "@/lib/lan-accounts";
-import { personLabel } from "@/lib/names";
 import { RemindToBookButton } from "@/components/seat-booking";
 import { SeatSwapApprovals, type SwapView } from "@/components/seat-swaps";
 import { CancelEvent, CopyNextYear, DeleteNewsButton, NewsComposer } from "@/components/event-extras";
 
 const { attendance, seat, user, reminderLog } = schema;
+
+const hasWishes = (a: Attendance) =>
+  (a.wishNear?.length ?? 0) > 0 || (a.wishAvoid?.length ?? 0) > 0 || a.wishPosition !== "any" || !!a.wishSeat || !!a.wishNote;
 
 // Same order as the event page (Overview, Seats, Attendees), then the orga-only tabs.
 const TABS = [
@@ -68,7 +71,9 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
     .from(user)
     .all()
     .filter((u) => memberIds.has(u.id) || rows.some((r) => r.userId === u.id));
-  const names = await getDisplayNames(id, users.map((u) => u.id));
+  const people = await getNames(id, users.map((u) => u.id));
+  // Full "Name "Nick" Surname" everywhere; the bare nick only inside small seat cells.
+  const names = new Map([...people].map(([uid, n]) => [uid, n.full]));
   const avatars = avatarMap(users);
   const lanIds = getLanAccounts(l, rows.map((r) => r.userId));
   const userById = new Map(users.map((u) => [u.id, u]));
@@ -103,9 +108,9 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
       return {
         id: r.id,
         userId: r.userId,
-        nick: names.get(r.userId) ?? u.name,
+        nick: people.get(r.userId)?.nick ?? u.name,
         avatar: avatars.get(r.userId),
-        name: u.name,
+        name: names.get(r.userId) ?? u.name,
         email: u.isGuest ? (u.inviteEmail ? `guest, invited at ${u.inviteEmail}` : "guest, no login yet") : u.email,
         status: r.status,
         paid: r.paid,
@@ -117,7 +122,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
         seatBooked: l.externalPlanUrl && l.seatsPublishedAt ? r.seatBooked : null,
       };
     })
-    .sort((a, b) => statusOrder[a.status] - statusOrder[b.status] || a.nick.localeCompare(b.nick));
+    .sort((a, b) => statusOrder[a.status] - statusOrder[b.status] || a.name.localeCompare(b.name));
 
   const due = dueKinds(l);
   const planPeople = going.map((r) => ({
@@ -149,8 +154,8 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
       id: s.id,
       fromUserId: s.fromUserId,
       toUserId: s.toUserId,
-      fromNick: names.get(s.fromUserId) ?? "?",
-      toNick: names.get(s.toUserId) ?? "?",
+      fromName: names.get(s.fromUserId) ?? "?",
+      toName: names.get(s.toUserId) ?? "?",
       fromSeat: seatOf.get(s.fromUserId) ?? null,
       toSeat: seatOf.get(s.toUserId) ?? null,
       status: s.status as SwapView["status"],
@@ -179,21 +184,15 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
             />
           </Card>
           {seats.length > 0 && (
-            <Card title="Seat picking" actions={l.seatPicking && !l.seatsPublishedAt ? <Pill tone="emerald">open</Pill> : <Pill>closed</Pill>}>
-              <p className="mb-3 text-sm text-muted">
-                {l.seatPicking && !l.seatsPublishedAt
-                  ? "Members who are coming and have ticked \"I have my ticket\" can take a free seat on the event page. Held seats stay out of reach. You can still move anyone here. Close picking, then publish the plan."
-                  : l.seatsPublishedAt
-                    ? "The plan is published, so members can't pick seats."
-                    : "Optional first phase: let members choose their own free seat before you finish and publish the plan."}
-              </p>
-              {!l.seatsPublishedAt && (
-                <form action={setSeatPicking.bind(null, l.id, !l.seatPicking)}>
-                  <button className={l.seatPicking ? btnSecondary : btnPrimary}>
-                    {l.seatPicking ? "Close seat picking" : "Let members pick their seats"}
-                  </button>
-                </form>
-              )}
+            <Card title="Seat steps" actions={l.seatsPublishedAt ? <Pill tone="emerald">final</Pill> : <Pill tone="amber">not final</Pill>}>
+              <SeatFlow
+                lanId={l.id}
+                finalizedAt={l.seatsPublishedAt ? fmtDate(l.seatsPublishedAt) : null}
+                picking={l.seatPicking && !l.seatsPublishedAt}
+                going={going.length}
+                unseated={going.length - seated}
+                wishes={going.filter(hasWishes).length}
+              />
             </Card>
           )}
           {swaps.length > 0 && (
@@ -240,15 +239,6 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
                   to track who booked their seat there.
                 </p>
               )}
-            </Card>
-          )}
-          {seats.length > 0 && (
-            <Card title="Publish">
-              <PublishSeats
-                lanId={l.id}
-                publishedAt={l.seatsPublishedAt ? fmtDate(l.seatsPublishedAt) : null}
-                unseated={going.length - seated}
-              />
             </Card>
           )}
           {wishChecks.length > 0 && (
@@ -424,13 +414,13 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
           seats={[...seats].sort((a, b) => a.row - b.row || a.col - b.col)}
           others={users
             .filter((u) => !inLan.has(u.id) && memberIds.has(u.id))
-            .map((u) => ({ id: u.id, name: personLabel(u, names.get(u.id)) }))
+            .map((u) => ({ id: u.id, name: names.get(u.id) ?? u.name }))
             .sort((a, b) => a.name.localeCompare(b.name))}
         />
       )}
 
       {tab === "seats" && (
-        // The seat plan is the main tool: map on the left with setup, publishing and wishes below it, and the seat
+        // The seat plan is the main tool: map on the left with setup, the seat flow (wishes, self pick, finalize) and wishes below it, and the seat
         // details panel in its own column on the right (desktop).
         <div className="space-y-5">
           {seats.length > 0 ? (
@@ -440,20 +430,19 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
                 cols={l.seatCols}
                 meId={me.id}
                 mode="admin"
-                seats={seats.map((s) => ({ ...s, nick: s.userId ? (names.get(s.userId) ?? "?") : null, color: s.userId ? (avatars.get(s.userId)?.color ?? null) : null }))}
+                seats={seats.map((s) => seatView(s, people, avatars))}
                 assignable={going
                   .map((r) => {
                     const w = wishChecks.find((c) => c.userId === r.userId);
                     return {
                       id: r.userId,
-                      nick: names.get(r.userId) ?? "?",
-                      name: userById.get(r.userId)?.name,
+                      name: names.get(r.userId) ?? "?",
                       lanAccount: lanIds.get(r.userId) || undefined,
                       ticket: r.paid ? ("ok" as const) : r.ticketBought ? ("reported" as const) : ("open" as const),
                       wishes: w ? { ok: w.ok, missed: w.missed } : undefined,
                     };
                   })
-                  .sort((a, b) => a.nick.localeCompare(b.nick))}
+                  .sort((a, b) => a.name.localeCompare(b.name))}
               >
                 {seatCards}
               </SeatMap>
@@ -566,7 +555,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               orgas={orgaIds.map((uid) => ({ id: uid, name: names.get(uid) ?? userById.get(uid)?.name ?? "?" }))}
               candidates={users
                 .filter((u) => !orgaIds.includes(u.id) && memberIds.has(u.id))
-                .map((u) => ({ id: u.id, name: personLabel(u, names.get(u.id)) }))
+                .map((u) => ({ id: u.id, name: names.get(u.id) ?? u.name }))
                 .sort((a, b) => a.name.localeCompare(b.name))}
             />
           </Card>

@@ -74,7 +74,7 @@ export async function requestSeatSwap(lanId: string, toUserId: string, note = ""
   const me = await requireUser();
   const l = mustGetLan(lanId);
   if (!canViewLan(me, lanId)) throw new Error("Not found");
-  if (!l.seatsPublishedAt) throw new Error("Swaps open once the orgas publish the seat plan.");
+  if (!l.seatsPublishedAt) throw new Error("Swaps open once the orgas finalize the seat plan.");
   if (toUserId === me.id) throw new Error("Pick someone else.");
   const mine = seatOf(lanId, me.id);
   const theirs = seatOf(lanId, toUserId);

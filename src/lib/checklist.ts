@@ -55,14 +55,19 @@ export function buildChecklist(input: {
     steps.push({
       key: "seat",
       title: "Get your seat",
-      state: seatLabel ? "done" : "pending",
-      hint: seatLabel
-        ? `Seat ${seatLabel}.`
-        : lan.seatPicking && !lan.seatsPublishedAt
-          ? "Seat picking is open: tick that you have your ticket, then take a free seat on the Seats tab."
-          : freeSeats === 0
-          ? "The orgas will publish the seat plan soon."
-          : "Add seat wishes on the Seats tab. The orgas publish the seat plan after the deadline.",
+      // Only final once the orgas finalized the plan, also when you picked your seat yourself.
+      state: lan.seatsPublishedAt && seatLabel ? "done" : seatLabel ? "pending" : lan.seatPicking && !lan.seatsPublishedAt ? "todo" : "pending",
+      hint: lan.seatsPublishedAt
+        ? seatLabel
+          ? `Seat ${seatLabel}, final.`
+          : "The plan is final but you have no seat yet. An orga will get back to you."
+        : seatLabel
+          ? `Seat ${seatLabel} for now. The orgas check and finalize the seat plan.`
+          : lan.seatPicking
+            ? "Self pick is on: tick that you have your ticket, then take a free seat on the Seats tab."
+            : freeSeats === 0
+              ? "The orgas will finalize the seat plan soon."
+              : "Add seat wishes on the Seats tab. The orgas finalize the seat plan after the deadline.",
     });
   }
   // The event's own seat plan (e.g. lal.gg): members book the seat they got there themselves.
