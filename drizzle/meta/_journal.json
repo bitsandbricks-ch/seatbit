@@ -190,6 +190,13 @@
       "when": 1794491218705,
       "tag": "0027_discord_modes",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "6",
+      "when": 1794494168034,
+      "tag": "0028_name_display",
+      "breakpoints": true
     }
   ]
 }

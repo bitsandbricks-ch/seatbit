@@ -3,11 +3,12 @@ import { useActionState } from "react";
 import { createClan, updateClan } from "@/app/clan-actions";
 import type { FormState } from "@/app/actions";
 import { Field, Input, btnPrimary, input } from "./ui";
+import { NAME_DISPLAYS, NAME_DISPLAY_LABELS } from "@/lib/names";
 
 export function ClanForm({
   clan,
 }: {
-  clan?: { id: string; name: string; description: string; joinPolicy: string; guestClaims: string; hasAvatar: boolean };
+  clan?: { id: string; name: string; description: string; joinPolicy: string; guestClaims: string; nameDisplay: string; hasAvatar: boolean };
 }) {
   const [state, action, pending] = useActionState<FormState, FormData>(clan ? updateClan : createClan, undefined);
   return (
@@ -34,6 +35,19 @@ export function ClanForm({
           <option value="approval">Yes, an admin confirms each claim</option>
           <option value="match">Yes, same name or nick moves over right away</option>
           <option value="off">No, only with the guest&apos;s own link</option>
+        </select>
+      </Field>
+      <Field
+        label="How are members shown?"
+        hint='Applies to event pages, the clan page and the Discord bot. Orgas and admins still see full names where they manage events and members. Without a nick of their own, people show as "Mike K.".'
+      >
+        <select name="nameDisplay" defaultValue={clan?.nameDisplay ?? "full"} className={input}>
+          {NAME_DISPLAYS.map((d) => (
+            <option key={d} value={d}>
+              {NAME_DISPLAY_LABELS[d]}
+              {d === "full" ? ' (Mike "Reyki" Keller)' : d === "nameNick" ? ' (Mike "Reyki")' : " (Reyki)"}
+            </option>
+          ))}
         </select>
       </Field>
       {clan && (

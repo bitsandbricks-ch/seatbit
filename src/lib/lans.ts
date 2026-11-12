@@ -2,7 +2,7 @@ import { and, asc, eq, inArray, isNull, or } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { AttendanceStatus, Lan, Nickname } from "@/db/schema";
 import { appUrl } from "./mail";
-import { personLabel } from "./names";
+import { personLabel, type NameDisplay } from "./names";
 import { eventMailVars, renderTemplate } from "./mail-templates";
 import { notify } from "./notify";
 
@@ -28,14 +28,32 @@ export function pickNick(
   );
 }
 
-/** A member's name at a LAN: the nick alone (tight spots) and the full Name "Nick" Surname. */
-export type PersonName = { nick: string; full: string };
+/**
+ * A member's name: the nick alone (tight spots), the full Name "Nick" Surname, the
+ * label the clan's name display asks for, and whether it's a real account (not a guest).
+ */
+export type PersonName = { nick: string; full: string; label: string; verified: boolean };
 
-/** Map userId -> nick and full display name for a LAN (nick: event > LAN type > default). */
-export async function getNames(lanId: string, userIds: string[]) {
+/** The clan's name display setting; "full" outside a clan. */
+export function clanNameDisplay(clanId: string | null | undefined): NameDisplay {
+  if (!clanId) return "full";
+  return db.select({ d: schema.clan.nameDisplay }).from(schema.clan).where(eq(schema.clan.id, clanId)).get()?.d ?? "full";
+}
+
+function personName(u: typeof user.$inferSelect, nick: string, mode: NameDisplay): PersonName {
+  return { nick, full: personLabel(u, nick), label: personLabel(u, nick, mode), verified: !u.isGuest };
+}
+
+/**
+ * Map userId -> names at a LAN (nick: event > LAN type > default). The label follows the
+ * event's clan setting; orga views pass mode "full".
+ */
+export async function getNames(lanId: string, userIds: string[], mode?: NameDisplay) {
   const map = new Map<string, PersonName>();
   if (userIds.length === 0) return map;
-  const typeId = getLan(lanId)?.typeId ?? null;
+  const l = getLan(lanId);
+  const typeId = l?.typeId ?? null;
+  const display = mode ?? clanNameDisplay(l?.clanId);
   const users = db.select().from(user).where(inArray(user.id, userIds)).all();
   const nicks = db
     .select()
@@ -53,13 +71,16 @@ export async function getNames(lanId: string, userIds: string[]) {
     .all();
   for (const u of users) {
     const nick = pickNick(nicks.filter((n) => n.userId === u.id), { lanId, typeId }, u.name);
-    map.set(u.id, { nick, full: personLabel(u, nick) });
+    map.set(u.id, personName(u, nick, display));
   }
   return map;
 }
 
-/** Map userId -> nick and full name outside a LAN (clan pages, stats, invites): default nick only. */
-export function getDefaultNames(userIds: string[]) {
+/**
+ * Map userId -> names outside a LAN (clan pages, stats, invites): default nick only.
+ * The label follows mode (default "full", for admin views and mails).
+ */
+export function getDefaultNames(userIds: string[], mode: NameDisplay = "full") {
   const map = new Map<string, PersonName>();
   const ids = [...new Set(userIds)];
   if (ids.length === 0) return map;
@@ -71,14 +92,14 @@ export function getDefaultNames(userIds: string[]) {
     .all();
   for (const u of users) {
     const nick = pickNick(nicks.filter((n) => n.userId === u.id), { lanId: null, typeId: null }, u.name);
-    map.set(u.id, { nick, full: personLabel(u, nick) });
+    map.set(u.id, personName(u, nick, mode));
   }
   return map;
 }
 
-/** Map userId -> how the member is shown at a LAN: Mike "Reyki" Keller. */
+/** Map userId -> how the member is shown at a LAN, per the clan's name display: Mike "Reyki" Keller. */
 export async function getDisplayNames(lanId: string, userIds: string[]) {
-  return new Map([...(await getNames(lanId, userIds))].map(([id, n]) => [id, n.full]));
+  return new Map([...(await getNames(lanId, userIds))].map(([id, n]) => [id, n.label]));
 }
 
 /** Map userId -> just the nick at a LAN, for places with no room for the full name. */
@@ -177,7 +198,7 @@ export function getLan(id: string) {
   return db.select().from(lan).where(eq(lan.id, id)).get();
 }
 
-/** A seat as the seat map shows it: short nick for the cell, full name for the details pane. */
+/** A seat as the seat map shows it: short nick for the cell, the name label for the details pane. */
 export function seatView<S extends { userId: string | null }>(
   s: S,
   people: Map<string, PersonName>,
@@ -187,7 +208,7 @@ export function seatView<S extends { userId: string | null }>(
   return {
     ...s,
     nick: s.userId ? (p?.nick ?? "?") : null,
-    name: s.userId ? (p?.full ?? "?") : null,
+    name: s.userId ? (p?.label ?? "?") : null,
     color: s.userId ? (avatars.get(s.userId)?.color ?? null) : null,
   };
 }

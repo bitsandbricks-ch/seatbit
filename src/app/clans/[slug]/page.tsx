@@ -48,7 +48,7 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
       id: m.u.id,
       role: isMemberRole(m.role) ? m.role : ("member" as const),
       guest: m.u.isGuest,
-      name: personLabel(m.u, pickNick(nicks.filter((n) => n.userId === m.u.id), { lanId: null, typeId: null }, m.u.name)),
+      name: personLabel(m.u, pickNick(nicks.filter((n) => n.userId === m.u.id), { lanId: null, typeId: null }, m.u.name), c.nameDisplay),
       avatar: avatarData(m.u),
     }))
     .sort((a, b) => a.name.localeCompare(b.name));

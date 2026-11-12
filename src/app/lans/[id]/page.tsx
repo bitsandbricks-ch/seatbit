@@ -9,7 +9,7 @@ import { getLanAccounts } from "@/lib/lan-accounts";
 import { SeatMap } from "@/components/seat-map";
 import { Avatar } from "@/components/avatar";
 import { getAvatars, type AvatarData } from "@/lib/avatars";
-import { Card, Columns, Page, Pill, StatusBadge } from "@/components/ui";
+import { Card, Columns, Page, Pill, StatusBadge, Verified } from "@/components/ui";
 import { fmtDate, fmtTime, relative } from "@/lib/format";
 import { ATTENDANCE_LOCKED_MSG, attendanceLocked, getDisplayNames, getLan, getNames, pickNick, seatView, signupClosed } from "@/lib/lans";
 import { canViewLan, isLanManager, requireUser } from "@/lib/session";
@@ -82,8 +82,9 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
       ...spots.map((s) => s.userId),
     ]),
   ]);
-  // Full "Name "Nick" Surname" everywhere; the bare nick only inside small seat cells.
-  const names = new Map([...people].map(([uid, n]) => [uid, n.full]));
+  // The clan's name display (default Name "Nick" Surname); the bare nick only inside small seat cells.
+  const names = new Map([...people].map(([uid, n]) => [uid, n.label]));
+  const verified = new Set([...people].flatMap(([uid, n]) => (n.verified ? [uid] : [])));
   const my = rows.find((r) => r.userId === me.id);
   const seatOf = new Map(
     seats.filter((s) => s.userId && (l.seatsPublishedAt || isLanManager(me, id))).map((s) => [s.userId!, s.label]),
@@ -428,9 +429,9 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           title={`Attendees (${going.length}${l.capacity ? ` / ${l.capacity}` : ""})`}
           actions={full && <Pill tone="red">Full · new sign-ups go on the waitlist</Pill>}
         >
-          <AttendeeList title="Coming" list={going} profileBase={profileBase} names={names} avatars={avatars} seatOf={seatOf} showPaid={isAdmin} meId={me.id} />
-          <AttendeeList title="Waitlist" list={group("waitlist")} profileBase={profileBase} names={names} avatars={avatars} seatOf={seatOf} showPaid={isAdmin} meId={me.id} />
-          <AttendeeList title="Unsure" list={group("maybe")} profileBase={profileBase} names={names} avatars={avatars} seatOf={seatOf} showPaid={false} meId={me.id} />
+          <AttendeeList title="Coming" list={going} profileBase={profileBase} names={names} verified={verified} avatars={avatars} seatOf={seatOf} showPaid={isAdmin} meId={me.id} />
+          <AttendeeList title="Waitlist" list={group("waitlist")} profileBase={profileBase} names={names} verified={verified} avatars={avatars} seatOf={seatOf} showPaid={isAdmin} meId={me.id} />
+          <AttendeeList title="Unsure" list={group("maybe")} profileBase={profileBase} names={names} verified={verified} avatars={avatars} seatOf={seatOf} showPaid={false} meId={me.id} />
           {group("declined").length > 0 && <p className="mt-3 text-xs text-muted">{group("declined").length} can&apos;t make it.</p>}
         </Card>
       )}
@@ -602,6 +603,7 @@ function AttendeeList({
   title,
   list,
   names,
+  verified,
   seatOf,
   showPaid,
   meId,
@@ -614,6 +616,7 @@ function AttendeeList({
   title: string;
   list: (typeof attendance.$inferSelect)[];
   names: Map<string, string>;
+  verified: Set<string>;
   seatOf: Map<string, string>;
   showPaid: boolean;
   meId: string;
@@ -635,6 +638,7 @@ function AttendeeList({
       ) : (
         <span className={`truncate ${a.userId === meId ? "font-semibold text-bit" : ""}`}>{names.get(a.userId)}</span>
       )}
+      {verified.has(a.userId) && <Verified />}
       </span>
       <span className="flex shrink-0 gap-1">
         {seatOf.get(a.userId) && <Pill>{seatOf.get(a.userId)}</Pill>}

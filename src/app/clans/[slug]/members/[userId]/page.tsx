@@ -7,7 +7,7 @@ import { CopyField } from "@/components/copy-field";
 import { MemberAdminActions } from "@/components/member-admin-actions";
 import { GuestEditForm } from "@/components/guest-form";
 import { updateGuest } from "@/app/clan-actions";
-import { Card, Page, PageHeader, Pill, StatTile, StatusBadge, columns, stack } from "@/components/ui";
+import { Card, Page, PageHeader, Pill, StatTile, StatusBadge, Verified, columns, stack } from "@/components/ui";
 import { clanPerms, getClanBySlug, isClanMember } from "@/lib/clans";
 import { isMemberRole } from "@/lib/clan-roles";
 import { RolePill } from "@/components/role-pill";
@@ -107,7 +107,13 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
       <PageHeader
         back={{ href: `/clans/${c.slug}?tab=members`, label: c.name }}
         avatar={<Avatar data={avatar} size={56} />}
-        title={personLabel(u, defaultNick)}
+        title={
+          <span className="inline-flex max-w-full items-center gap-2">
+            {/* Managers and the member themself see the full name whatever the clan shows. */}
+            <span className="truncate">{personLabel(u, defaultNick, seesPrivate ? "full" : c.nameDisplay)}</span>
+            {!u.isGuest && <Verified size={20} />}
+          </span>
+        }
         subtitle={
           <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <RolePill role={role} />
