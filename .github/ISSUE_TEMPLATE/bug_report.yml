@@ -1,0 +1,46 @@
+name: Bug report
+description: Something doesn't work as it should
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! For security problems, please use a private report instead (see SECURITY.md).
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open an event as an orga
+        2. Go to Seats → Edit seats
+        3. ...
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where
+      multiple: true
+      options:
+        - Website on a phone
+        - Website on a desktop
+        - Discord bot
+        - Emails
+        - Self-hosting / setup
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Image tag (e.g. main-20261112093000-abc1234) or commit, and the instance URL if it is public.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Screenshots or logs
+      description: Remove personal data (names, emails, tokens) first.

@@ -1,13 +1,18 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
-import { legal } from "@/lib/legal";
-import { Page, PageHeader } from "./ui";
+import { LEGAL_LAST_UPDATED, getLegal } from "@/lib/legal";
+import { Notice, Page, PageHeader } from "./ui";
 
 /** Long-form text page for the Terms of Service and the Privacy Policy. Title like every page, text at a readable width. */
 export function LegalPage({ title, children }: { title: string; children: ReactNode }) {
   return (
     <Page>
-      <PageHeader title={title} subtitle={`Last updated: ${legal.lastUpdated}`} />
+      <PageHeader title={title} subtitle={`Last updated: ${LEGAL_LAST_UPDATED}`} />
+      {!getLegal().complete && (
+        <Notice tone="warn">
+          The operator of this Seatbit instance hasn&apos;t filled in their name and contact details yet. Admins can add
+          them under Admin → Platform settings → Operator &amp; legal.
+        </Notice>
+      )}
     <article
       className="max-w-3xl space-y-4 text-sm leading-relaxed text-fg/90
         [&_a]:text-bit [&_a:hover]:underline
@@ -22,31 +27,37 @@ export function LegalPage({ title, children }: { title: string; children: ReactN
   );
 }
 
-/** "By continuing you agree to ..." line under the sign-in and sign-up forms. */
-export function LegalNotice() {
+/** The operator's name, address and email, as far as they are set. */
+export function Operator() {
+  const legal = getLegal();
+  if (!legal.operatorName && !legal.contactEmail && !legal.operatorAddress) {
+    return <p className="text-muted">The operator of this Seatbit instance (details not provided yet).</p>;
+  }
   return (
-    <p className="mx-auto mt-4 w-full max-w-sm text-center text-xs text-muted">
-      By continuing you agree to the{" "}
-      <Link href="/terms" className="text-muted underline hover:text-fg">
-        Terms of Service
-      </Link>{" "}
-      and the{" "}
-      <Link href="/privacy" className="text-muted underline hover:text-fg">
-        Privacy Policy
-      </Link>
-      .
+    <p>
+      {legal.operatorName ?? "The operator of this Seatbit instance"}
+      {legal.operatorAddress && (
+        <>
+          <br />
+          {legal.operatorAddress}
+        </>
+      )}
+      {legal.contactEmail && (
+        <>
+          <br />
+          <ContactEmail />
+        </>
+      )}
     </p>
   );
 }
 
-export function Operator() {
-  return (
-    <p>
-      {legal.operatorName}
-      <br />
-      {legal.operatorAddress}
-      <br />
-      <a href={`mailto:${legal.contactEmail}`}>{legal.contactEmail}</a>
-    </p>
+/** The contact email as a link, or a hint where to reach the operator when none is set. */
+export function ContactEmail() {
+  const { contactEmail } = getLegal();
+  return contactEmail ? (
+    <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
+  ) : (
+    <span>the operator of this instance (no contact email set yet)</span>
   );
 }

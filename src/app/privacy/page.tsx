@@ -1,14 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { LegalPage, Operator } from "@/components/legal-page";
-import { legal } from "@/lib/legal";
+import { redirect } from "next/navigation";
+import { ContactEmail, LegalPage, Operator } from "@/components/legal-page";
+import { getLegal } from "@/lib/legal";
 
 export const metadata: Metadata = {
   title: "Privacy Policy · Seatbit",
   description: "What personal data Seatbit and the Seatbit Discord bot process, why, and your rights.",
 };
 
+// Reads the operator settings on every request.
+export const dynamic = "force-dynamic";
+
 export default function PrivacyPage() {
+  const legal = getLegal();
+  // Operators can use their own document instead of the built-in one.
+  if (legal.privacyUrl) redirect(legal.privacyUrl);
   return (
     <LegalPage title="Privacy Policy">
       <p>
@@ -86,7 +93,10 @@ export default function PrivacyPage() {
 
       <h2>5. Service providers and transfers abroad</h2>
       <p>
-        Seatbit runs on our own server in {legal.hostingLocation}. We share data with these providers only as needed:
+        {legal.hostingLocation
+          ? `This Seatbit instance runs on a server in ${legal.hostingLocation}.`
+          : "This Seatbit instance runs on a server chosen by its operator."}{" "}
+        We share data with these providers only as needed:
       </p>
       <ul>
         <li>
@@ -137,7 +147,7 @@ export default function PrivacyPage() {
       </ul>
       <p>
         Downloading your data and deleting your account work directly on your profile. For anything else, email{" "}
-        <a href={`mailto:${legal.contactEmail}`}>{legal.contactEmail}</a>. You can also complain to a data protection
+        <ContactEmail />. You can also complain to a data protection
         authority: in Switzerland the Federal Data Protection and Information Commissioner (FDPIC,{" "}
         <a href="https://www.edoeb.admin.ch" target="_blank" rel="noreferrer">
           edoeb.admin.ch

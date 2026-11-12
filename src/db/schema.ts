@@ -369,6 +369,14 @@ export const REMINDER_KINDS = [
   "book_seat",
   "published",
   "signup_open",
+  // Orga nudges from the "Who's missing" tab (one row per step, re-sent updates sent_at).
+  "nudge_interest",
+  "nudge_answer",
+  "nudge_unsure",
+  "nudge_ticket",
+  "nudge_nick",
+  "nudge_seat",
+  "nudge_book",
   "cancelled",
 ] as const;
 export type ReminderKind = (typeof REMINDER_KINDS)[number];
@@ -681,3 +689,57 @@ export const auditLog = sqliteTable(
 );
 
 export type AuditEntry = typeof auditLog.$inferSelect;
+
+// ---------- Food orders ----------
+
+export const FOOD_ORDER_STATUSES = ["open", "closed", "ordered"] as const;
+export type FoodOrderStatus = (typeof FOOD_ORDER_STATUSES)[number];
+
+/** A food run at the LAN ("Pizza Saturday 19:00"): everyone adds what they want, one person orders. */
+export const foodOrder = sqliteTable(
+  "food_order",
+  {
+    id: id(),
+    lanId: text("lan_id")
+      .notNull()
+      .references(() => lan.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    /** Where from, e.g. "Pizzeria Roma". */
+    shop: text("shop").default("").notNull(),
+    menuUrl: text("menu_url").default("").notNull(),
+    note: text("note").default("").notNull(),
+    /** Last call for orders (optional). */
+    closesAt: integer("closes_at", { mode: "timestamp_ms" }),
+    status: text("status").$type<FoodOrderStatus>().default("open").notNull(),
+    /** Who collects the order and the money (the one who started it). */
+    createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  (t) => [index("food_order_lan_idx").on(t.lanId)],
+);
+
+/** One line of a food order: "2x Margherita, no olives". */
+export const foodItem = sqliteTable(
+  "food_item",
+  {
+    id: id(),
+    orderId: text("order_id")
+      .notNull()
+      .references(() => foodOrder.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    item: text("item").notNull(),
+    qty: integer("qty").default(1).notNull(),
+    /** Price per piece in cents (optional). */
+    priceCents: integer("price_cents"),
+    note: text("note").default("").notNull(),
+    /** Set by whoever collects the money. */
+    paid: integer("paid", { mode: "boolean" }).default(false).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  (t) => [index("food_item_order_idx").on(t.orderId)],
+);
+
+export type FoodOrder = typeof foodOrder.$inferSelect;
+export type FoodItem = typeof foodItem.$inferSelect;

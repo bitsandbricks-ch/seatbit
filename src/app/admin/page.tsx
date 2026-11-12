@@ -2,10 +2,11 @@ import Link from "next/link";
 import { desc } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { setUserRole } from "@/app/actions";
-import { Card, Page, PageHeader, Pill, btnGhost, btnSecondary } from "@/components/ui";
+import { Card, Notice, Page, PageHeader, Pill, btnGhost, btnSecondary } from "@/components/ui";
 import { ClanAvatar } from "@/components/clan-avatar";
 import { lanDay } from "@/lib/format";
 import { requireAdmin } from "@/lib/session";
+import { getLegal } from "@/lib/legal";
 import { getDefaultNames } from "@/lib/lans";
 
 export default async function AdminPage() {
@@ -41,6 +42,15 @@ export default async function AdminPage() {
           </>
         }
       />
+      {!getLegal().complete && (
+        <Notice tone="warn">
+          Add who runs this instance (name and contact email) under{" "}
+          <Link href="/admin/settings?tab=legal" className="underline">
+            Platform settings → Operator &amp; legal
+          </Link>
+          . The Terms of Service and Privacy Policy show these details.
+        </Notice>
+      )}
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <Stat label="Clans" value={clans.length} />
         <Stat label="Upcoming" value={lans.filter((l) => l.endsAt >= now).length} />

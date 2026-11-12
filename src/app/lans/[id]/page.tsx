@@ -10,7 +10,7 @@ import { SeatMap } from "@/components/seat-map";
 import { Avatar } from "@/components/avatar";
 import { getAvatars, type AvatarData } from "@/lib/avatars";
 import { Card, Columns, Page, Pill, StatusBadge } from "@/components/ui";
-import { fmtDate, relative } from "@/lib/format";
+import { fmtDate, fmtTime, relative } from "@/lib/format";
 import { ATTENDANCE_LOCKED_MSG, attendanceLocked, getDisplayNames, getLan, getNames, pickNick, seatView, signupClosed } from "@/lib/lans";
 import { canViewLan, isLanManager, requireUser } from "@/lib/session";
 import { getClan } from "@/lib/clans";
@@ -26,6 +26,8 @@ import { GameList } from "@/components/game-list";
 import { GAMES_REMINDER_DAYS, listGames } from "@/lib/games";
 import { SeatSwapPanel, type SwapView } from "@/components/seat-swaps";
 import { CheckInButton, DeleteNewsButton, InterestButtons } from "@/components/event-extras";
+import { FoodOrders, type FoodOrderCardView } from "@/components/food-orders";
+import { foodCurrency, isAcceptingItems, listFoodOrders, orderText } from "@/lib/food";
 
 const { attendance, seat, nickname } = schema;
 
@@ -37,7 +39,7 @@ const ANSWER_TEXT: Record<string, string> = {
   none: "No answer yet",
 };
 
-const TABS = ["overview", "seats", "attendees", "travel", "gear", "games"] as const;
+const TABS = ["overview", "seats", "attendees", "travel", "gear", "games", "food"] as const;
 
 export default async function LanPage({ params, searchParams }: PageProps<"/lans/[id]">) {
   const { id } = await params;
@@ -169,6 +171,31 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
   const games = listGames(id, me.id);
   const gameNames = tab === "games" ? Object.fromEntries(await getDisplayNames(id, [...new Set(games.flatMap((g) => g.voters))])) : {};
   const gamesToInstall = games.filter((g) => g.votes > 0 && !g.myInstalled).length;
+
+  // Food orders at the LAN: everyone coming can start one or add to one.
+  const foodOrders = listFoodOrders(id);
+  const openFood = foodOrders.filter((o) => isAcceptingItems(o, now)).length;
+  const canOrderFood = isAdmin || canTakePart;
+  const foodNames =
+    tab === "food"
+      ? Object.fromEntries(
+          await getDisplayNames(id, [
+            ...new Set(foodOrders.flatMap((o) => [...o.people.map((p) => p.userId), ...(o.createdBy ? [o.createdBy] : [])])),
+          ]),
+        )
+      : {};
+  const currency = foodCurrency();
+  const foodViews: FoodOrderCardView[] =
+    tab === "food"
+      ? foodOrders.map((o) => ({
+          ...o,
+          text: orderText(o, foodNames, currency),
+          canRun: o.createdBy === me.id || isAdmin,
+          accepting: isAcceptingItems(o, now),
+          closesTime: o.closesAt ? fmtTime(o.closesAt) : null,
+          closesLabel: o.closesAt ? fmtDate(o.closesAt) : null,
+        }))
+      : [];
 
   // Seat swaps: open requests I'm part of, and who I could swap with.
   const swapRows =
@@ -308,6 +335,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           { id: "travel", label: "Travel", badge: openRequests ? `${openRequests} looking` : undefined },
           { id: "gear", label: "Packing list" },
           { id: "games", label: "Games", badge: my?.status === "going" && gamesToInstall ? `${gamesToInstall} to install` : undefined },
+          { id: "food", label: "Food", badge: openFood ? `${openFood} open` : undefined },
         ]}
         active={tab}
         hrefFor={(t) => (t === "overview" ? `/lans/${l.id}` : `/lans/${l.id}?tab=${t}`)}
@@ -340,6 +368,18 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
             reminderDays={GAMES_REMINDER_DAYS}
           />
         </div>
+      )}
+
+      {tab === "food" && (
+        <FoodOrders
+          lanId={l.id}
+          orders={foodViews}
+          names={foodNames}
+          meId={me.id}
+          canOrder={canOrderFood && !l.cancelledAt}
+          currency={currency}
+          announceHint={!l.publishedAt ? "The event is still a draft, so nobody gets a DM." : null}
+        />
       )}
 
       {tab === "seats" && (

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
 import { Header } from "@/components/header";
+import { getLegal } from "@/lib/legal";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -33,6 +34,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <Link href="/privacy" className="hover:text-fg">
             Privacy
           </Link>
+          <a href={getLegal().sourceUrl} target="_blank" rel="noreferrer" className="hover:text-fg">
+            Source
+          </a>
+          {/* Please keep this attribution when you host your own instance. */}
           <a href="https://bitsandbricks.ch" target="_blank" rel="noreferrer" className="hover:text-fg">
             Powered by bitsandbricks.ch
           </a>

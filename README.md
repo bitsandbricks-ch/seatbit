@@ -1,172 +1,76 @@
-# Seatbit
+<p align="center"><img src="brand/logo/seatbit-logo.svg" alt="Seatbit" width="260"></p>
 
-Seatbit helps a clan or group of friends coordinate going to LAN parties run by others (think SwitzerLAN or Lock&Load with 30+ people): who's coming, who has bought a ticket, and who sits where in the group's seat block.
+<p align="center">
+  <a href="https://github.com/bitsandbricks-ch/seatbit/actions/workflows/ci.yml"><img src="https://github.com/bitsandbricks-ch/seatbit/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://bitsandbricks-ch.github.io/seatbit/"><img src="https://github.com/bitsandbricks-ch/seatbit/actions/workflows/docs.yml/badge.svg" alt="Docs"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-2ee59d" alt="License: AGPL-3.0"></a>
+</p>
 
-- **LANs**: each event the group goes to, with dates, location, event website, ticket shop link, ticket price and the number of group spots.
-- **Drafts**: a new LAN starts as a draft that only its orgas and the clan admins see. Nothing goes out while it's a draft (no Discord post, no reminders, no DMs). *Publish event* in the banner at the top shows it to the clan, posts the Discord announcement and starts the reminders. Events created before drafts existed count as published.
-- **Interest check** (optional first phase): members only say *I'd come / Maybe / Not this time*, before sign-up, tickets and seats. The date can stay open with a rough hint ("spring 2027"). *Open sign-up* ends it and tells everyone interested (except those who said no). Discord shows interest buttons meanwhile.
-- **Scheduled publish**: pick a time on a draft and it goes live by itself (checked every minute).
-- **New-event message**: publishing sends interested members a mail/DM. Each member picks per clan in their profile whether they hear about all events or only certain LAN types (one-off events always count).
-- **Cancel / next year**: orgas can cancel an event (everyone who answered is told, the Discord post turns red; undo is possible) or copy it as next year's draft (dates +1 year, seat block, orgas).
-- **Orga news**: short updates on the event page, sent by mail/DM to everyone coming, unsure or on the waitlist.
-- **Check-in**: on the day, people coming tap *I'm here*; everyone sees who is still on the way.
-- **Orgas per LAN**: the members who coordinate the group for that event. Only they (and global admins) can edit the LAN, the seat block and attendance. Any orga can add co-orgas.
-- **Attendance**: members answer *going / maybe / can't make it*. When the group's spots are full, new sign-ups go on a **waitlist** and move up automatically (with an email) when someone drops out.
-- **Member checklist per LAN**: sign up, set nickname, buy ticket (members tick it off, orgas confirm), claim a seat. Progress shows on the LAN list.
-- **Status at a glance**: no answer, attending, seat claimed (with seat number), waitlist/full, maybe, not going, plus free seats left.
-- **Due dates and email reminders**: an answer deadline and a buy-ticket deadline per LAN. Reminders go out automatically N days before each (to undecided members and to attendees without a ticket) and one day before the LAN (to everyone going). Each one goes out once per person; orgas can also nudge manually; members can opt out.
-- **Event page**: your answer and your checklist sit at the top on every tab (once you have a ticket your answer is locked and just shown). Tabs: *Overview* (dates, orgas, your nick, quick links to your seat and who's coming), *Seats*, *Attendees*, *Travel* and *Packing list*. Orgas switch between **View** and **Manage** right next to the title; the manage page has the same header and tab order (Overview, Seats, Attendees) plus Discord & WhatsApp and Settings.
-- **Seat plan** (Seats tab): a compact grid of the seats the group has (seat label or the first letters of the nick), so even a big block fits on a phone. Each letter is one row and every letter+number exists only once; seats sit at their number, so a block like `F1-F20, F25-F30` shows a small dotted gap for the seats that aren't ours. Rows too long for the screen wrap onto indented extra lines, and the row letter spans all lines of its row. Tap a seat to see who sits there in a details panel (its own column on the right on desktop, a bottom sheet on phones); switch to *Large* to show whole nicks (remembered per device), and use *Find someone* to highlight people.
-  - **Orgas edit seats right in the map**: tap a seat to assign or give it to someone, swap or move people, clear it, hold it for a guest or rename it to match the event's numbering. People without a seat are listed under *Not seated yet*: tap one and then a seat, or drag names and seated people around on desktop. *Edit seats* shows every number of a row: tap a dashed one to add it or a seat to remove it; the Seats tab also fills/clears rows, auto-assigns by seat wishes and finalizes the plan.
-  - **Seat flow**: members send seat wishes, then an optional **self pick** step (orgas turn it on per event) lets members with a ticket tap a free seat and *Take this seat* (or *Move here* / *Give up my seat*). The last step is always the orgas': they check the plan and **finalize** it, which closes wishes and self pick, shows everyone the plan and can tell everyone their seat. Picked seats only count as final after that.
-  - **Booking on the event site**: put the event's own seat plan link (e.g. the lal.gg Sitzplan, new every year) on the event. Once the orgas finalize the plan, each member gets a checklist step and a DM with an *I booked it* button to book the same seat there. Orgas see who booked, can remind the rest, and a seat change clears the tick.
-  - **Seat swaps**: after the plan is final, a member asks another to swap; they accept, an orga approves on the Seats tab and both get told.
-- **Games** (event page, Games tab): suggest games with download size, vote, tick off what you installed. Everyone coming gets an "install your games" reminder 2 days before the LAN.
-- **Live Discord post**: the pinned announcement also shows tickets, seat bookings and the next deadline (pinning needs the bot's *Pin Messages* permission).
-- **Travel** (event page, Travel tab): members offer or ask for rides and places to sleep, grouped by town. Others join an offer with free places; a driver can take a person who asked along with one tap, which also clears their request.
-- **Packing list** (event page, Packing list tab): each member gets a private packing list with the usual items (PC, screen, cables, headset, ticket, sleeping bag, ...), adds their own items and ticks them off.
-- **Audit log**: changes orgas and admins make (seat moves and swaps, auto-assign and finalizing, answer overrides, ticket confirmations, orga and clan-admin roles, join approvals, guest edits, publish / schedule / cancel, event and LAN type edits) are logged with who, what and when. Clan admins see their clan's log under *Manage → Audit log* (filter by kind of change and by event); platform admins see every clan plus platform changes (settings, platform roles, deleted accounts) under *Admin → Audit log*. Names are looked up when shown, and entries are kept for a year.
-- **Your data**: on the profile, *Download my data* gives a JSON file with everything Seatbit stores about you, and *Delete my account* removes your profile, email, picture, Discord link, sessions, nicks, LAN IDs, memberships, orga roles, rides, packing lists and your answers and seats for upcoming events (the waitlist moves up). Past events keep an anonymous "Deleted member" with only the answer, so clan stats still add up. The only admin of a clan with other members has to hand over first; a clan where nobody else with a login is left is deleted with the account.
-- **CSV export** of the group (seat, nick, name, email, status, ticket) to hand to the event's organisers.
-- **Dates and times** are always 24h, Swiss style ("Sat 14.11.2026, 18:00"), with a Monday-first date picker.
-- **Nicknames**: several nicks per user, a primary default, and separate nicks per LAN.
-- **Login with Discord.** The Discord login asks for the account's email, which is used for reminders. On first login members give their first name, surname and nickname (gamer tag). The first user to sign up becomes global admin. Google and email/password login are switched off for now; turn them back on in `LOGIN_METHODS` in `src/lib/auth.ts`. `ALLOW_EMAIL_LOGIN=1` enables email login for local development and tests.
+Seatbit helps a clan or group of friends go to LAN parties run by others (think SwitzerLAN or Lock & Load, with 30+ people): who's coming, who has bought a ticket, who sits where in the group's seat block, who drives whom and what to install before you leave. Self-host it with one container.
 
-Brand assets and guidelines are in `brand/` (see `brand/BRAND.md`).
+**📖 Documentation: [bitsandbricks-ch.github.io/seatbit](https://bitsandbricks-ch.github.io/seatbit/)** · [for members](docs/members/index.md) · [for orgas](docs/orgas/index.md) · [self-hosting](docs/self-hosting/index.md)
+
+## Features
+
+- **Event lifecycle:** drafts, publish now or at a set time, an optional **interest check** before dates are fixed, orga news, cancel, "copy for next year" and check-in on the day.
+- **Attendance** with *coming / unsure / not coming*, answer deadlines and an automatic **waitlist** when the group's spots are full.
+- **Tickets:** members tick off their ticket, orgas confirm; buy-by deadline with reminders.
+- **Seat plan** of the group's block (e.g. `F1-F16, F19-F22`): seat wishes, optional self pick, orgas edit right in the map (assign, swap, hold, drag & drop, auto-assign), finalize, then everyone books their seat on the event's own site. Seat swaps with orga approval.
+- **Travel** (rides and places to sleep), private **packing lists**, **games** with votes and install tracking, and **food orders** at the LAN (everyone adds their pizza, one person orders and ticks who paid).
+- **Audit log** of what orgas and admins changed (seats, answers, tickets, roles, guests, publish/cancel), for clan admins and platform admins.
+- **Your data:** members download everything as JSON and can delete their account themselves; past events keep an anonymous "Deleted member".
+- **Who's missing** for orgas: who still owes an answer, a ticket, a nick or a seat booking, with one-tap nudges by Discord DM or mail.
+- **Clans** with admins, join modes (open, approval, invite links), **guests** for people without an account, LAN types as templates for yearly events, and clan stats.
+- **Discord bot:** announcements with answer buttons and a live attendee list, reminders, DMs, `/lans`. **WhatsApp:** ready-to-paste texts.
+- **Email reminders** with admin-editable templates. **Login with Discord.**
+- **Self-hosting:** all settings (SMTP, Discord, operator details for the privacy policy and terms) in the browser, single container, SQLite.
+- Mobile-first with a good desktop layout; 24h dates ("Sat 14.11.2026, 18:00").
 
 ## Screenshots
 
-Phone (390 px) and desktop (1440 px) shots of the main pages are in [`docs/screenshots/`](docs/screenshots/). Regenerate them after UI changes so they stay current.
+Generated from demo data on every UI change (see [docs/development/screenshots.md](docs/development/screenshots.md)).
 
 | LANs | Event | Seat plan | Seat picking |
 | --- | --- | --- | --- |
-| <img src="docs/screenshots/phone-lans.png" width="200" alt="LAN list on a phone"> | <img src="docs/screenshots/phone-event.png" width="200" alt="Event page on a phone"> | <img src="docs/screenshots/phone-seat-plan.png" width="200" alt="Compact seat plan with the details sheet"> | <img src="docs/screenshots/phone-seat-picking.png" width="200" alt="A member picking a free seat"> |
+| <img src="docs/screenshots/phone-lans.png" width="200" alt="LAN list on a phone"> | <img src="docs/screenshots/phone-event.png" width="200" alt="Event page on a phone"> | <img src="docs/screenshots/phone-seat-plan.png" width="200" alt="Seat plan with the details sheet"> | <img src="docs/screenshots/phone-seat-picking.png" width="200" alt="A member picking a free seat"> |
 
-| Travel | Packing list | Date picker | Orga: seats |
+| Travel | Packing list | Games | Orga: seats |
 | --- | --- | --- | --- |
-| <img src="docs/screenshots/phone-travel.png" width="200" alt="Travel tab"> | <img src="docs/screenshots/phone-packing-list.png" width="200" alt="Packing list"> | <img src="docs/screenshots/phone-date-picker.png" width="200" alt="24h date picker"> | <img src="docs/screenshots/phone-manage-seats.png" width="200" alt="Orga seat editing on a phone"> |
+| <img src="docs/screenshots/phone-travel.png" width="200" alt="Travel tab"> | <img src="docs/screenshots/phone-packing-list.png" width="200" alt="Packing list"> | <img src="docs/screenshots/phone-games.png" width="200" alt="Games"> | <img src="docs/screenshots/phone-manage-seats.png" width="200" alt="Orga seat editing on a phone"> |
 
-**Desktop:** Seats tab with the details panel on the right, and the orgas' seat plan.
+| Food orders | Orga: who's missing |
+| --- | --- |
+| <img src="docs/screenshots/phone-food.png" width="200" alt="Food tab with a pizza order"> | <img src="docs/screenshots/phone-manage-missing.png" width="200" alt="Who's missing with nudge buttons"> |
 
 ![Seats tab on desktop](docs/screenshots/desktop-event-seats.png)
 
-![Orga seat plan on desktop](docs/screenshots/desktop-manage-seats.png)
+![Orga attendee list on desktop](docs/screenshots/desktop-manage-attendees.png)
 
-More: [LAN list](docs/screenshots/desktop-lans.png) · [event overview](docs/screenshots/desktop-event.png) · [event attendees](docs/screenshots/desktop-event-attendees.png) · [attendees](docs/screenshots/desktop-manage-attendees.png) · [clan](docs/screenshots/desktop-clan.png) · [admin](docs/screenshots/desktop-admin.png) · [clan manage](docs/screenshots/desktop-clan-manage.png) · [clan (phone)](docs/screenshots/phone-clan.png) · [clan guests (phone)](docs/screenshots/phone-clan-guests.png) · [profile (phone)](docs/screenshots/phone-profile.png) · [delete account (phone)](docs/screenshots/phone-profile-delete.png) · [clan audit log](docs/screenshots/desktop-clan-audit-log.png) · [platform audit log](docs/screenshots/desktop-admin-audit-log.png)
+More in [`docs/screenshots/`](docs/screenshots/).
 
-## Platform settings
-
-Global admins can configure the platform under **Admin → Platform settings** (`/admin/settings`) without touching the server: SMTP mail relay (with a "send test mail" button), Discord login and bot credentials (with a "check bot & register slash commands" button), sign-up on/off, admin emails, the reminder interval and the cron secret.
-
-- A value saved there wins over the matching environment variable. Clearing it falls back to the env var, then to the default. Each field shows where its current value comes from.
-- Passwords, client secrets and tokens are encrypted (AES-256-GCM) before they are stored, and are never shown again; the page only shows whether one is set and its last four characters.
-- The encryption key is `SETTINGS_ENCRYPTION_KEY`, or derived from `BETTER_AUTH_SECRET` if that isn't set. If the key changes, saved secrets can't be read any more and have to be entered again (the page says so).
-- `BETTER_AUTH_URL`, `BETTER_AUTH_SECRET`, `DATABASE_PATH` and `TZ` are needed at startup, so they stay env-only.
-
-### First start (bootstrap)
-
-Login is Discord-only, so nobody can reach the settings page until Discord login works:
-
-1. Create a Discord application (see below) and start Seatbit with `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET` set as env vars (plus `BETTER_AUTH_URL` and `BETTER_AUTH_SECRET`).
-2. Sign in. **The first account becomes platform admin.** To pick admins up front instead, set `ADMIN_EMAILS` (the emails of their Discord accounts).
-3. Everything else (bot token, public key, SMTP, ...) can then be set in the platform settings. Keep the two login env vars in place: if a wrong client ID or secret is ever saved on the settings page, nobody can sign in, and `node scripts/admin.mjs reset-setting discord.clientSecret` (and `discord.clientId`) brings back the env values.
-
-### Admin CLI
-
-`scripts/admin.mjs` manages platform admins straight on the database, also while the app runs (it's in the container image):
+## Quick start (self-hosting)
 
 ```sh
-kubectl exec deploy/seatbit -- node scripts/admin.mjs list                    # platform admins
-kubectl exec deploy/seatbit -- node scripts/admin.mjs users mike              # find users
-kubectl exec deploy/seatbit -- node scripts/admin.mjs grant mike@example.com  # make admin
-kubectl exec deploy/seatbit -- node scripts/admin.mjs revoke 123456789012345678
-kubectl exec deploy/seatbit -- node scripts/admin.mjs reset-setting discord.clientSecret
-```
-
-A user can be given by email, Discord user ID, Seatbit user ID, name or nickname. `grant` with an email nobody has signed in with yet adds it to the admin emails, so that person becomes admin on first sign-in. Locally: `npm run admin -- list`.
-
-## Stack
-
-Next.js 16 (App Router, server actions) · Better Auth · SQLite via Drizzle ORM · Tailwind CSS · Nodemailer.
-
-## Getting started
-
-```bash
-npm install
-cp .env.example .env.local   # then fill in the values
-npm run dev
-```
-
-Open http://localhost:3000 and register; the first account is the admin. The database is created in `./data/lan.db` and migrations run automatically on start.
-
-Without an SMTP host (platform settings or env), emails are printed to the server console, so you can try reminders locally.
-
-### Discord / Google login
-
-Buttons only appear when the matching client ID and secret are set.
-
-- **Discord**: create an app at https://discord.com/developers/applications, OAuth2 redirect: `<BETTER_AUTH_URL>/api/auth/callback/discord`
-- **Google**: create an OAuth client at https://console.cloud.google.com/apis/credentials, redirect: `<BETTER_AUTH_URL>/api/auth/callback/google`
-
-### Discord bot
-
-The bot uses the same Discord application as the login. It runs inside the app (Discord sends button clicks and slash commands to Seatbit over HTTPS), so there is no extra process to host.
-
-1. In the Discord developer portal, open your app:
-   - **Bot**: reset/copy the token into `DISCORD_BOT_TOKEN`.
-   - **General Information**: copy the public key into `DISCORD_PUBLIC_KEY`, and set **Interactions Endpoint URL** to `<BETTER_AUTH_URL>/api/discord/interactions` (the app must be running and reachable for Discord to accept it).
-2. Click **Check bot & register slash commands** in **Admin → Platform settings → Discord** (or run `npm run discord:register`) once. It registers the slash commands.
-3. Any clan can now add the bot: a clan admin opens **Clan settings → Discord & WhatsApp**, invites the bot to their server, and runs `/seatbit here` in the channel it should post in (needs "Manage Server" on Discord and a linked Discord account in Seatbit). A Discord server belongs to one clan; `/seatbit here clan:<name>` picks the clan if you admin several.
-
-What it does, per clan:
-
-- Posts each LAN of the clan as an announcement once an orga publishes it with **Coming / Unsure / Not coming** buttons. The attendee list on the post updates live, also when people answer on the website. Only clan members can answer. `/seatbit announce` posts the clan's upcoming LANs in a channel.
-- Posts the answer, ticket and "starts tomorrow" reminders in the clan's channels when they're due (same schedule as the emails), pinging the clan members they apply to.
-- `/lans` shows the server's clan's upcoming LANs and your status, privately, with answer buttons (in DMs: all your clans).
-- Orgas can re-post or post reminders by hand on the LAN's manage page; clan admins can unlink channels in clan settings.
-
-Clan members who aren't on the clan's Discord server see a "Join our Discord" button on the clan page (and get the link when their join request is approved). The bot creates the invite in the linked channel if it has "Create Invite" (included in the invite link from `npm run discord:register`); admins can paste their own under Clan settings → Discord & WhatsApp.
-
-Members are matched by their linked Discord account. Everyone signs in with Discord, so every member is matched automatically.
-
-### WhatsApp
-
-WhatsApp's official API can't post into regular groups or communities, so there is no bot. Instead the LAN's manage page has ready-made announcement and reminder texts with a copy button and a "Share via WhatsApp" link, to paste into the community.
-
-### Reminders
-
-The server checks for due reminders every `REMINDER_INTERVAL_MINUTES` (default 60). If you host somewhere without a long-running process, set it to `0` and call the endpoint from a cron job instead:
-
-```bash
-curl -H "Authorization: Bearer $CRON_SECRET" https://your-host/api/cron/reminders
-```
-
-## Production
-
-```bash
-npm run build
-npm start
-```
-
-Keep the `data/` directory (or `DATABASE_PATH`) on persistent storage, and set `TZ` to your timezone so dates in forms and emails are right.
-
-## Database changes
-
-Edit `src/db/schema.ts`, then run `npm run db:generate` to create a migration in `drizzle/`. It is applied on the next start.
-
-## Container image
-
-GitHub Actions builds a multi-arch image (amd64 + arm64) on every push to `main` and pushes it to `ghcr.io/bitsandbricks-ch/seatbit` as `:main`, `:sha-<short sha>` and `:main-<UTC timestamp>-<short sha>` (sortable, for automatic updates) (tags `v1.2.3` also give `:1.2.3`).
-
-```sh
-docker run -p 3000:3000 -v seatbit-data:/data \
-  -e BETTER_AUTH_URL=https://seatbit.ch -e BETTER_AUTH_SECRET=$(openssl rand -base64 32) \
+docker run -d -p 3000:3000 -v seatbit-data:/data \
+  -e BETTER_AUTH_URL=https://seatbit.example.com \
+  -e BETTER_AUTH_SECRET="$(openssl rand -base64 32)" \
   -e DISCORD_CLIENT_ID=... -e DISCORD_CLIENT_SECRET=... \
   ghcr.io/bitsandbricks-ch/seatbit:main
 ```
 
-- Runs as uid/gid 1001; the SQLite database is `/data/seatbit.db` (keep `/data` on a volume, one instance only).
-- Health check: `GET /api/health`. Migrations run on startup.
-- Admin CLI: `docker exec <container> node scripts/admin.mjs help` (see "Admin CLI").
-- Online backup while running: `node scripts/backup.mjs` (writes to `BACKUP_DIR`, default `/backups`, keeps `BACKUP_KEEP_DAYS`, default 14).
-- Works with a read-only root filesystem if `/tmp` and `/app/.next/cache` are writable.
+Sign in with Discord (the first account becomes admin), then set up email, the Discord bot and your operator details under **Admin → Platform settings**. Full guide: [Self-hosting](docs/self-hosting/index.md) · [Configuration](docs/self-hosting/configuration.md) · [Discord app and bot](docs/self-hosting/discord.md) · [Operator, privacy and terms](docs/self-hosting/legal.md).
+
+## Development
+
+```sh
+npm install
+cp .env.example .env.local   # set ALLOW_EMAIL_LOGIN=1
+npm run seed                 # demo data: alex@example.com / anna@example.com, password seatbit-demo
+npm run dev
+```
+
+Stack: Next.js (App Router) · Better Auth · SQLite with Drizzle · Tailwind CSS · Nodemailer. See [CONTRIBUTING.md](CONTRIBUTING.md); AI coding agents follow [AGENTS.md](AGENTS.md). Security issues: [SECURITY.md](SECURITY.md).
+
+## License
+
+Seatbit is free software under the [GNU Affero General Public License v3.0](LICENSE), with [additional terms](NOTICE.md): keep the "Powered by bitsandbricks.ch" and "Source" links when you run it for others. Brand assets and guidelines are in [`brand/`](brand/BRAND.md).

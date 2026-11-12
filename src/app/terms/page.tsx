@@ -1,14 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { LegalPage, Operator } from "@/components/legal-page";
-import { legal } from "@/lib/legal";
+import { redirect } from "next/navigation";
+import { ContactEmail, LegalPage, Operator } from "@/components/legal-page";
+import { getLegal } from "@/lib/legal";
 
 export const metadata: Metadata = {
   title: "Terms of Service · Seatbit",
   description: "The rules for using Seatbit and the Seatbit Discord bot.",
 };
 
+// Reads the operator settings on every request.
+export const dynamic = "force-dynamic";
+
 export default function TermsPage() {
+  const legal = getLegal();
+  // Operators can use their own document instead of the built-in one.
+  if (legal.termsUrl) redirect(legal.termsUrl);
   return (
     <LegalPage title="Terms of Service">
       <p>
@@ -20,12 +27,13 @@ export default function TermsPage() {
       <h2>1. Who runs Seatbit</h2>
       <Operator />
       <p>
-        Seatbit is a free hobby project, powered by{" "}
+        This site runs Seatbit, free and open-source software by{" "}
         <a href="https://bitsandbricks.ch" target="_blank" rel="noreferrer">
           bitsandbricks.ch
-        </a>
-        . It is not affiliated with, endorsed by or run on behalf of Discord or any LAN
-        party organiser. Tickets and seats at a LAN party are always sold and allocated by its organiser; Seatbit only
+        </a>{" "}
+        (<a href={legal.sourceUrl} target="_blank" rel="noreferrer">source code</a>). The operator named above runs
+        this instance and is responsible for it; the authors of the software are not, unless they are the operator.
+        Seatbit is not affiliated with, endorsed by or run on behalf of Discord or any LAN party organiser. Tickets and seats at a LAN party are always sold and allocated by its organiser; Seatbit only
         helps your group keep track of them.
       </p>
 
@@ -93,13 +101,14 @@ export default function TermsPage() {
 
       <h2>10. Law and jurisdiction</h2>
       <p>
-        These terms are governed by Swiss law. The courts at the operator&apos;s place of residence have jurisdiction,
-        unless mandatory consumer protection law gives you the right to sue in your own country.
+        These terms are governed by {legal.governingLaw ?? "the law of the country where the operator is based"}. The
+        courts at the operator&apos;s place of residence or registered office have jurisdiction, unless mandatory
+        consumer protection law gives you the right to sue in your own country.
       </p>
 
       <h2>11. Contact</h2>
       <p>
-        Questions about these terms: <a href={`mailto:${legal.contactEmail}`}>{legal.contactEmail}</a>.
+        Questions about these terms: <ContactEmail />.
       </p>
     </LegalPage>
   );

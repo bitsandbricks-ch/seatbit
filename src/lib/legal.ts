@@ -1,16 +1,34 @@
+import { getSetting } from "./settings";
+
 /**
- * Operator details shown on /terms and /privacy.
- * Each value can be overridden with the LEGAL_* environment variable next to it.
+ * Who runs this Seatbit instance, for the Terms of Service and Privacy Policy.
+ *
+ * Every self-hosted instance has its own operator, so nothing here has a
+ * built-in value: admins fill it in under Admin → Platform settings →
+ * Operator & legal, or set the LEGAL_* environment variables. Until then the
+ * legal pages say that the details are missing.
  */
-export const legal = {
-  /** Person or company that runs this Seatbit instance. */
-  operatorName: process.env.LEGAL_OPERATOR_NAME ?? "Mike Keller",
-  /** Postal address (street, postcode, town, country). */
-  operatorAddress: process.env.LEGAL_OPERATOR_ADDRESS ?? "Grossfeld 17, 6423 Seewen, Switzerland",
-  /** Contact email for questions and privacy requests. */
-  contactEmail: process.env.LEGAL_CONTACT_EMAIL ?? "mike@cheller.dev",
-  /** Where the server and database run. */
-  hostingLocation: process.env.LEGAL_HOSTING_LOCATION ?? "Switzerland",
-  /** Date of the current version of both documents. */
-  lastUpdated: "12 November 2026",
-};
+export function getLegal() {
+  const v = (key: string) => getSetting(key)?.trim() || undefined;
+  const operatorName = v("legal.operatorName");
+  const contactEmail = v("legal.contactEmail");
+  return {
+    operatorName,
+    operatorAddress: v("legal.operatorAddress"),
+    contactEmail,
+    hostingLocation: v("legal.hostingLocation"),
+    governingLaw: v("legal.governingLaw"),
+    /** The operator's own documents; when set, /terms and /privacy redirect there. */
+    termsUrl: v("legal.termsUrl"),
+    privacyUrl: v("legal.privacyUrl"),
+    /** Where users get the source code of this instance (footer "Source" link). */
+    sourceUrl: v("legal.sourceUrl") ?? "https://github.com/bitsandbricks-ch/seatbit",
+    /** Whether the operator has filled in the minimum: who they are and how to reach them. */
+    complete: !!(operatorName && contactEmail),
+  };
+}
+
+export type Legal = ReturnType<typeof getLegal>;
+
+/** Date of the current version of the built-in Terms of Service and Privacy Policy texts. */
+export const LEGAL_LAST_UPDATED = "12 November 2026";
