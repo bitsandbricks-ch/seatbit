@@ -9,6 +9,16 @@ Images are built for every change on `main` and published to the GitHub Containe
 | `:sha-<short sha>` | A specific commit. |
 | `:1.2.3` | Releases, when there are tags. |
 
+The footer shows the short commit hash the running image was built from, linked to that commit under your **Source code URL**. That tells you at a glance which build is live.
+
+If you build the image yourself, pass the commit in, since the build context has no `.git`:
+
+```sh
+docker build --build-arg GIT_COMMIT="$(git rev-parse HEAD)" -t seatbit .
+```
+
+Without it the footer simply shows no hash. `npm run build` outside Docker asks git itself.
+
 ## docker run
 
 ```sh
