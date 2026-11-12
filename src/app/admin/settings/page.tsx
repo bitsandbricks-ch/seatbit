@@ -28,6 +28,7 @@ const TABS = [
   { id: "google", label: "Google" },
   { id: "general", label: "Sign-up & admins" },
   { id: "automation", label: "Reminders" },
+  { id: "legal", label: "Operator & legal" },
   { id: "templates", label: "Mail templates" },
   { id: "server", label: "Server" },
 ] as const;
@@ -149,6 +150,17 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
         section("google", <Url label="Authorized redirect URI" value={`${appUrl}/api/auth/callback/google`} />)}
 
       {tab === "automation" && section("automation", <Url label="Cron URL" value={`${appUrl}/api/cron/reminders`} />)}
+
+      {tab === "legal" &&
+        section(
+          "legal",
+          <p className="text-xs text-muted">
+            The built-in <a href="/terms" className="text-bit hover:underline">Terms of Service</a> and{" "}
+            <a href="/privacy" className="text-bit hover:underline">Privacy Policy</a> are a starting point written for
+            Swiss and EU law, filled in with the details below. Check that they fit how you run your instance, or link
+            your own documents.
+          </p>,
+        )}
 
       {tab === "templates" && <TemplatesTab />}
 

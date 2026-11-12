@@ -2,6 +2,7 @@
   "name": "seatbit",
   "version": "0.1.0",
   "private": true,
+  "license": "AGPL-3.0-only",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -9,7 +10,10 @@
     "lint": "eslint",
     "db:generate": "drizzle-kit generate",
     "admin": "node --env-file-if-exists=.env scripts/admin.mjs",
-    "discord:register": "tsx --env-file-if-exists=.env scripts/discord-register.ts"
+    "discord:register": "tsx --env-file-if-exists=.env scripts/discord-register.ts",
+    "seed": "tsx --env-file-if-exists=.env scripts/seed-demo.ts",
+    "screenshots": "tsx scripts/screenshots.ts",
+    "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
     "better-auth": "^1.7.20",
@@ -27,11 +31,14 @@
     "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^20",
     "@types/nodemailer": "^8.0.2",
+    "@types/pngjs": "^6.0.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "drizzle-kit": "^0.31.11",
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
+    "playwright": "^1.63.0",
+    "pngjs": "^7.0.0",
     "tailwindcss": "4.3.3",
     "tsx": "^4.23.15",
     "typescript": "^5"

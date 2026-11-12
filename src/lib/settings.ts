@@ -50,6 +50,10 @@ export const SETTING_GROUPS = {
   },
   google: { title: "Google login", help: "OAuth client for the \"Sign in with Google\" button." },
   automation: { title: "Reminders & cron", help: "How due reminders are triggered." },
+  legal: {
+    title: "Operator & legal",
+    help: "Who runs this Seatbit instance. Shown on the Terms of Service and Privacy Policy pages. Fill this in before you invite people, or link your own documents instead.",
+  },
 } as const;
 export type SettingGroup = keyof typeof SETTING_GROUPS;
 
@@ -160,6 +164,83 @@ export const SETTINGS: SettingDef[] = [
   // Google
   { key: "google.clientId", group: "google", label: "Client ID", kind: "text", env: "GOOGLE_CLIENT_ID" },
   { key: "google.clientSecret", group: "google", label: "Client secret", kind: "secret", env: "GOOGLE_CLIENT_SECRET" },
+
+  // Operator & legal (each self-hosted instance has its own operator)
+  {
+    key: "legal.operatorName",
+    group: "legal",
+    label: "Operator name",
+    kind: "text",
+    env: "LEGAL_OPERATOR_NAME",
+    placeholder: "Jane Doe or Example Gaming Club",
+    help: "Person, club or company that runs this instance and is responsible for the data.",
+  },
+  {
+    key: "legal.operatorAddress",
+    group: "legal",
+    label: "Postal address",
+    kind: "text",
+    env: "LEGAL_OPERATOR_ADDRESS",
+    placeholder: "Example Street 1, 8000 Zurich, Switzerland",
+  },
+  {
+    key: "legal.contactEmail",
+    group: "legal",
+    label: "Contact email",
+    kind: "text",
+    env: "LEGAL_CONTACT_EMAIL",
+    placeholder: "privacy@example.com",
+    help: "For questions about the terms and for privacy requests (access, deletion).",
+    validate: (v) => (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? null : "Enter an email address"),
+  },
+  {
+    key: "legal.hostingLocation",
+    group: "legal",
+    label: "Hosting location",
+    kind: "text",
+    env: "LEGAL_HOSTING_LOCATION",
+    placeholder: "Switzerland",
+    help: "Country where the server and database run.",
+  },
+  {
+    key: "legal.governingLaw",
+    group: "legal",
+    label: "Governing law",
+    kind: "text",
+    env: "LEGAL_GOVERNING_LAW",
+    placeholder: "Swiss law",
+    help: "Shown in the terms, e.g. \"Swiss law\" or \"German law\". Empty: the law of the operator's country.",
+  },
+  {
+    key: "legal.termsUrl",
+    group: "legal",
+    label: "Own Terms of Service URL",
+    kind: "text",
+    env: "LEGAL_TERMS_URL",
+    placeholder: "https://example.com/terms",
+    help: "Optional. When set, /terms and all links to it (footer, emails, sign-in) go to your own document instead of the built-in one.",
+    validate: (v) => (/^https?:\/\/\S+$/.test(v) ? null : "Enter a full http(s) URL"),
+  },
+  {
+    key: "legal.privacyUrl",
+    group: "legal",
+    label: "Own Privacy Policy URL",
+    kind: "text",
+    env: "LEGAL_PRIVACY_URL",
+    placeholder: "https://example.com/privacy",
+    help: "Optional. Same as above, for the privacy policy.",
+    validate: (v) => (/^https?:\/\/\S+$/.test(v) ? null : "Enter a full http(s) URL"),
+  },
+  {
+    key: "legal.sourceUrl",
+    group: "legal",
+    label: "Source code URL",
+    kind: "text",
+    env: "SOURCE_URL",
+    default: "https://github.com/bitsandbricks-ch/seatbit",
+    help: "Linked as \"Source\" in the footer. If you run a changed version, point this to your fork (the AGPL asks you to offer your changes to your users).",
+    validate: (v) => (/^https?:\/\/\S+$/.test(v) ? null : "Enter a full http(s) URL"),
+  },
 
   // Automation
   {
