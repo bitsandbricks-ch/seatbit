@@ -6,7 +6,8 @@ Click **New event** on the **LANs** tab or the clan page. **Start from** a LAN t
 
 ![New event](../screenshots/desktop-new-event.png){ .shot }
 
-- **Dates:** start and end, the **answer by** date (when the group must know who comes, e.g. before you book the seat block) and the **buy ticket by** date.
+- **Dates:** start and end, the **answer by** date (when the group must know who comes, e.g. before you book the seat block) and the **buy ticket by** date. Set the start and the others follow: the end from the type's usual length, *answer by* from its days before. When you move the start later, the end and the deadlines move along by the same amount.
+- **Typing dates:** every date field is a text box. Type or paste e.g. `14.11.2026 18:00`, `14.11. 18` or `14.11.26 1800`, or open the calendar for a month view with quick times. To copy a date to another field, copy the text and paste it.
 - **Spots:** how many people the group can bring. When it's full, new answers go on a waitlist.
 - **Seats:** the seats the event gave the group, e.g. `F1-F16, F19-F22`.
 - **Event seat plan:** the link to the event's own seat plan, where every member books their seat (new every year).
@@ -21,7 +22,7 @@ Publishing shows the event to the clan, posts the Discord announcement with answ
 
 ## Interest check
 
-Not sure yet if the group goes, or when? Turn on the **interest check**: members only answer *I'd come / Maybe / Not this time*, nothing binding. The date can stay open with a rough hint like "Spring 2027". When you've decided, set the date and click **Open sign-up**: everyone who was interested (except those who said no) is told, and the normal answers, tickets and seats start.
+Not sure yet if the group goes, or when? Turn on the **interest check** (when creating the event, or later under *Settings* while it's a draft or nobody has answered yet): members only answer *I'd come / Maybe / Not this time*, nothing binding. The date can stay open with a rough hint like "Spring 2027". When you've decided, set the date and click **Open sign-up**: everyone who was interested (except those who said no) is told, and the normal answers, tickets and seats start.
 
 ![Interest check, orga view](../screenshots/desktop-interest-manage.png){ .shot }
 

@@ -15,6 +15,8 @@ export type LanTypeValues = {
   capacity: string;
   reminderDays: number;
   seatSpec: string;
+  durationHours: number;
+  answerDaysBefore: string;
 };
 
 export function LanTypeForm({ values }: { values: LanTypeValues }) {
@@ -44,6 +46,12 @@ export function LanTypeForm({ values }: { values: LanTypeValues }) {
         </Field>
         <Field label="Usual seats" hint="e.g. F1-F20. Copied into each new event of this type.">
           <Input name="seatSpec" defaultValue={values.seatSpec} className="font-mono" />
+        </Field>
+        <Field label="Usual length (hours)" hint="Fills in the end when you set the start, e.g. Fri 18:00 to Sun 16:00 = 46.">
+          <Input type="number" min={1} max={336} name="durationHours" defaultValue={values.durationHours} />
+        </Field>
+        <Field label="Answer by (days before)" hint="Fills in the answer deadline from the start. Empty = no deadline.">
+          <Input type="number" min={0} max={365} name="answerDaysBefore" defaultValue={values.answerDaysBefore} />
         </Field>
         <Field label="Remind days before deadline">
           <Input type="number" min={0} max={60} name="reminderDays" defaultValue={values.reminderDays} />

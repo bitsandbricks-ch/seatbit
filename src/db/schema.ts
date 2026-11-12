@@ -218,6 +218,10 @@ export const lanType = sqliteTable("lan_type", {
   reminderDays: integer("reminder_days").default(3).notNull(),
   /** Seats the group usually gets, e.g. "F1-F20". Copied into new events. */
   seatSpec: text("seat_spec").default("").notNull(),
+  /** Usual length of the event in hours (e.g. Fri 18:00 to Sun 16:00 = 46): fills the end when the start is set. */
+  durationHours: integer("duration_hours").default(46).notNull(),
+  /** "Answer by" this many days before the start; null = no answer deadline by default. */
+  answerDaysBefore: integer("answer_days_before").default(30),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
 });
 

@@ -162,6 +162,13 @@
       "when": 1794471274406,
       "tag": "0023_guest_claims",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "6",
+      "when": 1794472885089,
+      "tag": "0024_type_date_defaults",
+      "breakpoints": true
     }
   ]
 }

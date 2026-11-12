@@ -36,11 +36,11 @@ export default async function NewLanPage({ params, searchParams }: PageProps<"/c
   const start = new Date();
   start.setDate(start.getDate() + 30);
   start.setHours(18, 0, 0, 0);
-  const end = new Date(start);
-  end.setDate(end.getDate() + 2);
-  end.setHours(14);
-  const deadline = new Date(start);
-  deadline.setDate(deadline.getDate() - 14);
+  // The LAN type's usual length and answer deadline (defaults: 46 h, 30 days before).
+  const end = new Date(start.getTime() + (t?.durationHours ?? 46) * 3600_000);
+  const answerDays = t ? t.answerDaysBefore : 30;
+  const deadline = answerDays == null ? null : new Date(start.getTime() - answerDays * 86_400_000);
+  deadline?.setHours(23, 59, 0, 0);
   return (
     <Page>
       <PageHeader
