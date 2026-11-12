@@ -7,6 +7,7 @@ import { Avatar } from "@/components/avatar";
 import { Card, Columns, Notice, Page, PageHeader, Pill, btnGhost, btnPrimary, btnSecondary } from "@/components/ui";
 import { avatarData } from "@/lib/avatars";
 import { clanRole, getClanBySlug } from "@/lib/clans";
+import { isMemberRole } from "@/lib/clan-roles";
 import { canClaimDirectly, guestSuggestions, type GuestSuggestion } from "@/lib/guest-claim";
 import { getDefaultNames } from "@/lib/lans";
 import { requireUser } from "@/lib/session";
@@ -21,7 +22,7 @@ export default async function ClaimGuestPage({ params }: PageProps<"/clans/[slug
   const c = getClanBySlug(slug);
   if (!c) notFound();
   const role = clanRole(me.id, c.id);
-  if (me.isGuest || (role !== "member" && role !== "admin") || c.guestClaims === "off") redirect(`/clans/${slug}`);
+  if (me.isGuest || !isMemberRole(role) || c.guestClaims === "off") redirect(`/clans/${slug}`);
 
   const all = guestSuggestions(c.id, me.id);
   const names = getDefaultNames(all.map((s) => s.guest.id));

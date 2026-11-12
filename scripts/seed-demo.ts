@@ -115,7 +115,16 @@ export async function seedDemo({ force = false, discord = false } = {}) {
       })
       .run();
     for (const p of PEOPLE) {
-      const role = p.key === "alex" || p.key === "ben" ? "admin" : p.key === "tim" ? "pending" : "member";
+      const role =
+        p.key === "alex" || p.key === "ben"
+          ? "admin"
+          : p.key === "chiara"
+            ? "organizer"
+            : p.key === "lea"
+              ? "recruiter"
+              : p.key === "tim"
+                ? "pending"
+                : "member";
       tx.insert(s.clanMember).values({ clanId, userId: ids[p.key], role }).run();
     }
     tx.insert(s.clanInvite).values({ code: "demo-invite", clanId, createdBy: ids.alex }).run();
@@ -515,7 +524,8 @@ export async function seedDemo({ force = false, discord = false } = {}) {
       [-7, 19, "alex", "guest.add", "raffi", {}, null],
       [-1, 20, "rafael", "guest.claim_request", "rafael", { guest: "Raffi Kunz", match: "nick" }, null],
       [-6, 18, "alex", "attendance.set", "yannick", { event: lake.event, from: null, to: "going" }, lake.lanId],
-      [-5, 22, "alex", "member.role", "chiara", { from: "member", to: "admin" }, null],
+      [-5, 22, "alex", "member.role", "chiara", { from: "member", to: "organizer" }, null],
+      [-4, 20, "alex", "member.role", "lea", { from: "member", to: "recruiter" }, null],
       [-3, 19, "alex", "ticket.confirm", "ben", { event: lake.event, paid: true }, lake.lanId],
       [-3, 19, "alex", "ticket.confirm", "anna", { event: lake.event, paid: true }, lake.lanId],
       [-2, 20, "alex", "seat.auto", null, { event: lake.event, mode: "fill", count: 14 }, lake.lanId],

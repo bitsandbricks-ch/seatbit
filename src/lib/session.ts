@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 import { and, eq } from "drizzle-orm";
 import { getAuth } from "./auth";
-import { canManageClan, isClanMember } from "./clans";
+import { clanCan, isClanMember } from "./clans";
+import type { ClanPermission } from "./clan-roles";
 import { db, schema } from "@/db";
 
 export const getCurrentUser = cache(async () => {
@@ -32,11 +33,11 @@ export async function requireAdmin() {
   return u;
 }
 
-/** Platform admins, admins of the LAN's clan and the LAN's orgas may manage a LAN. */
+/** Platform admins, the clan's admins and event managers, and the LAN's orgas may manage a LAN. */
 export function isLanManager(u: { id: string; role: string }, lanId: string) {
   if (u.role === "admin") return true;
   const l = db.select({ clanId: schema.lan.clanId }).from(schema.lan).where(eq(schema.lan.id, lanId)).get();
-  if (l?.clanId && canManageClan(u, l.clanId)) return true;
+  if (l?.clanId && clanCan(u, l.clanId, "events")) return true;
   return !!db
     .select()
     .from(schema.lanOrga)
@@ -68,8 +69,17 @@ export function visibleLans<T extends { id: string; publishedAt: Date | null }>(
   return lans.filter((l) => l.publishedAt || isLanManager(u, l.id));
 }
 
-export async function requireClanManager(clanId: string) {
+const PERM_ERROR: Record<ClanPermission, string> = {
+  settings: "Only clan admins can do that",
+  roles: "Only clan admins can change roles",
+  members: "Only clan admins and recruiters can do that",
+  events: "Only clan admins and event managers can do that",
+  stats: "You can't see this clan's stats",
+  log: "You can't see this clan's audit log",
+};
+
+export async function requireClanPermission(clanId: string, perm: ClanPermission) {
   const u = await requireUser();
-  if (!canManageClan(u, clanId)) throw new Error("Only clan admins can do that");
+  if (!clanCan(u, clanId, perm)) throw new Error(PERM_ERROR[perm]);
   return u;
 }

@@ -8,6 +8,11 @@ updates:
       minor-and-patch:
         update-types: [minor, patch]
     open-pull-requests-limit: 5
+    ignore:
+      # typescript-eslint (via eslint-config-next) does not support TS 7 yet,
+      # so a TS 7 bump breaks lint. Drop this once it does.
+      - dependency-name: typescript
+        versions: [">=7"]
   - package-ecosystem: github-actions
     directory: /
     schedule:

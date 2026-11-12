@@ -1,6 +1,7 @@
 import { and, asc, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Attendance, AttendanceStatus, Lan } from "@/db/schema";
+import { isMemberRole, type MemberRole } from "./clan-roles";
 
 const { attendance, clanMember, lan, seat, user } = schema;
 
@@ -40,7 +41,7 @@ export type MemberStats = {
   firstName: string;
   lastName: string;
   isGuest: boolean;
-  role: "admin" | "member";
+  role: MemberRole;
   /** Past events they were asked for / answered / came to. */
   asked: number;
   answered: number;
@@ -109,7 +110,7 @@ export function clanStats(clanId: string, now = new Date()) {
       firstName: u.firstName,
       lastName: u.lastName,
       isGuest: u.isGuest,
-      role: role === "admin" ? "admin" : "member",
+      role: isMemberRole(role) ? role : "member",
       asked: askedPast.length,
       answered: askedPast.filter((l) => mine.some((a) => a.lanId === l.id)).length,
       attended: attendedLans.length,

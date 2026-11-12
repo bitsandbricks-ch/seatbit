@@ -5,7 +5,7 @@ import { Avatar } from "@/components/avatar";
 import { getAvatars, type AvatarData } from "@/lib/avatars";
 import { EventTurnoutChart } from "@/components/event-turnout-chart";
 import { Card, EmptyState, Page, Pill, StatTile } from "@/components/ui";
-import { canManageClan, clanRole, getClanBySlug } from "@/lib/clans";
+import { clanPerms, clanRole, getClanBySlug } from "@/lib/clans";
 import { clanStats, pct, type MemberStats } from "@/lib/clan-stats";
 import { fmtDay } from "@/lib/format";
 import { getDefaultNames } from "@/lib/lans";
@@ -16,7 +16,8 @@ export default async function ClanStatsPage({ params }: PageProps<"/clans/[slug]
   const me = await requireUser();
   const c = getClanBySlug(slug);
   if (!c) notFound();
-  if (!canManageClan(me, c.id)) redirect(`/clans/${slug}`);
+  const perms = clanPerms(me, c.id);
+  if (!perms.has("stats")) redirect(`/clans/${slug}`);
 
   const { events, members, totalMembers } = clanStats(c.id);
   const past = events.filter((e) => e.past);
@@ -41,7 +42,7 @@ export default async function ClanStatsPage({ params }: PageProps<"/clans/[slug]
 
   return (
     <Page>
-      <ClanHeader clan={c} role={clanRole(me.id, c.id)} canManage mode="view" tab="stats" />
+      <ClanHeader clan={c} role={clanRole(me.id, c.id)} perms={perms} mode="view" tab="stats" />
 
       <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
         <StatTile label="Members" value={String(totalMembers)} sub={guests ? `${guests} guests without login` : "all with login"} />

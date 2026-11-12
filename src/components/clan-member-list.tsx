@@ -6,6 +6,8 @@ import { PagerBar, matches, usePager } from "./pager";
 import { Pill, btnGhost, btnSecondary, input } from "./ui";
 import { Avatar } from "./avatar";
 import type { AvatarData } from "@/lib/avatars";
+import { MEMBER_ROLES, ROLE_INFO, type MemberRole } from "@/lib/clan-roles";
+import { RolePill } from "./role-pill";
 
 const PAGE_SIZE = 20;
 
@@ -15,7 +17,7 @@ export function ClanMemberGrid({
   members,
 }: {
   slug: string;
-  members: { id: string; name: string; admin: boolean; guest?: boolean; avatar?: AvatarData }[];
+  members: { id: string; name: string; role: MemberRole; guest?: boolean; avatar?: AvatarData }[];
 }) {
   const [q, setQ] = useState("");
   const shown = members.filter((m) => !q || matches(m.name, q));
@@ -47,7 +49,7 @@ export function ClanMemberGrid({
                 <span className="truncate font-medium">{m.name}</span>
               </span>
               <span className="flex shrink-0 gap-1">
-                {m.admin && <Pill tone="emerald">admin</Pill>}
+                <RolePill role={m.role} />
                 {m.guest && <Pill>guest</Pill>}
               </span>
             </Link>
@@ -66,15 +68,17 @@ export type ClanMemberRow = {
   nick: string;
   /** Email, or "No login yet" for guests. */
   sub: string;
-  role: "admin" | "member";
+  role: MemberRole;
   isGuest: boolean;
   avatar?: AvatarData;
 };
 
-type RoleFilter = "all" | "admin" | "member";
+type RoleFilter = "all" | MemberRole;
 const roleFilters: { id: RoleFilter; label: string; test: (m: ClanMemberRow) => boolean }[] = [
   { id: "all", label: "all", test: () => true },
   { id: "admin", label: "admins", test: (m) => m.role === "admin" },
+  { id: "organizer", label: "event managers", test: (m) => m.role === "organizer" },
+  { id: "recruiter", label: "recruiters", test: (m) => m.role === "recruiter" },
   { id: "member", label: "members", test: (m) => m.role === "member" && !m.isGuest },
 ];
 
@@ -83,11 +87,14 @@ export function ClanMemberAdmin({
   clanId,
   slug,
   meId,
+  canSetRoles,
   members,
 }: {
   clanId: string;
   slug: string;
   meId: string;
+  /** Admins change roles; recruiters only remove plain members. */
+  canSetRoles: boolean;
   members: ClanMemberRow[];
 }) {
   const [q, setQ] = useState("");
@@ -111,7 +118,9 @@ export function ClanMemberAdmin({
   return (
     <div className={`space-y-3 ${pending ? "opacity-70" : ""}`}>
       <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 text-sm sm:mx-0 sm:flex-wrap sm:px-0">
-        {roleFilters.map((f) => (
+        {roleFilters
+          .filter((f) => f.id === "all" || f.id === "member" || f.id === "admin" || members.some(f.test))
+          .map((f) => (
           <button
             key={f.id}
             type="button"
@@ -147,7 +156,7 @@ export function ClanMemberAdmin({
                 <Link href={`/clans/${slug}/members/${m.id}`} className="hover:text-bit hover:underline">
                   {m.name}
                 </Link>{" "}
-                {m.role === "admin" && <Pill tone="emerald">admin</Pill>}
+                <RolePill role={m.role} />
                 {m.isGuest && <Pill>guest</Pill>}
               </span>
               <span className="block truncate text-xs text-muted">
@@ -166,19 +175,31 @@ export function ClanMemberAdmin({
                 </button>
               ) : (
                 <>
-                  <button
-                    type="button"
-                    disabled={m.role === "admin" && lastAdmin}
-                    title={m.role === "admin" && lastAdmin ? "The clan needs at least one admin. Make someone else admin first." : undefined}
-                    className={`${btnGhost} text-xs`}
-                    onClick={() =>
-                      (m.role !== "admin" || m.id !== meId || confirm("Remove your own admin rights? You can't undo this yourself.")) &&
-                      run(() => setClanMemberRole(clanId, m.id, m.role === "admin" ? "member" : "admin"))
-                    }
-                  >
-                    {m.role === "admin" ? "Remove admin" : "Make admin"}
-                  </button>
-                  {m.id !== meId && (
+                  {canSetRoles && (
+                    <select
+                      key={m.role}
+                      defaultValue={m.role}
+                      disabled={m.role === "admin" && lastAdmin}
+                      title={m.role === "admin" && lastAdmin ? "The clan needs at least one admin. Make someone else admin first." : undefined}
+                      aria-label={`Role of ${m.name}`}
+                      className={`${input} !w-auto !py-1 text-xs`}
+                      onChange={(e) => {
+                        const to = e.target.value as MemberRole;
+                        if (m.role === "admin" && m.id === meId && !confirm("Give up your own admin rights? You can't undo this yourself.")) {
+                          e.target.value = m.role;
+                          return;
+                        }
+                        run(() => setClanMemberRole(clanId, m.id, to));
+                      }}
+                    >
+                      {MEMBER_ROLES.map((r) => (
+                        <option key={r} value={r}>
+                          {ROLE_INFO[r].label}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  {m.id !== meId && (canSetRoles || m.role === "member") && (
                     <button
                       type="button"
                       disabled={m.role === "admin" && lastAdmin}
