@@ -612,12 +612,17 @@ const upcomingLans = (clanIds: string[]) =>
  * Handles a verified interaction. Returns the immediate response, plus an
  * optional task to run after responding (Discord wants an answer within 3s).
  */
-export function handleInteraction(i: Interaction): { response: Json; later?: () => Promise<void> } {
+export function handleInteraction(i: Interaction): { response: Json | Promise<Json>; later?: () => Promise<void> } {
   if (i.type === 1) return { response: { type: 1 } }; // PING
 
   const discordUser = i.member?.user.id ?? i.user?.id ?? "";
   const editReply = (body: Json) => api("PATCH", `/webhooks/${appId()}/${i.token}/messages/@original`, body);
   const sub = i.data?.options?.[0];
+
+  // Autocomplete for /guest member:<…>: Discord members who aren't in the clan on Seatbit yet.
+  if (i.type === 4 && i.data?.name === "guest" && i.data.options?.find((o) => o.focused)?.name === "member") {
+    return { response: memberChoices(i) };
+  }
 
   // Autocomplete for /claim guest:<…> and /guest guest:<…>: the server's clan's guests nobody took over yet.
   if (i.type === 4 && (i.data?.name === "claim" || i.data?.name === "guest")) {
@@ -910,6 +915,55 @@ function claimCommand(i: Interaction, guestId?: string): { response: Json } {
   };
 }
 
+type GuildMember = { user: DiscordUser; nick?: string | null };
+
+/** Discord user ids of the clan's members on Seatbit (pending join requests not counted). */
+function clanDiscordIds(clanId: string) {
+  return new Set(
+    db
+      .select({ id: account.accountId })
+      .from(account)
+      .innerJoin(schema.clanMember, eq(schema.clanMember.userId, account.userId))
+      .where(and(eq(account.providerId, "discord"), eq(schema.clanMember.clanId, clanId)))
+      .all()
+      .map((r) => r.id),
+  );
+}
+
+/**
+ * Suggestions for /guest member:<…>: people on the server who aren't in the clan on
+ * Seatbit yet, found by what the orga typed, or by the picked guest's name before they type.
+ */
+async function memberChoices(i: Interaction): Promise<Json> {
+  const none = { type: 8, data: { choices: [] } };
+  const c = clanForGuild(i.guild_id);
+  const me = seatbitUserFor(i.member?.user.id ?? i.user?.id ?? "");
+  if (!c || !i.guild_id || !me || !clanCan(me, c.id, "members")) return none;
+  const typed = String(i.data?.options?.find((o) => o.name === "member")?.value ?? "").trim();
+  const guestId = String(i.data?.options?.find((o) => o.name === "guest")?.value ?? "");
+  const g = guestId ? claimableGuests(c.id, null).find((x) => x.id === guestId) : undefined;
+  const query = typed || g?.firstName || "";
+  let found: GuildMember[] = [];
+  try {
+    // Search works without the Server Members intent; the plain list (nothing typed yet) needs it and may fail.
+    found = await api<GuildMember[]>(
+      "GET",
+      query ? `/guilds/${i.guild_id}/members/search?query=${encodeURIComponent(query)}&limit=50` : `/guilds/${i.guild_id}/members?limit=100`,
+    );
+  } catch (e) {
+    if (query) console.warn("[discord] member search failed", (e as Error).message);
+  }
+  const inClan = clanDiscordIds(c.id);
+  const choices = found
+    .filter((m) => !m.user.bot && !inClan.has(m.user.id))
+    .slice(0, 25)
+    .map((m) => {
+      const shown = m.nick || m.user.global_name || m.user.username || m.user.id;
+      return { name: clip(m.user.username && shown !== m.user.username ? `${shown} (@${m.user.username})` : shown, 100), value: m.user.id };
+    });
+  return { type: 8, data: { choices } };
+}
+
 /**
  * /guest member:<@…> guest:<…>: an orga ties a guest to a Discord member. If that member
  * already has Seatbit, the guest moves over now; otherwise their Discord sign-in takes it
@@ -923,8 +977,8 @@ function linkGuestCommand(i: Interaction, editReply: (body: Json) => Promise<unk
   if (!clanCan(me, c.id, "members")) return { response: reply(`Only admins of **${c.name}** who manage members can do this.`) };
   const targetId = String(i.data?.options?.find((o) => o.name === "member")?.value ?? "");
   const guestId = String(i.data?.options?.find((o) => o.name === "guest")?.value ?? "");
-  const target = i.data?.resolved?.users?.[targetId];
-  if (!targetId || target?.bot) return { response: reply("Pick a person, not a bot.") };
+  // The member option is free text with suggestions; only a picked suggestion is a Discord user id.
+  if (!/^\d{15,21}$/.test(targetId)) return { response: reply("Pick the member from the suggestions while you type their name.") };
   const g = claimableGuests(c.id, null).find((x) => x.id === guestId);
   if (!g) return { response: reply(`That guest isn't free anymore in **${c.name}**: taken over, already asked for (approve or decline it under Members in Seatbit), or linked to someone. Pick one from the list.`) };
   const mention = `<@${targetId}>`;

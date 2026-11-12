@@ -16,5 +16,6 @@ export async function POST(req: Request) {
 
   const { response, later } = handleInteraction(JSON.parse(body));
   if (later) after(later);
-  return Response.json(response);
+  // Most answers are instant; member search for /guest asks Discord first.
+  return Response.json(await response);
 }
