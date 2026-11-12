@@ -211,6 +211,11 @@ export const lan = sqliteTable("lan", {
    * member books the seat the orgas gave them. Per event: the plan id changes every year.
    */
   externalPlanUrl: text("external_plan_url").default("").notNull(),
+  /**
+   * When an orga published the event. Null = draft: only orgas and clan admins see it, and nobody is
+   * notified (no Discord post, no reminders) until it's published.
+   */
+  publishedAt: integer("published_at", { mode: "timestamp_ms" }),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
 });
 

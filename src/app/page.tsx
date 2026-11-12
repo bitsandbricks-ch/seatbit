@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { and, asc, desc, eq, gt, inArray, lte } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, isNotNull, lte } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Lan } from "@/db/schema";
 import { EmptyState, Page, PageHeader, Pill, StatusBadge, btnPrimary } from "@/components/ui";
 import { fmtDay, fmtWeekday, relative } from "@/lib/format";
-import { requireUser } from "@/lib/session";
+import { requireUser, visibleLans } from "@/lib/session";
 import { buildChecklist, progress } from "@/lib/checklist";
 import { myClans } from "@/lib/clans";
 import { ClanAvatar } from "@/components/clan-avatar";
@@ -19,16 +19,19 @@ export default async function Home() {
   const clanIds = clans.map((c) => c.clan.id);
   const clanById = new Map(clans.map((c) => [c.clan.id, c.clan]));
   const adminClans = clans.filter((c) => c.role === "admin");
-  const upcoming = db
-    .select()
-    .from(lan)
-    .where(and(gt(lan.endsAt, now), inArray(lan.clanId, clanIds)))
-    .orderBy(asc(lan.startsAt))
-    .all();
+  const upcoming = visibleLans(
+    me,
+    db
+      .select()
+      .from(lan)
+      .where(and(gt(lan.endsAt, now), inArray(lan.clanId, clanIds)))
+      .orderBy(asc(lan.startsAt))
+      .all(),
+  );
   const past = db
     .select()
     .from(lan)
-    .where(and(lte(lan.endsAt, now), inArray(lan.clanId, clanIds)))
+    .where(and(lte(lan.endsAt, now), inArray(lan.clanId, clanIds), isNotNull(lan.publishedAt)))
     .orderBy(desc(lan.startsAt))
     .limit(10)
     .all();
@@ -141,8 +144,10 @@ function LanCard({
   const unpaid = my && (my.status === "going" || my.status === "waitlist") && !my.paid && !my.ticketBought && l.paymentDueDate;
   return (
     <Link
-      href={`/lans/${l.id}`}
-      className="group block rounded-card border border-line bg-surface p-4 transition hover:border-bit/50 active:scale-[0.99] sm:p-5"
+      href={l.publishedAt ? `/lans/${l.id}` : `/lans/${l.id}/manage`}
+      className={`group block rounded-card border bg-surface p-4 transition hover:border-bit/50 active:scale-[0.99] sm:p-5 ${
+        l.publishedAt ? "border-line" : "border-dashed border-warn/60"
+      }`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -161,6 +166,7 @@ function LanCard({
         <StatusBadge status={my?.status} seat={info.mySeat} />
       </div>
       <div className="mt-4 flex flex-wrap gap-2 text-xs">
+        {!l.publishedAt && <Pill tone="amber">Draft, only orgas see it</Pill>}
         <Pill>
           {going}
           {l.capacity ? ` / ${l.capacity}` : ""} going

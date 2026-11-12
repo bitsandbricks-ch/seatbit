@@ -10,11 +10,14 @@ export function DiscordButtons({
   posted,
   channels,
   kinds,
+  draft = false,
 }: {
   lanId: string;
   posted: number;
   channels: number;
   kinds: { kind: Kind; label: string }[];
+  /** Drafts stay off Discord until they're published. */
+  draft?: boolean;
 }) {
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<string | null>(null);
@@ -23,7 +26,7 @@ export function DiscordButtons({
       <div className="flex flex-wrap gap-2">
         <button
           className={btnSecondary}
-          disabled={pending || !channels}
+          disabled={draft || pending || !channels}
           onClick={() =>
             start(async () => {
               const n = await postLanToDiscord(lanId);
@@ -37,7 +40,7 @@ export function DiscordButtons({
           <button
             key={k.kind}
             className={btnSecondary}
-            disabled={pending || !channels}
+            disabled={draft || pending || !channels}
             onClick={() => {
               if (!confirm(`Post the "${k.label}" reminder to ${channels} Discord channel(s) now? It pings the members it applies to.`)) return;
               start(async () => {
@@ -50,6 +53,7 @@ export function DiscordButtons({
           </button>
         ))}
       </div>
+      {draft && <p className="text-sm text-muted">The announcement goes out when you publish the event.</p>}
       {msg && <p className="text-sm text-bit">{msg}</p>}
     </div>
   );

@@ -3,6 +3,7 @@
 Seatbit helps a clan or group of friends coordinate going to LAN parties run by others (think SwitzerLAN or Lock&Load with 30+ people): who's coming, who has bought a ticket, and who sits where in the group's seat block.
 
 - **LANs**: each event the group goes to, with dates, location, event website, ticket shop link, ticket price and the number of group spots.
+- **Drafts**: a new LAN starts as a draft that only its orgas and the clan admins see. Nothing goes out while it's a draft (no Discord post, no reminders, no DMs). *Publish event* in the banner at the top shows it to the clan, posts the Discord announcement and starts the reminders. Events created before drafts existed count as published.
 - **Orgas per LAN**: the members who coordinate the group for that event. Only they (and global admins) can edit the LAN, the seat block and attendance. Any orga can add co-orgas.
 - **Attendance**: members answer *going / maybe / can't make it*. When the group's spots are full, new sign-ups go on a **waitlist** and move up automatically (with an email) when someone drops out.
 - **Member checklist per LAN**: sign up, set nickname, buy ticket (members tick it off, orgas confirm), claim a seat. Progress shows on the LAN list.
@@ -111,7 +112,7 @@ The bot uses the same Discord application as the login. It runs inside the app (
 
 What it does, per clan:
 
-- Posts each new LAN of the clan as an announcement with **Coming / Unsure / Not coming** buttons. The attendee list on the post updates live, also when people answer on the website. Only clan members can answer. `/seatbit announce` posts the clan's upcoming LANs in a channel.
+- Posts each LAN of the clan as an announcement once an orga publishes it with **Coming / Unsure / Not coming** buttons. The attendee list on the post updates live, also when people answer on the website. Only clan members can answer. `/seatbit announce` posts the clan's upcoming LANs in a channel.
 - Posts the answer, ticket and "starts tomorrow" reminders in the clan's channels when they're due (same schedule as the emails), pinging the clan members they apply to.
 - `/lans` shows the server's clan's upcoming LANs and your status, privately, with answer buttons (in DMs: all your clans).
 - Orgas can re-post or post reminders by hand on the LAN's manage page; clan admins can unlink channels in clan settings.

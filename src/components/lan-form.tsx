@@ -90,7 +90,7 @@ export function LanForm({ values, types }: { values: LanFormValues; types: { id:
       </Field>
       {state?.error && <p className="text-sm text-danger">{state.error}</p>}
       <button disabled={pending} className={btnPrimary}>
-        {values.id ? "Save changes" : "Add LAN"}
+        {values.id ? "Save changes" : "Save as draft"}
       </button>
     </form>
   );

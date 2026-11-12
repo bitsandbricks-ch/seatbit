@@ -131,6 +131,7 @@ export async function promoteFromWaitlist(l: Lan) {
     if (free <= 0) break;
     db.update(attendance).set({ status: "going" }).where(eq(attendance.id, a.id)).run();
     free--;
+    if (!l.publishedAt) continue; // drafts tell nobody
     await notify(u, {
       kind: "waitlistPromoted",
       ...renderTemplate("waitlistPromoted", eventMailVars(l, u)),

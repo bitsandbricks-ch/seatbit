@@ -335,6 +335,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               {due.length > 0 && <p className="text-warn">Reminder window open: {due.join(", ")}.</p>}
               <ReminderButtons
                 lanId={l.id}
+                draft={!l.publishedAt}
                 counts={{
                   signup: l.signupDeadline ? undecided : null,
                   payment: l.paymentDueDate ? unpaid : null,
@@ -454,6 +455,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               {discordEnabled() && discordChannels > 0 && (
                 <DiscordButtons
                   lanId={l.id}
+                  draft={!l.publishedAt}
                   posted={discordPosts}
                   channels={discordChannels}
                   kinds={[

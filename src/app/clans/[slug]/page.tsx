@@ -10,7 +10,7 @@ import { fmtDay } from "@/lib/format";
 import { clanRole, getClanBySlug } from "@/lib/clans";
 import { pickNick } from "@/lib/lans";
 import { avatarData } from "@/lib/avatars";
-import { requireUser } from "@/lib/session";
+import { requireUser, visibleLans } from "@/lib/session";
 import { missingServers } from "@/lib/discord-invite";
 
 export default async function ClanPage({ params }: PageProps<"/clans/[slug]">) {
@@ -34,12 +34,15 @@ export default async function ClanPage({ params }: PageProps<"/clans/[slug]">) {
   const discordInvites = isMember ? await missingServers(me.id, c.id) : [];
   const lans =
     isMember || isAdmin
-      ? db
-          .select()
-          .from(schema.lan)
-          .where(and(eq(schema.lan.clanId, c.id), gt(schema.lan.endsAt, new Date())))
-          .orderBy(asc(schema.lan.startsAt))
-          .all()
+      ? visibleLans(
+          me,
+          db
+            .select()
+            .from(schema.lan)
+            .where(and(eq(schema.lan.clanId, c.id), gt(schema.lan.endsAt, new Date())))
+            .orderBy(asc(schema.lan.startsAt))
+            .all(),
+        )
       : [];
 
   return (
@@ -104,7 +107,10 @@ export default async function ClanPage({ params }: PageProps<"/clans/[slug]">) {
               {lans.map((l) => (
                 <li key={l.id}>
                   <Link href={`/lans/${l.id}`} className="-mx-2 flex min-h-12 items-center justify-between gap-2 rounded-md p-2 transition hover:bg-raised">
-                    <span className="truncate font-medium">{l.name}</span>
+                    <span className="flex min-w-0 items-center gap-2">
+                      <span className="truncate font-medium">{l.name}</span>
+                      {!l.publishedAt && <Pill tone="amber">Draft</Pill>}
+                    </span>
                     <span className="shrink-0 text-sm text-muted">{fmtDay(l.startsAt)}</span>
                   </Link>
                 </li>
