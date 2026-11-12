@@ -55,7 +55,7 @@ export default function PrivacyPage() {
         <li>For each event: whether you are coming, unsure or not coming, whether you bought a ticket, whether an orga confirmed it, and any note you add</li>
         <li>Seat wishes (people you want to sit near or not next to, preferred position or seat) and the seat you are assigned</li>
         <li>Whether you are an orga of an event</li>
-        <li>If an orga adds you as a guest before you have an account: the name, nickname and (if they have it) email address they enter, and your answers and seat for their events. The email is only used to send you the invite and to recognise you: when you sign in with a Discord account whose verified email matches, or through your claim link, this moves to your own account and the guest entry is deleted.</li>
+        <li>If an orga adds you as a guest before you have an account: the name, nickname and (if they have it) email address they enter, and your answers and seat for their events. The email is only used to send you the invite and to recognise you: when you sign in with a Discord account whose verified email matches, or through your claim link, this moves to your own account and the guest entry is deleted. If an orga tells the Discord bot which Discord member you are, we also keep your Discord user ID with the guest entry, send you one DM with your claim link, and move everything over when you sign in with that Discord account.</li>
         <li>Content clan admins enter: clan name, description and avatar, LAN types, events, invite links</li>
       </ul>
 
@@ -63,7 +63,7 @@ export default function PrivacyPage() {
       <ul>
         <li>For each linked channel: the Discord server ID, channel ID and name, which clan it belongs to, and the Discord user ID of whoever linked it</li>
         <li>The IDs of the announcement messages the bot posted, so it can keep them up to date</li>
-        <li>When you use a command or button, Discord sends us your Discord user ID, the server and channel. We use it to find your Seatbit account and, for example, save your answer to an event. The bot does not read or store other messages.</li>
+        <li>When you use a command or button, Discord sends us your Discord user ID, the server and channel. We use it to find your Seatbit account and, for example, save your answer to an event. For <code>/claim</code> it also sends your server nickname, display name and username, which we compare with the clan&apos;s guests and don&apos;t store. The bot does not read or store other messages.</li>
       </ul>
 
       {payments && (

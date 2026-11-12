@@ -31,6 +31,8 @@ A Discord server belongs to one clan.
 | Command | What it does |
 | --- | --- |
 | `/lans` | Your upcoming LANs of this server's clan (in DMs: all your clans) with answer buttons. Only you see it. |
+| `/claim` | Take over the guest profile the orgas made for you. Lists the clan's guests with your name or nick; `/claim guest:<name>` picks one. See [Claiming a guest on Discord](members-guests.md#on-discord). |
+| `/guest member:<@someone> guest:<name>` | Orgas who manage members: say which Discord member a guest is. See [Linking a guest to a Discord member](members-guests.md#on-discord). |
 | `/seatbit here` | Link this channel to your clan. |
 | `/seatbit announce` | Post the clan's upcoming LANs in this channel. |
 | `/seatbit stop` | Unlink this channel. |

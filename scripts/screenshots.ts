@@ -54,6 +54,17 @@ type Shot = {
   full?: boolean;
 };
 
+/**
+ * The sign-in link the bot's /claim gives Sara for her guest (same format as
+ * discordClaimTicket in src/lib/guest-claim.ts). Her Discord id comes from the seed's
+ * --discord accounts (index 15 in PEOPLE). Expires long after NOW, so the image is stable.
+ */
+function discordClaimTicket() {
+  const t = { d: "100000000000001015", g: "demo-guestsara", c: "demo-clan", m: "name", exp: Date.parse(NOW) + 3650 * 86400_000 };
+  const data = Buffer.from(JSON.stringify(t)).toString("base64url");
+  return `${data}.${crypto.createHmac("sha256", SECRET).update(`discord-claim:${data}`).digest("base64url")}`;
+}
+
 const seat = (label: string) => async (page: Page) => {
   await page.locator(`[aria-label^="Seat ${label},"], [aria-label="Seat ${label}"]`).first().click();
   // Phones: show the whole seat card below the sticky header and tabs.
@@ -102,6 +113,8 @@ const SHOTS: Shot[] = [
 
   // Sara joined, but the orgas had added her as a guest already
   { name: "phone-clan-claim", who: "sara", path: `${CLAN}/claim`, full: true },
+  // ... and pressed "That's me" after /claim on Discord before she had an account
+  { name: "phone-discord-claim", who: "sara", path: `/claim/discord/${discordClaimTicket()}` },
 
   // An orga (Alex) on the phone
   { name: "phone-manage", who: "alex", path: `${LAKESIDE}/manage`, full: true },

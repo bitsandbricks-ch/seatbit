@@ -1,0 +1,1 @@
+ALTER TABLE `user` ADD `guest_discord_id` text;

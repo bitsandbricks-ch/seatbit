@@ -255,15 +255,17 @@ export function describeAudit(e: AuditEntry, name: (id: string | null | undefine
     case "guest.renew_link":
       return `made a new claim link for the guest ${who}`;
     case "guest.claimed":
-      return `took over the guest profile${d.guest ? ` of ${d.guest}` : ""}${d.match ? ` (same ${d.match})` : ""}`;
+      return `took over the guest profile${d.guest ? ` of ${d.guest}` : ""}${d.match ? ` (same ${d.match})` : ""}${d.via === "discord" ? " on Discord" : ""}`;
     case "guest.claim_request":
-      return `asked to take over the guest ${d.guest}${d.match ? ` (same ${d.match})` : ""}`;
+      return `asked to take over the guest ${d.guest}${d.match ? ` (same ${d.match})` : ""}${d.via === "discord" ? " on Discord" : ""}`;
+    case "guest.discord_link":
+      return `linked the guest ${d.guest} to a Discord member, who takes it over when they sign in`;
     case "guest.claim_approve":
       return `confirmed ${who} is the guest ${d.guest}`;
     case "guest.claim_decline":
       return `declined ${who}'s request to take over the guest ${d.guest}`;
     case "guest.merged":
-      return `moved the guest ${d.guest ?? ""} over to ${who}'s account`;
+      return `moved the guest ${d.guest ?? ""} over to ${who}'s account${d.via === "discord" ? " on Discord" : ""}`;
     case "type.save":
       return d.created ? `created the LAN type ${d.type}` : `edited the LAN type ${d.type}`;
     case "type.delete":

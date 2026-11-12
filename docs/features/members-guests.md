@@ -28,7 +28,8 @@ To hand a guest over to its owner:
 | --- | --- |
 | **Email invite** | Enter their email and click **Send invite**. When they sign in with a Discord account with the same verified email, everything moves to their account automatically. |
 | **Claim link** | Copy the guest's link and send it yourself (WhatsApp, Discord, ...). Whoever opens it and signs in takes the guest over. **New link** invalidates the old one. |
-| **That's me** | The member claims the guest themselves. See below. |
+| **That's me** | The member claims the guest themselves, on the website or with `/claim` on Discord. See below. |
+| **`/guest` on Discord** | Say which Discord member the guest is. See [On Discord](#on-discord). |
 
 ### Members claiming a guest
 
@@ -46,7 +47,7 @@ What happens on **That's me** depends on **Clan settings → General → Can mem
 
 Safeguards, whatever the setting:
 
-- Only clan members can claim, never someone still waiting for approval.
+- On the website only clan members can claim, never someone still waiting for approval. On Discord, someone who isn't a member yet can ask (see [On Discord](#on-discord)), but that always needs an admin.
 - One open claim per member.
 - A guest with an email address, or a guest made clan admin, always needs an admin's OK.
 - A name is no proof: check before you approve (the request shows their email and why it was suggested).
@@ -54,3 +55,19 @@ Safeguards, whatever the setting:
 - Every claim, approval and decline is in the [audit log](audit-log.md).
 
 The guest's events, seat and nicks become the member's.
+
+### On Discord
+
+The [Seatbit bot](discord.md) does both directions in a server linked to the clan.
+
+**Members: `/claim`.** The bot lists the clan's guests whose name or nick matches the member's Seatbit profile or their Discord names (server nickname, display name, username), with a **That's me** button. `/claim guest:<name>` picks any other guest. The clan's *Can members claim guests?* setting and the safeguards above apply as on the website.
+
+- With a Seatbit account (Discord linked), the guest moves over or the request goes to the admins right away.
+- Without one, the bot answers with a **Sign in and take it over** link. It works for 24 hours, only for the Discord account that ran `/claim`. After signing in, they confirm once (below). If they aren't a clan member yet, they show up under *Waiting for approval* and *Guest claims*; approving the claim lets them in too.
+
+![Taking over a guest after /claim on Discord](../screenshots/phone-discord-claim.png){ .shot width="300" }
+
+**Orgas: `/guest member:<@someone> guest:<name>`.** Needs a Seatbit role that manages members (admin or recruiter); no Discord permission needed.
+
+- If that person already has Seatbit with Discord linked, the guest moves to their account at once and they get a DM.
+- Otherwise the bot DMs them the guest's claim link, and their first sign-in with that Discord account (or linking Discord on their profile) takes the guest over automatically, like the verified email invite. The guest list shows *Discord member linked*. Running `/guest` again for the same person moves the link to the new guest.

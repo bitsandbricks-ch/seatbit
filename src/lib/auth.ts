@@ -4,7 +4,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { count, isNull } from "drizzle-orm";
 import { db, schema } from "@/db";
-import { claimGuestsByEmail } from "./guest-claim";
+import { claimGuestsByDiscord, claimGuestsByEmail } from "./guest-claim";
 import { sendMail } from "./mail";
 import { getBoolSetting, getSetting, settingsFingerprint } from "./settings";
 
@@ -103,12 +103,27 @@ function build() {
       },
     },
     databaseHooks: {
+      account: {
+        create: {
+          // Linking Discord on the profile later counts too.
+          after: async (a) => {
+            if (a.providerId !== "discord") return;
+            try {
+              claimGuestsByDiscord(a.userId);
+            } catch (e) {
+              console.error("[guests] Discord auto-claim failed", e);
+            }
+          },
+        },
+      },
       session: {
         create: {
-          // Signing in with a verified email takes over guests the orgas invited with that address.
+          // Signing in with a verified email takes over guests the orgas invited with that address,
+          // and a linked Discord account the guests an orga tied to that Discord user via the bot.
           after: async (session) => {
             try {
               claimGuestsByEmail(session.userId);
+              claimGuestsByDiscord(session.userId);
             } catch (e) {
               console.error("[guests] auto-claim failed", e);
             }

@@ -64,8 +64,8 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
     .from(schema.guestClaim)
     .where(and(eq(schema.guestClaim.clanId, c.id), eq(schema.guestClaim.status, "pending")))
     .all()
-    // Only from people still in the clan, for guests still waiting to be claimed.
-    .filter((r) => members.some((m) => m.u.id === r.userId && m.role !== "pending") && members.some((m) => m.u.id === r.guestId));
+    // Only from people still in the clan (or asking to join it from Discord), for guests still waiting to be claimed.
+    .filter((r) => members.some((m) => m.u.id === r.userId) && members.some((m) => m.u.id === r.guestId));
   const active = members.filter((m) => m.role !== "pending");
   const guests = active.filter((m) => m.u.isGuest);
   const inClan = new Set(members.map((m) => m.u.id));
@@ -469,6 +469,7 @@ function GuestsTab({
                                 ? `Invited ${fmtDate(u.invitedAt)} at ${u.inviteEmail}`
                                 : u.inviteEmail
                               : "No email yet"}
+                            {u.guestDiscordId && " · Discord member linked"}
                           </span>
                         </span>
                         <span className={`${btnSecondary} shrink-0 group-open:!border-bit`}>
