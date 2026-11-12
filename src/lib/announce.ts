@@ -1,4 +1,4 @@
-import { fmtDate } from "./format";
+import { fmtDate, lanStart } from "./format";
 import { and, eq, ne } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Lan, User } from "@/db/schema";
@@ -12,9 +12,9 @@ export const fmtWhen = fmtDate;
 export const lanLink = (l: Lan) => `${appUrl}/lans/${l.id}`;
 
 export type LanSummary = {
-  going: { userId: string; nick: string }[];
-  maybe: { userId: string; nick: string }[];
-  waitlist: { userId: string; nick: string }[];
+  going: { userId: string; name: string }[];
+  maybe: { userId: string; name: string }[];
+  waitlist: { userId: string; name: string }[];
   /** Members who haven't answered or said maybe. */
   undecided: User[];
   /** Attendees (going or waitlist) without a ticket. */
@@ -26,7 +26,7 @@ export type LanSummary = {
   booked: number;
 };
 
-/** Who is coming, who hasn't answered and who still needs a ticket, with display nicks. */
+/** Who is coming, who hasn't answered and who still needs a ticket, with full display names (Mike "Reyki" Keller). */
 export async function lanSummary(l: Lan): Promise<LanSummary> {
   // Only the LAN's clan counts (pending join requests don't).
   const members = db
@@ -39,11 +39,11 @@ export async function lanSummary(l: Lan): Promise<LanSummary> {
   const rows = db.select().from(attendance).where(eq(attendance.lanId, l.id)).all();
   const names = await getDisplayNames(l.id, members.map((m) => m.id));
   const byUser = new Map(rows.map((r) => [r.userId, r]));
-  const withNick = (status: string) =>
+  const withName = (status: string) =>
     rows
       .filter((r) => r.status === status)
       .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
-      .map((r) => ({ userId: r.userId, nick: names.get(r.userId) ?? "?" }));
+      .map((r) => ({ userId: r.userId, name: names.get(r.userId) ?? "?" }));
   const seatedIds = new Set(
     db
       .select({ userId: schema.seat.userId })
@@ -58,9 +58,9 @@ export async function lanSummary(l: Lan): Promise<LanSummary> {
     goingNoTicket: goingRows.filter((r) => !r.paid && !r.ticketBought).length,
     seated: seatedRows.length,
     booked: seatedRows.filter((r) => r.seatBooked).length,
-    going: withNick("going").sort((a, b) => a.nick.localeCompare(b.nick)),
-    maybe: withNick("maybe").sort((a, b) => a.nick.localeCompare(b.nick)),
-    waitlist: withNick("waitlist"),
+    going: withName("going").sort((a, b) => a.name.localeCompare(b.name)),
+    maybe: withName("maybe").sort((a, b) => a.name.localeCompare(b.name)),
+    waitlist: withName("waitlist"),
     undecided: members.filter((m) => {
       const a = byUser.get(m.id);
       return !a || a.status === "maybe";
@@ -75,7 +75,7 @@ export async function lanSummary(l: Lan): Promise<LanSummary> {
 /** Key facts of a LAN as "label: value" lines (empty values left out). */
 export function lanFacts(l: Lan): [string, string][] {
   const facts: [string, string][] = [
-    ["When", `${fmtWhen(l.startsAt)} – ${fmtWhen(l.endsAt)}`],
+    ["When", l.dateTbd ? lanStart(l) : `${fmtWhen(l.startsAt)} – ${fmtWhen(l.endsAt)}`],
     ["Where", l.location],
     ["Ticket", [l.price, l.ticketUrl].filter(Boolean).join(" · ")],
     ["Answer by", l.signupDeadline ? fmtWhen(l.signupDeadline) : ""],
@@ -99,7 +99,7 @@ export async function whatsappTexts(l: Lan) {
     `🎮 *${l.name}*`,
     l.description ? l.description.trim().slice(0, 500) : null,
     facts,
-    `Who's in so far${spots}: ${s.going.map((g) => g.nick).join(", ") || "nobody yet"}`,
+    `Who's in so far${spots}: ${s.going.map((g) => g.name).join(", ") || "nobody yet"}`,
     `Say if you're coming: ${link}`,
   ]
     .filter(Boolean)
@@ -112,7 +112,7 @@ export async function whatsappTexts(l: Lan) {
     texts.push({
       kind: "signup",
       label: "Answer reminder",
-      text: `⏰ *${l.name}*: please say if you're coming by *${fmtWhen(l.signupDeadline)}*. ${s.undecided.length} of us haven't answered yet.\n\nGoing so far${spots}: ${s.going.map((g) => g.nick).join(", ") || "nobody yet"}\n\n${link}`,
+      text: `⏰ *${l.name}*: please say if you're coming by *${fmtWhen(l.signupDeadline)}*. ${s.undecided.length} of us haven't answered yet.\n\nGoing so far${spots}: ${s.going.map((g) => g.name).join(", ") || "nobody yet"}\n\n${link}`,
     });
   }
   if (l.paymentDueDate) {

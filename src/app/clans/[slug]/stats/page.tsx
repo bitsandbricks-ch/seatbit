@@ -1,16 +1,14 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { and, isNull } from "drizzle-orm";
-import { db, schema } from "@/db";
-import { ClanAvatar } from "@/components/clan-avatar";
+import { ClanHeader } from "@/components/clan-header";
 import { Avatar } from "@/components/avatar";
 import { getAvatars, type AvatarData } from "@/lib/avatars";
 import { EventTurnoutChart } from "@/components/event-turnout-chart";
-import { Card, EmptyState, Page, PageHeader, Pill, StatTile } from "@/components/ui";
-import { canManageClan, getClanBySlug } from "@/lib/clans";
+import { Card, EmptyState, Page, Pill, StatTile } from "@/components/ui";
+import { canManageClan, clanRole, getClanBySlug } from "@/lib/clans";
 import { clanStats, pct, type MemberStats } from "@/lib/clan-stats";
 import { fmtDay } from "@/lib/format";
-import { personLabel } from "@/lib/names";
+import { getDefaultNames } from "@/lib/lans";
 import { requireUser } from "@/lib/session";
 
 export default async function ClanStatsPage({ params }: PageProps<"/clans/[slug]/stats">) {
@@ -25,16 +23,9 @@ export default async function ClanStatsPage({ params }: PageProps<"/clans/[slug]
   const upcoming = events.filter((e) => !e.past);
   const sum = (list: typeof events, k: "asked" | "answered" | "going") => list.reduce((n, e) => n + e[k], 0);
   const guests = members.filter((m) => m.isGuest).length;
-  const defaultNicks = new Map(
-    db
-      .select({ userId: schema.nickname.userId, nick: schema.nickname.nick })
-      .from(schema.nickname)
-      .where(and(isNull(schema.nickname.lanId), isNull(schema.nickname.typeId)))
-      .all()
-      .map((n) => [n.userId, n.nick]),
-  );
+  const people = getDefaultNames(members.map((m) => m.userId));
   const avatars = getAvatars(members.map((m) => m.userId));
-  const label = (m: MemberStats) => personLabel(m, defaultNicks.get(m.userId));
+  const label = (m: MemberStats) => people.get(m.userId)?.full ?? m.name;
 
   const withPast = members.filter((m) => m.asked > 0);
   const mostActive = [...withPast]
@@ -50,7 +41,7 @@ export default async function ClanStatsPage({ params }: PageProps<"/clans/[slug]
 
   return (
     <Page>
-      <PageHeader back={{ href: `/clans/${c.slug}`, label: c.name }} avatar={<ClanAvatar clan={c} size={56} />} title="Clan stats" />
+      <ClanHeader clan={c} role={clanRole(me.id, c.id)} canManage mode="view" tab="stats" />
 
       <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
         <StatTile label="Members" value={String(totalMembers)} sub={guests ? `${guests} guests without login` : "all with login"} />

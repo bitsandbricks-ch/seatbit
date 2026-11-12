@@ -1,6 +1,7 @@
 /**
- * Fills an empty database with demo data: one clan, three LAN events (one
- * past, one with a final seat plan, one where members pick their own seats),
+ * Fills an empty database with demo data: one clan, five LAN events (one
+ * past, one with a final seat plan, one where members pick their own seats,
+ * an interest check and a draft),
  * members, a guest, nicknames, seats, travel offers, packing lists and games.
  *
  * Used for local development and by scripts/screenshots.ts, so the docs
@@ -179,10 +180,13 @@ export async function seedDemo({ force = false, discord = false } = {}) {
     const end = new Date(start.getTime() + 2 * DAY - 4 * 60 * 60 * 1000); // Sunday 14:00
     const mmStart = friday(110, 17);
     const lastYearStart = friday(-335, 18);
+    const retroStart = friday(150, 18); // placeholder for sorting; the date is "to be decided"
     const events = {
       lakeside: "demo-lan-lakeside",
       mountain: "demo-lan-mountain",
       past: "demo-lan-lakeside-past",
+      retro: "demo-lan-retro",
+      draft: "demo-lan-lakeside-next",
     };
     tx.insert(s.lan)
       .values([
@@ -206,6 +210,7 @@ export async function seedDemo({ force = false, discord = false } = {}) {
           seatsPublishedAt: at(-1, 21),
           seatingOpen: true,
           externalPlanUrl: "https://example.com/lakeside-lan/seatplan",
+          publishedAt: at(-40, 12),
           createdAt: at(-40, 12),
         },
         {
@@ -226,6 +231,7 @@ export async function seedDemo({ force = false, discord = false } = {}) {
           seatRows: 2,
           seatCols: 6,
           seatPicking: true,
+          publishedAt: at(-5, 12),
           createdAt: at(-5, 12),
         },
         {
@@ -241,7 +247,41 @@ export async function seedDemo({ force = false, discord = false } = {}) {
           seatRows: 1,
           seatCols: 16,
           seatsPublishedAt: new Date(lastYearStart.getTime() - 7 * DAY),
+          publishedAt: new Date(lastYearStart.getTime() - 60 * DAY),
           createdAt: new Date(lastYearStart.getTime() - 60 * DAY),
+        },
+        {
+          // Interest check: no date yet, members only say whether they'd come.
+          id: events.retro,
+          clanId,
+          name: "Retro Weekend",
+          description: "Old PCs, old games, one weekend. Would you come? If enough people are in, we book the hut.",
+          location: "Somewhere in the mountains",
+          startsAt: retroStart,
+          endsAt: new Date(retroStart.getTime() + 2 * DAY),
+          interestCheck: true,
+          dateTbd: true,
+          dateHint: "Spring 2027",
+          publishedAt: at(-3, 19),
+          createdAt: at(-3, 19),
+        },
+        {
+          // A draft: only orgas and clan admins see it until it's published.
+          id: events.draft,
+          clanId,
+          typeId: lakeside,
+          name: `Lakeside LAN ${start.getFullYear() + 1}`,
+          description: "Copied from this year. Dates still to confirm with the organisers.",
+          location: "Sports hall, Lakeside",
+          websiteUrl: "https://example.com/lakeside-lan",
+          ticketUrl: "https://example.com/lakeside-lan/tickets",
+          startsAt: new Date(start.getTime() + 364 * DAY),
+          endsAt: new Date(end.getTime() + 364 * DAY),
+          price: "CHF 65",
+          capacity: 20,
+          seatRows: 1,
+          seatCols: 22,
+          createdAt: at(-1, 22),
         },
       ])
       .run();
@@ -251,6 +291,23 @@ export async function seedDemo({ force = false, discord = false } = {}) {
         { lanId: events.lakeside, userId: ids.ben },
         { lanId: events.mountain, userId: ids.alex },
         { lanId: events.past, userId: ids.alex },
+        { lanId: events.retro, userId: ids.alex },
+        { lanId: events.draft, userId: ids.alex },
+        { lanId: events.draft, userId: ids.ben },
+      ])
+      .run();
+
+    // Interest check answers for the Retro Weekend (Anna hasn't answered yet).
+    const interest: [string, "yes" | "maybe" | "no"][] = [
+      ["alex", "yes"], ["ben", "yes"], ["chiara", "maybe"], ["finn", "yes"], ["lea", "no"], ["rafael", "yes"], ["nina", "maybe"],
+    ];
+    for (const [key, answer] of interest) tx.insert(s.lanInterest).values({ lanId: events.retro, userId: ids[key], answer }).run();
+
+    // Orga news on the Lakeside LAN.
+    tx.insert(s.lanNews)
+      .values([
+        { lanId: events.lakeside, authorId: ids.alex, text: "Seat plan is final! Please book your seat on the event site this week.", createdAt: at(-1, 21, 5) },
+        { lanId: events.lakeside, authorId: ids.ben, text: "Pizza order on Saturday at 19:00, bring cash.", createdAt: at(-6, 18) },
       ])
       .run();
 
@@ -410,7 +467,7 @@ function range(letter: string, from: number, to: number) {
 if (process.argv[1]?.match(/seed-demo\.[tj]s$/)) {
   seedDemo({ force: process.argv.includes("--force"), discord: process.argv.includes("--discord") })
     .then((r) => {
-      console.log(`Demo data added: ${r.users} people in "Pixel Pirates", 3 events.`);
+      console.log(`Demo data added: ${r.users} people in "Pixel Pirates", 5 events.`);
       console.log(`Sign in with alex@example.com (admin and orga) or anna@example.com (member), password "${r.password}".`);
       console.log("Email login needs ALLOW_EMAIL_LOGIN=1.");
     })

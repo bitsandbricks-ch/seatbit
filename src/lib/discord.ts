@@ -1,10 +1,10 @@
 import crypto from "node:crypto";
-import { and, asc, eq, gt, inArray } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, isNotNull } from "drizzle-orm";
 import { db, schema } from "@/db";
-import type { AttendanceStatus, Clan, Lan } from "@/db/schema";
+import { INTEREST_ANSWERS, type AttendanceStatus, type Clan, type InterestAnswer, type Lan } from "@/db/schema";
 import { avatarUrl, canManageClan, getClan, isClanMember, myClans } from "./clans";
 import { type ChatReminderKind, fmtWhen, lanFacts, lanLink, lanSummary } from "./announce";
-import { ATTENDANCE_LOCKED_MSG, attendanceLocked, getLan, setAttendance, signupClosed } from "./lans";
+import { ATTENDANCE_LOCKED_MSG, attendanceLocked, getDisplayNames, getLan, setAttendance, signupClosed } from "./lans";
 import { type Json, api, discordEnabled } from "./discord-api";
 import { getSetting } from "./settings";
 import { setSeatBooked } from "./seat-booking";
@@ -80,19 +80,65 @@ function nextDeadline(l: Lan, now = new Date()) {
   return next ? `⏰ Next: ${next[0]} ${fmtWhen(next[1]!)}` : "";
 }
 
+/** Interest check buttons: would you come? */
+function interestButtons(l: Lan) {
+  const btn = (a: InterestAnswer, label: string, style: number) => ({ type: 2, style, label, custom_id: `int:${l.id}:${a}` });
+  return [
+    {
+      type: 1,
+      components: [
+        btn("yes", "I'd come", 3),
+        btn("maybe", "Maybe", 2),
+        btn("no", "Not this time", 4),
+        { type: 2, style: 5, label: "Open in Seatbit", url: lanLink(l) },
+      ],
+    },
+  ];
+}
+
+/** The interest check post: who'd come, who maybe. */
+async function interestMessage(l: Lan) {
+  const rows = db.select().from(schema.lanInterest).where(eq(schema.lanInterest.lanId, l.id)).all();
+  const names = await getDisplayNames(l.id, rows.map((r) => r.userId));
+  const who = (a: string) => rows.filter((r) => r.answer === a).map((r) => names.get(r.userId) ?? "?").sort((x, y) => x.localeCompare(y));
+  const yes = who("yes");
+  const maybe = who("maybe");
+  const c = l.clanId ? getClan(l.clanId) : undefined;
+  const icon = c && avatarUrl(c);
+  const fields = lanFacts(l).map(([name, value]) => ({ name, value: clip(value, 1024), inline: true }));
+  fields.push({ name: `Would come (${yes.length})`, value: list(yes), inline: false });
+  if (maybe.length) fields.push({ name: `Maybe (${maybe.length})`, value: list(maybe), inline: false });
+  return {
+    embeds: [
+      {
+        author: c ? { name: clip(c.name, 256), url: `${appUrl}/clans/${c.slug}`, icon_url: icon ? `${appUrl}${icon}` : undefined } : undefined,
+        title: clip(`Would you come? ${l.name}`, 256),
+        url: lanLink(l),
+        description: clip(l.description, 1500) || undefined,
+        color: BRAND,
+        fields,
+        footer: { text: "Interest check, not binding. Sign-up opens once the orgas decide." },
+      },
+    ],
+    components: interestButtons(l),
+    allowed_mentions: { parse: [] },
+  };
+}
+
 /** The LAN announcement: details, live attendee list and attendance buttons. */
 export async function lanMessage(l: Lan) {
+  if (l.interestCheck && !l.cancelledAt) return interestMessage(l);
   const s = await lanSummary(l);
   const closed = !!signupClosed(l);
   const fields = lanFacts(l).map(([name, value]) => ({ name, value: clip(value, 1024), inline: true }));
   fields.push({
     name: `Coming (${s.going.length}${l.capacity ? `/${l.capacity}` : ""})`,
-    value: list(s.going.map((g) => g.nick)),
+    value: list(s.going.map((g) => g.name)),
     inline: false,
   });
-  if (s.maybe.length) fields.push({ name: `Unsure (${s.maybe.length})`, value: list(s.maybe.map((g) => g.nick)), inline: false });
+  if (s.maybe.length) fields.push({ name: `Unsure (${s.maybe.length})`, value: list(s.maybe.map((g) => g.name)), inline: false });
   if (s.waitlist.length)
-    fields.push({ name: `Waitlist (${s.waitlist.length})`, value: list(s.waitlist.map((g) => g.nick)), inline: false });
+    fields.push({ name: `Waitlist (${s.waitlist.length})`, value: list(s.waitlist.map((g) => g.name)), inline: false });
   // Live status: tickets, seat bookings and what's due next.
   const status = [
     s.going.length ? `🎟️ Tickets: **${s.going.length - s.goingNoTicket}/${s.going.length}**` : "",
@@ -106,15 +152,15 @@ export async function lanMessage(l: Lan) {
     embeds: [
       {
         author: c ? { name: clip(c.name, 256), url: `${appUrl}/clans/${c.slug}`, icon_url: icon ? `${appUrl}${icon}` : undefined } : undefined,
-        title: clip(l.name, 256),
+        title: clip(l.cancelledAt ? `❌ Cancelled: ${l.name}` : l.name, 256),
         url: lanLink(l),
-        description: clip(l.description, 1500) || undefined,
-        color: BRAND,
+        description: clip(l.cancelledAt ? l.cancelReason || "The orgas cancelled this event." : l.description, 1500) || undefined,
+        color: l.cancelledAt ? 0xef4444 : BRAND,
         fields,
-        footer: { text: closed ? "Sign-up is closed" : "Tap a button to set your status" },
+        footer: { text: l.cancelledAt ? "This event is cancelled" : closed ? "Sign-up is closed" : "Tap a button to set your status" },
       },
     ],
-    components: attendanceButtons(l, closed),
+    components: l.cancelledAt ? [] : attendanceButtons(l, closed),
     allowed_mentions: { parse: [] },
   };
 }
@@ -184,7 +230,8 @@ function forgetIfGone(channelId: string, e: unknown) {
 export async function announceLan(lanId: string, onlyChannelId?: string) {
   if (!discordEnabled()) return 0;
   const l = getLan(lanId);
-  if (!l) return 0;
+  // Drafts stay off Discord until an orga publishes them.
+  if (!l?.publishedAt) return 0;
   const msg = await lanMessage(l);
   const existing = new Set(
     db.select().from(discordMessage).where(eq(discordMessage.lanId, lanId)).all().map((m) => m.channelId),
@@ -359,7 +406,7 @@ const upcomingLans = (clanIds: string[]) =>
     ? db
         .select()
         .from(lan)
-        .where(and(gt(lan.endsAt, new Date()), inArray(lan.clanId, clanIds)))
+        .where(and(gt(lan.endsAt, new Date()), inArray(lan.clanId, clanIds), isNotNull(lan.publishedAt)))
         .orderBy(asc(lan.startsAt))
         .all()
     : [];
@@ -402,6 +449,25 @@ export function handleInteraction(i: Interaction): { response: Json; later?: () 
     } catch (e) {
       return { response: reply((e as Error).message, { components: [linkButton("Open in Seatbit", lanLink(l))] }) };
     }
+  }
+
+  // Interest check button
+  if (i.type === 3 && i.data?.custom_id?.startsWith("int:")) {
+    const [, lanId, answer] = i.data.custom_id.split(":") as [string, string, InterestAnswer];
+    const l = getLan(lanId);
+    if (!l) return { response: reply("This LAN doesn't exist anymore.") };
+    if (!l.interestCheck || l.cancelledAt) return { response: reply("The interest check is over.", { components: [linkButton("Open in Seatbit", lanLink(l))] }) };
+    if (!INTEREST_ANSWERS.includes(answer)) return { response: reply("Unknown button.") };
+    const me = seatbitUserFor(discordUser);
+    if (!me) return { response: notLinked() };
+    if (!l.clanId || !isClanMember(me.id, l.clanId)) return { response: reply("This LAN is for members of another clan.") };
+    db.insert(schema.lanInterest)
+      .values({ lanId: l.id, userId: me.id, answer })
+      .onConflictDoUpdate({ target: [schema.lanInterest.lanId, schema.lanInterest.userId], set: { answer } })
+      .run();
+    refreshLanMessagesSoon(l.id);
+    const text = { yes: "👍 Noted: you'd come", maybe: "🤔 Noted: maybe", no: "👋 Noted: not this time" }[answer];
+    return { response: reply(`${text} for **${l.name}**. We'll tell you when sign-up opens.`) };
   }
 
   // Attendance button

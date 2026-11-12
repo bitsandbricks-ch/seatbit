@@ -11,17 +11,20 @@ There are two roles:
 
 Anyone signed in can start a clan on the **Clans** page (*Start a clan*). You become its first admin.
 
+The clan page has **View** and **Manage** (for admins), with the tabs **Overview**, **Events**, **Members** and **Stats**.
+
 ![Clan page](../screenshots/desktop-clan.png){ .shot }
 
 ## Clan settings
 
-Open the clan and click **Settings**. The tabs:
+Open the clan and switch to **Manage**. The tabs:
 
 - **General:** name, description, avatar, and **who can join**:
     - *Approval* (default): anyone can ask to join, an admin approves.
     - *Open*: anyone joins directly.
     - *Invite only*: only with an invite link.
-- **Members:** approve join requests, add existing Seatbit users, add guests, make or remove admins. See [Members and guests](members.md).
+- **Members:** approve join requests, add existing Seatbit users, make or remove admins. See [Members and guests](members.md).
+- **Guests:** people without an account yet.
 - **LAN types:** templates for the LANs you go to every year (see below).
 - **Invite links:** links that let anyone who has them join as a member. They always work, whatever the join mode. Delete a link to stop it.
 - **Discord & WhatsApp:** connect the clan's Discord server. See [Discord and WhatsApp](discord.md).

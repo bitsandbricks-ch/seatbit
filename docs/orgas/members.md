@@ -11,7 +11,9 @@ Manage people under **Clan settings → Members**.
 
 ## Guests
 
-Guests are people who aren't on Seatbit yet, e.g. a friend who only comes once a year. Add them with first name, surname and nick, then sign them up for events and give them a seat like anyone else.
+**Clan settings → Guests.** Guests are people who aren't on Seatbit yet, e.g. a friend who only comes once a year. Add them with first name, surname and nick, then sign them up for events and give them a seat like anyone else. You can edit their name and nick later.
+
+![Guests](../screenshots/desktop-clan-guests.png){ .shot }
 
 To hand a guest over to its owner:
 

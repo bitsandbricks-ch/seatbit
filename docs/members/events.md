@@ -24,6 +24,12 @@ Say **Coming**, **Unsure** or **Not coming** before the *answer by* date. You ca
 - If the group's spots are full, you go on the **waitlist** and move up automatically (with an email) when someone drops out.
 - Once you have a ticket, your answer is **locked**. If your plans change, ask an orga.
 
+## Interest check
+
+Sometimes the orgas first ask **Would you come?** before an event is fixed, maybe without a date yet. Answer *I'd come*, *Maybe* or *Not this time*; it isn't binding. When the orgas open sign-up, everyone who was interested gets a message and answers properly.
+
+![Interest check](../screenshots/phone-interest.png){ .shot width="300" }
+
 ## Your checklist
 
 1. **Say you're coming.**
@@ -36,6 +42,10 @@ Say **Coming**, **Unsure** or **Not coming** before the *answer by* date. You ca
 
 On the Overview tab you can set a nick for this LAN type (used for every event of that type) and your **user ID or ticket number** on the event's own site, so the orgas can match you up. Only orgas see the ID.
 
+## News and the day itself
+
+Orgas post short **news** ("Doors open at 10:00") on the event page; you also get them by email or Discord DM if you're coming, unsure or on the waitlist. On the day, tap **I'm here** when you arrive so the others know you made it.
+
 ## Reminders
 
-Seatbit sends a reminder a few days before the answer and ticket deadlines (only to people who still have to act), the day before the LAN, and two days before to install your games. You get them by email and, if your clan uses the Discord bot, in Discord. Turn emails or Discord DMs off on your [profile](profile.md).
+Seatbit sends a reminder a few days before the answer and ticket deadlines (only to people who still have to act), the day before the LAN, and two days before to install your games. You get them by email and, if your clan uses the Discord bot, in Discord. Turn emails or Discord DMs off on your [profile](profile.md), and choose there which new events you want to hear about.

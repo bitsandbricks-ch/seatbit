@@ -12,6 +12,7 @@ Seatbit helps a clan or group of friends go to LAN parties run by others (think 
 
 ## Features
 
+- **Event lifecycle:** drafts, publish now or at a set time, an optional **interest check** before dates are fixed, orga news, cancel, "copy for next year" and check-in on the day.
 - **Attendance** with *coming / unsure / not coming*, answer deadlines and an automatic **waitlist** when the group's spots are full.
 - **Tickets:** members tick off their ticket, orgas confirm; buy-by deadline with reminders.
 - **Seat plan** of the group's block (e.g. `F1-F16, F19-F22`): seat wishes, optional self pick, orgas edit right in the map (assign, swap, hold, drag & drop, auto-assign), finalize, then everyone books their seat on the event's own site. Seat swaps with orga approval.

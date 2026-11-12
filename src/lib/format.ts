@@ -55,3 +55,15 @@ export function fmtRange(start: Date, end: Date) {
   const startDay = sameYear ? `${p2(start.getDate())}.${p2(start.getMonth() + 1)}.` : dmy(start);
   return `${WD[start.getDay()]} ${startDay}, ${hm(start)} – ${WD[end.getDay()]} ${dmy(end)}, ${hm(end)}`;
 }
+
+type When = { startsAt: Date; endsAt: Date; dateTbd?: boolean; dateHint?: string };
+const tbd = (l: When) => (l.dateHint ? `Date not set (${l.dateHint})` : "Date not set yet");
+
+/** The event's dates as a range, or "Date not set (spring 2027)" while the date is open. */
+export const lanRange = (l: When) => (l.dateTbd ? tbd(l) : fmtRange(l.startsAt, l.endsAt));
+/** "14.11.2026", or the date hint while the date is open. */
+export const lanDay = (l: When) => (l.dateTbd ? l.dateHint || "Date open" : fmtDay(l.startsAt));
+/** "Sat 14.11.2026", or the open-date text. */
+export const lanWeekday = (l: When) => (l.dateTbd ? tbd(l) : fmtWeekday(l.startsAt));
+/** "Sat 14.11.2026, 18:00", or the open-date text. */
+export const lanStart = (l: When) => (l.dateTbd ? tbd(l) : fmtDate(l.startsAt));

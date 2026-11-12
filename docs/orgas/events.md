@@ -11,7 +11,19 @@ Click **New event** on the **LANs** tab or the clan page. **Start from** a LAN t
 - **Seats:** the seats the event gave the group, e.g. `F1-F16, F19-F22`.
 - **Event seat plan:** the link to the event's own seat plan, where every member books their seat (new every year).
 
-If the clan has a linked Discord channel, the bot posts an announcement with answer buttons.
+## Draft, publish and schedule
+
+A new event starts as a **draft**: only its orgas and the clan admins see it, and nothing goes out (no Discord post, no reminders, no messages). Fill in the details, then click **Publish now**, or **Schedule…** a time and it goes live by itself.
+
+![A draft event](../screenshots/desktop-event-draft.png){ .shot }
+
+Publishing shows the event to the clan, posts the Discord announcement with answer buttons, starts the reminders and tells members about the new event by email or Discord DM. Each member chooses per clan whether they hear about all events or only certain LAN types (one-off events always count).
+
+## Interest check
+
+Not sure yet if the group goes, or when? Turn on the **interest check**: members only answer *I'd come / Maybe / Not this time*, nothing binding. The date can stay open with a rough hint like "Spring 2027". When you've decided, set the date and click **Open sign-up**: everyone who was interested (except those who said no) is told, and the normal answers, tickets and seats start.
+
+![Interest check, orga view](../screenshots/desktop-interest-manage.png){ .shot }
 
 ## Manage an event
 
@@ -21,7 +33,9 @@ Orgas see **View / Manage** next to the event title. *Manage* has the tabs **Ove
 
 ### Overview
 
-Numbers at a glance (coming, unsure, tickets, seats), the deadlines, and **reminder buttons** to nudge people by hand: everyone who hasn't answered, everyone without a ticket, or everyone coming.
+Numbers at a glance (coming, unsure, tickets, seats), the deadlines, **news for attendees**, and **reminder buttons** to nudge people by hand: everyone who hasn't answered, everyone without a ticket, or everyone coming.
+
+**News** are short updates ("Pizza order at 19:00, bring cash"). They show on the event page and go by email or DM to everyone coming, unsure or on the waitlist.
 
 Reminders also go out automatically a few days before each deadline (set per event) and the day before the LAN. Each one is sent once per person.
 
@@ -35,6 +49,14 @@ One row per member: answer, seat, **ticket** (members tick *I bought my ticket*,
 
 ### Settings
 
-Edit the event's details, dates, spots and links, add co-orgas, or delete the event.
+Edit the event's details, dates, spots and links, and add co-orgas. Also here:
+
+- **Copy for next year** creates next year's event as a draft (dates +1 year, seat block, orgas).
+- **Cancel event…** tells everyone who answered and turns the Discord post red. The event stays visible, greyed out; you can undo it.
+- **Delete** removes a draft or an event for good.
+
+## On the day
+
+Members coming tap **I'm here** when they arrive, and everyone sees who is still on the way.
 
 ![Event settings](../screenshots/desktop-manage-settings.png){ .shot }

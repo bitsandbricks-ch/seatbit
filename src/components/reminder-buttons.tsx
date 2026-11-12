@@ -6,9 +6,12 @@ import { btnSecondary } from "./ui";
 export function ReminderButtons({
   lanId,
   counts,
+  draft = false,
 }: {
   lanId: string;
   counts: { signup: number | null; payment: number | null; event: number };
+  /** Drafts send nothing, so the buttons wait for publishing. */
+  draft?: boolean;
 }) {
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<string | null>(null);
@@ -23,19 +26,20 @@ export function ReminderButtons({
     <div className="space-y-2">
       <div className="flex flex-wrap gap-2">
         {counts.signup !== null && (
-          <button disabled={pending || !counts.signup} className={btnSecondary} onClick={() => send("signup", "answer", counts.signup!)}>
+          <button disabled={draft || pending || !counts.signup} className={btnSecondary} onClick={() => send("signup", "answer", counts.signup!)}>
             Remind undecided ({counts.signup})
           </button>
         )}
         {counts.payment !== null && (
-          <button disabled={pending || !counts.payment} className={btnSecondary} onClick={() => send("payment", "ticket", counts.payment!)}>
+          <button disabled={draft || pending || !counts.payment} className={btnSecondary} onClick={() => send("payment", "ticket", counts.payment!)}>
             Remind without ticket ({counts.payment})
           </button>
         )}
-        <button disabled={pending || !counts.event} className={btnSecondary} onClick={() => send("event", "event", counts.event)}>
+        <button disabled={draft || pending || !counts.event} className={btnSecondary} onClick={() => send("event", "event", counts.event)}>
           Remind attendees ({counts.event})
         </button>
       </div>
+      {draft && <p className="text-sm text-muted">Reminders start once you publish the event.</p>}
       {msg && <p className="text-sm text-bit">{msg}</p>}
     </div>
   );

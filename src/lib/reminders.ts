@@ -1,5 +1,5 @@
 import { fmtDate } from "./format";
-import { and, eq, gt, ne } from "drizzle-orm";
+import { and, eq, gt, isNotNull, isNull, ne } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Lan, ReminderKind, User } from "@/db/schema";
 import { appUrl } from "./mail";
@@ -121,7 +121,15 @@ export function dueKinds(l: Lan, now = new Date()): ReminderKind[] {
  * often as you like (each reminder goes out once per user and LAN).
  */
 export async function runDueReminders(now = new Date()) {
-  const lans = db.select().from(lan).where(gt(lan.endsAt, now)).all();
+  // Scheduled drafts go live first, so they're in this round.
+  const { publishDueDrafts } = await import("./event-notices");
+  await publishDueDrafts(now).catch((e) => console.error("[publish] scheduled publish failed", e));
+  // Drafts, cancelled events and interest checks get no reminders.
+  const lans = db
+    .select()
+    .from(lan)
+    .where(and(gt(lan.endsAt, now), isNotNull(lan.publishedAt), isNull(lan.cancelledAt), eq(lan.interestCheck, false)))
+    .all();
   const result: { lan: string; kind: string; sent: number }[] = [];
   for (const l of lans) {
     const kinds = dueKinds(l, now);

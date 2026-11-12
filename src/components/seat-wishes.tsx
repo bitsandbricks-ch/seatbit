@@ -12,7 +12,7 @@ export function SeatWishes({
   initial,
 }: {
   lanId: string;
-  people: { id: string; nick: string }[];
+  people: { id: string; name: string }[];
   seatLabels: string[];
   initial: Wishes;
 }) {
@@ -41,7 +41,7 @@ export function SeatWishes({
               const avoid = w.avoid.includes(p.id);
               return (
                 <li key={p.id} className="flex items-center justify-between gap-2 rounded-md bg-raised/60 px-3 py-1.5">
-                  <span className="truncate">{p.nick}</span>
+                  <span className="min-w-0 leading-tight [overflow-wrap:anywhere]">{p.name}</span>
                   <span className="flex shrink-0 gap-1">
                     <button
                       type="button"

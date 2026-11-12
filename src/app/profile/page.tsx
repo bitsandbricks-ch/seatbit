@@ -14,6 +14,8 @@ import { Avatar } from "@/components/avatar";
 import { AppearanceForm } from "@/components/appearance-form";
 import { PROFILE_COLORS, PROFILE_ICONS, avatarData, initialsOf, userColor } from "@/lib/avatars";
 import { missingServers } from "@/lib/discord-invite";
+import { personLabel } from "@/lib/names";
+import { InterestsForm } from "@/components/event-extras";
 
 const DM_RESULT: Record<string, string> = {
   ok: "Test DM sent. Check your Discord DMs from the Seatbit bot.",
@@ -33,7 +35,9 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
   const nicks = db.select().from(schema.nickname).where(eq(schema.nickname.userId, me.id)).all();
   const lanIds = db.select().from(schema.lanAccount).where(eq(schema.lanAccount.userId, me.id)).all();
   const defaultNick = nicks.find((n) => !n.lanId && !n.typeId)?.nick ?? "";
-  const clanIds = myClans(me.id).map((c) => c.clan.id);
+  const memberships = db.select().from(schema.clanMember).where(eq(schema.clanMember.userId, me.id)).all();
+  const myClanList = myClans(me.id);
+  const clanIds = myClanList.map((c) => c.clan.id);
   const types = clanIds.length
     ? db.select().from(schema.lanType).where(inArray(schema.lanType.clanId, clanIds)).orderBy(asc(schema.lanType.name)).all()
     : [];
@@ -51,10 +55,10 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
     <Page>
       <PageHeader
         avatar={<Avatar data={avatarData(me)} size={56} />}
-        title={defaultNick || me.name}
+        title={personLabel(me, defaultNick)}
         subtitle={
           <span className="block truncate">
-            {me.name} · {me.email}
+            {me.email}
           </span>
         }
       />
@@ -87,7 +91,9 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
             <input type="checkbox" name="emailReminders" defaultChecked={me.emailReminders} className="mt-0.5" />
             <span>
               Email reminders
-              <span className="block text-xs text-muted">Deadlines, tickets and the day before a LAN, sent to {me.email}.</span>
+              <span className="block text-xs text-muted">
+                New events, orga news, deadlines, tickets and the day before a LAN, sent to {me.email}.
+              </span>
             </span>
           </label>
           <input type="hidden" name="discordDmsShown" value="1" />
@@ -139,6 +145,28 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
           name={defaultNick || me.name}
         />
       </Card>
+
+      {types.length > 0 && (
+        <Card title="Events I hear about">
+          <p className="mb-4 text-sm text-muted">
+            Who gets a message when a new event is published. Pick the kinds of LANs you care about, per clan.
+          </p>
+          <div className="space-y-5">
+            {myClanList
+              .filter((c) => types.some((t) => t.clanId === c.clan.id))
+              .map((c) => (
+                <div key={c.clan.id}>
+                  {myClanList.length > 1 && <h3 className="mb-2 text-sm font-medium text-fg">{c.clan.name}</h3>}
+                  <InterestsForm
+                    clanId={c.clan.id}
+                    types={types.filter((t) => t.clanId === c.clan.id).map((t) => ({ id: t.id, name: t.name }))}
+                    current={memberships.find((m) => m.clanId === c.clan.id)?.interestTypes ?? null}
+                  />
+                </div>
+              ))}
+          </div>
+        </Card>
+      )}
 
       {types.length > 0 && (
         <Card title="Nicks and IDs per LAN type">

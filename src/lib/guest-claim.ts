@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, eq, gt, inArray, sql } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, isNotNull, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { User } from "@/db/schema";
 import { fmtDay } from "./format";
@@ -129,7 +129,7 @@ export async function sendGuestInvite(guestId: string, inviter: string) {
     ? db
         .select()
         .from(schema.lan)
-        .where(and(inArray(schema.lan.id, lanIds), gt(schema.lan.endsAt, new Date())))
+        .where(and(inArray(schema.lan.id, lanIds), gt(schema.lan.endsAt, new Date()), isNotNull(schema.lan.publishedAt)))
         .orderBy(asc(schema.lan.startsAt))
         .all()
     : [];

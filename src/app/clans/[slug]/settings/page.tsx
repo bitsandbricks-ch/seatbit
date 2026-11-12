@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { and, asc, eq, isNull } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import { db, schema } from "@/db";
 import {
   addClanMember,
   addGuest,
+  deleteGuest,
   renewGuestLink,
-  setGuestEmail,
+  updateGuest,
   createInvite,
   deleteClan,
   deleteInvite,
@@ -14,30 +15,25 @@ import {
   setClanDiscordInvite,
   setClanMemberRole,
 } from "@/app/clan-actions";
-import { ClanAvatar } from "@/components/clan-avatar";
+import type { User } from "@/db/schema";
+import { Avatar } from "@/components/avatar";
+import { ClanHeader, CLAN_MANAGE_TABS } from "@/components/clan-header";
 import { ClanForm } from "@/components/clan-form";
 import { AddMemberForm } from "@/components/add-member-form";
 import { CopyField } from "@/components/copy-field";
-import { GuestEmailForm, GuestForm } from "@/components/guest-form";
-import { Tabs } from "@/components/tabs";
+import { GuestEditForm, GuestForm } from "@/components/guest-form";
 import { ClanMemberAdmin } from "@/components/clan-member-list";
-import { Card, Columns, Page, PageHeader, btnDanger, btnGhost, btnPrimary, btnSecondary } from "@/components/ui";
+import { Card, Columns, Page, btnDanger, btnGhost, btnPrimary, btnSecondary } from "@/components/ui";
 import { appUrl } from "@/lib/mail";
-import { personLabel } from "@/lib/names";
+import { getDefaultNames } from "@/lib/lans";
 import { avatarData } from "@/lib/avatars";
-import { canManageClan, getClanBySlug } from "@/lib/clans";
+import { canManageClan, clanRole, getClanBySlug } from "@/lib/clans";
+import { fmtDate } from "@/lib/format";
 import { requireUser } from "@/lib/session";
 import { unlinkDiscordChannel } from "@/app/actions";
 import { discordEnabled, inviteUrl } from "@/lib/discord-api";
 import { clanServers } from "@/lib/discord-invite";
 
-const TABS = [
-  { id: "general", label: "General" },
-  { id: "members", label: "Members" },
-  { id: "types", label: "LAN types" },
-  { id: "invites", label: "Invite links" },
-  { id: "chat", label: "Discord & WhatsApp" },
-];
 
 export default async function ClanSettingsPage({ params, searchParams }: PageProps<"/clans/[slug]/settings">) {
   const { slug } = await params;
@@ -46,7 +42,7 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
   const c = getClanBySlug(slug);
   if (!c) notFound();
   if (!canManageClan(me, c.id)) redirect(`/clans/${slug}`);
-  const tab = TABS.some((t) => t.id === sp.tab) ? (sp.tab as string) : "general";
+  const tab = (CLAN_MANAGE_TABS as readonly string[]).includes(sp.tab as string) ? (sp.tab as string) : "general";
 
   const members = db
     .select({ u: schema.user, role: schema.clanMember.role })
@@ -71,27 +67,16 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
     .where(eq(schema.user.isGuest, false))
     .all()
     .filter((u) => !inClan.has(u.id));
-  const defaultNicks = new Map(
-    db
-      .select({ userId: schema.nickname.userId, nick: schema.nickname.nick })
-      .from(schema.nickname)
-      .where(and(isNull(schema.nickname.lanId), isNull(schema.nickname.typeId)))
-      .all()
-      .map((n) => [n.userId, n.nick]),
-  );
+  const people = getDefaultNames([...members.map((m) => m.u.id), ...others.map((u) => u.id)]);
+  const fullName = (u: { id: string; name: string }) => people.get(u.id)?.full ?? u.name;
   const candidates = others
     // Shown as Name "Nick" Surname; don't hand every user's full email address to clan admins.
-    .map((u) => ({ id: u.id, name: personLabel(u, defaultNicks.get(u.id)), email: maskEmail(u.email) }))
+    .map((u) => ({ id: u.id, name: fullName(u), email: maskEmail(u.email) }))
     .sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <Page>
-      <PageHeader back={{ href: `/clans/${c.slug}`, label: c.name }} avatar={<ClanAvatar clan={c} size={56} />} title="Clan settings" />
-      <Tabs
-        tabs={TABS.map((t) => ({ ...t, badge: t.id === "members" && pending.length ? `${pending.length} waiting` : undefined }))}
-        active={tab}
-        hrefFor={(t) => `/clans/${c.slug}/settings?tab=${t}`}
-      />
+      <ClanHeader clan={c} role={clanRole(me.id, c.id)} canManage mode="manage" tab={tab} />
 
       {tab === "general" && (
         <Columns
@@ -116,44 +101,16 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
       {tab === "members" && (
         <Columns
           aside={
-            <>
-              <Card title="Add an existing user">
-                <AddMemberForm clanId={c.id} users={candidates} action={addClanMember} />
-              </Card>
-              <Card title="Guests">
-                <p className="mb-3 text-sm text-muted">
-                  For people who aren&apos;t on Seatbit yet: add them by name, then sign them up for events and give them a seat
-                  like anyone else. With an email address, Seatbit mails them an invite, and signing in with a Discord account
-                  on that address takes over everything you set up for them. Or send them their link yourself.
-                </p>
-                {guests.length > 0 && (
-                  <ul className="mb-4 space-y-3">
-                    {guests.map(({ u }) => (
-                      <li key={u.id} className="space-y-1.5 rounded-md border border-line p-3">
-                        <Link href={`/clans/${c.slug}/members/${u.id}`} className="block truncate text-sm font-medium hover:text-bit hover:underline">
-                          {u.name}
-                        </Link>
-                        <span className="block text-xs text-faint">
-                          {u.inviteEmail
-                            ? u.invitedAt
-                              ? `Invited ${u.invitedAt.toLocaleDateString("de-CH")} at ${u.inviteEmail}`
-                              : u.inviteEmail
-                            : "No email yet"}
-                        </span>
-                        <GuestEmailForm key={u.inviteEmail ?? ""} action={setGuestEmail.bind(null, c.id, u.id)} email={u.inviteEmail} />
-                        <span className="flex flex-wrap items-center gap-1">
-                          <CopyField value={`${appUrl}/claim/${u.claimCode}`} />
-                          <form action={renewGuestLink.bind(null, c.id, u.id)}>
-                            <button className={`${btnGhost} text-xs`}>New link</button>
-                          </form>
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                <GuestForm action={addGuest.bind(null, c.id)} />
-              </Card>
-            </>
+            <Card title="Add an existing user">
+              <p className="mb-3 text-sm text-muted">
+                Someone already on Seatbit. For people without an account, add a{" "}
+                <Link href={`/clans/${c.slug}/settings?tab=guests`} className="text-bit hover:underline">
+                  guest
+                </Link>
+                .
+              </p>
+              <AddMemberForm clanId={c.id} users={candidates} action={addClanMember} />
+            </Card>
           }
         >
           {pending.length > 0 && (
@@ -162,7 +119,7 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
                 {pending.map(({ u }) => (
                   <li key={u.id} className="flex flex-wrap items-center justify-between gap-2">
                     <span className="min-w-0">
-                      <span className="block truncate font-medium">{u.name}</span>
+                      <span className="block truncate font-medium">{fullName(u)}</span>
                       <span className="block truncate text-xs text-muted">{u.email}</span>
                     </span>
                     <span className="flex gap-2">
@@ -178,7 +135,7 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
               </ul>
             </Card>
           )}
-          <Card title={`Members (${active.length})`}>
+          <Card title={`Members (${active.length - guests.length})`}>
             <p className="mb-3 text-sm text-muted">
               Admins manage the clan: settings, members, LAN types and every event. Use &ldquo;Make admin&rdquo; and
               &ldquo;Remove admin&rdquo; here or on a member&apos;s profile. A clan always keeps at least one admin.
@@ -187,10 +144,10 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
               clanId={c.id}
               slug={c.slug}
               meId={me.id}
-              members={active.map(({ u, role }) => ({
+              members={active.filter(({ u }) => !u.isGuest).map(({ u, role }) => ({
                 id: u.id,
-                name: u.name,
-                nick: defaultNicks.get(u.id) ?? "",
+                name: fullName(u),
+                nick: people.get(u.id)?.nick ?? "",
                 sub: u.isGuest ? (u.inviteEmail ? `No login yet · ${u.inviteEmail}` : "No login yet") : u.email,
                 role: role === "admin" ? "admin" : "member",
                 isGuest: u.isGuest,
@@ -200,6 +157,8 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
           </Card>
         </Columns>
       )}
+
+      {tab === "guests" && <GuestsTab clanId={c.id} slug={c.slug} guests={guests.map((g) => g.u)} names={people} />}
 
       {tab === "chat" && <ChatTab clanId={c.id} />}
 
@@ -388,6 +347,111 @@ function TypesTab({ clanId, slug }: { clanId: string; slug: string }) {
         </ul>
       )}
     </Card>
+  );
+}
+
+function GuestsTab({
+  clanId,
+  slug,
+  guests,
+  names,
+}: {
+  clanId: string;
+  slug: string;
+  guests: User[];
+  names: Map<string, { full: string }>;
+}) {
+  const types = db.select().from(schema.lanType).where(eq(schema.lanType.clanId, clanId)).orderBy(asc(schema.lanType.name)).all();
+  const ids = guests.map((g) => g.id);
+  const typeNicks = ids.length
+    ? db.select().from(schema.nickname).where(and(inArray(schema.nickname.userId, ids), isNull(schema.nickname.lanId))).all()
+    : [];
+  const accounts = ids.length
+    ? db.select().from(schema.lanAccount).where(and(inArray(schema.lanAccount.userId, ids), isNull(schema.lanAccount.lanId))).all()
+    : [];
+  return (
+    <Columns
+      aside={
+        <Card title="Add a guest">
+          <p className="mb-3 text-sm text-muted">
+            For people who aren&apos;t on Seatbit yet: add them by name, then sign them up for events and give them a seat
+            like anyone else. With an email address, Seatbit mails them an invite, and signing in with a Discord account on
+            that address takes over everything you set up for them. Or send them their link yourself.
+          </p>
+          <GuestForm action={addGuest.bind(null, clanId)} />
+        </Card>
+      }
+    >
+      <Card title={`Guests (${guests.length})`}>
+        {guests.length === 0 ? (
+          <p className="text-sm text-muted">No guests. Everyone in the clan has their own login.</p>
+        ) : (
+          <>
+            <p className="mb-3 text-sm text-muted">
+              Guests haven&apos;t claimed their spot yet, so you keep their details up to date. Everything carries over
+              when they sign in.
+            </p>
+            <ul className="space-y-2">
+              {guests.map((u) => {
+                const nick = typeNicks.find((n) => n.userId === u.id && !n.typeId)?.nick ?? "";
+                return (
+                  <li key={u.id} className="rounded-md border border-line">
+                    <details className="group">
+                      <summary className="flex min-h-14 cursor-pointer list-none items-center gap-3 p-3 [&::-webkit-details-marker]:hidden">
+                        <Avatar data={avatarData(u)} size={36} />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate font-medium">{names.get(u.id)?.full ?? u.name}</span>
+                          <span className="block truncate text-xs text-faint">
+                            {u.inviteEmail
+                              ? u.invitedAt
+                                ? `Invited ${fmtDate(u.invitedAt)} at ${u.inviteEmail}`
+                                : u.inviteEmail
+                              : "No email yet"}
+                          </span>
+                        </span>
+                        <span className={`${btnSecondary} shrink-0 group-open:!border-bit`}>
+                          <span className="group-open:hidden">Edit</span>
+                          <span className="hidden group-open:inline">Close</span>
+                        </span>
+                      </summary>
+                      <div className="space-y-4 border-t border-line p-3 sm:p-4">
+                        <GuestEditForm
+                          action={updateGuest.bind(null, clanId, u.id)}
+                          guest={{ firstName: u.firstName, lastName: u.lastName, nick, email: u.inviteEmail ?? "" }}
+                          types={types.map((t) => ({
+                            id: t.id,
+                            name: t.name,
+                            nick: typeNicks.find((n) => n.userId === u.id && n.typeId === t.id)?.nick ?? "",
+                            lanId: accounts.find((a) => a.userId === u.id && a.typeId === t.id)?.value ?? "",
+                          }))}
+                        />
+                        <div className="space-y-1.5 border-t border-line pt-4">
+                          <p className="text-xs text-muted">Claim link: whoever opens it and signs in takes over this guest.</p>
+                          <span className="flex flex-wrap items-center gap-1">
+                            <CopyField value={`${appUrl}/claim/${u.claimCode}`} />
+                            <form action={renewGuestLink.bind(null, clanId, u.id)}>
+                              <button className={`${btnGhost} text-xs`}>New link</button>
+                            </form>
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line pt-4">
+                          <Link href={`/clans/${slug}/members/${u.id}`} className="text-sm text-bit hover:underline">
+                            Profile and events
+                          </Link>
+                          <form action={deleteGuest.bind(null, clanId, u.id)}>
+                            <button className={`${btnGhost} text-xs !text-danger`}>Remove guest</button>
+                          </form>
+                        </div>
+                      </div>
+                    </details>
+                  </li>
+                );
+              })}
+            </ul>
+          </>
+        )}
+      </Card>
+    </Columns>
   );
 }
 

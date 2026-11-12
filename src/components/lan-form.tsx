@@ -1,5 +1,5 @@
 "use client";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { saveLan, type FormState } from "@/app/actions";
 import { DateTimePicker } from "./date-time-picker";
 import { Field, Input, btnPrimary, input, label as labelCls } from "./ui";
@@ -22,14 +22,51 @@ export type LanFormValues = {
   price: string;
   capacity: string;
   reminderDays: number;
+  /** In the interest check (new events: whether to start with one). */
+  interestCheck?: boolean;
+  dateTbd?: boolean;
+  dateHint?: string;
 };
 
 export function LanForm({ values, types }: { values: LanFormValues; types: { id: string; name: string }[] }) {
   const [state, action, pending] = useActionState<FormState, FormData>(saveLan, undefined);
+  const [interest, setInterest] = useState(!!values.interestCheck);
+  const [tbd, setTbd] = useState(!!values.dateTbd);
+  // The date may stay open only during the interest check.
+  const open = interest && tbd;
   return (
     <form action={action} className="space-y-5">
       {values.id && <input type="hidden" name="id" value={values.id} />}
       {values.clanId && <input type="hidden" name="clanId" value={values.clanId} />}
+      {!values.id ? (
+        <label className="flex cursor-pointer items-start gap-3 rounded-md border border-line bg-raised/40 p-3 text-sm">
+          <input
+            type="checkbox"
+            name="interestCheck"
+            checked={interest}
+            onChange={(e) => setInterest(e.target.checked)}
+            className="mt-0.5 h-4 w-4 accent-bit"
+          />
+          <span>
+            Start with an interest check
+            <span className="block text-xs text-muted">
+              Members first only say whether they&apos;d come, before sign-up, tickets and seats. The date can stay open.
+              You open sign-up when you&apos;ve decided.
+            </span>
+          </span>
+        </label>
+      ) : (
+        interest && <input type="hidden" name="interestCheck" value="on" />
+      )}
+      {interest && (
+        <label className="flex cursor-pointer items-start gap-3 rounded-md border border-line bg-raised/40 p-3 text-sm">
+          <input type="checkbox" name="dateTbd" checked={tbd} onChange={(e) => setTbd(e.target.checked)} className="mt-0.5 h-4 w-4 accent-bit" />
+          <span>
+            Date not fixed yet
+            <span className="block text-xs text-muted">Set it before you open sign-up.</span>
+          </span>
+        </label>
+      )}
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="LAN type" hint="Members' nicks for this type carry over to every event of it.">
           <select name="typeId" defaultValue={values.typeId} className={input}>
@@ -59,8 +96,16 @@ export function LanForm({ values, types }: { values: LanFormValues; types: { id:
         >
           <Input type="url" name="externalPlanUrl" defaultValue={values.externalPlanUrl ?? ""} placeholder="https://" />
         </Field>
-        <DateField label="Starts" name="startsAt" value={values.startsAt} required />
-        <DateField label="Ends" name="endsAt" value={values.endsAt} required defaultTime="16:00" />
+        {open ? (
+          <Field label="Rough date" hint="Optional, shown instead of the date, e.g. “spring 2027” or “usually in March”.">
+            <Input name="dateHint" defaultValue={values.dateHint ?? ""} maxLength={60} placeholder="e.g. spring 2027" />
+          </Field>
+        ) : (
+          <>
+            <DateField label="Starts" name="startsAt" value={values.startsAt} required />
+            <DateField label="Ends" name="endsAt" value={values.endsAt} required defaultTime="16:00" />
+          </>
+        )}
         <DateField
           label="Answer by"
           name="signupDeadline"
@@ -90,7 +135,7 @@ export function LanForm({ values, types }: { values: LanFormValues; types: { id:
       </Field>
       {state?.error && <p className="text-sm text-danger">{state.error}</p>}
       <button disabled={pending} className={btnPrimary}>
-        {values.id ? "Save changes" : "Add LAN"}
+        {values.id ? "Save changes" : "Save as draft"}
       </button>
     </form>
   );

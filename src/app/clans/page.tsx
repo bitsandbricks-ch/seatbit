@@ -37,8 +37,8 @@ export default async function ClansPage() {
         <Card title="Your clans">
           <ul className="space-y-2">
             {myClans.map((c) => (
-              <li key={c.id}>
-                <Link href={`/clans/${c.slug}`} className="-mx-2 flex min-h-14 items-center gap-3 rounded-md p-2 transition hover:bg-raised">
+              <li key={c.id} className="-mx-2 flex items-center gap-2">
+                <Link href={`/clans/${c.slug}`} className="flex min-h-14 min-w-0 flex-1 items-center gap-3 rounded-md p-2 transition hover:bg-raised">
                   <ClanAvatar clan={c} />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-medium">{c.name}</span>
@@ -46,6 +46,11 @@ export default async function ClansPage() {
                   </span>
                   {mine.get(c.id) === "admin" && <Pill tone="emerald">admin</Pill>}
                 </Link>
+                {mine.get(c.id) === "admin" && (
+                  <Link href={`/clans/${c.slug}/settings`} className={`${btnSecondary} shrink-0 !text-bit`}>
+                    Manage
+                  </Link>
+                )}
               </li>
             ))}
           </ul>

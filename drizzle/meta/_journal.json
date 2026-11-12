@@ -127,6 +127,20 @@
       "when": 1794412624630,
       "tag": "0018_seat_booking_swaps_games",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1794465633208,
+      "tag": "0019_event_drafts",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "6",
+      "when": 1794466632181,
+      "tag": "0020_event_lifecycle",
+      "breakpoints": true
     }
   ]
 }

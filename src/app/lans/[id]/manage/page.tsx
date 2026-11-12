@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Attendance } from "@/db/schema";
 import { deleteLan } from "@/app/actions";
@@ -12,7 +12,7 @@ import { avatarMap } from "@/lib/avatars";
 import { EventHeader } from "@/components/event-header";
 import { Card, Page, Pill, btnDanger, btnSecondary } from "@/components/ui";
 import { fmtDate, relative, toInputValue } from "@/lib/format";
-import { getDisplayNames, getLan } from "@/lib/lans";
+import { getLan, getNames, seatView } from "@/lib/lans";
 import { dueKinds } from "@/lib/reminders";
 import { isLanManager, requireUser } from "@/lib/session";
 import { OrgaManager } from "@/components/orga-manager";
@@ -25,9 +25,9 @@ import { canManageClan, getClan } from "@/lib/clans";
 import { SeatFlow } from "@/components/seat-flow";
 import { checkWishes } from "@/lib/seating";
 import { getLanAccounts } from "@/lib/lan-accounts";
-import { personLabel } from "@/lib/names";
 import { RemindToBookButton } from "@/components/seat-booking";
 import { SeatSwapApprovals, type SwapView } from "@/components/seat-swaps";
+import { CancelEvent, CopyNextYear, DeleteNewsButton, NewsComposer } from "@/components/event-extras";
 
 const { attendance, seat, user, reminderLog } = schema;
 
@@ -71,7 +71,9 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
     .from(user)
     .all()
     .filter((u) => memberIds.has(u.id) || rows.some((r) => r.userId === u.id));
-  const names = await getDisplayNames(id, users.map((u) => u.id));
+  const people = await getNames(id, users.map((u) => u.id));
+  // Full "Name "Nick" Surname" everywhere; the bare nick only inside small seat cells.
+  const names = new Map([...people].map(([uid, n]) => [uid, n.full]));
   const avatars = avatarMap(users);
   const lanIds = getLanAccounts(l, rows.map((r) => r.userId));
   const userById = new Map(users.map((u) => [u.id, u]));
@@ -106,9 +108,9 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
       return {
         id: r.id,
         userId: r.userId,
-        nick: names.get(r.userId) ?? u.name,
+        nick: people.get(r.userId)?.nick ?? u.name,
         avatar: avatars.get(r.userId),
-        name: u.name,
+        name: names.get(r.userId) ?? u.name,
         email: u.isGuest ? (u.inviteEmail ? `guest, invited at ${u.inviteEmail}` : "guest, no login yet") : u.email,
         status: r.status,
         paid: r.paid,
@@ -120,7 +122,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
         seatBooked: l.externalPlanUrl && l.seatsPublishedAt ? r.seatBooked : null,
       };
     })
-    .sort((a, b) => statusOrder[a.status] - statusOrder[b.status] || a.nick.localeCompare(b.nick));
+    .sort((a, b) => statusOrder[a.status] - statusOrder[b.status] || a.name.localeCompare(b.name));
 
   const due = dueKinds(l);
   const planPeople = going.map((r) => ({
@@ -152,14 +154,20 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
       id: s.id,
       fromUserId: s.fromUserId,
       toUserId: s.toUserId,
-      fromNick: names.get(s.fromUserId) ?? "?",
-      toNick: names.get(s.toUserId) ?? "?",
+      fromName: names.get(s.fromUserId) ?? "?",
+      toName: names.get(s.toUserId) ?? "?",
       fromSeat: seatOf.get(s.fromUserId) ?? null,
       toSeat: seatOf.get(s.toUserId) ?? null,
       status: s.status as SwapView["status"],
       note: s.note,
     }));
   const swapsToApprove = swaps.filter((s) => s.status === "accepted").length;
+  const news = db
+    .select()
+    .from(schema.lanNews)
+    .where(eq(schema.lanNews.lanId, id))
+    .orderBy(desc(schema.lanNews.createdAt))
+    .all();
 
   const seatCards = (
           <div className="grid items-start gap-5 lg:grid-cols-2">
@@ -310,7 +318,14 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               <dl className="space-y-3 text-sm">
                 <DateItem label="Answer by" d={l.signupDeadline} now={now} />
                 <DateItem label="Buy ticket by" d={l.paymentDueDate} now={now} />
-                <DateItem label="Starts" d={l.startsAt} now={now} />
+                {l.dateTbd ? (
+                  <div className="flex justify-between gap-2">
+                    <dt className="text-muted">Starts</dt>
+                    <dd className="text-right text-faint">{l.dateHint || "not set yet"}</dd>
+                  </div>
+                ) : (
+                  <DateItem label="Starts" d={l.startsAt} now={now} />
+                )}
               </dl>
               <Link href={`/lans/${l.id}/manage?tab=settings`} className="mt-4 inline-block text-sm text-bit hover:underline">
                 Change dates
@@ -325,6 +340,35 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
             <Stat label="Seats" value={`${seated} / ${going.length}`} sub={seats.length ? `${freeSeats} free of ${seats.length}` : "no seats yet"} href={`/lans/${l.id}/manage?tab=seats`} />
           </div>
 
+          <Card title="News for attendees">
+            <NewsComposer lanId={l.id} published={!!l.publishedAt} />
+            {news.length > 0 && (
+              <ul className="mt-4 space-y-3 border-t border-line pt-4">
+                {news.slice(0, 5).map((n) => (
+                  <li key={n.id} className="text-sm">
+                    <p className="whitespace-pre-wrap text-fg/90">{n.text}</p>
+                    <p className="mt-1 flex items-center gap-3 text-xs text-faint">
+                      {n.authorId ? (names.get(n.authorId) ?? "Orga") : "Orga"} · {fmtDate(n.createdAt)}
+                      <DeleteNewsButton id={n.id} />
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+
+          {going.some((r) => r.arrivedAt) && (
+            <Card title="Check-in">
+              <p className="text-sm">
+                <span className="font-semibold text-fg">{going.filter((r) => r.arrivedAt).length}</span>
+                <span className="text-muted"> of {going.length} here.</span>{" "}
+                <span className="text-muted">
+                  On the way: {going.filter((r) => !r.arrivedAt).map((r) => names.get(r.userId) ?? "?").join(", ") || "nobody"}
+                </span>
+              </p>
+            </Card>
+          )}
+
           <Card title="Reminders">
             <div className="space-y-4 text-sm">
               <p className="text-muted">
@@ -335,6 +379,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               {due.length > 0 && <p className="text-warn">Reminder window open: {due.join(", ")}.</p>}
               <ReminderButtons
                 lanId={l.id}
+                draft={!l.publishedAt}
                 counts={{
                   signup: l.signupDeadline ? undecided : null,
                   payment: l.paymentDueDate ? unpaid : null,
@@ -369,7 +414,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
           seats={[...seats].sort((a, b) => a.row - b.row || a.col - b.col)}
           others={users
             .filter((u) => !inLan.has(u.id) && memberIds.has(u.id))
-            .map((u) => ({ id: u.id, name: personLabel(u, names.get(u.id)) }))
+            .map((u) => ({ id: u.id, name: names.get(u.id) ?? u.name }))
             .sort((a, b) => a.name.localeCompare(b.name))}
         />
       )}
@@ -385,20 +430,19 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
                 cols={l.seatCols}
                 meId={me.id}
                 mode="admin"
-                seats={seats.map((s) => ({ ...s, nick: s.userId ? (names.get(s.userId) ?? "?") : null, color: s.userId ? (avatars.get(s.userId)?.color ?? null) : null }))}
+                seats={seats.map((s) => seatView(s, people, avatars))}
                 assignable={going
                   .map((r) => {
                     const w = wishChecks.find((c) => c.userId === r.userId);
                     return {
                       id: r.userId,
-                      nick: names.get(r.userId) ?? "?",
-                      name: userById.get(r.userId)?.name,
+                      name: names.get(r.userId) ?? "?",
                       lanAccount: lanIds.get(r.userId) || undefined,
                       ticket: r.paid ? ("ok" as const) : r.ticketBought ? ("reported" as const) : ("open" as const),
                       wishes: w ? { ok: w.ok, missed: w.missed } : undefined,
                     };
                   })
-                  .sort((a, b) => a.nick.localeCompare(b.nick))}
+                  .sort((a, b) => a.name.localeCompare(b.name))}
               >
                 {seatCards}
               </SeatMap>
@@ -454,6 +498,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               {discordEnabled() && discordChannels > 0 && (
                 <DiscordButtons
                   lanId={l.id}
+                  draft={!l.publishedAt}
                   posted={discordPosts}
                   channels={discordChannels}
                   kinds={[
@@ -494,6 +539,9 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
                 price: l.price,
                 capacity: l.capacity?.toString() ?? "",
                 reminderDays: l.reminderDays,
+                interestCheck: l.interestCheck,
+                dateTbd: l.dateTbd,
+                dateHint: l.dateHint,
               }}
             />
           </Card>
@@ -507,10 +555,24 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               orgas={orgaIds.map((uid) => ({ id: uid, name: names.get(uid) ?? userById.get(uid)?.name ?? "?" }))}
               candidates={users
                 .filter((u) => !orgaIds.includes(u.id) && memberIds.has(u.id))
-                .map((u) => ({ id: u.id, name: personLabel(u, names.get(u.id)) }))
+                .map((u) => ({ id: u.id, name: names.get(u.id) ?? u.name }))
                 .sort((a, b) => a.name.localeCompare(b.name))}
             />
           </Card>
+
+          <Card title="Next year">
+            <p className="mb-3 text-sm text-muted">
+              Copy this event as a new draft one year later: details, links, deadlines, seat block (empty) and orgas. The
+              event&apos;s own seat plan link is left out, it changes every year.
+            </p>
+            <CopyNextYear lanId={l.id} />
+          </Card>
+
+          {!l.cancelledAt && (
+            <Card title="Cancel">
+              <CancelEvent lanId={l.id} published={!!l.publishedAt} />
+            </Card>
+          )}
 
           {me.role === "admin" && (
             <Card title="Danger zone">

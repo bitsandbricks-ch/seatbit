@@ -14,7 +14,7 @@ import { Field, Input, Pill, Segmented, btnGhost, btnPrimary, btnSecondary } fro
 export type TravelPostView = {
   id: string;
   userId: string;
-  nick: string;
+  name: string;
   kind: TravelKind;
   mode: "offer" | "request";
   town: string;
@@ -23,7 +23,7 @@ export type TravelPostView = {
   note: string;
   /** The author has since said they're not coming. */
   notComing: boolean;
-  spots: { userId: string; nick: string }[];
+  spots: { userId: string; name: string }[];
 };
 
 const copy = {
@@ -178,7 +178,7 @@ export function TravelBoard({
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p>
-                        <span className={`font-semibold ${mine ? "text-bit" : "text-fg"}`}>{p.nick}</span>{" "}
+                        <span className={`font-semibold ${mine ? "text-bit" : "text-fg"}`}>{p.name}</span>{" "}
                         <span className="text-muted">{p.mode === "offer" ? c.offerTitle : c.requestTitle}</span>
                         {p.notComing && (
                           <span className="ml-2">
@@ -206,10 +206,10 @@ export function TravelBoard({
                     <ul className="mt-2 flex flex-wrap gap-1.5">
                       {p.spots.map((s) => (
                         <li key={s.userId} className="inline-flex items-center gap-1 rounded-full bg-raised px-2 py-0.5 text-xs">
-                          <span className={s.userId === meId ? "text-bit" : ""}>{s.nick}</span>
+                          <span className={s.userId === meId ? "text-bit" : ""}>{s.name}</span>
                           {(canRemove || s.userId === meId) && (
                             <button
-                              aria-label={`Remove ${s.nick}`}
+                              aria-label={`Remove ${s.name}`}
                               disabled={pending}
                               onClick={() => run(() => leaveTravelOffer(p.id, s.userId))}
                               className="text-muted hover:text-danger"

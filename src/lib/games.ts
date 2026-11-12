@@ -82,7 +82,7 @@ function gamesText(l: Lan, u: User) {
 
 /** Sends the "install your games" reminder once to everyone coming. */
 export async function sendGamesReminder(l: Lan, opts: { force?: boolean } = {}) {
-  if (reminderGames(l.id).length === 0) return 0;
+  if (!l.publishedAt || reminderGames(l.id).length === 0) return 0;
   const rows = db
     .select({ u: user })
     .from(attendance)

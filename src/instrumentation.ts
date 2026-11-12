@@ -17,7 +17,16 @@ export async function register() {
       .then((r) => r.length && console.log("[reminders] sent", r))
       .catch((e) => console.error("[reminders] failed", e));
   };
+  // Scheduled event publishing is checked every minute, whatever the reminder interval.
+  const { publishDueDrafts } = await import("./lib/event-notices");
+  const publishTick = () => void publishDueDrafts().catch((e) => console.error("[publish] failed", e));
   // First check shortly after start, then look every minute whether the interval has passed.
-  setTimeout(tick, 10_000);
-  setInterval(tick, 60_000);
+  setTimeout(() => {
+    publishTick();
+    tick();
+  }, 10_000);
+  setInterval(() => {
+    publishTick();
+    tick();
+  }, 60_000);
 }

@@ -5,15 +5,18 @@ import { db, schema } from "@/db";
 import type { Attendance, Lan } from "@/db/schema";
 import { CopyField } from "@/components/copy-field";
 import { MemberAdminActions } from "@/components/member-admin-actions";
+import { GuestEditForm } from "@/components/guest-form";
+import { updateGuest } from "@/app/clan-actions";
 import { Card, Page, PageHeader, Pill, StatTile, StatusBadge, columns, stack } from "@/components/ui";
 import { canManageClan, getClanBySlug, isClanMember } from "@/lib/clans";
-import { fmtDate, fmtWeekday } from "@/lib/format";
+import { fmtDate, fmtWeekday, lanWeekday } from "@/lib/format";
 import { pickNick } from "@/lib/lans";
+import { personLabel } from "@/lib/names";
 import { appUrl } from "@/lib/mail";
 import { Avatar } from "@/components/avatar";
 import { avatarData } from "@/lib/avatars";
 import { pct } from "@/lib/clan-stats";
-import { isLanManager, requireUser } from "@/lib/session";
+import { isLanManager, requireUser, visibleLans } from "@/lib/session";
 
 export default async function MemberProfilePage({ params }: PageProps<"/clans/[slug]/members/[userId]">) {
   const { slug, userId } = await params;
@@ -55,7 +58,10 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
     }))
     .filter((r) => r.nick || r.lanId);
 
-  const lans = db.select().from(schema.lan).where(eq(schema.lan.clanId, c.id)).orderBy(asc(schema.lan.startsAt)).all();
+  const lans = visibleLans(
+    me,
+    db.select().from(schema.lan).where(eq(schema.lan.clanId, c.id)).orderBy(asc(schema.lan.startsAt)).all(),
+  );
   const rows = db.select().from(schema.attendance).where(eq(schema.attendance.userId, u.id)).all();
   const seats = db.select().from(schema.seat).where(eq(schema.seat.userId, u.id)).all();
   // Events they were asked for: those after they joined, plus any they answered.
@@ -95,12 +101,11 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
   return (
     <Page>
       <PageHeader
-        back={{ href: `/clans/${c.slug}`, label: c.name }}
+        back={{ href: `/clans/${c.slug}?tab=members`, label: c.name }}
         avatar={<Avatar data={avatar} size={56} />}
-        title={u.name}
+        title={personLabel(u, defaultNick)}
         subtitle={
           <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            {defaultNick && defaultNick !== u.name && <span className="font-medium" style={{ color: avatar.color }}>{defaultNick}</span>}
             {role === "admin" && <Pill tone="emerald">admin</Pill>}
             {u.isGuest && <Pill>guest · no login yet</Pill>}
             <span>in the clan since {fmtWeekday(membership.createdAt)}</span>
@@ -137,6 +142,24 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
         </div>
 
         <div className={`min-w-0 ${stack}`}>
+          {u.isGuest && isManager && (
+            <Card title="Edit guest">
+              <p className="mb-3 text-sm text-muted">
+                {u.firstName || u.name} hasn&apos;t claimed this spot yet, so admins keep the details up to date. It all
+                carries over when they sign in.
+              </p>
+              <GuestEditForm
+                action={updateGuest.bind(null, c.id, u.id)}
+                guest={{ firstName: u.firstName, lastName: u.lastName, nick: defaultNick, email: u.inviteEmail ?? "" }}
+                types={types.map((t) => ({
+                  id: t.id,
+                  name: t.name,
+                  nick: nicks.find((n) => n.typeId === t.id && !n.lanId)?.nick ?? "",
+                  lanId: lanAccounts.find((a) => a.typeId === t.id && !a.lanId)?.value ?? "",
+                }))}
+              />
+            </Card>
+          )}
           <Card title="Nicks">
             <dl className="space-y-2 text-sm">
               <div className="flex justify-between gap-3">
@@ -235,7 +258,7 @@ function EventList({
             <span className="min-w-0">
               <span className="block truncate font-medium">{l.name}</span>
               <span className="block truncate text-xs text-muted">
-                {fmtWeekday(l.startsAt)}
+                {lanWeekday(l)}
                 {typeName && ` · ${typeName}`}
                 {a?.status === "going" && ` · as ${nick}`}
               </span>

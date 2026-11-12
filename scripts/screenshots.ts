@@ -39,6 +39,8 @@ const NOW = "2026-11-12T10:00:00+01:00";
 const LAKESIDE = "/lans/demo-lan-lakeside";
 const MOUNTAIN = "/lans/demo-lan-mountain";
 const CLAN = "/clans/pixel-pirates";
+const RETRO = "/lans/demo-lan-retro";
+const DRAFT = "/lans/demo-lan-lakeside-next";
 
 type Who = "anon" | "alex" | "anna";
 type Device = "phone" | "desktop";
@@ -79,6 +81,7 @@ const SHOTS: Shot[] = [
   { name: "phone-travel", who: "anna", path: `${LAKESIDE}?tab=travel`, full: true },
   { name: "phone-packing-list", who: "anna", path: `${LAKESIDE}?tab=gear`, full: true },
   { name: "phone-games", who: "anna", path: `${LAKESIDE}?tab=games`, full: true },
+  { name: "phone-interest", who: "anna", path: RETRO, full: true },
   { name: "phone-clans", who: "anna", path: "/clans" },
   { name: "phone-clan", who: "anna", path: CLAN, full: true },
   { name: "phone-profile", who: "anna", path: "/profile", full: true },
@@ -108,10 +111,15 @@ const SHOTS: Shot[] = [
   { name: "desktop-manage-chat", who: "alex", path: `${LAKESIDE}/manage?tab=chat` },
   { name: "desktop-manage-settings", who: "alex", path: `${LAKESIDE}/manage?tab=settings`, full: true },
   { name: "desktop-new-event", who: "alex", path: `${CLAN}/lans/new` },
+  { name: "desktop-event-draft", who: "alex", path: `${DRAFT}/manage` },
+  { name: "desktop-interest-manage", who: "alex", path: `${RETRO}/manage` },
   { name: "desktop-clan", who: "alex", path: CLAN },
+  { name: "desktop-clan-events", who: "alex", path: `${CLAN}?tab=events` },
+  { name: "phone-clan-guests", who: "alex", path: `${CLAN}/settings?tab=guests`, full: true },
   { name: "desktop-clan-stats", who: "alex", path: `${CLAN}/stats` },
   { name: "desktop-clan-settings", who: "alex", path: `${CLAN}/settings` },
   { name: "desktop-clan-members", who: "alex", path: `${CLAN}/settings?tab=members` },
+  { name: "desktop-clan-guests", who: "alex", path: `${CLAN}/settings?tab=guests` },
   { name: "desktop-clan-discord", who: "alex", path: `${CLAN}/settings?tab=chat` },
   { name: "desktop-lan-types", who: "alex", path: `${CLAN}/settings?tab=types` },
   { name: "desktop-profile", who: "alex", path: "/profile" },

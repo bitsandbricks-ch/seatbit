@@ -230,4 +230,7 @@ export const PREVIEW_VARS: Record<string, string> = {
   clan: "The dark lizzards gizzards wizzards",
   inviter: "Mike",
   events: "Lock&Load 2027 (12 Mar 2027)",
+  reason: "The venue moved the date and most of us can't make the new one.",
+  news: "Doors open at 10:00. Bring an extension cord, there are only 2 sockets per seat.",
+  author: "Mike",
 };
