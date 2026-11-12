@@ -77,7 +77,7 @@ export default function PrivacyPage() {
 
       <h2>4. Who can see your data</h2>
       <ul>
-        <li><strong>Members of your clans</strong> see your name, nickname, avatar and whether you are coming to that clan&apos;s events. Once the seat plan is published they see who sits where.</li>
+        <li><strong>Members of your clans</strong> see your name, nickname, avatar and whether you are coming to that clan&apos;s events. Once the seat plan is final they see who sits where.</li>
         <li><strong>Clan admins and event orgas</strong> also see ticket status, notes and seat wishes for their events, and can export the attendee list.</li>
         <li><strong>People in a linked Discord channel</strong> see the bot&apos;s announcements, including the nicknames of who is coming, unsure or on the waitlist.</li>
         <li><strong>Platform admins</strong> of this Seatbit instance can see all data to run and support the Service.</li>

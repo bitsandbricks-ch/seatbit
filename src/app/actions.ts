@@ -554,16 +554,17 @@ export async function adminSwapSeats(seatA: string, seatB: string) {
   if (b.userId) notifyLater(() => notifySeatChanged(l, b.userId!, a.label));
 }
 
-/** Opens or closes the seat-picking phase, where members choose their own seat. */
+/** Turns the optional self-pick step on or off (members choose their own free seat). Only before the plan is final. */
 export async function setSeatPicking(lanId: string, open: boolean) {
   await requireLanManager(lanId);
+  if (open && mustGetLan(lanId).seatsPublishedAt) throw new Error("The seat plan is final. Reopen it first.");
   db.update(lan).set({ seatPicking: open }).where(eq(lan.id, lanId)).run();
   lanPath(lanId);
 }
 
 /**
  * A member takes a free seat (or gives theirs up with seatId null) while seat
- * picking is open and the plan isn't published. Held seats can't be picked.
+ * self pick is on and the plan isn't final. Held seats can't be picked.
  * Orgas can still move anyone afterwards.
  */
 export async function pickMySeat(lanId: string, seatId: string | null): Promise<{ error?: string }> {
@@ -580,7 +581,7 @@ export async function pickMySeat(lanId: string, seatId: string | null): Promise<
 async function pickMySeatOrThrow(lanId: string, seatId: string | null) {
   const me = await requireUser();
   const l = mustGetLan(lanId);
-  if (!l.seatPicking || l.seatsPublishedAt) throw new Error("Seat picking is closed. Ask an orga.");
+  if (!l.seatPicking || l.seatsPublishedAt) throw new Error(l.seatsPublishedAt ? "The orgas finalized the seat plan. Ask them to move you." : "Seat picking is closed. Ask an orga.");
   const a = db.select().from(attendance).where(and(eq(attendance.lanId, lanId), eq(attendance.userId, me.id))).get();
   if (a?.status !== "going") throw new Error("Say you're coming first.");
   if (seatId && !a.ticketBought && !a.paid) throw new Error("Confirm you have your ticket first.");
@@ -678,7 +679,7 @@ const wishInput = z.object({
 export async function setMySeatWishes(lanId: string, input: z.input<typeof wishInput>) {
   const me = await requireUser();
   const l = mustGetLan(lanId);
-  if (l.seatsPublishedAt) throw new Error("The seat plan is already published. Ask an orga.");
+  if (l.seatsPublishedAt) throw new Error("The seat plan is final. Ask an orga.");
   const w = wishInput.parse(input);
   const a = db
     .select()
@@ -699,11 +700,15 @@ export async function setMySeatWishes(lanId: string, input: z.input<typeof wishI
   lanPath(lanId);
 }
 
-/** Makes the seat plan visible to members; optionally emails everyone coming their seat. */
+/**
+ * The orgas' last step: finalizes the seat plan (stored as seatsPublishedAt).
+ * Closes self pick and seat wishes, shows everyone the plan and optionally
+ * tells everyone coming their seat. Also the last step when members picked their own seats.
+ */
 export async function publishSeats(lanId: string, notify: boolean): Promise<number> {
   await requireLanManager(lanId);
   const l = mustGetLan(lanId);
-  db.update(lan).set({ seatsPublishedAt: new Date() }).where(eq(lan.id, lanId)).run();
+  db.update(lan).set({ seatsPublishedAt: new Date(), seatPicking: false }).where(eq(lan.id, lanId)).run();
   let sent = 0;
   if (notify) {
     const rows = db
@@ -741,6 +746,7 @@ export async function publishSeats(lanId: string, notify: boolean): Promise<numb
   return sent;
 }
 
+/** Reopens a finalized plan (members can send wishes again; self pick stays off until an orga turns it on). */
 export async function unpublishSeats(lanId: string) {
   await requireLanManager(lanId);
   db.update(lan).set({ seatsPublishedAt: null }).where(eq(lan.id, lanId)).run();

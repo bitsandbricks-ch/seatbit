@@ -166,7 +166,7 @@ const fmt = fmtDate;
 
 // ---------- Event helpers ----------
 
-/** Tells a member their seat changed (only once the seat plan is published). */
+/** Tells a member their seat changed (only once the seat plan is final). */
 export async function notifySeatChanged(l: Lan, userId: string, label: string | null) {
   if (!l.seatsPublishedAt) return;
   await notify(userId, {

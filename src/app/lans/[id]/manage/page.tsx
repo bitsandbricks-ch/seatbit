@@ -2,14 +2,15 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { and, eq, inArray } from "drizzle-orm";
 import { db, schema } from "@/db";
-import { deleteLan, setSeatPicking } from "@/app/actions";
+import type { Attendance } from "@/db/schema";
+import { deleteLan } from "@/app/actions";
 import { AttendanceTable } from "@/components/attendance-table";
 import { LanForm } from "@/components/lan-form";
 import { ReminderButtons } from "@/components/reminder-buttons";
 import { SeatMap } from "@/components/seat-map";
 import { avatarMap } from "@/lib/avatars";
 import { EventHeader } from "@/components/event-header";
-import { Card, Page, Pill, btnDanger, btnPrimary, btnSecondary } from "@/components/ui";
+import { Card, Page, Pill, btnDanger, btnSecondary } from "@/components/ui";
 import { fmtDate, relative, toInputValue } from "@/lib/format";
 import { getDisplayNames, getLan } from "@/lib/lans";
 import { dueKinds } from "@/lib/reminders";
@@ -21,7 +22,7 @@ import { DiscordButtons, WhatsAppTexts } from "@/components/chat-panel";
 import { whatsappTexts } from "@/lib/announce";
 import { discordEnabled, inviteUrl } from "@/lib/discord-api";
 import { canManageClan, getClan } from "@/lib/clans";
-import { PublishSeats } from "@/components/publish-seats";
+import { SeatFlow } from "@/components/seat-flow";
 import { checkWishes } from "@/lib/seating";
 import { getLanAccounts } from "@/lib/lan-accounts";
 import { personLabel } from "@/lib/names";
@@ -29,6 +30,9 @@ import { RemindToBookButton } from "@/components/seat-booking";
 import { SeatSwapApprovals, type SwapView } from "@/components/seat-swaps";
 
 const { attendance, seat, user, reminderLog } = schema;
+
+const hasWishes = (a: Attendance) =>
+  (a.wishNear?.length ?? 0) > 0 || (a.wishAvoid?.length ?? 0) > 0 || a.wishPosition !== "any" || !!a.wishSeat || !!a.wishNote;
 
 // Same order as the event page (Overview, Seats, Attendees), then the orga-only tabs.
 const TABS = [
@@ -172,21 +176,15 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
             />
           </Card>
           {seats.length > 0 && (
-            <Card title="Seat picking" actions={l.seatPicking && !l.seatsPublishedAt ? <Pill tone="emerald">open</Pill> : <Pill>closed</Pill>}>
-              <p className="mb-3 text-sm text-muted">
-                {l.seatPicking && !l.seatsPublishedAt
-                  ? "Members who are coming and have ticked \"I have my ticket\" can take a free seat on the event page. Held seats stay out of reach. You can still move anyone here. Close picking, then publish the plan."
-                  : l.seatsPublishedAt
-                    ? "The plan is published, so members can't pick seats."
-                    : "Optional first phase: let members choose their own free seat before you finish and publish the plan."}
-              </p>
-              {!l.seatsPublishedAt && (
-                <form action={setSeatPicking.bind(null, l.id, !l.seatPicking)}>
-                  <button className={l.seatPicking ? btnSecondary : btnPrimary}>
-                    {l.seatPicking ? "Close seat picking" : "Let members pick their seats"}
-                  </button>
-                </form>
-              )}
+            <Card title="Seat steps" actions={l.seatsPublishedAt ? <Pill tone="emerald">final</Pill> : <Pill tone="amber">not final</Pill>}>
+              <SeatFlow
+                lanId={l.id}
+                finalizedAt={l.seatsPublishedAt ? fmtDate(l.seatsPublishedAt) : null}
+                picking={l.seatPicking && !l.seatsPublishedAt}
+                going={going.length}
+                unseated={going.length - seated}
+                wishes={going.filter(hasWishes).length}
+              />
             </Card>
           )}
           {swaps.length > 0 && (
@@ -233,15 +231,6 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
                   to track who booked their seat there.
                 </p>
               )}
-            </Card>
-          )}
-          {seats.length > 0 && (
-            <Card title="Publish">
-              <PublishSeats
-                lanId={l.id}
-                publishedAt={l.seatsPublishedAt ? fmtDate(l.seatsPublishedAt) : null}
-                unseated={going.length - seated}
-              />
             </Card>
           )}
           {wishChecks.length > 0 && (
@@ -386,7 +375,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
       )}
 
       {tab === "seats" && (
-        // The seat plan is the main tool: map on the left with setup, publishing and wishes below it, and the seat
+        // The seat plan is the main tool: map on the left with setup, the seat flow (wishes, self pick, finalize) and wishes below it, and the seat
         // details panel in its own column on the right (desktop).
         <div className="space-y-5">
           {seats.length > 0 ? (
