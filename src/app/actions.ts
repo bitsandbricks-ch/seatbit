@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db, schema } from "@/db";
 import { ATTENDANCE_STATUSES, type AttendanceStatus } from "@/db/schema";
+import { DISCORD_MODES } from "@/lib/discord-modes";
 import {
   getLan,
   promoteFromWaitlist,
@@ -888,6 +889,7 @@ const lanTypeInput = z.object({
     .optional()
     .transform((v) => (v ? Number(v) : null))
     .pipe(z.number().int().min(0).max(365).nullable()),
+  discordMode: z.enum(DISCORD_MODES).default("channel"),
 });
 
 export async function saveLanType(_: FormState, formData: FormData): Promise<FormState> {

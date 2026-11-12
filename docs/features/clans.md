@@ -70,6 +70,7 @@ A **LAN type** describes a LAN party you go to regularly, e.g. *Lock & Load* or 
 | Seats | The seats you usually get, e.g. `F1-F20`. |
 | Usual length | In hours, e.g. Fri 18:00 to Sun 16:00 = 46. Sets the event's end. |
 | Answer by | Days before the start members must answer (default 30). |
+| Discord | Where the bot posts these events, their reminders and news: the linked channel, a thread per event or a channel per event. See [Discord](discord.md#thread-or-channel-per-event). |
 
 Members set a nick and their user ID **per LAN type**, so they enter their name for the event's own site once, not every year.
 

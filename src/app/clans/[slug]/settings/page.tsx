@@ -393,7 +393,13 @@ function TypesTab({ clanId, slug }: { clanId: string; slug: string }) {
               <span className="min-w-0">
                 <span className="block font-medium">{t.name}</span>
                 <span className="block truncate text-xs text-muted">
-                  {[t.location, t.price, t.seatSpec && `seats ${t.seatSpec}`].filter(Boolean).join(" · ") || "—"}
+                  {[
+                    t.location,
+                    t.price,
+                    t.seatSpec && `seats ${t.seatSpec}`,
+                    t.discordMode === "thread" && "Discord thread per event",
+                    t.discordMode === "event_channel" && "Discord channel per event",
+                  ].filter(Boolean).join(" · ") || "—"}
                 </span>
               </span>
               <span className="flex gap-1">

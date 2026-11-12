@@ -172,6 +172,8 @@ export function uncancelEvent(l: Lan) {
 /** Sends orga news to everyone involved. Returns how many got it. */
 export async function sendNews(l: Lan, text: string, author: string) {
   if (!l.publishedAt) return 0;
+  const { postLanNews } = await import("./discord");
+  await postLanNews(l, text, author).catch((e) => console.error("[discord] news failed", e));
   return sendEach(l, involvedMembers(l), null, (u) => renderTemplate("eventNews", { ...eventMailVars(l, u), news: text, author }), {
     reminder: true,
   });

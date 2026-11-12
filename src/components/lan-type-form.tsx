@@ -1,6 +1,7 @@
 "use client";
 import { useActionState } from "react";
 import { saveLanType, type FormState } from "@/app/actions";
+import { DISCORD_MODES, DISCORD_MODE_LABELS, type DiscordMode } from "@/lib/discord-modes";
 import { Field, Input, btnPrimary, input } from "./ui";
 
 export type LanTypeValues = {
@@ -17,6 +18,7 @@ export type LanTypeValues = {
   seatSpec: string;
   durationHours: number;
   answerDaysBefore: string;
+  discordMode: DiscordMode;
 };
 
 export function LanTypeForm({ values }: { values: LanTypeValues }) {
@@ -55,6 +57,18 @@ export function LanTypeForm({ values }: { values: LanTypeValues }) {
         </Field>
         <Field label="Remind days before deadline">
           <Input type="number" min={0} max={60} name="reminderDays" defaultValue={values.reminderDays} />
+        </Field>
+        <Field
+          label="Discord"
+          hint="Where the bot posts these events, their reminders and news. A thread or channel keeps the linked channel tidy."
+        >
+          <select name="discordMode" defaultValue={values.discordMode} className={input}>
+            {DISCORD_MODES.map((m) => (
+              <option key={m} value={m}>
+                {DISCORD_MODE_LABELS[m]}
+              </option>
+            ))}
+          </select>
         </Field>
       </div>
       <Field label="Description">

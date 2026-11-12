@@ -196,6 +196,7 @@ export async function seedDemo({ force = false, discord = false } = {}) {
           price: "CHF 65",
           capacity: 20,
           seatSpec: "F1-F16, F19-F22",
+          discordMode: "thread",
         },
         {
           id: mountain,

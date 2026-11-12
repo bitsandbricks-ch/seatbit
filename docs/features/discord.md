@@ -21,10 +21,25 @@ A Discord server belongs to one clan.
 | | |
 | --- | --- |
 | **Announcements** | Each published event is posted with **Coming / Unsure / Not coming** buttons. The attendee list on the post updates live, also for answers on the website, and shows tickets, seat bookings and the next deadline. Pinned if the bot has *Pin Messages*. Turns red when the event is cancelled. |
-| **Reminders** | Answer, ticket, games and "starts tomorrow" reminders in the channel, pinging the members they apply to. |
+| **Reminders** | Answer, ticket and "starts soon" reminders as cards with the deadline, the ticket link and who's still open, pinging the members they apply to. |
+| **News** | With a thread or a channel per event (see below), orga news is posted there too. |
 | **DMs** | When something changes for a member (their seat, the final plan, reminders, nudges), with buttons like *I booked it*. Members can turn DMs off on their profile. |
 | **Join requests** | Admins and recruiters get a DM when someone asks to join or claims a guest. |
 | **Server invite** | Members who aren't on the server see **Join our Discord** on the clan page. The bot creates the invite if it has *Create Invite*; otherwise paste your own invite link in the clan settings. |
+
+## Thread or channel per event
+
+Each [LAN type](clans.md#lan-types) chooses where the bot puts its events, under **Discord** in the type's settings:
+
+| Setting | Announcement | Reminders and news |
+| --- | --- | --- |
+| **In the linked channel** (default) | Linked channel | Linked channel (news only by DM and mail) |
+| **Thread per event** | Linked channel | A thread on the announcement, named after the event |
+| **Channel per event** | A new channel named after the event, in the linked channel's category | That channel. The linked channel gets a short pointer to it. |
+
+![LAN type with a thread per event](../screenshots/desktop-lan-type-edit.png){ .shot }
+
+A thread needs the bot's *Create Public Threads* and *Send Messages in Threads* permissions, a channel per event needs *Manage Channels*. Without them the bot falls back to the linked channel. One-off events without a type use the linked channel. Changing the setting applies to events posted afterwards. Delete an event's channel on Discord when you no longer need it; the bot then uses the linked channel again.
 
 ## Commands
 

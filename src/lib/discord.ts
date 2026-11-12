@@ -7,6 +7,7 @@ import { roleCan } from "./clan-roles";
 import { type ChatReminderKind, fmtWhen, lanFacts, lanLink, lanSummary } from "./announce";
 import { ATTENDANCE_LOCKED_MSG, attendanceLocked, getDisplayNames, getLan, setAttendance, signupClosed } from "./lans";
 import { type Json, api, discordEnabled } from "./discord-api";
+import type { DiscordMode } from "./discord-modes";
 import { getSetting } from "./settings";
 import { setSeatBooked } from "./seat-booking";
 import { appUrl } from "./mail";
@@ -171,41 +172,107 @@ export async function lanMessage(l: Lan) {
   };
 }
 
-/** Reminder text for a channel, pinging linked members it applies to. */
+const AMBER = 0xf59e0b;
+
+/** Embed author line: the event's clan with its avatar. */
+function clanAuthor(l: Lan) {
+  const c = l.clanId ? getClan(l.clanId) : undefined;
+  if (!c) return undefined;
+  const icon = avatarUrl(c);
+  return { name: clip(c.name, 256), url: `${appUrl}/clans/${c.slug}`, icon_url: icon ? `${appUrl}${icon}` : undefined };
+}
+
+/** Reminder embed for a channel, pinging linked members it applies to (pings must be in the content to notify). */
 async function reminderMessage(kind: ChatReminderKind, l: Lan) {
   const s = await lanSummary(l);
-  const ids = discordIds();
-  const ping = (users: { id: string }[]) => {
-    const linked = users.map((u) => ids.get(u.id)).filter((x): x is string => !!x);
-    return { mentions: linked.map((id) => `<@${id}>`).join(" "), users: linked, unlinked: users.length - linked.length };
-  };
   // Nobody left to nudge: skip the post.
   if ((kind === "signup" && s.undecided.length === 0) || (kind === "payment" && s.noTicket.length === 0)) return null;
   if (kind === "event" && s.going.length === 0) return null;
-  let text: string;
-  let p: ReturnType<typeof ping>;
+  const ids = discordIds();
+  const targets = kind === "signup" ? s.undecided.map((u) => u.id) : kind === "payment" ? s.noTicket.map((u) => u.id) : s.going.map((g) => g.userId);
+  const linked = targets.map((id) => ids.get(id)).filter((x): x is string => !!x);
+  const unlinked = targets.length - linked.length;
+  const names = await getDisplayNames(l.id, targets);
+  const who = targets.map((id) => names.get(id) ?? "?").sort((a, b) => a.localeCompare(b));
+
+  let embed: Json;
   switch (kind) {
-    case "signup": {
-      p = ping(s.undecided);
-      text = `⏰ **${l.name}**: please say if you're coming by **${fmtWhen(l.signupDeadline!)}**. Still waiting on ${s.undecided.length}: ${p.mentions}`;
+    case "signup":
+      embed = {
+        title: `⏰ Are you coming? ${l.name}`,
+        description: `Please say if you're coming by **${fmtWhen(l.signupDeadline!)}**.`,
+        color: AMBER,
+        fields: [{ name: `Still waiting on (${who.length})`, value: list(who) }],
+      };
       break;
-    }
-    case "payment": {
-      p = ping(s.noTicket);
-      text = `🎟️ **${l.name}**: buy your ticket by **${fmtWhen(l.paymentDueDate!)}**${l.ticketUrl ? ` (<${l.ticketUrl}>)` : ""} and tick it off in Seatbit. Still open for ${s.noTicket.length}: ${p.mentions}`;
+    case "payment":
+      embed = {
+        title: `🎟️ Buy your ticket: ${l.name}`,
+        description: `Buy your ticket by **${fmtWhen(l.paymentDueDate!)}** and tick it off in Seatbit.`,
+        color: AMBER,
+        fields: [
+          ...(l.ticketUrl ? [{ name: "Ticket shop", value: clip(l.ticketUrl, 1024), inline: true }] : []),
+          ...(l.price ? [{ name: "Price", value: clip(l.price, 1024), inline: true }] : []),
+          { name: `Still open for (${who.length})`, value: list(who) },
+        ],
+      };
       break;
-    }
-    case "event": {
-      p = ping(s.going.map((g) => ({ id: g.userId })));
-      text = `🚀 **${l.name}** starts ${fmtWhen(l.startsAt)}${l.location ? ` at ${l.location}` : ""}. See you there! ${p.mentions}`;
+    case "event":
+      embed = {
+        title: `🚀 Starts soon: ${l.name}`,
+        description: "See you there!",
+        color: BRAND,
+        fields: [
+          { name: "When", value: fmtWhen(l.startsAt), inline: true },
+          ...(l.location ? [{ name: "Where", value: clip(l.location, 1024), inline: true }] : []),
+          { name: `Coming (${who.length})`, value: list(who) },
+        ],
+      };
       break;
-    }
   }
-  if (p.unlinked) text += `\n-# ${p.unlinked} member(s) without a linked Discord account aren't pinged.`;
+  const buttons =
+    kind === "signup"
+      ? attendanceButtons(l)
+      : [
+          {
+            type: 1,
+            components: [
+              ...(kind === "payment" && l.ticketUrl ? [{ type: 2, style: 5, label: "Buy ticket", url: l.ticketUrl }] : []),
+              { type: 2, style: 5, label: "Open in Seatbit", url: lanLink(l) },
+            ],
+          },
+        ];
   return {
-    content: clip(text, 2000),
-    components: kind === "signup" ? attendanceButtons(l) : [{ type: 1, components: [{ type: 2, style: 5, label: "Open in Seatbit", url: lanLink(l) }] }],
-    allowed_mentions: { users: p.users.slice(0, 100) },
+    content: clip(linked.map((id) => `<@${id}>`).join(" "), 2000) || undefined,
+    embeds: [
+      {
+        ...embed,
+        title: clip(embed.title as string, 256),
+        author: clanAuthor(l),
+        url: lanLink(l),
+        footer: unlinked ? { text: `${unlinked} member(s) without a linked Discord account aren't pinged.` } : undefined,
+      },
+    ],
+    components: buttons,
+    allowed_mentions: { users: linked.slice(0, 100) },
+  };
+}
+
+/** Orga news as an embed, for the event's thread or channel. */
+function newsMessage(l: Lan, text: string, author: string) {
+  return {
+    embeds: [
+      {
+        author: clanAuthor(l),
+        title: clip(`📣 News: ${l.name}`, 256),
+        url: lanLink(l),
+        description: clip(text, 4000),
+        color: BRAND,
+        footer: { text: clip(`From ${author}`, 2048) },
+      },
+    ],
+    components: [linkButton("Open in Seatbit", lanLink(l))],
+    allowed_mentions: { parse: [] },
   };
 }
 
@@ -229,6 +296,77 @@ function forgetIfGone(channelId: string, e: unknown) {
   return false;
 }
 
+type Post = typeof discordMessage.$inferSelect;
+
+/** Where an event's Discord things go: its LAN type's setting, plain channel otherwise. */
+export function discordModeOf(l: Pick<Lan, "typeId">): DiscordMode {
+  if (!l.typeId) return "channel";
+  return db.select({ m: schema.lanType.discordMode }).from(schema.lanType).where(eq(schema.lanType.id, l.typeId)).get()?.m ?? "channel";
+}
+
+/** Discord channel names: lowercase, dashes, no spaces. */
+export function eventChannelName(l: Pick<Lan, "name">) {
+  const name = l.name
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 90);
+  return name || "lan";
+}
+
+/** Makes a text channel for the event in the linked channel's category. Needs "Manage Channels". */
+async function createEventChannel(l: Lan, home: typeof discordChannel.$inferSelect) {
+  const parent = await api<{ parent_id?: string | null }>("GET", `/channels/${home.channelId}`).catch(() => ({ parent_id: null }));
+  const ch = await api<{ id: string }>("POST", `/guilds/${home.guildId}/channels`, {
+    name: eventChannelName(l),
+    type: 0,
+    topic: clip(`${l.name} · ${lanLink(l)}`, 1024),
+    ...(parent.parent_id && { parent_id: parent.parent_id }),
+  });
+  return ch.id;
+}
+
+/** Posts the announcement for one linked channel, in the place the event's mode asks for. */
+async function postAnnouncement(l: Lan, home: typeof discordChannel.$inferSelect, msg: Json, mode: DiscordMode) {
+  let eventChannelId: string | null = null;
+  if (mode === "event_channel") {
+    // Without "Manage Channels" the post falls back to the linked channel.
+    eventChannelId = await createEventChannel(l, home).catch((e) => {
+      console.warn(`[discord] couldn't create a channel for ${l.name}: ${(e as Error).message}`);
+      return null;
+    });
+  }
+  const where = eventChannelId ?? home.channelId;
+  const m = await api<{ id: string }>("POST", `/channels/${where}/messages`, msg);
+  // Pin the live post so it's easy to find. Needs the "Pin Messages" permission; fine without.
+  await api("PUT", `/channels/${where}/pins/${m.id}`).catch((e) =>
+    console.warn(`[discord] couldn't pin in ${where}: ${(e as Error).message}`),
+  );
+  let threadId: string | null = null;
+  if (mode === "thread") {
+    // A thread on the post keeps reminders and news out of the main channel. Needs "Create Public Threads".
+    threadId = await api<{ id: string }>("POST", `/channels/${where}/messages/${m.id}/threads`, {
+      name: clip(l.name, 100),
+      auto_archive_duration: 10080,
+    })
+      .then((t) => t.id)
+      .catch((e) => {
+        console.warn(`[discord] couldn't start a thread for ${l.name}: ${(e as Error).message}`);
+        return null;
+      });
+  }
+  if (eventChannelId) {
+    // Point the linked channel at the new one, so people find it.
+    await api("POST", `/channels/${home.channelId}/messages`, {
+      content: `📣 **${clip(l.name, 200)}** has its own channel: <#${eventChannelId}>`,
+      allowed_mentions: { parse: [] },
+    }).catch(() => {});
+  }
+  db.insert(discordMessage).values({ lanId: l.id, channelId: home.channelId, messageId: m.id, threadId, eventChannelId }).run();
+}
+
 /**
  * Posts the LAN announcement to every configured channel that doesn't have it
  * yet, and refreshes it where it exists. Returns how many channels got a new post.
@@ -239,6 +377,7 @@ export async function announceLan(lanId: string, onlyChannelId?: string) {
   // Drafts stay off Discord until an orga publishes them.
   if (!l?.publishedAt) return 0;
   const msg = await lanMessage(l);
+  const mode = discordModeOf(l);
   const existing = new Set(
     db.select().from(discordMessage).where(eq(discordMessage.lanId, lanId)).all().map((m) => m.channelId),
   );
@@ -246,13 +385,8 @@ export async function announceLan(lanId: string, onlyChannelId?: string) {
   for (const c of listChannels(l.clanId)) {
     if (existing.has(c.channelId) || (onlyChannelId && c.channelId !== onlyChannelId)) continue;
     try {
-      const m = await api<{ id: string }>("POST", `/channels/${c.channelId}/messages`, msg);
-      db.insert(discordMessage).values({ lanId, channelId: c.channelId, messageId: m.id }).run();
+      await postAnnouncement(l, c, msg, mode);
       posted++;
-      // Pin the live post so it's easy to find. Needs the "Pin Messages" permission; fine without.
-      await api("PUT", `/channels/${c.channelId}/pins/${m.id}`).catch((e) =>
-        console.warn(`[discord] couldn't pin in ${c.channelId}: ${(e as Error).message}`),
-      );
     } catch (e) {
       if (!forgetIfGone(c.channelId, e)) console.error("[discord] announce failed", e);
     }
@@ -284,25 +418,53 @@ export async function refreshLanMessages(lanId: string) {
   const msg = await lanMessage(l);
   for (const p of posts) {
     try {
-      await api("PATCH", `/channels/${p.channelId}/messages/${p.messageId}`, msg);
+      await api("PATCH", `/channels/${p.eventChannelId ?? p.channelId}/messages/${p.messageId}`, msg);
     } catch (e) {
       const status = (e as { status?: number }).status;
-      // Message was deleted by someone: forget it, so "Post to Discord" can post it again.
+      // Message (or the event's channel) was deleted by someone: forget it, so "Post to Discord" can post it again.
       if (status === 404) db.delete(discordMessage).where(eq(discordMessage.id, p.id)).run();
       else console.error("[discord] edit failed", e);
     }
   }
 }
 
+/**
+ * Posts a follow-up (reminder, news) for an event in one linked channel: in the event's thread or
+ * channel when it has one, else in the linked channel itself.
+ */
+async function postFollowUp(home: string, post: Post | undefined, msg: Json) {
+  const target = post?.threadId ?? post?.eventChannelId ?? home;
+  if (target === home) return api("POST", `/channels/${home}/messages`, msg);
+  try {
+    // Threads archive after a week of quiet; reopen it first (fails harmlessly when it's open).
+    if (target === post?.threadId) await api("PATCH", `/channels/${target}`, { archived: false }).catch(() => {});
+    return await api("POST", `/channels/${target}/messages`, msg);
+  } catch (e) {
+    const status = (e as { status?: number }).status;
+    if (status !== 404 && status !== 403) throw e;
+    // Thread or event channel deleted (or locked for the bot): forget it and use the linked channel.
+    console.warn(`[discord] event thread/channel ${target} unreachable (${status}), using ${home}`);
+    db.update(discordMessage)
+      .set(target === post?.threadId ? { threadId: null } : { eventChannelId: null })
+      .where(eq(discordMessage.id, post!.id))
+      .run();
+    return api("POST", `/channels/${home}/messages`, msg);
+  }
+}
+
+const postsByChannel = (lanId: string) =>
+  new Map(db.select().from(discordMessage).where(eq(discordMessage.lanId, lanId)).all().map((p) => [p.channelId, p]));
+
 /** Posts a reminder to every channel now (orga "nudge" button). */
 export async function postReminderNow(l: Lan, kind: ChatReminderKind) {
   if (!discordEnabled()) return 0;
   const msg = await reminderMessage(kind, l);
   if (!msg) return 0;
+  const posts = postsByChannel(l.id);
   let sent = 0;
   for (const c of listChannels(l.clanId)) {
     try {
-      await api("POST", `/channels/${c.channelId}/messages`, msg);
+      await postFollowUp(c.channelId, posts.get(c.channelId), msg);
       db.insert(channelReminderLog)
         .values({ lanId: l.id, channelId: c.channelId, kind })
         .onConflictDoUpdate({
@@ -321,6 +483,7 @@ export async function postReminderNow(l: Lan, kind: ChatReminderKind) {
 /** Posts due reminders that haven't been posted to a channel yet (called by the reminder scheduler). */
 export async function postDueChannelReminders(kinds: ChatReminderKind[], l: Lan) {
   if (!discordEnabled() || kinds.length === 0) return 0;
+  const posts = postsByChannel(l.id);
   let sent = 0;
   for (const kind of kinds) {
     const done = new Set(
@@ -337,12 +500,33 @@ export async function postDueChannelReminders(kinds: ChatReminderKind[], l: Lan)
     if (!msg) continue;
     for (const c of todo) {
       try {
-        await api("POST", `/channels/${c.channelId}/messages`, msg);
+        await postFollowUp(c.channelId, posts.get(c.channelId), msg);
         db.insert(channelReminderLog).values({ lanId: l.id, channelId: c.channelId, kind }).onConflictDoNothing().run();
         sent++;
       } catch (e) {
         if (!forgetIfGone(c.channelId, e)) console.error("[discord] reminder failed", e);
       }
+    }
+  }
+  return sent;
+}
+
+/**
+ * Posts orga news in the event's own thread or channel. Events in the plain channel mode don't get it
+ * there (members already get it by DM), so the main channel stays quiet.
+ */
+export async function postLanNews(l: Lan, text: string, author: string) {
+  if (!discordEnabled()) return 0;
+  const posts = db.select().from(discordMessage).where(eq(discordMessage.lanId, l.id)).all();
+  const msg = newsMessage(l, text, author);
+  let sent = 0;
+  for (const p of posts) {
+    if (!p.threadId && !p.eventChannelId) continue;
+    try {
+      await postFollowUp(p.channelId, p, msg);
+      sent++;
+    } catch (e) {
+      console.error("[discord] news failed", e);
     }
   }
   return sent;
