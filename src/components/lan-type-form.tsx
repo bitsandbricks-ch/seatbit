@@ -2,6 +2,7 @@
 import { useActionState } from "react";
 import { saveLanType, type FormState } from "@/app/actions";
 import { DISCORD_MODES, DISCORD_MODE_LABELS, type DiscordMode } from "@/lib/discord-modes";
+import { PROFILE_URL_HINT } from "@/lib/profile-link";
 import { Field, Input, btnPrimary, input } from "./ui";
 
 export type LanTypeValues = {
@@ -19,6 +20,7 @@ export type LanTypeValues = {
   durationHours: number;
   answerDaysBefore: string;
   discordMode: DiscordMode;
+  profileUrl: string;
 };
 
 export function LanTypeForm({ values }: { values: LanTypeValues }) {
@@ -39,6 +41,12 @@ export function LanTypeForm({ values }: { values: LanTypeValues }) {
         </Field>
         <Field label="Ticket shop">
           <Input type="url" name="ticketUrl" defaultValue={values.ticketUrl} placeholder="https://" />
+        </Field>
+        <Field
+          label="Member profile link"
+          hint="Optional. A member's profile on the event's site, with {id} where their LAN ID goes. Seatbit links each attendee's profile."
+        >
+          <Input name="profileUrl" defaultValue={values.profileUrl} placeholder={PROFILE_URL_HINT} className="font-mono" />
         </Field>
         <Field label="Usual ticket price">
           <Input name="price" defaultValue={values.price} />

@@ -28,6 +28,7 @@ An **event** is one edition of a LAN the group attends. It goes from draft (opti
 | **Spots** | How many people the group can bring. When full, new answers go on the [waitlist](attendance.md#waitlist). |
 | **Seats** | The seats the event gave the group, e.g. `F1-F16, F19-F22`. See [Seats](seats.md). |
 | **Event seat plan** | Link to the event's own seat plan where members book their seat (new every year). |
+| **Member profile link** | A member's profile on the event's site with `{id}` for their LAN ID. Empty uses the LAN type's. See [Profile links](clans.md#profile-links). |
 
 Every date field is a text box: type or paste `14.11.2026 18:00`, `14.11. 18` or `14.11.26 1800`, or open the calendar.
 

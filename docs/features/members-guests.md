@@ -16,6 +16,12 @@ Approve join requests, add people, and keep **guests**: people without a Seatbit
 | **Role** | One [role](clans.md#roles) per person (admins only). |
 | **Remove** | Takes someone out of the clan. Recruiters can remove plain members only. |
 
+### Member profiles
+
+Click a name to open the member's profile: their events, nicks, [socials](accounts.md#profile) and, where the LAN type has a [profile link](clans.md#profile-links), their profile on the event's site. Admins and recruiters also see contact details, LAN IDs and tickets.
+
+![Member profile](../screenshots/phone-member-profile.png){ .shot width="300" }
+
 ## Guests
 
 Guests are people who aren't on Seatbit yet, e.g. a friend who comes once a year. Add them with first name, surname and nick, then sign them up for events and give them a seat like anyone else. Name and nick can be edited later.

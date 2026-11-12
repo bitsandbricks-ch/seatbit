@@ -166,6 +166,7 @@ export async function deleteAccount(userId: string) {
         avatarStyle: "initials",
         avatarFile: null,
         icon: null,
+        socials: {},
         color: null,
         deletedAt: now,
       })
@@ -258,6 +259,7 @@ export function exportUserData(userId: string) {
       platformRole: me.role,
       emailReminders: me.emailReminders,
       discordDms: me.discordDms,
+      socials: me.socials,
       avatar: { style: me.avatarStyle, uploadedPicture: !!me.avatarFile, discordPicture: me.image, icon: me.icon, color: me.color },
       createdAt: me.createdAt,
       updatedAt: me.updatedAt,

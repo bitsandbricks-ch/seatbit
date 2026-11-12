@@ -29,6 +29,8 @@ export type AttendanceRow = {
   note: string;
   /** Participant number/ID at the LAN (lal.gg user ID, ticket number, ...), "" when not given. */
   lanAccount: string;
+  /** Their profile on the event's site, built from the LAN ID; null without a link pattern or ID. */
+  profileUrl: string | null;
   seatId: string | null;
   seat: string | null;
   /** Booked the seat on the event's own seat plan; null when the event has no seat plan link. */
@@ -210,6 +212,17 @@ export function AttendanceTable({
                   )}
                   {r.lanAccount && (
                     <span className="ml-2 font-mono text-xs font-normal text-muted lg:hidden">#{r.lanAccount}</span>
+                  )}
+                  {r.profileUrl && (
+                    <a
+                      href={r.profileUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="ml-2 text-xs font-normal text-bit hover:underline"
+                      title="Profile on the event's site"
+                    >
+                      Profile ↗
+                    </a>
                   )}
                 </p>
                 <p className="truncate text-xs text-muted">

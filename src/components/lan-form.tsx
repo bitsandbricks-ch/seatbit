@@ -2,6 +2,7 @@
 import { useActionState, useState } from "react";
 import { saveLan, type FormState } from "@/app/actions";
 import { DateTimePicker } from "./date-time-picker";
+import { PROFILE_URL_HINT } from "@/lib/profile-link";
 import { Field, Input, btnPrimary, input, label as labelCls } from "./ui";
 
 export type LanFormValues = {
@@ -15,6 +16,8 @@ export type LanFormValues = {
   ticketUrl: string;
   /** The event's own seat plan, where members book their seat. Optional (older callers leave it out). */
   externalPlanUrl?: string;
+  /** Profile link pattern with {id}; empty = the LAN type's. */
+  profileUrl?: string;
   startsAt: string;
   endsAt: string;
   signupDeadline: string;
@@ -157,6 +160,12 @@ export function LanForm({ values, types }: { values: LanFormValues; types: TypeO
           hint="Where members book their seat on the event's own site (e.g. the lal.gg Sitzplan). The link changes every year, so set it per event."
         >
           <Input type="url" name="externalPlanUrl" defaultValue={values.externalPlanUrl ?? ""} placeholder="https://" />
+        </Field>
+        <Field
+          label="Member profile link"
+          hint="A member's profile on the event's site, with {id} where their LAN ID goes. Empty uses the LAN type's link."
+        >
+          <Input name="profileUrl" defaultValue={values.profileUrl ?? ""} placeholder={PROFILE_URL_HINT} className="font-mono" />
         </Field>
         {open ? (
           <Field label="Rough date" hint="Optional, shown instead of the date, e.g. “spring 2027” or “usually in March”.">

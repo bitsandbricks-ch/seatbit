@@ -97,6 +97,7 @@ const SHOTS: Shot[] = [
   { name: "phone-clans", who: "anna", path: "/clans" },
   { name: "phone-clan", who: "anna", path: CLAN, full: true },
   { name: "phone-profile", who: "anna", path: "/profile", full: true },
+  { name: "phone-member-profile", who: "anna", path: `${CLAN}/members/demo-chiara`, full: true },
   {
     name: "phone-profile-delete",
     who: "anna",

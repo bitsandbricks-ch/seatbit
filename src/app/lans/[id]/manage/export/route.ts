@@ -3,10 +3,11 @@ import { db, schema } from "@/db";
 import { getLan, getNicks } from "@/lib/lans";
 import { getCurrentUser, isLanManager } from "@/lib/session";
 import { getLanAccounts } from "@/lib/lan-accounts";
+import { profileLink, profilePattern } from "@/lib/profile-link";
 
 const csv = (v: string) => (/[",\n;]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
 
-/** CSV of the group for this LAN (seat, nick, LAN ID, name, email, status, ticket), e.g. to send to the event's organisers. */
+/** CSV of the group for this LAN (seat, nick, LAN ID, name, email, status, ticket, profile link), e.g. to send to the event's organisers. */
 export async function GET(_: Request, { params }: RouteContext<"/lans/[id]/manage/export">) {
   const { id } = await params;
   const me = await getCurrentUser();
@@ -18,10 +19,12 @@ export async function GET(_: Request, { params }: RouteContext<"/lans/[id]/manag
   const users = new Map(db.select().from(schema.user).all().map((u) => [u.id, u]));
   const nicks = await getNicks(id, rows.map((r) => r.userId));
   const lanIds = getLanAccounts(l, rows.map((r) => r.userId));
+  const type = l.typeId ? db.select().from(schema.lanType).where(eq(schema.lanType.id, l.typeId)).get() : null;
+  const pattern = profilePattern(l, type);
   const seatOf = new Map(seats.filter((s) => s.userId).map((s) => [s.userId!, s.label]));
 
   const order = { going: 0, waitlist: 1, maybe: 2, declined: 3 };
-  const lines = [["seat", "nick", "lan_id", "name", "email", "status", "ticket", "note"].join(",")];
+  const lines = [["seat", "nick", "lan_id", "name", "email", "status", "ticket", "note", ...(pattern ? ["profile"] : [])].join(",")];
   for (const r of rows.sort(
     (a, b) =>
       order[a.status] - order[b.status] ||
@@ -38,6 +41,7 @@ export async function GET(_: Request, { params }: RouteContext<"/lans/[id]/manag
         r.status,
         r.paid ? "confirmed" : r.ticketBought ? "reported" : "open",
         r.note,
+        ...(pattern ? [profileLink(pattern, lanIds.get(r.userId)) ?? ""] : []),
       ]
         .map(csv)
         .join(","),

@@ -19,6 +19,8 @@ import { Avatar } from "@/components/avatar";
 import { avatarData } from "@/lib/avatars";
 import { pct } from "@/lib/clan-stats";
 import { isLanManager, requireUser, visibleLans } from "@/lib/session";
+import { profileLink } from "@/lib/profile-link";
+import { SocialList } from "@/components/social-list";
 
 export default async function MemberProfilePage({ params }: PageProps<"/clans/[slug]/members/[userId]">) {
   const { slug, userId } = await params;
@@ -51,16 +53,19 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
     .where(eq(schema.lanType.clanId, c.id))
     .orderBy(asc(schema.lanType.name))
     .all();
-  const lanAccounts = seesPrivate
-    ? db.select().from(schema.lanAccount).where(eq(schema.lanAccount.userId, u.id)).all()
-    : [];
+  // IDs are private, except where the LAN type links them to a profile on the event's site.
+  const lanAccounts = db.select().from(schema.lanAccount).where(eq(schema.lanAccount.userId, u.id)).all();
   const typeRows = types
-    .map((t) => ({
-      type: t,
-      nick: nicks.find((n) => n.typeId === t.id && n.isPrimary)?.nick ?? nicks.find((n) => n.typeId === t.id)?.nick,
-      lanId: lanAccounts.find((a) => a.typeId === t.id)?.value,
-    }))
-    .filter((r) => r.nick || r.lanId);
+    .map((t) => {
+      const value = lanAccounts.find((a) => a.typeId === t.id && !a.lanId)?.value;
+      return {
+        type: t,
+        nick: nicks.find((n) => n.typeId === t.id && n.isPrimary)?.nick ?? nicks.find((n) => n.typeId === t.id)?.nick,
+        lanId: seesPrivate ? value : undefined,
+        profile: profileLink(t.profileUrl, value),
+      };
+    })
+    .filter((r) => r.nick || r.lanId || r.profile);
 
   const lans = visibleLans(
     me,
@@ -92,13 +97,11 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
     .from(schema.clanMember)
     .where(and(eq(schema.clanMember.clanId, c.id), eq(schema.clanMember.role, "admin")))
     .all().length;
-  const discord = isManager
-    ? db
-        .select()
-        .from(schema.account)
-        .where(and(eq(schema.account.userId, u.id), eq(schema.account.providerId, "discord")))
-        .get()
-    : undefined;
+  const discord = db
+    .select()
+    .from(schema.account)
+    .where(and(eq(schema.account.userId, u.id), eq(schema.account.providerId, "discord")))
+    .get();
   const role = isMemberRole(membership.role) ? membership.role : "member";
   const avatar = avatarData(u);
 
@@ -181,14 +184,24 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
                   <dt className="text-muted">{r.type.name}</dt>
                   <dd className="min-w-0 text-right">
                     <span className="block truncate font-medium">{r.nick ?? defaultNick ?? "—"}</span>
-                    {r.lanId && <span className="block truncate text-xs text-faint">ID {r.lanId}</span>}
+                    {r.profile ? (
+                      <a href={r.profile} target="_blank" rel="noreferrer" className="block truncate text-xs text-bit hover:underline">
+                        {r.lanId ? `ID ${r.lanId}` : "Profile"} ↗
+                      </a>
+                    ) : (
+                      r.lanId && <span className="block truncate text-xs text-faint">ID {r.lanId}</span>
+                    )}
                   </dd>
                 </div>
               ))}
             </dl>
             {seesPrivate && typeRows.some((r) => r.lanId) && (
-              <p className="mt-3 text-xs text-faint">LAN IDs are only shown to clan admins and {isSelf ? "you" : "the member"}.</p>
+              <p className="mt-3 text-xs text-faint">LAN IDs are only shown to clan admins and {isSelf ? "you" : "the member"}. Profile links on an event&apos;s site are shown to the whole clan.</p>
             )}
+          </Card>
+
+          <Card title="Socials">
+            <SocialList socials={u.socials ?? {}} discordId={discord?.accountId} />
           </Card>
 
           {seesPrivate && (

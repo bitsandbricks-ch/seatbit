@@ -124,6 +124,7 @@ export async function copyForNextYear(lanId: string) {
       location: l.location,
       websiteUrl: l.websiteUrl,
       ticketUrl: l.ticketUrl,
+      profileUrl: l.profileUrl,
       startsAt: YEAR(l.startsAt)!,
       endsAt: YEAR(l.endsAt)!,
       signupDeadline: YEAR(l.signupDeadline),

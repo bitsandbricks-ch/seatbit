@@ -52,6 +52,8 @@ export const user = sqliteTable("user", {
   icon: text("icon"),
   /** Personal colour (one of PROFILE_COLORS), used for rings, seats and lists; null = picked from the user id. */
   color: text("color"),
+  /** Gaming and social handles shown on their member profile, keyed by SOCIALS in src/lib/socials.ts. */
+  socials: text("socials", { mode: "json" }).$type<Record<string, string>>().default({}).notNull(),
   /**
    * Set when the person deleted their account. The row stays (as "Deleted member", no email, no
    * logins) only so past events and the audit log keep their counts; everything personal is gone.
@@ -244,6 +246,8 @@ export const lanType = sqliteTable("lan_type", {
   answerDaysBefore: integer("answer_days_before").default(30),
   /** Where the Discord bot puts each event of this type: see DISCORD_MODES. */
   discordMode: text("discord_mode").$type<DiscordMode>().default("channel").notNull(),
+  /** Link to a member's profile on the event's site, with {id} for their LAN ID (e.g. https://example.com/user/?id={id}). */
+  profileUrl: text("profile_url").default("").notNull(),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
 });
 
@@ -282,6 +286,8 @@ export const lan = sqliteTable("lan", {
    * member books the seat the orgas gave them. Per event: the plan id changes every year.
    */
   externalPlanUrl: text("external_plan_url").default("").notNull(),
+  /** Profile link pattern with {id} for the member's LAN ID; empty = the LAN type's. */
+  profileUrl: text("profile_url").default("").notNull(),
   /**
    * When an orga published the event. Null = draft: only orgas and clan admins see it, and nobody is
    * notified (no Discord post, no reminders) until it's published.

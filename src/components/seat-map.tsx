@@ -35,6 +35,8 @@ export type SeatPerson = {
   /** Full name: Mike "Reyki" Keller. */
   name: string;
   lanAccount?: string;
+  /** Their profile on the event's site. */
+  profileUrl?: string;
   ticket?: "ok" | "reported" | "open";
   wishes?: { ok: string[]; missed: string[] };
 };
@@ -656,7 +658,14 @@ function SeatDetails({
           <p className={`text-lg font-semibold leading-tight [overflow-wrap:anywhere] ${mine ? "text-bit" : ""}`}>{s.name ?? s.nick}</p>
           {person?.lanAccount && (
             <p className="mt-1 text-xs text-muted">
-              Event account: <span className="font-mono text-fg">{person.lanAccount}</span>
+              Event account:{" "}
+              {person.profileUrl ? (
+                <a href={person.profileUrl} target="_blank" rel="noreferrer" className="font-mono text-bit hover:underline">
+                  {person.lanAccount} ↗
+                </a>
+              ) : (
+                <span className="font-mono text-fg">{person.lanAccount}</span>
+              )}
             </p>
           )}
           {admin && person?.ticket && (
