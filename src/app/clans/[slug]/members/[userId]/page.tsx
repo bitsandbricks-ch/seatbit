@@ -8,7 +8,9 @@ import { MemberAdminActions } from "@/components/member-admin-actions";
 import { GuestEditForm } from "@/components/guest-form";
 import { updateGuest } from "@/app/clan-actions";
 import { Card, Page, PageHeader, Pill, StatTile, StatusBadge, columns, stack } from "@/components/ui";
-import { canManageClan, getClanBySlug, isClanMember } from "@/lib/clans";
+import { clanPerms, getClanBySlug, isClanMember } from "@/lib/clans";
+import { isMemberRole } from "@/lib/clan-roles";
+import { RolePill } from "@/components/role-pill";
 import { fmtDate, fmtWeekday, lanWeekday } from "@/lib/format";
 import { pickNick } from "@/lib/lans";
 import { personLabel } from "@/lib/names";
@@ -34,8 +36,10 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
   if (!u) notFound();
 
   const isSelf = me.id === u.id;
-  const isManager = canManageClan(me, c.id);
-  // Private bits (email, LAN IDs, tickets): clan admins and the person themselves.
+  const perms = clanPerms(me, c.id);
+  // Admins and recruiters look after members and guests.
+  const isManager = perms.has("members");
+  // Private bits (email, LAN IDs, tickets): clan admins, recruiters and the person themselves.
   const seesPrivate = isManager || isSelf;
   const now = new Date();
 
@@ -95,7 +99,7 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
         .where(and(eq(schema.account.userId, u.id), eq(schema.account.providerId, "discord")))
         .get()
     : undefined;
-  const role = membership.role === "admin" ? "admin" : "member";
+  const role = isMemberRole(membership.role) ? membership.role : "member";
   const avatar = avatarData(u);
 
   return (
@@ -106,7 +110,7 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
         title={personLabel(u, defaultNick)}
         subtitle={
           <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            {role === "admin" && <Pill tone="emerald">admin</Pill>}
+            <RolePill role={role} />
             {u.isGuest && <Pill>guest · no login yet</Pill>}
             <span>in the clan since {fmtWeekday(membership.createdAt)}</span>
           </span>
@@ -208,7 +212,7 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
                   <CopyField value={`${appUrl}/claim/${u.claimCode}`} />
                 </div>
               )}
-              <p className="mt-3 text-xs text-faint">Only clan admins{isSelf && !isManager ? " and you" : ""} see this.</p>
+              <p className="mt-3 text-xs text-faint">Only clan admins and recruiters{isSelf && !isManager ? " and you" : ""} see this.</p>
             </Card>
           )}
 
@@ -220,6 +224,7 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
                 userId={u.id}
                 name={u.name}
                 role={role}
+                canSetRoles={perms.has("roles")}
                 isGuest={u.isGuest}
                 isSelf={isSelf}
                 lastAdmin={role === "admin" && admins <= 1}

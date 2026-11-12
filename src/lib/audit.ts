@@ -4,6 +4,7 @@ import { db, schema } from "@/db";
 import type { AuditEntry } from "@/db/schema";
 import { fmtDay } from "./format";
 import { getDefaultNames } from "./lans";
+import { roleWithArticle } from "./clan-roles";
 
 const { auditLog } = schema;
 
@@ -231,7 +232,10 @@ export function describeAudit(e: AuditEntry, name: (id: string | null | undefine
     case "member.approve":
       return `approved the join request of ${who}`;
     case "member.role":
-      return d.to === "admin" ? `made ${who} a clan admin` : `removed ${who} as clan admin`;
+      // Older entries only knew admin/member.
+      if (d.to === "admin") return `made ${who} a clan admin`;
+      if (d.to === "member") return `made ${who} a plain member (was ${roleWithArticle(String(d.from ?? "admin"))})`;
+      return `made ${who} ${roleWithArticle(String(d.to))}`;
     case "member.remove":
       return d.pending ? `declined the join request of ${who}` : `removed ${who} from the clan`;
     case "member.account_deleted":

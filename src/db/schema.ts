@@ -7,6 +7,7 @@ import {
   index,
   type AnySQLiteColumn,
 } from "drizzle-orm/sqlite-core";
+import type { ClanRole } from "../lib/clan-roles";
 
 const now = sql`(cast(unixepoch('subsecond') * 1000 as integer))`;
 const id = () =>
@@ -154,9 +155,8 @@ export const billingEvent = sqliteTable("billing_event", {
   at: integer("at", { mode: "timestamp_ms" }).default(now).notNull(),
 });
 
-/** "pending" = asked to join, waiting for an admin. */
-export const CLAN_ROLES = ["admin", "member", "pending"] as const;
-export type ClanRole = (typeof CLAN_ROLES)[number];
+// Roles and their permissions live in src/lib/clan-roles.ts.
+export { CLAN_ROLES, type ClanRole } from "../lib/clan-roles";
 
 export const clanMember = sqliteTable(
   "clan_member",
@@ -231,6 +231,10 @@ export const lanType = sqliteTable("lan_type", {
   reminderDays: integer("reminder_days").default(3).notNull(),
   /** Seats the group usually gets, e.g. "F1-F20". Copied into new events. */
   seatSpec: text("seat_spec").default("").notNull(),
+  /** Usual length of the event in hours (e.g. Fri 18:00 to Sun 16:00 = 46): fills the end when the start is set. */
+  durationHours: integer("duration_hours").default(46).notNull(),
+  /** "Answer by" this many days before the start; null = no answer deadline by default. */
+  answerDaysBefore: integer("answer_days_before").default(30),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
 });
 

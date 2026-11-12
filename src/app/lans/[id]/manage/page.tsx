@@ -12,7 +12,7 @@ import { avatarMap } from "@/lib/avatars";
 import { EventHeader } from "@/components/event-header";
 import { Card, Page, Pill, btnDanger, btnSecondary } from "@/components/ui";
 import { fmtDate, relative, toInputValue } from "@/lib/format";
-import { getLan, getNames, seatView } from "@/lib/lans";
+import { getLan, getNames, interestSwitch, seatView } from "@/lib/lans";
 import { dueKinds } from "@/lib/reminders";
 import { isLanManager, requireUser } from "@/lib/session";
 import { OrgaManager } from "@/components/orga-manager";
@@ -21,7 +21,7 @@ import { Tabs } from "@/components/tabs";
 import { DiscordButtons, WhatsAppTexts } from "@/components/chat-panel";
 import { whatsappTexts } from "@/lib/announce";
 import { discordEnabled, inviteUrl } from "@/lib/discord-api";
-import { canManageClan, getClan } from "@/lib/clans";
+import { clanCan, getClan } from "@/lib/clans";
 import { SeatFlow } from "@/components/seat-flow";
 import { checkWishes } from "@/lib/seating";
 import { getLanAccounts } from "@/lib/lan-accounts";
@@ -93,7 +93,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
     : 0;
   const lanClan = l.clanId ? getClan(l.clanId) : undefined;
   const discordPosts = db.select().from(schema.discordMessage).where(eq(schema.discordMessage.lanId, id)).all().length;
-  const invite = lanClan && canManageClan(me, lanClan.id) ? inviteUrl() : null;
+  const invite = lanClan && clanCan(me, lanClan.id, "settings") ? inviteUrl() : null;
 
   const wantsMail = (uid: string) => userById.get(uid)?.emailReminders;
   const undecided = users.filter(
@@ -602,6 +602,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
                 capacity: l.capacity?.toString() ?? "",
                 reminderDays: l.reminderDays,
                 interestCheck: l.interestCheck,
+                interestSwitch: interestSwitch(l),
                 dateTbd: l.dateTbd,
                 dateHint: l.dateHint,
               }}

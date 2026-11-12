@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { db, schema } from "@/db";
 import type { ClanRole } from "@/db/schema";
+import { CLAN_PERMISSIONS, roleCan, type ClanPermission } from "./clan-roles";
 import { foldName } from "./names";
 
 const { clan, clanMember } = schema;
@@ -21,12 +22,18 @@ export function clanRole(userId: string, clanId: string): ClanRole | null {
 
 export function isClanMember(userId: string, clanId: string) {
   const r = clanRole(userId, clanId);
-  return r === "admin" || r === "member";
+  return !!r && r !== "pending";
 }
 
-/** Platform admins and the clan's admins can manage a clan. */
-export function canManageClan(u: Who, clanId: string) {
-  return u.role === "admin" || clanRole(u.id, clanId) === "admin";
+/** Platform admins may do everything; everyone else what their clan role allows. */
+export function clanCan(u: Who, clanId: string, perm: ClanPermission) {
+  return u.role === "admin" || roleCan(clanRole(u.id, clanId), perm);
+}
+
+/** Everything the user may do in a clan, for pages that show or hide several parts. */
+export function clanPerms(u: Who, clanId: string) {
+  const r = clanRole(u.id, clanId);
+  return new Set(CLAN_PERMISSIONS.filter((p) => u.role === "admin" || roleCan(r, p)));
 }
 
 export function myClans(userId: string) {

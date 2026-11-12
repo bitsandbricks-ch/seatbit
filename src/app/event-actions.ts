@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db, schema } from "@/db";
 import { INTEREST_ANSWERS, type InterestAnswer } from "@/db/schema";
-import { getDisplayNames, getLan } from "@/lib/lans";
+import { addClanAdminsAsOrgas, getDisplayNames, getLan } from "@/lib/lans";
 import { cancelEvent, openSignup, publishEvent, sendNews, uncancelEvent } from "@/lib/event-notices";
 import { isClanMember } from "@/lib/clans";
 import { canViewLan, isLanManager, requireLanManager, requireUser } from "@/lib/session";
@@ -150,6 +150,7 @@ export async function copyForNextYear(lanId: string) {
     if (uid === me.id || !l.clanId || isClanMember(uid, l.clanId)) db.insert(lanOrga).values({ lanId: row.id, userId: uid }).run();
   }
   auditLan(row, me.id, "event.copy", { data: { from: l.name } });
+  addClanAdminsAsOrgas(row.id, l.clanId);
   revalidatePath("/");
   redirect(`/lans/${row.id}/manage?tab=settings&copied=1`);
 }

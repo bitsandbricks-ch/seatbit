@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { Card, Columns, Page, PageHeader } from "@/components/ui";
 import { LanTypeForm } from "@/components/lan-type-form";
-import { canManageClan, getClanBySlug } from "@/lib/clans";
+import { clanCan, getClanBySlug } from "@/lib/clans";
 import { requireUser } from "@/lib/session";
 
 export default async function NewLanTypePage({ params }: PageProps<"/clans/[slug]/types/new">) {
@@ -9,7 +9,7 @@ export default async function NewLanTypePage({ params }: PageProps<"/clans/[slug
   const me = await requireUser();
   const c = getClanBySlug(slug);
   if (!c) notFound();
-  if (!canManageClan(me, c.id)) redirect(`/clans/${slug}`);
+  if (!clanCan(me, c.id, "events")) redirect(`/clans/${slug}`);
   return (
     <Page>
       <PageHeader back={{ href: `/clans/${c.slug}/settings?tab=types`, label: "LAN types" }} title="Add a LAN type" />
@@ -27,6 +27,8 @@ export default async function NewLanTypePage({ params }: PageProps<"/clans/[slug
             capacity: "",
             reminderDays: 3,
             seatSpec: "",
+            durationHours: 46,
+            answerDaysBefore: "30",
           }}
         />
       </Card>

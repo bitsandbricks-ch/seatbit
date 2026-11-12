@@ -4,7 +4,7 @@ import { db, schema } from "@/db";
 import { deleteLanType } from "@/app/actions";
 import { Card, Columns, Page, PageHeader, btnDanger } from "@/components/ui";
 import { LanTypeForm } from "@/components/lan-type-form";
-import { canManageClan, getClanBySlug } from "@/lib/clans";
+import { clanCan, getClanBySlug } from "@/lib/clans";
 import { requireUser } from "@/lib/session";
 
 export default async function EditLanTypePage({ params }: PageProps<"/clans/[slug]/types/[id]">) {
@@ -12,7 +12,7 @@ export default async function EditLanTypePage({ params }: PageProps<"/clans/[slu
   const me = await requireUser();
   const c = getClanBySlug(slug);
   if (!c) notFound();
-  if (!canManageClan(me, c.id)) redirect(`/clans/${slug}`);
+  if (!clanCan(me, c.id, "events")) redirect(`/clans/${slug}`);
   const t = db
     .select()
     .from(schema.lanType)
@@ -35,7 +35,7 @@ export default async function EditLanTypePage({ params }: PageProps<"/clans/[slu
         }
       >
       <Card>
-        <LanTypeForm values={{ ...t, clanId: c.id, capacity: t.capacity?.toString() ?? "" }} />
+        <LanTypeForm values={{ ...t, clanId: c.id, capacity: t.capacity?.toString() ?? "", answerDaysBefore: t.answerDaysBefore?.toString() ?? "" }} />
       </Card>
       </Columns>
     </Page>
