@@ -21,7 +21,7 @@ import { Tabs } from "@/components/tabs";
 import { DiscordButtons, WhatsAppTexts } from "@/components/chat-panel";
 import { whatsappTexts } from "@/lib/announce";
 import { discordEnabled, inviteUrl } from "@/lib/discord-api";
-import { canManageClan, getClan } from "@/lib/clans";
+import { clanCan, getClan } from "@/lib/clans";
 import { SeatFlow } from "@/components/seat-flow";
 import { checkWishes } from "@/lib/seating";
 import { getLanAccounts } from "@/lib/lan-accounts";
@@ -93,7 +93,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
     : 0;
   const lanClan = l.clanId ? getClan(l.clanId) : undefined;
   const discordPosts = db.select().from(schema.discordMessage).where(eq(schema.discordMessage.lanId, id)).all().length;
-  const invite = lanClan && canManageClan(me, lanClan.id) ? inviteUrl() : null;
+  const invite = lanClan && clanCan(me, lanClan.id, "settings") ? inviteUrl() : null;
 
   const wantsMail = (uid: string) => userById.get(uid)?.emailReminders;
   const undecided = users.filter(

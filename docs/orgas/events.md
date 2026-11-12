@@ -13,7 +13,7 @@ Click **New event** on the **LANs** tab or the clan page. **Start from** a LAN t
 
 ## Draft, publish and schedule
 
-A new event starts as a **draft**: only its orgas and the clan admins see it, and nothing goes out (no Discord post, no reminders, no messages). Fill in the details, then click **Publish now**, or **Schedule…** a time and it goes live by itself.
+A new event starts as a **draft**: only its orgas, the clan admins and event managers see it, and nothing goes out (no Discord post, no reminders, no messages). Fill in the details, then click **Publish now**, or **Schedule…** a time and it goes live by itself.
 
 ![A draft event](../screenshots/desktop-event-draft.png){ .shot }
 

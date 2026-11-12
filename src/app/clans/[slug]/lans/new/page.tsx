@@ -5,7 +5,7 @@ import { Card, Columns, Page, PageHeader, Segmented } from "@/components/ui";
 import { LanForm } from "@/components/lan-form";
 import { toInputValue } from "@/lib/format";
 import { requireUser } from "@/lib/session";
-import { canManageClan, getClanBySlug, myClans } from "@/lib/clans";
+import { clanCan, getClanBySlug, myClans } from "@/lib/clans";
 import { ClanAvatar } from "@/components/clan-avatar";
 import { notFound, redirect } from "next/navigation";
 
@@ -14,10 +14,10 @@ export default async function NewLanPage({ params, searchParams }: PageProps<"/c
   const me = await requireUser();
   const c = getClanBySlug(slug);
   if (!c) notFound();
-  if (!canManageClan(me, c.id)) redirect(`/clans/${slug}`);
+  if (!clanCan(me, c.id, "events")) redirect(`/clans/${slug}`);
   const { type } = await searchParams;
   // Clans this user can create events for, so they can switch here instead of going back.
-  const managed = myClans(me.id).filter((m) => canManageClan(me, m.clan.id));
+  const managed = myClans(me.id).filter((m) => clanCan(me, m.clan.id, "events"));
   const types = db
     .select()
     .from(schema.lanType)

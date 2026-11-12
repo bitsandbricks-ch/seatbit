@@ -4,6 +4,7 @@ import { db, schema } from "@/db";
 import type { Lan, User } from "@/db/schema";
 import { api, discordEnabled } from "./discord-api";
 import { appUrl, sendMail } from "./mail";
+import { rolesWith } from "./clan-roles";
 
 const { account, attendance, user, clanMember } = schema;
 
@@ -21,6 +22,7 @@ export type NoticeKind =
   | "lan_changed"
   | "clan_request"
   | "clan_approved"
+  | "clan_role"
   | "guest_claimed";
 
 export type Notice = {
@@ -221,13 +223,13 @@ export async function notifyLanChanged(before: Lan, after: Lan) {
   return rows.length;
 }
 
-/** Tells a clan's admins about a join request or a claimed guest profile (DM only). */
+/** Tells whoever handles a clan's members (admins and recruiters) about a join request or a claimed guest profile (DM only). */
 export async function notifyClanAdmins(clanId: string, n: Omit<Notice, "dmOnly">) {
   const admins = db
     .select({ u: user })
     .from(clanMember)
     .innerJoin(user, eq(user.id, clanMember.userId))
-    .where(and(eq(clanMember.clanId, clanId), eq(clanMember.role, "admin"), ne(user.isGuest, true)))
+    .where(and(eq(clanMember.clanId, clanId), inArray(clanMember.role, rolesWith("members")), ne(user.isGuest, true)))
     .all();
   for (const { u } of admins) await sendDiscordDm(u, n);
 }

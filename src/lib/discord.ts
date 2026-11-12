@@ -2,7 +2,8 @@ import crypto from "node:crypto";
 import { and, asc, eq, gt, inArray, isNotNull } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { INTEREST_ANSWERS, type AttendanceStatus, type Clan, type InterestAnswer, type Lan } from "@/db/schema";
-import { avatarUrl, canManageClan, getClan, isClanMember, myClans } from "./clans";
+import { avatarUrl, clanCan, getClan, isClanMember, myClans } from "./clans";
+import { roleCan } from "./clan-roles";
 import { type ChatReminderKind, fmtWhen, lanFacts, lanLink, lanSummary } from "./announce";
 import { ATTENDANCE_LOCKED_MSG, attendanceLocked, getDisplayNames, getLan, setAttendance, signupClosed } from "./lans";
 import { type Json, api, discordEnabled } from "./discord-api";
@@ -397,7 +398,7 @@ function clanForGuild(guildId: string | undefined): Clan | undefined {
 /** Clans this user may link a server to: only clans they're an admin of (platform admins included). */
 function manageableClans(u: { id: string; role: string }) {
   return myClans(u.id)
-    .filter((m) => m.role === "admin")
+    .filter((m) => u.role === "admin" || roleCan(m.role, "settings"))
     .map((m) => m.clan);
 }
 
@@ -610,7 +611,7 @@ export function handleInteraction(i: Interaction): { response: Json; later?: () 
 /** Unlinks a channel from Seatbit (clan settings). Checks the caller may manage the channel's clan. */
 export function unlinkChannel(u: { id: string; role: string }, channelId: string) {
   const ch = db.select().from(discordChannel).where(eq(discordChannel.channelId, channelId)).get();
-  if (!ch || !canManageClan(u, ch.clanId)) return false;
+  if (!ch || !clanCan(u, ch.clanId, "settings")) return false;
   db.delete(discordChannel).where(eq(discordChannel.channelId, channelId)).run();
   db.delete(discordMessage).where(eq(discordMessage.channelId, channelId)).run();
   return true;

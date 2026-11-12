@@ -3,6 +3,7 @@ import { and, eq, gt } from "drizzle-orm";
 import type { ReactNode } from "react";
 import { db, schema } from "@/db";
 import type { Clan, ClanRole } from "@/db/schema";
+import { MANAGE_TAB_PERMS, isMemberRole, roleWithArticle, type ClanPermission } from "@/lib/clan-roles";
 import { joinClan } from "@/app/clan-actions";
 import { ClanAvatar } from "./clan-avatar";
 import { Tabs, type Tab } from "./tabs";
@@ -22,24 +23,33 @@ export function clanTabHref(slug: string, mode: "view" | "manage", tab: string) 
   return tab === "general" ? `/clans/${slug}/settings` : `/clans/${slug}/settings?tab=${tab}`;
 }
 
+/** The manage tabs this user may open, in tab order. Empty = no Manage switch. */
+export function manageTabsFor(perms: Set<ClanPermission>) {
+  return CLAN_MANAGE_TABS.filter((t) => perms.has(MANAGE_TAB_PERMS[t]));
+}
+
 /**
- * The clan's header and tab bar, the same on the clan page, its stats and its settings. Clan admins get the
- * View / Manage switch (like on events), so the settings are always one tap away. Switching keeps you on
- * Members if you're there.
+ * The clan's header and tab bar, the same on the clan page, its stats and its settings. Admins, event managers
+ * and recruiters get the View / Manage switch (like on events), with the manage tabs their role allows.
+ * Switching keeps you on Members if you're there.
  */
 export function ClanHeader({
   clan: c,
   role,
-  canManage,
+  perms,
   mode,
   tab,
 }: {
   clan: Clan;
   role: ClanRole | null;
-  canManage: boolean;
+  /** From clanPerms(). */
+  perms: Set<ClanPermission>;
   mode: "view" | "manage";
   tab: string;
 }) {
+  const manageTabs = manageTabsFor(perms);
+  const canManage = manageTabs.length > 0;
+  const seesDrafts = perms.has("events");
   const roles = db
     .select({ role: schema.clanMember.role, isGuest: schema.user.isGuest })
     .from(schema.clanMember)
@@ -49,10 +59,11 @@ export function ClanHeader({
   const active = roles.filter((r) => r.role !== "pending");
   const pending = roles.length - active.length;
   const guests = active.filter((r) => r.isGuest).length;
-  const isMember = role === "admin" || role === "member";
+  const isMember = isMemberRole(role);
 
   const other = mode === "view" ? "manage" : "view";
-  const keepTab = tab === "members" ? "members" : other === "view" ? "overview" : "general";
+  const keepTab =
+    tab === "members" && (other === "view" || manageTabs.includes("members")) ? "members" : other === "view" ? "overview" : manageTabs[0];
 
   let tabs: Tab[];
   if (mode === "view") {
@@ -64,32 +75,33 @@ export function ClanHeader({
             .where(and(eq(schema.lan.clanId, c.id), gt(schema.lan.endsAt, new Date())))
             .all()
             // Members don't see drafts.
-            .filter((l) => canManage || l.publishedAt).length
+            .filter((l) => seesDrafts || l.publishedAt).length
         : 0;
     tabs = [
       { id: "overview", label: "Overview" },
       ...(isMember || canManage ? [{ id: "events", label: "Events", count: upcoming || undefined }] : []),
       { id: "members", label: "Members", count: active.length },
-      ...(canManage ? [{ id: "stats", label: "Stats" }] : []),
+      ...(perms.has("stats") ? [{ id: "stats", label: "Stats" }] : []),
     ];
   } else {
     const types = db.select({ id: schema.lanType.id }).from(schema.lanType).where(eq(schema.lanType.clanId, c.id)).all().length;
-    tabs = [
-      { id: "general", label: "General" },
-      { id: "members", label: "Members", count: active.length - guests, badge: pending ? `${pending} waiting` : undefined },
-      { id: "guests", label: "Guests", count: guests },
-      { id: "types", label: "LAN types", count: types },
-      { id: "invites", label: "Invite links" },
-      { id: "chat", label: "Discord & WhatsApp" },
-      { id: "log", label: "Audit log" },
-    ];
+    const all: Record<ClanManageTab, Tab> = {
+      general: { id: "general", label: "General" },
+      members: { id: "members", label: "Members", count: active.length - guests, badge: pending ? `${pending} waiting` : undefined },
+      guests: { id: "guests", label: "Guests", count: guests },
+      types: { id: "types", label: "LAN types", count: types },
+      invites: { id: "invites", label: "Invite links" },
+      chat: { id: "chat", label: "Discord & WhatsApp" },
+      log: { id: "log", label: "Audit log" },
+    };
+    tabs = manageTabs.map((t) => all[t]);
   }
 
   let actions: ReactNode = null;
   if (canManage) {
     actions = (
       <>
-        {mode === "view" && (
+        {mode === "view" && perms.has("events") && (
           <Link href={`/clans/${c.slug}/lans/new`} className={btnPrimary}>
             <span aria-hidden>+</span> New event
           </Link>
@@ -98,7 +110,7 @@ export function ClanHeader({
           mode={mode}
           viewHref={clanTabHref(c.slug, "view", mode === "manage" ? keepTab : tab)}
           manageHref={clanTabHref(c.slug, "manage", mode === "view" ? keepTab : tab)}
-          manageBadge={mode === "view" ? pending : undefined}
+          manageBadge={mode === "view" && perms.has("members") ? pending : undefined}
         />
       </>
     );
@@ -109,7 +121,7 @@ export function ClanHeader({
       </form>
     );
   } else if (role === "pending") {
-    actions = <Pill tone="amber">Waiting for an admin to approve you</Pill>;
+    actions = <Pill tone="amber">Waiting for approval</Pill>;
   }
 
   return (
@@ -126,7 +138,9 @@ export function ClanHeader({
           <>
             {active.length} {active.length === 1 ? "member" : "members"}
             <span className="text-faint"> · {joinPolicyText[c.joinPolicy]}</span>
-            {role === "admin" && <span className="text-faint"> · you&apos;re an admin</span>}
+            {isMemberRole(role) && role !== "member" && (
+              <span className="text-faint"> · you&apos;re {roleWithArticle(role)}</span>
+            )}
           </>
         }
         actions={actions}

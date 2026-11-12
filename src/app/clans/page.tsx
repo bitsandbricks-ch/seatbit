@@ -6,6 +6,9 @@ import { ClanAvatar } from "@/components/clan-avatar";
 import { ClanForm } from "@/components/clan-form";
 import { Card, Columns, EmptyState, Page, PageHeader, Pill, btnPrimary, btnSecondary } from "@/components/ui";
 import { requireUser } from "@/lib/session";
+import { CLAN_MANAGE_TABS } from "@/components/clan-header";
+import { RolePill } from "@/components/role-pill";
+import { MANAGE_TAB_PERMS, roleCan } from "@/lib/clan-roles";
 
 export default async function ClansPage() {
   const me = await requireUser();
@@ -44,9 +47,9 @@ export default async function ClansPage() {
                     <span className="block truncate font-medium">{c.name}</span>
                     <span className="text-xs text-muted">{count(c.id)} members</span>
                   </span>
-                  {mine.get(c.id) === "admin" && <Pill tone="emerald">admin</Pill>}
+                  <RolePill role={mine.get(c.id)} />
                 </Link>
-                {mine.get(c.id) === "admin" && (
+                {CLAN_MANAGE_TABS.some((t) => roleCan(mine.get(c.id), MANAGE_TAB_PERMS[t])) && (
                   <Link href={`/clans/${c.slug}/settings`} className={`${btnSecondary} shrink-0 !text-bit`}>
                     Manage
                   </Link>

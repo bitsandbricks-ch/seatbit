@@ -7,6 +7,7 @@ import {
   index,
   type AnySQLiteColumn,
 } from "drizzle-orm/sqlite-core";
+import type { ClanRole } from "../lib/clan-roles";
 
 const now = sql`(cast(unixepoch('subsecond') * 1000 as integer))`;
 const id = () =>
@@ -135,9 +136,8 @@ export const clan = sqliteTable("clan", {
   createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
 });
 
-/** "pending" = asked to join, waiting for an admin. */
-export const CLAN_ROLES = ["admin", "member", "pending"] as const;
-export type ClanRole = (typeof CLAN_ROLES)[number];
+// Roles and their permissions live in src/lib/clan-roles.ts.
+export { CLAN_ROLES, type ClanRole } from "../lib/clan-roles";
 
 export const clanMember = sqliteTable(
   "clan_member",

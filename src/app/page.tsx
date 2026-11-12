@@ -7,6 +7,7 @@ import { fmtDay, lanDay, lanWeekday, relative } from "@/lib/format";
 import { requireUser, visibleLans } from "@/lib/session";
 import { buildChecklist, progress } from "@/lib/checklist";
 import { myClans } from "@/lib/clans";
+import { roleCan } from "@/lib/clan-roles";
 import { ClanAvatar } from "@/components/clan-avatar";
 
 const { lan, attendance, seat, nickname } = schema;
@@ -18,7 +19,8 @@ export default async function Home() {
   if (clans.length === 0) return <NoClan />;
   const clanIds = clans.map((c) => c.clan.id);
   const clanById = new Map(clans.map((c) => [c.clan.id, c.clan]));
-  const adminClans = clans.filter((c) => c.role === "admin");
+  // Clans this user creates events for (admins and event managers).
+  const adminClans = clans.filter((c) => roleCan(c.role, "events"));
   const upcoming = visibleLans(
     me,
     db

@@ -5,14 +5,15 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db, schema } from "@/db";
-import { canManageClan, clanRole, getClan, saveAvatar, uniqueSlug } from "@/lib/clans";
+import { clanCan, clanRole, getClan, saveAvatar, uniqueSlug } from "@/lib/clans";
+import { MEMBER_ROLES, ROLE_INFO, roleWithArticle, type MemberRole } from "@/lib/clan-roles";
 import { guestEmail } from "@/lib/guests";
 import { LAN_ID_MAX } from "@/lib/lan-accounts";
 import { accountByEmail, mergeGuestInto, normEmail, sendGuestInvite } from "@/lib/guest-claim";
 import { appUrl } from "@/lib/mail";
 import { missingServers, setServerInvite } from "@/lib/discord-invite";
 import { notify, notifyClanAdmins, notifyLater } from "@/lib/notify";
-import { requireClanManager, requireLanManager, requireUser } from "@/lib/session";
+import { requireClanPermission, requireLanManager, requireUser } from "@/lib/session";
 import { adminSetAttendance, type FormState } from "./actions";
 import { getDefaultNames } from "@/lib/lans";
 import { audit } from "@/lib/audit";
@@ -45,7 +46,7 @@ export async function createClan(_: FormState, formData: FormData): Promise<Form
 
 export async function updateClan(_: FormState, formData: FormData): Promise<FormState> {
   const clanId = String(formData.get("clanId"));
-  const me = await requireClanManager(clanId);
+  const me = await requireClanPermission(clanId, "settings");
   const before = getClan(clanId);
   const parsed = clanInput.safeParse({
     name: formData.get("name"),
@@ -139,25 +140,32 @@ export async function leaveClan(clanId: string) {
   redirect("/clans");
 }
 
-/** Approve a join request (pending -> member) or change a member's role. */
-export async function setClanMemberRole(clanId: string, userId: string, role: "admin" | "member") {
-  const me = await requireClanManager(clanId);
+/**
+ * Approve a join request (pending -> member: admins and recruiters) or change a member's role (admins only).
+ * A clan always keeps one admin.
+ */
+export async function setClanMemberRole(clanId: string, userId: string, role: MemberRole) {
+  if (!(MEMBER_ROLES as readonly string[]).includes(role)) throw new Error("Unknown role");
   const from = clanRole(userId, clanId);
-  if (role === "member" && clanRole(userId, clanId) === "admin" && adminCount(clanId) <= 1) {
-    throw new Error("A clan needs at least one admin.");
+  if (!from) throw new Error("Not in this clan");
+  const approving = from === "pending" && role === "member";
+  const me = await requireClanPermission(clanId, approving ? "members" : "roles");
+  if (from === role) return;
+  if (from === "admin" && adminCount(clanId) <= 1) throw new Error("A clan needs at least one admin.");
+  if (role !== "member" && db.select({ g: schema.user.isGuest }).from(schema.user).where(eq(schema.user.id, userId)).get()?.g) {
+    throw new Error("Guests get a role once they have claimed their account.");
   }
-  const wasPending = clanRole(userId, clanId) === "pending";
   db.update(clanMember)
     .set({ role })
     .where(and(eq(clanMember.clanId, clanId), eq(clanMember.userId, userId)))
     .run();
-  if (from && from !== role) {
-    if (from === "pending") audit({ actorId: me.id, action: "member.approve", clanId, targetUserId: userId });
-    if (role === "admin" || from === "admin") audit({ actorId: me.id, action: "member.role", clanId, targetUserId: userId, data: { from, to: role } });
+  if (from === "pending") audit({ actorId: me.id, action: "member.approve", clanId, targetUserId: userId });
+  if (from !== "pending" || role !== "member") {
+    audit({ actorId: me.id, action: "member.role", clanId, targetUserId: userId, data: { from, to: role } });
   }
   revalidatePath("/", "layout");
   const c = getClan(clanId);
-  if (wasPending && c) {
+  if (from === "pending" && c) {
     notifyLater(async () => {
       // They may not be on the clan's Discord yet, so this also goes by mail, with the invite.
       const invites = (await missingServers(userId, clanId)).map((sv) => sv.inviteUrl).filter(Boolean);
@@ -170,12 +178,22 @@ export async function setClanMemberRole(clanId: string, userId: string, role: "a
         url: `${appUrl}/clans/${c.slug}`,
       });
     });
+  } else if (c && role !== "member") {
+    notifyLater(() =>
+      notify(userId, {
+        kind: "clan_role",
+        subject: `${c.name}: you're now ${roleWithArticle(role)}`,
+        text: `${ROLE_INFO[role].description}\n\n${appUrl}/clans/${c.slug}`,
+        url: `${appUrl}/clans/${c.slug}`,
+      }),
+    );
   }
 }
 
+/** Recruiters remove members and decline requests; anyone with a role besides member only an admin can remove. */
 export async function removeClanMember(clanId: string, userId: string) {
-  const me = await requireClanManager(clanId);
   const role = clanRole(userId, clanId);
+  const me = await requireClanPermission(clanId, role === "member" || role === "pending" || !role ? "members" : "roles");
   if (role === "admin" && adminCount(clanId) <= 1) {
     throw new Error("A clan needs at least one admin.");
   }
@@ -187,7 +205,7 @@ export async function removeClanMember(clanId: string, userId: string) {
 }
 
 export async function createInvite(clanId: string) {
-  const me = await requireClanManager(clanId);
+  const me = await requireClanPermission(clanId, "members");
   const code = crypto.randomUUID().replace(/-/g, "").slice(0, 16);
   db.insert(clanInvite).values({ code, clanId, createdBy: me.id }).run();
   audit({ actorId: me.id, action: "invite.create", clanId });
@@ -197,14 +215,14 @@ export async function createInvite(clanId: string) {
 export async function deleteInvite(code: string) {
   const me = await requireUser();
   const inv = db.select().from(clanInvite).where(eq(clanInvite.code, code)).get();
-  if (!inv || !canManageClan(me, inv.clanId)) return;
+  if (!inv || !clanCan(me, inv.clanId, "members")) return;
   db.delete(clanInvite).where(eq(clanInvite.code, code)).run();
   audit({ actorId: me.id, action: "invite.delete", clanId: inv.clanId });
   revalidatePath("/", "layout");
 }
 
 export async function deleteClan(clanId: string) {
-  const me = await requireClanManager(clanId);
+  const me = await requireClanPermission(clanId, "settings");
   const c = getClan(clanId);
   db.delete(clan).where(eq(clan.id, clanId)).run();
   // The clan's own entries lose their clan (platform admins still see them); this one says what happened.
@@ -215,7 +233,7 @@ export async function deleteClan(clanId: string) {
 
 /** Admins add an existing Seatbit user directly. */
 export async function addClanMember(clanId: string, userId: string) {
-  const me = await requireClanManager(clanId);
+  const me = await requireClanPermission(clanId, "members");
   const u = db.select().from(schema.user).where(eq(schema.user.id, userId)).get();
   if (!u || u.deletedAt) throw new Error("User not found");
   const from = clanRole(userId, clanId);
@@ -306,7 +324,7 @@ function addedMessage(r: { id: string; existing?: string }, invited: boolean, wh
 
 /** Adds a member without a login, so orgas can sign them up and seat them. */
 export async function addGuest(clanId: string, _: FormState, formData: FormData): Promise<FormState> {
-  const me = await requireClanManager(clanId);
+  const me = await requireClanPermission(clanId, "members");
   const r = createGuest(clanId, formData);
   if ("error" in r) return r;
   audit({ actorId: me.id, action: "guest.add", clanId, targetUserId: r.id, data: { existing: !!r.existing || undefined } });
@@ -332,7 +350,7 @@ export async function addGuestToLan(lanId: string, _: FormState, formData: FormD
 
 /** Sets (or changes) a guest's email and sends them the invite. */
 export async function setGuestEmail(clanId: string, userId: string, _: FormState, formData: FormData): Promise<FormState> {
-  const me = await requireClanManager(clanId);
+  const me = await requireClanPermission(clanId, "members");
   const g = requireGuestOf(clanId, userId);
   const parsed = z.email().max(200).safeParse(String(formData.get("email") ?? "").trim());
   if (!parsed.success) return { error: "That email address doesn't look right." };
@@ -366,7 +384,7 @@ const guestEdit = z.object({
  * type, and email. A new email sends the invite (or hands everything over if that address has an account).
  */
 export async function updateGuest(clanId: string, userId: string, _: FormState, formData: FormData): Promise<FormState> {
-  const me = await requireClanManager(clanId);
+  const me = await requireClanPermission(clanId, "members");
   const g = requireGuestOf(clanId, userId);
   const parsed = guestEdit.safeParse({
     firstName: formData.get("firstName") ?? "",
@@ -450,7 +468,7 @@ function requireGuestOf(clanId: string, userId: string) {
 }
 
 export async function deleteGuest(clanId: string, userId: string) {
-  const me = await requireClanManager(clanId);
+  const me = await requireClanPermission(clanId, "members");
   const g = requireGuestOf(clanId, userId);
   audit({ actorId: me.id, action: "guest.delete", clanId, data: { guest: g.name } });
   db.delete(schema.user).where(eq(schema.user.id, userId)).run();
@@ -459,7 +477,7 @@ export async function deleteGuest(clanId: string, userId: string) {
 
 /** New claim link; the old one stops working. */
 export async function renewGuestLink(clanId: string, userId: string) {
-  const me = await requireClanManager(clanId);
+  const me = await requireClanPermission(clanId, "members");
   requireGuestOf(clanId, userId);
   audit({ actorId: me.id, action: "guest.renew_link", clanId, targetUserId: userId });
   db.update(schema.user).set({ claimCode: newClaimCode() }).where(eq(schema.user.id, userId)).run();
@@ -484,7 +502,7 @@ export async function claimGuest(code: string) {
 
 /** Clan admins set the Discord invite link shown to members who aren't on the server. */
 export async function setClanDiscordInvite(clanId: string, guildId: string, formData: FormData) {
-  await requireClanManager(clanId);
+  await requireClanPermission(clanId, "settings");
   const r = setServerInvite(clanId, guildId, String(formData.get("inviteUrl") ?? ""));
   if (r.error) throw new Error(r.error);
   revalidatePath("/clans", "layout");

@@ -14,6 +14,7 @@ import { fmtDate, fmtTime, relative } from "@/lib/format";
 import { ATTENDANCE_LOCKED_MSG, attendanceLocked, getDisplayNames, getLan, getNames, pickNick, seatView, signupClosed } from "@/lib/lans";
 import { canViewLan, isLanManager, requireUser } from "@/lib/session";
 import { getClan } from "@/lib/clans";
+import { rolesWith } from "@/lib/clan-roles";
 import { EventHeader } from "@/components/event-header";
 import { buildChecklist } from "@/lib/checklist";
 import { LanChecklist } from "@/components/lan-checklist";
@@ -62,7 +63,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
         .select({ u: schema.user })
         .from(schema.clanMember)
         .innerJoin(schema.user, eq(schema.user.id, schema.clanMember.userId))
-        .where(and(eq(schema.clanMember.clanId, l.clanId ?? ""), eq(schema.clanMember.role, "admin")))
+        .where(and(eq(schema.clanMember.clanId, l.clanId ?? ""), inArray(schema.clanMember.role, rolesWith("events"))))
         .all()
         .map((r) => r.u);
   const orgaNames = await getDisplayNames(id, orgas.map((o) => o.id));
