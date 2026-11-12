@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { deleteGuest, removeClanMember, setClanMemberRole } from "@/app/clan-actions";
 import { PagerBar, matches, usePager } from "./pager";
-import { Pill, btnGhost, btnSecondary, input } from "./ui";
+import { Pill, Verified, btnGhost, btnSecondary, input } from "./ui";
 import { Avatar } from "./avatar";
 import type { AvatarData } from "@/lib/avatars";
 import { MEMBER_ROLES, ROLE_INFO, type MemberRole } from "@/lib/clan-roles";
@@ -11,7 +11,7 @@ import { RolePill } from "./role-pill";
 
 const PAGE_SIZE = 20;
 
-/** Members tab on the clan page: everyone as Mike "Reyki" Keller, with search and pages. */
+/** Members tab on the clan page: everyone as the clan shows names (Mike "Reyki" Keller by default), with search and pages. */
 export function ClanMemberGrid({
   slug,
   members,
@@ -47,6 +47,7 @@ export function ClanMemberGrid({
               <span className="flex min-w-0 items-center gap-3">
                 <Avatar data={m.avatar} size={32} />
                 <span className="truncate font-medium">{m.name}</span>
+                {!m.guest && <Verified />}
               </span>
               <span className="flex shrink-0 gap-1">
                 <RolePill role={m.role} />
@@ -156,7 +157,7 @@ export function ClanMemberAdmin({
                 <Link href={`/clans/${slug}/members/${m.id}`} className="hover:text-bit hover:underline">
                   {m.name}
                 </Link>{" "}
-                <RolePill role={m.role} />
+                {!m.isGuest && <Verified />} <RolePill role={m.role} />
                 {m.isGuest && <Pill>guest</Pill>}
               </span>
               <span className="block truncate text-xs text-muted">

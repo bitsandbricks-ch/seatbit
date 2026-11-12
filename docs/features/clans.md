@@ -39,7 +39,7 @@ Everyone in a clan has one **clan role**:
 
 | Tab | |
 | --- | --- |
-| **General** | Name, description, avatar, join mode, guest claims, and the [Supporter](supporters.md) card when the instance has it on. |
+| **General** | Name, description, avatar, join mode, guest claims, how names are shown, and the [Supporter](supporters.md) card when the instance has it on. |
 | **Members** | Join requests, guest claims, add existing users, roles. See [Members and guests](members-guests.md). |
 | **Guests** | People without an account yet. See [Guests](members-guests.md#guests). |
 | **LAN types** | Templates for LANs you go to regularly. See [below](#lan-types). |
@@ -58,6 +58,18 @@ Everyone in a clan has one **clan role**:
 | *Invite only* | Only with an invite link. |
 
 **Can members claim guests?** An admin confirms each claim (default), same name or nick moves over right away, or only with the guest's own link. See [Members claiming a guest](members-guests.md#members-claiming-a-guest).
+
+**How are members shown?** Pick how people appear to each other on event pages, the seat map, the clan page and in the Discord bot:
+
+| Name display | Example |
+| --- | --- |
+| *Name "Nick" Surname* (default) | Mike "Reyki" Keller |
+| *Name "Nick"* | Mike "Reyki" |
+| *Nick only* | Reyki |
+
+The nick is the one for that event or LAN type, as always. Someone without a nick of their own shows as *Mike K.* in the shorter modes. Where orgas and admins manage things (event *Manage*, clan settings, stats, audit log, exports, the admin page) and on a member's profile for admins, recruiters and the member themself, the full name is always shown.
+
+**Verified check mark:** a green check mark after a name means the person has their own Seatbit account (they signed in with Discord). [Guests](members-guests.md#guests) an orga typed in don't have it until they take their guest over.
 
 ## LAN types
 

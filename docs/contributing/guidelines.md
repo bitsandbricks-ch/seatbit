@@ -30,7 +30,7 @@ The rules every change follows, for humans and [AI agents](agents.md) alike.
 | --- | --- |
 | **Dates** | Always 24h, Swiss style (*Sat 14.11.2026, 18:00*) via `src/lib/format.ts`. |
 | **Date inputs** | `src/components/date-time-picker.tsx`, never native `datetime-local`. |
-| **People** | *Name "Nick" Surname* via `personLabel` in `src/lib/names.ts`. |
+| **People** | *Name "Nick" Surname* via `personLabel` in `src/lib/names.ts`; on member-facing pages use the clan's name display (`getNames(...).label`, `getDisplayNames`). Mark real accounts with `<Verified />`. |
 
 ## Database
 

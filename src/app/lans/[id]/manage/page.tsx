@@ -74,7 +74,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
     .from(user)
     .all()
     .filter((u) => memberIds.has(u.id) || rows.some((r) => r.userId === u.id));
-  const people = await getNames(id, users.map((u) => u.id));
+  const people = await getNames(id, users.map((u) => u.id), "full");
   // Full "Name "Nick" Surname" everywhere; the bare nick only inside small seat cells.
   const names = new Map([...people].map(([uid, n]) => [uid, n.full]));
   const avatars = avatarMap(users);
@@ -175,7 +175,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
   // Who's missing: per step, who still owes something. Names for people outside the clan list come from getNames too.
   const missing = whoIsMissing(l);
   const missingIds = [...new Set(missing.flatMap((g) => g.people.map((p) => p.userId)))];
-  const missingNames = missingIds.some((uid) => !names.has(uid)) ? await getNames(id, missingIds) : null;
+  const missingNames = missingIds.some((uid) => !names.has(uid)) ? await getNames(id, missingIds, "full") : null;
   const memberMissing = new Set(
     missing.filter((g) => MISSING_STEPS[g.step].who === "member").flatMap((g) => g.people.map((p) => p.userId)),
   ).size;

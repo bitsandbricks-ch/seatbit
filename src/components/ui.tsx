@@ -81,6 +81,30 @@ export function Pill({ children, tone = "zinc" }: { children: ReactNode; tone?: 
   return <span className={`inline-flex items-center whitespace-nowrap rounded-bit px-1.5 py-0.5 text-xs ${tones[tone]}`}>{children}</span>;
 }
 
+/**
+ * Check mark after a name: this person has their own account (signed in with Discord),
+ * not a guest an orga typed in.
+ */
+export function Verified({ size = 14 }: { size?: number }) {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      width={size}
+      height={size}
+      role="img"
+      aria-label="Verified account"
+      className="inline-block shrink-0 align-[-0.125em] text-bit"
+    >
+      <title>Verified account: signed in themselves, not a guest</title>
+      <path
+        fill="currentColor"
+        d="M8 0.8l1.7 1.3 2.1-.2.8 2 2 .8-.2 2.1L15.7 8l-1.3 1.7.2 2.1-2 .8-.8 2-2.1-.2L8 15.7l-1.7-1.3-2.1.2-.8-2-2-.8.2-2.1L.3 8l1.3-1.7-.2-2.1 2-.8.8-2 2.1.2z"
+      />
+      <path fill="none" stroke="var(--color-ink)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" d="M5.2 8.2l1.9 1.9 3.8-4" />
+    </svg>
+  );
+}
+
 export function Field({ label: l, children, hint }: { label: string; children: ReactNode; hint?: string }) {
   return (
     <label className="block">

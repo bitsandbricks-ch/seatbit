@@ -1,0 +1,1 @@
+ALTER TABLE `clan` ADD `name_display` text DEFAULT 'full' NOT NULL;

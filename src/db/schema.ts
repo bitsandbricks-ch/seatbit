@@ -9,6 +9,7 @@ import {
 } from "drizzle-orm/sqlite-core";
 import type { ClanRole } from "../lib/clan-roles";
 import type { DiscordMode } from "../lib/discord-modes";
+import type { NameDisplay } from "../lib/names";
 
 const now = sql`(cast(unixepoch('subsecond') * 1000 as integer))`;
 const id = () =>
@@ -143,6 +144,8 @@ export const clan = sqliteTable("clan", {
    * an admin; "off": only through the guest's claim link or invite email.
    */
   guestClaims: text("guest_claims").$type<GuestClaimMode>().default("approval").notNull(),
+  /** How members are shown to each other (see NAME_DISPLAYS in lib/names.ts). */
+  nameDisplay: text("name_display").$type<NameDisplay>().default("full").notNull(),
   // Voluntary Supporter payments (hosted instances with billing on, see src/lib/billing.ts).
   // supporterUntil is the end of the last paid period; the badge shows while it's in the future.
   supporterUntil: integer("supporter_until", { mode: "timestamp_ms" }),

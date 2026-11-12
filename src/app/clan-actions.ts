@@ -28,7 +28,7 @@ import { adminSetAttendance, type FormState } from "./actions";
 import { getDefaultNames } from "@/lib/lans";
 import { audit } from "@/lib/audit";
 import { cancelSupport } from "@/lib/billing";
-import { cleanName } from "@/lib/names";
+import { NAME_DISPLAYS, cleanName } from "@/lib/names";
 
 const { clan, clanMember, clanInvite } = schema;
 
@@ -37,6 +37,7 @@ const clanInput = z.object({
   description: z.string().trim().max(2000).default(""),
   joinPolicy: z.enum(["approval", "open", "invite"]).default("approval"),
   guestClaims: z.enum(GUEST_CLAIM_MODES).default("approval"),
+  nameDisplay: z.enum(NAME_DISPLAYS).default("full"),
 });
 
 export async function createClan(_: FormState, formData: FormData): Promise<FormState> {
@@ -46,6 +47,7 @@ export async function createClan(_: FormState, formData: FormData): Promise<Form
     description: formData.get("description") ?? "",
     joinPolicy: formData.get("joinPolicy") ?? "approval",
     guestClaims: formData.get("guestClaims") ?? "approval",
+    nameDisplay: formData.get("nameDisplay") ?? "full",
   });
   if (!parsed.success) return { error: "Give the clan a name (at least 2 characters)." };
   const row = db
@@ -67,6 +69,7 @@ export async function updateClan(_: FormState, formData: FormData): Promise<Form
     description: formData.get("description") ?? "",
     joinPolicy: formData.get("joinPolicy") ?? "approval",
     guestClaims: formData.get("guestClaims") ?? "approval",
+    nameDisplay: formData.get("nameDisplay") ?? "full",
   });
   if (!parsed.success) return { error: "Give the clan a name (at least 2 characters)." };
   let avatar: string | undefined;
@@ -90,6 +93,7 @@ export async function updateClan(_: FormState, formData: FormData): Promise<Form
       before.description !== parsed.data.description && "description",
       before.joinPolicy !== parsed.data.joinPolicy && "join rule",
       before.guestClaims !== parsed.data.guestClaims && "guest claiming",
+      before.nameDisplay !== parsed.data.nameDisplay && "name display",
       (avatar || (formData.get("removeAvatar") === "on" && before.avatar)) && "avatar",
     ].filter((f): f is string => !!f);
     if (fields.length) audit({ actorId: me.id, action: "clan.update", clanId, data: { fields } });
