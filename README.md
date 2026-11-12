@@ -24,6 +24,7 @@ Seatbit helps a clan or group of friends go to LAN parties run by others (think 
 - **Discord bot:** announcements with answer buttons and a live attendee list, reminders, DMs, `/lans`. **WhatsApp:** ready-to-paste texts.
 - **Email reminders** with admin-editable templates. **Login with Discord.**
 - **Self-hosting:** all settings (SMTP, Discord, operator details for the privacy policy and terms) in the browser, single container, SQLite.
+- **Optional Supporter payments** for hosted instances: clans can support the operator with a voluntary yearly or monthly Stripe payment (card, TWINT, Apple Pay, Google Pay) and get a badge. No limits or paid features; off by default.
 - Mobile-first with a good desktop layout; 24h dates ("Sat 14.11.2026, 18:00").
 
 ## Screenshots

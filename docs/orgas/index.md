@@ -32,6 +32,8 @@ Open the clan and switch to **Manage**. The tabs:
 - **Invite links:** links that let anyone who has them join as a member. They always work, whatever the join mode. Delete a link to stop it.
 - **Discord & WhatsApp:** connect the clan's Discord server. See [Discord and WhatsApp](discord.md).
 
+If the instance you use has Supporter payments on, **General** also has a **Support Seatbit** card. Paying is voluntary: your clan gets a Supporter badge and a thank-you, and nothing else changes. Pick yearly or monthly, pay through Stripe (card, TWINT and more), and cancel any time with **Manage or cancel**. See [Supporter payments](../self-hosting/supporters.md).
+
 ![Clan settings](../screenshots/desktop-clan-settings.png){ .shot }
 
 ## LAN types

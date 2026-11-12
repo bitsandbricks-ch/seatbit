@@ -2,6 +2,7 @@ import "server-only";
 import { and, count, desc, eq, inArray, isNull, lt, type SQL } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { AuditEntry } from "@/db/schema";
+import { fmtDay } from "./format";
 import { getDefaultNames } from "./lans";
 
 const { auditLog } = schema;
@@ -219,6 +220,12 @@ export function describeAudit(e: AuditEntry, name: (id: string | null | undefine
       return `changed the clan's ${list(d.fields)}`;
     case "clan.delete":
       return `deleted the clan ${d.clan}`;
+    case "clan.supporter": {
+      const until = typeof d.until === "number" ? ` until ${fmtDay(new Date(d.until))}` : "";
+      return d.renewed ? `renewed the clan's Supporter payment${until}` : `the clan became a Supporter${until}. Thank you!`;
+    }
+    case "clan.supporter_end":
+      return `the clan's Supporter subscription ended`;
     case "member.add":
       return `added ${who} to the clan`;
     case "member.approve":

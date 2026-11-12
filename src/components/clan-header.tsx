@@ -4,7 +4,9 @@ import type { ReactNode } from "react";
 import { db, schema } from "@/db";
 import type { Clan, ClanRole } from "@/db/schema";
 import { joinClan } from "@/app/clan-actions";
+import { isSupporter } from "@/lib/billing";
 import { ClanAvatar } from "./clan-avatar";
+import { SupporterBadge } from "./support-card";
 import { Tabs, type Tab } from "./tabs";
 import { PageHeader, Pill, btnPrimary } from "./ui";
 import { ViewManageSwitch } from "./view-manage-switch";
@@ -137,6 +139,11 @@ export function ClanHeader({
             {active.length} {active.length === 1 ? "member" : "members"}
             <span className="text-faint"> · {joinPolicyText[c.joinPolicy]}</span>
             {role === "admin" && <span className="text-faint"> · you&apos;re an admin</span>}
+            {isSupporter(c) && (
+              <span className="ml-2 align-middle">
+                <SupporterBadge />
+              </span>
+            )}
           </>
         }
         actions={actions}

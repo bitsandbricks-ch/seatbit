@@ -25,6 +25,7 @@ import { requireClanManager, requireLanManager, requireUser } from "@/lib/sessio
 import { adminSetAttendance, type FormState } from "./actions";
 import { getDefaultNames } from "@/lib/lans";
 import { audit } from "@/lib/audit";
+import { cancelSupport } from "@/lib/billing";
 import { cleanName } from "@/lib/names";
 
 const { clan, clanMember, clanInvite } = schema;
@@ -226,6 +227,8 @@ export async function deleteInvite(code: string) {
 export async function deleteClan(clanId: string) {
   const me = await requireClanManager(clanId);
   const c = getClan(clanId);
+  // A deleted clan shouldn't keep paying.
+  if (c) await cancelSupport(c);
   db.delete(clan).where(eq(clan.id, clanId)).run();
   // The clan's own entries lose their clan (platform admins still see them); this one says what happened.
   audit({ actorId: me.id, action: "clan.delete", data: { clan: c?.name } });

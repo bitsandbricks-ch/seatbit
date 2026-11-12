@@ -4,6 +4,8 @@ import { Card, Notice, Page, PageHeader } from "@/components/ui";
 import { inviteUrl } from "@/lib/discord-api";
 import { appUrl, mailTarget } from "@/lib/mail";
 import { requireAdmin } from "@/lib/session";
+import { billingEnabled, billingProblems, supporterClans } from "@/lib/billing";
+import { fmtDay } from "@/lib/format";
 import { LOGIN_METHODS } from "@/lib/auth";
 import { SETTING_GROUPS, type SettingGroup, canEncrypt, settingsForAdmin } from "@/lib/settings";
 import { MAIL_TEMPLATES, getTemplate, savedTemplates } from "@/lib/mail-templates";
@@ -29,6 +31,7 @@ const TABS = [
   { id: "general", label: "General" },
   { id: "automation", label: "Reminders" },
   { id: "legal", label: "Operator & legal" },
+  { id: "billing", label: "Supporters" },
   { id: "templates", label: "Mail templates" },
   { id: "server", label: "Server" },
 ] as const;
@@ -162,6 +165,12 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
           </p>,
         )}
 
+      {tab === "billing" &&
+        section(
+          "billing",
+          <BillingInfo />,
+        )}
+
       {tab === "templates" && <TemplatesTab />}
 
       {tab === "server" && (
@@ -190,6 +199,38 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
         </Card>
       )}
     </Page>
+  );
+}
+
+/** Webhook URL, what's still missing, and which clans support the instance right now. */
+function BillingInfo() {
+  const problems = billingProblems();
+  const supporters = supporterClans();
+  return (
+    <>
+      <Url label="Webhook endpoint" value={`${appUrl}/api/billing/stripe/webhook`} />
+      <p className="text-xs text-muted">
+        Events: <code>checkout.session.completed</code>, <code>invoice.paid</code>,{" "}
+        <code>customer.subscription.deleted</code>. Turn on the payment methods (card, TWINT, Apple Pay, Google Pay) and
+        the customer portal in the Stripe Dashboard.
+      </p>
+      {problems.length > 0 && <p className="text-xs text-warn">Still missing: {problems.join(", ")}.</p>}
+      {!billingEnabled() && problems.length === 0 && <p className="text-xs text-muted">Off: clan admins don&apos;t see anything about payments.</p>}
+      {supporters.length > 0 && (
+        <p className="text-xs text-muted">
+          Supporters:{" "}
+          {supporters.map((c, i) => (
+            <span key={c.slug}>
+              {i > 0 && ", "}
+              <a href={`/clans/${c.slug}`} className="text-bit hover:underline">
+                {c.name}
+              </a>{" "}
+              ({c.plan === "month" ? "monthly" : "yearly"}, until {c.until ? fmtDay(c.until) : "–"})
+            </span>
+          ))}
+        </p>
+      )}
+    </>
   );
 }
 
