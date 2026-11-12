@@ -34,7 +34,7 @@ export default function TermsPage() {
         <li>You sign in with your Discord account. You need to meet Discord&apos;s minimum age and, where the law of your country requires it, have your parents&apos; consent.</li>
         <li>Give your real first name and surname. Your clan uses them to match you to tickets and seats.</li>
         <li>Keep your Discord account secure. You are responsible for what happens under your account.</li>
-        <li>You can ask us to delete your account at any time (see the <Link href="/privacy">Privacy Policy</Link>).</li>
+        <li>You can delete your account at any time on your <Link href="/profile">profile</Link> (see the <Link href="/privacy">Privacy Policy</Link>).</li>
       </ul>
 
       <h2>3. Clans, orgas and admins</h2>

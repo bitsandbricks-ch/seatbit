@@ -10,6 +10,7 @@ import { appUrl } from "@/lib/mail";
 import { notify, notifyLater, notifySeatChanged, sendDiscordDm } from "@/lib/notify";
 import { clearSeatBooked, remindToBook, setSeatBooked } from "@/lib/seat-booking";
 import { canViewLan, isLanManager, requireLanManager, requireUser } from "@/lib/session";
+import { auditLan } from "@/lib/audit";
 
 const { seat, seatSwap, game, gameVote, lanOrga, clanMember, user } = schema;
 
@@ -37,8 +38,9 @@ export async function setMySeatBooked(lanId: string, booked: boolean) {
 
 /** Orga corrects someone's "booked" tick. */
 export async function adminSetSeatBooked(lanId: string, userId: string, booked: boolean) {
-  await requireLanManager(lanId);
+  const me = await requireLanManager(lanId);
   setSeatBooked(lanId, userId, booked);
+  if (userId !== me.id) auditLan(mustGetLan(lanId), me.id, "seatbooked.set", { targetUserId: userId, data: { booked } });
   lanPath(lanId);
 }
 
@@ -148,11 +150,14 @@ export async function cancelSeatSwap(swapId: string) {
 export async function decideSeatSwap(swapId: string, approve: boolean) {
   const s = db.select().from(seatSwap).where(eq(seatSwap.id, swapId)).get();
   if (!s) throw new Error("Not found");
-  await requireLanManager(s.lanId);
+  const me = await requireLanManager(s.lanId);
   if (!OPEN.includes(s.status as (typeof OPEN)[number])) throw new Error("This request is already closed.");
   const l = mustGetLan(s.lanId);
+  const logDecision = () =>
+    auditLan(l, me.id, "swap.decide", { targetUserId: s.fromUserId, data: { approved: approve, otherUserId: s.toUserId } });
   if (!approve) {
     db.update(seatSwap).set({ status: "rejected", decidedAt: new Date() }).where(eq(seatSwap.id, swapId)).run();
+    logDecision();
     notifyLater(async () => {
       for (const uid of [s.fromUserId, s.toUserId])
         await notify(uid, {
@@ -191,6 +196,7 @@ export async function decideSeatSwap(swapId: string, approve: boolean) {
       .run();
   });
   clearSeatBooked(l.id, [s.fromUserId, s.toUserId]);
+  logDecision();
   notifyLater(async () => {
     await notifySeatChanged(l, s.fromUserId, b.label);
     await notifySeatChanged(l, s.toUserId, a.label);

@@ -12,5 +12,5 @@ export const legal = {
   /** Where the server and database run. */
   hostingLocation: process.env.LEGAL_HOSTING_LOCATION ?? "Switzerland",
   /** Date of the current version of both documents. */
-  lastUpdated: "11 November 2026",
+  lastUpdated: "12 November 2026",
 };

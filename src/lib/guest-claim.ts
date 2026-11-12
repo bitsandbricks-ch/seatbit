@@ -7,6 +7,7 @@ import { moveLanAccounts } from "./lan-accounts";
 import { appUrl } from "./mail";
 import { sendTemplate } from "./mail-templates";
 import { notifyClanAdmins, notifyLater } from "./notify";
+import { audit } from "./audit";
 
 const { clanMember, attendance, seat, nickname, lanOrga } = schema;
 
@@ -101,7 +102,10 @@ export function claimGuestsByEmail(userId: string) {
     .from(schema.user)
     .where(and(eq(schema.user.isGuest, true), sql`lower(${schema.user.inviteEmail}) = ${normEmail(me.email)}`))
     .all();
-  for (const g of guests) mergeGuestInto(g, me.id);
+  for (const g of guests) {
+    audit({ actorId: me.id, action: "guest.claimed", clanId: g.guestClanId, data: { guest: g.name } });
+    mergeGuestInto(g, me.id);
+  }
   return guests.length;
 }
 

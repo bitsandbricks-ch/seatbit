@@ -2,7 +2,7 @@ import "server-only";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
-import { count } from "drizzle-orm";
+import { count, isNull } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { claimGuestsByEmail } from "./guest-claim";
 import { sendMail } from "./mail";
@@ -119,7 +119,8 @@ function build() {
         create: {
           // The first user, and anyone listed in the admin emails setting, becomes an admin.
           before: async (u) => {
-            const [{ n }] = await db.select({ n: count() }).from(schema.user);
+            // Deleted accounts don't count, so a fresh start after everyone left still gets an admin.
+            const [{ n }] = await db.select({ n: count() }).from(schema.user).where(isNull(schema.user.deletedAt));
             const isAdmin = n === 0 || adminEmails().includes(u.email.toLowerCase());
             return { data: { ...u, role: isAdmin ? "admin" : "member" } };
           },

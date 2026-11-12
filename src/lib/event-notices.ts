@@ -9,6 +9,7 @@ import { fmtDate } from "./format";
 import { appUrl } from "./mail";
 import { notify } from "./notify";
 import { eventMailVars, renderTemplate } from "./mail-templates";
+import { auditLan } from "./audit";
 
 const { lan, user, clanMember, attendance, lanInterest, reminderLog } = schema;
 
@@ -89,11 +90,13 @@ const deadlineVar = (l: Lan) => (l.signupDeadline ? fmtDate(l.signupDeadline) : 
  * Makes a draft live: members see it, the Discord channels get the post and interested members a
  * "new event" (or "would you come?") mail/DM. Safe to call twice.
  */
-export async function publishEvent(lanId: string, now = new Date()) {
+/** `by` = who published it; null = the scheduled publish. */
+export async function publishEvent(lanId: string, now = new Date(), by: string | null = null) {
   const before = db.select().from(lan).where(eq(lan.id, lanId)).get();
   if (!before || before.publishedAt) return false;
   db.update(lan).set({ publishedAt: now, publishAt: null }).where(eq(lan.id, lanId)).run();
   const l = { ...before, publishedAt: now, publishAt: null };
+  auditLan(l, by, "event.publish", { data: { scheduled: by === null } });
   const { announceLan } = await import("./discord");
   await announceLan(lanId).catch((e) => console.error("[discord] announce failed", e));
   if (!l.cancelledAt && l.endsAt > now) {

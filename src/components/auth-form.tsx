@@ -11,8 +11,11 @@ export function AuthForm({
   mode,
   providers,
   next = "/",
+  notice,
 }: {
   next?: string;
+  /** Short line shown above the form, e.g. after an account was deleted. */
+  notice?: string;
   mode: "login" | "register";
   providers: { discord: boolean; google: boolean; email: boolean };
 }) {
@@ -74,6 +77,11 @@ export function AuthForm({
         <img src="/brand/seatbit-mark.svg" alt="" className="h-12 w-12" />
         <p className="mt-3 text-balance text-sm text-muted">Who&apos;s coming, who&apos;s paid, who sits where.</p>
       </div>
+      {notice && (
+        <p role="status" className="w-full max-w-sm rounded-card border border-bit/30 bg-bit/10 p-3 text-sm text-fg">
+          {notice}
+        </p>
+      )}
       <div className="w-full max-w-sm space-y-6 rounded-card border border-line bg-surface p-5 sm:p-6">
         <div className="space-y-1">
           <h1 className="text-xl font-semibold tracking-tight">
