@@ -23,7 +23,10 @@ Open the clan and switch to **Manage**. The tabs:
     - *Approval* (default): anyone can ask to join, an admin approves.
     - *Open*: anyone joins directly.
     - *Invite only*: only with an invite link.
-- **Members:** approve join requests, add existing Seatbit users, make or remove admins. See [Members and guests](members.md).
+
+    And **whether members can claim guests** themselves (see [Members and guests](members.md#members-claiming-a-guest)):
+    an admin confirms each claim (default), same name or nick moves over right away, or only with the guest's own link.
+- **Members:** approve join requests and guest claims, add existing Seatbit users, make or remove admins. See [Members and guests](members.md).
 - **Guests:** people without an account yet.
 - **LAN types:** templates for the LANs you go to every year (see below).
 - **Invite links:** links that let anyone who has them join as a member. They always work, whatever the join mode. Delete a link to stop it.

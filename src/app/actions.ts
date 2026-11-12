@@ -31,6 +31,7 @@ import { lanAccountScope, saveLanAccount } from "@/lib/lan-accounts";
 import { bookedButton, bookingLine, clearSeatBooked } from "@/lib/seat-booking";
 import { PROFILE_COLORS, PROFILE_ICONS, deleteUserAvatarFile, saveUserAvatar } from "@/lib/avatars";
 import { audit, auditLan, changedFields } from "@/lib/audit";
+import { cleanName } from "@/lib/names";
 
 const { attendance, nickname, seat, lan, user, lanOrga, lanType } = schema;
 
@@ -61,7 +62,7 @@ export async function setMyAttendance(lanId: string, status: AttendanceStatus) {
 }
 
 const nickInput = z.object({
-  nick: z.string().trim().min(1).max(32),
+  nick: z.string().transform(cleanName).pipe(z.string().min(1).max(32)),
   lanId: z.string().optional().transform((v) => v || null),
   typeId: z.string().optional().transform((v) => v || null),
 });
@@ -111,7 +112,7 @@ export async function setMyLanId(formData: FormData) {
   revalidatePath("/", "layout");
 }
 
-const personName = z.string().trim().min(1).max(40);
+const personName = z.string().transform(cleanName).pipe(z.string().min(1).max(40));
 
 /** First name, surname and the user's own nickname (gamer tag, independent of events). */
 export async function updateProfile(formData: FormData) {

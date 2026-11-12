@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { btnGhost, btnSecondary } from "./ui";
+import { nameMatches } from "@/lib/names";
 
 /**
  * Client-side paging for long lists (clan members, attendees). Keeps the page
@@ -105,12 +106,5 @@ export function PagerBar({ pager, noun = "people" }: { pager: Pager; noun?: stri
   );
 }
 
-/** Case-insensitive "every word appears somewhere" match, so "mike kel" finds Mike Keller. */
-export function matches(haystack: string, q: string) {
-  const h = haystack.toLowerCase();
-  return q
-    .toLowerCase()
-    .split(/\s+/)
-    .filter(Boolean)
-    .every((w) => h.includes(w));
-}
+/** "Every word appears somewhere", ignoring case and accents: "mike kel" finds Mike Keller, "muller" finds Müller. */
+export const matches = nameMatches;

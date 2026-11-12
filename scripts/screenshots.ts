@@ -42,7 +42,7 @@ const CLAN = "/clans/pixel-pirates";
 const RETRO = "/lans/demo-lan-retro";
 const DRAFT = "/lans/demo-lan-lakeside-next";
 
-type Who = "anon" | "alex" | "anna";
+type Who = "anon" | "alex" | "anna" | "sara";
 type Device = "phone" | "desktop";
 type Shot = {
   name: string;
@@ -99,6 +99,9 @@ const SHOTS: Shot[] = [
       await page.waitForTimeout(300);
     },
   },
+
+  // Sara joined, but the orgas had added her as a guest already
+  { name: "phone-clan-claim", who: "sara", path: `${CLAN}/claim`, full: true },
 
   // An orga (Alex) on the phone
   { name: "phone-manage", who: "alex", path: `${LAKESIDE}/manage`, full: true },
@@ -196,7 +199,7 @@ async function main() {
   };
 
   run("npx", ["tsx", "scripts/seed-demo.ts", "--discord"], env, true);
-  const sessions = createSessions(dbFile, ["alex", "anna"]);
+  const sessions = createSessions(dbFile, ["alex", "anna", "sara"]);
 
   // Own process group, so stopping it also stops the Next.js worker processes.
   const server = spawn(path.join(ROOT, "node_modules", ".bin", "next"), [dev ? "dev" : "start", "-p", String(PORT)], {

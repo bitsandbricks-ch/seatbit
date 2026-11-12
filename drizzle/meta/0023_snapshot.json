@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "921f9eef-8d1c-472b-9918-4faa58678c48",
+  "id": "a282329b-1f0b-40cc-ade7-4bb19beb5ede",
   "prevId": "fb93234c-b2d0-4069-bc05-06a0dc4b6f03",
   "tables": {
     "account": {
@@ -613,6 +613,14 @@
         },
         "join_policy": {
           "name": "join_policy",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'approval'"
+        },
+        "guest_claims": {
+          "name": "guest_claims",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -1452,6 +1460,124 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
+    "guest_claim": {
+      "name": "guest_claim",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "clan_id": {
+          "name": "clan_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "guest_id": {
+          "name": "guest_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'pending'"
+        },
+        "match": {
+          "name": "match",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        }
+      },
+      "indexes": {
+        "guest_claim_guest_user": {
+          "name": "guest_claim_guest_user",
+          "columns": [
+            "guest_id",
+            "user_id"
+          ],
+          "isUnique": true
+        },
+        "guest_claim_clan_idx": {
+          "name": "guest_claim_clan_idx",
+          "columns": [
+            "clan_id",
+            "status"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "guest_claim_clan_id_clan_id_fk": {
+          "name": "guest_claim_clan_id_clan_id_fk",
+          "tableFrom": "guest_claim",
+          "tableTo": "clan",
+          "columnsFrom": [
+            "clan_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "guest_claim_guest_id_user_id_fk": {
+          "name": "guest_claim_guest_id_user_id_fk",
+          "tableFrom": "guest_claim",
+          "tableTo": "user",
+          "columnsFrom": [
+            "guest_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "guest_claim_user_id_user_id_fk": {
+          "name": "guest_claim_user_id_user_id_fk",
+          "tableFrom": "guest_claim",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
     "lan": {
       "name": "lan",
       "columns": {
@@ -2126,22 +2252,6 @@
           "notNull": true,
           "autoincrement": false,
           "default": "''"
-        },
-        "duration_hours": {
-          "name": "duration_hours",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 46
-        },
-        "answer_days_before": {
-          "name": "answer_days_before",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": 30
         },
         "created_at": {
           "name": "created_at",

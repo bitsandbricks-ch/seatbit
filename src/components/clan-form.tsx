@@ -7,7 +7,7 @@ import { Field, Input, btnPrimary, input } from "./ui";
 export function ClanForm({
   clan,
 }: {
-  clan?: { id: string; name: string; description: string; joinPolicy: string; hasAvatar: boolean };
+  clan?: { id: string; name: string; description: string; joinPolicy: string; guestClaims: string; hasAvatar: boolean };
 }) {
   const [state, action, pending] = useActionState<FormState, FormData>(clan ? updateClan : createClan, undefined);
   return (
@@ -24,6 +24,16 @@ export function ClanForm({
           <option value="approval">Anyone can ask, an admin approves</option>
           <option value="open">Anyone can join directly</option>
           <option value="invite">Only with an invite link</option>
+        </select>
+      </Field>
+      <Field
+        label="Can members claim guests?"
+        hint="When someone joins, Seatbit shows them guests with the same name or nick. A guest whose invite email matches their verified Discord email always moves over by itself."
+      >
+        <select name="guestClaims" defaultValue={clan?.guestClaims ?? "approval"} className={input}>
+          <option value="approval">Yes, an admin confirms each claim</option>
+          <option value="match">Yes, same name or nick moves over right away</option>
+          <option value="off">No, only with the guest&apos;s own link</option>
         </select>
       </Field>
       {clan && (

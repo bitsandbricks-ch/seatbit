@@ -43,11 +43,13 @@ export async function GET(_: Request, { params }: RouteContext<"/lans/[id]/manag
         .join(","),
     );
   }
-  const file = `${l.name.replace(/[^\w-]+/g, "_")}_group.csv`;
-  return new Response(lines.join("\n") + "\n", {
+  const file = `${l.name.normalize("NFC").replace(/[^\p{L}\p{N}-]+/gu, "_")}_group.csv`;
+  const ascii = file.normalize("NFKD").replace(/[^\w.-]+/g, "");
+  // The byte order mark tells Excel the file is UTF-8; without it "Müller" opens as "MÃ¼ller".
+  return new Response("\uFEFF" + lines.join("\n") + "\n", {
     headers: {
       "content-type": "text/csv; charset=utf-8",
-      "content-disposition": `attachment; filename="${file}"`,
+      "content-disposition": `attachment; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(file)}`,
     },
   });
 }

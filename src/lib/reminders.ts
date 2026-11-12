@@ -97,7 +97,7 @@ async function send(kind: ReminderKind, l: Lan, users: User[], dedupe: boolean) 
         .run();
       sent++;
     } catch (e) {
-      console.error(`[reminders] ${kind} to ${u.email} failed`, e);
+      console.error("[reminders] %s to %s failed", kind, u.email, e);
     }
   }
   return sent;
