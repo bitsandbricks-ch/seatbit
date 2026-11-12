@@ -9,16 +9,16 @@ import type { AvatarData } from "@/lib/avatars";
 
 const PAGE_SIZE = 20;
 
-/** Members tab on the clan page: everyone with avatar, nick and name, with search and pages. */
+/** Members tab on the clan page: everyone as Mike "Reyki" Keller, with search and pages. */
 export function ClanMemberGrid({
   slug,
   members,
 }: {
   slug: string;
-  members: { id: string; nick: string; name?: string; admin: boolean; guest?: boolean; avatar?: AvatarData }[];
+  members: { id: string; name: string; admin: boolean; guest?: boolean; avatar?: AvatarData }[];
 }) {
   const [q, setQ] = useState("");
-  const shown = members.filter((m) => !q || matches(`${m.nick} ${m.name ?? ""}`, q));
+  const shown = members.filter((m) => !q || matches(m.name, q));
   const pager = usePager(shown, 48);
   return (
     <div className="space-y-3">
@@ -43,11 +43,8 @@ export function ClanMemberGrid({
               className="flex min-h-14 items-center justify-between gap-2 rounded-bit bg-raised/60 px-3 py-2 text-sm transition hover:bg-raised"
             >
               <span className="flex min-w-0 items-center gap-3">
-                <Avatar data={m.avatar} size={36} />
-                <span className="min-w-0">
-                  <span className="block truncate font-medium">{m.nick}</span>
-                  {m.name && m.name !== m.nick && <span className="block truncate text-xs text-muted">{m.name}</span>}
-                </span>
+                <Avatar data={m.avatar} size={32} />
+                <span className="truncate font-medium">{m.name}</span>
               </span>
               <span className="flex shrink-0 gap-1">
                 {m.admin && <Pill tone="emerald">admin</Pill>}
@@ -154,7 +151,6 @@ export function ClanMemberAdmin({
                 {m.isGuest && <Pill>guest</Pill>}
               </span>
               <span className="block truncate text-xs text-muted">
-                {m.nick && m.nick !== m.name && <span className="text-fg/80">{m.nick} · </span>}
                 {m.sub}
               </span>
             </span>

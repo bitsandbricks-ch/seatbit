@@ -14,6 +14,7 @@ import { missingServers, setServerInvite } from "@/lib/discord-invite";
 import { notify, notifyClanAdmins, notifyLater } from "@/lib/notify";
 import { requireClanManager, requireLanManager, requireUser } from "@/lib/session";
 import { adminSetAttendance, type FormState } from "./actions";
+import { getDefaultNames } from "@/lib/lans";
 
 const { clan, clanMember, clanInvite } = schema;
 
@@ -266,7 +267,8 @@ function createGuest(clanId: string, formData: FormData): Created {
   return { id };
 }
 
-const inviterName = (u: { firstName: string; name: string }) => u.firstName || u.name;
+/** The orga as the invite mail names them: Mike "Reyki" Keller. */
+const inviterName = (u: { id: string; name: string }) => getDefaultNames([u.id]).get(u.id)?.full ?? u.name;
 
 /** What the orga sees after adding someone. */
 function addedMessage(r: { id: string; existing?: string }, invited: boolean, what: string) {

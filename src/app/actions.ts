@@ -247,10 +247,28 @@ export async function saveLan(_: FormState, formData: FormData): Promise<FormSta
     if (t?.seatSpec) applySeatSpec(row.id, t.seatSpec);
   }
   lanPath(lanId!);
-  // New LANs are announced in the Discord channels; edits update the existing posts.
+  // New LANs start as drafts (no Discord post until published); edits update the existing posts.
   if (id) refreshLanMessagesSoon(id);
-  else await announceLan(lanId!).catch((e) => console.error("[discord] announce failed", e));
   redirect(`/lans/${lanId}/manage`);
+}
+
+/**
+ * Publishes a draft: clan members can now see it and answer, the Discord channels get the announcement,
+ * and reminders start running.
+ */
+export async function publishLan(lanId: string) {
+  await requireLanManager(lanId);
+  const l = mustGetLan(lanId);
+  if (l.publishedAt) return;
+  db.update(lan).set({ publishedAt: new Date() }).where(eq(lan.id, lanId)).run();
+  await announceLan(lanId).catch((e) => console.error("[discord] announce failed", e));
+  lanPath(lanId);
+  revalidatePath("/clans", "layout");
+}
+
+/** Drafts don't send anything, so manual reminder buttons need a published event. */
+function requirePublished(l: { publishedAt: Date | null }) {
+  if (!l.publishedAt) throw new Error("Publish the event first. Drafts don't send anything.");
 }
 
 export async function deleteLan(id: string) {
@@ -387,6 +405,7 @@ export async function adminSendReminder(
   kind: "signup" | "payment" | "event",
 ): Promise<number> {
   await requireLanManager(lanId);
+  requirePublished(mustGetLan(lanId));
   return sendReminderNow(mustGetLan(lanId), kind);
 }
 
@@ -403,6 +422,7 @@ export async function unlinkDiscordChannel(channelId: string) {
 
 export async function postDiscordReminder(lanId: string, kind: "signup" | "payment" | "event"): Promise<number> {
   await requireLanManager(lanId);
+  requirePublished(mustGetLan(lanId));
   return postReminderNow(mustGetLan(lanId), kind);
 }
 
@@ -710,7 +730,8 @@ export async function publishSeats(lanId: string, notify: boolean): Promise<numb
   const l = mustGetLan(lanId);
   db.update(lan).set({ seatsPublishedAt: new Date(), seatPicking: false }).where(eq(lan.id, lanId)).run();
   let sent = 0;
-  if (notify) {
+  // Drafts tell nobody; members see the seats once the event is published.
+  if (notify && l.publishedAt) {
     const rows = db
       .select({ a: attendance, u: user })
       .from(attendance)

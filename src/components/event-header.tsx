@@ -5,6 +5,9 @@ import type { Lan } from "@/db/schema";
 import { ClanAvatar } from "./clan-avatar";
 import { PageHeader, btnGhost } from "./ui";
 import { fmtRange } from "@/lib/format";
+import { eq } from "drizzle-orm";
+import { db, schema } from "@/db";
+import { PublishEvent } from "./publish-event";
 
 type Clan = Parameters<typeof ClanAvatar>[0]["clan"] & { slug: string; name: string };
 
@@ -31,7 +34,12 @@ export function EventHeader({
   actions?: ReactNode;
 }) {
   const keep = SHARED_TABS.includes(tab) && tab !== "overview" ? `?tab=${tab}` : "";
+  const discordChannels =
+    !l.publishedAt && canManage && l.clanId
+      ? db.select().from(schema.discordChannel).where(eq(schema.discordChannel.clanId, l.clanId)).all().length
+      : 0;
   return (
+    <>
     <PageHeader
       eyebrow={
         clan && (
@@ -82,5 +90,21 @@ export function EventHeader({
         </p>
       )}
     </PageHeader>
+    {!l.publishedAt && (
+      <section
+        aria-label="Draft"
+        className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-dashed border-warn/60 bg-warn/10 p-3 sm:p-4"
+      >
+        <div className="min-w-0 text-sm">
+          <p className="font-semibold text-warn">Draft</p>
+          <p className="text-muted">
+            Only orgas and clan admins see this event. Members get nothing yet: no Discord post, no reminders. Fill in
+            the details, then publish.
+          </p>
+        </div>
+        {canManage && <PublishEvent lanId={l.id} discordChannels={discordChannels} />}
+      </section>
+    )}
+    </>
   );
 }

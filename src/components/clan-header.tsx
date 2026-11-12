@@ -59,10 +59,12 @@ export function ClanHeader({
     const upcoming =
       isMember || canManage
         ? db
-            .select({ id: schema.lan.id })
+            .select({ id: schema.lan.id, publishedAt: schema.lan.publishedAt })
             .from(schema.lan)
             .where(and(eq(schema.lan.clanId, c.id), gt(schema.lan.endsAt, new Date())))
-            .all().length
+            .all()
+            // Members don't see drafts.
+            .filter((l) => canManage || l.publishedAt).length
         : 0;
     tabs = [
       { id: "overview", label: "Overview" },

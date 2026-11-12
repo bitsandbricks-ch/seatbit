@@ -1,7 +1,5 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { and, isNull } from "drizzle-orm";
-import { db, schema } from "@/db";
 import { ClanHeader } from "@/components/clan-header";
 import { Avatar } from "@/components/avatar";
 import { getAvatars, type AvatarData } from "@/lib/avatars";
@@ -10,7 +8,7 @@ import { Card, EmptyState, Page, Pill, StatTile } from "@/components/ui";
 import { canManageClan, clanRole, getClanBySlug } from "@/lib/clans";
 import { clanStats, pct, type MemberStats } from "@/lib/clan-stats";
 import { fmtDay } from "@/lib/format";
-import { personLabel } from "@/lib/names";
+import { getDefaultNames } from "@/lib/lans";
 import { requireUser } from "@/lib/session";
 
 export default async function ClanStatsPage({ params }: PageProps<"/clans/[slug]/stats">) {
@@ -25,16 +23,9 @@ export default async function ClanStatsPage({ params }: PageProps<"/clans/[slug]
   const upcoming = events.filter((e) => !e.past);
   const sum = (list: typeof events, k: "asked" | "answered" | "going") => list.reduce((n, e) => n + e[k], 0);
   const guests = members.filter((m) => m.isGuest).length;
-  const defaultNicks = new Map(
-    db
-      .select({ userId: schema.nickname.userId, nick: schema.nickname.nick })
-      .from(schema.nickname)
-      .where(and(isNull(schema.nickname.lanId), isNull(schema.nickname.typeId)))
-      .all()
-      .map((n) => [n.userId, n.nick]),
-  );
+  const people = getDefaultNames(members.map((m) => m.userId));
   const avatars = getAvatars(members.map((m) => m.userId));
-  const label = (m: MemberStats) => personLabel(m, defaultNicks.get(m.userId));
+  const label = (m: MemberStats) => people.get(m.userId)?.full ?? m.name;
 
   const withPast = members.filter((m) => m.asked > 0);
   const mostActive = [...withPast]

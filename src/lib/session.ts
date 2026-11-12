@@ -48,12 +48,22 @@ export async function requireLanManager(lanId: string) {
   return u;
 }
 
-/** Clan members (and platform admins) may see a LAN and answer for it. */
+/** Clan members (and platform admins) may see a LAN and answer for it. Drafts only show to its managers. */
 export function canViewLan(u: { id: string; role: string }, lanId: string) {
   if (u.role === "admin") return true;
-  const l = db.select({ clanId: schema.lan.clanId }).from(schema.lan).where(eq(schema.lan.id, lanId)).get();
+  const l = db
+    .select({ clanId: schema.lan.clanId, publishedAt: schema.lan.publishedAt })
+    .from(schema.lan)
+    .where(eq(schema.lan.id, lanId))
+    .get();
   if (!l) return false;
+  if (!l.publishedAt) return isLanManager(u, lanId);
   return (l.clanId && isClanMember(u.id, l.clanId)) || isLanManager(u, lanId);
+}
+
+/** Leaves out drafts the user can't manage (for event lists). */
+export function visibleLans<T extends { id: string; publishedAt: Date | null }>(u: { id: string; role: string }, lans: T[]) {
+  return lans.filter((l) => l.publishedAt || isLanManager(u, l.id));
 }
 
 export async function requireClanManager(clanId: string) {

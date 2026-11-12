@@ -11,11 +11,12 @@ import { Card, Page, PageHeader, Pill, StatTile, StatusBadge, columns, stack } f
 import { canManageClan, getClanBySlug, isClanMember } from "@/lib/clans";
 import { fmtDate, fmtWeekday } from "@/lib/format";
 import { pickNick } from "@/lib/lans";
+import { personLabel } from "@/lib/names";
 import { appUrl } from "@/lib/mail";
 import { Avatar } from "@/components/avatar";
 import { avatarData } from "@/lib/avatars";
 import { pct } from "@/lib/clan-stats";
-import { isLanManager, requireUser } from "@/lib/session";
+import { isLanManager, requireUser, visibleLans } from "@/lib/session";
 
 export default async function MemberProfilePage({ params }: PageProps<"/clans/[slug]/members/[userId]">) {
   const { slug, userId } = await params;
@@ -57,7 +58,10 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
     }))
     .filter((r) => r.nick || r.lanId);
 
-  const lans = db.select().from(schema.lan).where(eq(schema.lan.clanId, c.id)).orderBy(asc(schema.lan.startsAt)).all();
+  const lans = visibleLans(
+    me,
+    db.select().from(schema.lan).where(eq(schema.lan.clanId, c.id)).orderBy(asc(schema.lan.startsAt)).all(),
+  );
   const rows = db.select().from(schema.attendance).where(eq(schema.attendance.userId, u.id)).all();
   const seats = db.select().from(schema.seat).where(eq(schema.seat.userId, u.id)).all();
   // Events they were asked for: those after they joined, plus any they answered.
@@ -99,10 +103,9 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
       <PageHeader
         back={{ href: `/clans/${c.slug}?tab=members`, label: c.name }}
         avatar={<Avatar data={avatar} size={56} />}
-        title={u.name}
+        title={personLabel(u, defaultNick)}
         subtitle={
           <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            {defaultNick && defaultNick !== u.name && <span className="font-medium" style={{ color: avatar.color }}>{defaultNick}</span>}
             {role === "admin" && <Pill tone="emerald">admin</Pill>}
             {u.isGuest && <Pill>guest · no login yet</Pill>}
             <span>in the clan since {fmtWeekday(membership.createdAt)}</span>

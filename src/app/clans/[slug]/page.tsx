@@ -11,8 +11,9 @@ import { Card, Columns, EmptyState, Notice, Page, Pill, StatusBadge, btnGhost, b
 import { fmtDay, fmtRange } from "@/lib/format";
 import { canManageClan, clanRole, getClanBySlug } from "@/lib/clans";
 import { pickNick } from "@/lib/lans";
+import { personLabel } from "@/lib/names";
 import { avatarData } from "@/lib/avatars";
-import { requireUser } from "@/lib/session";
+import { requireUser, visibleLans } from "@/lib/session";
 import { missingServers } from "@/lib/discord-invite";
 
 export default async function ClanPage({ params, searchParams }: PageProps<"/clans/[slug]">) {
@@ -42,29 +43,34 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
       id: m.u.id,
       admin: m.role === "admin",
       guest: m.u.isGuest,
-      nick: pickNick(nicks.filter((n) => n.userId === m.u.id), { lanId: null, typeId: null }, m.u.name),
-      name: m.u.name,
+      name: personLabel(m.u, pickNick(nicks.filter((n) => n.userId === m.u.id), { lanId: null, typeId: null }, m.u.name)),
       avatar: avatarData(m.u),
     }))
-    .sort((a, b) => a.nick.localeCompare(b.nick));
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   const now = new Date();
   const upcoming = seesEvents
-    ? db
+    ? visibleLans(
+        me,
+        db
         .select()
         .from(schema.lan)
         .where(and(eq(schema.lan.clanId, c.id), gt(schema.lan.endsAt, now)))
         .orderBy(asc(schema.lan.startsAt))
-        .all()
+          .all(),
+      )
     : [];
   const past =
     seesEvents && tab === "events"
-      ? db
-          .select()
-          .from(schema.lan)
-          .where(and(eq(schema.lan.clanId, c.id), lte(schema.lan.endsAt, now)))
-          .orderBy(desc(schema.lan.startsAt))
-          .all()
+      ? visibleLans(
+          me,
+          db
+            .select()
+            .from(schema.lan)
+            .where(and(eq(schema.lan.clanId, c.id), lte(schema.lan.endsAt, now)))
+            .orderBy(desc(schema.lan.startsAt))
+            .all(),
+        )
       : [];
   const mine = new Map(
     upcoming.length + past.length
@@ -137,7 +143,7 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
                 <ul className="flex flex-wrap gap-1.5">
                   {members.slice(0, 18).map((m) => (
                     <li key={m.id}>
-                      <Link href={`/clans/${c.slug}/members/${m.id}`} title={m.nick} className="block rounded-full transition hover:opacity-80">
+                      <Link href={`/clans/${c.slug}/members/${m.id}`} title={m.name} className="block rounded-full transition hover:opacity-80">
                         <Avatar data={m.avatar} size={36} />
                       </Link>
                     </li>
@@ -299,7 +305,10 @@ function NextEvent({ lan: l, status, going }: { lan: Lan; status?: (typeof schem
       <p className="text-xs font-medium uppercase tracking-wide text-bit">Next event</p>
       <div className="mt-1 flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
         <div className="min-w-0">
-          <h2 className="text-xl font-bold tracking-tight sm:text-2xl">{l.name}</h2>
+          <h2 className="flex flex-wrap items-center gap-2 text-xl font-bold tracking-tight sm:text-2xl">
+            {l.name}
+            {!l.publishedAt && <Pill tone="amber">Draft</Pill>}
+          </h2>
           <p className="mt-0.5 text-sm text-muted">
             {fmtRange(l.startsAt, l.endsAt)}
             {l.location && ` · ${l.location}`}
@@ -324,7 +333,10 @@ function EventList({ lans, mine, past }: { lans: Lan[]; mine: Map<string, string
           <li key={l.id}>
             <Link href={`/lans/${l.id}`} className="-mx-2 flex min-h-14 items-center justify-between gap-3 rounded-md p-2 transition hover:bg-raised">
               <span className="min-w-0">
-                <span className="block truncate font-medium">{l.name}</span>
+                <span className="flex min-w-0 items-center gap-2">
+                  <span className="truncate font-medium">{l.name}</span>
+                  {!l.publishedAt && <Pill tone="amber">Draft</Pill>}
+                </span>
                 <span className="block truncate text-xs text-muted">
                   {fmtDay(l.startsAt)}
                   {l.location && ` · ${l.location}`}

@@ -7,8 +7,8 @@ export type SwapView = {
   id: string;
   fromUserId: string;
   toUserId: string;
-  fromNick: string;
-  toNick: string;
+  fromName: string;
+  toName: string;
   fromSeat: string | null;
   toSeat: string | null;
   status: "pending" | "accepted";
@@ -42,7 +42,7 @@ export function SeatSwapPanel({
   meId: string;
   mySeat: string;
   /** Other attendees with a seat. */
-  people: { id: string; nick: string; seat: string }[];
+  people: { id: string; name: string; seat: string }[];
   /** Open requests I'm part of. */
   swaps: SwapView[];
 }) {
@@ -56,7 +56,7 @@ export function SeatSwapPanel({
       {incoming.map((s) => (
         <div key={s.id} className="rounded-bit border border-bit/40 bg-bit-soft/40 p-3">
           <p>
-            <strong>{s.fromNick}</strong> ({s.fromSeat}) wants your seat {s.toSeat}.
+            <strong>{s.fromName}</strong> ({s.fromSeat}) wants your seat {s.toSeat}.
             {s.note && <span className="block text-muted">&ldquo;{s.note}&rdquo;</span>}
           </p>
           {s.status === "pending" ? (
@@ -77,7 +77,7 @@ export function SeatSwapPanel({
       {outgoing ? (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-bit bg-raised/60 p-3">
           <span>
-            You asked <strong>{outgoing.toNick}</strong> to swap {mySeat} ⇄ {outgoing.toSeat}.{" "}
+            You asked <strong>{outgoing.toName}</strong> to swap {mySeat} ⇄ {outgoing.toSeat}.{" "}
             {outgoing.status === "pending" ? <Pill tone="amber">waiting for them</Pill> : <Pill tone="emerald">waiting for an orga</Pill>}
           </span>
           <button disabled={pending} className={btnGhost} onClick={() => run(() => cancelSeatSwap(outgoing.id))}>
@@ -107,7 +107,7 @@ export function SeatSwapPanel({
               <option value="">Swap with…</option>
               {people.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.seat} · {p.nick}
+                  {p.seat} · {p.name}
                 </option>
               ))}
             </select>
@@ -138,7 +138,7 @@ export function SeatSwapApprovals({ swaps }: { swaps: SwapView[] }) {
         {swaps.map((s) => (
           <li key={s.id} className="flex flex-wrap items-center justify-between gap-2 rounded-bit bg-raised/60 px-3 py-2">
             <span>
-              <strong>{s.fromNick}</strong> {s.fromSeat} ⇄ {s.toSeat} <strong>{s.toNick}</strong>
+              <strong>{s.fromName}</strong> {s.fromSeat} ⇄ {s.toSeat} <strong>{s.toName}</strong>
               {s.note && <span className="block text-xs text-muted">&ldquo;{s.note}&rdquo;</span>}
             </span>
             {s.status === "accepted" ? (
@@ -152,7 +152,7 @@ export function SeatSwapApprovals({ swaps }: { swaps: SwapView[] }) {
               </span>
             ) : (
               <span className="flex items-center gap-2">
-                <Pill tone="amber">waiting for {s.toNick}</Pill>
+                <Pill tone="amber">waiting for {s.toName}</Pill>
                 <button disabled={pending} className={btnGhost} onClick={() => run(() => decideSeatSwap(s.id, false))}>
                   Reject
                 </button>
