@@ -12,7 +12,7 @@ import { avatarMap } from "@/lib/avatars";
 import { EventHeader } from "@/components/event-header";
 import { Card, Page, Pill, btnDanger, btnSecondary } from "@/components/ui";
 import { fmtDate, relative, toInputValue } from "@/lib/format";
-import { getLan, getNames, seatView } from "@/lib/lans";
+import { getLan, getNames, interestSwitch, seatView } from "@/lib/lans";
 import { dueKinds } from "@/lib/reminders";
 import { isLanManager, requireUser } from "@/lib/session";
 import { OrgaManager } from "@/components/orga-manager";
@@ -602,6 +602,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
                 capacity: l.capacity?.toString() ?? "",
                 reminderDays: l.reminderDays,
                 interestCheck: l.interestCheck,
+                interestSwitch: interestSwitch(l),
                 dateTbd: l.dateTbd,
                 dateHint: l.dateHint,
               }}

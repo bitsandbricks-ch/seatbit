@@ -37,6 +37,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <a href={getLegal().sourceUrl} target="_blank" rel="noreferrer" className="hover:text-fg">
             Source
           </a>
+          <a href="https://buymeacoffee.com/bitsandbricks" target="_blank" rel="noreferrer" className="hover:text-fg">
+            Buy me a coffee
+          </a>
           {/* Please keep this attribution when you host your own instance. */}
           <a href="https://bitsandbricks.ch" target="_blank" rel="noreferrer" className="hover:text-fg">
             Powered by bitsandbricks.ch

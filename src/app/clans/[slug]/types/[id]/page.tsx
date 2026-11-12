@@ -35,7 +35,7 @@ export default async function EditLanTypePage({ params }: PageProps<"/clans/[slu
         }
       >
       <Card>
-        <LanTypeForm values={{ ...t, clanId: c.id, capacity: t.capacity?.toString() ?? "" }} />
+        <LanTypeForm values={{ ...t, clanId: c.id, capacity: t.capacity?.toString() ?? "", answerDaysBefore: t.answerDaysBefore?.toString() ?? "" }} />
       </Card>
       </Columns>
     </Page>
