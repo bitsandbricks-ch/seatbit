@@ -27,7 +27,7 @@ Not sure yet if the group goes, or when? Turn on the **interest check**: members
 
 ## Manage an event
 
-Orgas see **View / Manage** next to the event title. *Manage* has the tabs **Overview**, **Seats**, **Attendees**, **Discord & WhatsApp** and **Settings**.
+Orgas see **View / Manage** next to the event title. *Manage* has the tabs **Overview**, **Seats**, **Attendees**, **Who's missing**, **Discord & WhatsApp** and **Settings**.
 
 ![Manage overview](../screenshots/desktop-manage.png){ .shot }
 
@@ -46,6 +46,21 @@ One row per member: answer, seat, **ticket** (members tick *I bought my ticket*,
 ![Attendees](../screenshots/desktop-manage-attendees.png){ .shot }
 
 **Export CSV** downloads the group (seat, nick, name, email, status, ticket, LAN ID) to send to the event's organisers.
+
+### Who's missing
+
+Everyone who still owes the group something, step by step:
+
+- no answer to the interest check, no answer at all, or still unsure
+- coming but no ticket yet, or no nickname
+- self pick is on and they have a ticket, but no seat yet
+- seat not booked on the event's own seat plan
+
+Each person shows how a nudge reaches them: *DM + mail*, *Discord DM*, *Mail only* or *Can't reach* (no Discord and email reminders off). **Nudge** sends one person a short reminder for that step, **Nudge all** everyone in it. The Discord DM has buttons where they fit (*Coming / Unsure / Not coming*, *Buy ticket*, *I booked it*). DMs respect the member's DM setting and mails their email reminder setting, and each person gets at most one nudge per step every 12 hours. Nudges are off for drafts and cancelled events.
+
+Your own to-dos are listed at the end: **tickets to confirm** and people **without a seat**, with a link to the tab where you fix them.
+
+![Who's missing](../screenshots/desktop-manage-missing.png){ .shot }
 
 ### Settings
 

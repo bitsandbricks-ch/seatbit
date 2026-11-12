@@ -16,7 +16,8 @@ Seatbit helps a clan or group of friends go to LAN parties run by others (think 
 - **Attendance** with *coming / unsure / not coming*, answer deadlines and an automatic **waitlist** when the group's spots are full.
 - **Tickets:** members tick off their ticket, orgas confirm; buy-by deadline with reminders.
 - **Seat plan** of the group's block (e.g. `F1-F16, F19-F22`): seat wishes, optional self pick, orgas edit right in the map (assign, swap, hold, drag & drop, auto-assign), finalize, then everyone books their seat on the event's own site. Seat swaps with orga approval.
-- **Travel** (rides and places to sleep), private **packing lists** and **games** with votes and install tracking.
+- **Travel** (rides and places to sleep), private **packing lists**, **games** with votes and install tracking, and **food orders** at the LAN (everyone adds their pizza, one person orders and ticks who paid).
+- **Who's missing** for orgas: who still owes an answer, a ticket, a nick or a seat booking, with one-tap nudges by Discord DM or mail.
 - **Clans** with admins, join modes (open, approval, invite links), **guests** for people without an account, LAN types as templates for yearly events, and clan stats.
 - **Discord bot:** announcements with answer buttons and a live attendee list, reminders, DMs, `/lans`. **WhatsApp:** ready-to-paste texts.
 - **Email reminders** with admin-editable templates. **Login with Discord.**
@@ -34,6 +35,10 @@ Generated from demo data on every UI change (see [docs/development/screenshots.m
 | Travel | Packing list | Games | Orga: seats |
 | --- | --- | --- | --- |
 | <img src="docs/screenshots/phone-travel.png" width="200" alt="Travel tab"> | <img src="docs/screenshots/phone-packing-list.png" width="200" alt="Packing list"> | <img src="docs/screenshots/phone-games.png" width="200" alt="Games"> | <img src="docs/screenshots/phone-manage-seats.png" width="200" alt="Orga seat editing on a phone"> |
+
+| Food orders | Orga: who's missing |
+| --- | --- |
+| <img src="docs/screenshots/phone-food.png" width="200" alt="Food tab with a pizza order"> | <img src="docs/screenshots/phone-manage-missing.png" width="200" alt="Who's missing with nudge buttons"> |
 
 ![Seats tab on desktop](docs/screenshots/desktop-event-seats.png)
 

@@ -39,7 +39,7 @@ export interface SettingDef {
 }
 
 export const SETTING_GROUPS = {
-  general: { title: "General", help: "Who can sign up and who is a global admin." },
+  general: { title: "General", help: "Who can sign up, who is a global admin, and the currency for food orders." },
   mail: {
     title: "Email (SMTP relay)",
     help: "Used for reminders and password resets. Without a host, mails are only printed to the server log.",
@@ -240,6 +240,18 @@ export const SETTINGS: SettingDef[] = [
     default: "https://github.com/bitsandbricks-ch/seatbit",
     help: "Linked as \"Source\" in the footer. If you run a changed version, point this to your fork (the AGPL asks you to offer your changes to your users).",
     validate: (v) => (/^https?:\/\/\S+$/.test(v) ? null : "Enter a full http(s) URL"),
+  },
+
+  {
+    key: "food.currency",
+    group: "general",
+    label: "Currency for food orders",
+    kind: "text",
+    env: "FOOD_CURRENCY",
+    default: "CHF",
+    placeholder: "CHF",
+    help: "Shown next to prices on the Food tab, e.g. CHF or EUR.",
+    validate: (v) => (/^[^\s]{1,5}$/.test(v) ? null : "1 to 5 characters, e.g. CHF, EUR or €"),
   },
 
   // Automation

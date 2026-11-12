@@ -26,7 +26,7 @@ const TABS = [
   { id: "mail", label: "Email" },
   { id: "discord", label: "Discord" },
   { id: "google", label: "Google" },
-  { id: "general", label: "Sign-up & admins" },
+  { id: "general", label: "General" },
   { id: "automation", label: "Reminders" },
   { id: "legal", label: "Operator & legal" },
   { id: "templates", label: "Mail templates" },

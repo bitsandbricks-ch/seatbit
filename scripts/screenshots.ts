@@ -81,6 +81,7 @@ const SHOTS: Shot[] = [
   { name: "phone-travel", who: "anna", path: `${LAKESIDE}?tab=travel`, full: true },
   { name: "phone-packing-list", who: "anna", path: `${LAKESIDE}?tab=gear`, full: true },
   { name: "phone-games", who: "anna", path: `${LAKESIDE}?tab=games`, full: true },
+  { name: "phone-food", who: "anna", path: `${LAKESIDE}?tab=food`, full: true },
   { name: "phone-interest", who: "anna", path: RETRO, full: true },
   { name: "phone-clans", who: "anna", path: "/clans" },
   { name: "phone-clan", who: "anna", path: CLAN, full: true },
@@ -88,6 +89,7 @@ const SHOTS: Shot[] = [
 
   // An orga (Alex) on the phone
   { name: "phone-manage", who: "alex", path: `${LAKESIDE}/manage`, full: true },
+  { name: "phone-manage-missing", who: "alex", path: `${LAKESIDE}/manage?tab=missing` },
   { name: "phone-manage-seats", who: "alex", path: `${LAKESIDE}/manage?tab=seats`, act: seat("F12") },
   {
     name: "phone-date-picker",
@@ -105,8 +107,10 @@ const SHOTS: Shot[] = [
   { name: "desktop-event-seats", who: "alex", path: `${LAKESIDE}?tab=seats`, act: seat("F9") },
   { name: "desktop-event-attendees", who: "alex", path: `${LAKESIDE}?tab=attendees` },
   { name: "desktop-games", who: "alex", path: `${LAKESIDE}?tab=games` },
+  { name: "desktop-food", who: "alex", path: `${LAKESIDE}?tab=food`, full: true },
   { name: "desktop-manage", who: "alex", path: `${LAKESIDE}/manage` },
   { name: "desktop-manage-attendees", who: "alex", path: `${LAKESIDE}/manage?tab=attendees` },
+  { name: "desktop-manage-missing", who: "alex", path: `${LAKESIDE}/manage?tab=missing`, full: true },
   { name: "desktop-manage-seats", who: "alex", path: `${LAKESIDE}/manage?tab=seats`, act: seat("F12") },
   { name: "desktop-manage-chat", who: "alex", path: `${LAKESIDE}/manage?tab=chat` },
   { name: "desktop-manage-settings", who: "alex", path: `${LAKESIDE}/manage?tab=settings`, full: true },

@@ -449,6 +449,34 @@ export async function seedDemo({ force = false, discord = false } = {}) {
       }
     }
 
+    // Food: a pizza order Anna collects on Saturday, and Friday's kebab run (already ordered).
+    const sat = new Date(start.getTime() + DAY);
+    sat.setHours(19, 0, 0, 0);
+    tx.insert(s.foodOrder)
+      .values([
+        { id: "demo-food-pizza", lanId: events.lakeside, title: "Pizza Saturday evening", shop: "Pizzeria Da Gino", menuUrl: "https://example.com/menu", note: "I call at 19:00. Pay me cash or TWINT when it arrives.", closesAt: sat, status: "open", createdBy: ids.anna },
+        { id: "demo-food-kebab", lanId: events.lakeside, title: "Friday kebab run", shop: "Bodrum Kebab", status: "ordered", createdBy: ids.alex, createdAt: at(-1, 12) },
+      ])
+      .run();
+    const food: [string, string, string, number, number, string?, boolean?][] = [
+      ["demo-food-pizza", "anna", "Margherita", 1, 1650],
+      ["demo-food-pizza", "alex", "Diavola", 1, 1950, "extra hot"],
+      ["demo-food-pizza", "alex", "Tiramisu", 1, 750],
+      ["demo-food-pizza", "ben", "Margherita", 2, 1650],
+      ["demo-food-pizza", "chiara", "Quattro Formaggi", 1, 2050, "", true],
+      ["demo-food-pizza", "lea", "Margherita", 1, 1650, "", true],
+      ["demo-food-pizza", "marco", "Diavola", 1, 1950, "extra hot"],
+      ["demo-food-pizza", "nina", "Calzone", 1, 1900],
+      ["demo-food-kebab", "alex", "Döner", 1, 1200, "", true],
+      ["demo-food-kebab", "elena", "Dürüm", 1, 1300, "no onions", true],
+      ["demo-food-kebab", "finn", "Döner box", 1, 1100],
+    ];
+    food.forEach(([orderId, key, item, qty, priceCents, note = "", paid = false], i) =>
+      tx.insert(s.foodItem)
+        .values({ orderId, userId: ids[key], item, qty, priceCents, note, paid, createdAt: new Date(Date.now() - (food.length - i) * 60_000) })
+        .run(),
+    );
+
     // A second, open clan Anna isn't in, so the clan list has something to join.
     tx.insert(s.clan)
       .values({ id: "demo-clan-2", name: "Lag Legends", slug: "lag-legends", description: "Retro LAN fans from Bern. Everyone welcome.", joinPolicy: "open" })

@@ -20,9 +20,10 @@ A value saved in the platform settings wins over the environment variable. Clear
 
 | Setting | Variable | Default |
 | --- | --- | --- |
-| **Sign-up & admins** | | |
+| **General** | | |
 | Allow new accounts | `SIGNUP_OPEN` | `true` |
 | Admin emails (become platform admin on sign-up) | `ADMIN_EMAILS` | |
+| Currency for food orders | `FOOD_CURRENCY` | `CHF` |
 | **Email** | | |
 | SMTP host, port, encryption | `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURITY` | –, `587`, `starttls` |
 | Username, password | `SMTP_USER`, `SMTP_PASSWORD` | |
