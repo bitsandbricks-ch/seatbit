@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, isNotNull } from "drizzle-orm";
+import { and, asc, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Attendance, AttendanceStatus, Lan } from "@/db/schema";
 
@@ -56,7 +56,7 @@ export function clanStats(clanId: string, now = new Date()) {
   const lans = db
     .select()
     .from(lan)
-    .where(and(eq(lan.clanId, clanId), isNotNull(lan.publishedAt)))
+    .where(and(eq(lan.clanId, clanId), isNotNull(lan.publishedAt), isNull(lan.cancelledAt), eq(lan.interestCheck, false)))
     .orderBy(asc(lan.startsAt))
     .all();
   const members = db

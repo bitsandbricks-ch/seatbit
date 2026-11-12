@@ -12,7 +12,7 @@
  */
 import { eq, like } from "drizzle-orm";
 import { db, schema } from "../db";
-import { fmtDate } from "./format";
+import { lanStart } from "./format";
 import { appUrl, sendMail } from "./mail";
 import { type FactRow, type TemplateParts, type Vars, buildMail } from "./mail-fill";
 
@@ -141,6 +141,61 @@ export const MAIL_TEMPLATES = [
     button: "Event details",
     note: "",
   },
+  {
+    id: "eventPublished",
+    title: "New event",
+    when: "An orga publishes an event (or it goes live at its scheduled time), to members interested in that kind of event.",
+    vars: { ...lanVars, deadline: "Answer deadline (empty if not set)" },
+    facts: [...eventFacts, ["Answer by", "{deadline}"]],
+    subject: "New event: {lan}",
+    body: "{clan} is going to {lan}. Are you coming? Let us know in Seatbit.",
+    button: "Answer now",
+    note: "You get these because you're interested in this kind of event. Change it in your Seatbit profile.",
+  },
+  {
+    id: "interestCheck",
+    title: "Interest check",
+    when: "An orga publishes an event that starts with an interest check.",
+    vars: lanVars,
+    facts: eventFacts,
+    subject: "Would you come to {lan}?",
+    body: "{clan} is thinking about going to {lan}. Would you come? Tell us, so we know whether it's worth getting spots. Nothing is binding yet: sign-up comes later.",
+    button: "I'm interested / not",
+    note: "You get these because you're interested in this kind of event. Change it in your Seatbit profile.",
+  },
+  {
+    id: "signupOpen",
+    title: "Sign-up open",
+    when: "An orga ends the interest check and opens sign-up.",
+    vars: { ...lanVars, deadline: "Answer deadline (empty if not set)" },
+    facts: [...eventFacts, ["Answer by", "{deadline}"]],
+    subject: "We're going to {lan}: sign up now",
+    body: "It's decided: {clan} is going to {lan}. Sign-up is open now, so say if you're coming.",
+    button: "Sign up",
+    note: "",
+  },
+  {
+    id: "eventCancelled",
+    title: "Event cancelled",
+    when: "An orga cancels an event, to everyone who answered.",
+    vars: { ...lanVars, reason: "Why, as the orga wrote it (empty if none)" },
+    facts: [...eventFacts, ["Why", "{reason}"]],
+    subject: "{lan} is cancelled",
+    body: "The orgas cancelled {lan}. Sorry about that!",
+    button: "Event page",
+    note: "",
+  },
+  {
+    id: "eventNews",
+    title: "News from the orgas",
+    when: "An orga posts news on an event, to everyone coming, unsure or on the waitlist.",
+    vars: { ...lanVars, news: "The news text", author: "Orga who wrote it" },
+    facts: eventFacts,
+    subject: "{lan}: news from {author}",
+    body: "{news}",
+    button: "Event page",
+    note: "",
+  },
 ] as const satisfies MailTemplate[];
 
 export type MailTemplateId = (typeof MAIL_TEMPLATES)[number]["id"];
@@ -212,7 +267,7 @@ export async function sendTemplate(to: string, id: MailTemplateId, vars: Vars) {
 
 /** The placeholders every event mail has. */
 export function eventMailVars(
-  l: { id: string; name: string; startsAt: Date; location: string; clanId: string | null },
+  l: { id: string; name: string; startsAt: Date; endsAt: Date; dateTbd?: boolean; dateHint?: string; location: string; clanId: string | null },
   u: { firstName: string; name: string },
 ) {
   const c = l.clanId ? db.select({ name: schema.clan.name }).from(schema.clan).where(eq(schema.clan.id, l.clanId)).get() : null;
@@ -220,7 +275,7 @@ export function eventMailVars(
     firstName: u.firstName || u.name,
     clan: c?.name ?? "",
     lan: l.name,
-    start: fmtDate(l.startsAt),
+    start: lanStart(l),
     location: l.location,
     link: `${appUrl}/lans/${l.id}`,
   };

@@ -8,7 +8,7 @@ import { Avatar } from "@/components/avatar";
 import { ClanHeader, CLAN_VIEW_TABS } from "@/components/clan-header";
 import { ClanMemberGrid } from "@/components/clan-member-list";
 import { Card, Columns, EmptyState, Notice, Page, Pill, StatusBadge, btnGhost, btnPrimary, btnSecondary } from "@/components/ui";
-import { fmtDay, fmtRange } from "@/lib/format";
+import { lanDay, lanRange } from "@/lib/format";
 import { canManageClan, clanRole, getClanBySlug } from "@/lib/clans";
 import { pickNick } from "@/lib/lans";
 import { personLabel } from "@/lib/names";
@@ -308,9 +308,11 @@ function NextEvent({ lan: l, status, going }: { lan: Lan; status?: (typeof schem
           <h2 className="flex flex-wrap items-center gap-2 text-xl font-bold tracking-tight sm:text-2xl">
             {l.name}
             {!l.publishedAt && <Pill tone="amber">Draft</Pill>}
+            {l.cancelledAt && <Pill tone="red">Cancelled</Pill>}
+            {l.interestCheck && !l.cancelledAt && <Pill tone="emerald">Interest check</Pill>}
           </h2>
           <p className="mt-0.5 text-sm text-muted">
-            {fmtRange(l.startsAt, l.endsAt)}
+            {lanRange(l)}
             {l.location && ` · ${l.location}`}
           </p>
         </div>
@@ -336,9 +338,11 @@ function EventList({ lans, mine, past }: { lans: Lan[]; mine: Map<string, string
                 <span className="flex min-w-0 items-center gap-2">
                   <span className="truncate font-medium">{l.name}</span>
                   {!l.publishedAt && <Pill tone="amber">Draft</Pill>}
+                  {l.cancelledAt && <Pill tone="red">Cancelled</Pill>}
+                  {l.interestCheck && !l.cancelledAt && <Pill tone="emerald">Interest check</Pill>}
                 </span>
                 <span className="block truncate text-xs text-muted">
-                  {fmtDay(l.startsAt)}
+                  {lanDay(l)}
                   {l.location && ` · ${l.location}`}
                 </span>
               </span>

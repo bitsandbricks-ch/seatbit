@@ -9,7 +9,7 @@ import { GuestEditForm } from "@/components/guest-form";
 import { updateGuest } from "@/app/clan-actions";
 import { Card, Page, PageHeader, Pill, StatTile, StatusBadge, columns, stack } from "@/components/ui";
 import { canManageClan, getClanBySlug, isClanMember } from "@/lib/clans";
-import { fmtDate, fmtWeekday } from "@/lib/format";
+import { fmtDate, fmtWeekday, lanWeekday } from "@/lib/format";
 import { pickNick } from "@/lib/lans";
 import { personLabel } from "@/lib/names";
 import { appUrl } from "@/lib/mail";
@@ -258,7 +258,7 @@ function EventList({
             <span className="min-w-0">
               <span className="block truncate font-medium">{l.name}</span>
               <span className="block truncate text-xs text-muted">
-                {fmtWeekday(l.startsAt)}
+                {lanWeekday(l)}
                 {typeName && ` · ${typeName}`}
                 {a?.status === "going" && ` · as ${nick}`}
               </span>

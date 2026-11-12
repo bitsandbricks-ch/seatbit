@@ -4,10 +4,10 @@ import { ViewManageSwitch } from "./view-manage-switch";
 import type { Lan } from "@/db/schema";
 import { ClanAvatar } from "./clan-avatar";
 import { PageHeader, btnGhost } from "./ui";
-import { fmtRange } from "@/lib/format";
+import { fmtDate, lanRange } from "@/lib/format";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/db";
-import { PublishEvent } from "./publish-event";
+import { OpenSignupButton, PublishEvent, UndoCancelButton } from "./publish-event";
 
 type Clan = Parameters<typeof ClanAvatar>[0]["clan"] & { slug: string; name: string };
 
@@ -34,10 +34,6 @@ export function EventHeader({
   actions?: ReactNode;
 }) {
   const keep = SHARED_TABS.includes(tab) && tab !== "overview" ? `?tab=${tab}` : "";
-  const discordChannels =
-    !l.publishedAt && canManage && l.clanId
-      ? db.select().from(schema.discordChannel).where(eq(schema.discordChannel.clanId, l.clanId)).all().length
-      : 0;
   return (
     <>
     <PageHeader
@@ -55,7 +51,7 @@ export function EventHeader({
       title={l.name}
       subtitle={
         <>
-          {fmtRange(l.startsAt, l.endsAt)}
+          {lanRange(l)}
           {l.location && (
             <span className="block sm:inline">
               <span className="hidden sm:inline"> · </span>
@@ -90,21 +86,77 @@ export function EventHeader({
         </p>
       )}
     </PageHeader>
-    {!l.publishedAt && (
+    <EventStatus lan={l} canManage={canManage} />
+    </>
+  );
+}
+
+/** Where the event stands, when it's anything but a normal open event: draft, interest check or cancelled. */
+function EventStatus({ lan: l, canManage }: { lan: Lan; canManage: boolean }) {
+  if (l.cancelledAt) {
+    return (
+      <section aria-label="Cancelled" className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-danger/50 bg-danger/10 p-3 sm:p-4">
+        <div className="min-w-0 text-sm">
+          <p className="font-semibold text-danger">Cancelled</p>
+          <p className="text-muted">{l.cancelReason || "The orgas cancelled this event."}</p>
+        </div>
+        {canManage && <UndoCancelButton lanId={l.id} />}
+      </section>
+    );
+  }
+  if (!l.publishedAt) {
+    const discordChannels = l.clanId
+      ? db.select().from(schema.discordChannel).where(eq(schema.discordChannel.clanId, l.clanId)).all().length
+      : 0;
+    return (
       <section
         aria-label="Draft"
         className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-dashed border-warn/60 bg-warn/10 p-3 sm:p-4"
       >
         <div className="min-w-0 text-sm">
-          <p className="font-semibold text-warn">Draft</p>
+          <p className="font-semibold text-warn">
+            Draft{l.interestCheck ? " · starts with an interest check" : ""}
+          </p>
           <p className="text-muted">
-            Only orgas and clan admins see this event. Members get nothing yet: no Discord post, no reminders. Fill in
-            the details, then publish.
+            Only orgas and clan admins see this event. Nothing goes out yet: no Discord post, no messages, no reminders.
+            {l.publishAt ? (
+              <>
+                {" "}
+                Goes live by itself on <span className="text-fg">{fmtDate(l.publishAt)}</span>.
+              </>
+            ) : (
+              " Fill in the details, then publish now or pick a time."
+            )}
           </p>
         </div>
-        {canManage && <PublishEvent lanId={l.id} discordChannels={discordChannels} />}
+        {canManage && (
+          <PublishEvent
+            lanId={l.id}
+            discordChannels={discordChannels}
+            scheduled={l.publishAt ? fmtDate(l.publishAt) : null}
+            interestCheck={l.interestCheck}
+          />
+        )}
       </section>
-    )}
-    </>
-  );
+    );
+  }
+  if (l.interestCheck) {
+    const answers = db.select().from(schema.lanInterest).where(eq(schema.lanInterest.lanId, l.id)).all();
+    const n = (a: string) => answers.filter((x) => x.answer === a).length;
+    return (
+      <section aria-label="Interest check" className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-bit/40 bg-bit-soft p-3 sm:p-4">
+        <div className="min-w-0 text-sm">
+          <p className="font-semibold text-bit">Interest check</p>
+          <p className="text-muted">
+            Would you come? Nothing is binding yet: sign-up, tickets and seats come once the orgas decide.
+            <span className="block text-fg">
+              {n("yes")} interested · {n("maybe")} maybe · {n("no")} not
+            </span>
+          </p>
+        </div>
+        {canManage && <OpenSignupButton lanId={l.id} dateTbd={l.dateTbd} />}
+      </section>
+    );
+  }
+  return null;
 }

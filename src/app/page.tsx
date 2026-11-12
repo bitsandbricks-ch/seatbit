@@ -3,7 +3,7 @@ import { and, asc, desc, eq, gt, inArray, isNotNull, lte } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Lan } from "@/db/schema";
 import { EmptyState, Page, PageHeader, Pill, StatusBadge, btnPrimary } from "@/components/ui";
-import { fmtDay, fmtWeekday, relative } from "@/lib/format";
+import { fmtDay, lanDay, lanWeekday, relative } from "@/lib/format";
 import { requireUser, visibleLans } from "@/lib/session";
 import { buildChecklist, progress } from "@/lib/checklist";
 import { myClans } from "@/lib/clans";
@@ -113,7 +113,7 @@ export default async function Home() {
               <li key={l.id}>
                 <Link href={`/lans/${l.id}`} className="flex min-h-12 items-center justify-between gap-3 px-4 py-3 transition hover:bg-raised/60">
                   <span className="truncate">{l.name}</span>
-                  <span className="shrink-0 text-sm text-muted">{fmtDay(l.startsAt)}</span>
+                  <span className="shrink-0 text-sm text-muted">{lanDay(l)}</span>
                 </Link>
               </li>
             ))}
@@ -139,7 +139,7 @@ function LanCard({
   going: number;
   now: Date;
 }) {
-  const needsAnswer = !my || my.status === "maybe";
+  const needsAnswer = (!my || my.status === "maybe") && !l.interestCheck && !l.cancelledAt;
   const deadlineSoon = l.signupDeadline && l.signupDeadline > now;
   const unpaid = my && (my.status === "going" || my.status === "waitlist") && !my.paid && !my.ticketBought && l.paymentDueDate;
   return (
@@ -147,7 +147,7 @@ function LanCard({
       href={l.publishedAt ? `/lans/${l.id}` : `/lans/${l.id}/manage`}
       className={`group block rounded-card border bg-surface p-4 transition hover:border-bit/50 active:scale-[0.99] sm:p-5 ${
         l.publishedAt ? "border-line" : "border-dashed border-warn/60"
-      }`}
+      } ${l.cancelledAt ? "opacity-60" : ""}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -158,8 +158,8 @@ function LanCard({
           )}
           <h3 className="text-lg font-semibold tracking-tight">{l.name}</h3>
           <p className="text-sm text-muted">
-            {fmtWeekday(l.startsAt)}
-            <span className="text-faint"> · {relative(l.startsAt, now)}</span>
+            {lanWeekday(l)}
+            {!l.dateTbd && <span className="text-faint"> · {relative(l.startsAt, now)}</span>}
           </p>
           {l.location && <p className="truncate text-sm text-muted">{l.location}</p>}
         </div>
@@ -167,6 +167,8 @@ function LanCard({
       </div>
       <div className="mt-4 flex flex-wrap gap-2 text-xs">
         {!l.publishedAt && <Pill tone="amber">Draft, only orgas see it</Pill>}
+        {l.cancelledAt && <Pill tone="red">Cancelled</Pill>}
+        {l.interestCheck && !l.cancelledAt && <Pill tone="emerald">Interest check: would you come?</Pill>}
         <Pill>
           {going}
           {l.capacity ? ` / ${l.capacity}` : ""} going
@@ -175,10 +177,10 @@ function LanCard({
           <Pill tone="amber">Answer by {fmtDay(l.signupDeadline!)} ({relative(l.signupDeadline!, now)})</Pill>
         )}
         {unpaid && <Pill tone="red">Ticket due {fmtDay(l.paymentDueDate!)}</Pill>}
-        {info.hasSeats && (
+        {info.hasSeats && !l.cancelledAt && (
           <Pill tone={info.freeSeats ? "zinc" : "red"}>{info.freeSeats ? `${info.freeSeats} seats free` : "No seats left"}</Pill>
         )}
-        {my && my.status !== "declined" && (
+        {my && my.status !== "declined" && !l.cancelledAt && (
           <Pill tone={info.progress.done === info.progress.total ? "emerald" : "amber"}>
             Checklist {info.progress.done}/{info.progress.total}
           </Pill>
