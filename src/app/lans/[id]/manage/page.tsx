@@ -27,6 +27,8 @@ import { checkWishes } from "@/lib/seating";
 import { getLanAccounts } from "@/lib/lan-accounts";
 import { RemindToBookButton } from "@/components/seat-booking";
 import { SeatSwapApprovals, type SwapView } from "@/components/seat-swaps";
+import { WhoIsMissing, type MissingGroupView } from "@/components/who-is-missing";
+import { MISSING_STEPS, NUDGE_COOLDOWN_MS, whoIsMissing, type MissingStep } from "@/lib/missing";
 import { CancelEvent, CopyNextYear, DeleteNewsButton, NewsComposer } from "@/components/event-extras";
 
 const { attendance, seat, user, reminderLog } = schema;
@@ -39,6 +41,7 @@ const TABS = [
   ["overview", "Overview"],
   ["seats", "Seats"],
   ["attendees", "Attendees"],
+  ["missing", "Who's missing"],
   ["chat", "Discord & WhatsApp"],
   ["settings", "Settings"],
 ] as const;
@@ -168,6 +171,47 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
     .where(eq(schema.lanNews.lanId, id))
     .orderBy(desc(schema.lanNews.createdAt))
     .all();
+
+  // Who's missing: per step, who still owes something. Names for people outside the clan list come from getNames too.
+  const missing = whoIsMissing(l);
+  const missingIds = [...new Set(missing.flatMap((g) => g.people.map((p) => p.userId)))];
+  const missingNames = missingIds.some((uid) => !names.has(uid)) ? await getNames(id, missingIds) : null;
+  const memberMissing = new Set(
+    missing.filter((g) => MISSING_STEPS[g.step].who === "member").flatMap((g) => g.people.map((p) => p.userId)),
+  ).size;
+  const fixes: Partial<Record<MissingStep, MissingGroupView["fix"]>> = {
+    confirm: { href: `/lans/${l.id}/manage?tab=attendees`, label: "Confirm on the Attendees tab" },
+    assign: { href: `/lans/${l.id}/manage?tab=seats`, label: "Assign on the Seats tab" },
+  };
+  const hints: Record<MissingStep, string> = {
+    interest: "Haven't said if they'd come. The nudge asks yes, maybe or no (with buttons in the DM).",
+    answer: "Clan members who haven't answered at all. The nudge asks coming, unsure or not coming.",
+    unsure: "Said unsure. The nudge asks if they know yet.",
+    ticket: "Coming, but haven't ticked that they have a ticket. The nudge links the ticket shop and the deadline.",
+    nick: "Coming without a nickname for the seat plan.",
+    seat: "Self pick is on and they have a ticket, but no seat yet.",
+    book: "Have a seat here but haven't ticked that they booked it on the event's seat plan.",
+    confirm: "Said they bought a ticket. Check it and confirm it.",
+    assign: "Coming, but without a seat in the group's block.",
+  };
+  const missingGroups: MissingGroupView[] = missing.map((g) => ({
+    step: g.step,
+    title: MISSING_STEPS[g.step].title,
+    hint: hints[g.step],
+    who: MISSING_STEPS[g.step].who,
+    fix: fixes[g.step],
+    people: g.people
+      .map((p) => ({
+        userId: p.userId,
+        name: names.get(p.userId) ?? missingNames?.get(p.userId)?.full ?? "?",
+        avatar: avatars.get(p.userId),
+        discord: p.reach.discord,
+        email: p.reach.email,
+        nudgedAt: p.nudgedAt,
+        detail: p.detail,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name)),
+  }));
 
   const seatCards = (
           <div className="grid items-start gap-5 lg:grid-cols-2">
@@ -300,7 +344,9 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
           badge:
             t === "attendees" && ticketsReported
               ? `${ticketsReported} to confirm`
-              : t === "seats" && swapsToApprove
+              : t === "missing" && memberMissing
+                ? `${memberMissing}`
+                : t === "seats" && swapsToApprove
                 ? `${swapsToApprove} swap${swapsToApprove > 1 ? "s" : ""} to approve`
                 : t === "seats" && going.length - seated > 0 && seats.length
                   ? `${going.length - seated} unseated`
@@ -335,7 +381,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
           <div className="min-w-0 space-y-4 sm:space-y-6 lg:col-start-1 lg:row-start-1">
           <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
             <Stat label="Coming" value={`${going.length}${l.capacity ? ` / ${l.capacity}` : ""}`} sub={`${count("waitlist")} waitlist`} href={`/lans/${l.id}/manage?tab=attendees`} />
-            <Stat label="Unsure / no answer" value={`${count("maybe")} / ${noAnswer}`} sub={`${count("declined")} not coming`} href={`/lans/${l.id}/manage?tab=attendees`} />
+            <Stat label="Unsure / no answer" value={`${count("maybe")} / ${noAnswer}`} sub={`${count("declined")} not coming · who's missing →`} href={`/lans/${l.id}/manage?tab=missing`} />
             <Stat label="Tickets" value={`${ticketsConfirmed} / ${going.length}`} sub={`${ticketsReported} to confirm`} href={`/lans/${l.id}/manage?tab=attendees`} />
             <Stat label="Seats" value={`${seated} / ${going.length}`} sub={seats.length ? `${freeSeats} free of ${seats.length}` : "no seats yet"} href={`/lans/${l.id}/manage?tab=seats`} />
           </div>
@@ -416,6 +462,22 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
             .filter((u) => !inLan.has(u.id) && memberIds.has(u.id))
             .map((u) => ({ id: u.id, name: names.get(u.id) ?? u.name }))
             .sort((a, b) => a.name.localeCompare(b.name))}
+        />
+      )}
+
+      {tab === "missing" && (
+        <WhoIsMissing
+          lanId={l.id}
+          groups={missingGroups}
+          profileBase={lanClan ? `/clans/${lanClan.slug}/members/` : null}
+          blocked={
+            l.cancelledAt
+              ? "This event is cancelled, so nudges are off."
+              : !l.publishedAt
+                ? "This event is still a draft. Publish it before nudging anyone."
+                : null
+          }
+          cooldownMs={NUDGE_COOLDOWN_MS}
         />
       )}
 

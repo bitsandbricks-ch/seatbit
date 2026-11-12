@@ -8,6 +8,7 @@ import type { Lan } from "@/db/schema";
 import { getDisplayNames, getLan } from "@/lib/lans";
 import { appUrl } from "@/lib/mail";
 import { notify, notifyLater, notifySeatChanged, sendDiscordDm } from "@/lib/notify";
+import { NUDGE_STEPS, nudge, type NudgeResult, type NudgeStep } from "@/lib/missing";
 import { clearSeatBooked, remindToBook, setSeatBooked } from "@/lib/seat-booking";
 import { canViewLan, isLanManager, requireLanManager, requireUser } from "@/lib/session";
 
@@ -260,4 +261,18 @@ export async function setGameMark(gameId: string, field: "vote" | "installed", v
     .onConflictDoUpdate({ target: [gameVote.gameId, gameVote.userId], set: { [field]: value } })
     .run();
   lanPath(g.lanId);
+}
+
+// ---------------- Who's missing ----------------
+
+/** Orga nudge from the "Who's missing" tab: one person, or everyone missing a step. */
+export async function nudgeMissing(lanId: string, step: string, userIds?: string[]): Promise<NudgeResult> {
+  await requireLanManager(lanId);
+  const l = mustGetLan(lanId);
+  if (!l.publishedAt) throw new Error("Publish the event first. Members can't see drafts.");
+  if (l.cancelledAt) throw new Error("This event is cancelled.");
+  if (!NUDGE_STEPS.includes(step as NudgeStep)) throw new Error("Unknown step");
+  const r = await nudge(l, step as NudgeStep, userIds);
+  lanPath(lanId);
+  return r;
 }
