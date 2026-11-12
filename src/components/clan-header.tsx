@@ -10,7 +10,7 @@ import { PageHeader, Pill, btnPrimary } from "./ui";
 import { ViewManageSwitch } from "./view-manage-switch";
 
 export const CLAN_VIEW_TABS = ["overview", "events", "members", "stats"] as const;
-export const CLAN_MANAGE_TABS = ["general", "members", "guests", "types", "invites", "chat"] as const;
+export const CLAN_MANAGE_TABS = ["general", "members", "guests", "types", "invites", "chat", "log"] as const;
 export type ClanViewTab = (typeof CLAN_VIEW_TABS)[number];
 export type ClanManageTab = (typeof CLAN_MANAGE_TABS)[number];
 
@@ -81,6 +81,7 @@ export function ClanHeader({
       { id: "types", label: "LAN types", count: types },
       { id: "invites", label: "Invite links" },
       { id: "chat", label: "Discord & WhatsApp" },
+      { id: "log", label: "Audit log" },
     ];
   }
 

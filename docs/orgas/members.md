@@ -9,6 +9,12 @@ Manage people under **Clan settings → Members**.
 - **Make admin / Remove admin:** a clan always keeps at least one admin.
 - **Remove** takes someone out of the clan.
 
+## Audit log
+
+**Clan settings → Audit log** lists the changes orgas and admins made in the clan and its events: seat moves, swaps, auto-assign and finalizing the plan, changed answers, confirmed tickets, orga and admin roles, join approvals, guest edits, publishing, cancelling and event edits. Filter by kind of change or by event. Members' own answers aren't listed, and entries are kept for a year. Only clan admins see it.
+
+![Audit log](../screenshots/desktop-clan-audit-log.png){ .shot }
+
 ## Guests
 
 **Clan settings → Guests.** Guests are people who aren't on Seatbit yet, e.g. a friend who only comes once a year. Add them with first name, surname and nick, then sign them up for events and give them a seat like anyone else. You can edit their name and nick later.

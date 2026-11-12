@@ -4,7 +4,7 @@ Platform admins run the instance: they see all clans, events and users, and chan
 
 ![Admin](../screenshots/desktop-admin.png){ .shot }
 
-The **Admin** page lists all clans, events and users. Make someone admin or take it away in the user list. **Platform settings** has the tabs Email, Discord, Sign-up & admins, Reminders, Operator & legal, Mail templates and Server (see [Configuration](../self-hosting/configuration.md)).
+The **Admin** page lists all clans, events and users. Make someone admin or take it away in the user list. Deleted accounts don't show up there (only their count). **Audit log** shows the log of every clan plus platform changes (settings by name, never their values, platform roles, mail templates, deleted accounts); filter by clan or kind of change. **Platform settings** has the tabs Email, Discord, Sign-up & admins, Reminders, Operator & legal, Mail templates and Server (see [Configuration](../self-hosting/configuration.md)).
 
 ## Admin CLI
 

@@ -9,6 +9,8 @@ import { getDisplayNames, getLan } from "@/lib/lans";
 import { cancelEvent, openSignup, publishEvent, sendNews, uncancelEvent } from "@/lib/event-notices";
 import { isClanMember } from "@/lib/clans";
 import { canViewLan, isLanManager, requireLanManager, requireUser } from "@/lib/session";
+import { auditLan } from "@/lib/audit";
+import { fmtDate } from "@/lib/format";
 
 const { lan, lanOrga, lanInterest, lanNews, clanMember, lanType, seat, attendance } = schema;
 
@@ -29,15 +31,16 @@ const lanPath = (id: string) => {
 
 /** Sets (or clears, with null) the time a draft goes live by itself. */
 export async function schedulePublish(lanId: string, at: string | null): Promise<{ error?: string } | void> {
-  await requireLanManager(lanId);
+  const me = await requireLanManager(lanId);
   const l = mustGetLan(lanId);
   if (l.publishedAt) return { error: "The event is already published." };
   const when = at ? new Date(at) : null;
   if (when && isNaN(when.getTime())) return { error: "Pick a valid date and time." };
   if (when && when <= new Date()) {
-    await publishEvent(lanId);
+    await publishEvent(lanId, new Date(), me.id);
   } else {
     db.update(lan).set({ publishAt: when }).where(eq(lan.id, lanId)).run();
+    auditLan(l, me.id, "event.schedule", { data: { at: when ? fmtDate(when) : null } });
   }
   lanPath(lanId);
 }
@@ -61,10 +64,11 @@ export async function setMyInterest(lanId: string, answer: InterestAnswer) {
 
 /** Ends the interest check: sign-up opens and interested members are told. Needs a fixed date. */
 export async function openSignupNow(lanId: string): Promise<{ error?: string; sent?: number }> {
-  await requireLanManager(lanId);
+  const me = await requireLanManager(lanId);
   const l = mustGetLan(lanId);
   if (!l.interestCheck) return {};
   if (l.dateTbd) return { error: "Set the date first (Settings tab), then open sign-up." };
+  auditLan(l, me.id, "event.signup_open");
   const sent = await openSignup(l);
   lanPath(lanId);
   return { sent };
@@ -73,17 +77,20 @@ export async function openSignupNow(lanId: string): Promise<{ error?: string; se
 // ---------------- Cancel ----------------
 
 export async function cancelLan(lanId: string, reason: string): Promise<{ sent: number }> {
-  await requireLanManager(lanId);
+  const me = await requireLanManager(lanId);
   const l = mustGetLan(lanId);
   if (l.cancelledAt) return { sent: 0 };
+  auditLan(l, me.id, "event.cancel", { data: { reason: reason.trim().slice(0, 200) || undefined } });
   const sent = await cancelEvent(l, reason.trim().slice(0, 500));
   lanPath(lanId);
   return { sent };
 }
 
 export async function uncancelLan(lanId: string) {
-  await requireLanManager(lanId);
-  uncancelEvent(mustGetLan(lanId));
+  const me = await requireLanManager(lanId);
+  const l = mustGetLan(lanId);
+  if (l.cancelledAt) auditLan(l, me.id, "event.uncancel");
+  uncancelEvent(l);
   lanPath(lanId);
 }
 
@@ -142,6 +149,7 @@ export async function copyForNextYear(lanId: string) {
   for (const uid of orgas) {
     if (uid === me.id || !l.clanId || isClanMember(uid, l.clanId)) db.insert(lanOrga).values({ lanId: row.id, userId: uid }).run();
   }
+  auditLan(row, me.id, "event.copy", { data: { from: l.name } });
   revalidatePath("/");
   redirect(`/lans/${row.id}/manage?tab=settings&copied=1`);
 }
@@ -164,8 +172,9 @@ export async function postNews(lanId: string, text: string): Promise<{ error?: s
 export async function deleteNews(newsId: string) {
   const n = db.select().from(lanNews).where(eq(lanNews.id, newsId)).get();
   if (!n) return;
-  await requireLanManager(n.lanId);
+  const me = await requireLanManager(n.lanId);
   db.delete(lanNews).where(eq(lanNews.id, newsId)).run();
+  auditLan(mustGetLan(n.lanId), me.id, "news.delete");
   lanPath(n.lanId);
 }
 
@@ -199,5 +208,6 @@ export async function setArrived(lanId: string, userId: string | null, arrived: 
     .set({ arrivedAt: arrived ? new Date() : null })
     .where(eq(attendance.id, a.id))
     .run();
+  if (target !== me.id && !!a.arrivedAt !== arrived) auditLan(mustGetLan(lanId), me.id, "arrived.set", { targetUserId: target, data: { arrived } });
   lanPath(lanId);
 }

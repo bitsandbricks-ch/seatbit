@@ -16,7 +16,7 @@
  * users get (fake) Discord accounts instead of passwords, as on a real instance.
  */
 import { hashPassword } from "better-auth/crypto";
-import { count } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 import { db, schema } from "../src/db";
 
 export const DEMO_PASSWORD = "seatbit-demo";
@@ -476,6 +476,28 @@ export async function seedDemo({ force = false, discord = false } = {}) {
         .values({ orderId, userId: ids[key], item, qty, priceCents, note, paid, createdAt: new Date(Date.now() - (food.length - i) * 60_000) })
         .run(),
     );
+
+    // Audit log: what the orgas changed lately (Clan settings -> Audit log, Admin -> Audit log).
+    const lanName = (id: string) => tx.select({ name: s.lan.name }).from(s.lan).where(eq(s.lan.id, id)).get()?.name ?? "";
+    const lake = { lanId: events.lakeside, clanId, event: lanName(events.lakeside) };
+    const log: [number, number, string, string, string | null, Record<string, unknown>, string | null][] = [
+      // [days ago, hour, actor, action, target, data, lanId]
+      [-12, 19, "alex", "event.publish", null, { event: lake.event }, lake.lanId],
+      [-9, 21, "alex", "member.approve", "tim", {}, null],
+      [-8, 20, "alex", "guest.add", "yannick", {}, null],
+      [-6, 18, "alex", "attendance.set", "yannick", { event: lake.event, from: null, to: "going" }, lake.lanId],
+      [-5, 22, "alex", "member.role", "chiara", { from: "member", to: "admin" }, null],
+      [-3, 19, "alex", "ticket.confirm", "ben", { event: lake.event, paid: true }, lake.lanId],
+      [-3, 19, "alex", "ticket.confirm", "anna", { event: lake.event, paid: true }, lake.lanId],
+      [-2, 20, "alex", "seat.auto", null, { event: lake.event, mode: "fill", count: 14 }, lake.lanId],
+      [-2, 20, "chiara", "seat.swap", "finn", { event: lake.event, a: "F4", b: "F7", otherUserId: ids.gina }, lake.lanId],
+      [-1, 21, "alex", "seats.finalize", null, { event: lake.event, notified: 15 }, lake.lanId],
+      [0, 8, "chiara", "attendance.set", "tim", { event: lake.event, from: "going", to: "declined" }, lake.lanId],
+    ];
+    for (const [days, hh, actor, action, target, data, lanId] of log)
+      tx.insert(s.auditLog)
+        .values({ at: at(days, hh), actorId: ids[actor], action, clanId, lanId, targetUserId: target ? ids[target] : null, data })
+        .run();
 
     // A second, open clan Anna isn't in, so the clan list has something to join.
     tx.insert(s.clan)

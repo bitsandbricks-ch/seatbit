@@ -5,6 +5,7 @@ import { botIdentity, commands, discordEnabled, registerCommands } from "@/lib/d
 import { mailTarget, sendMail, verifySmtp } from "@/lib/mail";
 import { PREVIEW_VARS, type MailTemplateId, renderTemplate, resetTemplate, saveTemplate, templateDef } from "@/lib/mail-templates";
 import { requireAdmin } from "@/lib/session";
+import { audit } from "@/lib/audit";
 import {
   SETTINGS,
   SETTING_GROUPS,
@@ -58,6 +59,8 @@ export async function saveSettings(group: SettingGroup, _prev: ActionResult, for
     if ("set" in o) setSetting(o.key, o.set, me.id);
     else clearSetting(o.key);
   }
+  // Only the setting names: values can be secrets.
+  if (ops.length) audit({ actorId: me.id, action: "settings.save", data: { group, keys: ops.map((o) => o.key) } });
   revalidatePath("/", "layout");
   return done(true, ops.length ? `Saved ${ops.length} change${ops.length === 1 ? "" : "s"}.` : "Nothing changed.");
 }
@@ -106,14 +109,16 @@ export async function saveMailTemplate(id: string, _prev: ActionResult, form: Fo
   } catch (e) {
     return done(false, errMsg(e));
   }
+  audit({ actorId: me.id, action: "mail_template.save", data: { template: templateDef(id).title } });
   revalidatePath("/admin/settings");
   return done(true, "Saved.");
 }
 
 /** Brings back the built-in text of a mail template. */
 export async function resetMailTemplate(id: string): Promise<ActionResult> {
-  await requireAdmin();
+  const me = await requireAdmin();
   resetTemplate(id);
+  audit({ actorId: me.id, action: "mail_template.reset", data: { template: templateLabel(id) } });
   revalidatePath("/admin/settings");
   return done(true, "Back to the default text.");
 }
@@ -128,5 +133,13 @@ export async function sendTemplateTest(id: string): Promise<ActionResult> {
     return done(true, mailTarget().kind === "console" ? "No SMTP set up, so it went to the server log." : `Sent to ${me.email}.`);
   } catch (e) {
     return done(false, errMsg(e));
+  }
+}
+
+function templateLabel(id: string) {
+  try {
+    return templateDef(id).title;
+  } catch {
+    return id;
   }
 }

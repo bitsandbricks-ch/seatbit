@@ -46,6 +46,11 @@ export const user = sqliteTable("user", {
   icon: text("icon"),
   /** Personal colour (one of PROFILE_COLORS), used for rings, seats and lists; null = picked from the user id. */
   color: text("color"),
+  /**
+   * Set when the person deleted their account. The row stays (as "Deleted member", no email, no
+   * logins) only so past events and the audit log keep their counts; everything personal is gone.
+   */
+  deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" })
     .default(now)
@@ -657,6 +662,33 @@ export const lanNews = sqliteTable(
   },
   (t) => [index("lan_news_lan_idx").on(t.lanId)],
 );
+
+// ---------- Audit log ----------
+
+/**
+ * Changes orgas and admins make (seat moves, answer overrides, role changes, guest edits,
+ * publish/cancel, ...). Clan admins see their clan's entries, platform admins all of them.
+ * Names are looked up when the log is shown (actor / target), so a deleted account shows as
+ * "Deleted member" here too; `data` only holds non-personal details (seat labels, statuses,
+ * the event name). Entries older than a year are removed.
+ */
+export const auditLog = sqliteTable(
+  "audit_log",
+  {
+    id: id(),
+    at: integer("at", { mode: "timestamp_ms" }).default(now).notNull(),
+    actorId: text("actor_id").references(() => user.id, { onDelete: "set null" }),
+    /** null = platform-wide (settings, platform roles) or the clan was deleted. */
+    clanId: text("clan_id").references(() => clan.id, { onDelete: "set null" }),
+    lanId: text("lan_id").references(() => lan.id, { onDelete: "set null" }),
+    targetUserId: text("target_user_id").references(() => user.id, { onDelete: "set null" }),
+    action: text("action").notNull(),
+    data: text("data", { mode: "json" }).$type<Record<string, unknown>>().default({}).notNull(),
+  },
+  (t) => [index("audit_log_clan_idx").on(t.clanId, t.at), index("audit_log_lan_idx").on(t.lanId), index("audit_log_at_idx").on(t.at)],
+);
+
+export type AuditEntry = typeof auditLog.$inferSelect;
 
 // ---------- Food orders ----------
 

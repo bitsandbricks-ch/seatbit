@@ -28,6 +28,7 @@ import { isClanMember } from "@/lib/clans";
 import { lanAccountScope, saveLanAccount } from "@/lib/lan-accounts";
 import { bookedButton, bookingLine, clearSeatBooked } from "@/lib/seat-booking";
 import { PROFILE_COLORS, PROFILE_ICONS, deleteUserAvatarFile, saveUserAvatar } from "@/lib/avatars";
+import { audit, auditLan, changedFields } from "@/lib/audit";
 
 const { attendance, nickname, seat, lan, user, lanOrga, lanType } = schema;
 
@@ -222,6 +223,26 @@ const lanInput = z.object({
 
 export type FormState = { error?: string; ok?: boolean; message?: string } | undefined;
 
+/** Event fields named in the audit log when an orga edits them. */
+const LAN_FIELD_LABELS: Partial<Record<keyof typeof lan.$inferSelect, string>> = {
+  name: "name",
+  typeId: "LAN type",
+  description: "description",
+  location: "location",
+  websiteUrl: "website",
+  ticketUrl: "ticket link",
+  externalPlanUrl: "seat plan link",
+  startsAt: "dates",
+  endsAt: "dates",
+  dateTbd: "dates",
+  dateHint: "dates",
+  signupDeadline: "answer deadline",
+  paymentDueDate: "ticket deadline",
+  price: "price",
+  capacity: "spots",
+  reminderDays: "reminder days",
+};
+
 export async function saveLan(_: FormState, formData: FormData): Promise<FormState> {
   const id = (formData.get("id") as string) || null;
   const clanId = id ? mustGetLan(id).clanId : String(formData.get("clanId") ?? "");
@@ -259,6 +280,8 @@ export async function saveLan(_: FormState, formData: FormData): Promise<FormSta
     const before = mustGetLan(id);
     db.update(lan).set(v).where(eq(lan.id, id)).run();
     const after = mustGetLan(id);
+    const fields = changedFields(before, after, LAN_FIELD_LABELS);
+    if (fields.length) auditLan(after, me.id, "event.update", { data: { fields } });
     notifyLater(() => notifyLanChanged(before, after));
     if ((v.capacity ?? Infinity) > (before.capacity ?? Infinity) || v.capacity === null) {
       await promoteFromWaitlist(mustGetLan(id));
@@ -267,6 +290,7 @@ export async function saveLan(_: FormState, formData: FormData): Promise<FormSta
     const row = db.insert(lan).values({ ...v, clanId }).returning().get();
     lanId = row.id;
     db.insert(lanOrga).values({ lanId: row.id, userId: me.id }).run();
+    auditLan(row, me.id, "event.create");
     const t = v.typeId ? db.select().from(lanType).where(eq(lanType.id, v.typeId)).get() : undefined;
     if (t?.seatSpec) applySeatSpec(row.id, t.seatSpec);
   }
@@ -281,8 +305,8 @@ export async function saveLan(_: FormState, formData: FormData): Promise<FormSta
  * and reminders start running.
  */
 export async function publishLan(lanId: string) {
-  await requireLanManager(lanId);
-  await publishEvent(lanId);
+  const me = await requireLanManager(lanId);
+  await publishEvent(lanId, new Date(), me.id);
   lanPath(lanId);
   revalidatePath("/clans", "layout");
 }
@@ -294,9 +318,9 @@ function requirePublished(l: { publishedAt: Date | null }) {
 
 export async function deleteLan(id: string) {
   const l = mustGetLan(id);
-  if (!l.clanId) await requireAdmin();
-  else await requireClanManager(l.clanId);
+  const me = l.clanId ? await requireClanManager(l.clanId) : await requireAdmin();
   db.delete(lan).where(eq(lan.id, id)).run();
+  audit({ actorId: me.id, action: "event.delete", clanId: l.clanId, data: { event: l.name } });
   revalidatePath("/");
   redirect("/");
 }
@@ -352,16 +376,25 @@ export async function renameSeat(seatId: string, label: string): Promise<{ error
 export async function toggleSeatLock(seatId: string) {
   const s = db.select().from(seat).where(eq(seat.id, seatId)).get();
   if (!s) return;
-  await requireLanManager(s.lanId);
+  const me = await requireLanManager(s.lanId);
   db.update(seat).set({ locked: !s.locked }).where(eq(seat.id, seatId)).run();
+  auditLan(mustGetLan(s.lanId), me.id, "seat.lock", { data: { seat: s.label, locked: !s.locked } });
   lanPath(s.lanId);
 }
 
 export async function adminAssignSeat(seatId: string, userId: string | null) {
   const s = db.select().from(seat).where(eq(seat.id, seatId)).get();
   if (!s) return;
-  await requireLanManager(s.lanId);
-  if (s.userId !== userId) clearSeatBooked(s.lanId, [s.userId, userId]);
+  const me = await requireLanManager(s.lanId);
+  if (s.userId !== userId) {
+    clearSeatBooked(s.lanId, [s.userId, userId]);
+    const l = mustGetLan(s.lanId);
+    if (s.userId) auditLan(l, me.id, "seat.assign", { targetUserId: s.userId, data: { from: s.label, to: null } });
+    if (userId) {
+      const prev = db.select().from(seat).where(and(eq(seat.lanId, s.lanId), eq(seat.userId, userId))).get();
+      auditLan(l, me.id, "seat.assign", { targetUserId: userId, data: { from: prev?.label ?? null, to: s.label } });
+    }
+  }
   db.transaction((tx) => {
     if (userId) {
       tx.update(seat)
@@ -375,18 +408,23 @@ export async function adminAssignSeat(seatId: string, userId: string | null) {
 }
 
 export async function adminSetAttendance(lanId: string, userId: string, status: AttendanceStatus) {
-  await requireLanManager(lanId);
+  const me = await requireLanManager(lanId);
   const cid = mustGetLan(lanId).clanId;
   if (cid && !isClanMember(userId, cid)) throw new Error("Not a member of this clan");
   if (!ATTENDANCE_STATUSES.includes(status)) throw new Error("Bad status");
+  const before = db.select().from(attendance).where(and(eq(attendance.lanId, lanId), eq(attendance.userId, userId))).get();
   // Admins can override capacity.
   await setAttendance(mustGetLan(lanId), userId, status, { force: true });
+  if (before?.status !== status)
+    auditLan(mustGetLan(lanId), me.id, "attendance.set", { targetUserId: userId, data: { from: before?.status ?? null, to: status } });
   lanPath(lanId);
 }
 
 export async function adminRemoveAttendance(lanId: string, userId: string) {
-  await requireLanManager(lanId);
+  const me = await requireLanManager(lanId);
   const l = mustGetLan(lanId);
+  const before = db.select().from(attendance).where(and(eq(attendance.lanId, lanId), eq(attendance.userId, userId))).get();
+  if (before) auditLan(l, me.id, "attendance.remove", { targetUserId: userId, data: { from: before.status } });
   await setAttendance(l, userId, "declined", { force: true });
   db.delete(attendance)
     .where(and(eq(attendance.lanId, lanId), eq(attendance.userId, userId)))
@@ -397,8 +435,9 @@ export async function adminRemoveAttendance(lanId: string, userId: string) {
 export async function adminSetPaid(attendanceId: string, paid: boolean) {
   const a = db.select().from(attendance).where(eq(attendance.id, attendanceId)).get();
   if (!a) return;
-  await requireLanManager(a.lanId);
+  const me = await requireLanManager(a.lanId);
   db.update(attendance).set({ paid }).where(eq(attendance.id, attendanceId)).run();
+  if (a.paid !== paid) auditLan(mustGetLan(a.lanId), me.id, "ticket.confirm", { targetUserId: a.userId, data: { paid } });
   refreshLanMessagesSoon(a.lanId);
   lanPath(a.lanId);
 }
@@ -406,18 +445,20 @@ export async function adminSetPaid(attendanceId: string, paid: boolean) {
 export async function adminSetNote(attendanceId: string, note: string) {
   const a = db.select().from(attendance).where(eq(attendance.id, attendanceId)).get();
   if (!a) return;
-  await requireLanManager(a.lanId);
+  const me = await requireLanManager(a.lanId);
   db.update(attendance).set({ note: note.slice(0, 500) }).where(eq(attendance.id, attendanceId)).run();
+  if (a.note !== note.slice(0, 500)) auditLan(mustGetLan(a.lanId), me.id, "attendance.note", { targetUserId: a.userId });
   lanPath(a.lanId);
 }
 
 /** Orgas fill in or fix someone's participant ID (e.g. for guests). Same scope as the member's own. */
 export async function adminSetLanId(lanId: string, userId: string, value: string) {
-  await requireLanManager(lanId);
+  const me = await requireLanManager(lanId);
   const l = mustGetLan(lanId);
   const a = db.select().from(attendance).where(and(eq(attendance.lanId, lanId), eq(attendance.userId, userId))).get();
   if (!a) throw new Error("Not on this LAN");
   saveLanAccount(userId, lanAccountScope(l), value);
+  if (userId !== me.id) auditLan(l, me.id, "lanid.set", { targetUserId: userId });
   lanPath(lanId);
 }
 
@@ -437,7 +478,9 @@ export async function postLanToDiscord(lanId: string): Promise<number> {
 
 export async function unlinkDiscordChannel(channelId: string) {
   const me = await requireUser();
+  const ch = db.select().from(schema.discordChannel).where(eq(schema.discordChannel.channelId, channelId)).get();
   if (!unlinkChannel(me, channelId)) throw new Error("Not allowed");
+  if (ch) audit({ actorId: me.id, action: "discord.unlink", clanId: ch.clanId, data: { channel: ch.channelName || ch.channelId } });
   revalidatePath("/clans", "layout");
 }
 
@@ -451,6 +494,7 @@ export async function setUserRole(userId: string, role: "admin" | "member") {
   const me = await requireAdmin();
   if (userId === me.id && role !== "admin") throw new Error("You can't demote yourself");
   db.update(user).set({ role }).where(eq(user.id, userId)).run();
+  audit({ actorId: me.id, action: "platform.role", targetUserId: userId, data: { to: role } });
   revalidatePath("/admin");
 }
 
@@ -469,18 +513,20 @@ export async function setMyTicketBought(lanId: string, bought: boolean) {
 }
 
 export async function addOrga(lanId: string, userId: string) {
-  await requireLanManager(lanId);
+  const me = await requireLanManager(lanId);
   const cid = mustGetLan(lanId).clanId;
   if (cid && !isClanMember(userId, cid)) throw new Error("Not a member of this clan");
-  db.insert(lanOrga).values({ lanId, userId }).onConflictDoNothing().run();
+  const r = db.insert(lanOrga).values({ lanId, userId }).onConflictDoNothing().run();
+  if (r.changes) auditLan(mustGetLan(lanId), me.id, "orga.add", { targetUserId: userId });
   lanPath(lanId);
 }
 
 export async function removeOrga(lanId: string, userId: string) {
-  await requireLanManager(lanId);
-  db.delete(lanOrga)
+  const me = await requireLanManager(lanId);
+  const r = db.delete(lanOrga)
     .where(and(eq(lanOrga.lanId, lanId), eq(lanOrga.userId, userId)))
     .run();
+  if (r.changes) auditLan(mustGetLan(lanId), me.id, "orga.remove", { targetUserId: userId });
   lanPath(lanId);
 }
 
@@ -570,9 +616,12 @@ function applySeatSpec(lanId: string, spec: string): { error?: string; count?: n
 }
 
 export async function setSeatsFromList(lanId: string, spec: string): Promise<{ error?: string; count?: number }> {
-  await requireLanManager(lanId);
+  const me = await requireLanManager(lanId);
   const r = applySeatSpec(lanId, spec);
-  if (!r.error) lanPath(lanId);
+  if (!r.error) {
+    auditLan(mustGetLan(lanId), me.id, "seat.layout", { data: { spec: spec.trim().slice(0, 200), count: r.count } });
+    lanPath(lanId);
+  }
   return r;
 }
 
@@ -581,8 +630,15 @@ export async function adminSwapSeats(seatA: string, seatB: string) {
   const a = db.select().from(seat).where(eq(seat.id, seatA)).get();
   const b = db.select().from(seat).where(eq(seat.id, seatB)).get();
   if (!a || !b || a.id === b.id || a.lanId !== b.lanId) return;
-  await requireLanManager(a.lanId);
+  const me = await requireLanManager(a.lanId);
   clearSeatBooked(a.lanId, [a.userId, b.userId]);
+  const first = a.userId ? a : b;
+  const second = first === a ? b : a;
+  if (first.userId)
+    auditLan(mustGetLan(a.lanId), me.id, "seat.swap", {
+      targetUserId: first.userId,
+      data: { a: first.label, b: second.label, otherUserId: second.userId },
+    });
   // (lan, user) is unique, so empty both seats first, then fill them crosswise.
   db.transaction((tx) => {
     tx.update(seat).set({ userId: null }).where(inArray(seat.id, [a.id, b.id])).run();
@@ -597,9 +653,10 @@ export async function adminSwapSeats(seatA: string, seatB: string) {
 
 /** Turns the optional self-pick step on or off (members choose their own free seat). Only before the plan is final. */
 export async function setSeatPicking(lanId: string, open: boolean) {
-  await requireLanManager(lanId);
+  const me = await requireLanManager(lanId);
   if (open && mustGetLan(lanId).seatsPublishedAt) throw new Error("The seat plan is final. Reopen it first.");
   db.update(lan).set({ seatPicking: open }).where(eq(lan.id, lanId)).run();
+  auditLan(mustGetLan(lanId), me.id, "seat.picking", { data: { open } });
   lanPath(lanId);
 }
 
@@ -642,10 +699,16 @@ async function pickMySeatOrThrow(lanId: string, seatId: string | null) {
 
 /** Assigns a seat to an attendee from the attendee list (seatId null = no seat). */
 export async function adminSetSeatFor(lanId: string, userId: string, seatId: string | null) {
-  await requireLanManager(lanId);
+  const me = await requireLanManager(lanId);
   const before = db.select().from(seat).where(and(eq(seat.lanId, lanId), eq(seat.userId, userId))).get();
   const target = seatId ? db.select().from(seat).where(eq(seat.id, seatId)).get() : undefined;
-  if (before?.id !== seatId) clearSeatBooked(lanId, [userId, target?.userId]);
+  if ((before?.id ?? null) !== seatId) {
+    clearSeatBooked(lanId, [userId, target?.userId]);
+    const l = mustGetLan(lanId);
+    auditLan(l, me.id, "seat.assign", { targetUserId: userId, data: { from: before?.label ?? null, to: target?.label ?? null } });
+    if (target?.userId && target.userId !== userId)
+      auditLan(l, me.id, "seat.assign", { targetUserId: target.userId, data: { from: target.label, to: null } });
+  }
   db.transaction((tx) => {
     tx.update(seat)
       .set({ userId: null })
@@ -681,7 +744,7 @@ function planPeople(lanId: string) {
  * People with a confirmed or reported ticket go first.
  */
 export async function adminAutoAssignSeats(lanId: string, mode: "fill" | "replan" = "fill"): Promise<number> {
-  await requireLanManager(lanId);
+  const me = await requireLanManager(lanId);
   if (mode === "replan") {
     db.update(seat)
       .set({ userId: null })
@@ -700,6 +763,7 @@ export async function adminAutoAssignSeats(lanId: string, mode: "fill" | "replan
   lanPath(lanId);
   // After the plan is out, tell people whose seat changed.
   const l = mustGetLan(lanId);
+  auditLan(l, me.id, "seat.auto", { data: { mode, count: plan.size } });
   if (l.seatsPublishedAt) {
     const label = new Map(seats.map((s) => [s.id, s.label]));
     notifyLater(async () => {
@@ -747,7 +811,7 @@ export async function setMySeatWishes(lanId: string, input: z.input<typeof wishI
  * tells everyone coming their seat. Also the last step when members picked their own seats.
  */
 export async function publishSeats(lanId: string, notify: boolean): Promise<number> {
-  await requireLanManager(lanId);
+  const me = await requireLanManager(lanId);
   const l = mustGetLan(lanId);
   db.update(lan).set({ seatsPublishedAt: new Date(), seatPicking: false }).where(eq(lan.id, lanId)).run();
   let sent = 0;
@@ -784,14 +848,16 @@ export async function publishSeats(lanId: string, notify: boolean): Promise<numb
       }
     }
   }
+  auditLan(l, me.id, "seats.finalize", { data: { notified: sent || undefined } });
   lanPath(lanId);
   return sent;
 }
 
 /** Reopens a finalized plan (members can send wishes again; self pick stays off until an orga turns it on). */
 export async function unpublishSeats(lanId: string) {
-  await requireLanManager(lanId);
+  const me = await requireLanManager(lanId);
   db.update(lan).set({ seatsPublishedAt: null }).where(eq(lan.id, lanId)).run();
+  auditLan(mustGetLan(lanId), me.id, "seats.reopen");
   lanPath(lanId);
 }
 
@@ -818,7 +884,7 @@ export async function saveLanType(_: FormState, formData: FormData): Promise<For
   const existing = id ? db.select().from(lanType).where(eq(lanType.id, id)).get() : undefined;
   const clanId = existing?.clanId ?? String(formData.get("clanId") ?? "");
   if (!clanId) return { error: "Pick a clan." };
-  await requireClanManager(clanId);
+  const me = await requireClanManager(clanId);
   const parsed = lanTypeInput.safeParse(
     Object.fromEntries([...formData.entries()].filter(([k]) => k !== "id" && k !== "clanId")),
   );
@@ -834,6 +900,7 @@ export async function saveLanType(_: FormState, formData: FormData): Promise<For
   }
   if (id) db.update(lanType).set(parsed.data).where(eq(lanType.id, id)).run();
   else db.insert(lanType).values({ ...parsed.data, clanId }).run();
+  audit({ actorId: me.id, action: "type.save", clanId, data: { type: parsed.data.name, created: !id } });
   revalidatePath("/", "layout");
   redirect(`/clans/${clanSlug(clanId)}/settings?tab=types`);
 }
@@ -841,8 +908,9 @@ export async function saveLanType(_: FormState, formData: FormData): Promise<For
 export async function deleteLanType(id: string) {
   const t = db.select().from(lanType).where(eq(lanType.id, id)).get();
   if (!t?.clanId) return;
-  await requireClanManager(t.clanId);
+  const me = await requireClanManager(t.clanId);
   db.delete(lanType).where(eq(lanType.id, id)).run();
+  audit({ actorId: me.id, action: "type.delete", clanId: t.clanId, data: { type: t.name } });
   revalidatePath("/", "layout");
   redirect(`/clans/${clanSlug(t.clanId)}/settings?tab=types`);
 }

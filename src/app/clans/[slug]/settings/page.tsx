@@ -33,6 +33,8 @@ import { requireUser } from "@/lib/session";
 import { unlinkDiscordChannel } from "@/app/actions";
 import { discordEnabled, inviteUrl } from "@/lib/discord-api";
 import { clanServers } from "@/lib/discord-invite";
+import { AuditLog, auditQuery, parseAuditFilter } from "@/components/audit-log";
+import { auditEntries, auditedEvents } from "@/lib/audit";
 
 
 export default async function ClanSettingsPage({ params, searchParams }: PageProps<"/clans/[slug]/settings">) {
@@ -64,7 +66,7 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
       email: schema.user.email,
     })
     .from(schema.user)
-    .where(eq(schema.user.isGuest, false))
+    .where(and(eq(schema.user.isGuest, false), isNull(schema.user.deletedAt)))
     .all()
     .filter((u) => !inClan.has(u.id));
   const people = getDefaultNames([...members.map((m) => m.u.id), ...others.map((u) => u.id)]);
@@ -161,6 +163,8 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
       {tab === "guests" && <GuestsTab clanId={c.id} slug={c.slug} guests={guests.map((g) => g.u)} names={people} />}
 
       {tab === "chat" && <ChatTab clanId={c.id} />}
+
+      {tab === "log" && <LogTab clanId={c.id} slug={c.slug} sp={sp} />}
 
       {tab === "types" && (
         <Columns>
@@ -452,6 +456,30 @@ function GuestsTab({
         )}
       </Card>
     </Columns>
+  );
+}
+
+/** Who changed what in the clan: seat moves, answer overrides, roles, guests, publishing. Clan admins only. */
+function LogTab({ clanId, slug, sp }: { clanId: string; slug: string; sp: Record<string, string | string[] | undefined> }) {
+  const filter = parseAuditFilter(sp);
+  const { rows, total, page, pages } = auditEntries({ clanId, lanId: filter.lan, group: filter.group, page: filter.page });
+  return (
+    <Card title="Audit log">
+      <p className="mb-4 text-sm text-muted">
+        Changes orgas and admins made in this clan and its events. Members&apos; own answers aren&apos;t listed. Entries
+        are kept for a year.
+      </p>
+      <AuditLog
+        rows={rows}
+        total={total}
+        page={page}
+        pages={pages}
+        filter={filter}
+        keep={{ tab: "log" }}
+        href={(f) => `/clans/${slug}/settings?${auditQuery(f, { tab: "log" })}`}
+        events={auditedEvents(clanId)}
+      />
+    </Card>
   );
 }
 

@@ -67,6 +67,7 @@ export default function PrivacyPage() {
       <ul>
         <li>Login sessions, with the IP address and browser (user agent) they were created from</li>
         <li>A log of which reminders were sent, so nobody gets the same one twice</li>
+        <li>An audit log of changes orgas and admins make (for example who moved a seat, changed someone&apos;s answer, confirmed a ticket, changed a role or edited a guest), with the time, who made the change and who it was about</li>
         <li>Server logs (time, requested page, IP address, error messages) that our server keeps for a short time</li>
       </ul>
 
@@ -85,7 +86,7 @@ export default function PrivacyPage() {
       <h2>4. Who can see your data</h2>
       <ul>
         <li><strong>Members of your clans</strong> see your name, nickname, avatar and whether you are coming to that clan&apos;s events. Once the seat plan is final they see who sits where.</li>
-        <li><strong>Clan admins and event orgas</strong> also see ticket status, notes and seat wishes for their events, and can export the attendee list.</li>
+        <li><strong>Clan admins and event orgas</strong> also see ticket status, notes and seat wishes for their events, and can export the attendee list. Clan admins see their clan&apos;s audit log.</li>
         <li><strong>People in a linked Discord channel</strong> see the bot&apos;s announcements, including the nicknames of who is coming, unsure or on the waitlist.</li>
         <li><strong>Platform admins</strong> of this Seatbit instance can see all data to run and support the Service.</li>
       </ul>
@@ -121,11 +122,17 @@ export default function PrivacyPage() {
         <li>Account, profile and event data: as long as your account exists. When you leave a clan, your membership is removed.</li>
         <li>Login sessions: until you sign out or they expire.</li>
         <li>Discord channel links: until the channel is unlinked or the bot is removed.</li>
+        <li>Audit log entries: one year.</li>
         <li>Server logs: a few days. Database backups: up to 14 days.</li>
       </ul>
       <p>
-        When your account is deleted, we delete your profile, nicknames, clan memberships, attendance, seat wishes and
-        seat assignments. Backups are overwritten within 14 days.
+        You can delete your account yourself on your <Link href="/profile">profile</Link> (Your data, Delete my
+        account). We then delete your name, email, picture, Discord link, login sessions, nicknames, LAN IDs, clan
+        memberships, orga roles, seat wishes, seats, rides, packing lists and your answers to upcoming events. Your
+        answers to past events (coming or not, ticket) stay with an anonymous &ldquo;Deleted member&rdquo; that
+        can&apos;t be traced back to you, so your clan&apos;s event history still adds up; audit log entries show the
+        same &ldquo;Deleted member&rdquo;. A clan where nobody else with a login is left is deleted with your account.
+        Backups are overwritten within 14 days.
       </p>
 
       <h2>7. Your rights</h2>
@@ -134,12 +141,12 @@ export default function PrivacyPage() {
         <li>get information about the data we hold about you, and a copy of it;</li>
         <li>have wrong data corrected (you can edit most of it yourself on your <Link href="/profile">profile</Link>);</li>
         <li>have your data deleted, or its processing restricted;</li>
-        <li>receive your data in a common machine-readable format;</li>
+        <li>receive your data in a common machine-readable format (Download my data on your profile gives you everything as a JSON file);</li>
         <li>object to processing based on our legitimate interest;</li>
         <li>withdraw any consent you gave, with effect for the future.</li>
       </ul>
       <p>
-        To use these rights, or to delete your account, email{" "}
+        Downloading your data and deleting your account work directly on your profile. For anything else, email{" "}
         <ContactEmail />. You can also complain to a data protection
         authority: in Switzerland the Federal Data Protection and Information Commissioner (FDPIC,{" "}
         <a href="https://www.edoeb.admin.ch" target="_blank" rel="noreferrer">

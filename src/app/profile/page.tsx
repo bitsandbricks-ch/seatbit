@@ -16,6 +16,8 @@ import { PROFILE_COLORS, PROFILE_ICONS, avatarData, initialsOf, userColor } from
 import { missingServers } from "@/lib/discord-invite";
 import { personLabel } from "@/lib/names";
 import { InterestsForm } from "@/components/event-extras";
+import { YourData } from "@/components/delete-account";
+import { checkDeletion } from "@/lib/account";
 
 const DM_RESULT: Record<string, string> = {
   ok: "Test DM sent. Check your Discord DMs from the Seatbit bot.",
@@ -48,6 +50,7 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
     .all();
   const hasDiscord = accounts.some((a) => a.providerId === "discord");
   // After a refused test DM: the clan servers they're not on, with invites.
+  const deletion = checkDeletion(me.id);
   const joinServers =
     dmParam === "cant_dm" ? (await Promise.all(clanIds.map((id) => missingServers(me.id, id)))).flat() : [];
 
@@ -67,6 +70,14 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
           <>
             <Card title="Sign-in methods">
               <LinkedAccounts linked={accounts.map((a) => a.providerId)} available={enabledProviders()} />
+            </Card>
+            <Card title="Your data">
+              <YourData
+                blockingClans={deletion.blockingClans.map((c) => ({ name: c.name, slug: c.slug }))}
+                clansToDelete={deletion.clansToDelete.map((c) => c.name)}
+                lastPlatformAdmin={deletion.lastPlatformAdmin}
+                upcomingEvents={deletion.upcomingEvents}
+              />
             </Card>
             <div className="sm:hidden">
               <SignOutButton className={`${btnSecondary} w-full`} />

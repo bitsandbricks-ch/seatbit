@@ -16,7 +16,10 @@ export default async function AdminPage() {
     .from(schema.lan)
     .orderBy(desc(schema.lan.startsAt))
     .all();
-  const users = db.select().from(schema.user).orderBy(schema.user.name).all();
+  const allUsers = db.select().from(schema.user).orderBy(schema.user.name).all();
+  // Deleted accounts only stay as empty rows for past events; they aren't users any more.
+  const users = allUsers.filter((u) => !u.deletedAt);
+  const deleted = allUsers.length - users.length;
   const people = getDefaultNames(users.map((u) => u.id));
   const clans = db.select().from(schema.clan).orderBy(schema.clan.name).all();
   const members = db.select().from(schema.clanMember).all();
@@ -29,9 +32,14 @@ export default async function AdminPage() {
         title="Platform admin"
         subtitle="All clans, events and users on this Seatbit. Clan admins manage their own clan."
         actions={
-          <Link href="/admin/settings" className={btnSecondary}>
-            Platform settings
-          </Link>
+          <>
+            <Link href="/admin/log" className={btnSecondary}>
+              Audit log
+            </Link>
+            <Link href="/admin/settings" className={btnSecondary}>
+              Platform settings
+            </Link>
+          </>
         }
       />
       {!getLegal().complete && (
@@ -46,7 +54,7 @@ export default async function AdminPage() {
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <Stat label="Clans" value={clans.length} />
         <Stat label="Upcoming" value={lans.filter((l) => l.endsAt >= now).length} />
-        <Stat label="Users" value={users.filter((u) => !u.isGuest).length} hint={`${users.filter((u) => u.isGuest).length} guests`} />
+        <Stat label="Users" value={users.filter((u) => !u.isGuest).length} hint={`${users.filter((u) => u.isGuest).length} guests${deleted ? ` · ${deleted} deleted` : ""}`} />
       </div>
 
       <Card title={`Clans (${clans.length})`}>

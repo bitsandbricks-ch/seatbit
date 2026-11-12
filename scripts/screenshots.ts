@@ -86,6 +86,19 @@ const SHOTS: Shot[] = [
   { name: "phone-clans", who: "anna", path: "/clans" },
   { name: "phone-clan", who: "anna", path: CLAN, full: true },
   { name: "phone-profile", who: "anna", path: "/profile", full: true },
+  {
+    name: "phone-profile-delete",
+    who: "anna",
+    path: "/profile",
+    act: async (page) => {
+      await page.getByRole("button", { name: "Delete my account…" }).click();
+      await page.evaluate(() => {
+        const h = [...document.querySelectorAll("h2, h3")].find((e) => e.textContent === "Your data");
+        if (h) window.scrollTo({ top: h.getBoundingClientRect().top + window.scrollY - 90, behavior: "instant" });
+      });
+      await page.waitForTimeout(300);
+    },
+  },
 
   // An orga (Alex) on the phone
   { name: "phone-manage", who: "alex", path: `${LAKESIDE}/manage`, full: true },
@@ -126,6 +139,8 @@ const SHOTS: Shot[] = [
   { name: "desktop-clan-guests", who: "alex", path: `${CLAN}/settings?tab=guests` },
   { name: "desktop-clan-discord", who: "alex", path: `${CLAN}/settings?tab=chat` },
   { name: "desktop-lan-types", who: "alex", path: `${CLAN}/settings?tab=types` },
+  { name: "desktop-clan-audit-log", who: "alex", path: `${CLAN}/settings?tab=log` },
+  { name: "desktop-admin-audit-log", who: "alex", path: "/admin/log" },
   { name: "desktop-profile", who: "alex", path: "/profile" },
   { name: "desktop-admin", who: "alex", path: "/admin" },
   { name: "desktop-admin-mail", who: "alex", path: "/admin/settings?tab=mail" },

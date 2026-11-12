@@ -11,4 +11,13 @@ Open **Profile** (your avatar on desktop, the tab bar on phones).
 - **Nicks and IDs per LAN type:** a nick for every event of a LAN type (e.g. your name on lal.gg) and your user ID or ticket number there.
 - **Sign-in methods:** link Discord if you signed in another way.
 
-To delete your account or get a copy of your data, contact the operator of your Seatbit instance (see its *Privacy* page in the footer).
+## Your data
+
+The **Your data** card has two buttons:
+
+- **Download my data** gives you a JSON file with everything Seatbit stores about you: profile, sign-in methods, nicks, LAN IDs, clans, every event answer with seat and seat wishes, rides, packing lists, games, swap requests and the audit log entries about you.
+- **Delete my account** (type DELETE to confirm) signs you out and deletes your name, email, picture, Discord link, nicks, LAN IDs, clan memberships, orga roles, rides and packing lists, plus your answers and seats for upcoming events (the waitlist moves up). Past events keep an anonymous *Deleted member* with only the answer, so your clan's history and stats still add up.
+
+![Delete my account](../screenshots/phone-profile-delete.png){ .shot }
+
+If you're the only admin of a clan that has other members, make someone else admin first. A clan where nobody else with a login is left is deleted together with your account; the confirmation tells you before you delete.

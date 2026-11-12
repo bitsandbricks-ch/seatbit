@@ -17,6 +17,8 @@ Seatbit helps a clan or group of friends go to LAN parties run by others (think 
 - **Tickets:** members tick off their ticket, orgas confirm; buy-by deadline with reminders.
 - **Seat plan** of the group's block (e.g. `F1-F16, F19-F22`): seat wishes, optional self pick, orgas edit right in the map (assign, swap, hold, drag & drop, auto-assign), finalize, then everyone books their seat on the event's own site. Seat swaps with orga approval.
 - **Travel** (rides and places to sleep), private **packing lists**, **games** with votes and install tracking, and **food orders** at the LAN (everyone adds their pizza, one person orders and ticks who paid).
+- **Audit log** of what orgas and admins changed (seats, answers, tickets, roles, guests, publish/cancel), for clan admins and platform admins.
+- **Your data:** members download everything as JSON and can delete their account themselves; past events keep an anonymous "Deleted member".
 - **Who's missing** for orgas: who still owes an answer, a ticket, a nick or a seat booking, with one-tap nudges by Discord DM or mail.
 - **Clans** with admins, join modes (open, approval, invite links), **guests** for people without an account, LAN types as templates for yearly events, and clan stats.
 - **Discord bot:** announcements with answer buttons and a live attendee list, reminders, DMs, `/lans`. **WhatsApp:** ready-to-paste texts.

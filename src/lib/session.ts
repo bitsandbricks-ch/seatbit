@@ -11,7 +11,9 @@ export const getCurrentUser = cache(async () => {
   const s = await getAuth().api.getSession({ headers: await headers() });
   if (!s) return null;
   // Read fresh from DB so role changes apply immediately.
-  return (await db.query.user.findFirst({ where: eq(schema.user.id, s.user.id) })) ?? null;
+  const u = await db.query.user.findFirst({ where: eq(schema.user.id, s.user.id) });
+  // A deleted account is signed out everywhere, even if a session cookie is still around.
+  return u && !u.deletedAt ? u : null;
 });
 
 /** Signed-in user. Until they've given first name and surname (e.g. right after a Discord sign-up) they're sent to /welcome. */
