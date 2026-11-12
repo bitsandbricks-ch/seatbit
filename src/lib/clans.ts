@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { db, schema } from "@/db";
 import type { ClanRole } from "@/db/schema";
+import { foldName } from "./names";
 
 const { clan, clanMember } = schema;
 
@@ -48,10 +49,7 @@ export function getClan(id: string) {
 
 export function slugify(name: string) {
   return (
-    name
-      .normalize("NFKD")
-      .replace(/[̀-ͯ]/g, "")
-      .toLowerCase()
+    foldName(name)
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "")
       .slice(0, 40) || "clan"

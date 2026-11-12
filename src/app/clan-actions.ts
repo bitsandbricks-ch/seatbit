@@ -5,10 +5,19 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db, schema } from "@/db";
+import { GUEST_CLAIM_MODES } from "@/db/schema";
 import { canManageClan, clanRole, getClan, saveAvatar, uniqueSlug } from "@/lib/clans";
 import { guestEmail } from "@/lib/guests";
 import { LAN_ID_MAX } from "@/lib/lan-accounts";
-import { accountByEmail, mergeGuestInto, normEmail, sendGuestInvite } from "@/lib/guest-claim";
+import {
+  accountByEmail,
+  canClaimDirectly,
+  guestSuggestions,
+  mergeGuestInto,
+  normEmail,
+  openGuestMatches,
+  sendGuestInvite,
+} from "@/lib/guest-claim";
 import { appUrl } from "@/lib/mail";
 import { missingServers, setServerInvite } from "@/lib/discord-invite";
 import { notify, notifyClanAdmins, notifyLater } from "@/lib/notify";
@@ -16,6 +25,7 @@ import { requireClanManager, requireLanManager, requireUser } from "@/lib/sessio
 import { adminSetAttendance, type FormState } from "./actions";
 import { getDefaultNames } from "@/lib/lans";
 import { audit } from "@/lib/audit";
+import { cleanName } from "@/lib/names";
 
 const { clan, clanMember, clanInvite } = schema;
 
@@ -23,6 +33,7 @@ const clanInput = z.object({
   name: z.string().trim().min(2).max(80),
   description: z.string().trim().max(2000).default(""),
   joinPolicy: z.enum(["approval", "open", "invite"]).default("approval"),
+  guestClaims: z.enum(GUEST_CLAIM_MODES).default("approval"),
 });
 
 export async function createClan(_: FormState, formData: FormData): Promise<FormState> {
@@ -31,6 +42,7 @@ export async function createClan(_: FormState, formData: FormData): Promise<Form
     name: formData.get("name"),
     description: formData.get("description") ?? "",
     joinPolicy: formData.get("joinPolicy") ?? "approval",
+    guestClaims: formData.get("guestClaims") ?? "approval",
   });
   if (!parsed.success) return { error: "Give the clan a name (at least 2 characters)." };
   const row = db
@@ -51,6 +63,7 @@ export async function updateClan(_: FormState, formData: FormData): Promise<Form
     name: formData.get("name"),
     description: formData.get("description") ?? "",
     joinPolicy: formData.get("joinPolicy") ?? "approval",
+    guestClaims: formData.get("guestClaims") ?? "approval",
   });
   if (!parsed.success) return { error: "Give the clan a name (at least 2 characters)." };
   let avatar: string | undefined;
@@ -73,6 +86,7 @@ export async function updateClan(_: FormState, formData: FormData): Promise<Form
       before.name !== parsed.data.name && "name",
       before.description !== parsed.data.description && "description",
       before.joinPolicy !== parsed.data.joinPolicy && "join rule",
+      before.guestClaims !== parsed.data.guestClaims && "guest claiming",
       (avatar || (formData.get("removeAvatar") === "on" && before.avatar)) && "avatar",
     ].filter((f): f is string => !!f);
     if (fields.length) audit({ actorId: me.id, action: "clan.update", clanId, data: { fields } });
@@ -100,7 +114,13 @@ export async function joinClan(clanId: string) {
     );
   }
   revalidatePath("/", "layout");
-  redirect(`/clans/${c.slug}`);
+  redirect(afterJoin(c, me.id));
+}
+
+/** Where a new member lands: the guest check when the orgas seem to have added them already. */
+function afterJoin(c: { id: string; slug: string; guestClaims: string }, userId: string) {
+  const member = ["member", "admin"].includes(clanRole(userId, c.id) ?? "");
+  return member && c.guestClaims !== "off" && openGuestMatches(c.id, userId).length ? `/clans/${c.slug}/claim` : `/clans/${c.slug}`;
 }
 
 export async function joinWithInvite(code: string) {
@@ -116,7 +136,7 @@ export async function joinWithInvite(code: string) {
     })
     .run();
   revalidatePath("/", "layout");
-  redirect(`/clans/${c.slug}`);
+  redirect(afterJoin(c, me.id));
 }
 
 function adminCount(clanId: string) {
@@ -233,10 +253,12 @@ export async function addClanMember(clanId: string, userId: string) {
 
 // ---------------- Guests ----------------
 
+const guestName = z.string().transform(cleanName).pipe(z.string().min(1).max(40));
+
 const guestInput = z.object({
-  firstName: z.string().trim().min(1).max(40),
-  lastName: z.string().trim().min(1).max(40),
-  nick: z.string().trim().max(32).default(""),
+  firstName: guestName,
+  lastName: guestName,
+  nick: z.string().transform(cleanName).pipe(z.string().max(32)).default(""),
   email: z.union([z.literal(""), z.email().max(200)]).default(""),
 });
 
@@ -355,9 +377,9 @@ export async function setGuestEmail(clanId: string, userId: string, _: FormState
 }
 
 const guestEdit = z.object({
-  firstName: z.string().trim().min(1).max(40),
-  lastName: z.string().trim().min(1).max(40),
-  nick: z.string().trim().max(32),
+  firstName: guestName,
+  lastName: guestName,
+  nick: z.string().transform(cleanName).pipe(z.string().max(32)),
   email: z.union([z.literal(""), z.email().max(200)]),
 });
 
@@ -488,4 +510,112 @@ export async function setClanDiscordInvite(clanId: string, guildId: string, form
   const r = setServerInvite(clanId, guildId, String(formData.get("inviteUrl") ?? ""));
   if (r.error) throw new Error(r.error);
   revalidatePath("/clans", "layout");
+}
+
+// ---------------- Members claiming guests ----------------
+
+/** The signed-in member of the clan (not pending, not a guest) and the clan, or an error. */
+async function requireClaimingMember(clanId: string) {
+  const me = await requireUser();
+  const c = getClan(clanId);
+  if (!c) throw new Error("Clan not found");
+  const role = clanRole(me.id, clanId);
+  if (me.isGuest || (role !== "member" && role !== "admin")) throw new Error("Join the clan first");
+  if (c.guestClaims === "off") throw new Error("In this clan, guests are taken over through their own link. Ask an admin.");
+  return { me, c };
+}
+
+/**
+ * "That's me": the member takes over a guest of the clan. With a name or nick match in a
+ * clan that allows it, everything moves over right away; otherwise a clan admin confirms.
+ */
+export async function claimGuestAsMember(clanId: string, guestId: string) {
+  const { me, c } = await requireClaimingMember(clanId);
+  const s = guestSuggestions(clanId, me.id).find((x) => x.guest.id === guestId);
+  if (!s) throw new Error("That guest was taken over already");
+  const g = s.guest;
+  if (canClaimDirectly(c.guestClaims, s, clanRole(g.id, clanId))) {
+    audit({ actorId: me.id, action: "guest.claimed", clanId, data: { guest: g.name, match: s.match } });
+    mergeGuestInto(g, me.id);
+    revalidatePath("/", "layout");
+    redirect(`/clans/${c.slug}?claimed=1`);
+  }
+  // One open request per member and clan: you can only be one of the guests.
+  db.transaction((tx) => {
+    tx.delete(schema.guestClaim)
+      .where(and(eq(schema.guestClaim.clanId, clanId), eq(schema.guestClaim.userId, me.id), eq(schema.guestClaim.status, "pending")))
+      .run();
+    tx.insert(schema.guestClaim)
+      .values({ clanId, guestId, userId: me.id, match: s.match, status: "pending" })
+      .onConflictDoUpdate({
+        target: [schema.guestClaim.guestId, schema.guestClaim.userId],
+        set: { status: "pending", match: s.match, createdAt: new Date() },
+      })
+      .run();
+  });
+  audit({ actorId: me.id, action: "guest.claim_request", clanId, targetUserId: me.id, data: { guest: g.name, match: s.match } });
+  const who = inviterName(me);
+  notifyLater(() =>
+    notifyClanAdmins(clanId, {
+      kind: "guest_claim_request",
+      subject: `${who} says they're ${g.name}`,
+      text: `${who} asked to take over the guest ${g.name} in ${c.name}${
+        s.match ? ` (same ${s.match})` : ""
+      }. Check it's really them, then approve or decline it in the clan's member list.`,
+      url: `${appUrl}/clans/${c.slug}/settings?tab=members`,
+    }),
+  );
+  revalidatePath("/", "layout");
+  redirect(`/clans/${c.slug}/claim`);
+}
+
+/** "Not me": stops suggesting this guest to the member. */
+export async function dismissGuestSuggestion(clanId: string, guestId: string) {
+  const { me } = await requireClaimingMember(clanId);
+  const g = db.select().from(schema.user).where(eq(schema.user.id, guestId)).get();
+  if (!g?.isGuest || g.guestClanId !== clanId) return;
+  db.insert(schema.guestClaim)
+    .values({ clanId, guestId, userId: me.id, status: "dismissed" })
+    .onConflictDoUpdate({ target: [schema.guestClaim.guestId, schema.guestClaim.userId], set: { status: "dismissed" } })
+    .run();
+  revalidatePath("/", "layout");
+}
+
+/** The member takes back their open request. */
+export async function cancelGuestClaim(claimId: string) {
+  const me = await requireUser();
+  db.delete(schema.guestClaim)
+    .where(and(eq(schema.guestClaim.id, claimId), eq(schema.guestClaim.userId, me.id), eq(schema.guestClaim.status, "pending")))
+    .run();
+  revalidatePath("/", "layout");
+}
+
+/** A clan admin confirms (everything moves to the member) or declines a request. */
+export async function decideGuestClaim(claimId: string, approve: boolean) {
+  const r = db.select().from(schema.guestClaim).where(eq(schema.guestClaim.id, claimId)).get();
+  if (!r) return;
+  const me = await requireClanManager(r.clanId);
+  const c = getClan(r.clanId);
+  const g = db.select().from(schema.user).where(eq(schema.user.id, r.guestId)).get();
+  if (!c || !g?.isGuest || r.status !== "pending") return;
+  audit({
+    actorId: me.id,
+    action: approve ? "guest.claim_approve" : "guest.claim_decline",
+    clanId: c.id,
+    targetUserId: r.userId,
+    data: { guest: g.name },
+  });
+  if (approve) mergeGuestInto(g, r.userId);
+  else db.update(schema.guestClaim).set({ status: "declined" }).where(eq(schema.guestClaim.id, claimId)).run();
+  notifyLater(() =>
+    notify(r.userId, {
+      kind: approve ? "guest_claim_approved" : "guest_claim_declined",
+      subject: approve ? `You took over ${g.name} in ${c.name}` : `Not taken over: ${g.name}`,
+      text: approve
+        ? `An admin of ${c.name} confirmed you're ${g.name}. Their events, seats and nicks are yours now.\n\n${appUrl}/clans/${c.slug}`
+        : `An admin of ${c.name} didn't confirm you're ${g.name}. If that's a mistake, talk to them.\n\n${appUrl}/clans/${c.slug}`,
+      url: `${appUrl}/clans/${c.slug}`,
+    }),
+  );
+  revalidatePath("/", "layout");
 }

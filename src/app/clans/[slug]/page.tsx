@@ -15,6 +15,7 @@ import { personLabel } from "@/lib/names";
 import { avatarData } from "@/lib/avatars";
 import { requireUser, visibleLans } from "@/lib/session";
 import { missingServers } from "@/lib/discord-invite";
+import { guestSuggestions, unclaimedGuests } from "@/lib/guest-claim";
 
 export default async function ClanPage({ params, searchParams }: PageProps<"/clans/[slug]">) {
   const { slug } = await params;
@@ -97,6 +98,20 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
       .where(and(eq(schema.attendance.lanId, lanId), eq(schema.attendance.status, "going")))
       .all().length;
 
+  // Guests that look like the viewer, and their own open request to take one over.
+  const claiming = isMember && !me.isGuest && c.guestClaims !== "off";
+  const mySuggestions = claiming && tab === "overview" ? guestSuggestions(c.id, me.id) : [];
+  const guestMatch = mySuggestions.find((s) => s.match && !s.status);
+  const myClaim = mySuggestions.find((s) => s.status === "pending");
+  const hasGuests = claiming && tab === "members" && unclaimedGuests(c.id).length > 0;
+  const openClaims = canManage
+    ? db
+        .select({ id: schema.guestClaim.id })
+        .from(schema.guestClaim)
+        .where(and(eq(schema.guestClaim.clanId, c.id), eq(schema.guestClaim.status, "pending")))
+        .all().length
+    : 0;
+
   // Members who aren't on the clan's Discord server(s) yet get an invite.
   const discordInvites = isMember && tab === "overview" ? await missingServers(me.id, c.id) : [];
 
@@ -110,16 +125,43 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
     <Page>
       <ClanHeader clan={c} role={role} canManage={canManage} mode="view" tab={tab} />
 
-      {canManage && pending > 0 && (
+      {canManage && pending + openClaims > 0 && (
         <Notice tone="warn">
           <span className="flex flex-wrap items-center justify-between gap-2">
             <span>
-              {pending === 1 ? "1 person wants" : `${pending} people want`} to join {c.name}.
+              {[
+                pending > 0 && `${pending === 1 ? "1 person wants" : `${pending} people want`} to join ${c.name}.`,
+                openClaims > 0 && `${openClaims === 1 ? "1 member says they're" : `${openClaims} members say they're`} one of your guests.`,
+              ]
+                .filter(Boolean)
+                .join(" ")}
             </span>
             <Link href={`/clans/${c.slug}/settings?tab=members`} className="font-semibold underline underline-offset-2">
               Review requests
             </Link>
           </span>
+        </Notice>
+      )}
+
+      {sp.claimed && tab === "overview" && (
+        <Notice>Done: the guest&apos;s events, seats and nicks are yours now.</Notice>
+      )}
+      {guestMatch && (
+        <Notice>
+          <span className="flex flex-wrap items-center justify-between gap-2">
+            <span>
+              The orgas added <span className="font-semibold">{guestMatch.guest.name}</span> as a guest, with the same{" "}
+              {guestMatch.match} as you. Is that you?
+            </span>
+            <Link href={`/clans/${c.slug}/claim`} className="font-semibold text-bit underline underline-offset-2">
+              Check
+            </Link>
+          </span>
+        </Notice>
+      )}
+      {myClaim && !guestMatch && (
+        <Notice>
+          You asked to take over the guest <span className="font-semibold">{myClaim.guest.name}</span>. An admin will confirm it.
         </Notice>
       )}
 
@@ -289,6 +331,14 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
           }
         >
           <ClanMemberGrid slug={c.slug} members={members} />
+          {hasGuests && (
+            <p className="mt-4 border-t border-line pt-3 text-sm text-muted">
+              Did the orgas add you as a guest before you signed up?{" "}
+              <Link href={`/clans/${c.slug}/claim`} className="text-bit hover:underline">
+                Take it over
+              </Link>
+            </p>
+          )}
         </Card>
       )}
     </Page>

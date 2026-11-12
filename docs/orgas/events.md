@@ -45,7 +45,7 @@ One row per member: answer, seat, **ticket** (members tick *I bought my ticket*,
 
 ![Attendees](../screenshots/desktop-manage-attendees.png){ .shot }
 
-**Export CSV** downloads the group (seat, nick, name, email, status, ticket, LAN ID) to send to the event's organisers.
+**Export CSV** downloads the group (seat, nick, name, email, status, ticket, LAN ID) to send to the event's organisers. It opens in Excel and Numbers with umlauts and accents intact.
 
 ### Who's missing
 

@@ -8,6 +8,7 @@ import { appUrl } from "./mail";
 import { sendTemplate } from "./mail-templates";
 import { notifyClanAdmins, notifyLater } from "./notify";
 import { audit } from "./audit";
+import { nameKeys } from "./names";
 
 const { clanMember, attendance, seat, nickname, lanOrga } = schema;
 
@@ -146,4 +147,85 @@ export async function sendGuestInvite(guestId: string, inviter: string) {
   });
   db.update(schema.user).set({ invitedAt: new Date() }).where(eq(schema.user.id, g.id)).run();
   return true;
+}
+
+// ---------------- Members claiming guests ----------------
+
+export type GuestMatch = "name" | "nick";
+export type GuestSuggestion = {
+  guest: User;
+  /** Same name or nick as the member, or null. */
+  match: GuestMatch | null;
+  /** The member's own request for this guest, if any. */
+  status: "pending" | "declined" | "dismissed" | null;
+  claimId: string | null;
+};
+
+/** Nicks shorter than this (after folding) are too generic to count as a match. */
+const MIN_NICK = 3;
+
+function keysFor(userIds: string[]) {
+  const users = userIds.length ? db.select().from(schema.user).where(inArray(schema.user.id, userIds)).all() : [];
+  const nicks = userIds.length ? db.select().from(nickname).where(inArray(nickname.userId, userIds)).all() : [];
+  return new Map(
+    users.map((u) => [
+      u.id,
+      {
+        name: new Set(nameKeys(`${u.firstName} ${u.lastName}`).filter((k) => k.includes(" "))),
+        nick: new Set(nicks.filter((n) => n.userId === u.id).flatMap((n) => nameKeys(n.nick)).filter((k) => k.length >= MIN_NICK)),
+      },
+    ]),
+  );
+}
+
+const overlaps = (a: Set<string>, b: Set<string>) => [...a].some((k) => b.has(k));
+
+/** The clan's guests nobody has taken over yet, newest last. */
+export function unclaimedGuests(clanId: string) {
+  return db
+    .select({ u: schema.user })
+    .from(clanMember)
+    .innerJoin(schema.user, eq(schema.user.id, clanMember.userId))
+    .where(and(eq(clanMember.clanId, clanId), eq(schema.user.isGuest, true), eq(schema.user.guestClanId, clanId)))
+    .all()
+    .map((r) => r.u);
+}
+
+/**
+ * The clan's guests as the member sees them on the claim page: whether the name or a
+ * nick matches theirs, and what they already said about each. Matches come first.
+ */
+export function guestSuggestions(clanId: string, userId: string): GuestSuggestion[] {
+  const guests = unclaimedGuests(clanId);
+  if (!guests.length) return [];
+  const keys = keysFor([userId, ...guests.map((g) => g.id)]);
+  const mine = keys.get(userId);
+  const claims = db
+    .select()
+    .from(schema.guestClaim)
+    .where(and(eq(schema.guestClaim.clanId, clanId), eq(schema.guestClaim.userId, userId)))
+    .all();
+  return guests
+    .map((g) => {
+      const k = keys.get(g.id);
+      const match: GuestMatch | null =
+        mine && k ? (overlaps(mine.name, k.name) ? "name" : overlaps(mine.nick, k.nick) ? "nick" : null) : null;
+      const c = claims.find((x) => x.guestId === g.id);
+      return { guest: g, match, status: c?.status ?? null, claimId: c?.id ?? null };
+    })
+    .sort((a, b) => Number(!!b.match) - Number(!!a.match) || a.guest.name.localeCompare(b.guest.name));
+}
+
+/** Guests that look like the member and that they haven't answered yet. */
+export function openGuestMatches(clanId: string, userId: string) {
+  return guestSuggestions(clanId, userId).filter((s) => s.match && !s.status);
+}
+
+/**
+ * Whether a member may take over this guest right away instead of asking an admin:
+ * the clan allows it, the name or nick matches, and nothing about the guest asks
+ * for a second look (orgas gave them an email, which isn't the member's, or made them admin).
+ */
+export function canClaimDirectly(mode: string, s: Pick<GuestSuggestion, "guest" | "match">, guestRole: string | null) {
+  return mode === "match" && !!s.match && !s.guest.inviteEmail && guestRole !== "admin";
 }
