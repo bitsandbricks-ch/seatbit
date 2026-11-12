@@ -1,6 +1,7 @@
 "use client";
 import { useMemo, useState, useTransition } from "react";
 import { btnSecondary, input } from "./ui";
+import { nameMatches } from "@/lib/names";
 
 export function AddMemberForm({
   clanId,
@@ -17,7 +18,7 @@ export function AddMemberForm({
     () =>
       q.trim().length < 2
         ? []
-        : users.filter((u) => u.name.toLowerCase().includes(q.toLowerCase())).slice(0, 8),
+        : users.filter((u) => nameMatches(u.name, q)).slice(0, 8),
     [q, users],
   );
   return (

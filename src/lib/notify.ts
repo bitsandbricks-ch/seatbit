@@ -21,7 +21,10 @@ export type NoticeKind =
   | "lan_changed"
   | "clan_request"
   | "clan_approved"
-  | "guest_claimed";
+  | "guest_claimed"
+  | "guest_claim_request"
+  | "guest_claim_approved"
+  | "guest_claim_declined";
 
 export type Notice = {
   kind: NoticeKind;

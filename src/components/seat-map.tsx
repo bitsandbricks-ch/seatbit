@@ -12,6 +12,7 @@ import {
 } from "@/app/actions";
 import { rowLetter } from "@/lib/seat-labels";
 import { Card, Pill, Segmented, btnGhost, btnPrimary, btnSecondary, input } from "./ui";
+import { nameMatches } from "@/lib/names";
 
 export type SeatView = {
   id: string;
@@ -117,8 +118,8 @@ export function SeatMap({
   const matches = (s: SeatView) =>
     !q ||
     s.label.toLowerCase() === q ||
-    (!!s.nick && s.nick.toLowerCase().includes(q)) ||
-    (!!s.name && s.name.toLowerCase().includes(q));
+    (!!s.nick && nameMatches(s.nick, q)) ||
+    (!!s.name && nameMatches(s.name, q));
   const matchCount = q ? seats.filter(matches).length : 0;
 
   useEffect(() => {
