@@ -12,3 +12,6 @@ deploy
 e2e
 test-results
 playwright-report
+docs
+site
+mkdocs.yml

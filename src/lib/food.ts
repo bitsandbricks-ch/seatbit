@@ -1,11 +1,12 @@
 import { eq, inArray } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { FoodOrderStatus } from "@/db/schema";
+import { getSetting } from "./settings";
 
 const { foodOrder, foodItem } = schema;
 
-/** Currency shown next to food prices. Instances outside Switzerland set FOOD_CURRENCY (e.g. "EUR"). */
-export const foodCurrency = () => process.env.FOOD_CURRENCY?.trim() || "CHF";
+/** Currency shown next to food prices (platform setting, default CHF). */
+export const foodCurrency = () => getSetting("food.currency")?.trim() || "CHF";
 
 /** "12.50" from 1250 cents. */
 export const fmtMoney = (cents: number) => (cents / 100).toFixed(2);

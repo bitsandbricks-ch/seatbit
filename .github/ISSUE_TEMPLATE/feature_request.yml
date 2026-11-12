@@ -1,0 +1,33 @@
+name: Feature request
+description: Suggest an idea or an improvement
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the situation, e.g. "As an orga, when people drop out a week before the LAN, I ..."
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: How could Seatbit help? Sketches and examples from other tools are welcome.
+    validations:
+      required: true
+  - type: dropdown
+    id: who
+    attributes:
+      label: Who is it for?
+      multiple: true
+      options:
+        - Members
+        - Event orgas
+        - Clan admins
+        - Platform admins / self-hosters
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives
+      description: Anything you do today to work around it.

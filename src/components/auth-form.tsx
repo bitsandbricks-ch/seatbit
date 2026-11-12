@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { setNick } from "@/app/actions";
-import { LegalNotice } from "@/components/legal-page";
+import { LegalNotice } from "@/components/legal-notice";
 import { authClient } from "@/lib/auth-client";
 import { btnPrimary, btnSecondary, Field, Input } from "./ui";
 
