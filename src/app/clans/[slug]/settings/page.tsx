@@ -20,6 +20,7 @@ import type { User } from "@/db/schema";
 import { Avatar } from "@/components/avatar";
 import { ClanHeader, manageTabsFor } from "@/components/clan-header";
 import { ClanForm } from "@/components/clan-form";
+import { SupportCard } from "@/components/support-card";
 import { AddMemberForm } from "@/components/add-member-form";
 import { CopyField } from "@/components/copy-field";
 import { GuestEditForm, GuestForm } from "@/components/guest-form";
@@ -95,12 +96,18 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
       {tab === "general" && (
         <Columns
           aside={
-            <Card title="Danger zone">
-              <p className="mb-3 text-sm text-muted">Deletes the clan with all its events and LAN types.</p>
-              <form action={deleteClan.bind(null, c.id)}>
-                <button className={btnDanger}>Delete clan</button>
-              </form>
-            </Card>
+            <>
+              <SupportCard clan={c} status={typeof sp.support === "string" ? sp.support : undefined} />
+              <Card title="Danger zone">
+                <p className="mb-3 text-sm text-muted">
+                  Deletes the clan with all its events and LAN types.
+                  {c.stripeSubscriptionId && " Its Supporter subscription is cancelled too."}
+                </p>
+                <form action={deleteClan.bind(null, c.id)}>
+                  <button className={btnDanger}>Delete clan</button>
+                </form>
+              </Card>
+            </>
           }
         >
           <Card>

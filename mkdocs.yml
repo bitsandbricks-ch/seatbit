@@ -66,6 +66,7 @@ nav:
       - Discord app and bot: self-hosting/discord.md
       - Email: self-hosting/email.md
       - Operator, privacy and terms: self-hosting/legal.md
+      - Supporter payments: self-hosting/supporters.md
       - Platform admin: admins/index.md
       - Backups and upgrades: self-hosting/operations.md
   - Development:

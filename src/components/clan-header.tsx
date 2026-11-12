@@ -5,7 +5,9 @@ import { db, schema } from "@/db";
 import type { Clan, ClanRole } from "@/db/schema";
 import { MANAGE_TAB_PERMS, isMemberRole, roleWithArticle, type ClanPermission } from "@/lib/clan-roles";
 import { joinClan } from "@/app/clan-actions";
+import { isSupporter } from "@/lib/billing";
 import { ClanAvatar } from "./clan-avatar";
+import { SupporterBadge } from "./support-card";
 import { Tabs, type Tab } from "./tabs";
 import { PageHeader, Pill, btnPrimary } from "./ui";
 import { ViewManageSwitch } from "./view-manage-switch";
@@ -150,6 +152,11 @@ export function ClanHeader({
             <span className="text-faint"> · {joinPolicyText[c.joinPolicy]}</span>
             {isMemberRole(role) && role !== "member" && (
               <span className="text-faint"> · you&apos;re {roleWithArticle(role)}</span>
+            )}
+            {isSupporter(c) && (
+              <span className="ml-2 align-middle">
+                <SupporterBadge />
+              </span>
             )}
           </>
         }

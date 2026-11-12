@@ -138,6 +138,7 @@ const SHOTS: Shot[] = [
   { name: "phone-clan-guests", who: "alex", path: `${CLAN}/settings?tab=guests`, full: true },
   { name: "desktop-clan-stats", who: "alex", path: `${CLAN}/stats` },
   { name: "desktop-clan-settings", who: "alex", path: `${CLAN}/settings` },
+  { name: "desktop-clan-support", who: "alex", path: "/clans/lag-legends/settings" },
   { name: "desktop-clan-members", who: "alex", path: `${CLAN}/settings?tab=members` },
   { name: "desktop-member-role", who: "alex", path: `${CLAN}/members/demo-chiara` },
   { name: "desktop-clan-guests", who: "alex", path: `${CLAN}/settings?tab=guests` },
@@ -150,6 +151,7 @@ const SHOTS: Shot[] = [
   { name: "desktop-admin-mail", who: "alex", path: "/admin/settings?tab=mail" },
   { name: "desktop-admin-discord", who: "alex", path: "/admin/settings?tab=discord" },
   { name: "desktop-admin-legal", who: "alex", path: "/admin/settings?tab=legal", full: true },
+  { name: "desktop-admin-billing", who: "alex", path: "/admin/settings?tab=billing", full: true },
   { name: "desktop-admin-templates", who: "alex", path: "/admin/settings?tab=templates" },
   { name: "desktop-privacy", who: "alex", path: "/privacy" },
 ];
@@ -194,6 +196,12 @@ async function main() {
     LEGAL_CONTACT_EMAIL: "hello@example.com",
     LEGAL_HOSTING_LOCATION: "Switzerland",
     LEGAL_GOVERNING_LAW: "Swiss law",
+    // Supporter payments on, with fake Stripe values. Prices can't be fetched, so buttons show their fallback labels.
+    BILLING_ENABLED: "true",
+    STRIPE_SECRET_KEY: "sk_test_screenshots_only",
+    STRIPE_WEBHOOK_SECRET: "whsec_screenshots_only",
+    STRIPE_PRICE_ANNUAL: "price_screenshotsAnnual",
+    STRIPE_PRICE_MONTHLY: "price_screenshotsMonthly",
     ALLOW_EMAIL_LOGIN: "",
     SMTP_HOST: "",
     SMTP_URL: "",

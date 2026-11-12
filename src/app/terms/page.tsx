@@ -3,6 +3,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ContactEmail, LegalPage, Operator } from "@/components/legal-page";
 import { getLegal } from "@/lib/legal";
+import { billingEnabled } from "@/lib/billing";
+import { getSetting } from "@/lib/settings";
 
 export const metadata: Metadata = {
   title: "Terms of Service · Seatbit",
@@ -16,6 +18,9 @@ export default function TermsPage() {
   const legal = getLegal();
   // Operators can use their own document instead of the built-in one.
   if (legal.termsUrl) redirect(legal.termsUrl);
+  // The payments section only exists where the operator turned on Supporter payments.
+  const payments = billingEnabled();
+  const n = (k: number) => k + (payments && k >= 8 ? 1 : 0);
   return (
     <LegalPage title="Terms of Service">
       <p>
@@ -80,33 +85,60 @@ export default function TermsPage() {
 
       <h2>7. Availability and changes</h2>
       <p>
-        The Service is provided free of charge, &quot;as is&quot; and &quot;as available&quot;. We may change, pause or
-        shut it down at any time. We will try to give notice before shutting it down so you can export your data, but
+        The Service is provided free of charge{payments && ", with every feature, whether or not your clan is a Supporter (section 8)"},
+        &quot;as is&quot; and &quot;as available&quot;. We may change, pause or shut it down at any time. We will try to give notice before shutting it down so you can export your data, but
         we do not promise any particular uptime. Always check important dates (ticket sales, deadlines) with the LAN
         party organiser as well.
       </p>
 
-      <h2>8. Liability</h2>
+      {payments && (
+        <>
+          <h2 id="payments">8. Supporter payments</h2>
+          <ul>
+            <li>
+              Clan admins can choose to support this Seatbit instance on behalf of their clan with a recurring payment
+              (yearly or monthly). This is voluntary: the payment goes to the operator named in section 1.
+            </li>
+            <li>
+              Supporters get a Supporter badge on their clan and our thanks. There are no extra features, limits or
+              priority support; not paying never restricts a clan.
+            </li>
+            <li>
+              Payments are processed by Stripe. The price and the payment methods (for example card or TWINT) are shown
+              before you pay. Stripe&apos;s own terms apply to the payment itself.
+            </li>
+            <li>
+              The payment renews automatically at the end of each period until it is cancelled. Any clan admin can cancel
+              at any time in the clan settings (&quot;Manage or cancel&quot;); there are no further charges, and the badge
+              stays until the end of the period already paid. Deleting the clan cancels the payment right away.
+            </li>
+            <li>Refunds: {getSetting("billing.refundPolicy")?.trim() || "write to us and we will find a fair solution."}</li>
+            <li>If we shut the Service down, we cancel all payments and refund the unused part of the current period.</li>
+          </ul>
+        </>
+      )}
+
+      <h2>{n(8)}. Liability</h2>
       <p>
         To the extent permitted by law, we are not liable for any damage resulting from using or not being able to use
         the Service, in particular for missed tickets, seats, deadlines or reminders, or for lost data. Liability for
         intent and gross negligence, and any liability that cannot be excluded by law, remains unaffected.
       </p>
 
-      <h2>9. Changes to these terms</h2>
+      <h2>{n(9)}. Changes to these terms</h2>
       <p>
         We may update these terms. The date at the top shows the current version. If a change is significant, we will
         tell you in the app or by email. If you keep using the Service after a change, you accept the new terms.
       </p>
 
-      <h2>10. Law and jurisdiction</h2>
+      <h2>{n(10)}. Law and jurisdiction</h2>
       <p>
         These terms are governed by {legal.governingLaw ?? "the law of the country where the operator is based"}. The
         courts at the operator&apos;s place of residence or registered office have jurisdiction, unless mandatory
         consumer protection law gives you the right to sue in your own country.
       </p>
 
-      <h2>11. Contact</h2>
+      <h2>{n(11)}. Contact</h2>
       <p>
         Questions about these terms: <ContactEmail />.
       </p>

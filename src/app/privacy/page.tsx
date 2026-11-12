@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ContactEmail, LegalPage, Operator } from "@/components/legal-page";
 import { getLegal } from "@/lib/legal";
+import { billingEnabled } from "@/lib/billing";
 
 export const metadata: Metadata = {
   title: "Privacy Policy · Seatbit",
@@ -16,6 +17,8 @@ export default function PrivacyPage() {
   const legal = getLegal();
   // Operators can use their own document instead of the built-in one.
   if (legal.privacyUrl) redirect(legal.privacyUrl);
+  // Stripe only appears where the operator turned on Supporter payments.
+  const payments = billingEnabled();
   return (
     <LegalPage title="Privacy Policy">
       <p>
@@ -63,6 +66,19 @@ export default function PrivacyPage() {
         <li>When you use a command or button, Discord sends us your Discord user ID, the server and channel. We use it to find your Seatbit account and, for example, save your answer to an event. The bot does not read or store other messages.</li>
       </ul>
 
+      {payments && (
+        <>
+          <h3>Supporter payments</h3>
+          <p>
+            If a clan admin chooses to support this instance, the payment is made on Stripe&apos;s checkout page. Stripe
+            collects the payer&apos;s name, email address and payment details (card, TWINT or wallet). We never see card
+            numbers or TWINT details. We store only, for the clan: the Stripe customer and subscription IDs, whether it
+            pays yearly or monthly, and until when it is paid. The audit log of the clan notes when it became a
+            Supporter.
+          </p>
+        </>
+      )}
+
       <h3>Technical data</h3>
       <ul>
         <li>Login sessions, with the IP address and browser (user agent) they were created from</li>
@@ -76,6 +92,9 @@ export default function PrivacyPage() {
         <li><strong>To run the Service for you and your clan</strong> (account, events, tickets, seats, Discord bot). Legal basis: performing our agreement with you (Art. 6(1)(b) GDPR).</li>
         <li><strong>To send you reminders</strong> about deadlines and upcoming events, by email and in linked Discord channels. Legal basis: our agreement with you; you can switch off emails on your profile.</li>
         <li><strong>To keep the Service secure</strong> and fix problems (sessions, logs, backups). Legal basis: our legitimate interest in a working, secure service (Art. 6(1)(f) GDPR).</li>
+        {payments && (
+          <li><strong>To handle voluntary Supporter payments</strong> and keep the required bookkeeping records. Legal basis: our agreement with the payer and our legal obligations (Art. 6(1)(b) and (c) GDPR).</li>
+        )}
         <li><strong>To meet legal obligations.</strong> Legal basis: Art. 6(1)(c) GDPR.</li>
       </ul>
       <p>
@@ -110,6 +129,16 @@ export default function PrivacyPage() {
           <strong>Our email provider</strong>, which delivers reminder emails and receives your email address, name and
           the reminder text.
         </li>
+        {payments && (
+          <li>
+            <strong>Stripe Payments Europe, Ltd.</strong> (Ireland), together with Stripe, Inc. (USA), processes Supporter
+            payments as our payment provider and keeps the payment records it must keep by law. See Stripe&apos;s{" "}
+            <a href="https://stripe.com/privacy" target="_blank" rel="noreferrer">
+              privacy policy
+            </a>
+            .
+          </li>
+        )}
       </ul>
       <p>
         Where data goes to a country without adequate data protection (such as the USA), the transfer relies on the
@@ -123,6 +152,9 @@ export default function PrivacyPage() {
         <li>Login sessions: until you sign out or they expire.</li>
         <li>Discord channel links: until the channel is unlinked or the bot is removed.</li>
         <li>Audit log entries: one year.</li>
+        {payments && (
+          <li>Supporter details of a clan: as long as the clan exists. Payment records (receipts, amounts, dates): as long as bookkeeping law requires, usually ten years.</li>
+        )}
         <li>Server logs: a few days. Database backups: up to 14 days.</li>
       </ul>
       <p>

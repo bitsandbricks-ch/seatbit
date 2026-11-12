@@ -4,6 +4,7 @@ import { db, schema } from "@/db";
 import type { Clan } from "@/db/schema";
 import { audit, auditNames, describeAudit } from "./audit";
 import { deleteUserAvatarFile } from "./avatars";
+import { cancelSupport } from "./billing";
 import { GUEST_EMAIL_DOMAIN } from "./guests";
 import { getDefaultNames, setAttendance } from "./lans";
 import { appUrl } from "./mail";
@@ -105,6 +106,9 @@ export async function deleteAccount(userId: string) {
     .all()
     .map((m) => m.clanId)
     .filter((id) => !check.clansToDelete.some((c) => c.id === id));
+
+  // Clans that go away with the account stop their Supporter subscription too.
+  for (const c of check.clansToDelete) await cancelSupport(c);
 
   db.transaction((tx) => {
     if (check.clansToDelete.length)

@@ -139,7 +139,20 @@ export const clan = sqliteTable("clan", {
    * an admin; "off": only through the guest's claim link or invite email.
    */
   guestClaims: text("guest_claims").$type<GuestClaimMode>().default("approval").notNull(),
+  // Voluntary Supporter payments (hosted instances with billing on, see src/lib/billing.ts).
+  // supporterUntil is the end of the last paid period; the badge shows while it's in the future.
+  supporterUntil: integer("supporter_until", { mode: "timestamp_ms" }),
+  supporterPlan: text("supporter_plan").$type<"year" | "month">(),
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+});
+
+/** Stripe webhook events already handled, so a retried delivery doesn't apply twice. */
+export const billingEvent = sqliteTable("billing_event", {
+  id: text("id").primaryKey(), // Stripe event id (evt_...)
+  type: text("type").notNull(),
+  at: integer("at", { mode: "timestamp_ms" }).default(now).notNull(),
 });
 
 // Roles and their permissions live in src/lib/clan-roles.ts.

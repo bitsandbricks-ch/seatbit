@@ -20,6 +20,8 @@ Under **Admin → Platform settings → Operator & legal** (or with the `LEGAL_*
 
 Until the name and contact email are set, the legal pages and the admin page show a warning.
 
+If you turn on [Supporter payments](supporters.md), the terms get a payments section (with your **Refund policy**) and the privacy policy names Stripe.
+
 ## Use your own documents
 
 If the built-in texts don't fit (another country's law, a club with its own policy, other service providers), write your own and set **Own Terms of Service URL** and **Own Privacy Policy URL**. `/terms` and `/privacy` then redirect there, so all links in the app and in emails go to your documents.

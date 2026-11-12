@@ -169,6 +169,13 @@
       "when": 1794472885089,
       "tag": "0024_type_date_defaults",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1794474872603,
+      "tag": "0025_supporter",
+      "breakpoints": true
     }
   ]
 }

@@ -111,6 +111,11 @@ export async function seedDemo({ force = false, discord = false } = {}) {
         slug: "pixel-pirates",
         description: "A bunch of friends from Lucerne who go to two or three LAN parties a year. Bring snacks.",
         joinPolicy: "approval",
+        // A Supporter (only shows where Supporter payments are on, like in the screenshots).
+        supporterUntil: new Date(Date.now() + 300 * DAY),
+        supporterPlan: "year",
+        stripeCustomerId: "cus_demo0000000000",
+        stripeSubscriptionId: "sub_demo0000000000",
         createdAt: new Date(Date.now() - 400 * DAY),
       })
       .run();
