@@ -87,12 +87,12 @@ export async function lanMessage(l: Lan) {
   const fields = lanFacts(l).map(([name, value]) => ({ name, value: clip(value, 1024), inline: true }));
   fields.push({
     name: `Coming (${s.going.length}${l.capacity ? `/${l.capacity}` : ""})`,
-    value: list(s.going.map((g) => g.nick)),
+    value: list(s.going.map((g) => g.name)),
     inline: false,
   });
-  if (s.maybe.length) fields.push({ name: `Unsure (${s.maybe.length})`, value: list(s.maybe.map((g) => g.nick)), inline: false });
+  if (s.maybe.length) fields.push({ name: `Unsure (${s.maybe.length})`, value: list(s.maybe.map((g) => g.name)), inline: false });
   if (s.waitlist.length)
-    fields.push({ name: `Waitlist (${s.waitlist.length})`, value: list(s.waitlist.map((g) => g.nick)), inline: false });
+    fields.push({ name: `Waitlist (${s.waitlist.length})`, value: list(s.waitlist.map((g) => g.name)), inline: false });
   // Live status: tickets, seat bookings and what's due next.
   const status = [
     s.going.length ? `🎟️ Tickets: **${s.going.length - s.goingNoTicket}/${s.going.length}**` : "",

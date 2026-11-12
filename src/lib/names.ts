@@ -1,6 +1,8 @@
 /**
- * How a person is shown wherever orgas pick someone: Mike "Reyki" Keller.
- * The nick is left out when it is just the real name (or missing).
+ * The one way a person is shown in Seatbit (pages, seat map, emails, Discord):
+ * Mike "Reyki" Keller. The nick is left out when it is just the real name (or missing).
+ * Use the LAN's nick (event > LAN type > default) where there is one: see getDisplayNames
+ * in lib/lans.ts, which does that lookup.
  */
 export function personLabel(u: { firstName: string; lastName: string; name: string }, nick?: string | null) {
   const first = u.firstName.trim();

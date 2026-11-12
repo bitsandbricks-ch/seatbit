@@ -9,10 +9,10 @@ import type { AvatarData } from "@/lib/avatars";
 
 const PAGE_SIZE = 20;
 
-/** Members card on the clan page: nicks with search and pages. */
-export function ClanMemberGrid({ slug, members }: { slug: string; members: { id: string; nick: string; admin: boolean; avatar?: AvatarData }[] }) {
+/** Members card on the clan page: full names (Mike "Reyki" Keller) with search and pages. */
+export function ClanMemberGrid({ slug, members }: { slug: string; members: { id: string; name: string; admin: boolean; avatar?: AvatarData }[] }) {
   const [q, setQ] = useState("");
-  const shown = members.filter((m) => !q || matches(m.nick, q));
+  const shown = members.filter((m) => !q || matches(m.name, q));
   const pager = usePager(shown, 24);
   return (
     <div className="space-y-3">
@@ -38,7 +38,7 @@ export function ClanMemberGrid({ slug, members }: { slug: string; members: { id:
             >
               <span className="flex min-w-0 items-center gap-2">
                 <Avatar data={m.avatar} size={24} />
-                <span className="truncate">{m.nick}</span>
+                <span className="truncate">{m.name}</span>
               </span>
               {m.admin && <Pill tone="emerald">admin</Pill>}
             </Link>
@@ -143,7 +143,6 @@ export function ClanMemberAdmin({
                 {m.isGuest && <Pill>guest</Pill>}
               </span>
               <span className="block truncate text-xs text-muted">
-                {m.nick && m.nick !== m.name && <span className="text-fg/80">{m.nick} · </span>}
                 {m.sub}
               </span>
             </span>
