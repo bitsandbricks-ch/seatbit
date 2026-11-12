@@ -202,13 +202,40 @@ export function unclaimedGuests(clanId: string) {
 }
 
 /**
+ * Unclaimed guests that are still free for this person: not already asked for by
+ * someone else (waiting for an admin) and not tied by an orga to another Discord member.
+ * Without a person (orga views), guests with an open request or a Discord link are left out.
+ */
+export function claimableGuests(clanId: string, userId: string | null, discordId: string | null = null) {
+  const guests = unclaimedGuests(clanId);
+  if (!guests.length) return guests;
+  const askedByOthers = new Set(
+    db
+      .select({ guestId: schema.guestClaim.guestId, userId: schema.guestClaim.userId })
+      .from(schema.guestClaim)
+      .where(and(eq(schema.guestClaim.clanId, clanId), eq(schema.guestClaim.status, "pending")))
+      .all()
+      .filter((r) => r.userId !== userId)
+      .map((r) => r.guestId),
+  );
+  const myDiscord = discordId ?? (userId ? discordIdOfUser(userId) : undefined);
+  return guests.filter((g) => !askedByOthers.has(g.id) && (!g.guestDiscordId || g.guestDiscordId === myDiscord));
+}
+
+/**
  * The clan's guests as the member sees them on the claim page: whether the name or a
  * nick matches theirs, and what they already said about each. Matches come first.
  * `extraNames` also count as theirs (the Discord bot passes their Discord names);
- * without a `userId` only those count.
+ * without a `userId` only those count. Guests someone else already asked for, or an orga
+ * tied to another Discord member, are left out.
  */
-export function guestSuggestions(clanId: string, userId: string | null, extraNames: string[] = []): GuestSuggestion[] {
-  const guests = unclaimedGuests(clanId);
+export function guestSuggestions(
+  clanId: string,
+  userId: string | null,
+  extraNames: string[] = [],
+  discordId: string | null = null,
+): GuestSuggestion[] {
+  const guests = claimableGuests(clanId, userId, discordId);
   if (!guests.length) return [];
   const keys = keysFor([...(userId ? [userId] : []), ...guests.map((g) => g.id)]);
   const own = userId ? keys.get(userId) : undefined;

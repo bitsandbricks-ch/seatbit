@@ -17,7 +17,7 @@ import { personLabel } from "@/lib/names";
 import { avatarData } from "@/lib/avatars";
 import { requireUser, visibleLans } from "@/lib/session";
 import { missingServers } from "@/lib/discord-invite";
-import { guestSuggestions, unclaimedGuests } from "@/lib/guest-claim";
+import { claimableGuests, guestSuggestions } from "@/lib/guest-claim";
 
 export default async function ClanPage({ params, searchParams }: PageProps<"/clans/[slug]">) {
   const { slug } = await params;
@@ -107,7 +107,7 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
   const mySuggestions = claiming && tab === "overview" ? guestSuggestions(c.id, me.id) : [];
   const guestMatch = mySuggestions.find((s) => s.match && !s.status);
   const myClaim = mySuggestions.find((s) => s.status === "pending");
-  const hasGuests = claiming && tab === "members" && unclaimedGuests(c.id).length > 0;
+  const hasGuests = claiming && tab === "members" && claimableGuests(c.id, me.id).length > 0;
   const openClaims = canMembers
     ? db
         .select({ id: schema.guestClaim.id })

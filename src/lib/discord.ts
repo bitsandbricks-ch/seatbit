@@ -12,7 +12,7 @@ import { getSetting } from "./settings";
 import { setSeatBooked } from "./seat-booking";
 import { appUrl } from "./mail";
 import { audit } from "./audit";
-import { claimOrRequestGuest, discordClaimTicket, guestSuggestions, mergeGuestInto, unclaimedGuests } from "./guest-claim";
+import { claimableGuests, claimOrRequestGuest, discordClaimTicket, guestSuggestions, mergeGuestInto } from "./guest-claim";
 import { nameMatches } from "./names";
 import { dmDiscordUser, notify, notifyLater } from "./notify";
 
@@ -623,7 +623,10 @@ export function handleInteraction(i: Interaction): { response: Json; later?: () 
   if (i.type === 4 && (i.data?.name === "claim" || i.data?.name === "guest")) {
     const c = clanForGuild(i.guild_id);
     const q = String(i.data.options?.find((o) => o.focused)?.value ?? "");
-    const choices = (c ? unclaimedGuests(c.id) : [])
+    // /claim: what's still free for the caller; /guest (orgas): only guests nobody asked for or got linked to yet.
+    const me = i.data.name === "claim" ? seatbitUserFor(discordUser) : undefined;
+    const free = c ? (i.data.name === "claim" ? claimableGuests(c.id, me?.id ?? null, discordUser) : claimableGuests(c.id, null)) : [];
+    const choices = free
       .filter((g) => !q || nameMatches(g.name, q))
       .sort((a, b) => a.name.localeCompare(b.name))
       .slice(0, 25)
@@ -849,7 +852,7 @@ function claimCommand(i: Interaction, guestId?: string): { response: Json } {
   const discordUser = du?.id ?? "";
   const me = seatbitUserFor(discordUser);
   const names = discordNames(du, i.member?.nick);
-  const all = guestSuggestions(c.id, me?.id ?? null, names);
+  const all = guestSuggestions(c.id, me?.id ?? null, names, discordUser);
   const openClan = linkButton("Open clan", `${appUrl}/clans/${c.slug}`);
 
   if (!guestId) {
@@ -875,7 +878,7 @@ function claimCommand(i: Interaction, guestId?: string): { response: Json } {
   }
 
   const s = all.find((x) => x.guest.id === guestId);
-  if (!s) return { response: reply("That guest was taken over already, or belongs to another clan.", { components: [openClan] }) };
+  if (!s) return { response: reply("That guest was taken over already, someone else asked for it, or it belongs to another clan.", { components: [openClan] }) };
   const g = s.guest;
 
   if (!me) {
@@ -922,8 +925,8 @@ function linkGuestCommand(i: Interaction, editReply: (body: Json) => Promise<unk
   const guestId = String(i.data?.options?.find((o) => o.name === "guest")?.value ?? "");
   const target = i.data?.resolved?.users?.[targetId];
   if (!targetId || target?.bot) return { response: reply("Pick a person, not a bot.") };
-  const g = unclaimedGuests(c.id).find((x) => x.id === guestId);
-  if (!g) return { response: reply(`That isn't a guest of **${c.name}** anymore. Pick one from the list.`) };
+  const g = claimableGuests(c.id, null).find((x) => x.id === guestId);
+  if (!g) return { response: reply(`That guest isn't free anymore in **${c.name}**: taken over, already asked for (approve or decline it under Members in Seatbit), or linked to someone. Pick one from the list.`) };
   const mention = `<@${targetId}>`;
   const existing = seatbitUserFor(targetId);
 
