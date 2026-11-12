@@ -22,7 +22,7 @@ Dependabot opens weekly npm updates (minor and patch grouped) and monthly GitHub
 | `:sha-<short sha>` | A specific commit. |
 | `:1.2.3` | Releases, from `v1.2.3` tags. |
 
-The image workflow passes the commit as the `GIT_COMMIT` build arg (on pull requests the branch head). `next.config.ts` bakes it in as `SEATBIT_COMMIT`, and the footer shows and links it.
+The image workflow passes the commit as the `GIT_COMMIT` build arg (on pull requests the branch head). `next.config.ts` bakes it in as `SEATBIT_COMMIT`, and the root layout shows and links it.
 
 ## Docs site
 
