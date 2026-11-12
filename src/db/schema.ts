@@ -133,6 +133,12 @@ export const clan = sqliteTable("clan", {
    * directly; "invite": only with an invite link. Invite links always work.
    */
   joinPolicy: text("join_policy").$type<"approval" | "open" | "invite">().default("approval").notNull(),
+  /**
+   * Can members say "I'm this guest" themselves? "approval": yes, an admin confirms;
+   * "match": guests with the same name or nick move over right away, other picks need
+   * an admin; "off": only through the guest's claim link or invite email.
+   */
+  guestClaims: text("guest_claims").$type<GuestClaimMode>().default("approval").notNull(),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
 });
 
@@ -157,6 +163,35 @@ export const clanMember = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
   },
   (t) => [uniqueIndex("clan_member_uq").on(t.clanId, t.userId), index("clan_member_user_idx").on(t.userId)],
+);
+
+export const GUEST_CLAIM_MODES = ["approval", "match", "off"] as const;
+export type GuestClaimMode = (typeof GUEST_CLAIM_MODES)[number];
+
+/**
+ * A member says they are one of the clan's guests. "pending" waits for a clan admin;
+ * "declined" (by an admin) and "dismissed" ("not me", by the member) keep that guest
+ * from being suggested to them again. Approved requests disappear with the guest.
+ */
+export const guestClaim = sqliteTable(
+  "guest_claim",
+  {
+    id: id(),
+    clanId: text("clan_id")
+      .notNull()
+      .references(() => clan.id, { onDelete: "cascade" }),
+    guestId: text("guest_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    status: text("status").$type<"pending" | "declined" | "dismissed">().default("pending").notNull(),
+    /** Why it was suggested: same name or nick, or null when the member picked it from the list. */
+    match: text("match").$type<"name" | "nick">(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  (t) => [uniqueIndex("guest_claim_guest_user").on(t.guestId, t.userId), index("guest_claim_clan_idx").on(t.clanId, t.status)],
 );
 
 /** Invite links: anyone with the code can join the clan as a member. */

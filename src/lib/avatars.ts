@@ -57,8 +57,10 @@ export function userColor(u: { id: string; color: string | null }) {
 }
 
 export function initialsOf(u: { name: string; firstName: string; lastName: string }) {
-  const i = [u.firstName, u.lastName].map((s) => s.trim()[0]?.toUpperCase()).filter(Boolean).join("");
-  return i || u.name.trim().slice(0, 2).toUpperCase() || "?";
+  // Whole characters in NFC, so "Ö" stays "Ö" and not "O" plus a stray accent.
+  const chars = (s: string) => Array.from(s.normalize("NFC").trim());
+  const i = [u.firstName, u.lastName].map((s) => chars(s)[0]?.toUpperCase()).filter(Boolean).join("");
+  return i || chars(u.name).slice(0, 2).join("").toUpperCase() || "?";
 }
 
 export function avatarData(u: AvatarUser): AvatarData {

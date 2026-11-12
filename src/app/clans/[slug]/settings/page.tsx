@@ -9,6 +9,7 @@ import {
   renewGuestLink,
   updateGuest,
   createInvite,
+  decideGuestClaim,
   deleteClan,
   deleteInvite,
   removeClanMember,
@@ -57,6 +58,13 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
     .all()
     .sort((a, b) => a.u.name.localeCompare(b.u.name));
   const pending = members.filter((m) => m.role === "pending");
+  const claims = db
+    .select()
+    .from(schema.guestClaim)
+    .where(and(eq(schema.guestClaim.clanId, c.id), eq(schema.guestClaim.status, "pending")))
+    .all()
+    // Only from people still in the clan, for guests still waiting to be claimed.
+    .filter((r) => members.some((m) => m.u.id === r.userId && m.role !== "pending") && members.some((m) => m.u.id === r.guestId));
   const active = members.filter((m) => m.role !== "pending");
   const guests = active.filter((m) => m.u.isGuest);
   const inClan = new Set(members.map((m) => m.u.id));
@@ -73,6 +81,7 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
     .all()
     .filter((u) => !inClan.has(u.id));
   const people = getDefaultNames([...members.map((m) => m.u.id), ...others.map((u) => u.id)]);
+  const userOf = (id: string) => members.find((m) => m.u.id === id)!.u;
   const fullName = (u: { id: string; name: string }) => people.get(u.id)?.full ?? u.name;
   const candidates = others
     // Shown as Name "Nick" Surname; don't hand every user's full email address to clan admins.
@@ -97,7 +106,7 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
           <Card>
             <ClanForm
               key={c.avatar ?? "none"}
-              clan={{ id: c.id, name: c.name, description: c.description, joinPolicy: c.joinPolicy, hasAvatar: !!c.avatar }}
+              clan={{ id: c.id, name: c.name, description: c.description, joinPolicy: c.joinPolicy, guestClaims: c.guestClaims, hasAvatar: !!c.avatar }}
             />
           </Card>
         </Columns>
@@ -140,6 +149,40 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
                     </span>
                   </li>
                 ))}
+              </ul>
+            </Card>
+          )}
+          {claims.length > 0 && (
+            <Card title="Guest claims">
+              <p className="mb-3 text-sm text-muted">
+                These members say they&apos;re one of your guests. Approving moves the guest&apos;s events, seats and nicks to
+                their account. Check it&apos;s really them, a name alone proves nothing.
+              </p>
+              <ul className="divide-y divide-line">
+                {claims.map((r) => {
+                  const u = userOf(r.userId);
+                  const g = userOf(r.guestId);
+                  return (
+                    <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                      <span className="min-w-0">
+                        <span className="block truncate font-medium">
+                          {fullName(u)} <span className="font-normal text-muted">is</span> {fullName(g)}?
+                        </span>
+                        <span className="block truncate text-xs text-muted">
+                          {[r.match ? `Same ${r.match}` : "Picked from the list", u.email, `asked ${fmtDate(r.createdAt)}`].join(" · ")}
+                        </span>
+                      </span>
+                      <span className="flex gap-2">
+                        <form action={decideGuestClaim.bind(null, r.id, true)}>
+                          <button className={btnPrimary}>Approve</button>
+                        </form>
+                        <form action={decideGuestClaim.bind(null, r.id, false)}>
+                          <button className={btnGhost}>Decline</button>
+                        </form>
+                      </span>
+                    </li>
+                  );
+                })}
               </ul>
             </Card>
           )}

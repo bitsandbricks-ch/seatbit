@@ -57,7 +57,17 @@ export function ClanHeader({
     .where(eq(schema.clanMember.clanId, c.id))
     .all();
   const active = roles.filter((r) => r.role !== "pending");
-  const pending = roles.length - active.length;
+  // Join requests plus members asking to take over a guest: both wait for an admin.
+  const pending =
+    roles.length -
+    active.length +
+    (canManage
+      ? db
+          .select({ id: schema.guestClaim.id })
+          .from(schema.guestClaim)
+          .where(and(eq(schema.guestClaim.clanId, c.id), eq(schema.guestClaim.status, "pending")))
+          .all().length
+      : 0);
   const guests = active.filter((r) => r.isGuest).length;
   const isMember = isMemberRole(role);
 

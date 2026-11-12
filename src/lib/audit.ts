@@ -248,7 +248,13 @@ export function describeAudit(e: AuditEntry, name: (id: string | null | undefine
     case "guest.renew_link":
       return `made a new claim link for the guest ${who}`;
     case "guest.claimed":
-      return `took over the guest profile${d.guest ? ` of ${d.guest}` : ""}`;
+      return `took over the guest profile${d.guest ? ` of ${d.guest}` : ""}${d.match ? ` (same ${d.match})` : ""}`;
+    case "guest.claim_request":
+      return `asked to take over the guest ${d.guest}${d.match ? ` (same ${d.match})` : ""}`;
+    case "guest.claim_approve":
+      return `confirmed ${who} is the guest ${d.guest}`;
+    case "guest.claim_decline":
+      return `declined ${who}'s request to take over the guest ${d.guest}`;
     case "guest.merged":
       return `moved the guest ${d.guest ?? ""} over to ${who}'s account`;
     case "type.save":

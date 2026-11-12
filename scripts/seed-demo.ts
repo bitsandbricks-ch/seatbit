@@ -2,7 +2,7 @@
  * Fills an empty database with demo data: one clan, five LAN events (one
  * past, one with a final seat plan, one where members pick their own seats,
  * an interest check and a draft),
- * members, a guest, nicknames, seats, travel offers, packing lists and games.
+ * members, guests (one with a claim request), nicknames, seats, travel offers, packing lists and games.
  *
  * Used for local development and by scripts/screenshots.ts, so the docs
  * screenshots always show the same people. Dates are relative to today.
@@ -147,6 +147,33 @@ export async function seedDemo({ force = false, discord = false } = {}) {
       .run();
     tx.insert(s.nickname).values({ userId: ids.yannick, nick: "Yeti", isPrimary: true }).run();
     tx.insert(s.clanMember).values({ clanId, userId: ids.yannick, role: "member" }).run();
+
+    // Two guests the orgas added for people who then signed up on their own: Sara can
+    // take hers over (same name), Rafael already asked to (same nick) and waits for an admin.
+    const guest = (key: string, first: string, last: string, nick: string, color: string) => {
+      ids[key] = `demo-${key}`;
+      tx.insert(s.user)
+        .values({
+          id: ids[key],
+          name: `${first} ${last}`,
+          firstName: first,
+          lastName: last,
+          email: `${ids[key]}@guest.seatbit.invalid`,
+          isGuest: true,
+          guestClanId: clanId,
+          claimCode: `demo-claim-${key}`,
+          avatarStyle: "initials",
+          color,
+        })
+        .run();
+      if (nick) tx.insert(s.nickname).values({ userId: ids[key], nick, isPrimary: true }).run();
+      tx.insert(s.clanMember).values({ clanId, userId: ids[key], role: "member" }).run();
+    };
+    guest("guestsara", "Sara", "Lang", "", "#ffa94d");
+    guest("raffi", "Raffi", "Kunz", "Rex", "#a3e635");
+    tx.insert(s.guestClaim)
+      .values({ clanId, guestId: ids.raffi, userId: ids.rafael, match: "nick", createdAt: at(-1, 20) })
+      .run();
 
     // ---------- LAN types ----------
     const lakeside = "demo-type-lakeside";
@@ -494,6 +521,8 @@ export async function seedDemo({ force = false, discord = false } = {}) {
       [-12, 19, "alex", "event.publish", null, { event: lake.event }, lake.lanId],
       [-9, 21, "alex", "member.approve", "tim", {}, null],
       [-8, 20, "alex", "guest.add", "yannick", {}, null],
+      [-7, 19, "alex", "guest.add", "raffi", {}, null],
+      [-1, 20, "rafael", "guest.claim_request", "rafael", { guest: "Raffi Kunz", match: "nick" }, null],
       [-6, 18, "alex", "attendance.set", "yannick", { event: lake.event, from: null, to: "going" }, lake.lanId],
       [-5, 22, "alex", "member.role", "chiara", { from: "member", to: "organizer" }, null],
       [-4, 20, "alex", "member.role", "lea", { from: "member", to: "recruiter" }, null],
