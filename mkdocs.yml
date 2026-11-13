@@ -96,6 +96,7 @@ nav:
           - Accounts and profile: features/accounts.md
           - Clans and roles: features/clans.md
           - Members and guests: features/members-guests.md
+          - Languages: features/languages.md
       - Events:
           - Event lifecycle: features/events.md
           - Attendance and tickets: features/attendance.md

@@ -37,7 +37,7 @@ export const de: Messages = {
   language: {
     label: "Sprache",
     auto: "Automatisch (Browsersprache)",
-    hint: "Gilt für die App, deine Mails und deine Discord-DMs.",
+    hint: "Die Sprache der App. Automatisch folgt deinem Browser.",
     switchTo: "Sprache wechseln",
   },
   status: {

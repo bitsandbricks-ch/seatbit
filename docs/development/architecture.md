@@ -52,6 +52,17 @@ docs/              this site (MkDocs)
 | `src/lib/billing.ts` | Stripe supporter subscriptions. |
 | `src/lib/names.ts`, `format.ts` | `personLabel` (*Anna "Nova" Frei*) and Swiss 24h date formatting. |
 
+## Languages
+
+The UI is in English and German, without locale prefixes in the URL. `src/i18n/server.ts` picks the language per request: the user's saved `locale`, then the `seatbit-locale` cookie, then `Accept-Language`, then the *Default language* setting.
+
+- Texts are in `src/i18n/messages/en.ts` and `de.ts`. `de.ts` is typed as the English messages, so a missing or extra key fails the type check.
+- Server components: `const t = await getT()`. Client components: `const t = useT()` (the root layout provides the language). Both give `t("event.coming")`, `t("home.seatsFree", { count })` and `t.rich(...)` for placeholders that are React nodes.
+- `{name}` is a placeholder; a message written as `{ one, other }` picks by `count`.
+- Dates: pass `t.locale` to the formatters in `src/lib/format.ts` (weekday names change, the format doesn't).
+- German uses Swiss spelling: "ss", never "ß". The per-event role is "Lead" in both languages.
+- Mails and Discord messages use `localeOf(user)`: the saved language, else the instance default.
+
 ## Background work
 
 `src/instrumentation.ts` runs inside the server process: every minute it publishes scheduled drafts, and every *Reminder check interval* minutes it sends due reminders. Setting the interval to `0` turns that off; `/api/cron/reminders` (with `CRON_SECRET`) does the same from outside.

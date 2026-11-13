@@ -23,6 +23,7 @@ The rules every change follows, for humans and [AI agents](agents.md) alike.
 - Use the shared components in `src/components/ui.tsx` (`Page`, `PageHeader`, `Card`, `Notice`, ...) and `src/components/tabs.tsx`.
 - **Colours** only via brand tokens (`brand/tokens.css`), never raw values.
 - Every page uses the root layout width (`max-w-7xl`); don't add your own max-width.
+- **Texts** go through `t()` with an English and a German entry (`src/i18n/messages/`), never as literals in the page. German uses "ss", not "ß". See [Architecture](../development/architecture.md#languages).
 
 ## Formatting
 

@@ -37,7 +37,7 @@ export const en = {
   language: {
     label: "Language",
     auto: "Automatic (browser language)",
-    hint: "Used for the app, your mails and your Discord DMs.",
+    hint: "The app's language. Automatic follows your browser.",
     switchTo: "Switch language",
   },
   status: {

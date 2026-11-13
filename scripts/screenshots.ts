@@ -52,6 +52,8 @@ type Shot = {
   act?: (page: Page) => Promise<void>;
   /** Capture the whole page instead of the first screen. */
   full?: boolean;
+  /** Browser language; the demo users have no saved language, so this picks the UI language. */
+  lang?: "de";
 };
 
 /**
@@ -98,6 +100,9 @@ const SHOTS: Shot[] = [
   { name: "phone-clans", who: "anna", path: "/clans" },
   { name: "phone-clan", who: "anna", path: CLAN, full: true },
   { name: "phone-profile", who: "anna", path: "/profile", full: true },
+  // German: same pages with a Swiss German browser.
+  { name: "phone-event-de", who: "anna", path: LAKESIDE, full: true, lang: "de" },
+  { name: "phone-profile-de", who: "anna", path: "/profile", lang: "de" },
   { name: "phone-member-profile", who: "anna", path: `${CLAN}/members/demo-chiara`, full: true },
   {
     name: "phone-profile-delete",
@@ -134,6 +139,7 @@ const SHOTS: Shot[] = [
 
   // Desktop, as Alex (platform admin, clan admin and lead)
   { name: "desktop-lans", who: "alex", path: "/" },
+  { name: "desktop-lans-de", who: "alex", path: "/", lang: "de" },
   { name: "desktop-event", who: "alex", path: LAKESIDE },
   { name: "desktop-event-seats", who: "alex", path: `${LAKESIDE}?tab=seats`, act: seat("F9") },
   { name: "desktop-event-attendees", who: "alex", path: `${LAKESIDE}?tab=attendees` },
@@ -252,13 +258,13 @@ async function main() {
     const contexts = new Map<string, BrowserContext>();
     for (const shot of shots) {
       const device: Device = shot.name.startsWith("phone-") ? "phone" : "desktop";
-      const key = `${shot.who}:${device}`;
+      const key = `${shot.who}:${device}:${shot.lang ?? "en"}`;
       let ctx = contexts.get(key);
       if (!ctx) {
         ctx = await browser.newContext({
           ...DEVICES[device],
           colorScheme: "dark",
-          locale: "en-GB",
+          locale: shot.lang === "de" ? "de-CH" : "en-GB",
           timezoneId: "Europe/Zurich",
           reducedMotion: "reduce",
         });
