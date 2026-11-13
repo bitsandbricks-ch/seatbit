@@ -23,7 +23,7 @@ Seatbit helps a clan or group of friends go to LAN parties run by others (think 
 - **Attendance and tickets:** coming / unsure / not coming, waitlist, deadlines with email and Discord reminders, leads confirm tickets.
 - **Seat plan** of the group's block (e.g. `F1-F16, F19-F22`): seat wishes, self pick, drag and drop planner, then everyone books the same seat on the event's own site.
 - **At the LAN:** rides and places to sleep, private packing lists, game votes, food orders.
-- **Clans** with roles, guests, invite links and a **Discord bot** with answer buttons.
+- **Clans** with roles, guests, invite links, **clan payments** (dues, ticket money, who paid) and a **Discord bot** with answer buttons.
 - **Self-hosted:** one container, SQLite, every setting in the browser.
 
 | LANs | Event | Seat plan | Lead: who's missing |

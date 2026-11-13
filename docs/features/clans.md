@@ -22,6 +22,7 @@ Everyone in a clan has one **clan role**:
 | Give and take roles | ✓ | | | |
 | Approve join requests, add and remove members, guests, invite links | ✓ | | ✓ | |
 | Create events, run every clan event, LAN types | ✓ | ✓ | | |
+| [Clan payments](payments.md): charges and who paid | ✓ | ✓ | | |
 | Stats and [audit log](audit-log.md) | ✓ | ✓ | ✓ | |
 | Answer for events | ✓ | ✓ | ✓ | ✓ |
 

@@ -7,6 +7,7 @@ import { MANAGE_TAB_PERMS, isMemberRole, type ClanPermission } from "@/lib/clan-
 import { getT } from "@/i18n/server";
 import { joinClan } from "@/app/clan-actions";
 import { isSupporter } from "@/lib/billing";
+import { clanPaymentsOn, memberLines, owedSummary, paymentsAvailable, reportedCount } from "@/lib/payments";
 import { ClanAvatar } from "./clan-avatar";
 import { DonorBadge, SupporterBadge } from "./support-card";
 import { isDonorClan } from "@/lib/donations";
@@ -14,8 +15,8 @@ import { Tabs, type Tab } from "./tabs";
 import { PageHeader, Pill, btnPrimary } from "./ui";
 import { ViewManageSwitch } from "./view-manage-switch";
 
-export const CLAN_VIEW_TABS = ["overview", "events", "members", "stats"] as const;
-export const CLAN_MANAGE_TABS = ["general", "members", "guests", "types", "invites", "chat", "log"] as const;
+export const CLAN_VIEW_TABS = ["overview", "events", "members", "payments", "stats"] as const;
+export const CLAN_MANAGE_TABS = ["general", "members", "guests", "types", "invites", "chat", "payments", "log"] as const;
 export type ClanViewTab = (typeof CLAN_VIEW_TABS)[number];
 export type ClanManageTab = (typeof CLAN_MANAGE_TABS)[number];
 
@@ -28,7 +29,14 @@ export function clanTabHref(slug: string, mode: "view" | "manage", tab: string) 
 
 /** The manage tabs this user may open, in tab order. Empty = no Manage switch. */
 export function manageTabsFor(perms: Set<ClanPermission>) {
-  return CLAN_MANAGE_TABS.filter((t) => perms.has(MANAGE_TAB_PERMS[t]));
+  // Payments only where the operator allows them.
+  return CLAN_MANAGE_TABS.filter((t) => perms.has(MANAGE_TAB_PERMS[t]) && (t !== "payments" || paymentsAvailable()));
+}
+
+/** Members see a Payments tab once the clan has charged them something (or they run payments). */
+export function showsPaymentsTab(c: Clan, userId: string, perms: Set<ClanPermission>) {
+  if (!clanPaymentsOn(c)) return false;
+  return perms.has("payments") || memberLines(userId, { clanId: c.id }).length > 0;
 }
 
 /**
@@ -42,8 +50,11 @@ export async function ClanHeader({
   perms,
   mode,
   tab,
+  meId,
 }: {
   clan: Clan;
+  /** The viewer, for their own Payments tab. */
+  meId: string;
   role: ClanRole | null;
   /** From clanPerms(). */
   perms: Set<ClanPermission>;
@@ -91,10 +102,12 @@ export async function ClanHeader({
             // Members don't see drafts.
             .filter((l) => seesDrafts || l.publishedAt).length
         : 0;
+    const myOwed = showsPaymentsTab(c, meId, perms) ? owedSummary(memberLines(meId, { clanId: c.id })).count : null;
     tabs = [
       { id: "overview", label: t("event.tabs.overview") },
       ...(isMember || canManage ? [{ id: "events", label: t("clanHeader.events"), count: upcoming || undefined }] : []),
       { id: "members", label: t("clanPage.members"), count: active.length },
+      ...(myOwed !== null ? [{ id: "payments", label: t("payments.title"), badge: myOwed ? t("payments.openBadge", { count: myOwed }) : undefined }] : []),
       ...(perms.has("stats") ? [{ id: "stats", label: t("clanHeader.stats") }] : []),
     ];
   } else {
@@ -111,6 +124,10 @@ export async function ClanHeader({
       types: { id: "types", label: t("clanPage.links.types"), count: types },
       invites: { id: "invites", label: t("clanPage.links.invites") },
       chat: { id: "chat", label: t("manage.tabs.chat") },
+      payments: (() => {
+        const toCheck = c.paymentsEnabled && manageTabs.includes("payments") ? reportedCount(c.id) : 0;
+        return { id: "payments", label: t("payments.title"), badge: toCheck ? t("payments.toCheck", { count: toCheck }) : undefined };
+      })(),
       log: { id: "log", label: t("clanHeader.log") },
     };
     tabs = manageTabs.map((x) => all[x]);

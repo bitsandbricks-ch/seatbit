@@ -69,6 +69,7 @@ import { orgas } from "./orgas";
 import { packing } from "./packing";
 import { pager } from "./pager";
 import { pages } from "./pages";
+import { payments } from "./payments";
 import { picker } from "./picker";
 import { platformRoles } from "./platformRoles";
 import { profile } from "./profile";
@@ -166,6 +167,7 @@ export const en = {
   packing,
   pager,
   pages,
+  payments,
   picker,
   platformRoles,
   profile,

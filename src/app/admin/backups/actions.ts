@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { audit } from "@/lib/audit";
-import { createBackup, deleteBackup } from "@/lib/backup";
+import { BackupError, createBackup, deleteBackup } from "@/lib/backup";
 import { requirePlatform } from "@/lib/session";
 import { getT } from "@/i18n/server";
 import type { ActionResult } from "../settings/actions";
@@ -18,7 +18,8 @@ export async function backupNow(): Promise<ActionResult> {
     revalidatePath("/admin/backups");
     return done(true, t("backups.created", { name: f.name }));
   } catch (e) {
-    return done(false, t("backups.failed", { error: e instanceof Error ? e.message : String(e) }));
+    const error = e instanceof BackupError ? t(e.key, e.vars) : e instanceof Error ? e.message : String(e);
+    return done(false, t("backups.failed", { error }));
   }
 }
 

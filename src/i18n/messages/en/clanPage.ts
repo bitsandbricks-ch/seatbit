@@ -13,6 +13,7 @@ export const clanPage = {
     invites: "Invite links",
     invitesSub: "Let people join right away",
     chatSub: "Bot, channels, invites",
+    paymentsSub: "Dues, ticket money, who paid",
   },
   cancelRequest: "Cancel request",
   leave: "Leave clan",

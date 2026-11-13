@@ -19,7 +19,7 @@ The connection (`src/db/index.ts`) turns on WAL mode and foreign keys, runs pend
 3. Start the app (or `npm run build`): the migration runs on the existing database. Also try it on a database with data (`npm run seed` first).
 4. Extend `scripts/seed-demo.ts` if screenshots need the new data.
 
-Migrations up to `0036` are numbered; newer ones are named by their creation time, so two branches never claim the same name. Which migrations a database already has is tracked by the journal's `when`, not by the file name, so the switch changes nothing on running instances.
+Migrations up to `0037` are numbered; newer ones are named by their creation time, so two branches never claim the same name. Which migrations a database already has is tracked by the journal's `when`, not by the file name, so the switch changes nothing on running instances.
 
 !!! warning "Journal timestamps"
     Drizzle skips a migration whose journal `when` is older than the last applied one, silently. `npm run db:rebase` (below) always gives the branch's migration the newest `when`.
