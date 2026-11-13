@@ -112,6 +112,26 @@ export const SETTINGS: SettingDef[] = [
         : "Use a comma-separated list of email addresses",
   },
 
+  {
+    key: "auth.trustedProxies",
+    group: "general",
+    label: "Trusted proxies",
+    kind: "list",
+    env: "TRUSTED_PROXIES",
+    // Private ranges: the ingress/reverse proxy in front of Seatbit usually sits in one of them.
+    default: "10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 127.0.0.1/32, ::1/128, fc00::/7",
+    placeholder: "10.0.0.0/8, 192.168.0.0/16",
+    help: "Comma-separated IP ranges (CIDR) of the reverse proxies in front of Seatbit. Their entries in X-Forwarded-For are skipped to find the visitor's address for the login rate limit.",
+    validate: (v) =>
+      v
+        .split(",")
+        .map((e) => e.trim())
+        .filter(Boolean)
+        .every((e) => /^[0-9a-fA-F:.]+\/\d{1,3}$/.test(e))
+        ? null
+        : "Use a comma-separated list of IP ranges like 10.0.0.0/8",
+  },
+
   // Mail
   { key: "smtp.host", group: "mail", label: "SMTP host", kind: "text", env: "SMTP_HOST", placeholder: "smtp.example.com" },
   {

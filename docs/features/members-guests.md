@@ -12,7 +12,7 @@ Approve join requests, add people, and keep **guests**: people without a Seatbit
 | --- | --- |
 | **Waiting for approval** | People who asked to join (join mode *Approval*). Approve or decline. Admins and recruiters get a Discord DM for each request. |
 | **Guest claims** | Members who say they're one of your guests. See [below](#members-claiming-a-guest). |
-| **Add an existing user** | Search Seatbit users by name or nick and add them directly. |
+| **Add an existing user** | Search people who are already in another clan with you by name or nick and add them directly. Anyone else joins with an [invite link](clans.md), or you add them as a guest with their email. |
 | **Role** | One [role](clans.md#roles) per person (admins only). |
 | **Remove** | Takes someone out of the clan. Recruiters can remove plain members only. |
 
@@ -32,7 +32,7 @@ To hand a guest over to its owner:
 
 | Way | |
 | --- | --- |
-| **Email invite** | Enter their email and click **Send invite**. When they sign in with a Discord account with the same verified email, everything moves to their account automatically. |
+| **Email invite** | Enter their email and click **Send invite**. When they sign in with a Discord account with the same verified email, everything moves to their account automatically. This also works when the address already has a Seatbit account: they get the invite and take the guest over with their next sign-in. |
 | **Claim link** | Copy the guest's link and send it yourself (WhatsApp, Discord, ...). Whoever opens it and signs in takes the guest over. **New link** invalidates the old one. |
 | **That's me** | The member claims the guest themselves, on the website or with `/claim` on Discord. See below. |
 | **`/guest` on Discord** | Say which Discord member the guest is. See [On Discord](#on-discord). |

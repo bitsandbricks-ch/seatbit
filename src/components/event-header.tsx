@@ -12,6 +12,7 @@ import { ShareButton } from "./share-button";
 import { lanLink } from "@/lib/announce";
 import { getT } from "@/i18n/server";
 import type { T } from "@/i18n/translate";
+import { httpHref } from "@/lib/safe-url";
 
 type Clan = Parameters<typeof ClanAvatar>[0]["clan"] & { slug: string; name: string };
 
@@ -83,12 +84,12 @@ export async function EventHeader({
       {mode === "view" && (l.websiteUrl || l.ticketUrl) && (
         <p className="mt-1 flex flex-wrap gap-2 text-sm">
           {l.websiteUrl && (
-            <a href={l.websiteUrl} target="_blank" rel="noreferrer" className={`${btnGhost} border border-line !text-bit`}>
+            <a href={httpHref(l.websiteUrl)} target="_blank" rel="noreferrer" className={`${btnGhost} border border-line !text-bit`}>
               {t("eventUi.website")} <span aria-hidden>↗</span>
             </a>
           )}
           {l.ticketUrl && (
-            <a href={l.ticketUrl} target="_blank" rel="noreferrer" className={`${btnGhost} border border-line !text-bit`}>
+            <a href={httpHref(l.ticketUrl)} target="_blank" rel="noreferrer" className={`${btnGhost} border border-line !text-bit`}>
               {t("eventUi.ticketShop")} <span aria-hidden>↗</span>
             </a>
           )}

@@ -11,7 +11,9 @@ import { isAcceptingItems, parseMoney } from "@/lib/food";
 import { getDisplayNames, getLan } from "@/lib/lans";
 import { appUrl } from "@/lib/mail";
 import { notify, notifyLater } from "@/lib/notify";
+import { optionalHttpUrl } from "@/lib/safe-url";
 import { canViewLan, isLanManager, requireUser } from "@/lib/session";
+import { overLimit } from "@/lib/rate-limit";
 
 const { foodOrder, foodItem, attendance, user } = schema;
 
@@ -50,7 +52,7 @@ function canRunOrder(me: User, o: { lanId: string; createdBy: string | null }) {
 const orderInput = z.object({
   title: z.string().trim().min(1, "Give it a name").max(60),
   shop: z.string().trim().max(60),
-  menuUrl: z.union([z.literal(""), z.url().max(500)]),
+  menuUrl: optionalHttpUrl(),
   note: z.string().trim().max(300),
   closesAt: z
     .string()
@@ -80,7 +82,7 @@ export async function createFoodOrder(lanId: string, formData: FormData): Promis
   const { announce, ...values } = parsed.data;
   const o = db.insert(foodOrder).values({ lanId, ...values, createdBy: me.id }).returning().get();
 
-  if (announce && l.publishedAt) {
+  if (announce && l.publishedAt && !overLimit("send", me.id)) {
     const names = await getDisplayNames(lanId, [me.id]);
     const going = db
       .select({ u: user })

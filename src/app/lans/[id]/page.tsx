@@ -38,6 +38,7 @@ import { clanPaymentsOn, memberLines } from "@/lib/payments";
 import { foodCurrency, isAcceptingItems, listFoodOrders, orderText } from "@/lib/food";
 import { getT } from "@/i18n/server";
 import type { T } from "@/i18n/translate";
+import { httpHref } from "@/lib/safe-url";
 
 const { attendance, seat, nickname } = schema;
 
@@ -303,7 +304,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
   const seatPills = (
     <span className="flex flex-wrap items-center gap-2">
       {l.externalPlanUrl && (
-        <a href={l.externalPlanUrl} target="_blank" rel="noreferrer" className="text-sm text-bit hover:underline">
+        <a href={httpHref(l.externalPlanUrl)} target="_blank" rel="noreferrer" className="text-sm text-bit hover:underline">
           {t("event.eventSeatPlan")} <span aria-hidden>↗</span>
         </a>
       )}

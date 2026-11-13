@@ -1,0 +1,13 @@
+date: 2026-11-13
+type: improved
+en:
+  title: Security improvements
+  text: >-
+    Seatbit is better protected throughout. Leads now add existing users only if they already share
+    a clan with them; everyone else joins with an invite link or an email invite.
+de:
+  title: Sicherheitsverbesserungen
+  text: >-
+    Seatbit ist rundum besser geschützt. Leads fügen bestehende Konten nur noch direkt hinzu, wenn sie
+    schon einen Clan mit ihnen teilen; alle anderen kommen über einen Einladungslink oder eine
+    E-Mail-Einladung dazu.

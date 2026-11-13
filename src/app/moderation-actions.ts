@@ -52,6 +52,9 @@ export async function suspendUserAction(userId: string, form: FormData) {
 
 export async function unsuspendUserAction(userId: string) {
   const me = await assertPlatform("suspend");
+  const target = db.select().from(schema.user).where(eq(schema.user.id, userId)).get();
+  // Same rule as suspending: only someone who outranks them.
+  if (!target || target.id === me.id || !outranks(me, target)) throw await err("errors.perm.platform");
   unsuspendUser(userId, me.id);
   revalidatePath("/admin", "layout");
 }

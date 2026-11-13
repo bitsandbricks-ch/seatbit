@@ -14,6 +14,8 @@ import { NUDGE_STEPS, nudge, type NudgeResult, type NudgeStep } from "@/lib/miss
 import { clearSeatBooked, setSeatBooked } from "@/lib/seat-booking";
 import { canViewLan, isLanManager, requireLanManager, requireUser } from "@/lib/session";
 import { auditLan } from "@/lib/audit";
+import { optionalHttpUrl } from "@/lib/safe-url";
+import { enforceLimit } from "@/lib/rate-limit";
 
 const { seat, seatSwap, game, gameVote, lanOrga, clanMember, user } = schema;
 
@@ -201,7 +203,7 @@ const gameInput = z.object({
     .optional()
     .transform((v) => (v ? Math.round(Number(v)) : null))
     .pipe(z.number().int().min(0).max(2000).nullable()),
-  url: z.union([z.literal(""), z.url().max(500)]).default(""),
+  url: optionalHttpUrl().default(""),
 });
 
 async function requireLanViewer(lanId: string) {
@@ -260,7 +262,8 @@ export async function setGameMark(gameId: string, field: "vote" | "installed", v
 
 /** Lead nudge from the "Who's missing" tab: one person, or everyone missing a step. */
 export async function nudgeMissing(lanId: string, step: string, userIds?: string[]): Promise<NudgeResult> {
-  await requireLanManager(lanId);
+  const me = await requireLanManager(lanId);
+  await enforceLimit("send", me.id);
   const l = mustGetLan(lanId);
   if (!l.publishedAt) throw await err("errors.publishFirst");
   if (l.cancelledAt) throw await err("errors.cancelled");

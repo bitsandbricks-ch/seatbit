@@ -4,7 +4,7 @@ export const clanSettings = {
   deleteSub: "Its Supporter subscription is cancelled too.",
   delete: "Delete clan",
   addExisting: "Add an existing user",
-  addExistingHint: "Someone already on Seatbit. For people without an account, add a {guest}.",
+  addExistingHint: "Someone who is already in another clan with you. Everyone else joins with an invite link, or add them as a {guest} with their email.",
   guest: "guest",
   approve: "Approve",
   decline: "Decline",

@@ -41,6 +41,7 @@ import { MISSING_STEPS, NUDGE_COOLDOWN_MS, whoIsMissing, type MissingStep } from
 import { CancelEvent, CopyNextYear, DeleteNewsButton, NewsComposer } from "@/components/event-extras";
 import { getT } from "@/i18n/server";
 import type { T } from "@/i18n/translate";
+import { httpHref } from "@/lib/safe-url";
 
 const { attendance, seat, user, reminderLog } = schema;
 
@@ -317,7 +318,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
                   <p className="text-muted">
                     {t.rich("manage.bookingHint", {
                       plan: (
-                        <a href={l.externalPlanUrl} target="_blank" rel="noreferrer" className="text-bit hover:underline">
+                        <a href={httpHref(l.externalPlanUrl)} target="_blank" rel="noreferrer" className="text-bit hover:underline">
                           {t("manage.eventSeatPlan")}
                         </a>
                       ),

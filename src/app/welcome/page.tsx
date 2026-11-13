@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { safeNext } from "@/lib/safe-url";
 import { and, eq, isNull } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { completeProfile } from "@/app/actions";
@@ -13,7 +14,7 @@ export default async function WelcomePage({ searchParams }: PageProps<"/welcome"
   const me = await requireUser({ allowIncomplete: true });
   const t = await getT();
   const raw = (await searchParams).next;
-  const next = typeof raw === "string" && raw.startsWith("/") && !raw.startsWith("//") ? raw : "/";
+  const next = safeNext(raw);
   if (isProfileComplete(me)) redirect(next);
   const nick =
     db

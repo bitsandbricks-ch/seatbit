@@ -1,6 +1,7 @@
 export const settingDefs = {
   auth_signupOpen: { label: "Allow new accounts", help: "When off, only people who already have an account can sign in." },
   auth_adminEmails: { label: "Admin emails", help: "Comma-separated. These become global admins when they sign up. The first account is always admin.", invalid: "Use a comma-separated list of email addresses" },
+  auth_trustedProxies: { label: "Trusted proxies", help: "Comma-separated IP ranges (CIDR) of the reverse proxies in front of Seatbit. Their entries in X-Forwarded-For are skipped to find the visitor's address for the login rate limit.", invalid: "Use a comma-separated list of IP ranges like 10.0.0.0/8" },
   smtp_host: { label: "SMTP host" },
   smtp_port: { label: "Port", invalid: "Must be a whole number from 1 to 65535" },
   smtp_security: { label: "Encryption", options: { starttls: "STARTTLS (usually port 587)", tls: "TLS / SMTPS (usually port 465)", none: "None (local relays only)" } },

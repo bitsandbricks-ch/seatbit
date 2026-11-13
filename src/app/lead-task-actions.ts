@@ -67,7 +67,10 @@ export async function saveLeadTask(_: FormState, fd: FormData): Promise<FormStat
   const dueRaw = str(fd, "dueDays", 5);
   const due = dueRaw === "" ? null : Math.max(-365, Math.min(365, Math.round(Number(dueRaw))));
   const contactId = str(fd, "contactId") || null;
-  const contact = contactId ? db.select().from(leadContact).where(eq(leadContact.id, contactId)).get() : undefined;
+  const found = contactId ? db.select().from(leadContact).where(eq(leadContact.id, contactId)).get() : undefined;
+  // Only a contact of one of this clan's LAN types.
+  const contactClan = found ? db.select({ clanId: lanType.clanId }).from(lanType).where(eq(lanType.id, found.typeId)).get()?.clanId : null;
+  const contact = found && contactClan === scope.clanId ? found : undefined;
   const values = {
     title,
     note: str(fd, "note", 2000),

@@ -8,12 +8,11 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db, schema } from "@/db";
 import { GUEST_CLAIM_MODES } from "@/db/schema";
-import { clanCan, clanRole, getClan, saveAvatar, uniqueSlug } from "@/lib/clans";
+import { clanCan, clanRole, clanmateIds, getClan, saveAvatar, uniqueSlug } from "@/lib/clans";
 import { MEMBER_ROLES, isMemberRole, type MemberRole } from "@/lib/clan-roles";
 import { guestEmail } from "@/lib/guests";
 import { LAN_ID_MAX } from "@/lib/lan-accounts";
 import {
-  accountByEmail,
   claimOrRequestGuest,
   discordTicketState,
   guestSuggestions,
@@ -35,6 +34,8 @@ import { UNLINKED, sendGuestDiscordDm } from "@/lib/discord";
 import type { ActionResult } from "@/app/admin/settings/actions";
 import { cancelSupport } from "@/lib/billing";
 import { NAME_DISPLAYS, cleanName } from "@/lib/names";
+import { safeNext } from "@/lib/safe-url";
+import { overLimit } from "@/lib/rate-limit";
 
 const { clan, clanMember, clanInvite } = schema;
 
@@ -52,6 +53,7 @@ const JOIN_LABEL = { approval: "clanForm.joinApproval", open: "clanForm.joinOpen
 
 export async function createClan(_: FormState, formData: FormData): Promise<FormState> {
   const me = await requireUser();
+  if (overLimit("clan", me.id)) return { error: await tr("errors.tooMany") };
   const parsed = clanInput.safeParse({
     name: formData.get("name"),
     description: formData.get("description") ?? "",
@@ -146,7 +148,7 @@ export async function joinClan(clanId: string, next?: unknown) {
   }
   revalidatePath("/", "layout");
   // Bound form actions also get the FormData here, so only a same-site path counts.
-  const back = typeof next === "string" && next.startsWith("/") && !next.startsWith("//") ? next : undefined;
+  const back = safeNext(next, "") || undefined;
   redirect(afterJoin(c, me.id, back));
 }
 
@@ -292,6 +294,8 @@ export async function addClanMember(clanId: string, userId: string) {
   const me = await requireClanPermission(clanId, "members");
   const u = db.select().from(schema.user).where(eq(schema.user.id, userId)).get();
   if (!u || u.deletedAt) throw new Error("User not found");
+  // Leads add people they already share a clan with; everyone else joins by invite link or request.
+  if (!platformCan(me, "clans") && !clanmateIds(me.id).has(userId)) throw new Error("User not found");
   const from = clanRole(userId, clanId);
   if (from === "pending") audit({ actorId: me.id, action: "member.approve", clanId, targetUserId: userId });
   else if (!from) audit({ actorId: me.id, action: "member.add", clanId, targetUserId: userId });
@@ -318,7 +322,7 @@ const guestInput = z.object({
 
 const newClaimCode = () => crypto.randomUUID().replace(/-/g, "").slice(0, 16);
 
-type Created = { id: string; existing?: string } | { error: string };
+type Created = { id: string } | { error: string };
 
 /**
  * Creates a guest member of a clan from the form. When the email belongs to someone
@@ -336,19 +340,8 @@ function createGuest(clanId: string, formData: FormData): Created {
     return { error: bad.has("email") ? "That email address doesn't look right." : "Give the guest a first name and a surname." };
   }
   const { firstName, lastName, nick, email } = parsed.data;
-  if (email) {
-    const acc = accountByEmail(email);
-    if (acc) {
-      db.insert(clanMember)
-        .values({ clanId, userId: acc.id, role: "member" })
-        .onConflictDoUpdate({
-          target: [clanMember.clanId, clanMember.userId],
-          set: { role: sql`CASE WHEN ${clanMember.role} = 'pending' THEN 'member' ELSE ${clanMember.role} END` },
-        })
-        .run();
-      return { id: acc.id, existing: acc.name };
-    }
-  }
+  // An address that belongs to an account still makes a guest with an invite: leads don't add
+  // people to a clan by email, and the form doesn't tell whether an address has an account.
   const id = crypto.randomUUID();
   db.transaction((tx) => {
     tx.insert(schema.user)
@@ -374,9 +367,12 @@ function createGuest(clanId: string, formData: FormData): Created {
 /** The lead as the invite mail names them: Mike "Reyki" Keller. */
 const inviterName = (u: { id: string; name: string }) => getDefaultNames([u.id]).get(u.id)?.full ?? u.name;
 
+/** Sends a guest their invite mail, unless the lead already sent a lot in a short time (spam guard). */
+const inviteGuest = async (guestId: string, me: { id: string; name: string }) =>
+  overLimit("send", me.id) ? false : sendGuestInvite(guestId, inviterName(me));
+
 /** What the lead sees after adding someone. */
-function addedMessage(r: { id: string; existing?: string }, invited: boolean, what: string) {
-  if (r.existing) return `${r.existing} already has a Seatbit account with that email, so we ${what} them instead of a guest.`;
+function addedMessage(invited: boolean) {
   return invited ? "Guest added. The invite mail is on its way." : "Guest added.";
 }
 
@@ -385,10 +381,10 @@ export async function addGuest(clanId: string, _: FormState, formData: FormData)
   const me = await requireClanPermission(clanId, "members");
   const r = createGuest(clanId, formData);
   if ("error" in r) return r;
-  audit({ actorId: me.id, action: "guest.add", clanId, targetUserId: r.id, data: { existing: !!r.existing || undefined } });
-  const invited = !r.existing && (await sendGuestInvite(r.id, inviterName(me)).catch(() => false));
+  audit({ actorId: me.id, action: "guest.add", clanId, targetUserId: r.id });
+  const invited = await inviteGuest(r.id, me).catch(() => false);
   revalidatePath("/", "layout");
-  return { ok: true, message: addedMessage(r, invited, "added") };
+  return { ok: true, message: addedMessage(invited) };
 }
 
 /** From an event's Attendees tab: adds a guest to the event's clan and signs them up as coming. */
@@ -398,31 +394,25 @@ export async function addGuestToLan(lanId: string, _: FormState, formData: FormD
   if (!l?.clanId) return { error: await tr("errors.noClan") };
   const r = createGuest(l.clanId, formData);
   if ("error" in r) return r;
-  audit({ actorId: me.id, action: "guest.add", clanId: l.clanId, lanId, targetUserId: r.id, data: { existing: !!r.existing || undefined } });
+  audit({ actorId: me.id, action: "guest.add", clanId: l.clanId, lanId, targetUserId: r.id });
   await adminSetAttendance(lanId, r.id, "going");
   // After signing up, so the invite lists this event.
-  const invited = !r.existing && (await sendGuestInvite(r.id, inviterName(me)).catch(() => false));
+  const invited = await inviteGuest(r.id, me).catch(() => false);
   revalidatePath("/", "layout");
-  return { ok: true, message: addedMessage(r, invited, "signed up") };
+  return { ok: true, message: addedMessage(invited) };
 }
 
 /** Sets (or changes) a guest's email and sends them the invite. */
 export async function setGuestEmail(clanId: string, userId: string, _: FormState, formData: FormData): Promise<FormState> {
   const me = await requireClanPermission(clanId, "members");
-  const g = requireGuestOf(clanId, userId);
+  requireGuestOf(clanId, userId);
   const parsed = z.email().max(200).safeParse(String(formData.get("email") ?? "").trim());
   if (!parsed.success) return { error: await tr("errors.badEmail") };
-  const acc = accountByEmail(parsed.data);
-  if (acc) {
-    // They're on Seatbit already: hand everything over right away.
-    audit({ actorId: me.id, action: "guest.merged", clanId, targetUserId: acc.id, data: { guest: g.name } });
-    mergeGuestInto(g, acc.id);
-    revalidatePath("/", "layout");
-    return { ok: true, message: await tr("errors.merged", { name: acc.name }) };
-  }
+  // Also when the address belongs to an account: the invite mail lets that person take the guest over
+  // themselves (or it happens at their next sign-in), instead of leads moving people around by email.
   db.update(schema.user).set({ inviteEmail: normEmail(parsed.data) }).where(eq(schema.user.id, userId)).run();
   audit({ actorId: me.id, action: "guest.email", clanId, targetUserId: userId });
-  const sent = await sendGuestInvite(userId, inviterName(me)).catch((e) => {
+  const sent = await inviteGuest(userId, me).catch((e) => {
     console.error("[mail] guest invite failed", e);
     return false;
   });
@@ -500,15 +490,8 @@ export async function updateGuest(clanId: string, userId: string, _: FormState, 
     if (!newEmail) {
       db.update(schema.user).set({ inviteEmail: null, invitedAt: null }).where(eq(schema.user.id, userId)).run();
     } else {
-      const acc = accountByEmail(newEmail);
-      if (acc) {
-        audit({ actorId: me.id, action: "guest.merged", clanId, targetUserId: acc.id, data: { guest: `${firstName} ${lastName}` } });
-        mergeGuestInto({ ...g, firstName, lastName, name: `${firstName} ${lastName}` }, acc.id);
-        revalidatePath("/", "layout");
-        return { ok: true, message: await tr("errors.merged", { name: acc.name }) };
-      }
       db.update(schema.user).set({ inviteEmail: newEmail }).where(eq(schema.user.id, userId)).run();
-      const sent = await sendGuestInvite(userId, inviterName(me)).catch((e) => {
+      const sent = await inviteGuest(userId, me).catch((e) => {
         console.error("[mail] guest invite failed", e);
         return false;
       });
@@ -539,6 +522,7 @@ export async function resendGuestDiscordDm(clanId: string, userId: string): Prom
   const me = await requireClanPermission(clanId, "members");
   const g = requireGuestOf(clanId, userId);
   if (!g.guestDiscordId) return { ok: false, message: await tr("guestDiscord.notLinked"), at: Date.now() };
+  if (overLimit("send", me.id)) return { ok: false, message: await tr("errors.tooMany"), at: Date.now() };
   const r = await sendGuestDiscordDm(g.id);
   audit({ actorId: me.id, action: "guest.discord_dm", clanId, targetUserId: g.id, data: { guest: g.name, ok: r.ok } });
   revalidatePath("/clans", "layout");

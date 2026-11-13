@@ -136,6 +136,7 @@ nav:
           - Stripe (payments): installation/stripe.md
       - Operate:
           - Backups, upgrades and admin CLI: installation/operations.md
+          - Security hardening: installation/security.md
   - Development:
       - development/index.md
       - Architecture: development/architecture.md

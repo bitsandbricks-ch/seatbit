@@ -47,6 +47,8 @@ export const errors = {
   comingFirst: "Say you're coming first.",
   ticketFirst: "Confirm you have your ticket first.",
   noSeat: "That seat doesn't exist.",
+  notOnLan: "That person isn't on this event's list.",
+  tooMany: "That was a lot in a short time. Please wait a while and try again.",
   seatHeld: "{seat} is held by the leads.",
   seatTaken: "{seat} was just taken. Pick another one.",
   planFinalAsk: "The seat plan is final. Ask a lead.",

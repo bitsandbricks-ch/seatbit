@@ -12,6 +12,7 @@ import { isClanMember } from "@/lib/clans";
 import { canViewLan, isLanManager, requireLanManager, requireUser } from "@/lib/session";
 import { auditLan } from "@/lib/audit";
 import { fmtDate } from "@/lib/format";
+import { overLimit } from "@/lib/rate-limit";
 
 const { lan, lanOrga, lanInterest, lanNews, clanMember, lanType, seat, attendance } = schema;
 
@@ -186,6 +187,7 @@ export async function postNews(lanId: string, text: string): Promise<{ error?: s
   const t = text.trim();
   if (!t) return { error: await tr("errors.writeFirst") };
   if (t.length > 2000) return { error: await tr("errors.max2000") };
+  if (overLimit("send", me.id)) return { error: await tr("errors.tooMany") };
   db.insert(lanNews).values({ lanId, authorId: me.id, text: t }).run();
   const author = (await getDisplayNames(lanId, [me.id])).get(me.id) ?? me.firstName;
   lanPath(lanId);
