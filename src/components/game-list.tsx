@@ -4,6 +4,7 @@ import { addGame, deleteGame, setGameMark } from "@/app/lan-extras-actions";
 import type { GameView } from "@/lib/games";
 import { btnGhost, btnPrimary, input } from "./ui";
 import { useT } from "@/i18n/client";
+import { httpHref } from "@/lib/safe-url";
 
 /** Games to play at the LAN: suggest, vote, and tick off what you installed. */
 export function GameList({
@@ -61,7 +62,7 @@ export function GameList({
               <div className="min-w-0 flex-1">
                 <p className="font-medium text-fg">
                   {g.url ? (
-                    <a href={g.url} target="_blank" rel="noreferrer" className="hover:text-bit hover:underline">
+                    <a href={httpHref(g.url)} target="_blank" rel="noreferrer" className="hover:text-bit hover:underline">
                       {g.name}
                     </a>
                   ) : (

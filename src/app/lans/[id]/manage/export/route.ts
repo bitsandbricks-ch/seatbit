@@ -5,7 +5,14 @@ import { getCurrentUser, isLanManager } from "@/lib/session";
 import { getLanAccounts } from "@/lib/lan-accounts";
 import { profileLink, profilePattern } from "@/lib/profile-link";
 
-const csv = (v: string) => (/[",\n;]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
+/**
+ * One CSV cell. Text that starts like a formula (=, +, -, @, tab, CR) gets a leading apostrophe,
+ * so a nick such as "=HYPERLINK(...)" stays text when a lead opens the file in Excel or Sheets.
+ */
+const csv = (raw: string) => {
+  const v = /^[=+\-@\t\r]/.test(raw) ? `'${raw}` : raw;
+  return /[",\n\r;]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
+};
 
 /** CSV of the group for this LAN (seat, nick, LAN ID, name, email, status, ticket, profile link), e.g. to send to the event's organisers. */
 export async function GET(_: Request, { params }: RouteContext<"/lans/[id]/manage/export">) {
@@ -53,6 +60,7 @@ export async function GET(_: Request, { params }: RouteContext<"/lans/[id]/manag
   return new Response("\uFEFF" + lines.join("\n") + "\n", {
     headers: {
       "content-type": "text/csv; charset=utf-8",
+      "cache-control": "no-store",
       "content-disposition": `attachment; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(file)}`,
     },
   });

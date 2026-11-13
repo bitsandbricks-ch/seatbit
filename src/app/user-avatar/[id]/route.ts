@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/db";
-import { AVATAR_MIME, uploadsDir } from "@/lib/clans";
+import { uploadHeaders, uploadsDir } from "@/lib/clans";
 
 export async function GET(_: Request, { params }: RouteContext<"/user-avatar/[id]">) {
   const u = db
@@ -15,10 +15,6 @@ export async function GET(_: Request, { params }: RouteContext<"/user-avatar/[id
   const file = path.join(uploadsDir, name);
   if (!fs.existsSync(file)) return new Response("Not found", { status: 404 });
   return new Response(fs.readFileSync(file), {
-    headers: {
-      "content-type": AVATAR_MIME[path.extname(file).slice(1)] ?? "application/octet-stream",
-      // The URL carries the file name, so a new upload gets a new URL.
-      "cache-control": "public, max-age=31536000, immutable",
-    },
+    headers: uploadHeaders(file),
   });
 }

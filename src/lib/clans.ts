@@ -1,4 +1,4 @@
-import { and, eq, isNull, ne } from "drizzle-orm";
+import { and, eq, inArray, isNull, ne } from "drizzle-orm";
 import fs from "node:fs";
 import path from "node:path";
 import { db, schema } from "@/db";
@@ -24,6 +24,23 @@ export function clanRole(userId: string, clanId: string): ClanRole | null {
 export function isClanMember(userId: string, clanId: string) {
   const r = clanRole(userId, clanId);
   return !!r && r !== "pending";
+}
+
+/** Ids of everyone who shares a clan with this user (both full members, not pending), the user included. */
+export function clanmateIds(userId: string): Set<string> {
+  const mine = db
+    .select({ clanId: clanMember.clanId })
+    .from(clanMember)
+    .where(and(eq(clanMember.userId, userId), ne(clanMember.role, "pending")))
+    .all()
+    .map((r) => r.clanId);
+  if (!mine.length) return new Set([userId]);
+  const rows = db
+    .select({ userId: clanMember.userId })
+    .from(clanMember)
+    .where(and(inArray(clanMember.clanId, mine), ne(clanMember.role, "pending")))
+    .all();
+  return new Set([userId, ...rows.map((r) => r.userId)]);
 }
 
 /** Suspended by platform staff: its members lose access until it's restored. */
@@ -99,16 +116,42 @@ export const AVATAR_MIME: Record<string, string> = Object.fromEntries(
   Object.entries(IMAGE_TYPES).map(([m, e]) => [e, m]),
 );
 
-/** Stores an uploaded avatar and returns its file name. */
-export async function saveAvatar(clanId: string, file: File) {
-  const ext = IMAGE_TYPES[file.type];
-  if (!ext) throw await imageError("errors.imageType");
+/** The image type by its first bytes, or null. The browser's file.type is only a claim. */
+export function sniffImage(b: Buffer): string | null {
+  if (b.length >= 8 && b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return "png";
+  if (b.length >= 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "jpg";
+  if (b.length >= 6 && /^GIF8[79]a$/.test(b.subarray(0, 6).toString("latin1"))) return "gif";
+  if (b.length >= 12 && b.subarray(0, 4).toString("latin1") === "RIFF" && b.subarray(8, 12).toString("latin1") === "WEBP") return "webp";
+  return null;
+}
+
+/**
+ * Checks an uploaded picture (type, size, real image content) and stores it as `<prefix>-<time>.<ext>`.
+ * The extension comes from the content, so the file is always served with a matching image type.
+ */
+export async function saveUpload(prefix: string, file: File) {
+  if (!IMAGE_TYPES[file.type]) throw await imageError("errors.imageType");
   if (file.size > 2 * 1024 * 1024) throw await imageError("errors.imageSize");
+  const buf = Buffer.from(await file.arrayBuffer());
+  const ext = sniffImage(buf);
+  if (!ext) throw await imageError("errors.imageType");
   fs.mkdirSync(uploadsDir, { recursive: true });
-  const name = `clan-${clanId}-${Date.now()}.${ext}`;
-  fs.writeFileSync(path.join(uploadsDir, name), Buffer.from(await file.arrayBuffer()));
+  const name = `${prefix}-${Date.now()}.${ext}`;
+  fs.writeFileSync(path.join(uploadsDir, name), buf);
   return name;
 }
+
+/** Stores an uploaded avatar and returns its file name. */
+export const saveAvatar = (clanId: string, file: File) => saveUpload(`clan-${clanId}`, file);
+
+/** Headers for serving an uploaded picture: never sniffed or run as a page, even if it slipped through. */
+export const uploadHeaders = (file: string) => ({
+  "content-type": AVATAR_MIME[path.extname(file).slice(1)] ?? "application/octet-stream",
+  "x-content-type-options": "nosniff",
+  "content-security-policy": "default-src 'none'; sandbox",
+  // The URL carries the file name, so a new upload gets a new URL.
+  "cache-control": "public, max-age=31536000, immutable",
+});
 
 export function avatarUrl(c: { id: string; avatar: string | null }) {
   return c.avatar ? `/clan-avatar/${c.id}?v=${encodeURIComponent(c.avatar)}` : null;

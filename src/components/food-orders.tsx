@@ -12,6 +12,7 @@ import type { FoodOrderView } from "@/lib/food";
 import { DateTimePicker } from "./date-time-picker";
 import { Card, Pill, btnGhost, btnPrimary, btnSecondary, input, label } from "./ui";
 import { useT } from "@/i18n/client";
+import { httpHref } from "@/lib/safe-url";
 
 const money = (cents: number) => (cents / 100).toFixed(2);
 
@@ -126,7 +127,7 @@ function OrderCard({
             <p>
               {o.shop && <span className="text-fg">{o.shop}</span>}
               {o.menuUrl && (
-                <a href={o.menuUrl} target="_blank" rel="noreferrer" className={`${o.shop ? "ml-2 " : ""}text-bit hover:underline`}>
+                <a href={httpHref(o.menuUrl)} target="_blank" rel="noreferrer" className={`${o.shop ? "ml-2 " : ""}text-bit hover:underline`}>
                   {t("food.menu")} <span aria-hidden>↗</span>
                 </a>
               )}
