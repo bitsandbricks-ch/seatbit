@@ -425,9 +425,10 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               </Link>
             </Notice>
           )}
-          <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+          {/* The numbers at a glance, one compact strip; each opens the tab with the details. */}
+          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-card border border-line bg-line sm:grid-cols-4">
             <Stat label="Coming" value={`${going.length}${l.capacity ? ` / ${l.capacity}` : ""}`} sub={`${count("waitlist")} waitlist`} href={`/lans/${l.id}/manage?tab=attendees`} />
-            <Stat label="Unsure / no answer" value={`${count("maybe")} / ${noAnswer}`} sub={`${count("declined")} not coming · who's missing →`} href={`/lans/${l.id}/manage?tab=missing`} />
+            <Stat label="Unsure / no answer" value={`${count("maybe")} / ${noAnswer}`} sub={`${count("declined")} not coming`} href={`/lans/${l.id}/manage?tab=missing`} />
             <Stat label="Tickets" value={`${ticketsConfirmed} / ${going.length}`} sub={`${ticketsReported} to confirm`} href={`/lans/${l.id}/manage?tab=attendees`} />
             <Stat label="Seats" value={`${seated} / ${going.length}`} sub={seats.length ? `${freeSeats} free of ${seats.length}` : "no seats yet"} href={`/lans/${l.id}/manage?tab=seats`} />
           </div>
@@ -464,9 +465,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
           <Card title="Reminders">
             <div className="space-y-4 text-sm">
               <p className="text-muted">
-                Sent automatically {l.reminderDays} day(s) before the answer deadline (to undecided members) and the
-                ticket deadline (to attendees without a ticket), and the day before the LAN (to everyone coming). Each
-                one goes out once per person.
+                Go out automatically {l.reminderDays} day(s) before each deadline and the day before the LAN, once per person.
               </p>
               {due.length > 0 && <p className="text-warn">Reminder window open: {due.join(", ")}.</p>}
               <ReminderButtons
@@ -722,10 +721,10 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
 
 function Stat({ label, value, sub, href }: { label: string; value: string; sub: string; href: string }) {
   return (
-    <Link href={href} className="rounded-card border border-line bg-surface p-4 hover:border-muted/50">
-      <p className="text-xs uppercase tracking-wide text-faint">{label}</p>
-      <p className="mt-1 text-2xl font-bold tabular-nums">{value}</p>
-      <p className="text-xs text-muted">{sub}</p>
+    <Link href={href} className="min-w-0 bg-surface px-3 py-2.5 transition hover:bg-raised sm:px-4 sm:py-3">
+      <p className="truncate text-xs text-muted">{label}</p>
+      <p className="text-xl font-bold tabular-nums">{value}</p>
+      <p className="truncate text-xs text-faint">{sub}</p>
     </Link>
   );
 }

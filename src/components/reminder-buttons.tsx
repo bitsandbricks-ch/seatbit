@@ -24,19 +24,20 @@ export function ReminderButtons({
   };
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="w-full text-sm text-muted sm:w-auto">Remind now:</span>
         {counts.signup !== null && (
           <button disabled={draft || pending || !counts.signup} className={btnSecondary} onClick={() => send("signup", "answer", counts.signup!)}>
-            Remind undecided ({counts.signup})
+            Undecided ({counts.signup})
           </button>
         )}
         {counts.payment !== null && (
           <button disabled={draft || pending || !counts.payment} className={btnSecondary} onClick={() => send("payment", "ticket", counts.payment!)}>
-            Remind without ticket ({counts.payment})
+            No ticket ({counts.payment})
           </button>
         )}
         <button disabled={draft || pending || !counts.event} className={btnSecondary} onClick={() => send("event", "event", counts.event)}>
-          Remind attendees ({counts.event})
+          Everyone coming ({counts.event})
         </button>
       </div>
       {draft && <p className="text-sm text-muted">Reminders start once you publish the event.</p>}
