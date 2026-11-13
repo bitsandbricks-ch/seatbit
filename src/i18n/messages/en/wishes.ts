@@ -1,0 +1,15 @@
+export const wishes = {
+  whoNear: "Who do you want to sit with, and who not right next to?",
+  near: "Near",
+  notNextTo: "Not next to",
+  where: "Where in the row?",
+  any: "Don't mind",
+  edge: "At the edge",
+  middle: "In the middle",
+  preferred: "Preferred seat",
+  anySeat: "Any",
+  note: "Anything else for the leads?",
+  notePlaceholder: "e.g. need a power socket for a second PC",
+  saved: "Saved. The leads will try to make it work.",
+  save: "Save wishes",
+};

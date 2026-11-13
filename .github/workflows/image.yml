@@ -5,6 +5,7 @@ on:
     branches: [main]
     tags: ["v*"]
   pull_request:
+  merge_group:
   workflow_dispatch:
 
 permissions:
@@ -17,8 +18,8 @@ concurrency:
 
 env:
   IMAGE: ghcr.io/${{ github.repository }}
-  # Push on main/tags/manual runs; PRs only build (and warm their own cache).
-  PUSH: ${{ github.event_name != 'pull_request' }}
+  # Push on main/tags/manual runs; PRs and the merge queue only build (and warm their own cache).
+  PUSH: ${{ github.event_name != 'pull_request' && github.event_name != 'merge_group' }}
 
 jobs:
   build:
@@ -81,7 +82,7 @@ jobs:
 
   merge:
     name: Push multi-arch tags
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && github.event_name != 'merge_group'
     needs: build
     runs-on: ubuntu-latest
     steps:

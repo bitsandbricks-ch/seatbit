@@ -2,16 +2,14 @@ import Link from "next/link";
 import { desc } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { setPlatformRole, suspendClanAction, suspendUserAction, unsuspendClanAction, unsuspendUserAction } from "@/app/moderation-actions";
-import { Card, Notice, Page, PageHeader, Pill, btnDanger, btnGhost, btnSecondary, input } from "@/components/ui";
+import { Card, Notice, Page, PageHeader, Pill, btnDanger, btnGhost, input } from "@/components/ui";
 import { ClanAvatar } from "@/components/clan-avatar";
 import { lanDay } from "@/lib/format";
 import { requirePlatform } from "@/lib/session";
 import { STAFF_ROLES, assignableRoles, canSetRole, isStaff, outranks, platformCan } from "@/lib/platform-roles";
-import { openReportCount } from "@/lib/reports";
 import type { T } from "@/i18n/translate";
 import { getLegal } from "@/lib/legal";
 import { backupStatus } from "@/lib/backup";
-import { donationsEnabled } from "@/lib/donations";
 import { getDefaultNames } from "@/lib/lans";
 import { getT } from "@/i18n/server";
 
@@ -26,7 +24,6 @@ export default async function AdminPage() {
     suspend: platformCan(me, "suspend"),
   };
   const roles = assignableRoles(me);
-  const openReports = can.reports ? openReportCount() : 0;
   const lans = db
     .select()
     .from(schema.lan)
@@ -47,40 +44,6 @@ export default async function AdminPage() {
       <PageHeader
         title={t("adminLog.platformAdmin")}
         subtitle={t("admin.subtitle")}
-        actions={
-          <>
-            {can.reports && (
-              <Link href="/admin/reports" className={btnSecondary}>
-                {t("moderation.reports")}
-                {openReports > 0 && <Pill tone="red">{openReports}</Pill>}
-              </Link>
-            )}
-            <Link href="/admin/stats" className={btnSecondary}>
-              {t("admin.usage")}
-            </Link>
-            {can.owner && (
-              <Link href="/admin/backups" className={btnSecondary}>
-                {t("admin.backups")}
-              </Link>
-            )}
-            <Link href="/admin/health" className={btnSecondary}>
-              {t("health.title")}
-            </Link>
-            <Link href="/admin/log" className={btnSecondary}>
-              {t("clanHeader.log")}
-            </Link>
-            {can.owner && donationsEnabled() && (
-              <Link href="/admin/donations" className={btnSecondary}>
-                {t("adminDonations.title")}
-              </Link>
-            )}
-            {can.settings && (
-              <Link href="/admin/settings" className={btnSecondary}>
-                {t("clanSettings.platformSettings")}
-              </Link>
-            )}
-          </>
-        }
       >
         <p className="text-sm text-muted">
           {t("platformRoles.you", { role: t(`platformRoles.name.${me.role as (typeof STAFF_ROLES)[number]}`) })}{" "}

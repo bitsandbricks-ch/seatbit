@@ -1,0 +1,25 @@
+import type { Messages } from "../en";
+
+export const mailVar: Messages["mailVar"] = {
+  firstName: "Ihr Vorname",
+  firstName_guest: "Vorname des Gasts",
+  clan: "Name des Clans (steht auch im Kopf)",
+  inviter: "Lead, der sie geschickt hat",
+  events: "Events, für die die Person angemeldet ist (leer, wenn keine)",
+  link: "Link zum Event (der Button führt dorthin)",
+  link_claim: "Persönlicher Übernahme-Link (der Button führt dorthin)",
+  lan: "Name des Events",
+  start: "Startdatum und -zeit",
+  location: "Ort (leer, wenn nicht gesetzt)",
+  deadline: "Antwortfrist",
+  deadline_ticket: "Ticketfrist",
+  deadline_optional: "Antwortfrist (leer, wenn nicht gesetzt)",
+  price: "Ticketpreis (leer, wenn nicht gesetzt)",
+  ticketUrl: "Link zum Ticketshop (leer, wenn nicht gesetzt)",
+  seat: "Ihr Platz (leer, wenn keiner)",
+  seat_final: "Ihr Platz (leer, wenn keiner oder der Plan nicht fixiert ist)",
+  seatInfo: "«Du sitzt auf F3.» oder ein Hinweis, dass noch kein Platz da ist",
+  reason: "Grund, wie der Lead ihn geschrieben hat (leer, wenn keiner)",
+  news: "Der News-Text",
+  author: "Lead, der sie geschrieben hat",
+};

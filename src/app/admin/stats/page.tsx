@@ -37,7 +37,6 @@ export default async function UsageStatsPage({ searchParams }: PageProps<"/admin
   return (
     <Page>
       <PageHeader
-        back={{ href: "/admin", label: t("adminLog.platformAdmin") }}
         title={t("usage.title")}
         subtitle={t("usage.subtitle")}
         actions={

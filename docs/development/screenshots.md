@@ -23,5 +23,11 @@ Add an entry to `SHOTS` in `scripts/screenshots.ts`: a name starting with `phone
 
 ## Automation
 
-- **CI** renders every page on each pull request and attaches the screenshots to the run, so reviewers can look at them.
+- **CI** renders every page on each pull request and attaches the screenshots to the run (artifact *screenshots*), so reviewers can look at them.
 - After a merge to `main` that touches the UI, the **Screenshots** workflow regenerates them and opens (or updates) a pull request *Update screenshots*. Merge it to publish the new pictures to the README and the docs.
+
+## Screenshots in pull requests
+
+Feature pull requests **don't commit changed screenshots**. Every UI change re-renders many of the same PNGs, and binary files can't be merged, so parallel branches would all conflict on them. The bot pull request updates them after the merge instead. CI fails a pull request that modifies an existing file in `docs/screenshots/` (the bot's own branch is exempt); undo it with `git checkout origin/main -- docs/screenshots`.
+
+A **new** shot (a new page or tab) is a new file and can't conflict, so commit it when the docs you write show it. Put pictures for reviewers in the pull request description, or point them at the CI artifact.

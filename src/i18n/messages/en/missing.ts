@@ -1,0 +1,20 @@
+export const missing = {
+  none: "Nobody is missing anything. Everyone answered, has a ticket and a seat.",
+  intro:
+    "Who still owes the group something, step by step. A nudge goes out as a Discord DM (if they kept DMs on) and as a mail (if they kept email reminders on). Each person gets at most one nudge per step every {hours} hours.",
+  steps: "Steps",
+  leadTodo: "lead to-do",
+  dmMail: "DM + mail",
+  dm: "Discord DM",
+  mailOnly: "Mail only",
+  cantReach: "Can't reach",
+  nudgedAgo: "nudged {when}",
+  nudged: "Nudged {count}",
+  skipped: "{count} nudged recently",
+  unreachable: "{count} can't be reached",
+  nudgeAll: "Nudge all {count}",
+  allNudged: "All nudged",
+  nudgedShort: "Nudged",
+  nudgeName: "Nudge {name}",
+  nudge: "Nudge",
+};

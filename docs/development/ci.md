@@ -6,12 +6,21 @@ All checks run on GitHub Actions. Every pull request must pass them before it is
 
 | Workflow | When | What |
 | --- | --- | --- |
-| **CI** (`ci.yml`) | Pull requests, pushes to `main` | Lint, typecheck, build, then render every page on demo data (smoke test). The screenshots are attached to the run. |
-| **Docs** (`docs.yml`) | Pull requests; `main` publishes | `mkdocs build --strict` (broken links and missing images fail), deploy to GitHub Pages. |
-| **Container image** (`image.yml`) | Pull requests build; `main` and `v*` tags push | Native amd64 and arm64 builds, merged into one multi-arch image on GHCR. |
+| **CI** (`ci.yml`) | Pull requests, merge queue, pushes to `main` | Existing screenshots unchanged, lint, `drizzle-kit check` (colliding migrations), untranslated text, typecheck, build, then render every page on demo data (smoke test). The screenshots are attached to the run. |
+| **Docs** (`docs.yml`) | Pull requests, merge queue; `main` publishes | `mkdocs build --strict` (broken links and missing images fail), deploy to GitHub Pages. |
+| **Container image** (`image.yml`) | Pull requests and the merge queue build; `main` and `v*` tags push | Native amd64 and arm64 builds, merged into one multi-arch image on GHCR. |
 | **Screenshots** (`screenshots.yml`) | Pushes to `main` that touch the UI | Regenerate `docs/screenshots/` and open or update an *Update screenshots* pull request. See [Screenshots](screenshots.md). |
 
 Dependabot opens weekly npm updates (minor and patch grouped) and monthly GitHub Actions and pip updates.
+
+## Merging
+
+Many pull requests run in parallel, and each merge makes the others stale. Two repository settings keep that cheap; a maintainer turns them on under **Settings**:
+
+1. **General → Pull Requests → Allow auto-merge.** A pull request can then be set to *merge when ready* and lands as soon as its checks are green and it is approved, instead of waiting to be noticed.
+2. **Rules → Rulesets → New branch ruleset** for `main` with **Require status checks to pass** (*Lint, typecheck, build*, *build* from Docs, *Build amd64* and *Build arm64*) and **Require merge queue**. The queue merges ready pull requests one by one and tests each on top of the ones before it, so two pull requests that each pass alone can't break `main` together. The CI, Docs and Container image workflows run on `merge_group` for this.
+
+Without the merge queue, merge ready pull requests soon after they are green, oldest first.
 
 ## Image tags
 

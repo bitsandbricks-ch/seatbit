@@ -47,7 +47,7 @@ export default async function BackupsPage() {
 
   return (
     <Page>
-      <PageHeader back={{ href: "/admin", label: t("adminLog.platformAdmin") }} title={t("backups.title")} subtitle={t("backups.subtitle")} />
+      <PageHeader title={t("backups.title")} subtitle={t("backups.subtitle")} />
 
       {status.lastError && (
         <Notice tone="danger">

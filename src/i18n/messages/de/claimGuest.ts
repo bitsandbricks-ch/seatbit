@@ -1,0 +1,28 @@
+import type { Messages } from "../en";
+
+export const claimGuest: Messages["claimGuest"] = {
+  waiting: "Wartet auf einen Admin",
+  declined: "Abgelehnt",
+  signedUp: "Angemeldet für {events}",
+  notSignedUp: "Noch für nichts angemeldet",
+  cancel: "Anfrage zurückziehen",
+  meTake: "Das bin ich, übernehmen",
+  me: "Das bin ich",
+  notMe: "Nicht ich",
+  title: "Stehst du schon auf der Liste?",
+  subtitle: "Leads fügen Leute manchmal als Gäste hinzu, bevor sie sich registrieren. Wenn einer davon du bist, übernimm ihn, damit Events, Platz und Nicks erhalten bleiben.",
+  how: "So funktioniert's",
+  howMatch: "Ein Gast mit gleichem Namen oder Nick wie du wandert sofort auf dein Konto.",
+  howAdmin: "Ein Admin des Clans prüft, ob es wirklich du bist, dann wird alles übernommen.",
+  howOther: "Wählst du einen anderen Gast, fragt das zuerst einen Admin.",
+  howOne: "Du kannst jeweils einen Gast anfragen.",
+  howLink: "Persönlichen Link von deinen Leads bekommen? Wer ihn öffnet, übernimmt den Gast sofort.",
+  pending: "Du hast angefragt, {name} zu übernehmen. Die Admins von {clan} wurden informiert und bestätigen es.",
+  looksLikeYou: "Sieht nach dir aus",
+  clanGuests: "Gäste des Clans",
+  none: "In {clan} gibt es gerade keine Gäste, also gibt es nichts zu übernehmen.",
+  noMatch: "Kein Gast hat deinen Namen oder Nick. Wenn einer der anderen unten du bist, wähl ihn.",
+  others: "Andere Gäste",
+  all: "Alle Gäste",
+  noneOfThese: "Keiner davon, weiter",
+};

@@ -56,7 +56,6 @@ export default async function HealthPage() {
   return (
     <Page>
       <PageHeader
-        back={{ href: "/admin", label: "Admin" }}
         title={t("health.title")}
         subtitle={t("health.subtitle")}
         actions={
