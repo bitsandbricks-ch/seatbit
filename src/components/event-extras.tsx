@@ -4,15 +4,17 @@ import type { InterestAnswer } from "@/db/schema";
 import { cancelLan, copyForNextYear, deleteNews, postNews, setArrived, setMyInterest, setMyInterests } from "@/app/event-actions";
 import { btn, btnDanger, btnGhost, btnPrimary, btnSecondary, input } from "./ui";
 import { useT } from "@/i18n/client";
+import type { MessageKey } from "@/i18n/translate";
 
-const INTEREST: { a: InterestAnswer; label: string; active: string }[] = [
-  { a: "yes", label: "I'd come", active: "border-bit bg-bit text-on-bit hover:bg-bit-hover" },
-  { a: "maybe", label: "Maybe", active: "border-warn bg-warn text-on-bit" },
-  { a: "no", label: "Not this time", active: "border-danger/50 bg-danger/15 text-danger" },
+const INTEREST: { a: InterestAnswer; label: MessageKey; active: string }[] = [
+  { a: "yes", label: "eventUi.idCome", active: "border-bit bg-bit text-on-bit hover:bg-bit-hover" },
+  { a: "maybe", label: "eventUi.maybe", active: "border-warn bg-warn text-on-bit" },
+  { a: "no", label: "eventUi.notThisTime", active: "border-danger/50 bg-danger/15 text-danger" },
 ];
 
 /** Interest check answer: would you come? */
 export function InterestButtons({ lanId, current }: { lanId: string; current: InterestAnswer | null }) {
+  const t = useT();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   return (
@@ -29,13 +31,13 @@ export function InterestButtons({ lanId, current }: { lanId: string; current: In
                 try {
                   await setMyInterest(lanId, o.a);
                 } catch (e) {
-                  setError(e instanceof Error ? e.message : "Failed");
+                  setError(e instanceof Error ? e.message : t("eventUi.failed"));
                 }
               })
             }
             className={`${btn} border px-2 ${current === o.a ? o.active : "border-line bg-raised text-fg hover:border-muted/40"}`}
           >
-            {o.label}
+            {t(o.label)}
           </button>
         ))}
       </div>
@@ -46,6 +48,7 @@ export function InterestButtons({ lanId, current }: { lanId: string; current: In
 
 /** Leads write news for everyone at the event. */
 export function NewsComposer({ lanId, published }: { lanId: string; published: boolean }) {
+  const t = useT();
   const [pending, start] = useTransition();
   const [text, setText] = useState("");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -59,7 +62,7 @@ export function NewsComposer({ lanId, published }: { lanId: string; published: b
           if (r.error) setMsg({ ok: false, text: r.error });
           else {
             setText("");
-            setMsg({ ok: true, text: published ? `Posted. ${r.sent ?? 0} people got it by mail or DM.` : "Saved. It goes out to nobody while the event is a draft." });
+            setMsg({ ok: true, text: published ? t("eventUi.newsPosted", { count: r.sent ?? 0 }) : t("eventUi.newsDraft") });
           }
         });
       }}
@@ -69,14 +72,14 @@ export function NewsComposer({ lanId, published }: { lanId: string; published: b
         onChange={(e) => setText(e.target.value)}
         rows={3}
         maxLength={2000}
-        placeholder="e.g. Doors open at 10:00. Bring an extension cord, there are only 2 sockets per seat."
+        placeholder={t("eventUi.newsPlaceholder")}
         className={input}
       />
       <div className="flex flex-wrap items-center gap-3">
         <button disabled={pending || !text.trim()} className={btnPrimary}>
-          {pending ? "Sending…" : "Post news"}
+          {pending ? t("eventUi.sending") : t("eventUi.postNews")}
         </button>
-        <span className="text-xs text-muted">Shown on the event page and sent to everyone coming, unsure or on the waitlist.</span>
+        <span className="text-xs text-muted">{t("eventUi.newsHint")}</span>
       </div>
       {msg && <p className={`text-sm ${msg.ok ? "text-bit" : "text-danger"}`}>{msg.text}</p>}
     </form>
@@ -84,16 +87,18 @@ export function NewsComposer({ lanId, published }: { lanId: string; published: b
 }
 
 export function DeleteNewsButton({ id }: { id: string }) {
+  const t = useT();
   const [pending, start] = useTransition();
   return (
     <button disabled={pending} className="text-xs text-faint hover:text-danger" onClick={() => start(() => deleteNews(id))}>
-      Delete
+      {t("eventUi.delete")}
     </button>
   );
 }
 
 /** "I'm here" on the day of the event. */
 export function CheckInButton({ lanId, arrived }: { lanId: string; arrived: boolean }) {
+  const t = useT();
   const [pending, start] = useTransition();
   return (
     <button
@@ -101,20 +106,21 @@ export function CheckInButton({ lanId, arrived }: { lanId: string; arrived: bool
       className={arrived ? btnSecondary : btnPrimary}
       onClick={() => start(() => setArrived(lanId, null, !arrived))}
     >
-      {arrived ? "✓ You're checked in (undo)" : "I'm here"}
+      {arrived ? t("eventUi.checkedIn") : t("eventUi.imHere")}
     </button>
   );
 }
 
 /** Cancel the event, with an optional reason for everyone. */
 export function CancelEvent({ lanId, published }: { lanId: string; published: boolean }) {
+  const t = useT();
   const [pending, start] = useTransition();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
   if (!open) {
     return (
       <button className={btnSecondary} onClick={() => setOpen(true)}>
-        Cancel event…
+        {t("eventUi.cancelOpen")}
       </button>
     );
   }
@@ -125,20 +131,20 @@ export function CancelEvent({ lanId, published }: { lanId: string; published: bo
         onChange={(e) => setReason(e.target.value)}
         rows={2}
         maxLength={500}
-        placeholder="Why? (optional, shown to everyone)"
+        placeholder={t("eventUi.cancelWhy")}
         className={input}
       />
       <p className="text-xs text-muted">
         {published
-          ? "Everyone who answered gets a mail and DM. The event stays visible as cancelled; you can undo it."
-          : "It's a draft, so nobody is told."}
+          ? t("eventUi.cancelPublished")
+          : t("eventUi.cancelDraft")}
       </p>
       <div className="flex gap-2">
         <button disabled={pending} className={btnDanger} onClick={() => start(async () => void (await cancelLan(lanId, reason)))}>
-          {pending ? "Cancelling…" : "Cancel the event"}
+          {pending ? t("eventUi.cancelling") : t("eventUi.cancelEvent")}
         </button>
         <button disabled={pending} className={btnGhost} onClick={() => setOpen(false)}>
-          Keep it
+          {t("eventUi.keepIt")}
         </button>
       </div>
     </div>
@@ -146,10 +152,11 @@ export function CancelEvent({ lanId, published }: { lanId: string; published: bo
 }
 
 export function CopyNextYear({ lanId }: { lanId: string }) {
+  const t = useT();
   const [pending, start] = useTransition();
   return (
     <button disabled={pending} className={btnSecondary} onClick={() => start(() => copyForNextYear(lanId))}>
-      {pending ? "Copying…" : "Copy for next year"}
+      {pending ? t("eventUi.copying") : t("eventUi.copyNextYear")}
     </button>
   );
 }

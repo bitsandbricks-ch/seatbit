@@ -2,6 +2,7 @@
 import type { ChecklistStep } from "@/lib/checklist";
 import { TicketConfirm } from "./ticket-confirm";
 import { BookedToggle } from "./seat-booking";
+import { useT } from "@/i18n/client";
 
 export function LanChecklist({
   lanId,
@@ -95,15 +96,16 @@ function ChecklistStrip({
   planUrl?: string;
   seatBooked: boolean;
 }) {
+  const t = useT();
   const all = done === steps.length;
   return (
-    <section aria-label="Your checklist" className="rounded-card border border-line bg-surface p-3 sm:p-4">
+    <section aria-label={t("checklist.title")} className="rounded-card border border-line bg-surface p-3 sm:p-4">
       <div className="mb-3 flex items-center gap-3">
-        <h2 className="text-sm font-semibold text-fg">Your checklist</h2>
+        <h2 className="text-sm font-semibold text-fg">{t("checklist.title")}</h2>
         <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-raised">
           <div className="h-full bg-bit transition-all" style={{ width: `${(done / steps.length) * 100}%` }} />
         </div>
-        <span className={`text-sm ${all ? "font-medium text-bit" : "text-muted"}`}>{all ? "All set" : `${done} / ${steps.length}`}</span>
+        <span className={`text-sm ${all ? "font-medium text-bit" : "text-muted"}`}>{all ? t("checklist.allSet") : `${done} / ${steps.length}`}</span>
       </div>
       <ol className={`grid gap-x-4 gap-y-3 sm:grid-cols-2 ${steps.length >= 4 ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
         {steps.map((s, i) => (

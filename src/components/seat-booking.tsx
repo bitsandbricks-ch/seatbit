@@ -2,15 +2,17 @@
 import { useState, useTransition } from "react";
 import { adminRemindToBook, setMySeatBooked } from "@/app/lan-extras-actions";
 import { btnSecondary } from "./ui";
+import { useT } from "@/i18n/client";
 
 /** "I booked it on the event's seat plan" checkbox, with a link to that plan. */
 export function BookedToggle({ lanId, booked, planUrl }: { lanId: string; booked: boolean; planUrl: string }) {
+  const t = useT();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   return (
     <div className="space-y-2">
       <a href={planUrl} target="_blank" rel="noreferrer" className="inline-flex text-sm text-bit hover:underline">
-        Open the event&apos;s seat plan <span aria-hidden>↗</span>
+        {t("eventUi.openPlan")} <span aria-hidden>↗</span>
       </a>
       <label className="flex items-center gap-3 rounded-md border border-line bg-raised px-3 py-2.5 text-sm">
         <input
@@ -25,13 +27,13 @@ export function BookedToggle({ lanId, booked, planUrl }: { lanId: string; booked
               try {
                 await setMySeatBooked(lanId, v);
               } catch (err) {
-                setError(err instanceof Error ? err.message : "Failed");
+                setError(err instanceof Error ? err.message : t("eventUi.failed"));
               }
             });
           }}
           className="h-5 w-5 accent-bit"
         />
-        <span>I booked it</span>
+        <span>{t("eventUi.booked")}</span>
       </label>
       {error && <p className="text-sm text-danger">{error}</p>}
     </div>
