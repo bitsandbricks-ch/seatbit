@@ -6,6 +6,8 @@ import type { Clan } from "@/db/schema";
 import { audit } from "./audit";
 import { appUrl } from "./mail";
 import { getBoolSetting, getSetting } from "./settings";
+import { emitPlatformEvent } from "./platform-events";
+import { onDonationPaid, onDonationRefunded } from "./donations";
 
 /**
  * Voluntary "Supporter" payments for hosted instances.
@@ -28,7 +30,7 @@ const GRACE_MS = 3 * 86400_000;
 
 export type SupportPlan = "year" | "month";
 
-function config() {
+export function config() {
   const v = (k: string) => getSetting(k)?.trim() || undefined;
   return {
     enabled: getBoolSetting("billing.enabled"),
@@ -98,7 +100,7 @@ export class BillingError extends Error {}
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Obj = Record<string, any>;
 
-async function stripe(method: "GET" | "POST" | "DELETE", path: string, params?: Params, timeoutMs = 10_000): Promise<Obj> {
+export async function stripe(method: "GET" | "POST" | "DELETE", path: string, params?: Params, timeoutMs = 10_000): Promise<Obj> {
   const key = config().secretKey;
   if (!key) throw new BillingError("Stripe isn't set up");
   const body = params && method !== "GET" ? encode(params) : undefined;
@@ -126,30 +128,40 @@ async function stripe(method: "GET" | "POST" | "DELETE", path: string, params?: 
 
 // ---------- Prices (for the button labels) ----------
 
-type PriceInfo = { label: string } | null;
+type PriceInfo = { label: string; amount: number; currency: string } | null;
 const g = globalThis as unknown as { __seatbitPrices?: Map<string, { at: number; info: PriceInfo }> };
 const priceCache = (g.__seatbitPrices ??= new Map());
 
 /** "CHF 30 / year", from Stripe and cached for an hour. Null when Stripe can't be reached. */
 export async function priceLabel(plan: SupportPlan): Promise<string | null> {
+  return (await priceInfo(plan))?.label ?? null;
+}
+
+/** Amount and currency of the annual price, e.g. to see whether a donation covers a year. */
+export async function annualPrice() {
+  const p = await priceInfo("year");
+  return p ? { amount: p.amount, currency: p.currency } : null;
+}
+
+async function priceInfo(plan: SupportPlan): Promise<PriceInfo> {
   const id = config().prices[plan];
   if (!id) return null;
   const hit = priceCache.get(id);
   // Failures are retried after five minutes, successes after an hour.
-  if (hit && Date.now() - hit.at < (hit.info ? 3600_000 : 300_000)) return hit.info?.label ?? null;
+  if (hit && Date.now() - hit.at < (hit.info ? 3600_000 : 300_000)) return hit.info;
   let info: PriceInfo = null;
   try {
     const p = await stripe("GET", `/prices/${encodeURIComponent(id)}`, undefined, 3_000);
     if (typeof p.unit_amount === "number" && p.currency) {
       const amount = p.unit_amount % 100 === 0 ? String(p.unit_amount / 100) : (p.unit_amount / 100).toFixed(2);
       // The interval ("/ year") is added in the reader's language.
-      info = { label: `${String(p.currency).toUpperCase()} ${amount}` };
+      info = { label: `${String(p.currency).toUpperCase()} ${amount}`, amount: p.unit_amount, currency: String(p.currency).toUpperCase() };
     }
   } catch {
     // Labels fall back to "Yearly" / "Monthly".
   }
   priceCache.set(id, { at: Date.now(), info });
-  return info?.label ?? null;
+  return info;
 }
 
 // ---------- Checkout and portal ----------
@@ -223,7 +235,15 @@ export async function handleStripeEvent(event: Obj): Promise<boolean> {
   const o = event.data?.object ?? {};
   switch (event.type) {
     case "checkout.session.completed":
-      await onCheckoutCompleted(o);
+      if (o.mode === "payment") await onDonationPaid(o);
+      else await onCheckoutCompleted(o);
+      break;
+    case "checkout.session.async_payment_succeeded":
+      // Delayed payment methods: the donation is only paid now.
+      if (o.mode === "payment") await onDonationPaid(o);
+      break;
+    case "charge.refunded":
+      onDonationRefunded(o);
       break;
     case "invoice.paid":
       await onInvoicePaid(o);
@@ -260,7 +280,7 @@ function subscriptionPeriod(sub: Obj): { end?: Date; plan?: SupportPlan } {
   };
 }
 
-function extendSupport(c: Clan, until: Date | undefined, set: Partial<Clan>) {
+export function extendSupport(c: Clan, until: Date | undefined, set: Partial<Clan>, extra: { donation?: boolean } = {}) {
   const prev = c.supporterUntil;
   const supporterUntil = until && (!prev || until > prev) ? until : prev;
   db.update(schema.clan).set({ ...set, supporterUntil }).where(eq(schema.clan.id, c.id)).run();
@@ -269,7 +289,14 @@ function extendSupport(c: Clan, until: Date | undefined, set: Partial<Clan>) {
       actorId: null,
       action: "clan.supporter",
       clanId: c.id,
-      data: { until: supporterUntil.getTime(), plan: set.supporterPlan ?? c.supporterPlan ?? undefined, renewed: !!prev },
+      data: { until: supporterUntil.getTime(), plan: set.supporterPlan ?? c.supporterPlan ?? undefined, renewed: !!prev, donation: extra.donation },
+    });
+    const renewed = !!prev && prev.getTime() + GRACE_MS > Date.now();
+    emitPlatformEvent({
+      type: renewed ? "supporter.renewed" : "supporter.started",
+      clanName: c.name,
+      plan: set.supporterPlan ?? c.supporterPlan ?? undefined,
+      until: supporterUntil,
     });
   }
 }
@@ -334,4 +361,5 @@ function onSubscriptionDeleted(sub: Obj) {
   const until = c.supporterUntil && c.supporterUntil < ended ? c.supporterUntil : ended;
   db.update(schema.clan).set({ stripeSubscriptionId: null, supporterUntil: until }).where(eq(schema.clan.id, c.id)).run();
   audit({ actorId: null, action: "clan.supporter_end", clanId: c.id });
+  emitPlatformEvent({ type: "supporter.ended", clanName: c.name });
 }

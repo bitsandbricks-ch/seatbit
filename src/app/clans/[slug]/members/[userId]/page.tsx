@@ -1,3 +1,5 @@
+import { DonorBadge } from "@/components/support-card";
+import { isDonor } from "@/lib/donations";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, asc, eq } from "drizzle-orm";
@@ -129,6 +131,7 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
             {/* Managers and the member themself also see the full name the clan's display leaves out. */}
             {seesPrivate && fullName !== shownName && <span>{fullName}</span>}
             {u.isGuest && <Pill>{t("member.guestNoLogin")}</Pill>}
+            {!u.isGuest && isDonor(u.id) && <DonorBadge label={t("donate.badgeLabel")} title={t("donate.badgePerson")} />}
             <span>{t("member.since", { date: fmtWeekday(membership.createdAt, t.locale) })}</span>
           </span>
         }

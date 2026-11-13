@@ -46,6 +46,9 @@ A value saved in the platform settings wins over the environment variable. Clear
 | Stripe secret key, webhook signing secret | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | |
 | Annual and monthly price ID | `STRIPE_PRICE_ANNUAL`, `STRIPE_PRICE_MONTHLY` | |
 | Refund policy (sentence in the terms) | `BILLING_REFUND_POLICY` | full refund within 14 days |
+| One-off donations on/off | `DONATIONS_ENABLED` | `false` |
+| Suggested donation amounts | `DONATION_AMOUNTS` | `10, 20, 50` |
+| Donation currency | `DONATION_CURRENCY` | `CHF` |
 
 Passwords, client secrets and tokens are encrypted (AES-256-GCM) before they are stored and never shown again; the page only shows whether one is set and its last four characters.
 
