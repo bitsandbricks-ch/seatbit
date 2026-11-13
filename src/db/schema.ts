@@ -27,7 +27,11 @@ export const user = sqliteTable("user", {
   email: text("email").notNull().unique(),
   emailVerified: integer("email_verified", { mode: "boolean" }).default(false).notNull(),
   image: text("image"),
-  role: text("role").default("member").notNull(), // "admin" | "member"
+  /** Platform role (see src/lib/platform-roles.ts): "owner" | "admin" | "moderator" | "support" | "member". */
+  role: text("role").default("member").notNull(),
+  /** Suspended by platform staff: signed out everywhere until restored. */
+  suspendedAt: integer("suspended_at", { mode: "timestamp_ms" }),
+  suspendedReason: text("suspended_reason"),
   emailReminders: integer("email_reminders", { mode: "boolean" }).default(true).notNull(),
   /** Discord DMs from the bot about changes (needs a linked Discord account). */
   discordDms: integer("discord_dms", { mode: "boolean" }).default(true).notNull(),
@@ -166,6 +170,9 @@ export const clan = sqliteTable("clan", {
   supporterPlan: text("supporter_plan").$type<"year" | "month">(),
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
+  /** Suspended by platform staff: hidden from members, no joining, the bot stays quiet. */
+  suspendedAt: integer("suspended_at", { mode: "timestamp_ms" }),
+  suspendedReason: text("suspended_reason"),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
 });
 
@@ -175,6 +182,31 @@ export const billingEvent = sqliteTable("billing_event", {
   type: text("type").notNull(),
   at: integer("at", { mode: "timestamp_ms" }).default(now).notNull(),
 });
+
+/**
+ * One-off donations to the instance (see src/lib/donations.ts). Only paid ones are stored:
+ * an abandoned Checkout leaves nothing behind.
+ */
+export const donation = sqliteTable(
+  "donation",
+  {
+    id: id(),
+    stripeSessionId: text("stripe_session_id").notNull().unique(),
+    paymentIntentId: text("payment_intent_id"),
+    /** Who paid. Kept when the account is deleted only as long as the user row exists. */
+    userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+    /** Set when the donor gave on behalf of a clan they manage. */
+    clanId: text("clan_id").references(() => clan.id, { onDelete: "set null" }),
+    /** In the currency's smallest unit (Rappen, cents). */
+    amount: integer("amount").notNull(),
+    currency: text("currency").notNull(),
+    /** The donor agreed to show a Donor badge. */
+    showBadge: integer("show_badge", { mode: "boolean" }).default(true).notNull(),
+    refundedAt: integer("refunded_at", { mode: "timestamp_ms" }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  (t) => [index("donation_user_idx").on(t.userId), index("donation_clan_idx").on(t.clanId)],
+);
 
 // Roles and their permissions live in src/lib/clan-roles.ts.
 export { CLAN_ROLES, type ClanRole } from "../lib/clan-roles";
@@ -701,6 +733,7 @@ export type User = typeof user.$inferSelect;
 export type Lan = typeof lan.$inferSelect;
 export type LanType = typeof lanType.$inferSelect;
 export type Clan = typeof clan.$inferSelect;
+export type Donation = typeof donation.$inferSelect;
 export type Attendance = typeof attendance.$inferSelect;
 export type Nickname = typeof nickname.$inferSelect;
 export type LanAccount = typeof lanAccount.$inferSelect;
@@ -723,6 +756,22 @@ export const appSetting = sqliteTable("app_setting", {
   updatedBy: text("updated_by").references(() => user.id, { onDelete: "set null" }),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" }).default(now).notNull(),
 });
+
+/**
+ * Which days someone used Seatbit (a date, no time, no pages), for the platform usage stats.
+ * At most one row per person and day; rows older than USAGE_KEEP_DAYS are removed.
+ */
+export const userActivity = sqliteTable(
+  "user_activity",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    /** YYYY-MM-DD in the server's time zone. */
+    day: text("day").notNull(),
+  },
+  (t) => [uniqueIndex("user_activity_user_day_idx").on(t.userId, t.day), index("user_activity_day_idx").on(t.day)],
+);
 
 export const INTEREST_ANSWERS = ["yes", "maybe", "no"] as const;
 export type InterestAnswer = (typeof INTEREST_ANSWERS)[number];
@@ -912,3 +961,35 @@ export const lanTask = sqliteTable(
 export type LeadContact = typeof leadContact.$inferSelect;
 export type LeadTask = typeof leadTask.$inferSelect;
 export type LanTask = typeof lanTask.$inferSelect;
+
+// ---------- Abuse reports ----------
+
+// Reasons and states live in src/lib/report-reasons.ts.
+import type { ReportReason, ReportStatus } from "../lib/report-reasons";
+export { REPORT_REASONS, REPORT_STATUSES, type ReportReason, type ReportStatus } from "../lib/report-reasons";
+
+/** A member's report about a clan or an event, for the platform moderators' queue. */
+export const report = sqliteTable(
+  "report",
+  {
+    id: id(),
+    /** The reported clan (also set for an event report, so a clan's reports stay together). */
+    clanId: text("clan_id").references(() => clan.id, { onDelete: "set null" }),
+    /** Set when an event was reported. */
+    lanId: text("lan_id").references(() => lan.id, { onDelete: "set null" }),
+    /** Name at the time of the report, so the queue still makes sense after a deletion. */
+    subject: text("subject").default("").notNull(),
+    reporterId: text("reporter_id").references(() => user.id, { onDelete: "set null" }),
+    reason: text("reason").$type<ReportReason>().notNull(),
+    message: text("message").default("").notNull(),
+    status: text("status").$type<ReportStatus>().default("open").notNull(),
+    handledBy: text("handled_by").references(() => user.id, { onDelete: "set null" }),
+    handledAt: integer("handled_at", { mode: "timestamp_ms" }),
+    /** Moderator's note on the outcome; only staff see it. */
+    note: text("note").default("").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  (t) => [index("report_status_idx").on(t.status, t.createdAt), index("report_clan_idx").on(t.clanId)],
+);
+
+export type Report = typeof report.$inferSelect;

@@ -2,9 +2,12 @@ import "server-only";
 import { and, count, desc, eq, inArray, isNull, lt, type SQL } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { AuditEntry } from "@/db/schema";
-import { fmtDay } from "./format";
+import { fmtDay, fmtMoney } from "./format";
 import { getDefaultNames } from "./lans";
 import { isMemberRole, type MemberRole } from "./clan-roles";
+import { STAFF_ROLES, type StaffRole } from "./platform-roles";
+
+const isStaffRole = (r: unknown): r is StaffRole => (STAFF_ROLES as readonly unknown[]).includes(r);
 import { makeT, type T } from "../i18n/translate";
 
 const { auditLog } = schema;
@@ -83,9 +86,9 @@ export const AUDIT_GROUPS = {
   events: { prefixes: ["event.", "lead.", "news."] },
   attendance: { prefixes: ["attendance.", "waitlist.", "ticket.", "lanid.", "arrived.", "seatbooked."] },
   seats: { prefixes: ["seat.", "seats.", "swap."] },
-  members: { prefixes: ["member.", "invite.", "clan.", "platform.", "account."] },
+  members: { prefixes: ["member.", "invite.", "clan.", "platform.", "account.", "user.", "report."] },
   guests: { prefixes: ["guest."] },
-  settings: { prefixes: ["type.", "discord.", "settings.", "mail_template."] },
+  settings: { prefixes: ["type.", "discord.", "settings.", "mail_template.", "backup."] },
 } as const;
 export type AuditGroup = keyof typeof AUDIT_GROUPS;
 
@@ -246,10 +249,19 @@ export function describeAudit(
       return t("audit.clanDelete", v);
     case "clan.supporter": {
       const until = typeof d.until === "number" ? t("audit.until", { date: fmtDay(new Date(d.until)) }) : "";
+      if (d.donation) return t("audit.supporterDonation", { until });
       return t(d.renewed ? "audit.supporterRenewed" : "audit.supporter", { until });
     }
     case "clan.supporter_end":
       return t("audit.supporterEnd");
+    case "platform.donation": {
+      const amount = typeof d.amount === "number" && typeof d.currency === "string" ? fmtMoney(d.amount, d.currency) : "";
+      return t(e.clanId ? "audit.donationClan" : "audit.donation", { amount });
+    }
+    case "platform.donation_refund": {
+      const amount = typeof d.amount === "number" && typeof d.currency === "string" ? fmtMoney(d.amount, d.currency) : "";
+      return t("audit.donationRefund", { amount });
+    }
     case "member.add":
       return t("audit.memberAdd", v);
     case "member.approve":
@@ -300,15 +312,45 @@ export function describeAudit(
     case "discord.unlink":
       return t("audit.discordChannelUnlink", v);
     case "platform.role":
-      return t(d.to === "admin" ? "audit.platformAdmin" : "audit.platformAdminRemove", v);
+      // Older entries (before platform roles) only knew admin/member.
+      if (!d.from) return t(d.to === "admin" ? "audit.platformAdmin" : "audit.platformAdminRemove", v);
+      return t("audit.platformRole", { who, role: isStaffRole(d.to) ? t(`platformRoles.name.${d.to}`) : t("platformRoles.name.member") });
+    case "user.suspend":
+      return t("audit.userSuspend", v);
+    case "user.unsuspend":
+      return t("audit.userUnsuspend", v);
+    case "clan.suspend":
+      return t("audit.clanSuspend");
+    case "clan.unsuspend":
+      return t("audit.clanUnsuspend");
+    case "report.file":
+      return t(d.kind === "event" ? "audit.reportEvent" : "audit.reportClan");
+    case "report.resolved":
+      return t("audit.reportResolved");
+    case "report.dismissed":
+      return t("audit.reportDismissed");
+    case "report.reopen":
+      return t("audit.reportReopen");
     case "settings.save":
       return t("audit.settings", { keys: list(d.keys) });
+    case "settings.maintenance":
+      return t("audit.maintenance", v);
+    case "settings.maintenance_clear":
+      return t("audit.maintenanceClear");
+    case "settings.announce":
+      return t("audit.announce", v);
     case "mail_template.save":
       return t("audit.templateSave", v);
     case "mail_template.reset":
       return t("audit.templateReset", v);
     case "account.delete":
       return t("audit.accountDelete");
+    case "backup.create":
+      return t("audit.backupCreate", v);
+    case "backup.download":
+      return t("audit.backupDownload", v);
+    case "backup.delete":
+      return t("audit.backupDelete", v);
     default:
       return e.action;
   }

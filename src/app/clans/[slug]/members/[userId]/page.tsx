@@ -1,3 +1,5 @@
+import { DonorBadge } from "@/components/support-card";
+import { isDonor } from "@/lib/donations";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, asc, eq } from "drizzle-orm";
@@ -21,6 +23,7 @@ import { Avatar } from "@/components/avatar";
 import { avatarData } from "@/lib/avatars";
 import { pct } from "@/lib/clan-stats";
 import { isLanManager, requireUser, visibleLans } from "@/lib/session";
+import { platformCan } from "@/lib/platform-roles";
 import { profileLink } from "@/lib/profile-link";
 import { SocialList } from "@/components/social-list";
 import { getT } from "@/i18n/server";
@@ -32,7 +35,7 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
   const t = await getT();
   const c = getClanBySlug(slug);
   if (!c) notFound();
-  if (!isClanMember(me.id, c.id) && me.role !== "admin") notFound();
+  if (!isClanMember(me.id, c.id) && !platformCan(me, "view")) notFound();
   const membership = db
     .select()
     .from(schema.clanMember)
@@ -129,6 +132,7 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
             {/* Managers and the member themself also see the full name the clan's display leaves out. */}
             {seesPrivate && fullName !== shownName && <span>{fullName}</span>}
             {u.isGuest && <Pill>{t("member.guestNoLogin")}</Pill>}
+            {!u.isGuest && isDonor(u.id) && <DonorBadge label={t("donate.badgeLabel")} title={t("donate.badgePerson")} />}
             <span>{t("member.since", { date: fmtWeekday(membership.createdAt, t.locale) })}</span>
           </span>
         }

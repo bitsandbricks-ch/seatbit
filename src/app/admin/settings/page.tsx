@@ -4,17 +4,32 @@ import { Card, Notice, Page, PageHeader } from "@/components/ui";
 import { inviteUrl } from "@/lib/discord-api";
 import { appUrl, mailTarget } from "@/lib/mail";
 import { requireAdmin } from "@/lib/session";
+import { OWNER_SETTING_GROUPS, platformCan } from "@/lib/platform-roles";
 import { billingEnabled, billingProblems, supporterClans } from "@/lib/billing";
+import { donationProblems, donationsEnabled } from "@/lib/donations";
 import { fmtDay } from "@/lib/format";
 import { LOGIN_METHODS } from "@/lib/auth";
-import { type SettingGroup, type SettingView, canEncrypt, settingsForAdmin } from "@/lib/settings";
+import { type SettingGroup, canEncrypt, getSetting, resolveSetting, settingsForAdmin } from "@/lib/settings";
+import { localized } from "@/lib/settings-i18n";
 import { MAIL_TEMPLATES, defaultParts, getTemplate, savedTemplates } from "@/lib/mail-templates";
 import { LOCALES, LOCALE_NAMES, isLocale, type Locale } from "@/i18n/config";
 import type { FactRow } from "@/lib/mail-fill";
 import { MailTemplateEditor } from "@/components/mail-template-editor";
 import { getT } from "@/i18n/server";
 import type { MessageKey, T } from "@/i18n/translate";
-import { resetMailTemplate, saveMailTemplate, saveSettings, sendTemplateTest, sendTestMail, setupDiscordBot } from "./actions";
+import { AnnounceForm, MaintenanceForm } from "@/components/platform-forms";
+import { currentMaintenance } from "@/lib/maintenance";
+import {
+  postPlatformAnnouncement,
+  resetMailTemplate,
+  saveMailTemplate,
+  saveMaintenance,
+  saveSettings,
+  sendTemplateTest,
+  sendTestMail,
+  setupDiscordBot,
+  testOpsChannels,
+} from "./actions";
 
 export async function generateMetadata() {
   return { title: `${(await getT())("clanSettings.platformSettings")} · Seatbit` };
@@ -29,31 +44,19 @@ function Url({ label, value }: { label: string; value: string }) {
   );
 }
 
-const TABS = ["mail", "discord", "google", "general", "automation", "legal", "billing", "templates", "server"] as const;
+const TABS = ["mail", "discord", "google", "general", "automation", "maintenance", "legal", "billing", "templates", "server"] as const;
 type TabId = (typeof TABS)[number];
 
-/** A setting's label, help and choices in the admin's language (settings.ts keeps the English source). */
-function localized(s: SettingView, t: T): SettingView {
-  const slug = s.key.replace(".", "_");
-  const tf = (k: string, fb: string | undefined) => {
-    const v = t(k as MessageKey);
-    return v === k ? fb : v;
-  };
-  return {
-    ...s,
-    label: tf(`settingDefs.${slug}.label`, s.label) ?? s.label,
-    help: tf(`settingDefs.${slug}.help`, s.help),
-    options: s.options?.map((o) => ({ ...o, label: tf(`settingDefs.${slug}.options.${o.value}`, o.label) ?? o.label })),
-  };
-}
-
 export default async function SettingsPage({ searchParams }: PageProps<"/admin/settings">) {
-  await requireAdmin();
+  const me = await requireAdmin();
   const t = await getT();
   const { tab: rawTab, lang: rawLang } = await searchParams;
   const mailLang: Locale = isLocale(rawLang) ? rawLang : t.locale;
   // Google login is switched off in code (LOGIN_METHODS), so its settings tab is hidden.
-  const tabs = TABS.filter((x) => x !== "google" || LOGIN_METHODS.google);
+  // Billing and legal only show to owners.
+  const tabs = TABS.filter(
+    (x) => (x !== "google" || LOGIN_METHODS.google) && (!OWNER_SETTING_GROUPS.includes(x) || platformCan(me, "owner")),
+  );
   const tab: TabId = tabs.some((x) => x === rawTab) ? (rawTab as TabId) : "mail";
   const all = settingsForAdmin().map((s) => localized(s, t));
   const fields = (g: SettingGroup) => all.filter((s) => s.group === g);
@@ -157,6 +160,38 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
             </div>
           </>,
         )}
+      {tab === "discord" &&
+        section(
+          "ops",
+          <>
+            <p className="text-xs text-muted">{t("adminSettings.opsHint")}</p>
+            <ActionButton action={testOpsChannels}>{t("adminSettings.opsTest")}</ActionButton>
+          </>,
+        )}
+      {tab === "discord" && (
+        <Card title={t("adminSettings.announceCard")}>
+          <p className="-mt-2 mb-4 text-sm text-muted">{t("adminSettings.announceHint")}</p>
+          {getSetting("ops.announceChannelId") ? (
+            <AnnounceForm action={postPlatformAnnouncement} />
+          ) : (
+            <p className="text-sm text-faint">{t("adminSettings.announceNoChannel")}</p>
+          )}
+        </Card>
+      )}
+
+      {tab === "maintenance" && (
+        <Card title={t("settingGroups.maintenance.title")}>
+          <p className="-mt-2 mb-4 text-sm text-muted">{t("settingGroups.maintenance.help")}</p>
+          <MaintenanceStatus t={t} />
+          <MaintenanceForm
+            action={saveMaintenance}
+            message={resolveSetting("maintenance.message").value ?? ""}
+            startsAt={getSetting("maintenance.startsAt") ?? ""}
+            endsAt={getSetting("maintenance.endsAt") ?? ""}
+            canAnnounce={!!getSetting("ops.announceChannelId")}
+          />
+        </Card>
+      )}
 
       {tab === "google" &&
         section("google", <Url label={t("adminSettings.googleRedirect")} value={`${appUrl}/api/auth/callback/google`} />)}
@@ -217,9 +252,21 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
   );
 }
 
+/** Whether the banner shows right now, and where its message comes from. */
+function MaintenanceStatus({ t }: { t: T }) {
+  const m = currentMaintenance();
+  const fromEnv = resolveSetting("maintenance.message").source === "env";
+  return (
+    <div className="mb-4 space-y-1 rounded-md border border-line bg-ink/50 p-3 text-xs text-muted">
+      <p>{t(m ? (m.state === "now" ? "adminSettings.maintenanceShowingNow" : "adminSettings.maintenanceShowingPlanned") : "adminSettings.maintenanceOff")}</p>
+      {fromEnv && <p className="text-warn">{t("adminSettings.maintenanceFromEnv", { env: "MAINTENANCE_MESSAGE" })}</p>}
+    </div>
+  );
+}
+
 /** Webhook URL, what's still missing, and which clans support the instance right now. */
 function BillingInfo({ t }: { t: T }) {
-  const problems = billingProblems();
+  const problems = [...new Set([...billingProblems(), ...donationProblems()])];
   const supporters = supporterClans();
   return (
     <>
@@ -228,13 +275,21 @@ function BillingInfo({ t }: { t: T }) {
         {t.rich("adminSettings.stripeEvents", {
           events: (
             <>
-              <code>checkout.session.completed</code>, <code>invoice.paid</code>, <code>customer.subscription.deleted</code>
+              <code>checkout.session.completed</code>, <code>invoice.paid</code>, <code>customer.subscription.deleted</code>,{" "}
+              <code>checkout.session.async_payment_succeeded</code>, <code>charge.refunded</code>
             </>
           ),
         })}
       </p>
       {problems.length > 0 && <p className="text-xs text-warn">{t("adminSettings.missing", { list: problems.join(", ") })}</p>}
-      {!billingEnabled() && problems.length === 0 && <p className="text-xs text-muted">{t("adminSettings.billingOff")}</p>}
+      {!billingEnabled() && !donationsEnabled() && problems.length === 0 && <p className="text-xs text-muted">{t("adminSettings.billingOff")}</p>}
+      {donationsEnabled() && (
+        <p className="text-xs text-muted">
+          <a href="/admin/donations" className="text-bit hover:underline">
+            {t("adminSettings.donationsLink")}
+          </a>
+        </p>
+      )}
       {supporters.length > 0 && (
         <p className="text-xs text-muted">
           {t("adminSettings.supporters")}{" "}

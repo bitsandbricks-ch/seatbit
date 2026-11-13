@@ -12,7 +12,7 @@ Open your clan's Seatbit and click **Continue with Discord**. The same button cr
 
 On first sign-in Seatbit asks for your **first name, surname and nickname** (gamer tag). The clan uses your real name to match tickets and seats; everyone else mostly sees your nick. People are shown as *Anna "Nova" Frei*.
 
-The first account on an instance becomes [platform admin](admin.md).
+The first account on an instance becomes [platform owner](admin.md#platform-roles).
 
 ## Join a clan
 

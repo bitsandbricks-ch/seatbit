@@ -122,7 +122,7 @@ The top of *Manage → Overview* lists what the leads still have to do for the e
 | **Open sign-up** | Only during an [interest check](#interest-check): you opened sign-up. |
 | **Enter the group's seats** | The seat block is entered. |
 | **Move people up from the waitlist** | Only when you move people up by hand and a spot is free. |
-| **Everyone has a ticket** | Everyone coming has a ticket. A member saying they have one counts; confirming it is optional. |
+| **Everyone has a ticket** | Everyone coming ticked *I have my ticket* (or a lead ticked it for them). Waits on members, nothing to confirm. |
 | **Seat everyone** | Everyone coming has a seat. With self pick on: *Members pick, you fill the gaps*. |
 | **Finalize the seat plan** | The plan is final. |
 | **Book the seats on the event site** | Only with an event seat plan link: every seat is ticked as booked. See [Seats](seats.md#book-on-the-event-site). |

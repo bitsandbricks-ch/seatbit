@@ -33,7 +33,10 @@ const SOCIALS: Record<string, Record<string, string>> = {
 
 type Person = { key: string; first: string; last: string; nick: string; color: string; icon?: string };
 
-// The first one is the platform admin, clan admin and lead; "anna" is the member the screenshots follow.
+/** Platform staff besides the owner (alex), for the admin page and the report queue. */
+const PLATFORM_STAFF: Record<string, string> = { oliver: "moderator", nina: "support" };
+
+// The first one is the platform owner, clan admin and lead; "anna" is the member the screenshots follow.
 const PEOPLE: Person[] = [
   { key: "alex", first: "Alex", last: "Brunner", nick: "Blitz", color: "#6c8cff", icon: "🧙" },
   { key: "anna", first: "Anna", last: "Frei", nick: "Nova", color: "#f472b6", icon: "🦊" },
@@ -91,7 +94,7 @@ export async function seedDemo({ force = false, discord = false } = {}) {
           lastName: p.last,
           email: `${p.key}@example.com`,
           emailVerified: true,
-          role: i === 0 ? "admin" : "member",
+          role: i === 0 ? "owner" : (PLATFORM_STAFF[p.key] ?? "member"),
           avatarStyle: p.icon ? "icon" : "initials",
           icon: p.icon ?? null,
           color: p.color,
@@ -617,11 +620,86 @@ export async function seedDemo({ force = false, discord = false } = {}) {
         .values({ at: at(days, hh), actorId: ids[actor], action, clanId, lanId, targetUserId: target ? ids[target] : null, data })
         .run();
 
+    // A year of "used Seatbit on this day" for the usage stats: some people every few days, some
+    // rarely, everyone more often in the weeks before an event. A fixed pattern, so screenshots don't change.
+    const p2 = (n: number) => String(n).padStart(2, "0");
+    const busy = [events.past, events.lakeside].map((id) => tx.select().from(s.lan).where(eq(s.lan.id, id)).get()?.startsAt.getTime() ?? 0);
+    PEOPLE.forEach((p, i) => {
+      const often = i === 0 ? 50 : 1 + ((i * 37) % 7);
+      for (let d = 365; d >= 0; d--) {
+        const day = new Date(Date.now() - d * DAY);
+        const soon = busy.some((b) => b - day.getTime() > 0 && b - day.getTime() < 21 * DAY);
+        if (((i + 3) * 7919 + d * 104729) % 100 >= (soon ? often * 4 : often)) continue;
+        tx.insert(s.userActivity)
+          .values({ userId: ids[p.key], day: `${day.getFullYear()}-${p2(day.getMonth() + 1)}-${p2(day.getDate())}` })
+          .onConflictDoNothing()
+          .run();
+      }
+    });
+
     // A second, open clan Anna isn't in, so the clan list has something to join.
     tx.insert(s.clan)
       .values({ id: "demo-clan-2", name: "Lag Legends", slug: "lag-legends", description: "Retro LAN fans from Bern. Everyone welcome.", joinPolicy: "open" })
       .run();
     tx.insert(s.clanMember).values({ clanId: "demo-clan-2", userId: ids.rafael, role: "admin" }).run();
+
+    // A spammy clan with reports waiting in the moderators' queue (Admin -> Reports).
+    tx.insert(s.clan)
+      .values({ id: "demo-clan-3", name: "Cheap Keys Club", slug: "cheap-keys-club", description: "Game keys for 1 CHF! DM us.", joinPolicy: "open" })
+      .run();
+    tx.insert(s.clanMember).values({ clanId: "demo-clan-3", userId: ids.marco, role: "admin" }).run();
+    const reports: [string, string, string, string, number, string?, string?][] = [
+      // [reporter, clan, reason, message, days ago, status, handled by]
+      ["anna", "demo-clan-3", "spam", "Their clan page only advertises key reselling, they DMed half our clan.", 0],
+      ["ben", "demo-clan-3", "other", "Same as the others: key reselling spam in Discord DMs.", 1],
+      ["gina", "demo-clan-2", "impersonation", "I thought they copied our clan, but it's a different group.", 6, "dismissed", "oliver"],
+    ];
+    for (const [who, cid, reason, message, days, status = "open", by] of reports)
+      tx.insert(s.report)
+        .values({
+          clanId: cid,
+          subject: cid === "demo-clan-3" ? "Cheap Keys Club" : "Lag Legends",
+          reporterId: ids[who],
+          reason: reason as "spam",
+          message,
+          status: status as "open",
+          handledBy: by ? ids[by] : null,
+          handledAt: by ? at(-days + 1, 10) : null,
+          note: by ? "Different clan with a similar name, nothing to do." : "",
+          createdAt: at(-days, 18),
+        })
+        .run();
+    const platformLog: [number, number, string, string, string | null, Record<string, unknown>][] = [
+      [-30, 20, "alex", "platform.role", "oliver", { from: "member", to: "moderator" }],
+      [-30, 20, "alex", "platform.role", "nina", { from: "member", to: "support" }],
+      [-5, 10, "oliver", "report.dismissed", null, { kind: "clan" }],
+    ];
+    for (const [days, hh, actor, action, target, data] of platformLog)
+      tx.insert(s.auditLog)
+        .values({ at: at(days, hh), actorId: ids[actor], action, clanId: null, targetUserId: target ? ids[target] : null, data })
+        .run();
+
+    // One-off donations (only show where donations are on, like in the screenshots).
+    const gifts: [string, number, string | null, boolean, number][] = [
+      ["anna", 2000, null, true, 12],
+      ["alex", 5000, null, true, 40],
+      ["rafael", 3000, "demo-clan-2", true, 5],
+      ["chiara", 1000, null, false, 80],
+    ];
+    gifts.forEach(([who, amount, forClan, showBadge, daysAgo], i) =>
+      tx.insert(s.donation)
+        .values({
+          stripeSessionId: `cs_demo_${i}`,
+          paymentIntentId: `pi_demo_${i}`,
+          userId: ids[who],
+          clanId: forClan,
+          amount,
+          currency: "CHF",
+          showBadge,
+          createdAt: new Date(Date.now() - daysAgo * DAY),
+        })
+        .run(),
+    );
   });
 
   return { users: PEOPLE.length + 1, password: DEMO_PASSWORD };
@@ -636,7 +714,7 @@ if (process.argv[1]?.match(/seed-demo\.[tj]s$/)) {
   seedDemo({ force: process.argv.includes("--force"), discord: process.argv.includes("--discord") })
     .then((r) => {
       console.log(`Demo data added: ${r.users} people in "Pixel Pirates", 5 events.`);
-      console.log(`Sign in with alex@example.com (admin and lead) or anna@example.com (member), password "${r.password}".`);
+      console.log(`Sign in with alex@example.com (owner, clan admin and lead), oliver@example.com (moderator) or anna@example.com (member), password "${r.password}".`);
       console.log("Email login needs ALLOW_EMAIL_LOGIN=1.");
     })
     .catch((e) => {

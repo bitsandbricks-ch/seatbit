@@ -27,7 +27,8 @@ import { notify as notifyMember, notifyLanChanged, notifyLater, notifySeatChange
 import { appUrl } from "@/lib/mail";
 import { planSeats } from "@/lib/seating";
 import { eventMailVars, renderTemplate } from "@/lib/mail-templates";
-import { canViewLan, requireAdmin, requireClanPermission, requireLanManager, requireUser } from "@/lib/session";
+import { assertPlatform, canViewLan, requireClanPermission, requireLanManager, requireUser } from "@/lib/session";
+import { platformCan } from "@/lib/platform-roles";
 import { isClanMember } from "@/lib/clans";
 import { lanAccountScope, saveLanAccount } from "@/lib/lan-accounts";
 import { validProfileUrl } from "@/lib/profile-link";
@@ -88,7 +89,7 @@ export async function setMyLanId(formData: FormData) {
   const lanId = String(formData.get("lanId") ?? "");
   if (typeId) {
     const t = db.select().from(lanType).where(eq(lanType.id, typeId)).get();
-    if (!t || (t.clanId && !isClanMember(me.id, t.clanId) && me.role !== "admin")) throw new Error("Not found");
+    if (!t || (t.clanId && !isClanMember(me.id, t.clanId) && !platformCan(me, "view"))) throw new Error("Not found");
     saveLanAccount(me.id, { lanId: null, typeId }, String(formData.get("lanAccount") ?? ""));
   } else {
     const l = mustGetLan(lanId);
@@ -341,7 +342,7 @@ async function requirePublished(l: { publishedAt: Date | null }) {
 
 export async function deleteLan(id: string) {
   const l = mustGetLan(id);
-  const me = l.clanId ? await requireClanPermission(l.clanId, "events") : await requireAdmin();
+  const me = l.clanId ? await requireClanPermission(l.clanId, "events") : await assertPlatform("clans");
   db.delete(lan).where(eq(lan.id, id)).run();
   audit({ actorId: me.id, action: "event.delete", clanId: l.clanId, data: { event: l.name } });
   revalidatePath("/");
@@ -495,7 +496,8 @@ export async function adminSetPaid(attendanceId: string, paid: boolean) {
   const a = db.select().from(attendance).where(eq(attendance.id, attendanceId)).get();
   if (!a) return;
   const me = await requireLanManager(a.lanId);
-  db.update(attendance).set({ paid }).where(eq(attendance.id, attendanceId)).run();
+  // Trust based: the lead's tick is the same as the member's "I have my ticket" (e.g. for a guest), not a confirmation step.
+  db.update(attendance).set({ paid, ticketBought: paid }).where(eq(attendance.id, attendanceId)).run();
   if (a.paid !== paid) auditLan(mustGetLan(a.lanId), me.id, "ticket.confirm", { targetUserId: a.userId, data: { paid } });
   refreshLanMessagesSoon(a.lanId);
   lanPath(a.lanId);
@@ -549,13 +551,6 @@ export async function postDiscordReminder(lanId: string, kind: "signup" | "payme
   return postReminderNow(mustGetLan(lanId), kind);
 }
 
-export async function setUserRole(userId: string, role: "admin" | "member") {
-  const me = await requireAdmin();
-  if (userId === me.id && role !== "admin") throw await err("errors.noSelfDemote");
-  db.update(user).set({ role }).where(eq(user.id, userId)).run();
-  audit({ actorId: me.id, action: "platform.role", targetUserId: userId, data: { to: role } });
-  revalidatePath("/admin");
-}
 
 export async function setMyTicketBought(lanId: string, bought: boolean) {
   const me = await requireUser();

@@ -55,8 +55,7 @@ const statusOrder: Record<AttendanceStatus, number> = { going: 0, waitlist: 1, m
 /** Extra "who still needs something" filters on top of the status chips. */
 const needs = {
   all: { label: "attendees.need.all", test: () => true },
-  ticketOpen: { label: "attendees.need.ticketOpen", test: (r: AttendanceRow) => r.status !== "declined" && !r.paid },
-  ticketReported: { label: "attendees.need.ticketReported", test: (r: AttendanceRow) => r.ticketBought && !r.paid },
+  ticketOpen: { label: "attendees.need.ticketOpen", test: (r: AttendanceRow) => r.status !== "declined" && !r.paid && !r.ticketBought },
   noSeat: { label: "attendees.need.noSeat", test: (r: AttendanceRow) => r.status === "going" && !r.seatId },
   notBooked: {
     label: "attendees.need.notBooked",
@@ -293,14 +292,13 @@ export function AttendanceTable({
               <label className="col-span-2 flex min-h-10 cursor-pointer items-center gap-2 rounded-md border border-line px-3 py-2 text-sm sm:col-span-1 sm:self-end lg:self-auto">
                 <input
                   type="checkbox"
-                  key={String(r.paid)}
-                  defaultChecked={r.paid}
+                  key={String(r.paid || r.ticketBought)}
+                  defaultChecked={r.paid || r.ticketBought}
                   onChange={(e) => run(() => adminSetPaid(r.id, e.target.checked))}
                   className="h-5 w-5 accent-bit"
                 />
                 <span>
                   {t("attendees.ticketOk")}
-                  {r.ticketBought && !r.paid && <span className="ml-1 text-xs text-warn">({t("attendees.reported")})</span>}
                 </span>
               </label>
               <label className="block">

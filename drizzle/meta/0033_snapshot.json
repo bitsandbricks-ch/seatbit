@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "0fac3dfc-61c9-47f9-9991-4a452841b5cb",
+  "id": "149662d4-745e-486b-b039-11d6ab9578cc",
   "prevId": "b085ddef-6ab3-48e3-a6dc-5c13495c6a38",
   "tables": {
     "account": {
@@ -681,14 +681,6 @@
           "notNull": false,
           "autoincrement": false
         },
-        "lead_tasks_seeded": {
-          "name": "lead_tasks_seeded",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": false
-        },
         "supporter_until": {
           "name": "supporter_until",
           "type": "integer",
@@ -1085,6 +1077,137 @@
             "id"
           ],
           "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "donation": {
+      "name": "donation",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "stripe_session_id": {
+          "name": "stripe_session_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "payment_intent_id": {
+          "name": "payment_intent_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "clan_id": {
+          "name": "clan_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "amount": {
+          "name": "amount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "currency": {
+          "name": "currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "show_badge": {
+          "name": "show_badge",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
+        },
+        "refunded_at": {
+          "name": "refunded_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        }
+      },
+      "indexes": {
+        "donation_stripe_session_id_unique": {
+          "name": "donation_stripe_session_id_unique",
+          "columns": [
+            "stripe_session_id"
+          ],
+          "isUnique": true
+        },
+        "donation_user_idx": {
+          "name": "donation_user_idx",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        },
+        "donation_clan_idx": {
+          "name": "donation_clan_idx",
+          "columns": [
+            "clan_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "donation_user_id_user_id_fk": {
+          "name": "donation_user_id_user_id_fk",
+          "tableFrom": "donation",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "donation_clan_id_clan_id_fk": {
+          "name": "donation_clan_id_clan_id_fk",
+          "tableFrom": "donation",
+          "tableTo": "clan",
+          "columnsFrom": [
+            "clan_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
           "onUpdate": "no action"
         }
       },
@@ -2286,113 +2409,6 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "lan_task": {
-      "name": "lan_task",
-      "columns": {
-        "lan_id": {
-          "name": "lan_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "task_id": {
-          "name": "task_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "assignee_id": {
-          "name": "assignee_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "done_at": {
-          "name": "done_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "done_by_id": {
-          "name": "done_by_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "lan_task_uq": {
-          "name": "lan_task_uq",
-          "columns": [
-            "lan_id",
-            "task_id"
-          ],
-          "isUnique": true
-        }
-      },
-      "foreignKeys": {
-        "lan_task_lan_id_lan_id_fk": {
-          "name": "lan_task_lan_id_lan_id_fk",
-          "tableFrom": "lan_task",
-          "tableTo": "lan",
-          "columnsFrom": [
-            "lan_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "lan_task_task_id_lead_task_id_fk": {
-          "name": "lan_task_task_id_lead_task_id_fk",
-          "tableFrom": "lan_task",
-          "tableTo": "lead_task",
-          "columnsFrom": [
-            "task_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "lan_task_assignee_id_user_id_fk": {
-          "name": "lan_task_assignee_id_user_id_fk",
-          "tableFrom": "lan_task",
-          "tableTo": "user",
-          "columnsFrom": [
-            "assignee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "lan_task_done_by_id_user_id_fk": {
-          "name": "lan_task_done_by_id_user_id_fk",
-          "tableFrom": "lan_task",
-          "tableTo": "user",
-          "columnsFrom": [
-            "done_by_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
     "lan_type": {
       "name": "lan_type",
       "columns": {
@@ -2512,14 +2528,6 @@
           "autoincrement": false,
           "default": "''"
         },
-        "clan_lead_tasks": {
-          "name": "clan_lead_tasks",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": true
-        },
         "created_at": {
           "name": "created_at",
           "type": "integer",
@@ -2542,267 +2550,6 @@
             "id"
           ],
           "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "lead_contact": {
-      "name": "lead_contact",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "type_id": {
-          "name": "type_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "role": {
-          "name": "role",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "''"
-        },
-        "email": {
-          "name": "email",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "''"
-        },
-        "discord": {
-          "name": "discord",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "''"
-        },
-        "phone": {
-          "name": "phone",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "''"
-        },
-        "url": {
-          "name": "url",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "''"
-        },
-        "note": {
-          "name": "note",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "''"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
-        }
-      },
-      "indexes": {
-        "lead_contact_type_idx": {
-          "name": "lead_contact_type_idx",
-          "columns": [
-            "type_id"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "lead_contact_type_id_lan_type_id_fk": {
-          "name": "lead_contact_type_id_lan_type_id_fk",
-          "tableFrom": "lead_contact",
-          "tableTo": "lan_type",
-          "columnsFrom": [
-            "type_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "lead_task": {
-      "name": "lead_task",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "clan_id": {
-          "name": "clan_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "type_id": {
-          "name": "type_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "lan_id": {
-          "name": "lan_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "title": {
-          "name": "title",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "note": {
-          "name": "note",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "''"
-        },
-        "after": {
-          "name": "after",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'[]'"
-        },
-        "due_days": {
-          "name": "due_days",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "contact_id": {
-          "name": "contact_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "sort": {
-          "name": "sort",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
-        }
-      },
-      "indexes": {
-        "lead_task_clan_idx": {
-          "name": "lead_task_clan_idx",
-          "columns": [
-            "clan_id"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "lead_task_clan_id_clan_id_fk": {
-          "name": "lead_task_clan_id_clan_id_fk",
-          "tableFrom": "lead_task",
-          "tableTo": "clan",
-          "columnsFrom": [
-            "clan_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "lead_task_type_id_lan_type_id_fk": {
-          "name": "lead_task_type_id_lan_type_id_fk",
-          "tableFrom": "lead_task",
-          "tableTo": "lan_type",
-          "columnsFrom": [
-            "type_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "lead_task_lan_id_lan_id_fk": {
-          "name": "lead_task_lan_id_lan_id_fk",
-          "tableFrom": "lead_task",
-          "tableTo": "lan",
-          "columnsFrom": [
-            "lan_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "lead_task_contact_id_lead_contact_id_fk": {
-          "name": "lead_task_contact_id_lead_contact_id_fk",
-          "tableFrom": "lead_task",
-          "tableTo": "lead_contact",
-          "columnsFrom": [
-            "contact_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
           "onUpdate": "no action"
         }
       },

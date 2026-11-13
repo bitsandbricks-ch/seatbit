@@ -6,7 +6,7 @@ Seatbit has three kinds of users:
 
 - **Members** answer for events, pick seats, offer rides and order food.
 - **Leads, clan admins, event managers and recruiters** run the clan and its events. See [roles](clans.md#roles).
-- **Platform admins** run the instance. See [Platform admin](admin.md).
+- **Platform staff** (owners, admins, moderators, support) run the instance. See [Platform admin](admin.md).
 
 ## Overview
 
@@ -28,7 +28,9 @@ Seatbit has three kinds of users:
 | [Discord and WhatsApp](discord.md) | Bot announcements with answer buttons, reminders, DMs, slash commands; WhatsApp texts. | Clan admins, leads |
 | [Audit log](audit-log.md) | What leads and admins changed. | Admins, event managers, recruiters |
 | [Supporter badge](supporters.md) | Optional voluntary payments for clans (off by default). | Clan admins |
-| [Platform admin](admin.md) | All clans, events and users, platform settings, mail templates. | Platform admins |
+| [Donations](donations.md) | Optional one-off donations to the instance, with a Donor badge (off by default). | Everyone |
+| [Platform admin](admin.md) | Platform roles, all clans, events and users, platform settings, mail templates. | Platform staff |
+| [Reports and suspensions](moderation.md) | Members report clans and events, moderators handle them and suspend users or clans. | Everyone, moderators |
 
 ## Conventions in the app
 

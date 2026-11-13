@@ -17,6 +17,7 @@ import { freeSpots, getLan, getNames, interestSwitch, seatView, waitlistOf } fro
 import { WaitlistPanel } from "@/components/waitlist-panel";
 import { dueKinds } from "@/lib/reminders";
 import { isLanManager, requireUser } from "@/lib/session";
+import { platformCan } from "@/lib/platform-roles";
 import { OrgaManager } from "@/components/orga-manager";
 import { SeatSetup } from "@/components/seat-setup";
 import { Tabs } from "@/components/tabs";
@@ -169,8 +170,8 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
   const wishChecks = checkWishes(seats, planPeople, (uid) => names.get(uid) ?? "?", t);
   const wishNotes = going.filter((r) => r.wishNote);
   const now = new Date();
-  const ticketsConfirmed = going.filter((r) => r.paid).length;
-  const ticketsReported = going.filter((r) => !r.paid && r.ticketBought).length;
+  // Trust based: the member's own "I have my ticket" counts.
+  const withTicket = going.filter((r) => r.ticketBought || r.paid).length;
   const seated = going.filter((r) => seatOf.has(r.userId)).length;
   const freeSeats = seats.filter((s) => !s.userId && !s.locked).length;
   const count = (st: string) => rows.filter((r) => r.status === st).length;
@@ -197,8 +198,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
   const leadSteps = buildLeadChecklist({
     lan: l,
     going: going.length,
-    ticketsToConfirm: ticketsReported,
-    ticketsConfirmed,
+    withTicket,
     seats: seats.length,
     seated,
     booked: bookedCount,
@@ -406,9 +406,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
           id,
           label: t(label),
           badge:
-            id === "attendees" && ticketsReported
-              ? t("manage.badge.toConfirm", { count: ticketsReported })
-              : id === "missing" && memberMissing
+            id === "missing" && memberMissing
                 ? `${memberMissing}`
                 : id === "seats" && swapsToApprove
                   ? t("manage.badge.swaps", { count: swapsToApprove })
@@ -483,8 +481,8 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
             />
             <Stat
               label={t("bot.tickets")}
-              value={`${ticketsConfirmed} / ${going.length}`}
-              sub={t("manage.badge.toConfirm", { count: ticketsReported })}
+              value={`${withTicket} / ${going.length}`}
+              sub={t("leadSteps.notBought", { count: going.length - withTicket })}
               href={`/lans/${l.id}/manage?tab=attendees`}
             />
             <Stat
@@ -656,7 +654,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
                       name: names.get(r.userId) ?? "?",
                       lanAccount: lanIds.get(r.userId) || undefined,
                       profileUrl: profileLink(profilePat, lanIds.get(r.userId)) ?? undefined,
-                      ticket: r.paid ? ("ok" as const) : r.ticketBought ? ("reported" as const) : ("open" as const),
+                      ticket: r.paid || r.ticketBought ? ("ok" as const) : ("open" as const),
                       wishes: w ? { ok: w.ok, missed: w.missed } : undefined,
                     };
                   })
@@ -678,7 +676,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               {!discordEnabled() ? (
                 <p className="text-muted">
                   {t("manage.botNotSetUp")}{" "}
-                  {me.role === "admin" ? (
+                  {platformCan(me, "settings") ? (
                     <Link href="/admin/settings?tab=discord" className="text-bit hover:underline">
                       {t("manage.addBotToken")}
                     </Link>
@@ -791,7 +789,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
             </Card>
           )}
 
-          {me.role === "admin" && (
+          {platformCan(me, "clans") && (
             <Card title={t("manage.dangerZone")}>
               <form action={deleteLan.bind(null, l.id)}>
                 <button className={btnDanger}>{t("manage.deleteLan")}</button>

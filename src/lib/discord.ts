@@ -4,6 +4,7 @@ import { db, schema } from "@/db";
 import type { AttendanceStatus, InterestAnswer, Lan } from "@/db/schema";
 import { avatarUrl, clanCan, getClan, myClans } from "./clans";
 import { roleCan } from "./clan-roles";
+import { platformCan } from "./platform-roles";
 import { type ChatReminderKind, fmtWhen, lanFacts, lanLink, lanSummary } from "./announce";
 import { getDisplayNames, getLan, signupClosed } from "./lans";
 import { type Json, api, discordEnabled } from "./discord-api";
@@ -552,10 +553,10 @@ export async function postLanNews(l: Lan, text: string, author: string) {
 // ---------- Slash commands & buttons ----------
 
 
-/** Clans this user may link a server to: only clans they're an admin of (platform admins included). */
+/** Clans this user may link a server to: only clans they're an admin of (platform owners and admins included). */
 function manageableClans(u: { id: string; role: string }) {
   return myClans(u.id)
-    .filter((m) => u.role === "admin" || roleCan(m.role, "settings"))
+    .filter((m) => platformCan(u, "clans") || roleCan(m.role, "settings"))
     .map((m) => m.clan);
 }
 

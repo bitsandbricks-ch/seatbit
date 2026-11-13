@@ -132,12 +132,12 @@ function build() {
       },
       user: {
         create: {
-          // The first user, and anyone listed in the admin emails setting, becomes an admin.
+          // The first user, and anyone listed in the admin emails setting, becomes an owner.
           before: async (u) => {
             // Deleted accounts don't count, so a fresh start after everyone left still gets an admin.
             const [{ n }] = await db.select({ n: count() }).from(schema.user).where(isNull(schema.user.deletedAt));
             const isAdmin = n === 0 || adminEmails().includes(u.email.toLowerCase());
-            return { data: { ...u, role: isAdmin ? "admin" : "member" } };
+            return { data: { ...u, role: isAdmin ? "owner" : "member" } };
           },
         },
       },
