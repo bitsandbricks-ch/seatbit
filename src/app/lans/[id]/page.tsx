@@ -1,5 +1,6 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { AttendanceButtons } from "@/components/attendance-buttons";
@@ -10,11 +11,12 @@ import { getLanAccounts } from "@/lib/lan-accounts";
 import { SeatMap } from "@/components/seat-map";
 import { Avatar } from "@/components/avatar";
 import { getAvatars, type AvatarData } from "@/lib/avatars";
-import { Card, Columns, Page, Pill, StatusBadge, Verified } from "@/components/ui";
-import { fmtDate, fmtTime, relative } from "@/lib/format";
+import { Card, Columns, LockedAnswerBadge, Page, Pill, StatusBadge, Verified } from "@/components/ui";
+import { fmtDate, fmtTime, lanRange, relative } from "@/lib/format";
 import { attendanceLocked, getDisplayNames, getLan, getNames, pickNick, seatView, signupClosed, waitlistPositions } from "@/lib/lans";
-import { canViewLan, isLanManager, requireUser } from "@/lib/session";
-import { getClan } from "@/lib/clans";
+import { canViewLan, getCurrentUser, isLanManager, isProfileComplete } from "@/lib/session";
+import { clanRole, getClan } from "@/lib/clans";
+import { EventInvite } from "@/components/event-invite";
 import { rolesWith } from "@/lib/clan-roles";
 import { EventHeader } from "@/components/event-header";
 import { buildChecklist, onTheDay, progress } from "@/lib/checklist";
@@ -37,14 +39,57 @@ const { attendance, seat, nickname } = schema;
 
 const TABS = ["overview", "seats", "attendees", "travel", "gear", "games", "food"] as const;
 
+/** Link previews (WhatsApp, Discord, ...): name, date and place of published events; drafts stay generic. */
+export async function generateMetadata({ params }: PageProps<"/lans/[id]">): Promise<Metadata> {
+  const l = getLan((await params).id);
+  if (!l?.publishedAt) return {};
+  const clan = l.clanId ? getClan(l.clanId) : undefined;
+  const t = await getT();
+  const description = [
+    l.cancelledAt ? t("share.cancelled") : null,
+    lanRange(l, t.locale),
+    l.location,
+    clan && t("share.eventOf", { clan: clan.name }),
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  return {
+    title: `${l.name} · Seatbit`,
+    description,
+    openGraph: { title: l.name, description, type: "website", siteName: "Seatbit", url: `/lans/${l.id}` },
+    twitter: { card: "summary_large_image", title: l.name, description },
+  };
+}
+
 export default async function LanPage({ params, searchParams }: PageProps<"/lans/[id]">) {
   const { id } = await params;
   const sp = await searchParams;
   const tab = TABS.find((t) => t === sp.tab) ?? "overview";
-  const me = await requireUser();
+  const here = `/lans/${id}${tab === "overview" ? "" : `?tab=${tab}`}`;
+  const viewer = await getCurrentUser();
+  if (viewer && !isProfileComplete(viewer)) redirect(`/welcome?next=${encodeURIComponent(here)}`);
   const t = await getT();
   const l = getLan(id);
-  if (!l || !canViewLan(me, id)) notFound();
+  if (!l) notFound();
+  if (!viewer || !canViewLan(viewer, id)) {
+    // Shared links: people who can't open the event yet see what it is and how to get in, instead of a 404.
+    // No redirect for signed-out visitors either, so link previews keep this page's metadata.
+    const clan = l.publishedAt && l.clanId ? getClan(l.clanId) : undefined;
+    if (!clan) {
+      if (!viewer) redirect(`/login?next=${encodeURIComponent(here)}`);
+      notFound();
+    }
+    return (
+      <EventInvite
+        lan={l}
+        clan={clan}
+        signedIn={!!viewer}
+        pending={!!viewer && clanRole(viewer.id, clan.id) === "pending"}
+        here={here}
+      />
+    );
+  }
+  const me = viewer;
   const lanClan = l.clanId ? getClan(l.clanId) : undefined;
   const now = new Date();
 
@@ -281,6 +326,10 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
     </Card>
   );
 
+  const showChecklist = !!my && my.status !== "declined" && !l.cancelledAt && !l.interestCheck;
+  // A locked answer can't be changed here, so it shrinks to a badge in the checklist and frees the space.
+  // The full card stays for the waitlist place and the check-in on the day.
+  const compactAnswer = showChecklist && locked && (my.status === "going" || my.status === "maybe") && !atTheVenue;
   // A finished checklist folds to one line; the answer card next to it then keeps its own height.
   const checklistDone = (() => {
     const p = progress(steps);
@@ -292,8 +341,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
       <EventHeader lan={l} clan={lanClan} mode="view" canManage={isAdmin} tab={tab} />
 
       {/* Your answer and your checklist sit above the tabs, so they show on every tab. */}
-      <div className={`grid gap-4 ${checklistDone ? "items-start" : "items-stretch"} ${my && my.status !== "declined" && !l.cancelledAt && !l.interestCheck ? "lg:grid-cols-[20rem_minmax(0,1fr)] 2xl:grid-cols-[22rem_minmax(0,1fr)]" : ""}`}>
-        {l.interestCheck && !l.cancelledAt ? (
+      <div className={`grid gap-4 ${checklistDone ? "items-start" : "items-stretch"} ${showChecklist && !compactAnswer ? "lg:grid-cols-[20rem_minmax(0,1fr)] 2xl:grid-cols-[22rem_minmax(0,1fr)]" : ""}`}>
+        {compactAnswer ? null : l.interestCheck && !l.cancelledAt ? (
         <section aria-label={t("event.wouldYouCome")} className="rounded-card border border-line bg-surface p-3 sm:p-4">
           <h2 className="mb-1 text-sm font-semibold text-fg">{t("event.wouldYouCome")}</h2>
           <p className="mb-3 text-sm text-muted">{t("event.notBinding")}</p>
@@ -335,9 +384,10 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           )}
         </section>
         )}
-        {my && my.status !== "declined" && !l.cancelledAt && !l.interestCheck && (
+        {showChecklist && (
           <LanChecklist
             variant="strip"
+            answer={compactAnswer && <LockedAnswerBadge status={my.status} />}
             lanId={l.id}
             steps={steps}
             ticketBought={my.ticketBought}

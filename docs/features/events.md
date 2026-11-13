@@ -64,6 +64,37 @@ For when you're not sure yet if, or when, the group goes. Turn it on when creati
 
 ![Interest check, lead view](../screenshots/desktop-interest-manage.png){ .shot }
 
+## Share an event
+
+Every published event has a **Share** button next to its title, for members and leads alike.
+
+- **On a phone** it opens the phone's share sheet (WhatsApp, Discord, Signal, ...).
+- **On a computer** it copies the link and shows *Link copied*.
+
+Pasted into a chat, the link shows a preview card with the event's name, date, place and the clan's name and avatar. Clan avatars in WebP show the clan's initials instead. Drafts have no Share button and their links show a plain Seatbit card, so nothing leaks before you publish.
+
+![Link preview](../screenshots/desktop-event-link-preview.png){ .shot }
+
+Someone who opens the link but can't see the event yet gets a card with the event's name, date and place and a way in:
+
+| Who opens it | What they see |
+| --- | --- |
+| Signed out | *Sign in* or *Create an account*, then straight back to the event. New accounts fill in their name first. |
+| Signed in, not in the clan, clan is **open** | *Join clan*, then the event. |
+| Signed in, not in the clan, clan needs **approval** | *Ask to join*. The link opens the event once a clan admin lets them in. |
+| Signed in, not in the clan, clan is **invite-only** | A note to ask a lead for an [invite link](clans.md#clan-settings). |
+
+<div class="phones" markdown>
+<figure markdown>
+
+![Shared event, signed out](../screenshots/phone-event-shared.png){ .shot }
+
+<figcaption>Signed out</figcaption>
+</figure>
+</div>
+
+For ready-made WhatsApp texts with the link (announcement, reminders), see *Manage → Discord & WhatsApp*.
+
 ## Manage
 
 Leads see **View / Manage** next to the event title. *Manage* has the tabs:

@@ -111,8 +111,8 @@ export async function updateClan(_: FormState, formData: FormData): Promise<Form
   redirect(`/clans/${slug}/settings`);
 }
 
-/** Joins an open clan directly, or asks to join an approval clan. */
-export async function joinClan(clanId: string) {
+/** Joins an open clan directly, or asks to join an approval clan. `next`: where to go afterwards (a shared event link). */
+export async function joinClan(clanId: string, next?: unknown) {
   const me = await requireUser();
   const c = getClan(clanId);
   if (!c) throw new Error("Clan not found");
@@ -130,13 +130,17 @@ export async function joinClan(clanId: string) {
     );
   }
   revalidatePath("/", "layout");
-  redirect(afterJoin(c, me.id));
+  // Bound form actions also get the FormData here, so only a same-site path counts.
+  const back = typeof next === "string" && next.startsWith("/") && !next.startsWith("//") ? next : undefined;
+  redirect(afterJoin(c, me.id, back));
 }
 
 /** Where a new member lands: the guest check when the leads seem to have added them already. */
-function afterJoin(c: { id: string; slug: string; guestClaims: string }, userId: string) {
+function afterJoin(c: { id: string; slug: string; guestClaims: string }, userId: string, next?: string) {
   const member = ["member", "admin"].includes(clanRole(userId, c.id) ?? "");
-  return member && c.guestClaims !== "off" && openGuestMatches(c.id, userId).length ? `/clans/${c.slug}/claim` : `/clans/${c.slug}`;
+  if (member && c.guestClaims !== "off" && openGuestMatches(c.id, userId).length) return `/clans/${c.slug}/claim`;
+  // Pending requests go back too: the shared event shows that the request is waiting.
+  return next ?? `/clans/${c.slug}`;
 }
 
 export async function joinWithInvite(code: string) {
