@@ -7,7 +7,7 @@ import { and, eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { INTEREST_ANSWERS, type Attendance, type AttendanceStatus, type InterestAnswer, type Lan, type User } from "@/db/schema";
 import { fmtWeekday } from "./format";
-import { lanLink } from "./announce";
+import { fmtWhen, lanFacts, lanLink } from "./announce";
 import { buildChecklist, type StepState } from "./checklist";
 import { getClan, isClanMember, myClans } from "./clans";
 import type { Json } from "./discord-api";
@@ -30,6 +30,7 @@ import { ATTENDANCE_LOCKED_MSG, attendanceLocked, getDisplayNames, getLan, getNa
 import { appUrl } from "./mail";
 import { saveNick, saveSeatWishes, saveTicketBought } from "./member-updates";
 import { nameMatches } from "./names";
+import { type Notice, sendDiscordDm } from "./notify";
 import { bookedButton } from "./seat-booking";
 
 const { attendance, lanInterest, lanType, nickname, seat } = schema;
@@ -142,12 +143,45 @@ export function answerEvent(l: Lan, me: User, status: AttendanceStatus, editRepl
             : stored === "waitlist"
               ? ` You're #${waitlistPositions(l.id).get(me.id) ?? "?"} in line; you get a DM when you move up.`
               : "";
-        await editReply({ content: `${statusLabel[stored]} for **${l.name}**.${extra}`, components: [linkButton("Open in Seatbit", lanLink(l))] });
+        // A DM keeps the confirmation once the ephemeral reply is gone (unless they turned DMs off).
+        const dm = await sendDiscordDm(me, answerDm(l, me, stored));
+        await editReply({
+          content: `${statusLabel[stored]} for **${l.name}**.${extra}${dm ? "\n-# I sent you a DM to keep." : ""}`,
+          components: [linkButton("Open in Seatbit", lanLink(l))],
+        });
       } catch (e) {
         console.error("[discord] attendance failed", e);
         await editReply({ content: "Something went wrong, please try again in Seatbit." }).catch(() => {});
       }
     },
+  };
+}
+
+/** The confirmation DM after answering on Discord: the answer, the facts and what to do next. */
+function answerDm(l: Lan, me: User, stored: AttendanceStatus): Notice {
+  const next = {
+    going: l.paymentDueDate
+      ? `Next: buy your ticket by **${fmtWhen(l.paymentDueDate)}** and tick it off with \`/ticket\` or the button below.`
+      : "Next: buy your ticket and tick it off with `/ticket` or the button below.",
+    waitlist: `You're #${waitlistPositions(l.id).get(me.id) ?? "?"} in line. I'll DM you when you move up.`,
+    maybe: l.signupDeadline ? `Please decide by **${fmtWhen(l.signupDeadline)}**: \`/coming\` or \`/not-coming\`.` : "Decide with `/coming` or `/not-coming` when you know.",
+    declined: "Changed your mind? Use `/coming` while sign-up is open.",
+  }[stored];
+  const facts = lanFacts(l)
+    .filter(([k]) => k === "When" || k === "Where" || (stored === "going" && k === "Ticket"))
+    .map(([k, v]) => `**${k}:** ${v}`);
+  const going = stored === "going" || stored === "waitlist";
+  return {
+    kind: "signup_confirmed",
+    subject: clip(`${statusLabel[stored].replace(/^\S+ /, "")}: ${l.name}`, 256),
+    text: "",
+    dm: [...facts, "", next].join("\n"),
+    url: lanLink(l),
+    dmOnly: true,
+    buttons: [
+      ...(going ? [{ type: 2, style: 3, label: "I have my ticket", custom_id: `ticket:${l.id}` }] : []),
+      ...(stored === "going" && l.ticketUrl ? [{ type: 2, style: 5, label: "Buy ticket", url: l.ticketUrl }] : []),
+    ],
   };
 }
 
