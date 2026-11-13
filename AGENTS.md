@@ -29,7 +29,7 @@ A self-hostable web app that helps a clan coordinate going to LAN parties run by
 - **Self-hosting:** never hard-code anything about one particular instance (operator name, address, domain, Discord server, clan). Use settings with neutral defaults. Keep the "Powered by bitsandbricks.ch" and "Source" footer links.
 - **UI:** mobile-first with a good desktop layout. Use `src/components/ui.tsx` (Page, PageHeader, Card, Notice, ...) and `src/components/tabs.tsx`; colours only via brand tokens (`brand/tokens.css`). Every page uses the root layout width (max-w-7xl); never add your own max-width.
 - **Dates:** always 24h, Swiss style ("Sat 14.11.2026, 18:00") via `src/lib/format.ts`. No native `datetime-local` inputs; use `src/components/date-time-picker.tsx`.
-- **People** are shown via `personLabel` (`src/lib/names.ts`): Name "Nick" Surname by default, or the clan's name display on member-facing pages (`getNames(...).label`, `getDisplayNames`). Clan orga views follow it too and show the full name small below (`full`); logs, exports, mails and the admin page keep the full name. Real accounts (not guests) get `<Verified />`.
+- **People** are shown via `personLabel` (`src/lib/names.ts`): Name "Nick" Surname by default, or the clan's name display on member-facing pages (`getNames(...).label`, `getDisplayNames`). Clan lead views follow it too and show the full name small below (`full`); logs, exports, mails and the admin page keep the full name. Real accounts (not guests) get `<Verified />`.
 - **No secrets** in code, commits, screenshots, logs or docs. Use example values (`example.com`, `1234567890123456789`).
 - Write short comments that explain why, not what.
 

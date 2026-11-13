@@ -35,7 +35,7 @@ function useRun() {
 export type FoodOrderCardView = FoodOrderView & {
   /** Plain text to copy for the call to the shop. */
   text: string;
-  /** I started it or I'm an orga: close, mark ordered, tick payments. */
+  /** I started it or I'm a lead: close, mark ordered, tick payments. */
   canRun: boolean;
   /** Open and before its last call. */
   accepting: boolean;
@@ -59,7 +59,7 @@ export function FoodOrders({
   /** userId -> full display name */
   names: Record<string, string>;
   meId: string;
-  /** Coming (or an orga): may start orders and add items. */
+  /** Coming (or a lead): may start orders and add items. */
   canOrder: boolean;
   currency: string;
   /** Why the "DM everyone" box is off, e.g. for drafts. Null when it works. */

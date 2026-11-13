@@ -34,7 +34,7 @@ A new page needs an entry in `nav` in `mkdocs.yml`. When you move a page, add th
 
 - **Reference, not marketing.** Short sentences, tables for fields and options, bold for UI labels.
 - Start a feature page with one sentence on what it does, then `**Who:** ... · **Where:** ...`.
-- Use the app's words: *Coming / Unsure / Not coming*, *Manage*, *orga*.
+- Use the app's words: *Coming / Unsure / Not coming*, *Manage*, *lead*.
 - Dates as the app shows them: *Sat 14.11.2026, 18:00*.
 - Example values only: `seatbit.example.com`, `1234567890123456789`.
 

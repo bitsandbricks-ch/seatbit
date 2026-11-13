@@ -8,7 +8,7 @@ import { btnGhost, btnSecondary } from "./ui";
 type Act = (prev: ActionResult) => Promise<ActionResult>;
 
 /**
- * The Discord member an orga linked a guest to with /guest: who, when, the DM, and
+ * The Discord member a lead linked a guest to with /guest: who, when, the DM, and
  * buttons to send the DM again or drop the link. Re-linking someone else happens in Discord.
  */
 export function GuestDiscordLink({

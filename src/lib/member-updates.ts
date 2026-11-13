@@ -43,11 +43,11 @@ const myAttendance = (lanId: string, userId: string) =>
     .where(and(eq(attendance.lanId, lanId), eq(attendance.userId, userId)))
     .get();
 
-/** "I bought my ticket" (or not). Once an orga confirmed it, only they can change it. */
+/** "I bought my ticket" (or not). Once a lead confirmed it, only they can change it. */
 export function saveTicketBought(lanId: string, userId: string, bought: boolean) {
   const a = myAttendance(lanId, userId);
   if (!a) throw new Error("Say whether you're coming first");
-  if (a.paid) throw new Error("An orga already confirmed your ticket. Ask them if something changed.");
+  if (a.paid) throw new Error("A lead already confirmed your ticket. Ask them if something changed.");
   db.update(attendance).set({ ticketBought: bought }).where(eq(attendance.id, a.id)).run();
 }
 

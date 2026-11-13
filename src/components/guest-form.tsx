@@ -3,7 +3,7 @@ import { useActionState, useEffect, useRef } from "react";
 import type { FormState } from "@/app/actions";
 import { Field, Input, btnPrimary, btnSecondary } from "./ui";
 
-/** Adds a guest member: someone without a login yet, managed by the orgas. */
+/** Adds a guest member: someone without a login yet, managed by the leads. */
 export function GuestForm({
   action,
   submitLabel = "Add guest",

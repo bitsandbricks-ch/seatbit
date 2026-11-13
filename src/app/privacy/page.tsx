@@ -52,10 +52,10 @@ export default function PrivacyPage() {
       <h3>Clans and LAN events</h3>
       <ul>
         <li>Which clans you belong to, and your role there (member, admin, waiting for approval)</li>
-        <li>For each event: whether you are coming, unsure or not coming, whether you bought a ticket, whether an orga confirmed it, and any note you add</li>
+        <li>For each event: whether you are coming, unsure or not coming, whether you bought a ticket, whether a lead confirmed it, and any note you add</li>
         <li>Seat wishes (people you want to sit near or not next to, preferred position or seat) and the seat you are assigned</li>
-        <li>Whether you are an orga of an event</li>
-        <li>If an orga adds you as a guest before you have an account: the name, nickname and (if they have it) email address they enter, and your answers and seat for their events. The email is only used to send you the invite and to recognise you: when you sign in with a Discord account whose verified email matches, or through your claim link, this moves to your own account and the guest entry is deleted. If an orga tells the Discord bot which Discord member you are, we also keep your Discord user ID with the guest entry, send you one DM with your claim link, and move everything over when you sign in with that Discord account.</li>
+        <li>Whether you are a lead of an event</li>
+        <li>If a lead adds you as a guest before you have an account: the name, nickname and (if they have it) email address they enter, and your answers and seat for their events. The email is only used to send you the invite and to recognise you: when you sign in with a Discord account whose verified email matches, or through your claim link, this moves to your own account and the guest entry is deleted. If a lead tells the Discord bot which Discord member you are, we also keep your Discord user ID with the guest entry, send you one DM with your claim link, and move everything over when you sign in with that Discord account.</li>
         <li>Content clan admins enter: clan name, description and avatar, LAN types, events, invite links</li>
       </ul>
 
@@ -83,7 +83,7 @@ export default function PrivacyPage() {
       <ul>
         <li>Login sessions, with the IP address and browser (user agent) they were created from</li>
         <li>A log of which reminders were sent, so nobody gets the same one twice</li>
-        <li>An audit log of changes orgas and admins make (for example who moved a seat, changed someone&apos;s answer, confirmed a ticket, changed a role or edited a guest), with the time, who made the change and who it was about</li>
+        <li>An audit log of changes leads and admins make (for example who moved a seat, changed someone&apos;s answer, confirmed a ticket, changed a role or edited a guest), with the time, who made the change and who it was about</li>
         <li>Server logs (time, requested page, IP address, error messages) that our server keeps for a short time</li>
       </ul>
 
@@ -105,7 +105,7 @@ export default function PrivacyPage() {
       <h2>4. Who can see your data</h2>
       <ul>
         <li><strong>Members of your clans</strong> see your name, nickname, avatar and whether you are coming to that clan&apos;s events. Once the seat plan is final they see who sits where.</li>
-        <li><strong>Clan admins and event orgas</strong> also see ticket status, notes and seat wishes for their events, and can export the attendee list. Clan admins see their clan&apos;s audit log.</li>
+        <li><strong>Clan admins and event leads</strong> also see ticket status, notes and seat wishes for their events, and can export the attendee list. Clan admins see their clan&apos;s audit log.</li>
         <li><strong>People in a linked Discord channel</strong> see the bot&apos;s announcements, including the nicknames of who is coming, unsure or on the waitlist.</li>
         <li><strong>Platform admins</strong> of this Seatbit instance can see all data to run and support the Service.</li>
       </ul>
@@ -160,7 +160,7 @@ export default function PrivacyPage() {
       <p>
         You can delete your account yourself on your <Link href="/profile">profile</Link> (Your data, Delete my
         account). We then delete your name, email, picture, Discord link, login sessions, nicknames, LAN IDs, clan
-        memberships, orga roles, seat wishes, seats, rides, packing lists and your answers to upcoming events. Your
+        memberships, lead roles, seat wishes, seats, rides, packing lists and your answers to upcoming events. Your
         answers to past events (coming or not, ticket) stay with an anonymous &ldquo;Deleted member&rdquo; that
         can&apos;t be traced back to you, so your clan&apos;s event history still adds up; audit log entries show the
         same &ldquo;Deleted member&rdquo;. A clan where nobody else with a login is left is deleted with your account.

@@ -126,7 +126,7 @@ export async function joinClan(clanId: string) {
   redirect(afterJoin(c, me.id));
 }
 
-/** Where a new member lands: the guest check when the orgas seem to have added them already. */
+/** Where a new member lands: the guest check when the leads seem to have added them already. */
 function afterJoin(c: { id: string; slug: string; guestClaims: string }, userId: string) {
   const member = ["member", "admin"].includes(clanRole(userId, c.id) ?? "");
   return member && c.guestClaims !== "off" && openGuestMatches(c.id, userId).length ? `/clans/${c.slug}/claim` : `/clans/${c.slug}`;
@@ -345,16 +345,16 @@ function createGuest(clanId: string, formData: FormData): Created {
   return { id };
 }
 
-/** The orga as the invite mail names them: Mike "Reyki" Keller. */
+/** The lead as the invite mail names them: Mike "Reyki" Keller. */
 const inviterName = (u: { id: string; name: string }) => getDefaultNames([u.id]).get(u.id)?.full ?? u.name;
 
-/** What the orga sees after adding someone. */
+/** What the lead sees after adding someone. */
 function addedMessage(r: { id: string; existing?: string }, invited: boolean, what: string) {
   if (r.existing) return `${r.existing} already has a Seatbit account with that email, so we ${what} them instead of a guest.`;
   return invited ? "Guest added. The invite mail is on its way." : "Guest added.";
 }
 
-/** Adds a member without a login, so orgas can sign them up and seat them. */
+/** Adds a member without a login, so leads can sign them up and seat them. */
 export async function addGuest(clanId: string, _: FormState, formData: FormData): Promise<FormState> {
   const me = await requireClanPermission(clanId, "members");
   const r = createGuest(clanId, formData);
@@ -508,7 +508,7 @@ export async function deleteGuest(clanId: string, userId: string) {
 }
 
 /** New claim link; the old one stops working. */
-/** "Send the DM again" on a guest an orga linked to a Discord member. */
+/** "Send the DM again" on a guest a lead linked to a Discord member. */
 export async function resendGuestDiscordDm(clanId: string, userId: string): Promise<ActionResult> {
   const me = await requireClanPermission(clanId, "members");
   const g = requireGuestOf(clanId, userId);
@@ -550,7 +550,7 @@ export async function renewGuestLink(clanId: string, userId: string) {
 
 /**
  * The signed-in user takes over a guest: clan membership, attendance, seats,
- * nicks, orga roles, rides and gear move to the real account, then the guest is deleted.
+ * nicks, lead roles, rides and gear move to the real account, then the guest is deleted.
  * Where both have something for the same LAN, the real account's stays.
  */
 export async function claimGuest(code: string) {

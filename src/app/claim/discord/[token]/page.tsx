@@ -23,7 +23,7 @@ export default async function DiscordClaimPage({ params }: PageProps<"/claim/dis
       st.kind === "invalid"
         ? ["Link no longer works", "It's older than a day. Run /claim in your clan's Discord server again for a new one."]
         : st.kind === "gone"
-          ? ["Already taken over", "That guest isn't waiting anymore. If it was you, you're all set; otherwise talk to your orgas."]
+          ? ["Already taken over", "That guest isn't waiting anymore. If it was you, you're all set; otherwise talk to your leads."]
           : st.linked
             ? ["Different Discord account", "This link is for the Discord account that ran /claim. Sign in with that one."]
             : ["Link Discord first", "This link is for the Discord account that ran /claim. Link it on your profile, then open the link again."];

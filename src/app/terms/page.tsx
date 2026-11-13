@@ -50,11 +50,11 @@ export default function TermsPage() {
         <li>You can delete your account at any time on your <Link href="/profile">profile</Link> (see the <Link href="/privacy">Privacy Policy</Link>).</li>
       </ul>
 
-      <h2>3. Clans, orgas and admins</h2>
+      <h2>3. Clans, leads and admins</h2>
       <p>
         Anyone can create a clan. Clan admins decide who can join, manage LAN types and events, and may approve,
-        add or remove members. Orgas of an event can see and edit the attendance, ticket status, seat wishes and seat
-        assignments of that event. Clan admins and orgas must only use this information to organise the group&apos;s
+        add or remove members. Leads of an event can see and edit the attendance, ticket status, seat wishes and seat
+        assignments of that event. Clan admins and leads must only use this information to organise the group&apos;s
         trip to the LAN, and must not copy it elsewhere for other purposes.
       </p>
 

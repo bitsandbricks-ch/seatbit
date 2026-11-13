@@ -2,11 +2,11 @@
 
 An **event** is one edition of a LAN the group attends. It goes from draft (optionally an interest check) to published, sign-up, the LAN itself, and next year's copy.
 
-**Who:** orgas, clan admins and event managers create and run events; members answer · **Where:** *New event* on the *LANs* tab or the clan page; *Manage* on the event
+**Who:** leads, clan admins and event managers create and run events; members answer · **Where:** *New event* on the *LANs* tab or the clan page; *Manage* on the event
 
 | Stage | Who sees it | What happens |
 | --- | --- | --- |
-| **Draft** | Orgas, clan admins, event managers | Nothing goes out. |
+| **Draft** | Leads, clan admins, event managers | Nothing goes out. |
 | **Interest check** (optional) | The clan | *Would you come?* answers, date can stay open. |
 | **Published** | The clan | Announcement, answers, tickets, seats, reminders. |
 | **LAN day** | The clan | Check-in with *I'm here*. |
@@ -25,7 +25,7 @@ An **event** is one edition of a LAN the group attends. It goes from draft (opti
 | **Start, end** | Set the start and the end follows from the type's usual length. Moving the start later moves the end and the deadlines by the same amount. |
 | **Answer by** | When the group must know who comes (e.g. before booking the seat block). Defaults from the type's days before. |
 | **Buy ticket by** | Deadline for tickets. |
-| **Spots** | How many people the group can bring. When full, new answers go on the [waitlist](attendance.md#waitlist); orgas choose whether the next in line moves up by itself or they pick. |
+| **Spots** | How many people the group can bring. When full, new answers go on the [waitlist](attendance.md#waitlist); leads choose whether the next in line moves up by itself or they pick. |
 | **Seats** | The seats the event gave the group, e.g. `F1-F16, F19-F22`. See [Seats](seats.md). |
 | **Event seat plan** | Link to the event's own seat plan where the leads book the group's seats (new every year). |
 | **Member profile link** | A member's profile on the event's site with `{id}` for their LAN ID. Empty uses the LAN type's. See [Profile links](clans.md#profile-links). |
@@ -36,7 +36,7 @@ Every date field is a text box: type or paste `14.11.2026 18:00`, `14.11. 18` or
 
 ## Draft, publish and schedule
 
-A new event starts as a **draft**: only its orgas, clan admins and event managers see it, and nothing goes out (no Discord post, no reminders, no messages).
+A new event starts as a **draft**: only its leads, clan admins and event managers see it, and nothing goes out (no Discord post, no reminders, no messages).
 
 ![A draft event](../screenshots/desktop-event-draft.png){ .shot }
 
@@ -62,11 +62,11 @@ For when you're not sure yet if, or when, the group goes. Turn it on when creati
 </figure>
 </div>
 
-![Interest check, orga view](../screenshots/desktop-interest-manage.png){ .shot }
+![Interest check, lead view](../screenshots/desktop-interest-manage.png){ .shot }
 
 ## Manage
 
-Orgas see **View / Manage** next to the event title. *Manage* has the tabs:
+Leads see **View / Manage** next to the event title. *Manage* has the tabs:
 
 | Tab | |
 | --- | --- |
@@ -75,7 +75,7 @@ Orgas see **View / Manage** next to the event title. *Manage* has the tabs:
 | **Attendees** | Answers, tickets, LAN IDs, CSV export. See [Attendance](attendance.md#attendee-list). |
 | **Who's missing** | Who still owes something, with nudges. See [Who's missing](reminders.md#whos-missing). |
 | **Discord & WhatsApp** | Re-post the announcement, post reminders, WhatsApp texts. See [Discord](discord.md#per-event). |
-| **Settings** | Details, dates, spots, links, co-orgas, copy, cancel, delete. |
+| **Settings** | Details, dates, spots, links, co-leads, copy, cancel, delete. |
 
 ![Manage overview](../screenshots/desktop-manage.png){ .shot }
 
@@ -105,7 +105,7 @@ Short updates ("Doors open at 10:00, bring cash for pizza"). They show on the ev
 
 | Action | |
 | --- | --- |
-| **Copy for next year** | Creates next year's event as a draft: dates +1 year, seat block, orgas. |
+| **Copy for next year** | Creates next year's event as a draft: dates +1 year, seat block, leads. |
 | **Cancel event…** | Tells everyone who answered and turns the Discord post red. The event stays visible, greyed out. Can be undone. |
 | **Delete** | Removes a draft or an event for good. |
 

@@ -27,7 +27,7 @@ function myAttendance(lanId: string, userId: string) {
     .get();
 }
 
-/** Everyone who isn't "not coming" may order food; orgas always. */
+/** Everyone who isn't "not coming" may order food; leads always. */
 function canOrder(me: User, lanId: string) {
   if (isLanManager(me, lanId)) return true;
   if (!canViewLan(me, lanId)) return false;
@@ -41,7 +41,7 @@ function getOrder(orderId: string) {
   return o;
 }
 
-/** Whoever started an order runs it (collects the money); orgas can too. */
+/** Whoever started an order runs it (collects the money); leads can too. */
 function canRunOrder(me: User, o: { lanId: string; createdBy: string | null }) {
   return o.createdBy === me.id || isLanManager(me, o.lanId);
 }
@@ -110,7 +110,7 @@ export async function createFoodOrder(lanId: string, formData: FormData): Promis
 export async function setFoodOrderStatus(orderId: string, status: FoodOrderStatus) {
   const me = await requireUser();
   const o = getOrder(orderId);
-  if (!canRunOrder(me, o)) throw new Error("Only who started this order or an orga can change it.");
+  if (!canRunOrder(me, o)) throw new Error("Only who started this order or a lead can change it.");
   // Reopening an order whose last call passed clears the last call, otherwise it would stay closed.
   const reopenLate = status === "open" && o.closesAt && o.closesAt <= new Date();
   db.update(foodOrder)
@@ -123,7 +123,7 @@ export async function setFoodOrderStatus(orderId: string, status: FoodOrderStatu
 export async function deleteFoodOrder(orderId: string) {
   const me = await requireUser();
   const o = getOrder(orderId);
-  if (!canRunOrder(me, o)) throw new Error("Only who started this order or an orga can delete it.");
+  if (!canRunOrder(me, o)) throw new Error("Only who started this order or a lead can delete it.");
   db.delete(foodOrder).where(eq(foodOrder.id, orderId)).run();
   foodPath(o.lanId);
 }

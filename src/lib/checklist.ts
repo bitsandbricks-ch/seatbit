@@ -19,7 +19,7 @@ export function buildChecklist(input: {
   lan: Lan;
   attendance: Attendance | undefined;
   hasNick: boolean;
-  /** My seat: the final one, or the one I picked myself while self pick is on. Null while orga assignments are private. */
+  /** My seat: the final one, or the one I picked myself while self pick is on. Null while lead assignments are private. */
   seatLabel: string | null;
   hasSeatPlan: boolean;
   freeSeats: number;

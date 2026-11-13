@@ -2,7 +2,7 @@
 import { useState, useTransition } from "react";
 import { setMyTicketBought } from "@/app/actions";
 
-/** "I have my ticket" checkbox for members (sets ticketBought). Locked once an orga confirmed the ticket. */
+/** "I have my ticket" checkbox for members (sets ticketBought). Locked once a lead confirmed the ticket. */
 export function TicketConfirm({ lanId, bought, confirmed, label }: { lanId: string; bought: boolean; confirmed: boolean; label?: string }) {
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +29,7 @@ export function TicketConfirm({ lanId, bought, confirmed, label }: { lanId: stri
         />
         <span>
           {label ?? "I have my ticket"}
-          {confirmed && <span className="ml-1 text-xs text-muted">(confirmed by an orga)</span>}
+          {confirmed && <span className="ml-1 text-xs text-muted">(confirmed by a lead)</span>}
         </span>
       </label>
       {error && <p className="mt-1 text-sm text-danger">{error}</p>}

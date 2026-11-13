@@ -558,7 +558,7 @@ function LogTab({ clanId, slug, sp }: { clanId: string; slug: string; sp: Record
   return (
     <Card title="Audit log">
       <p className="mb-4 text-sm text-muted">
-        Changes orgas and admins made in this clan and its events. Members&apos; own answers aren&apos;t listed. Entries
+        Changes leads and admins made in this clan and its events. Members&apos; own answers aren&apos;t listed. Entries
         are kept for a year.
       </p>
       <AuditLog
@@ -587,7 +587,7 @@ function RolesCard() {
           </div>
         ))}
       </dl>
-      <p className="mt-3 text-xs text-faint">Orgas of a single event are set on the event&apos;s manage page.</p>
+      <p className="mt-3 text-xs text-faint">Leads of a single event are set on the event&apos;s manage page.</p>
     </Card>
   );
 }

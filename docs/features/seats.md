@@ -1,8 +1,8 @@
 # Seats
 
-The **seat plan** shows the group's seat block. Members send seat wishes or pick a seat, orgas plan and finalize it, then everyone books the same seat on the event's own site.
+The **seat plan** shows the group's seat block. Members send seat wishes or pick a seat, leads plan and finalize it, then everyone books the same seat on the event's own site.
 
-**Who:** members view, wish and pick; orgas plan · **Where:** event *Seats* tab; *Manage → Seats*
+**Who:** members view, wish and pick; leads plan · **Where:** event *Seats* tab; *Manage → Seats*
 
 ![Seat plan with the details panel](../screenshots/desktop-event-seats.png){ .shot }
 
@@ -18,8 +18,8 @@ The **seat plan** shows the group's seat block. Members send seat wishes or pick
 | Step | |
 | --- | --- |
 | 1. **Seat wishes** | Members say who they want to sit with, who not right next to, edge or middle, or a specific seat. On Discord: `/wish`. |
-| 2. **Self pick** (optional) | Orgas turn it on; members with a ticket tap a free seat and **Take this seat**, **Move here** or **Give up my seat**. |
-| 3. **Final plan** | Orgas finalize. This closes wishes and self pick, shows everyone the plan and can tell everyone their seat. Later changes notify the people who moved. **Reopen** goes back. |
+| 2. **Self pick** (optional) | Leads turn it on; members with a ticket tap a free seat and **Take this seat**, **Move here** or **Give up my seat**. |
+| 3. **Final plan** | Leads finalize. This closes wishes and self pick, shows everyone the plan and can tell everyone their seat. Later changes notify the people who moved. **Reopen** goes back. |
 
 Seats only count, and everyone sees the plan, once it is final. The member [checklist](attendance.md#checklist) follows these steps: *Pick your seat* (or the optional *Send seat wishes*), then *Leads confirm your seat*.
 
@@ -38,9 +38,9 @@ Seats only count, and everyone sees the plan, once it is final. The member [chec
 </figure>
 <figure markdown>
 
-![Orga seat editing on a phone](../screenshots/phone-manage-seats.png){ .shot }
+![Lead seat editing on a phone](../screenshots/phone-manage-seats.png){ .shot }
 
-<figcaption>Orga: editing</figcaption>
+<figcaption>Lead: editing</figcaption>
 </figure>
 </div>
 
@@ -48,7 +48,7 @@ Seats only count, and everyone sees the plan, once it is final. The member [chec
 
 *Manage → Seats*.
 
-![Orga seat plan](../screenshots/desktop-manage-seats.png){ .shot }
+![Lead seat plan](../screenshots/desktop-manage-seats.png){ .shot }
 
 **Our seats:** enter the seats the event gave you, e.g. `F1-F16, F19-F22`. Saving again keeps assignments for seats that stay in the list. **Edit seats** in the map shows every number of a row: tap a dashed one to add it, a seat to remove it.
 
@@ -72,4 +72,4 @@ When the event has an **event seat plan** link, the leads book everyone's seat t
 
 ## Seat swaps
 
-After the plan is final, a member can ask another to swap. Once the other agrees, an orga **approves** or rejects it on the Seats tab, and both are told.
+After the plan is final, a member can ask another to swap. Once the other agrees, a lead **approves** or rejects it on the Seats tab, and both are told.

@@ -114,7 +114,7 @@ export function AuditLog({
 
       {rows.length === 0 ? (
         <EmptyState icon="box" title="Nothing logged yet">
-          Changes by orgas and admins show up here: seat moves, answer changes, roles, guests, publishing and cancelling.
+          Changes by leads and admins show up here: seat moves, answer changes, roles, guests, publishing and cancelling.
         </EmptyState>
       ) : (
         <ol className="-my-1 divide-y divide-line">

@@ -33,7 +33,7 @@ const SOCIALS: Record<string, Record<string, string>> = {
 
 type Person = { key: string; first: string; last: string; nick: string; color: string; icon?: string };
 
-// The first one is the platform admin, clan admin and orga; "anna" is the member the screenshots follow.
+// The first one is the platform admin, clan admin and lead; "anna" is the member the screenshots follow.
 const PEOPLE: Person[] = [
   { key: "alex", first: "Alex", last: "Brunner", nick: "Blitz", color: "#6c8cff", icon: "🧙" },
   { key: "anna", first: "Anna", last: "Frei", nick: "Nova", color: "#f472b6", icon: "🦊" },
@@ -142,7 +142,7 @@ export async function seedDemo({ force = false, discord = false } = {}) {
     }
     tx.insert(s.clanInvite).values({ code: "demo-invite", clanId, createdBy: ids.alex }).run();
 
-    // A guest: someone the orgas added who has no account yet.
+    // A guest: someone the leads added who has no account yet.
     ids.yannick = "demo-yannick";
     tx.insert(s.user)
       .values({
@@ -161,7 +161,7 @@ export async function seedDemo({ force = false, discord = false } = {}) {
     tx.insert(s.nickname).values({ userId: ids.yannick, nick: "Yeti", isPrimary: true }).run();
     tx.insert(s.clanMember).values({ clanId, userId: ids.yannick, role: "member" }).run();
 
-    // Two guests the orgas added for people who then signed up on their own: Sara can
+    // Two guests the leads added for people who then signed up on their own: Sara can
     // take hers over (same name), Rafael already asked to (same nick) and waits for an admin.
     const guest = (key: string, first: string, last: string, nick: string, color: string) => {
       ids[key] = `demo-${key}`;
@@ -248,7 +248,7 @@ export async function seedDemo({ force = false, discord = false } = {}) {
           clanId,
           typeId: lakeside,
           name: `Lakeside LAN ${start.getFullYear()}`,
-          description: "Our big one. Doors open Friday 18:00. Please book the seat the orgas gave you on the event's seat plan.",
+          description: "Our big one. Doors open Friday 18:00. Please book the seat the leads gave you on the event's seat plan.",
           location: "Sports hall, Lakeside",
           websiteUrl: "https://example.com/lakeside-lan",
           ticketUrl: "https://example.com/lakeside-lan/tickets",
@@ -271,7 +271,7 @@ export async function seedDemo({ force = false, discord = false } = {}) {
           clanId,
           typeId: mountain,
           name: `Mountain Mayhem ${mmStart.getFullYear()}`,
-          description: "Hut LAN with fondue on Saturday. Pick your own seat until the orgas close the plan.",
+          description: "Hut LAN with fondue on Saturday. Pick your own seat until the leads close the plan.",
           location: "Mountain hut, Alpstadt",
           websiteUrl: "https://example.com/mountain-mayhem",
           ticketUrl: "https://example.com/mountain-mayhem/tickets",
@@ -319,7 +319,7 @@ export async function seedDemo({ force = false, discord = false } = {}) {
           createdAt: at(-3, 19),
         },
         {
-          // A draft: only orgas and clan admins see it until it's published.
+          // A draft: only leads and clan admins see it until it's published.
           id: events.draft,
           clanId,
           typeId: lakeside,
@@ -356,7 +356,7 @@ export async function seedDemo({ force = false, discord = false } = {}) {
     ];
     for (const [key, answer] of interest) tx.insert(s.lanInterest).values({ lanId: events.retro, userId: ids[key], answer }).run();
 
-    // Orga news on the Lakeside LAN.
+    // Lead news on the Lakeside LAN.
     tx.insert(s.lanNews)
       .values([
         { lanId: events.lakeside, authorId: ids.alex, text: "Seat plan is final! Please book your seat on the event site this week.", createdAt: at(-1, 21, 5) },
@@ -417,7 +417,7 @@ export async function seedDemo({ force = false, discord = false } = {}) {
         })
         .run();
     }
-    // Chiara asked Gina to swap; Gina accepted, waiting for an orga.
+    // Chiara asked Gina to swap; Gina accepted, waiting for a lead.
     tx.insert(s.seatSwap)
       .values({ lanId: events.lakeside, fromUserId: ids.chiara, toUserId: ids.gina, status: "accepted", note: "Want to sit at the end of the row" })
       .run();
@@ -547,7 +547,7 @@ export async function seedDemo({ force = false, discord = false } = {}) {
         .run(),
     );
 
-    // Audit log: what the orgas changed lately (Clan settings -> Audit log, Admin -> Audit log).
+    // Audit log: what the leads changed lately (Clan settings -> Audit log, Admin -> Audit log).
     const lanName = (id: string) => tx.select({ name: s.lan.name }).from(s.lan).where(eq(s.lan.id, id)).get()?.name ?? "";
     const lake = { lanId: events.lakeside, clanId, event: lanName(events.lakeside) };
     const log: [number, number, string, string, string | null, Record<string, unknown>, string | null][] = [
@@ -591,7 +591,7 @@ if (process.argv[1]?.match(/seed-demo\.[tj]s$/)) {
   seedDemo({ force: process.argv.includes("--force"), discord: process.argv.includes("--discord") })
     .then((r) => {
       console.log(`Demo data added: ${r.users} people in "Pixel Pirates", 5 events.`);
-      console.log(`Sign in with alex@example.com (admin and orga) or anna@example.com (member), password "${r.password}".`);
+      console.log(`Sign in with alex@example.com (admin and lead) or anna@example.com (member), password "${r.password}".`);
       console.log("Email login needs ALLOW_EMAIL_LOGIN=1.");
     })
     .catch((e) => {

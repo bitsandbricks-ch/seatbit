@@ -76,7 +76,7 @@ export function checkDeletion(userId: string): DeletionCheck {
 
 /**
  * Deletes an account. Everything personal goes: profile, picture, email, Discord link and sessions,
- * nicks, LAN IDs, clan memberships, orga roles, answers and seats for upcoming events, rides,
+ * nicks, LAN IDs, clan memberships, lead roles, answers and seats for upcoming events, rides,
  * packing lists, votes and swap requests. What stays is an empty "Deleted member" row with the
  * answers to past events (coming or not, ticket), so the clan's history and stats still add up.
  * Clans where nobody else with a login is left are deleted with it.

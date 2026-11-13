@@ -34,7 +34,7 @@ export const ROLE_INFO: Record<MemberRole, { label: string; description: string;
   },
   member: {
     label: "Member",
-    description: "Answers for events and sees the clan. Can still be an orga of single events.",
+    description: "Answers for events and sees the clan. Can still be a lead of single events.",
     perms: [],
   },
 };

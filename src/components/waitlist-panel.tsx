@@ -17,7 +17,7 @@ export type WaitlistEntry = {
   ticket: "confirmed" | "reported" | null;
 };
 
-/** Orga view of the waitlist: the line in order, move people up or reorder, and how free spots are filled. */
+/** Lead view of the waitlist: the line in order, move people up or reorder, and how free spots are filled. */
 export function WaitlistPanel({
   lanId,
   entries,
@@ -44,7 +44,7 @@ export function WaitlistPanel({
           onChange={(v) => run(() => setWaitlistAuto(lanId, v === "auto"))}
           options={[
             { id: "auto", label: "Next in line moves up" },
-            { id: "manual", label: "Orgas pick" },
+            { id: "manual", label: "Leads pick" },
           ]}
         />
         <p className="text-sm text-muted">
@@ -54,7 +54,7 @@ export function WaitlistPanel({
       <p className="text-sm text-muted">
         {auto
           ? "When someone stops coming, the first person in line moves to coming and gets an email and a Discord DM."
-          : "When someone stops coming, the orgas get a notice and move someone up by hand. Handy when you want to ask first who still has time."}
+          : "When someone stops coming, the leads get a notice and move someone up by hand. Handy when you want to ask first who still has time."}
       </p>
 
       {entries.length === 0 ? (

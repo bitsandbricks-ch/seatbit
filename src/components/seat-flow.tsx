@@ -6,8 +6,8 @@ import { Pill, btnGhost, btnPrimary, btnSecondary } from "./ui";
 type StepState = "done" | "active" | "off" | "todo";
 
 /**
- * The orga's seat flow as steps: members send wishes, an optional self-pick
- * phase, then the orgas check the plan and finalize it. Finalizing is always
+ * The lead's seat flow as steps: members send wishes, an optional self-pick
+ * phase, then the leads check the plan and finalize it. Finalizing is always
  * the last step, also when members picked their own seats: it closes self pick
  * and wishes, shows everyone the plan and (optionally) tells them their seat.
  * In the database "finalized" is `seatsPublishedAt`.
@@ -70,7 +70,7 @@ export function SeatFlow({
       ),
     },
     {
-      title: "Orgas finalize the plan",
+      title: "Leads finalize the plan",
       state: final ? "done" : "todo",
       body: final ? (
         <div className="flex flex-wrap items-center justify-between gap-3">

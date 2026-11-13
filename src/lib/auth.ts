@@ -118,8 +118,8 @@ function build() {
       },
       session: {
         create: {
-          // Signing in with a verified email takes over guests the orgas invited with that address,
-          // and a linked Discord account the guests an orga tied to that Discord user via the bot.
+          // Signing in with a verified email takes over guests the leads invited with that address,
+          // and a linked Discord account the guests a lead tied to that Discord user via the bot.
           after: async (session) => {
             try {
               claimGuestsByEmail(session.userId);

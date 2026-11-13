@@ -24,11 +24,11 @@ export type MissingGroupView = {
   hint: string;
   who: "member" | "orga";
   people: MissingPersonView[];
-  /** For orga steps: where to fix it. */
+  /** For lead steps: where to fix it. */
   fix?: { href: string; label: string };
 };
 
-/** Orga view: who still owes an answer, a ticket, a nick or a seat, with one-tap nudges by Discord DM or mail. */
+/** Lead view: who still owes an answer, a ticket, a nick or a seat, with one-tap nudges by Discord DM or mail. */
 export function WhoIsMissing({
   lanId,
   groups,
@@ -85,7 +85,7 @@ export function WhoIsMissing({
                 {g.title} <span className="text-sm font-normal text-faint">{g.people.length}</span>
               </span>
             }
-            actions={<Pill tone="amber">orga to-do</Pill>}
+            actions={<Pill tone="amber">lead to-do</Pill>}
           >
             <p className="mb-3 text-sm text-muted">{g.hint}</p>
             <PeopleList people={g.people} profileBase={profileBase} />

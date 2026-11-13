@@ -96,7 +96,7 @@ export default async function Home() {
         >
           {adminClans.length > 0
             ? "Add the next LAN your clan is going to, and everyone can say if they're coming."
-            : "When an orga adds the next LAN your clan is going to, it shows up here."}
+            : "When a lead adds the next LAN your clan is going to, it shows up here."}
         </EmptyState>
       )}
 
@@ -175,7 +175,7 @@ function LanCard({
         <StatusBadge status={my?.status} seat={info.mySeat} />
       </div>
       <div className="mt-4 flex flex-wrap gap-2 text-xs">
-        {!l.publishedAt && <Pill tone="amber">Draft, only orgas see it</Pill>}
+        {!l.publishedAt && <Pill tone="amber">Draft, only leads see it</Pill>}
         {l.cancelledAt && <Pill tone="red">Cancelled</Pill>}
         {l.interestCheck && !l.cancelledAt && <Pill tone="emerald">Interest check: would you come?</Pill>}
         <Pill>

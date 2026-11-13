@@ -1,8 +1,8 @@
 # Reminders and who's missing
 
-Seatbit reminds people before deadlines by itself. Orgas can also remind by hand, and **Who's missing** lists everyone who still owes the group something, with one-tap nudges.
+Seatbit reminds people before deadlines by itself. Leads can also remind by hand, and **Who's missing** lists everyone who still owes the group something, with one-tap nudges.
 
-**Who:** orgas · **Where:** *Manage → Overview* and *Manage → Who's missing*
+**Who:** leads · **Where:** *Manage → Overview* and *Manage → Who's missing*
 
 ## Automatic reminders
 

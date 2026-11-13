@@ -101,7 +101,7 @@ export const commands = [
         ],
       },
       { type: 3, name: "seat", description: "A seat you'd like, e.g. F7", required: false, max_length: 12 },
-      { type: 3, name: "note", description: "Anything else the orgas should know", required: false, max_length: 300 },
+      { type: 3, name: "note", description: "Anything else the leads should know", required: false, max_length: 300 },
       { type: 5, name: "clear", description: "Start over: remove all your wishes first", required: false },
     ],
   },
@@ -112,7 +112,7 @@ export const commands = [
   },
   {
     name: "claim",
-    description: "Take over the guest profile your clan's orgas made for you",
+    description: "Take over the guest profile your clan's leads made for you",
     type: 1,
     dm_permission: false,
     options: [
@@ -122,7 +122,7 @@ export const commands = [
   {
     // Seatbit checks the caller may manage the clan's members; no Discord permission needed.
     name: "guest",
-    description: "Orgas: tell Seatbit which Discord member a guest is, so they take it over",
+    description: "Leads: tell Seatbit which Discord member a guest is, so they take it over",
     type: 1,
     dm_permission: false,
     options: [

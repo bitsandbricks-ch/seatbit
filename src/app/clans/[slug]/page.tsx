@@ -167,7 +167,7 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
         <Notice>
           <span className="flex flex-wrap items-center justify-between gap-2">
             <span>
-              The orgas added <span className="font-semibold">{guestMatch.guest.name}</span> as a guest, with the same{" "}
+              The leads added <span className="font-semibold">{guestMatch.guest.name}</span> as a guest, with the same{" "}
               {guestMatch.match} as you. Is that you?
             </span>
             <Link href={`/clans/${c.slug}/claim`} className="font-semibold text-bit underline underline-offset-2">
@@ -351,7 +351,7 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
           <ClanMemberGrid slug={c.slug} members={members} />
           {hasGuests && (
             <p className="mt-4 border-t border-line pt-3 text-sm text-muted">
-              Did the orgas add you as a guest before you signed up?{" "}
+              Did the leads add you as a guest before you signed up?{" "}
               <Link href={`/clans/${c.slug}/claim`} className="text-bit hover:underline">
                 Take it over
               </Link>

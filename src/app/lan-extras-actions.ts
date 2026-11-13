@@ -43,7 +43,7 @@ export async function adminSetSeatBooked(lanId: string, userId: string, booked: 
 
 const OPEN = ["pending", "accepted"] as const;
 
-/** Orgas of a LAN, or the clan admins and event managers when it has none. They approve swaps. */
+/** Leads of a LAN, or the clan admins and event managers when it has none. They approve swaps. */
 function orgasOf(l: Lan) {
   const ids = db.select().from(lanOrga).where(eq(lanOrga.lanId, l.id)).all().map((o) => o.userId);
   if (ids.length) return db.select().from(user).where(inArray(user.id, ids)).all();
@@ -65,7 +65,7 @@ export async function requestSeatSwap(lanId: string, toUserId: string, note = ""
   const me = await requireUser();
   const l = mustGetLan(lanId);
   if (!canViewLan(me, lanId)) throw new Error("Not found");
-  if (!l.seatsPublishedAt) throw new Error("Swaps open once the orgas finalize the seat plan.");
+  if (!l.seatsPublishedAt) throw new Error("Swaps open once the leads finalize the seat plan.");
   if (toUserId === me.id) throw new Error("Pick someone else.");
   const mine = seatOf(lanId, me.id);
   const theirs = seatOf(lanId, toUserId);
@@ -84,7 +84,7 @@ export async function requestSeatSwap(lanId: string, toUserId: string, note = ""
     notify(toUserId, {
       kind: "seat_swap",
       subject: `${names.get(me.id)} wants to swap seats at ${l.name}`,
-      text: `${names.get(me.id)} (seat ${mine.label}) asks to swap with your seat ${theirs.label} at ${l.name}.${note.trim() ? `\n\n"${note.trim().slice(0, 200)}"` : ""}\n\nAccept or decline on the event page. An orga approves the swap afterwards.`,
+      text: `${names.get(me.id)} (seat ${mine.label}) asks to swap with your seat ${theirs.label} at ${l.name}.${note.trim() ? `\n\n"${note.trim().slice(0, 200)}"` : ""}\n\nAccept or decline on the event page. A lead approves the swap afterwards.`,
       url: lanUrl(l),
       dmOnly: true,
     }),
@@ -92,7 +92,7 @@ export async function requestSeatSwap(lanId: string, toUserId: string, note = ""
   lanPath(lanId);
 }
 
-/** The asked member accepts or declines. Accepting sends it to the orgas. */
+/** The asked member accepts or declines. Accepting sends it to the leads. */
 export async function answerSeatSwap(swapId: string, accept: boolean) {
   const me = await requireUser();
   const s = db.select().from(seatSwap).where(eq(seatSwap.id, swapId)).get();
@@ -109,7 +109,7 @@ export async function answerSeatSwap(swapId: string, accept: boolean) {
       kind: "seat_swap",
       subject: accept ? `${b} agreed to swap seats` : `${b} declined your seat swap`,
       text: accept
-        ? `${b} agreed to swap seats with you at ${l.name}. An orga still has to approve it.`
+        ? `${b} agreed to swap seats with you at ${l.name}. A lead still has to approve it.`
         : `${b} doesn't want to swap seats at ${l.name}.`,
       url: lanUrl(l),
       dmOnly: true,
@@ -135,7 +135,7 @@ export async function cancelSeatSwap(swapId: string) {
   lanPath(s.lanId);
 }
 
-/** Orga approves (swaps the two seats as they are now) or rejects an accepted swap. */
+/** Lead approves (swaps the two seats as they are now) or rejects an accepted swap. */
 export async function decideSeatSwap(swapId: string, approve: boolean) {
   const s = db.select().from(seatSwap).where(eq(seatSwap.id, swapId)).get();
   if (!s) throw new Error("Not found");
@@ -152,7 +152,7 @@ export async function decideSeatSwap(swapId: string, approve: boolean) {
         await notify(uid, {
           kind: "seat_swap",
           subject: `Seat swap at ${l.name} not approved`,
-          text: `The orgas didn't approve the seat swap at ${l.name}. Your seat stays the same. Ask them if you want to know why.`,
+          text: `The leads didn't approve the seat swap at ${l.name}. Your seat stays the same. Ask them if you want to know why.`,
           url: lanUrl(l),
           dmOnly: true,
         });
@@ -235,12 +235,12 @@ export async function addGame(lanId: string, formData: FormData): Promise<{ erro
   return {};
 }
 
-/** Removes a game: whoever added it, or an orga. */
+/** Removes a game: whoever added it, or a lead. */
 export async function deleteGame(gameId: string) {
   const me = await requireUser();
   const g = db.select().from(game).where(eq(game.id, gameId)).get();
   if (!g) return;
-  if (g.addedBy !== me.id && !isLanManager(me, g.lanId)) throw new Error("Only who added it or an orga can remove it.");
+  if (g.addedBy !== me.id && !isLanManager(me, g.lanId)) throw new Error("Only who added it or a lead can remove it.");
   db.delete(game).where(eq(game.id, gameId)).run();
   lanPath(g.lanId);
 }
@@ -259,7 +259,7 @@ export async function setGameMark(gameId: string, field: "vote" | "installed", v
 
 // ---------------- Who's missing ----------------
 
-/** Orga nudge from the "Who's missing" tab: one person, or everyone missing a step. */
+/** Lead nudge from the "Who's missing" tab: one person, or everyone missing a step. */
 export async function nudgeMissing(lanId: string, step: string, userIds?: string[]): Promise<NudgeResult> {
   await requireLanManager(lanId);
   const l = mustGetLan(lanId);

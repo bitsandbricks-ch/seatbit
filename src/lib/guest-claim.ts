@@ -20,7 +20,7 @@ export const normEmail = (e: string) => e.trim().toLowerCase();
 
 /**
  * The real account `meId` takes over guest `g`: clan membership, attendance, seats,
- * nicks, orga roles, rides and sleeping spots move over, then the guest is deleted.
+ * nicks, lead roles, rides and sleeping spots move over, then the guest is deleted.
  * Where both have something for the same LAN, the real account's stays.
  * Empty first name / surname on the account are filled from the guest.
  */
@@ -203,9 +203,9 @@ export function unclaimedGuests(clanId: string) {
 
 /**
  * Unclaimed guests that are still free for this person: not already asked for by
- * someone else (waiting for an admin) and not tied by an orga to another Discord member.
- * Without a person (orga views), guests with an open request or a Discord link are left out;
- * `includeLinked` keeps the linked ones (orgas re-linking a guest to someone else).
+ * someone else (waiting for an admin) and not tied by a lead to another Discord member.
+ * Without a person (lead views), guests with an open request or a Discord link are left out;
+ * `includeLinked` keeps the linked ones (leads re-linking a guest to someone else).
  */
 export function claimableGuests(clanId: string, userId: string | null, discordId: string | null = null, opts: { includeLinked?: boolean } = {}) {
   const guests = unclaimedGuests(clanId);
@@ -229,7 +229,7 @@ export function claimableGuests(clanId: string, userId: string | null, discordId
  * The clan's guests as the member sees them on the claim page: whether the name or a
  * nick matches theirs, and what they already said about each. Matches come first.
  * `extraNames` also count as theirs (the Discord bot passes their Discord names);
- * without a `userId` only those count. Guests someone else already asked for, or an orga
+ * without a `userId` only those count. Guests someone else already asked for, or a lead
  * tied to another Discord member, are left out.
  */
 export function guestSuggestions(
@@ -270,7 +270,7 @@ export function openGuestMatches(clanId: string, userId: string) {
 /**
  * Whether a member may take over this guest right away instead of asking an admin:
  * the clan allows it, the name or nick matches, and nothing about the guest asks
- * for a second look (orgas gave them an email, which isn't the member's, or made them admin).
+ * for a second look (leads gave them an email, which isn't the member's, or made them admin).
  */
 export function canClaimDirectly(mode: string, s: Pick<GuestSuggestion, "guest" | "match">, guestRole: string | null) {
   return mode === "match" && !!s.match && !s.guest.inviteEmail && guestRole !== "admin";
@@ -331,7 +331,7 @@ export function discordIdOfUser(userId: string) {
     .get()?.id;
 }
 
-/** Takes over every guest an orga linked to this account's Discord user (via the bot). Returns how many. */
+/** Takes over every guest a lead linked to this account's Discord user (via the bot). Returns how many. */
 export function claimGuestsByDiscord(userId: string) {
   const me = db.select().from(schema.user).where(eq(schema.user.id, userId)).get();
   const discordId = me && !me.isGuest ? discordIdOfUser(me.id) : undefined;
@@ -396,7 +396,7 @@ export function discordTicketState(token: string, me: User) {
   return { kind: s.status === "pending" ? ("pending" as const) : ("ok" as const), clan: c, claim };
 }
 
-/** What the guest page says about the Discord member an orga linked the guest to. */
+/** What the guest page says about the Discord member a lead linked the guest to. */
 export function guestDiscordLines(g: User): string[] {
   if (!g.guestDiscordId) return ["Not linked to a Discord member."];
   const by = g.guestDiscordLinkedBy ? getDefaultNames([g.guestDiscordLinkedBy]).get(g.guestDiscordLinkedBy)?.full : undefined;

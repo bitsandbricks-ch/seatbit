@@ -22,7 +22,7 @@ export default async function ClansPage() {
 
   return (
     <Page>
-      <PageHeader title="Clans" subtitle="Your clan sees its events together. Join one with an invite link from your orga, or start your own." />
+      <PageHeader title="Clans" subtitle="Your clan sees its events together. Join one with an invite link from your lead, or start your own." />
       <Columns
         aside={
           <Card title="Start a clan">
@@ -33,7 +33,7 @@ export default async function ClansPage() {
       >
       {myClans.length === 0 && others.length === 0 && (
         <EmptyState icon="users" title="No clans yet">
-          Start one, or ask your orga for an invite link.
+          Start one, or ask your lead for an invite link.
         </EmptyState>
       )}
       {myClans.length > 0 && (
