@@ -36,7 +36,7 @@ export const health = {
   discordSettings: "Discord settings",
   jobs: "Background jobs",
   jobsHint: "Since the server started ({since}). Runs started from the cron URL count too.",
-  job: { reminders: "Reminders", publish: "Scheduled publishing", backup: "Database backup" },
+  job: { reminders: "Reminders", publish: "Scheduled publishing", backup: "Database backup", restoreTest: "Backup restore test" },
   everyN: { one: "Every minute", other: "Every {count} minutes" },
   cronOnly: "Built-in check off, cron URL only",
   runs: { one: "{count} run", other: "{count} runs" },

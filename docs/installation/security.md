@@ -27,6 +27,7 @@ What Seatbit does to protect its users, and what you as the operator of an insta
 - Set a long random `BETTER_AUTH_SECRET` (`openssl rand -base64 32`) and keep it out of git. It signs sessions and, unless you set `SETTINGS_ENCRYPTION_KEY`, encrypts the saved secrets: losing it means saving those again.
 - Keep secrets in a Kubernetes `Secret` (or Docker secrets / an env file only root can read), ideally managed with Sealed Secrets, SOPS or an external secret store.
 - Set a `CRON_SECRET` only if you call `/api/cron/reminders`; without one the endpoint is off.
+- The same goes for `METRICS_TOKEN` and `/api/metrics`. The metrics only hold totals (no names or clans), but keep the token secret anyway, or block `/api/metrics` at the ingress and scrape the pod directly.
 - Rotate the Discord client secret, bot token and Stripe keys when someone who had access leaves.
 
 ### Reverse proxy

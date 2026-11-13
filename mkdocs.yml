@@ -136,7 +136,7 @@ nav:
           - Operator, privacy and terms: installation/legal.md
           - Stripe (payments): installation/stripe.md
       - Operate:
-          - Backups, upgrades and admin CLI: installation/operations.md
+          - Backups, upgrades, metrics and admin CLI: installation/operations.md
           - Security hardening: installation/security.md
   - Development:
       - development/index.md
