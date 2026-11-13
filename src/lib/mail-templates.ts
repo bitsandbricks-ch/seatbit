@@ -14,7 +14,7 @@ import { eq, like } from "drizzle-orm";
 import { db, schema } from "../db";
 import { isLocale, type Locale } from "../i18n/config";
 import { lanStart } from "./format";
-import { appUrl, sendMail } from "./mail";
+import { appUrl, deliverMail } from "./mail";
 import { type FactRow, type TemplateParts, type Vars, buildMail } from "./mail-fill";
 
 export { fill, PREVIEW_VARS, buildMail } from "./mail-fill";
@@ -340,10 +340,10 @@ export function renderTemplate(id: MailTemplateId, vars: Vars, loc: Locale = "en
   return buildMail(getTemplate(id, loc), templateDef(id).facts, vars, { appUrl, locale: loc });
 }
 
-/** Renders a template and sends it (HTML with a plain-text part). */
-export async function sendTemplate(to: string, id: MailTemplateId, vars: Vars, loc: Locale = "en") {
+/** Renders a template and sends it (HTML with a plain-text part). `test` marks the subject for admin test sends. */
+export async function sendTemplate(to: string, id: MailTemplateId, vars: Vars, loc: Locale = "en", opts: { test?: boolean } = {}) {
   const m = renderTemplate(id, vars, loc);
-  await sendMail(to, m.subject, m.text, m.html);
+  await deliverMail(to, { ...m, subject: opts.test ? `[Test] ${m.subject}` : m.subject });
 }
 
 /** The placeholders every event mail has. */

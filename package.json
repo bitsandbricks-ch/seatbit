@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "eslint",
     "check:i18n": "tsx scripts/check-i18n.ts",
+    "check:mail": "tsx scripts/check-mail.ts",
     "db:generate": "drizzle-kit generate",
     "admin": "node --env-file-if-exists=.env scripts/admin.mjs",
     "discord:register": "tsx --env-file-if-exists=.env scripts/discord-register.ts",

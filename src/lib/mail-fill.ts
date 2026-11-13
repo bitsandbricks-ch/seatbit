@@ -59,8 +59,9 @@ const C = {
 const FONT = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 const MONO = "SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace";
 
+// Punctuation right after a link ("… at https://example.com.") ends the sentence, not the link.
 const linkify = (s: string) =>
-  esc(s).replace(/https?:\/\/[^\s<]+/g, (u) => `<a href="${u}" target="_blank" style="color: ${C.link}; word-break: break-all;">${u}</a>`);
+  esc(s).replace(/https?:\/\/[^\s<]*[^\s<.,;:!?)]/g, (u) => `<a href="${u}" target="_blank" style="color: ${C.link}; word-break: break-all;">${u}</a>`);
 
 const para = (html: string, small = false) =>
   `<p style="margin: 0 0 16px; font-family: ${FONT}; font-size: ${small ? "13px" : "15px"}; line-height: ${small ? "20px" : "24px"}; color: ${small ? C.muted : C.fg};">${html}</p>`;
@@ -191,6 +192,14 @@ export function renderMail(m: MailContent): { html: string; text: string; dm: st
   return { html, text, dm };
 }
 
+/** Logo, mail settings and legal links every mail carries. */
+export const layoutLinks = (appUrl: string) => ({
+  logoUrl: `${appUrl}/brand/icon-192.png`,
+  settingsUrl: `${appUrl}/profile?tab=notifications`,
+  termsUrl: `${appUrl}/terms`,
+  privacyUrl: `${appUrl}/privacy`,
+});
+
 /** Fills a template's parts and facts and renders the mail. */
 export function buildMail(
   parts: TemplateParts,
@@ -215,10 +224,7 @@ export function buildMail(
     button: link && label ? { label, url: link } : undefined,
     note: fill(parts.note, vars),
     header: vars.clan?.trim() || "Seatbit",
-    logoUrl: `${ctx.appUrl}/brand/icon-192.png`,
-    settingsUrl: `${ctx.appUrl}/profile?tab=notifications`,
-    termsUrl: `${ctx.appUrl}/terms`,
-    privacyUrl: `${ctx.appUrl}/privacy`,
+    ...layoutLinks(ctx.appUrl),
     locale: t.locale,
   });
   return { subject, html, text, dm };

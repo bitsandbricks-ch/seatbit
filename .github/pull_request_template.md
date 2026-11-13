@@ -8,7 +8,7 @@
 
 ## Checklist
 
-- [ ] `npm run lint`, `npm run check:i18n`, `npm run typecheck` and `npm run build` pass
+- [ ] `npm run lint`, `npm run check:i18n`, `npm run check:mail`, `npm run typecheck` and `npm run build` pass
 - [ ] Tested on a phone-sized and a desktop-sized window (UI changes)
 - [ ] New migration has the next free number and runs on an existing database (schema changes)
 - [ ] Docs in `docs/` updated for user-facing or setup changes

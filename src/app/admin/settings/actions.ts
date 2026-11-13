@@ -2,8 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { botIdentity, commands, discordEnabled, registerCommands } from "@/lib/discord-api";
-import { appUrl, mailTarget, sendMail, verifySmtp } from "@/lib/mail";
-import { type MailTemplateId, renderTemplate, resetTemplate, saveTemplate, templateDef } from "@/lib/mail-templates";
+import { appUrl, mailTarget, verifySmtp } from "@/lib/mail";
+import { FIXED_MAIL_IDS, type FixedMailId, sendFixedMailTest, sendSystemMail } from "@/lib/system-mail";
+import { type MailTemplateId, resetTemplate, sendTemplate, saveTemplate, templateDef } from "@/lib/mail-templates";
 import { previewVars } from "@/lib/mail-fill";
 import { isLocale } from "@/i18n/config";
 
@@ -92,11 +93,7 @@ export async function sendTestMail(): Promise<ActionResult> {
   if (target.kind === "console") return done(false, t("adminSettings.noSmtp"));
   try {
     await verifySmtp();
-    await sendMail(
-      me.email,
-      t("adminSettings.testSubject"),
-      t("adminSettings.testBody", { name: me.name }),
-    );
+    await sendSystemMail(me.email, "smtpTest", { firstName: me.firstName || me.name, host: target.kind === "smtp" ? target.host : "SMTP_URL" }, t.locale);
     return done(true, t("adminSettings.testSent", { email: me.email }));
   } catch (e) {
     return done(false, t("adminSettings.smtpFailed", { error: errMsg(e) }));
@@ -153,8 +150,20 @@ export async function sendTemplateTest(id: string, lang: string): Promise<Action
   try {
     templateDef(id);
     const loc = asLocale(lang);
-    const m = renderTemplate(id as MailTemplateId, { ...previewVars(loc), firstName: me.firstName || me.name }, loc);
-    await sendMail(me.email, `[Test] ${m.subject}`, m.text, m.html);
+    await sendTemplate(me.email, id as MailTemplateId, { ...previewVars(loc), firstName: me.firstName || me.name }, loc, { test: true });
+    return done(true, mailTarget().kind === "console" ? t("adminSettings.toLog") : t("adminSettings.sentTo", { email: me.email }));
+  } catch (e) {
+    return done(false, errMsg(e));
+  }
+}
+
+/** Sends a fixed system mail to the admin, filled with example values. */
+export async function sendSystemMailTest(id: string, lang: string): Promise<ActionResult> {
+  const me = await requireAdmin();
+  const t = await getT();
+  if (!(FIXED_MAIL_IDS as string[]).includes(id)) return done(false, errMsg(new Error(`Unknown mail ${id}`)));
+  try {
+    await sendFixedMailTest(me.email, id as FixedMailId, me.firstName || me.name, asLocale(lang));
     return done(true, mailTarget().kind === "console" ? t("adminSettings.toLog") : t("adminSettings.sentTo", { email: me.email }));
   } catch (e) {
     return done(false, errMsg(e));

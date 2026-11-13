@@ -28,6 +28,8 @@ jobs:
         run: npm run lint
       - name: Untranslated text
         run: npm run check:i18n
+      - name: Mail goes through templates
+        run: npm run check:mail
       - name: Typecheck
         run: npm run typecheck
       - name: Build

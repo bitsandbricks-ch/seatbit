@@ -47,6 +47,7 @@ docs/              this site (MkDocs)
 | `src/lib/reminders.ts` | Due reminders, deduplicated via `reminder_log`. |
 | `src/lib/missing.ts` | Who's missing and nudges. |
 | `src/lib/notify.ts`, `mail.ts`, `discord.ts` | Sending to a user by email and Discord DM. |
+| `src/lib/mail-fill.ts`, `mail-templates.ts`, `system-mail.ts` | The one mail layout, the admin-editable templates and the fixed system mails. See [Mail](#mail). |
 | `src/lib/discord-commands.ts`, `member-updates.ts` | Member slash commands (`/coming`, `/status`, `/ticket`, `/nick`, `/wish`); the member updates they share with the website. |
 | `src/lib/announce.ts` | The Discord event announcement with its live attendee list. |
 | `src/lib/audit.ts` | Audit log entries. |
@@ -65,6 +66,16 @@ The UI is in English and German, without locale prefixes in the URL. `src/i18n/s
 - Mails and Discord messages use `localeOf(user)`: the saved language, else the instance default. Posts in a clan's Discord channels use `clanLocale(clan)`. Mail templates are stored per language (`mailtpl.<id>.<part>` for English, `.de` appended for German).
 - Server actions translate what reaches people: `throw await err("errors.joinFirst")` and `{ error: await tr("errors.pickClan") }` from `src/i18n/server.ts`. Pure guards nobody hits through the UI ("Bad status") stay English.
 - `npm run check:i18n` (also in CI) parses every `.tsx` and fails on JSX text, user-facing attributes (`title`, `label`, `placeholder`, ...) and `confirm()` text that don't go through `t()`. Brand names and ALL-CAPS words are allowed; `// i18n-ignore` marks a deliberate exception, `i18n-ignore-file` a file written once per language (the legal pages, `TermsEn` / `TermsDe`).
+
+## Mail
+
+Every email goes out in the same layout (`renderMail` in `src/lib/mail-fill.ts`), in the recipient's language. There are three ways to send one, and no other:
+
+- `sendTemplate()` (`mail-templates.ts`): the templates admins can edit (reminders, invites, event news, ...).
+- `sendSystemMail()` (`system-mail.ts`): fixed system mails whose text lives in the `systemMail` messages (SMTP test mail, password reset). Add a new one to `SYSTEM_MAILS` with an English and a German text.
+- `notify()` (`notify.ts`): notifications by email and Discord DM. A notice with a rendered template uses it; a plain-text notice (join requests, upgrades, seat swaps, ...) is wrapped by `renderNotice()`: its text as the body, its link as the button.
+
+`deliverMail()` in `mail.ts` is the only code that talks to SMTP and takes only a rendered mail (HTML and text). `npm run check:mail` (also in CI) fails when anything else imports nodemailer or calls `deliverMail()`.
 
 ## Background work
 
