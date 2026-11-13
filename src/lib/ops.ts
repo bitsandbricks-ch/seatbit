@@ -155,7 +155,7 @@ export function safePath(path: string) {
 
 // ---------- Upgrades ----------
 
-/** onUpgrade listener: the ops channel gets the new version with its changelog entries ; the public announcements channel doesn't get the changelog. */
+/** onUpgrade listener: the ops channel gets the new version with its changelog entries. The public announcements channel does not get the changelog. */
 export async function announceUpgradeOnDiscord(e: UpgradeEvent) {
   const t = opsT();
   const version = e.now.slice(0, 7);
