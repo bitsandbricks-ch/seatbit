@@ -1,0 +1,14 @@
+date: 2026-11-13
+type: new
+pr: 112
+en:
+  title: Clan payments
+  text: >-
+    Clans can collect dues and ticket money from their members. Leads see who has paid, members tap
+    "I've paid", and Seatbit reminds people before the due date. Turn it on under Manage → Payments.
+de:
+  title: Clan-Zahlungen
+  text: >-
+    Clans können Mitgliederbeiträge und Ticketgeld einziehen. Leads sehen, wer bezahlt hat, Mitglieder
+    tippen auf «Ich habe bezahlt», und Seatbit erinnert vor dem Fälligkeitsdatum. Einschalten unter
+    Verwalten → Zahlungen.
