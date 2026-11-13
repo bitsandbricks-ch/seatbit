@@ -11,6 +11,7 @@ A self-hostable web app that helps a clan coordinate going to LAN parties run by
 1. **Branch:** work on your own branch, never push to `main`. One topic per branch and pull request.
 2. **Before you push**, all of these must pass locally:
    - `npm run lint`
+   - `npm run check:i18n` (UI text not going through `t()`)
    - `npm run typecheck`
    - `npm run build`
    - `mkdocs build --strict` when you touched `docs/` or `mkdocs.yml` (`pip install -r docs/requirements.txt`)
@@ -28,7 +29,7 @@ A self-hostable web app that helps a clan coordinate going to LAN parties run by
 - **Settings:** instance-wide options go into `SETTINGS` in `src/lib/settings.ts` (admin UI with env var fallback), not into new hard-coded constants or env-only variables. Only startup values (`BETTER_AUTH_URL`, `BETTER_AUTH_SECRET`, `DATABASE_PATH`, `TZ`) stay env-only.
 - **Self-hosting:** never hard-code anything about one particular instance (operator name, address, domain, Discord server, clan). Use settings with neutral defaults. Keep the "Powered by bitsandbricks.ch" and "Source" footer links.
 - **UI:** mobile-first with a good desktop layout. Use `src/components/ui.tsx` (Page, PageHeader, Card, Notice, ...) and `src/components/tabs.tsx`; colours only via brand tokens (`brand/tokens.css`). Every page uses the root layout width (max-w-7xl); never add your own max-width.
-- **Languages:** UI text goes through `t()` (`getT()` on the server, `useT()` in client components) with keys in both `src/i18n/messages/en.ts` and `de.ts` (Swiss German: "ss", never "ß"). Pass `t.locale` to the date formatters.
+- **Languages:** UI text goes through `t()` (`getT()` on the server, `useT()` in client components) with keys in both `src/i18n/messages/en.ts` and `de.ts` (Swiss German: "ss", never "ß"). Pass `t.locale` to the date formatters. `npm run check:i18n` flags JSX text and labels that skip `t()`; mark a deliberate exception (a brand name, an example) with `i18n-ignore`. Error messages that reach people (server actions, `{ error }` results) are translated too: `throw await err("errors.…")` and `await tr(...)` from `src/i18n/server.ts`.
 - **Dates:** always 24h, Swiss style ("Sat 14.11.2026, 18:00") via `src/lib/format.ts`. No native `datetime-local` inputs; use `src/components/date-time-picker.tsx`.
 - **People** are shown via `personLabel` (`src/lib/names.ts`): Name "Nick" Surname by default, or the clan's name display on member-facing pages (`getNames(...).label`, `getDisplayNames`). Clan lead views follow it too and show the full name small below (`full`); logs, exports, mails and the admin page keep the full name. Real accounts (not guests) get `<Verified />`.
 - **No secrets** in code, commits, screenshots, logs or docs. Use example values (`example.com`, `1234567890123456789`).

@@ -14,7 +14,6 @@ import {
   reorderWaitlist,
   setAttendance,
   signupClosed,
-  ATTENDANCE_LOCKED_MSG,
   attendanceLocked,
   interestSwitch,
   addClanAdminsAsOrgas,
@@ -38,7 +37,8 @@ import { PROFILE_COLORS, PROFILE_ICONS, deleteUserAvatarFile, saveUserAvatar } f
 import { audit, auditLan, changedFields } from "@/lib/audit";
 import { cleanName } from "@/lib/names";
 import { saveNick, saveSeatWishes, saveTicketBought, type wishInput } from "@/lib/member-updates";
-import { getLocale } from "@/i18n/server";
+import { err, getLocale, getT, localeOf, makeT, tr } from "@/i18n/server";
+import type { T } from "@/i18n/translate";
 
 const { attendance, seat, lan, user, lanOrga, lanType } = schema;
 
@@ -59,11 +59,11 @@ const lanPath = (id: string) => {
 export async function setMyAttendance(lanId: string, status: AttendanceStatus) {
   const me = await requireUser();
   const l = mustGetLan(lanId);
-  if (!canViewLan(me, lanId)) throw new Error("Join the clan first");
+  if (!canViewLan(me, lanId)) throw await err("errors.joinFirst");
   if (!ATTENDANCE_STATUSES.includes(status) || status === "waitlist") throw new Error("Bad status");
-  if (signupClosed(l)) throw new Error("Sign-up for this LAN is closed");
+  if (signupClosed(l)) throw await err("errors.signupClosed");
   const mine = db.select().from(attendance).where(and(eq(attendance.lanId, lanId), eq(attendance.userId, me.id))).get();
-  if (attendanceLocked(mine)) throw new Error(ATTENDANCE_LOCKED_MSG);
+  if (attendanceLocked(mine)) throw await err("errors.locked");
   await setAttendance(l, me.id, status);
   lanPath(lanId);
 }
@@ -160,7 +160,7 @@ export async function updateAppearance(_: AppearanceState, formData: FormData): 
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Upload failed" };
   }
-  if (style === "icon" && !icon) return { error: "Pick an icon first." };
+  if (style === "icon" && !icon) return { error: await tr("errors.pickIcon") };
   db.update(user).set({ avatarStyle: style, color, icon, avatarFile }).where(eq(user.id, me.id)).run();
   revalidatePath("/", "layout");
   return { ok: true };
@@ -169,13 +169,13 @@ export async function updateAppearance(_: AppearanceState, formData: FormData): 
 /** Sends the member a test DM and shows on the profile whether it arrived, or why not. */
 export async function sendTestDm() {
   const me = await requireUser();
-  const r = await trySendDiscordDm(me, {
+  const r = await trySendDiscordDm(me, (t) => ({
     kind: "test",
-    subject: "Seatbit test DM",
-    text: "This is a test from your Seatbit profile. Changes to your events, seats and reminders will show up here.",
+    subject: t("notice.testDm"),
+    text: t("notice.testDmText"),
     url: `${appUrl}/profile?tab=notifications`,
     dmOnly: true,
-  });
+  }));
   redirect(`/profile?tab=notifications&dm=${r.ok ? "ok" : r.problem}#dms`);
 }
 
@@ -267,7 +267,7 @@ const LAN_FIELD_LABELS: Partial<Record<keyof typeof lan.$inferSelect, string>> =
 export async function saveLan(_: FormState, formData: FormData): Promise<FormState> {
   const id = (formData.get("id") as string) || null;
   const clanId = id ? mustGetLan(id).clanId : String(formData.get("clanId") ?? "");
-  if (!clanId) return { error: "Pick a clan." };
+  if (!clanId) return { error: await tr("errors.pickClan") };
   const me = id ? await requireLanManager(id) : await requireClanPermission(clanId, "events");
   const parsed = lanInput.safeParse(
     Object.fromEntries([...formData.entries()].filter(([k]) => k !== "id" && k !== "clanId")),
@@ -287,14 +287,14 @@ export async function saveLan(_: FormState, formData: FormData): Promise<FormSta
     const s = keep && !keep.dateTbd ? keep.startsAt : new Date(Date.now() + 365 * 24 * 3600 * 1000);
     dates = { startsAt: s, endsAt: keep && !keep.dateTbd ? keep.endsAt : new Date(s.getTime() + 2 * 24 * 3600 * 1000) };
   } else {
-    if (!startsAt || !endsAt) return { error: "Set when the event starts and ends." };
-    if (endsAt <= startsAt) return { error: "The end must be after the start." };
+    if (!startsAt || !endsAt) return { error: await tr("errors.setDates") };
+    if (endsAt <= startsAt) return { error: await tr("errors.endAfterStart") };
     dates = { startsAt, endsAt };
   }
   const v = { ...rest, ...dates, dateTbd, interestCheck: inInterest };
   if (v.typeId) {
     const t = db.select().from(lanType).where(eq(lanType.id, v.typeId)).get();
-    if (t?.clanId !== clanId) return { error: "That LAN type belongs to another clan." };
+    if (t?.clanId !== clanId) return { error: await tr("errors.typeOtherClan") };
   }
 
   let lanId = id;
@@ -315,7 +315,7 @@ export async function saveLan(_: FormState, formData: FormData): Promise<FormSta
     addClanAdminsAsOrgas(row.id, clanId);
     auditLan(row, me.id, "event.create");
     const t = v.typeId ? db.select().from(lanType).where(eq(lanType.id, v.typeId)).get() : undefined;
-    if (t?.seatSpec) applySeatSpec(row.id, t.seatSpec);
+    if (t?.seatSpec) applySeatSpec(row.id, t.seatSpec, await getT());
   }
   lanPath(lanId!);
   // New LANs start as drafts (no Discord post until published); edits update the existing posts.
@@ -335,8 +335,8 @@ export async function publishLan(lanId: string) {
 }
 
 /** Drafts don't send anything, so manual reminder buttons need a published event. */
-function requirePublished(l: { publishedAt: Date | null }) {
-  if (!l.publishedAt) throw new Error("Publish the event first. Drafts don't send anything.");
+async function requirePublished(l: { publishedAt: Date | null }) {
+  if (!l.publishedAt) throw await err("errors.publishFirstSend");
 }
 
 export async function deleteLan(id: string) {
@@ -377,7 +377,7 @@ export async function renameSeat(seatId: string, label: string): Promise<{ error
   if (!s) return;
   await requireLanManager(s.lanId);
   const p = parseSeatLabel(label);
-  if (!p) return { error: "Use a row letter and a number, e.g. F12." };
+  if (!p) return { error: await tr("errors.seatFormat") };
   const clean = `${p.letter}${p.num}`;
   // Each letter is one row: join the row that already has this letter, keep a row of its own, or start a new one.
   const others = db.select().from(seat).where(eq(seat.lanId, s.lanId)).all().filter((x) => x.id !== s.id);
@@ -385,7 +385,7 @@ export async function renameSeat(seatId: string, label: string): Promise<{ error
   const alone = !others.some((x) => x.row === s.row);
   const row = sameLetter ? sameLetter.row : alone ? s.row : Math.max(-1, ...others.map((x) => x.row)) + 1;
   const col = p.num - 1;
-  if (others.some((x) => x.row === row && x.col === col)) return { error: `${clean} already exists. Each seat number can only be there once.` };
+  if (others.some((x) => x.row === row && x.col === col)) return { error: await tr("errors.seatExists", { seat: clean }) };
   db.update(seat).set({ label: clean, row, col }).where(eq(seat.id, seatId)).run();
   const l = mustGetLan(s.lanId);
   if (row >= l.seatRows || col >= l.seatCols)
@@ -526,7 +526,7 @@ export async function adminSendReminder(
   kind: "signup" | "payment" | "event",
 ): Promise<number> {
   await requireLanManager(lanId);
-  requirePublished(mustGetLan(lanId));
+  await requirePublished(mustGetLan(lanId));
   return sendReminderNow(mustGetLan(lanId), kind);
 }
 
@@ -545,13 +545,13 @@ export async function unlinkDiscordChannel(channelId: string) {
 
 export async function postDiscordReminder(lanId: string, kind: "signup" | "payment" | "event"): Promise<number> {
   await requireLanManager(lanId);
-  requirePublished(mustGetLan(lanId));
+  await requirePublished(mustGetLan(lanId));
   return postReminderNow(mustGetLan(lanId), kind);
 }
 
 export async function setUserRole(userId: string, role: "admin" | "member") {
   const me = await requireAdmin();
-  if (userId === me.id && role !== "admin") throw new Error("You can't demote yourself");
+  if (userId === me.id && role !== "admin") throw await err("errors.noSelfDemote");
   db.update(user).set({ role }).where(eq(user.id, userId)).run();
   audit({ actorId: me.id, action: "platform.role", targetUserId: userId, data: { to: role } });
   revalidatePath("/admin");
@@ -559,7 +559,7 @@ export async function setUserRole(userId: string, role: "admin" | "member") {
 
 export async function setMyTicketBought(lanId: string, bought: boolean) {
   const me = await requireUser();
-  saveTicketBought(lanId, me.id, bought);
+  saveTicketBought(lanId, me.id, bought, await getT());
   refreshLanMessagesSoon(lanId);
   lanPath(lanId);
 }
@@ -608,7 +608,7 @@ export async function toggleSeatRow(lanId: string, row: number) {
  * Parses a seat list like "F1-F20" or "F1-F10, G1-G10, H3" into rows of labels.
  * Each letter prefix becomes one row, in the order given.
  */
-function parseSeatSpec(spec: string): string[][] {
+function parseSeatSpec(spec: string, t: T): string[][] {
   const rows = new Map<string, string[]>();
   for (const raw of spec.split(/[\s,;]+/).filter(Boolean)) {
     const range = raw.match(/^([A-Za-z]*)(\d+)-(?:([A-Za-z]*))?(\d+)$/);
@@ -619,11 +619,11 @@ function parseSeatSpec(spec: string): string[][] {
     } else if (single) {
       [prefix, from, to] = [single[1].toUpperCase(), Number(single[2]), Number(single[2])];
     } else {
-      throw new Error(`Can't read "${raw}". Use e.g. F1-F20 or F1, F2, G5.`);
+      throw new Error(t("errors.seatParse", { raw }));
     }
-    if (!prefix) throw new Error(`"${raw}" needs its row letter, e.g. F1-F20.`);
+    if (!prefix) throw new Error(t("errors.seatRow", { raw }));
     if (to < from) [from, to] = [to, from];
-    if (to - from > 200) throw new Error(`"${raw}" is too many seats`);
+    if (to - from > 200) throw new Error(t("errors.seatTooMany", { raw }));
     const row = rows.get(prefix) ?? [];
     for (let n = from; n <= to; n++) {
       const label = `${prefix}${n}`;
@@ -635,16 +635,16 @@ function parseSeatSpec(spec: string): string[][] {
 }
 
 /** Replaces the seat block with the given seat labels, keeping assignments for labels that remain. */
-function applySeatSpec(lanId: string, spec: string): { error?: string; count?: number } {
+function applySeatSpec(lanId: string, spec: string, t: T): { error?: string; count?: number } {
   let rows: string[][];
   try {
-    rows = parseSeatSpec(spec);
+    rows = parseSeatSpec(spec, t);
   } catch (e) {
     return { error: (e as Error).message };
   }
   const total = rows.reduce((n, r) => n + r.length, 0);
-  if (total === 0) return { error: "Enter at least one seat, e.g. F1-F20." };
-  if (total > 1000) return { error: "That's more than 1000 seats." };
+  if (total === 0) return { error: t("errors.seatOne") };
+  if (total > 1000) return { error: t("errors.seat1000") };
   const old = new Map(
     db.select().from(seat).where(eq(seat.lanId, lanId)).all().map((s) => [s.label.toUpperCase(), s]),
   );
@@ -669,7 +669,7 @@ function applySeatSpec(lanId: string, spec: string): { error?: string; count?: n
 
 export async function setSeatsFromList(lanId: string, spec: string): Promise<{ error?: string; count?: number }> {
   const me = await requireLanManager(lanId);
-  const r = applySeatSpec(lanId, spec);
+  const r = applySeatSpec(lanId, spec, await getT());
   if (!r.error) {
     auditLan(mustGetLan(lanId), me.id, "seat.layout", { data: { spec: spec.trim().slice(0, 200), count: r.count } });
     lanPath(lanId);
@@ -706,7 +706,7 @@ export async function adminSwapSeats(seatA: string, seatB: string) {
 /** Turns the optional self-pick step on or off (members choose their own free seat). Only before the plan is final. */
 export async function setSeatPicking(lanId: string, open: boolean) {
   const me = await requireLanManager(lanId);
-  if (open && mustGetLan(lanId).seatsPublishedAt) throw new Error("The seat plan is final. Reopen it first.");
+  if (open && mustGetLan(lanId).seatsPublishedAt) throw await err("errors.planFinalReopen");
   db.update(lan).set({ seatPicking: open }).where(eq(lan.id, lanId)).run();
   auditLan(mustGetLan(lanId), me.id, "seat.picking", { data: { open } });
   lanPath(lanId);
@@ -730,17 +730,18 @@ export async function pickMySeat(lanId: string, seatId: string | null): Promise<
 
 async function pickMySeatOrThrow(lanId: string, seatId: string | null) {
   const me = await requireUser();
+  const t = await getT();
   const l = mustGetLan(lanId);
-  if (!l.seatPicking || l.seatsPublishedAt) throw new Error(l.seatsPublishedAt ? "The leads finalized the seat plan. Ask them to move you." : "Seat picking is closed. Ask a lead.");
+  if (!l.seatPicking || l.seatsPublishedAt) throw new Error(t(l.seatsPublishedAt ? "errors.planFinalMove" : "errors.pickClosed"));
   const a = db.select().from(attendance).where(and(eq(attendance.lanId, lanId), eq(attendance.userId, me.id))).get();
-  if (a?.status !== "going") throw new Error("Say you're coming first.");
-  if (seatId && !a.ticketBought && !a.paid) throw new Error("Confirm you have your ticket first.");
+  if (a?.status !== "going") throw new Error(t("errors.comingFirst"));
+  if (seatId && !a.ticketBought && !a.paid) throw new Error(t("errors.ticketFirst"));
   db.transaction((tx) => {
     if (seatId) {
       const s = tx.select().from(seat).where(and(eq(seat.id, seatId), eq(seat.lanId, lanId))).get();
-      if (!s) throw new Error("That seat doesn't exist.");
-      if (s.locked) throw new Error(`${s.label} is held by the leads.`);
-      if (s.userId && s.userId !== me.id) throw new Error(`${s.label} was just taken. Pick another one.`);
+      if (!s) throw new Error(t("errors.noSeat"));
+      if (s.locked) throw new Error(t("errors.seatHeld", { seat: s.label }));
+      if (s.userId && s.userId !== me.id) throw new Error(t("errors.seatTaken", { seat: s.label }));
     }
     tx.update(seat).set({ userId: null }).where(and(eq(seat.lanId, lanId), eq(seat.userId, me.id))).run();
     if (seatId) tx.update(seat).set({ userId: me.id }).where(eq(seat.id, seatId)).run();
@@ -828,8 +829,8 @@ export async function adminAutoAssignSeats(lanId: string, mode: "fill" | "replan
 export async function setMySeatWishes(lanId: string, input: z.input<typeof wishInput>) {
   const me = await requireUser();
   const l = mustGetLan(lanId);
-  if (l.seatsPublishedAt) throw new Error("The seat plan is final. Ask a lead.");
-  saveSeatWishes(lanId, me.id, input);
+  if (l.seatsPublishedAt) throw await err("errors.planFinalAsk");
+  saveSeatWishes(lanId, me.id, input, await getT());
   lanPath(lanId);
 }
 
@@ -856,16 +857,21 @@ export async function publishSeats(lanId: string, notify: boolean): Promise<numb
     const seats = db.select().from(seat).where(eq(seat.lanId, lanId)).all();
     for (const { u } of rows) {
       const mine = seats.find((s) => s.userId === u.id);
+      const ut = makeT(localeOf(u));
       try {
         const r = await notifyMember(u, {
           kind: "seatsPublished",
-          ...renderTemplate("seatsPublished", {
-            ...eventMailVars(l, u),
-            seat: mine?.label,
-            seatInfo: mine
-              ? `You're sitting at ${mine.label}.${l.externalPlanUrl ? " The leads book it on the event site for you." : ""}`
-              : "You don't have a seat yet, a lead will get back to you.",
-          }),
+          ...renderTemplate(
+            "seatsPublished",
+            {
+              ...eventMailVars(l, u, ut.locale),
+              seat: mine?.label,
+              seatInfo: mine
+                ? ut(l.externalPlanUrl ? "mail.seatInfoBook" : "mail.seatInfo", { seat: mine.label })
+                : ut("mail.seatInfoNone"),
+            },
+            ut.locale,
+          ),
           url: `${appUrl}/lans/${l.id}`,
         });
         if (r.email || r.dm) sent++;
@@ -917,7 +923,7 @@ export async function saveLanType(_: FormState, formData: FormData): Promise<For
   const id = (formData.get("id") as string) || null;
   const existing = id ? db.select().from(lanType).where(eq(lanType.id, id)).get() : undefined;
   const clanId = existing?.clanId ?? String(formData.get("clanId") ?? "");
-  if (!clanId) return { error: "Pick a clan." };
+  if (!clanId) return { error: await tr("errors.pickClan") };
   const me = await requireClanPermission(clanId, "events");
   const parsed = lanTypeInput.safeParse(
     Object.fromEntries([...formData.entries()].filter(([k]) => k !== "id" && k !== "clanId")),
@@ -927,7 +933,7 @@ export async function saveLanType(_: FormState, formData: FormData): Promise<For
   }
   if (parsed.data.seatSpec) {
     try {
-      parseSeatSpec(parsed.data.seatSpec);
+      parseSeatSpec(parsed.data.seatSpec, await getT());
     } catch (e) {
       return { error: (e as Error).message };
     }

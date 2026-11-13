@@ -4,6 +4,7 @@ import { saveLan, type FormState } from "@/app/actions";
 import { DateTimePicker } from "./date-time-picker";
 import { PROFILE_URL_HINT } from "@/lib/profile-link";
 import { Field, Input, btnPrimary, input, label as labelCls } from "./ui";
+import { useT } from "@/i18n/client";
 
 export type LanFormValues = {
   id?: string;
@@ -43,6 +44,7 @@ const fromLocal = (v: string) => (v ? new Date(v) : null);
 const valid = (d: Date | null): d is Date => !!d && !isNaN(d.getTime());
 
 export function LanForm({ values, types }: { values: LanFormValues; types: TypeOption[] }) {
+  const t = useT();
   const [state, action, pending] = useActionState<FormState, FormData>(saveLan, undefined);
   const [typeId, setTypeId] = useState(values.typeId);
   const [startsAt, setStartsAt] = useState(values.startsAt);
@@ -50,7 +52,7 @@ export function LanForm({ values, types }: { values: LanFormValues; types: TypeO
   const [deadline, setDeadline] = useState(values.signupDeadline);
   const [ticketBy, setTicketBy] = useState(values.paymentDueDate);
   const [filled, setFilled] = useState<string | null>(null);
-  const type = types.find((t) => t.id === typeId);
+  const type = types.find((x) => x.id === typeId);
 
   /**
    * A new start moves the other dates with it: when they were set, by the same amount (keeps the
@@ -70,7 +72,7 @@ export function LanForm({ values, types }: { values: LanFormValues; types: TypeO
     const end = shift(endsAt) || toLocal(new Date(next.getTime() + (type?.durationHours ?? 46) * 3600_000));
     if (end !== endsAt) {
       setEndsAt(end);
-      done.push("end");
+      done.push(t("lanForm.moved.end"));
     }
     let dl = shift(deadline);
     const days = type ? type.answerDaysBefore : 30;
@@ -81,14 +83,14 @@ export function LanForm({ values, types }: { values: LanFormValues; types: TypeO
     }
     if (dl && dl !== deadline) {
       setDeadline(dl);
-      done.push("answer by");
+      done.push(t("lanForm.moved.answerBy"));
     }
     const tb = shift(ticketBy);
     if (tb && tb !== ticketBy) {
       setTicketBy(tb);
-      done.push("ticket by");
+      done.push(t("lanForm.moved.ticketBy"));
     }
-    setFilled(done.length ? `Moved ${done.join(", ")} along with the start.` : null);
+    setFilled(done.length ? t("lanForm.moved.text", { what: done.join(", ") }) : null);
   };
   const [interest, setInterest] = useState(!!values.interestCheck);
   const [tbd, setTbd] = useState(!!values.dateTbd);
@@ -108,18 +110,13 @@ export function LanForm({ values, types }: { values: LanFormValues; types: TypeO
             className="mt-0.5 h-4 w-4 accent-bit"
           />
           <span>
-            Start with an interest check
-            <span className="block text-xs text-muted">
-              Members first only say whether they&apos;d come, before sign-up, tickets and seats. The date can stay open.
-              You open sign-up when you&apos;ve decided.
-            </span>
+            {t("lanForm.interest")}
+            <span className="block text-xs text-muted">{t("lanForm.interestHint")}</span>
           </span>
         </label>
       ) : (
         <p className="rounded-md border border-line bg-raised/40 p-3 text-xs text-muted">
-          {values.interestSwitch === "on-locked"
-            ? "This event is in its interest check. End it with “Open sign-up” at the top of the page."
-            : "Sign-up is open and members have answered, so it can't go back to an interest check."}
+          {t(values.interestSwitch === "on-locked" ? "lanForm.interestOn" : "lanForm.interestLocked")}
           {interest && <input type="hidden" name="interestCheck" value="on" />}
         </p>
       )}
@@ -127,95 +124,95 @@ export function LanForm({ values, types }: { values: LanFormValues; types: TypeO
         <label className="flex cursor-pointer items-start gap-3 rounded-md border border-line bg-raised/40 p-3 text-sm">
           <input type="checkbox" name="dateTbd" checked={tbd} onChange={(e) => setTbd(e.target.checked)} className="mt-0.5 h-4 w-4 accent-bit" />
           <span>
-            Date not fixed yet
-            <span className="block text-xs text-muted">Set it before you open sign-up.</span>
+            {t("lanForm.tbd")}
+            <span className="block text-xs text-muted">{t("lanForm.tbdHint")}</span>
           </span>
         </label>
       )}
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="LAN type" hint="Members' nicks for this type carry over to every event of it.">
+        <Field label={t("lanForm.type")} hint={t("lanForm.typeHint")}>
           <select name="typeId" value={typeId} onChange={(e) => setTypeId(e.target.value)} className={input}>
-            <option value="">None (one-off)</option>
-            {types.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
+            <option value="">{t("lanForm.typeNone")}</option>
+            {types.map((ty) => (
+              <option key={ty.id} value={ty.id}>
+                {ty.name}
               </option>
             ))}
           </select>
         </Field>
-        <Field label="Event name">
-          <Input name="name" defaultValue={values.name} required placeholder="e.g. Winter LAN 2026" />
+        <Field label={t("lanForm.name")}>
+          <Input name="name" defaultValue={values.name} required placeholder={t("lanForm.namePlaceholder")} />
         </Field>
-        <Field label="Location">
+        <Field label={t("lanForm.location")}>
           <Input name="location" defaultValue={values.location} />
         </Field>
-        <Field label="Event website">
+        <Field label={t("lanForm.website")}>
           <Input type="url" name="websiteUrl" defaultValue={values.websiteUrl} placeholder="https://" />
         </Field>
-        <Field label="Ticket shop">
+        <Field label={t("bot.ticketShop")}>
           <Input type="url" name="ticketUrl" defaultValue={values.ticketUrl} placeholder="https://" />
         </Field>
         <Field
-          label="Event seat plan"
-          hint="Where the leads book the group's seats on the event's own site (e.g. the lal.gg Sitzplan). The link changes every year, so set it per event."
+          label={t("lanForm.plan")}
+          hint={t("lanForm.planHint")}
         >
           <Input type="url" name="externalPlanUrl" defaultValue={values.externalPlanUrl ?? ""} placeholder="https://" />
         </Field>
         <Field
-          label="Member profile link"
-          hint="A member's profile on the event's site, with {id} where their LAN ID goes. Empty uses the LAN type's link."
+          label={t("lanForm.profile")}
+          hint={t("lanForm.profileHint", { id: "{id}" })}
         >
           <Input name="profileUrl" defaultValue={values.profileUrl ?? ""} placeholder={PROFILE_URL_HINT} className="font-mono" />
         </Field>
         {open ? (
-          <Field label="Rough date" hint="Optional, shown instead of the date, e.g. “spring 2027” or “usually in March”.">
-            <Input name="dateHint" defaultValue={values.dateHint ?? ""} maxLength={60} placeholder="e.g. spring 2027" />
+          <Field label={t("lanForm.rough")} hint={t("lanForm.roughHint")}>
+            <Input name="dateHint" defaultValue={values.dateHint ?? ""} maxLength={60} placeholder={t("lanForm.roughPlaceholder")} />
           </Field>
         ) : (
           <>
             <DateField
-              label="Starts"
+              label={t("manage.starts")}
               name="startsAt"
               value={startsAt}
               onChange={changeStart}
               required
-              hint={filled ?? "Type or paste e.g. 14.11.2026 18:00, or open the calendar. The other dates follow."}
+              hint={filled ?? t("lanForm.startsHint")}
             />
-            <DateField label="Ends" name="endsAt" value={endsAt} onChange={setEndsAt} required defaultTime="16:00" />
+            <DateField label={t("lanForm.ends")} name="endsAt" value={endsAt} onChange={setEndsAt} required defaultTime="16:00" />
           </>
         )}
         <DateField
-          label="Answer by"
+          label={t("notice.field.answerBy")}
           name="signupDeadline"
           value={deadline}
           onChange={setDeadline}
-          hint="When members must say if they come, e.g. before you book the group's seats. Undecided members get a reminder."
+          hint={t("lanForm.answerHint")}
           defaultTime="23:59"
         />
         <DateField
-          label="Buy ticket by"
+          label={t("manage.buyTicketBy")}
           name="paymentDueDate"
           value={ticketBy}
           onChange={setTicketBy}
-          hint="Attendees without a ticket get a reminder before this."
+          hint={t("lanForm.ticketHint")}
           defaultTime="23:59"
         />
-        <Field label="Ticket price">
-          <Input name="price" defaultValue={values.price} placeholder="e.g. 25 CHF" />
+        <Field label={t("lanForm.price")}>
+          <Input name="price" defaultValue={values.price} placeholder={t("lanForm.pricePlaceholder")} />
         </Field>
-        <Field label="Group spots" hint="How many seats/tickets the group has. Empty = unlimited. Extra sign-ups go to a waitlist.">
+        <Field label={t("lanForm.spots")} hint={t("lanForm.spotsHint")}>
           <Input type="number" min={1} name="capacity" defaultValue={values.capacity} />
         </Field>
-        <Field label="Remind days before deadline">
+        <Field label={t("lanForm.remindDays")}>
           <Input type="number" min={0} max={60} name="reminderDays" defaultValue={values.reminderDays} />
         </Field>
       </div>
-      <Field label="Description">
+      <Field label={t("lanForm.description")}>
         <textarea name="description" defaultValue={values.description} rows={4} className={input} />
       </Field>
       {state?.error && <p className="text-sm text-danger">{state.error}</p>}
       <button disabled={pending} className={btnPrimary}>
-        {values.id ? "Save changes" : "Save as draft"}
+        {values.id ? t("lanForm.saveChanges") : t("lanForm.saveDraft")}
       </button>
     </form>
   );
@@ -239,10 +236,11 @@ function DateField({
   required?: boolean;
   defaultTime?: string;
 }) {
+  const t = useT();
   return (
     <div>
       <span className={labelCls}>{label}</span>
-      <DateTimePicker name={name} value={value} onChange={onChange} required={required} defaultTime={defaultTime} placeholder={required ? "Pick a date" : "No deadline"} />
+      <DateTimePicker name={name} value={value} onChange={onChange} required={required} defaultTime={defaultTime} placeholder={required ? t("picker.pick") : t("lanForm.noDeadline")} />
       {hint && <span className="mt-1.5 block text-xs text-muted">{hint}</span>}
     </div>
   );

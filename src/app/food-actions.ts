@@ -1,4 +1,5 @@
 "use server";
+import { err, tr } from "@/i18n/server";
 
 import { and, eq, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -35,9 +36,9 @@ function canOrder(me: User, lanId: string) {
   return !!a && a.status !== "declined";
 }
 
-function getOrder(orderId: string) {
+async function getOrder(orderId: string) {
   const o = db.select().from(foodOrder).where(eq(foodOrder.id, orderId)).get();
-  if (!o) throw new Error("This food order is gone.");
+  if (!o) throw await err("errors.foodGone");
   return o;
 }
 
@@ -63,8 +64,8 @@ export async function createFoodOrder(lanId: string, formData: FormData): Promis
   const me = await requireUser();
   const l = getLan(lanId);
   if (!l) return { error: "LAN not found" };
-  if (!canOrder(me, lanId)) return { error: "Only people coming to this LAN can start a food order." };
-  if (l.cancelledAt) return { error: "This event is cancelled." };
+  if (!canOrder(me, lanId)) return { error: await tr("errors.foodStart") };
+  if (l.cancelledAt) return { error: await tr("errors.cancelled") };
   const parsed = orderInput.safeParse({
     title: formData.get("title") ?? "",
     shop: formData.get("shop") ?? "",
@@ -75,7 +76,7 @@ export async function createFoodOrder(lanId: string, formData: FormData): Promis
   });
   if (!parsed.success) return { error: parsed.error.issues.map((i) => i.message).join(", ") };
   if (db.select().from(foodOrder).where(eq(foodOrder.lanId, lanId)).all().length >= MAX_ORDERS)
-    return { error: `This LAN already has ${MAX_ORDERS} food orders. Delete an old one first.` };
+    return { error: await tr("errors.foodMax", { count: MAX_ORDERS }) };
   const { announce, ...values } = parsed.data;
   const o = db.insert(foodOrder).values({ lanId, ...values, createdBy: me.id }).returning().get();
 
@@ -90,16 +91,16 @@ export async function createFoodOrder(lanId: string, formData: FormData): Promis
     const url = `${appUrl}/lans/${lanId}?tab=food`;
     notifyLater(async () => {
       for (const { u } of going)
-        await notify(u, {
+        await notify(u, (t) => ({
           kind: "food_order",
-          subject: `${o.title}: add your order`,
-          text: `${names.get(me.id)} is collecting a food order at ${l.name}: ${o.title}${o.shop ? ` from ${o.shop}` : ""}.${
-            o.closesAt ? ` Last call ${fmtTime(o.closesAt)}.` : ""
-          }${o.note ? `\n\n${o.note}` : ""}\n\nAdd what you want in Seatbit.`,
+          subject: t("notice.foodOrder", { title: o.title }),
+          text: `${t(o.shop ? "notice.foodOrderFromText" : "notice.foodOrderText", { name: names.get(me.id) ?? "", lan: l.name, title: o.title, shop: o.shop ?? "" })}${
+            o.closesAt ? ` ${t("notice.lastCall", { time: fmtTime(o.closesAt) })}` : ""
+          }${o.note ? `\n\n${o.note}` : ""}\n\n${t("notice.foodOrderHow")}`,
           url,
           // Food runs are small and happen at the LAN: a DM, never a mail.
           dmOnly: true,
-        });
+        }));
     });
   }
   foodPath(lanId);
@@ -109,8 +110,8 @@ export async function createFoodOrder(lanId: string, formData: FormData): Promis
 /** Close (no new items), mark as ordered, or reopen. */
 export async function setFoodOrderStatus(orderId: string, status: FoodOrderStatus) {
   const me = await requireUser();
-  const o = getOrder(orderId);
-  if (!canRunOrder(me, o)) throw new Error("Only who started this order or a lead can change it.");
+  const o = await getOrder(orderId);
+  if (!canRunOrder(me, o)) throw await err("errors.foodChange");
   // Reopening an order whose last call passed clears the last call, otherwise it would stay closed.
   const reopenLate = status === "open" && o.closesAt && o.closesAt <= new Date();
   db.update(foodOrder)
@@ -122,8 +123,8 @@ export async function setFoodOrderStatus(orderId: string, status: FoodOrderStatu
 
 export async function deleteFoodOrder(orderId: string) {
   const me = await requireUser();
-  const o = getOrder(orderId);
-  if (!canRunOrder(me, o)) throw new Error("Only who started this order or a lead can delete it.");
+  const o = await getOrder(orderId);
+  if (!canRunOrder(me, o)) throw await err("errors.foodDelete");
   db.delete(foodOrder).where(eq(foodOrder.id, orderId)).run();
   foodPath(o.lanId);
 }
@@ -141,10 +142,10 @@ const itemInput = z.object({
 /** Adds a line to an open order ("2x Margherita, extra cheese"). */
 export async function addFoodItem(orderId: string, formData: FormData): Promise<{ error?: string }> {
   const me = await requireUser();
-  const o = getOrder(orderId);
-  if (!canOrder(me, o.lanId)) return { error: "Only people coming to this LAN can order." };
+  const o = await getOrder(orderId);
+  if (!canOrder(me, o.lanId)) return { error: await tr("errors.foodOrder") };
   // The one running the order can still add late items (someone shouted their order across the room).
-  if (!isAcceptingItems(o) && !canRunOrder(me, o)) return { error: "This order is closed." };
+  if (!isAcceptingItems(o) && !canRunOrder(me, o)) return { error: await tr("errors.foodClosed") };
   const parsed = itemInput.safeParse({
     item: formData.get("item") ?? "",
     qty: formData.get("qty") || "1",
@@ -157,7 +158,7 @@ export async function addFoodItem(orderId: string, formData: FormData): Promise<
     .from(foodItem)
     .where(and(eq(foodItem.orderId, orderId), eq(foodItem.userId, me.id)))
     .all();
-  if (mine.length >= MAX_ITEMS_PER_PERSON) return { error: "That's a lot of food. Ask whoever orders to add the rest." };
+  if (mine.length >= MAX_ITEMS_PER_PERSON) return { error: await tr("errors.foodLot") };
   const { price, ...rest } = parsed.data;
   db.insert(foodItem).values({ orderId, userId: me.id, ...rest, priceCents: price }).run();
   foodPath(o.lanId);
@@ -169,9 +170,9 @@ export async function removeFoodItem(itemId: string) {
   const me = await requireUser();
   const i = db.select().from(foodItem).where(eq(foodItem.id, itemId)).get();
   if (!i) return;
-  const o = getOrder(i.orderId);
+  const o = await getOrder(i.orderId);
   const own = i.userId === me.id && isAcceptingItems(o);
-  if (!own && !canRunOrder(me, o)) throw new Error("This order is closed. Ask whoever runs it.");
+  if (!own && !canRunOrder(me, o)) throw await err("errors.foodClosedAsk");
   db.delete(foodItem).where(eq(foodItem.id, itemId)).run();
   foodPath(o.lanId);
 }
@@ -179,8 +180,8 @@ export async function removeFoodItem(itemId: string) {
 /** Ticks (or unticks) that a person paid for everything they ordered. */
 export async function setFoodPaid(orderId: string, userId: string, paid: boolean) {
   const me = await requireUser();
-  const o = getOrder(orderId);
-  if (!canRunOrder(me, o)) throw new Error("Only who runs this order can tick payments.");
+  const o = await getOrder(orderId);
+  if (!canRunOrder(me, o)) throw await err("errors.foodPay");
   db.update(foodItem)
     .set({ paid })
     .where(and(eq(foodItem.orderId, orderId), eq(foodItem.userId, userId)))

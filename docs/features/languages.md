@@ -15,15 +15,25 @@ On your first sign-in Seatbit keeps the language you signed up in. Choose **Auto
 
 German uses Swiss spelling ("ss", never "ß"). Dates keep the same 24-hour format in both languages: "Sa 14.11.2026, 18:00".
 
-## Clan language for Discord
+## Mails
 
-Clan admins set **Language of Discord posts** in the clan settings. It is meant for the bot's posts in the clan's channels; when it's empty, the instance default applies.
+Every mail goes out in the language of the person it's for: their profile language, or the instance default when they never picked one. Guest invites use the clan's language, since the guest has no profile yet.
 
-## What is translated so far
+Each mail template has its own text per language. Platform admins switch between English and German at the top of *Admin › Platform settings › Mail templates*; editing or resetting one language leaves the other alone. See [Email](../installation/email.md#mail-templates).
 
-The app shell, sign-in, welcome, home, profile, the clan list and the event page with all its tabs (overview, seats, attendees, travel, packing list, games, food) are translated.
+## Discord
 
-Still in English for now: the lead views (*Manage*), clan settings and stats, the platform admin pages, the legal pages, mails and the Discord bot. They follow in the next steps.
+- **Replies to one person** (slash commands, buttons, DMs) use that person's Seatbit language, else the language of their Discord app, else the clan's.
+- **Posts in a channel** (event announcements, attendee lists, deadline reminders) use the clan's **Language of Discord posts** from the clan settings. When it's empty, the instance default applies.
+- Slash commands and their options show German descriptions in Discord apps set to German.
+
+WhatsApp texts on *Manage › Discord & WhatsApp* follow your own language, since you copy them yourself.
+
+## What is translated
+
+Everything: the event pages, *Manage*, clan pages and settings, stats, member profiles, the audit log, the platform admin and its settings, mails, Discord, WhatsApp texts, error messages, and the built-in Terms of Service and Privacy Policy.
+
+What people type stays as they wrote it: event names, descriptions, news, notes and the values operators enter in the settings (for example *Governing law*). The data export (*Download my data*) stays in English.
 
 <div class="phones" markdown>
 <figure markdown>
@@ -39,6 +49,10 @@ Still in English for now: the lead views (*Manage*), clan settings and stats, th
 </div>
 
 ![Home page in German](../screenshots/desktop-lans-de.png){ .shot }
+
+![Manage page in German](../screenshots/desktop-manage-de.png){ .shot }
+
+![Clan stats in German](../screenshots/desktop-clan-stats-de.png){ .shot }
 
 ## For developers
 

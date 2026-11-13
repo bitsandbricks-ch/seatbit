@@ -4,6 +4,7 @@ import type { AttendanceStatus, Lan, Nickname } from "@/db/schema";
 import { appUrl } from "./mail";
 import { personLabel, type NameDisplay } from "./names";
 import { eventMailVars, renderTemplate } from "./mail-templates";
+import { localeOf } from "../i18n/user-locale";
 import { notify } from "./notify";
 
 const { attendance, nickname, seat, user, lan } = schema;
@@ -123,7 +124,6 @@ export function goingCount(lanId: string) {
 export function attendanceLocked(a: { ticketBought: boolean; paid: boolean } | null | undefined) {
   return !!a && (a.ticketBought || a.paid);
 }
-export const ATTENDANCE_LOCKED_MSG = "You have a ticket, so your answer is locked. Ask a lead if your plans change.";
 
 export function signupClosed(l: Lan, now = new Date()) {
   return !!l.cancelledAt || l.interestCheck || (l.signupDeadline && l.signupDeadline < now) || l.endsAt < now;
@@ -200,12 +200,12 @@ async function spotOpened(l: Lan) {
   if (!l.publishedAt || !waiting || !free) return;
   const orgas = db.select({ userId: schema.lanOrga.userId }).from(schema.lanOrga).where(eq(schema.lanOrga.lanId, l.id)).all();
   for (const o of orgas) {
-    await notify(o.userId, {
+    await notify(o.userId, (t) => ({
       kind: "waitlist_spot",
-      subject: `A spot opened at ${l.name}`,
-      text: `${free === 1 ? "A spot is" : `${free} spots are`} free at ${l.name} and ${waiting} ${waiting === 1 ? "person is" : "people are"} on the waitlist. You move people up by hand for this event: pick who gets the spot.\n\n${appUrl}/lans/${l.id}/manage?tab=attendees`,
+      subject: t("notice.spotOpened", { lan: l.name }),
+      text: `${t("notice.spotsFree", { count: free, lan: l.name })} ${t("notice.waiting", { count: waiting })} ${t("notice.pickByHand")}\n\n${appUrl}/lans/${l.id}/manage?tab=attendees`,
       url: `${appUrl}/lans/${l.id}/manage?tab=attendees`,
-    }).catch((e) => console.error("[notify] failed", e));
+    })).catch((e) => console.error("[notify] failed", e));
   }
 }
 
@@ -235,7 +235,7 @@ export async function moveUp(l: Lan, userId: string) {
   if (!u) return;
   await notify(u, {
     kind: "waitlistPromoted",
-    ...renderTemplate("waitlistPromoted", eventMailVars(l, u)),
+    ...renderTemplate("waitlistPromoted", eventMailVars(l, u, localeOf(u)), localeOf(u)),
     url: `${appUrl}/lans/${l.id}`,
   }).catch((e) => console.error("[notify] failed", e));
 }

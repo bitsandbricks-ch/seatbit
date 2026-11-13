@@ -1,5 +1,6 @@
 import type { Lan } from "@/db/schema";
 import type { StepState } from "./checklist";
+import { makeT, type T } from "../i18n/translate";
 
 export type LeadStep = { key: string; title: string; state: StepState; hint: string; href?: string };
 
@@ -17,7 +18,9 @@ export function buildLeadChecklist(input: {
   /** Free spots with people waiting, when the leads move people up by hand. */
   spotsToFill: number;
   swapsToApprove: number;
+  t?: T;
 }): LeadStep[] {
+  const t = input.t ?? makeT("en");
   const { lan: l, going, ticketsToConfirm, ticketsConfirmed, seats, seated, booked, spotsToFill, swapsToApprove } = input;
   const base = `/lans/${l.id}/manage`;
   const final = !!l.seatsPublishedAt;
@@ -25,34 +28,34 @@ export function buildLeadChecklist(input: {
 
   steps.push({
     key: "publish",
-    title: "Publish the event",
+    title: t("leadSteps.publish"),
     state: l.publishedAt ? "done" : l.publishAt ? "pending" : "todo",
-    hint: l.publishedAt ? "Members see it." : l.publishAt ? "Goes live by itself at the set time." : "It's a draft: only leads see it. Publish it at the top.",
+    hint: t(l.publishedAt ? "leadSteps.publishDone" : l.publishAt ? "leadSteps.publishScheduled" : "leadSteps.publishDraft"),
   });
 
   if (l.interestCheck) {
     steps.push({
       key: "signup",
-      title: "Open sign-up",
+      title: t("leadSteps.signup"),
       state: "todo",
-      hint: "The interest check is running. Use Open sign-up at the top once you know you're going."
+      hint: t("leadSteps.signupHint"),
     });
   }
 
   steps.push({
     key: "seats",
-    title: "Enter the group's seats",
+    title: t("leadSteps.seats"),
     state: seats > 0 ? "done" : "todo",
-    hint: seats > 0 ? `${seats} seats.` : "Add the seat block the event gave the group.",
+    hint: seats > 0 ? t("leadSteps.seatsDone", { count: seats }) : t("leadSteps.seatsHint"),
     href: `${base}?tab=seats`,
   });
 
   if (spotsToFill > 0) {
     steps.push({
       key: "waitlist",
-      title: "Move people up from the waitlist",
+      title: t("leadSteps.waitlist"),
       state: "todo",
-      hint: `${spotsToFill === 1 ? "A spot is" : `${spotsToFill} spots are`} free.`,
+      hint: t("leadSteps.spotsFree", { count: spotsToFill }),
       href: `${base}?tab=attendees#waitlist`,
     });
   }
@@ -60,14 +63,19 @@ export function buildLeadChecklist(input: {
   const openTickets = going - ticketsConfirmed - ticketsToConfirm;
   steps.push({
     key: "tickets",
-    title: "Confirm tickets",
+    title: t("leadSteps.tickets"),
     state: going > 0 && ticketsConfirmed === going ? "done" : ticketsToConfirm > 0 ? "todo" : "pending",
     hint:
       going === 0
-        ? "Nobody is coming yet."
+        ? t("leadSteps.nobody")
         : ticketsConfirmed === going
-          ? `All ${going} confirmed.`
-          : [ticketsToConfirm > 0 && `${ticketsToConfirm} to confirm`, openTickets > 0 && `${openTickets} not bought yet`].filter(Boolean).join(", ") + ".",
+          ? t("leadSteps.allConfirmed", { count: going })
+          : [
+              ticketsToConfirm > 0 && t("leadSteps.toConfirm", { count: ticketsToConfirm }),
+              openTickets > 0 && t("leadSteps.notBought", { count: openTickets }),
+            ]
+              .filter(Boolean)
+              .join(", ") + ".",
     href: `${base}?tab=attendees`,
   });
 
@@ -75,33 +83,38 @@ export function buildLeadChecklist(input: {
     const picking = l.seatPicking && !final;
     steps.push({
       key: "assign",
-      title: picking ? "Members pick, you fill the gaps" : "Seat everyone",
+      title: t(picking ? "leadSteps.assignPicking" : "leadSteps.assign"),
       state: going > 0 && seated >= going ? "done" : picking ? "pending" : "todo",
-      hint: going === 0 ? "Nobody is coming yet." : seated >= going ? `All ${going} seated.` : `${going - seated} of ${going} without a seat.`,
+      hint:
+        going === 0
+          ? t("leadSteps.nobody")
+          : seated >= going
+            ? t("leadSteps.allSeated", { count: going })
+            : t("leadSteps.unseated", { left: going - seated, count: going }),
       href: `${base}?tab=seats`,
     });
     steps.push({
       key: "finalize",
-      title: "Finalize the seat plan",
+      title: t("leadSteps.finalize"),
       state: final ? "done" : "todo",
-      hint: final ? "Members see their final seat." : "Closes wishes and self pick and shows everyone the plan.",
+      hint: t(final ? "leadSteps.finalizeDone" : "leadSteps.finalizeHint"),
       href: `${base}?tab=seats`,
     });
     if (l.externalPlanUrl) {
       steps.push({
         key: "book",
-        title: "Book the seats on the event site",
+        title: t("leadSteps.book"),
         state: final && seated > 0 && booked >= seated ? "done" : final ? "todo" : "pending",
-        hint: final ? `${booked} of ${seated} booked.` : "After the plan is final.",
+        hint: final ? t("leadSteps.booked", { booked, count: seated }) : t("leadSteps.afterFinal"),
         href: `${base}?tab=seats#booking`,
       });
     }
     if (swapsToApprove > 0) {
       steps.push({
         key: "swaps",
-        title: "Approve seat swaps",
+        title: t("leadSteps.swaps"),
         state: "todo",
-        hint: `${swapsToApprove} waiting.`,
+        hint: t("leadSteps.swapsWaiting", { count: swapsToApprove }),
         href: `${base}?tab=seats`,
       });
     }

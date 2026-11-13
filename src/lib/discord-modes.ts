@@ -6,8 +6,3 @@
 export const DISCORD_MODES = ["channel", "thread", "event_channel"] as const;
 export type DiscordMode = (typeof DISCORD_MODES)[number];
 
-export const DISCORD_MODE_LABELS: Record<DiscordMode, string> = {
-  channel: "In the linked channel",
-  thread: "Thread per event",
-  event_channel: "Channel per event",
-};

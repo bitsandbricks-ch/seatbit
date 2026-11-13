@@ -152,10 +152,59 @@ export const commands = [
   },
 ];
 
+// German descriptions for Discord's own language switch (Discord picks by the member's client language).
+// Command and option names stay English: they're what people type.
+const DE: Record<string, string> = {
+  "Only needed if several events are open": "Nur nötig, wenn mehrere Events offen sind",
+  "Say you're coming to a LAN": "Sag, dass du an eine LAN kommst",
+  "Say you're not sure yet if you come to a LAN": "Sag, dass du noch nicht sicher bist, ob du an eine LAN kommst",
+  "Say you're not coming to a LAN": "Sag, dass du nicht an eine LAN kommst",
+  "Where you stand: your answer, ticket, nick, seat and what's due next": "Dein Stand: Antwort, Ticket, Nick, Platz und was als Nächstes fällig ist",
+  "Only this event (default: your next ones)": "Nur dieses Event (sonst: deine nächsten)",
+  "Tick off that you bought your ticket": "Hake ab, dass du dein Ticket gekauft hast",
+  "False takes it back (default: true)": "False nimmt es zurück (sonst: true)",
+  "Set your nickname, for one LAN type or everywhere": "Setz deinen Nick, für einen LAN-Typ oder überall",
+  "Your nick": "Dein Nick",
+  "Use it at this event's LAN type only (default: everywhere)": "Nur für den LAN-Typ dieses Events (sonst: überall)",
+  "See or change your seat wishes": "Platzwünsche ansehen oder ändern",
+  "Add someone you want to sit near": "Jemand, neben dem du sitzen willst",
+  "Add someone you don't want to sit next to": "Jemand, neben dem du nicht sitzen willst",
+  "Where in the row": "Wo in der Reihe",
+  Anywhere: "Egal wo",
+  "At the edge": "Am Rand",
+  "In the middle": "In der Mitte",
+  "A seat you'd like, e.g. F7": "Ein Platz, den du gern hättest, z. B. F7",
+  "Anything else the leads should know": "Was die Leads sonst noch wissen sollten",
+  "Start over: remove all your wishes first": "Neu anfangen: zuerst alle Wünsche entfernen",
+  "Upcoming LANs and your status, with buttons to answer": "Kommende LANs und dein Status, mit Knöpfen zum Antworten",
+  "Take over the guest profile your clan's leads made for you": "Übernimm das Gastprofil, das die Leads deines Clans für dich erstellt haben",
+  "Only needed if I don't find you by name": "Nur nötig, wenn ich dich nicht über den Namen finde",
+  "Leads: tell Seatbit which Discord member a guest is, so they take it over":
+    "Leads: Sag Seatbit, welches Discord-Mitglied ein Gast ist, damit es ihn übernimmt",
+  "The guest in Seatbit": "Der Gast in Seatbit",
+  "The Discord member (type to search)": "Das Discord-Mitglied (tippen zum Suchen)",
+  "Seatbit bot settings for this server": "Seatbit-Bot-Einstellungen für diesen Server",
+  "Post your clan's LAN announcements and reminders in this channel": "Poste die LAN-Ankündigungen und Erinnerungen deines Clans in diesem Kanal",
+  "Only needed if you manage several clans": "Nur nötig, wenn du mehrere Clans verwaltest",
+  "Stop posting in this channel": "In diesem Kanal nicht mehr posten",
+  "Post your clan's upcoming LANs in this channel now": "Poste die kommenden LANs deines Clans jetzt in diesem Kanal",
+};
+
+/** Adds German description (and choice) localizations to every command and option. */
+function localized<T>(node: T): T {
+  if (Array.isArray(node)) return node.map(localized) as T;
+  if (!node || typeof node !== "object") return node;
+  const o = Object.fromEntries(Object.entries(node).map(([k, v]) => [k, localized(v)])) as Record<string, unknown>;
+  if (typeof o.description === "string" && DE[o.description]) o.description_localizations = { de: DE[o.description] };
+  // Choices have a name and value but no description.
+  if (typeof o.name === "string" && "value" in o && DE[o.name]) o.name_localizations = { de: DE[o.name] };
+  return o as T;
+}
+
 export async function registerCommands() {
   const id = appId();
   if (!id || !botToken()) throw new Error("The Discord application ID and bot token are required");
-  return api("PUT", `/applications/${id}/commands`, commands);
+  return api("PUT", `/applications/${id}/commands`, localized(commands));
 }
 
 /** Bot invite link with the permissions it needs. */

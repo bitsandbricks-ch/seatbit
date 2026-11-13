@@ -5,6 +5,7 @@ import { adminMoveUp, adminReorderWaitlist, setWaitlistAuto } from "@/app/action
 import { Avatar } from "./avatar";
 import { Segmented, btnGhost, btnSecondary } from "./ui";
 import type { AvatarData } from "@/lib/avatars";
+import { useT } from "@/i18n/client";
 
 export type WaitlistEntry = {
   userId: string;
@@ -32,6 +33,7 @@ export function WaitlistPanel({
   auto: boolean;
   profileBase?: string | null;
 }) {
+  const t = useT();
   const [pending, start] = useTransition();
   const run = (fn: () => Promise<unknown>) => start(async () => void (await fn()));
 
@@ -39,26 +41,24 @@ export function WaitlistPanel({
     <div className={`space-y-4 ${pending ? "opacity-70" : ""}`}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Segmented
-          label="When a spot opens"
+          label={t("waitlistPanel.whenOpens")}
           value={auto ? ("auto" as const) : ("manual" as const)}
           onChange={(v) => run(() => setWaitlistAuto(lanId, v === "auto"))}
           options={[
-            { id: "auto", label: "Next in line moves up" },
-            { id: "manual", label: "Leads pick" },
+            { id: "auto", label: t("waitlistPanel.auto") },
+            { id: "manual", label: t("waitlistPanel.manual") },
           ]}
         />
         <p className="text-sm text-muted">
-          {free == null ? "No limit set" : free === 0 ? "No free spot" : `${free} free spot${free === 1 ? "" : "s"}`}
+          {free == null ? t("waitlistPanel.noLimit") : free === 0 ? t("waitlistPanel.noFree") : t("waitlistPanel.free", { count: free })}
         </p>
       </div>
       <p className="text-sm text-muted">
-        {auto
-          ? "When someone stops coming, the first person in line moves to coming and gets an email and a Discord DM."
-          : "When someone stops coming, the leads get a notice and move someone up by hand. Handy when you want to ask first who still has time."}
+        {auto ? t("waitlistPanel.autoHint") : t("waitlistPanel.manualHint")}
       </p>
 
       {entries.length === 0 ? (
-        <p className="py-2 text-sm text-muted">Nobody is waiting.</p>
+        <p className="py-2 text-sm text-muted">{t("waitlistPanel.nobody")}</p>
       ) : (
         <ol className="divide-y divide-line overflow-hidden rounded-card border border-line">
           {entries.map((e, i) => (
@@ -76,9 +76,10 @@ export function WaitlistPanel({
                   )}
                 </p>
                 <p className="truncate text-xs text-muted">
-                  {e.full !== e.name && `${e.full} · `}waiting {e.since}
-                  {e.ticket === "confirmed" && " · ticket confirmed"}
-                  {e.ticket === "reported" && " · ticket reported"}
+                  {e.full !== e.name && `${e.full} · `}
+                  {t("waitlistPanel.waiting", { since: e.since })}
+                  {e.ticket === "confirmed" && ` · ${t("waitlistPanel.ticketConfirmed")}`}
+                  {e.ticket === "reported" && ` · ${t("waitlistPanel.ticketReported")}`}
                 </p>
               </div>
               <div className="ml-9 flex shrink-0 items-center gap-1 sm:ml-0">
@@ -87,8 +88,8 @@ export function WaitlistPanel({
                   className={`${btnGhost} !px-2`}
                   disabled={pending || i === 0}
                   onClick={() => run(() => adminReorderWaitlist(lanId, e.userId, -1))}
-                  aria-label={`Move ${e.name} one place up`}
-                  title="One place up"
+                  aria-label={t("waitlistPanel.upName", { name: e.name })}
+                  title={t("waitlistPanel.up")}
                 >
                   ↑
                 </button>
@@ -97,8 +98,8 @@ export function WaitlistPanel({
                   className={`${btnGhost} !px-2`}
                   disabled={pending || i === entries.length - 1}
                   onClick={() => run(() => adminReorderWaitlist(lanId, e.userId, 1))}
-                  aria-label={`Move ${e.name} one place down`}
-                  title="One place down"
+                  aria-label={t("waitlistPanel.downName", { name: e.name })}
+                  title={t("waitlistPanel.down")}
                 >
                   ↓
                 </button>
@@ -107,11 +108,11 @@ export function WaitlistPanel({
                   className={`${btnSecondary} !py-1.5 text-sm`}
                   disabled={pending}
                   onClick={() =>
-                    (free !== 0 || confirm(`The group is full. Move ${e.name} to coming anyway (over the limit)?`)) &&
+                    (free !== 0 || confirm(t("waitlistPanel.overLimit", { name: e.name }))) &&
                     run(() => adminMoveUp(lanId, e.userId))
                   }
                 >
-                  Move to coming
+                  {t("waitlistPanel.moveUp")}
                 </button>
               </div>
             </li>

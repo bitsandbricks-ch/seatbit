@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import type { ActionResult } from "@/app/admin/settings/actions";
 import { Result } from "./settings-section";
 import { btnGhost, btnSecondary } from "./ui";
+import { useT } from "@/i18n/client";
 
 type Act = (prev: ActionResult) => Promise<ActionResult>;
 
@@ -22,6 +23,7 @@ export function GuestDiscordLink({
   resend: Act;
   unlink: Act;
 }) {
+  const t = useT();
   const [sent, resendAction, sending] = useActionState(resend, undefined);
   const [dropped, unlinkAction, unlinking] = useActionState(unlink, undefined);
   return (
@@ -37,19 +39,19 @@ export function GuestDiscordLink({
         <div className="flex flex-wrap items-center gap-2">
           <form action={resendAction}>
             <button disabled={sending} className={`${btnSecondary} text-xs`}>
-              {sending ? "Sending…" : "Send the DM again"}
+              {sending ? t("eventUi.sending") : t("guestDiscord.resend")}
             </button>
           </form>
           <form action={unlinkAction}>
             <button disabled={unlinking} className={`${btnGhost} text-xs !text-danger`}>
-              Unlink
+              {t("clanSettings.unlink")}
             </button>
           </form>
         </div>
       )}
       <Result state={sent ?? dropped} />
       <p className="text-xs text-faint">
-        {linked ? "To link someone else, run /guest again in Discord." : "Link them in Discord with /guest guest:… member:…"}
+        {t(linked ? "guestDiscord.relink" : "guestDiscord.howToLink")}
       </p>
     </div>
   );

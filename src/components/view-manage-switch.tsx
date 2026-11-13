@@ -48,7 +48,7 @@ export function ViewManageSwitch({
         {!!manageBadge && (
           <span
             className="rounded-full bg-warn px-1.5 py-px text-[11px] font-semibold tabular-nums text-ink"
-            title={`${manageBadge} waiting`}
+            title={t("common.waiting", { count: manageBadge })}
           >
             {manageBadge}
           </span>

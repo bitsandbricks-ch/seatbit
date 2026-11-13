@@ -14,6 +14,8 @@ import { audit } from "./audit";
 import { claimableGuests, claimOrRequestGuest, discordClaimTicket, guestSuggestions, mergeGuestInto } from "./guest-claim";
 import { nameMatches } from "./names";
 import { type DmResult, dmDiscordUser, notify, notifyLater } from "./notify";
+import { makeT, type T } from "../i18n/translate";
+import { clanLocale } from "../i18n/user-locale";
 import { answerEvent, answerInterest, handleMemberCommand, handleTicketButton, memberAutocomplete } from "./discord-commands";
 import {
   type DiscordUser,
@@ -22,6 +24,7 @@ import {
   EPHEMERAL,
   clanForGuild,
   clip,
+  interactionT,
   linkButton,
   nextDeadline,
   notLinked,
@@ -61,13 +64,18 @@ export function verifyDiscordRequest(body: string, signature: string | null, tim
 const BRAND = 0x10b981;
 const list = (names: string[]) => clip(names.join(", ") || "—", 1024);
 
+/** Channel posts speak the clan's language (Discord language setting in the clan settings). */
+export function lanT(l: Pick<Lan, "clanId">): T {
+  return makeT(clanLocale(l.clanId ? getClan(l.clanId) : null));
+}
+
 /** Discord user ids of members who linked their Discord account, by Seatbit user id. */
 function discordIds(): Map<string, string> {
   const rows = db.select().from(account).where(eq(account.providerId, "discord")).all();
   return new Map(rows.map((r) => [r.userId, r.accountId]));
 }
 
-function attendanceButtons(l: Lan, disabled = false) {
+function attendanceButtons(l: Lan, t: T, disabled = false) {
   const btn = (status: AttendanceStatus, label: string, style: number) => ({
     type: 2,
     style,
@@ -79,26 +87,26 @@ function attendanceButtons(l: Lan, disabled = false) {
     {
       type: 1,
       components: [
-        btn("going", "Coming", 3),
-        btn("maybe", "Unsure", 2),
-        btn("declined", "Not coming", 4),
-        { type: 2, style: 5, label: "Open in Seatbit", url: lanLink(l) },
+        btn("going", t("nudge.going"), 3),
+        btn("maybe", t("nudge.maybe"), 2),
+        btn("declined", t("nudge.declined"), 4),
+        { type: 2, style: 5, label: t("notice.openInSeatbit"), url: lanLink(l) },
       ],
     },
   ];
 }
 
 /** Interest check buttons: would you come? */
-function interestButtons(l: Lan) {
+function interestButtons(l: Lan, t: T) {
   const btn = (a: InterestAnswer, label: string, style: number) => ({ type: 2, style, label, custom_id: `int:${l.id}:${a}` });
   return [
     {
       type: 1,
       components: [
-        btn("yes", "I'd come", 3),
-        btn("maybe", "Maybe", 2),
-        btn("no", "Not this time", 4),
-        { type: 2, style: 5, label: "Open in Seatbit", url: lanLink(l) },
+        btn("yes", t("eventUi.idCome"), 3),
+        btn("maybe", t("eventUi.maybe"), 2),
+        btn("no", t("eventUi.notThisTime"), 4),
+        { type: 2, style: 5, label: t("notice.openInSeatbit"), url: lanLink(l) },
       ],
     },
   ];
@@ -106,6 +114,7 @@ function interestButtons(l: Lan) {
 
 /** The interest check post: who'd come, who maybe. */
 async function interestMessage(l: Lan) {
+  const t = lanT(l);
   const rows = db.select().from(schema.lanInterest).where(eq(schema.lanInterest.lanId, l.id)).all();
   const names = await getDisplayNames(l.id, rows.map((r) => r.userId));
   const who = (a: string) => rows.filter((r) => r.answer === a).map((r) => names.get(r.userId) ?? "?").sort((x, y) => x.localeCompare(y));
@@ -113,22 +122,22 @@ async function interestMessage(l: Lan) {
   const maybe = who("maybe");
   const c = l.clanId ? getClan(l.clanId) : undefined;
   const icon = c && avatarUrl(c);
-  const fields = lanFacts(l).map(([name, value]) => ({ name, value: clip(value, 1024), inline: true }));
-  fields.push({ name: `Would come (${yes.length})`, value: list(yes), inline: false });
-  if (maybe.length) fields.push({ name: `Maybe (${maybe.length})`, value: list(maybe), inline: false });
+  const fields = lanFacts(l, t).map(([name, value]) => ({ name, value: clip(value, 1024), inline: true }));
+  fields.push({ name: t("bot.wouldCome", { count: yes.length }), value: list(yes), inline: false });
+  if (maybe.length) fields.push({ name: t("bot.maybeCount", { count: maybe.length }), value: list(maybe), inline: false });
   return {
     embeds: [
       {
         author: c ? { name: clip(c.name, 256), url: `${appUrl}/clans/${c.slug}`, icon_url: icon ? `${appUrl}${icon}` : undefined } : undefined,
-        title: clip(`Would you come? ${l.name}`, 256),
+        title: clip(t("bot.interestTitle", { lan: l.name }), 256),
         url: lanLink(l),
         description: clip(l.description, 1500) || undefined,
         color: BRAND,
         fields,
-        footer: { text: "Interest check, not binding. Sign-up opens once the leads decide." },
+        footer: { text: t("bot.interestFooter") },
       },
     ],
-    components: interestButtons(l),
+    components: interestButtons(l, t),
     allowed_mentions: { parse: [] },
   };
 }
@@ -136,39 +145,44 @@ async function interestMessage(l: Lan) {
 /** The LAN announcement: details, live attendee list and attendance buttons. */
 export async function lanMessage(l: Lan) {
   if (l.interestCheck && !l.cancelledAt) return interestMessage(l);
+  const t = lanT(l);
   const s = await lanSummary(l);
   const closed = !!signupClosed(l);
-  const fields = lanFacts(l).map(([name, value]) => ({ name, value: clip(value, 1024), inline: true }));
+  const fields = lanFacts(l, t).map(([name, value]) => ({ name, value: clip(value, 1024), inline: true }));
   fields.push({
-    name: `Coming (${s.going.length}${l.capacity ? `/${l.capacity}` : ""})`,
+    name: `${t("bot.coming")} (${s.going.length}${l.capacity ? `/${l.capacity}` : ""})`,
     value: list(s.going.map((g) => g.name)),
     inline: false,
   });
-  if (s.maybe.length) fields.push({ name: `Unsure (${s.maybe.length})`, value: list(s.maybe.map((g) => g.name)), inline: false });
+  if (s.maybe.length) fields.push({ name: `${t("bot.unsure")} (${s.maybe.length})`, value: list(s.maybe.map((g) => g.name)), inline: false });
   if (s.waitlist.length)
-    fields.push({ name: `Waitlist (${s.waitlist.length}, in order)`, value: list(s.waitlist.map((g, i) => `${i + 1}. ${g.name}`)), inline: false });
+    fields.push({
+      name: t("bot.waitlist", { count: s.waitlist.length }),
+      value: list(s.waitlist.map((g, i) => `${i + 1}. ${g.name}`)),
+      inline: false,
+    });
   // Live status: tickets, seat bookings and what's due next.
   const status = [
-    s.going.length ? `🎟️ Tickets: **${s.going.length - s.goingNoTicket}/${s.going.length}**` : "",
-    s.seated ? `💺 Seats booked on the event site: **${s.booked}/${s.seated}**` : "",
-    nextDeadline(l),
+    s.going.length ? `🎟️ ${t("bot.tickets")}: **${s.going.length - s.goingNoTicket}/${s.going.length}**` : "",
+    s.seated ? `💺 ${t("bot.seatsBooked")}: **${s.booked}/${s.seated}**` : "",
+    nextDeadline(l, new Date(), t),
   ].filter(Boolean);
-  if (status.length) fields.push({ name: "Status", value: clip(status.join("\n"), 1024), inline: false });
+  if (status.length) fields.push({ name: t("bot.status"), value: clip(status.join("\n"), 1024), inline: false });
   const c = l.clanId ? getClan(l.clanId) : undefined;
   const icon = c && avatarUrl(c);
   return {
     embeds: [
       {
         author: c ? { name: clip(c.name, 256), url: `${appUrl}/clans/${c.slug}`, icon_url: icon ? `${appUrl}${icon}` : undefined } : undefined,
-        title: clip(l.cancelledAt ? `❌ Cancelled: ${l.name}` : l.name, 256),
+        title: clip(l.cancelledAt ? `❌ ${t("bot.cancelled", { lan: l.name })}` : l.name, 256),
         url: lanLink(l),
-        description: clip(l.cancelledAt ? l.cancelReason || "The leads cancelled this event." : l.description, 1500) || undefined,
+        description: clip(l.cancelledAt ? l.cancelReason || t("bot.cancelledText") : l.description, 1500) || undefined,
         color: l.cancelledAt ? 0xef4444 : BRAND,
         fields,
-        footer: { text: l.cancelledAt ? "This event is cancelled" : closed ? "Sign-up is closed" : "Tap a button to set your status" },
+        footer: { text: l.cancelledAt ? t("bot.cancelledFooter") : closed ? t("bot.closedFooter") : t("bot.openFooter") },
       },
     ],
-    components: l.cancelledAt ? [] : attendanceButtons(l, closed),
+    components: l.cancelledAt ? [] : attendanceButtons(l, t, closed),
     allowed_mentions: { parse: [] },
   };
 }
@@ -185,6 +199,7 @@ function clanAuthor(l: Lan) {
 
 /** Reminder embed for a channel, pinging linked members it applies to (pings must be in the content to notify). */
 async function reminderMessage(kind: ChatReminderKind, l: Lan) {
+  const t = lanT(l);
   const s = await lanSummary(l);
   // Nobody left to nudge: skip the post.
   if ((kind === "signup" && s.undecided.length === 0) || (kind === "payment" && s.noTicket.length === 0)) return null;
@@ -200,46 +215,46 @@ async function reminderMessage(kind: ChatReminderKind, l: Lan) {
   switch (kind) {
     case "signup":
       embed = {
-        title: `⏰ Are you coming? ${l.name}`,
-        description: `Please say if you're coming by **${fmtWhen(l.signupDeadline!)}**.`,
+        title: `⏰ ${t("bot.remindSignup", { lan: l.name })}`,
+        description: t("bot.remindSignupText", { date: `**${fmtWhen(l.signupDeadline!, t.locale)}**` }),
         color: AMBER,
-        fields: [{ name: `Still waiting on (${who.length})`, value: list(who) }],
+        fields: [{ name: t("bot.waitingOn", { count: who.length }), value: list(who) }],
       };
       break;
     case "payment":
       embed = {
-        title: `🎟️ Buy your ticket: ${l.name}`,
-        description: `Buy your ticket by **${fmtWhen(l.paymentDueDate!)}** and tick it off in Seatbit.`,
+        title: `🎟️ ${t("bot.remindPayment", { lan: l.name })}`,
+        description: t("bot.remindPaymentText", { date: `**${fmtWhen(l.paymentDueDate!, t.locale)}**` }),
         color: AMBER,
         fields: [
-          ...(l.ticketUrl ? [{ name: "Ticket shop", value: clip(l.ticketUrl, 1024), inline: true }] : []),
-          ...(l.price ? [{ name: "Price", value: clip(l.price, 1024), inline: true }] : []),
-          { name: `Still open for (${who.length})`, value: list(who) },
+          ...(l.ticketUrl ? [{ name: t("bot.ticketShop"), value: clip(l.ticketUrl, 1024), inline: true }] : []),
+          ...(l.price ? [{ name: t("notice.field.price"), value: clip(l.price, 1024), inline: true }] : []),
+          { name: t("bot.openFor", { count: who.length }), value: list(who) },
         ],
       };
       break;
     case "event":
       embed = {
-        title: `🚀 Starts soon: ${l.name}`,
-        description: "See you there!",
+        title: `🚀 ${t("bot.startsSoon", { lan: l.name })}`,
+        description: t("bot.seeYou"),
         color: BRAND,
         fields: [
-          { name: "When", value: fmtWhen(l.startsAt), inline: true },
-          ...(l.location ? [{ name: "Where", value: clip(l.location, 1024), inline: true }] : []),
-          { name: `Coming (${who.length})`, value: list(who) },
+          { name: t("bot.when"), value: fmtWhen(l.startsAt, t.locale), inline: true },
+          ...(l.location ? [{ name: t("bot.where"), value: clip(l.location, 1024), inline: true }] : []),
+          { name: `${t("bot.coming")} (${who.length})`, value: list(who) },
         ],
       };
       break;
   }
   const buttons =
     kind === "signup"
-      ? attendanceButtons(l)
+      ? attendanceButtons(l, t)
       : [
           {
             type: 1,
             components: [
-              ...(kind === "payment" && l.ticketUrl ? [{ type: 2, style: 5, label: "Buy ticket", url: l.ticketUrl }] : []),
-              { type: 2, style: 5, label: "Open in Seatbit", url: lanLink(l) },
+              ...(kind === "payment" && l.ticketUrl ? [{ type: 2, style: 5, label: t("nudge.buyTicket"), url: l.ticketUrl }] : []),
+              { type: 2, style: 5, label: t("notice.openInSeatbit"), url: lanLink(l) },
             ],
           },
         ];
@@ -251,7 +266,7 @@ async function reminderMessage(kind: ChatReminderKind, l: Lan) {
         title: clip(embed.title as string, 256),
         author: clanAuthor(l),
         url: lanLink(l),
-        footer: unlinked ? { text: `${unlinked} member(s) without a linked Discord account aren't pinged.` } : undefined,
+        footer: unlinked ? { text: t("bot.unlinked", { count: unlinked }) } : undefined,
       },
     ],
     components: buttons,
@@ -261,18 +276,19 @@ async function reminderMessage(kind: ChatReminderKind, l: Lan) {
 
 /** Lead news as an embed, for the event's thread or channel. */
 function newsMessage(l: Lan, text: string, author: string) {
+  const t = lanT(l);
   return {
     embeds: [
       {
         author: clanAuthor(l),
-        title: clip(`📣 News: ${l.name}`, 256),
+        title: clip(`📣 ${t("bot.news", { lan: l.name })}`, 256),
         url: lanLink(l),
         description: clip(text, 4000),
         color: BRAND,
-        footer: { text: clip(`From ${author}`, 2048) },
+        footer: { text: clip(t("bot.newsFrom", { name: author }), 2048) },
       },
     ],
-    components: [linkButton("Open in Seatbit", lanLink(l))],
+    components: [linkButton(t("notice.openInSeatbit"), lanLink(l))],
     allowed_mentions: { parse: [] },
   };
 }
@@ -361,7 +377,7 @@ async function postAnnouncement(l: Lan, home: typeof discordChannel.$inferSelect
   if (eventChannelId) {
     // Point the linked channel at the new one, so people find it.
     await api("POST", `/channels/${home.channelId}/messages`, {
-      content: `📣 **${clip(l.name, 200)}** has its own channel: <#${eventChannelId}>`,
+      content: `📣 ${lanT(l)("bot.ownChannel", { lan: `**${clip(l.name, 200)}**`, channel: `<#${eventChannelId}>` })}`,
       allowed_mentions: { parse: [] },
     }).catch(() => {});
   }
@@ -549,6 +565,7 @@ function manageableClans(u: { id: string; role: string }) {
  */
 export function handleInteraction(i: Interaction): Handled {
   if (i.type === 1) return { response: { type: 1 } }; // PING
+  const t = interactionT(i);
 
   const discordUser = i.member?.user.id ?? i.user?.id ?? "";
   const editReply = (body: Json) => api("PATCH", `/webhooks/${appId()}/${i.token}/messages/@original`, body);
@@ -575,7 +592,7 @@ export function handleInteraction(i: Interaction): Handled {
       .sort((a, b) => a.name.localeCompare(b.name))
       .slice(0, 25)
       .map((g) => ({
-        name: clip(i.data?.name === "guest" && g.guestDiscordId ? `${g.name} · linked to ${g.guestDiscordName ?? "a Discord member"}` : g.name, 100),
+        name: clip(i.data?.name === "guest" && g.guestDiscordId ? `${g.name} · ${t("bot.linkedTo", { name: g.guestDiscordName ?? t("bot.aDiscordMember") })}` : g.name, 100),
         value: g.id,
       }));
     return { response: { type: 8, data: { choices } } };
@@ -599,10 +616,10 @@ export function handleInteraction(i: Interaction): Handled {
   // "I booked it" button in older seat DMs: the leads book seats on the event site now.
   if (i.type === 3 && i.data?.custom_id?.startsWith("booked:")) {
     const l = getLan(i.data.custom_id.slice("booked:".length));
-    if (!l) return { response: reply("This LAN doesn't exist anymore.") };
+    if (!l) return { response: reply(t("bot.lanGone")) };
     return {
-      response: reply(`No need: the leads book your seat for **${l.name}** on the event site.`, {
-        components: [linkButton("Open in Seatbit", lanLink(l))],
+      response: reply(t("bot.noNeedBooked", { lan: `**${l.name}**` }), {
+        components: [linkButton(t("notice.openInSeatbit"), lanLink(l))],
       }),
     };
   }
@@ -611,10 +628,12 @@ export function handleInteraction(i: Interaction): Handled {
   if (i.type === 3 && (i.data?.custom_id?.startsWith("int:") || i.data?.custom_id?.startsWith("att:"))) {
     const [kind, lanId, answer] = i.data.custom_id.split(":");
     const l = getLan(lanId);
-    if (!l) return { response: reply("This LAN doesn't exist anymore.") };
+    if (!l) return { response: reply(t("bot.lanGone")) };
     const me = seatbitUserFor(discordUser);
-    if (!me) return { response: notLinked() };
-    return kind === "int" ? answerInterest(l, me, answer as InterestAnswer) : answerEvent(l, me, answer as AttendanceStatus, editReply);
+    if (!me) return { response: notLinked(t) };
+    return kind === "int"
+      ? answerInterest(l, me, answer as InterestAnswer, t)
+      : answerEvent(l, me, answer as AttendanceStatus, editReply, t);
   }
 
   // "I have my ticket" button from /ticket and /status
@@ -627,41 +646,48 @@ export function handleInteraction(i: Interaction): Handled {
   // /claim [guest:<…>], and the "That's me" buttons it shows
   if (i.type === 2 && i.data?.name === "claim") {
     const wanted = i.data.options?.find((o) => o.name === "guest")?.value;
-    return claimCommand(i, wanted ? String(wanted) : undefined);
+    return claimCommand(i, t, wanted ? String(wanted) : undefined);
   }
   if (i.type === 3 && i.data?.custom_id?.startsWith("claim:")) {
-    return claimCommand(i, i.data.custom_id.slice("claim:".length));
+    return claimCommand(i, t, i.data.custom_id.slice("claim:".length));
   }
 
   // /guest member:<@…> guest:<…>: a lead says who a guest is
-  if (i.type === 2 && i.data?.name === "guest") return linkGuestCommand(i, editReply);
+  if (i.type === 2 && i.data?.name === "guest") return linkGuestCommand(i, t, editReply);
 
   // /lans: this server's clan, or (in DMs / unlinked servers) all of your clans
   if (i.type === 2 && i.data?.name === "lans") {
     const me = seatbitUserFor(discordUser);
     const serverClan = clanForGuild(i.guild_id);
     const clanIds = serverClan ? [serverClan.id] : me ? myClans(me.id).filter((m) => m.role !== "pending").map((m) => m.clan.id) : [];
-    if (!serverClan && !me) return { response: notLinked() };
+    if (!serverClan && !me) return { response: notLinked(t) };
     const upcoming = upcomingLans(clanIds).slice(0, 5);
-    if (upcoming.length === 0) return { response: reply(`No upcoming LANs${serverClan ? ` for ${serverClan.name}` : ""} right now.`) };
+    if (upcoming.length === 0)
+      return { response: reply(serverClan ? t("bot.noUpcomingFor", { clan: serverClan.name }) : t("bot.noUpcoming")) };
     const mine = me
       ? new Map(db.select().from(attendance).where(eq(attendance.userId, me.id)).all().map((a) => [a.lanId, a.status]))
       : new Map<string, AttendanceStatus>();
-    const label: Record<string, string> = { going: "coming", maybe: "unsure", declined: "not coming", waitlist: "waitlist" };
+    const label: Record<string, string> = {
+      going: t("bot.you.going"),
+      maybe: t("bot.you.maybe"),
+      declined: t("bot.you.declined"),
+      waitlist: t("bot.you.waitlist"),
+    };
     const lines = upcoming.map(
-      (l) => `**[${l.name}](<${lanLink(l)}>)** · ${fmtWhen(l.startsAt)}${me ? ` · you: ${label[mine.get(l.id) ?? ""] ?? "no answer"}` : ""}`,
+      (l) =>
+        `**[${l.name}](<${lanLink(l)}>)** · ${fmtWhen(l.startsAt, t.locale)}${me ? ` · ${t("bot.you.label")}: ${label[mine.get(l.id) ?? ""] ?? t("bot.you.none")}` : ""}`,
     );
     return {
-      response: reply(lines.join("\n") + (me ? "" : "\n\n-# Link Discord on your Seatbit profile to answer from here."), {
+      response: reply(lines.join("\n") + (me ? "" : `\n\n-# ${t("bot.linkToAnswer")}`), {
         components: upcoming
           .filter((l) => !signupClosed(l))
           .slice(0, 4)
           .map((l) => ({
             type: 1,
             components: [
-              { type: 2, style: 3, label: clip(`Coming: ${l.name}`, 80), custom_id: `att:${l.id}:going` },
-              { type: 2, style: 2, label: "Unsure", custom_id: `att:${l.id}:maybe` },
-              { type: 2, style: 4, label: "Not coming", custom_id: `att:${l.id}:declined` },
+              { type: 2, style: 3, label: clip(`${t("nudge.going")}: ${l.name}`, 80), custom_id: `att:${l.id}:going` },
+              { type: 2, style: 2, label: t("nudge.maybe"), custom_id: `att:${l.id}:maybe` },
+              { type: 2, style: 4, label: t("nudge.declined"), custom_id: `att:${l.id}:declined` },
             ],
           })),
       }),
@@ -670,18 +696,18 @@ export function handleInteraction(i: Interaction): Handled {
 
   // /seatbit here|stop|announce (Discord only shows it to members with Manage Server)
   if (i.type === 2 && i.data?.name === "seatbit") {
-    if (!i.guild_id || !i.channel_id) return { response: reply("Use this in a server channel.") };
+    if (!i.guild_id || !i.channel_id) return { response: reply(t("bot.useInServer")) };
     const guildId = i.guild_id;
     const channelId = i.channel_id;
 
     if (sub?.name === "here") {
       const me = seatbitUserFor(discordUser);
-      if (!me) return { response: notLinked() };
+      if (!me) return { response: notLinked(t) };
       const mine = manageableClans(me);
       if (mine.length === 0) {
         return {
-          response: reply("You need to be an admin of a clan in Seatbit to link this server. Create one or ask your clan admin.", {
-            components: [linkButton("Open Seatbit", appUrl)],
+          response: reply(t("bot.needAdmin"), {
+            components: [linkButton(t("bot.openSeatbit"), appUrl)],
           }),
         };
       }
@@ -691,15 +717,15 @@ export function handleInteraction(i: Interaction): Handled {
         return {
           response: reply(
             wanted
-              ? "You can't manage that clan."
-              : `You manage several clans. Pick one: \`/seatbit here clan:\` (${mine.map((c) => c.name).join(", ")}).`,
+              ? t("bot.cantManage")
+              : t("bot.severalClans", { clans: mine.map((c) => c.name).join(", ") }),
           ),
         };
       }
       const existing = clanForGuild(guildId);
       if (existing && existing.id !== target.id) {
         return {
-          response: reply(`This server is already linked to **${existing.name}**. Run \`/seatbit stop\` in its channels first.`),
+          response: reply(t("bot.alreadyLinked", { clan: `**${existing.name}**` })),
         };
       }
       db.insert(discordChannel)
@@ -707,33 +733,31 @@ export function handleInteraction(i: Interaction): Handled {
         .onConflictDoUpdate({ target: discordChannel.channelId, set: { clanId: target.id, channelName: i.channel?.name ?? "" } })
         .run();
       return {
-        response: reply(
-          `👍 This channel now gets **${target.name}**'s new LANs, deadline reminders and live attendee lists. Use \`/seatbit announce\` to post the upcoming ones now.`,
-        ),
+        response: reply(`👍 ${t("bot.linked", { clan: `**${target.name}**` })}`),
       };
     }
 
     if (sub?.name === "stop") {
       db.delete(discordChannel).where(eq(discordChannel.channelId, channelId)).run();
       db.delete(discordMessage).where(eq(discordMessage.channelId, channelId)).run();
-      return { response: reply("OK, I won't post in this channel anymore.") };
+      return { response: reply(t("bot.stopped")) };
     }
 
     if (sub?.name === "announce") {
       const known = db.select().from(discordChannel).where(eq(discordChannel.channelId, channelId)).get();
-      if (!known) return { response: reply("Run `/seatbit here` in this channel first.") };
+      if (!known) return { response: reply(t("bot.runHereFirst")) };
       return {
         response: { type: 5, data: { flags: EPHEMERAL } },
         later: async () => {
           let n = 0;
           for (const l of upcomingLans([known.clanId])) n += await announceLan(l.id, channelId);
-          await editReply({ content: n ? `Posted ${n} LAN(s).` : "All upcoming LANs are already posted here." });
+          await editReply({ content: n ? t("bot.posted", { count: n }) : t("bot.allPosted") });
         },
       };
     }
   }
 
-  return { response: reply("Unknown command.") };
+  return { response: reply(t("bot.unknown")) };
 }
 
 // ---------- Guest claims ----------
@@ -748,34 +772,34 @@ function discordNames(u: DiscordUser | undefined, nick?: string | null) {
  * With one: takes it over (or asks the admins) when the caller has a Seatbit account,
  * else hands them a sign-in link that carries the claim over.
  */
-function claimCommand(i: Interaction, guestId?: string): { response: Json } {
+function claimCommand(i: Interaction, t: T, guestId?: string): { response: Json } {
   const c = clanForGuild(i.guild_id);
-  if (!c) return { response: reply("This server isn't linked to a clan in Seatbit yet. Ask your clan admin to run `/seatbit here`.") };
-  if (c.guestClaims === "off")
-    return { response: reply(`In **${c.name}**, guests are taken over through their own link. Ask an admin for yours.`) };
+  if (!c) return { response: reply(t("bot.serverNotLinkedAsk")) };
+  if (c.guestClaims === "off") return { response: reply(t("bot.claimsOff", { clan: `**${c.name}**` })) };
   const du = i.member?.user ?? i.user;
   const discordUser = du?.id ?? "";
   const me = seatbitUserFor(discordUser);
   const names = discordNames(du, i.member?.nick);
   const all = guestSuggestions(c.id, me?.id ?? null, names, discordUser);
-  const openClan = linkButton("Open clan", `${appUrl}/clans/${c.slug}`);
+  const openClan = linkButton(t("bot.openClan"), `${appUrl}/clans/${c.slug}`);
 
   if (!guestId) {
-    if (!all.length) return { response: reply(`**${c.name}** has no guests waiting to be taken over.`, { components: [openClan] }) };
+    if (!all.length) return { response: reply(t("bot.noGuests", { clan: `**${c.name}**` }), { components: [openClan] }) };
     const matches = all.filter((s) => s.match && s.status !== "dismissed").slice(0, 5);
     if (!matches.length)
       return {
-        response: reply(`I didn't find a guest in **${c.name}** with your name or nick. Pick yours with \`/claim guest:\`.`),
+        response: reply(t("bot.noGuestMatch", { clan: `**${c.name}**` })),
       };
     const lines = matches.map(
-      (s) => `• **${s.guest.name}** (same ${s.match})${s.status === "pending" ? " · waiting for an admin" : s.status === "declined" ? " · an admin said no" : ""}`,
+      (s) =>
+        `• **${s.guest.name}** ${t(s.match === "nick" ? "notice.sameNick" : "notice.sameName")}${s.status === "pending" ? ` · ${t("bot.waitingAdmin")}` : s.status === "declined" ? ` · ${t("bot.adminSaidNo")}` : ""}`,
     );
     return {
-      response: reply(`These guests in **${c.name}** look like you:\n${lines.join("\n")}\n\nIs one of them you?`, {
+      response: reply(`${t("bot.lookLikeYou", { clan: `**${c.name}**` })}\n${lines.join("\n")}\n\n${t("bot.isOneYou")}`, {
         components: [
           {
             type: 1,
-            components: matches.map((s) => ({ type: 2, style: 3, label: clip(`That's me: ${s.guest.name}`, 80), custom_id: `claim:${s.guest.id}` })),
+            components: matches.map((s) => ({ type: 2, style: 3, label: clip(t("bot.thatsMe", { name: s.guest.name }), 80), custom_id: `claim:${s.guest.id}` })),
           },
         ],
       }),
@@ -783,33 +807,32 @@ function claimCommand(i: Interaction, guestId?: string): { response: Json } {
   }
 
   const s = all.find((x) => x.guest.id === guestId);
-  if (!s) return { response: reply("That guest was taken over already, someone else asked for it, or it belongs to another clan.", { components: [openClan] }) };
+  if (!s) return { response: reply(t("bot.guestNotFree"), { components: [openClan] }) };
   const g = s.guest;
 
   if (!me) {
     // No Seatbit account behind this Discord user yet: the link signs them in and continues there.
     const ticket = discordClaimTicket({ d: discordUser, g: g.id, c: c.id, m: s.match });
     return {
-      response: reply(
-        `Sign in to Seatbit with this Discord account to take over **${g.name}** in **${c.name}**. The link works for 24 hours.`,
-        { components: [linkButton("Sign in and take it over", `${appUrl}/claim/discord/${ticket}`)] },
-      ),
+      response: reply(t("bot.signInToClaim", { guest: `**${g.name}**`, clan: `**${c.name}**` }), {
+        components: [linkButton(t("bot.signInAndClaim"), `${appUrl}/claim/discord/${ticket}`)],
+      }),
     };
   }
   if (s.status === "pending")
-    return { response: reply(`You already asked to take over **${g.name}**. An admin of **${c.name}** will confirm it.`) };
+    return { response: reply(t("bot.alreadyAsked", { guest: `**${g.name}**`, clan: `**${c.name}**` })) };
   if (!profileComplete(me))
     return {
-      response: reply("Finish your Seatbit profile first (first name and surname), then try again.", {
-        components: [linkButton("Open Seatbit", `${appUrl}/welcome`)],
+      response: reply(t("bot.finishProfile"), {
+        components: [linkButton(t("bot.openSeatbit"), `${appUrl}/welcome`)],
       }),
     };
   const r = claimOrRequestGuest(c, s, me, "discord");
   return {
     response: reply(
       r === "claimed"
-        ? `🎉 Done: **${g.name}** is you now. Their events, seat and nicks moved to your account.`
-        : `👍 Asked the admins of **${c.name}** to confirm you're **${g.name}**. I'll DM you when they did.`,
+        ? `🎉 ${t("bot.claimed", { guest: `**${g.name}**` })}`
+        : `👍 ${t("bot.askedAdmins", { guest: `**${g.name}**`, clan: `**${c.name}**` })}`,
       { components: [openClan] },
     ),
   };
@@ -869,18 +892,22 @@ async function memberChoices(i: Interaction): Promise<Json> {
  * already has Seatbit, the guest moves over now; otherwise their Discord sign-in takes it
  * over, and the bot DMs them the claim link.
  */
-function linkGuestCommand(i: Interaction, editReply: (body: Json) => Promise<unknown>): { response: Json; later?: () => Promise<void> } {
+function linkGuestCommand(
+  i: Interaction,
+  t: T,
+  editReply: (body: Json) => Promise<unknown>,
+): { response: Json; later?: () => Promise<void> } {
   const c = clanForGuild(i.guild_id);
-  if (!c) return { response: reply("This server isn't linked to a clan in Seatbit yet. Run `/seatbit here` first.") };
+  if (!c) return { response: reply(t("bot.serverNotLinked")) };
   const me = seatbitUserFor(i.member?.user.id ?? i.user?.id ?? "");
-  if (!me) return { response: notLinked() };
-  if (!clanCan(me, c.id, "members")) return { response: reply(`Only admins of **${c.name}** who manage members can do this.`) };
+  if (!me) return { response: notLinked(t) };
+  if (!clanCan(me, c.id, "members")) return { response: reply(t("bot.onlyMemberAdmins", { clan: `**${c.name}**` })) };
   const targetId = String(i.data?.options?.find((o) => o.name === "member")?.value ?? "");
   const guestId = String(i.data?.options?.find((o) => o.name === "guest")?.value ?? "");
   // The member option is free text with suggestions; only a picked suggestion is a Discord user id.
-  if (!/^\d{15,21}$/.test(targetId)) return { response: reply("Pick the member from the suggestions while you type their name.") };
+  if (!/^\d{15,21}$/.test(targetId)) return { response: reply(t("bot.pickMember")) };
   const g = claimableGuests(c.id, null, null, { includeLinked: true }).find((x) => x.id === guestId);
-  if (!g) return { response: reply(`That guest isn't free anymore in **${c.name}**: taken over, or someone asked for it (approve or decline it under Members in Seatbit). Pick one from the list.`) };
+  if (!g) return { response: reply(t("bot.guestTaken", { clan: `**${c.name}**` })) };
   const mention = `<@${targetId}>`;
   const existing = seatbitUserFor(targetId);
 
@@ -888,14 +915,14 @@ function linkGuestCommand(i: Interaction, editReply: (body: Json) => Promise<unk
     audit({ actorId: me.id, action: "guest.merged", clanId: c.id, targetUserId: existing.id, data: { guest: g.name, via: "discord" } });
     mergeGuestInto(g, existing.id);
     notifyLater(() =>
-      notify(existing.id, {
+      notify(existing.id, (t) => ({
         kind: "guest_linked",
-        subject: `You took over ${g.name} in ${c.name}`,
-        text: `An admin of ${c.name} said you're ${g.name}. Their events, seats and nicks are yours now.\n\n${appUrl}/clans/${c.slug}`,
+        subject: t("notice.tookOver", { guest: g.name, clan: c.name }),
+        text: `${t("notice.linkedText", { guest: g.name, clan: c.name })}\n\n${appUrl}/clans/${c.slug}`,
         url: `${appUrl}/clans/${c.slug}`,
-      }),
+      })),
     );
-    return { response: reply(`👍 Done: ${mention} already has Seatbit, so **${g.name}** moved to their account.`) };
+    return { response: reply(`👍 ${t("bot.merged", { member: mention, guest: `**${g.name}**` })}`) };
   }
 
   const same = g.guestDiscordId === targetId;
@@ -926,11 +953,10 @@ function linkGuestCommand(i: Interaction, editReply: (body: Json) => Promise<unk
         if (name) db.update(user).set({ guestDiscordName: name }).where(eq(user.id, g.id)).run();
       }
       const dm = await sendGuestDiscordDm(g.id);
-      const what = same ? `${mention} was linked to **${g.name}** already` : `👍 Linked: ${mention} is **${g.name}**`;
+      const vars = { member: mention, guest: `**${g.name}**`, link };
+      const what = same ? t("bot.linkedAlready", vars) : `👍 ${t("bot.linkedNow", vars)}`;
       await editReply({
-        content: dm.ok
-          ? `${what}. I DMed them the link${same ? " again" : ""}; signing in to Seatbit with Discord takes the guest over.`
-          : `${what}. Signing in to Seatbit with Discord takes the guest over. I couldn't DM them, so send them this link: ${link}`,
+        content: `${what} ${dm.ok ? t(same ? "bot.dmedAgain" : "bot.dmed") : t("bot.couldntDm", vars)}`,
         allowed_mentions: { parse: [] },
       }).catch((e) => console.error("[discord] guest link reply failed", e));
     },
@@ -959,13 +985,16 @@ export async function sendGuestDiscordDm(guestId: string): Promise<DmResult> {
   const g = db.select().from(user).where(eq(user.id, guestId)).get();
   if (!g?.isGuest || !g.guestDiscordId || !g.claimCode) return { ok: false, problem: "no_discord" };
   const c = g.guestClanId ? getClan(g.guestClanId) : undefined;
-  const clanName = c?.name ?? "your clan";
+  // A guest has no profile yet: the clan's language decides.
+  const t = makeT(clanLocale(c));
+  const clanName = c?.name ?? t("mail.yourClan");
   const dm = await dmDiscordUser(g.guestDiscordId, {
     kind: "guest_linked",
-    subject: `Your spot in ${clanName} is waiting`,
-    text: `The leads of ${clanName} added you to Seatbit as ${g.name}. Sign in with this Discord account to see your events, tickets and seat.`,
+    locale: t.locale,
+    subject: t("notice.spotWaiting", { clan: clanName }),
+    text: t("notice.spotWaitingText", { clan: clanName, guest: g.name }),
     url: `${appUrl}/claim/${g.claimCode}`,
-    footer: "Seatbit · sent because a lead of your clan linked you",
+    footer: t("notice.linkedFooter"),
   });
   if (dm.ok) db.update(user).set({ guestDiscordDmAt: new Date() }).where(eq(user.id, g.id)).run();
   return dm;

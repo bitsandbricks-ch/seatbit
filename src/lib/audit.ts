@@ -4,7 +4,8 @@ import { db, schema } from "@/db";
 import type { AuditEntry } from "@/db/schema";
 import { fmtDay } from "./format";
 import { getDefaultNames } from "./lans";
-import { roleWithArticle } from "./clan-roles";
+import { isMemberRole, type MemberRole } from "./clan-roles";
+import { makeT, type T } from "../i18n/translate";
 
 const { auditLog } = schema;
 
@@ -79,12 +80,12 @@ export function changedFields<T extends Record<string, unknown>>(before: T, afte
 // ---------- Reading ----------
 
 export const AUDIT_GROUPS = {
-  events: { label: "Events", prefixes: ["event.", "lead.", "news."] },
-  attendance: { label: "Answers & tickets", prefixes: ["attendance.", "waitlist.", "ticket.", "lanid.", "arrived.", "seatbooked."] },
-  seats: { label: "Seats", prefixes: ["seat.", "seats.", "swap."] },
-  members: { label: "Members & roles", prefixes: ["member.", "invite.", "clan.", "platform.", "account."] },
-  guests: { label: "Guests", prefixes: ["guest."] },
-  settings: { label: "Settings", prefixes: ["type.", "discord.", "settings.", "mail_template."] },
+  events: { prefixes: ["event.", "lead.", "news."] },
+  attendance: { prefixes: ["attendance.", "waitlist.", "ticket.", "lanid.", "arrived.", "seatbooked."] },
+  seats: { prefixes: ["seat.", "seats.", "swap."] },
+  members: { prefixes: ["member.", "invite.", "clan.", "platform.", "account."] },
+  guests: { prefixes: ["guest."] },
+  settings: { prefixes: ["type.", "discord.", "settings.", "mail_template."] },
 } as const;
 export type AuditGroup = keyof typeof AUDIT_GROUPS;
 
@@ -140,158 +141,168 @@ export function auditCount(clanId: string) {
 }
 
 /** Names for the people in a page of entries. Removed guests (row gone) show as "a removed guest". */
-export function auditNames(rows: AuditEntry[]) {
+export function auditNames(rows: AuditEntry[], someone = "someone") {
   const ids = rows.flatMap((r) => [r.actorId, r.targetUserId, typeof r.data.otherUserId === "string" ? r.data.otherUserId : null]);
   const names = getDefaultNames(ids.filter((x): x is string => !!x));
-  return (id: string | null | undefined, fallback = "someone") => (id ? names.get(id)?.full ?? fallback : fallback);
+  return (id: string | null | undefined, fallback = someone) => (id ? names.get(id)?.full ?? fallback : fallback);
 }
 
-const STATUS: Record<string, string> = { going: "coming", maybe: "unsure", declined: "not coming", waitlist: "waitlist" };
-const st = (v: unknown) => (typeof v === "string" ? STATUS[v] ?? v : "no answer");
-const list = (v: unknown) => (Array.isArray(v) && v.length ? v.join(", ") : "details");
+const STATUS = ["going", "maybe", "declined", "waitlist"] as const;
 
 /**
  * What happened, as a sentence without the actor ("moved Anna "Pixel" Muster from F3 to F7").
  * `name` resolves user ids; the event is named by the caller where it's shown.
  */
-export function describeAudit(e: AuditEntry, name: (id: string | null | undefined, fallback?: string) => string): string {
+export function describeAudit(
+  e: AuditEntry,
+  name: (id: string | null | undefined, fallback?: string) => string,
+  t: T = makeT("en"),
+): string {
   const d = e.data as Record<string, unknown>;
-  const who = name(e.targetUserId, "a removed person");
-  const other = name(d.otherUserId as string | undefined, "a removed person");
-  const at = d.event ? ` at ${d.event}` : "";
+  const removed = t("audit.removedPerson");
+  const who = name(e.targetUserId, removed);
+  const other = name(d.otherUserId as string | undefined, removed);
+  const at = d.event ? t("audit.at", { event: String(d.event) }) : "";
+  const st = (v: unknown) =>
+    typeof v === "string" ? ((STATUS as readonly string[]).includes(v) ? t(`audit.status.${v as (typeof STATUS)[number]}`) : v) : t("audit.status.none");
+  const list = (v: unknown) => (Array.isArray(v) && v.length ? v.join(", ") : t("audit.details"));
+  const role = (r: unknown) => (isMemberRole(String(r)) ? t(`roleA.${String(r) as MemberRole}`) : String(r));
+  const v = { ...d, who, other, at, event: d.event as string } as Record<string, string | number>;
+  const via = d.via === "discord" ? t("audit.onDiscord") : "";
+  const match = d.match ? t(d.match === "nick" ? "audit.sameNick" : "audit.sameName") : "";
   switch (e.action) {
     case "event.create":
-      return `created the event ${d.event} (draft)`;
+      return t("audit.eventCreate", v);
     case "event.update":
-      return `changed ${list(d.fields)} of ${d.event}`;
+      return t("audit.eventUpdate", { ...v, fields: list(d.fields) });
     case "event.publish":
-      return d.scheduled ? `${d.event} went live (scheduled publish)` : `published ${d.event}`;
+      return t(d.scheduled ? "audit.eventPublishScheduled" : "audit.eventPublish", v);
     case "event.schedule":
-      return d.at ? `scheduled ${d.event} to go live on ${d.at}` : `removed the scheduled publish of ${d.event}`;
+      return t(d.at ? "audit.eventSchedule" : "audit.eventUnschedule", { ...v, at: String(d.at ?? "") });
     case "event.signup_open":
-      return `ended the interest check and opened sign-up for ${d.event}`;
+      return t("audit.signupOpen", v);
     case "event.cancel":
-      return `cancelled ${d.event}${d.reason ? ` ("${d.reason}")` : ""}`;
+      return t(d.reason ? "audit.cancelReason" : "audit.cancel", v);
     case "event.uncancel":
-      return `took back the cancellation of ${d.event}`;
+      return t("audit.uncancel", v);
     case "event.delete":
-      return `deleted the event ${d.event}`;
+      return t("audit.eventDelete", v);
     case "event.copy":
-      return `copied ${d.from} as next year's draft ${d.event}`;
+      return t("audit.eventCopy", v);
     case "orga.add":
-      return `made ${who} a lead${at}`;
+      return t("audit.orgaAdd", v);
     case "orga.remove":
-      return `removed ${who} as lead${at}`;
+      return t("audit.orgaRemove", v);
     case "news.delete":
-      return `deleted a lead news post${at}`;
+      return t("audit.newsDelete", v);
     case "attendance.set":
-      return `changed the answer of ${who}${at} from ${st(d.from)} to ${st(d.to)}`;
+      return t("audit.attendanceSet", { ...v, from: st(d.from), to: st(d.to) });
     case "waitlist.move_up":
-      return `moved ${who} up from the waitlist${at}`;
+      return t("audit.waitlistUp", v);
     case "waitlist.reorder":
-      return `moved ${who} ${d.dir === "up" ? "up" : "down"} one place on the waitlist${at}`;
+      return t(d.dir === "up" ? "audit.reorderUp" : "audit.reorderDown", v);
     case "waitlist.auto":
-      return d.on ? `let the waitlist${at} move up by itself` : `switched the waitlist${at} to moving up by hand`;
+      return t(d.on ? "audit.autoOn" : "audit.autoOff", v);
     case "attendance.remove":
-      return `removed ${who} from the attendees${at}`;
+      return t("audit.attendanceRemove", v);
     case "ticket.confirm":
-      return d.paid ? `confirmed the ticket of ${who}${at}` : `took back the ticket confirmation of ${who}${at}`;
+      return t(d.paid ? "audit.ticketConfirm" : "audit.ticketUnconfirm", v);
     case "attendance.note":
-      return `edited the lead note on ${who}${at}`;
+      return t("audit.note", v);
     case "lanid.set":
-      return `set the LAN ID of ${who}${at}`;
+      return t("audit.lanId", v);
     case "arrived.set":
-      return d.arrived ? `checked in ${who}${at}` : `undid the check-in of ${who}${at}`;
+      return t(d.arrived ? "audit.arrived" : "audit.notArrived", v);
     case "seatbooked.set":
-      return d.booked ? `marked the seat of ${who} as booked on the event site${at}` : `cleared the "seat booked" tick of ${who}${at}`;
+      return t(d.booked ? "audit.booked" : "audit.notBooked", v);
     case "seat.assign":
-      if (!d.to) return `took seat ${d.from} away from ${who}${at}`;
-      return d.from ? `moved ${who} from ${d.from} to ${d.to}${at}` : `gave ${who} seat ${d.to}${at}`;
+      if (!d.to) return t("audit.seatTake", v);
+      return t(d.from ? "audit.seatMove" : "audit.seatGive", v);
     case "seat.swap":
-      return d.otherUserId ? `swapped ${who} (${d.a}) and ${other} (${d.b})${at}` : `moved ${who} from ${d.a} to ${d.b}${at}`;
+      return t(d.otherUserId ? "audit.seatSwap" : "audit.seatSwapMove", v);
     case "seat.auto":
-      return d.mode === "replan" ? `re-planned all seats${at} (${d.count} seated)` : `auto-assigned ${d.count} seats${at}`;
+      return t(d.mode === "replan" ? "audit.replan" : "audit.autoAssign", v);
     case "seat.layout":
-      return `changed the seat block${at}${d.spec ? ` to ${d.spec}` : ""}`;
+      return t(d.spec ? "audit.layoutTo" : "audit.layout", v);
     case "seat.lock":
-      return d.locked ? `held seat ${d.seat}${at}` : `released the hold on seat ${d.seat}${at}`;
+      return t(d.locked ? "audit.lock" : "audit.unlock", v);
     case "seat.picking":
-      return d.open ? `opened seat self pick${at}` : `closed seat self pick${at}`;
+      return t(d.open ? "audit.pickOpen" : "audit.pickClose", v);
     case "seats.finalize":
-      return `finalized the seat plan${at}${d.notified ? `, told ${d.notified} people` : ""}`;
+      return t(d.notified ? "audit.finalizeTold" : "audit.finalize", v);
     case "seats.reopen":
-      return `reopened the seat plan${at}`;
+      return t("audit.reopen", v);
     case "swap.decide":
-      return `${d.approved ? "approved" : "rejected"} the seat swap of ${who} and ${other}${at}`;
+      return t(d.approved ? "audit.swapApprove" : "audit.swapReject", v);
     case "clan.update":
-      return `changed the clan's ${list(d.fields)}`;
+      return t("audit.clanUpdate", { fields: list(d.fields) });
     case "clan.delete":
-      return `deleted the clan ${d.clan}`;
+      return t("audit.clanDelete", v);
     case "clan.supporter": {
-      const until = typeof d.until === "number" ? ` until ${fmtDay(new Date(d.until))}` : "";
-      return d.renewed ? `renewed the clan's Supporter payment${until}` : `the clan became a Supporter${until}. Thank you!`;
+      const until = typeof d.until === "number" ? t("audit.until", { date: fmtDay(new Date(d.until)) }) : "";
+      return t(d.renewed ? "audit.supporterRenewed" : "audit.supporter", { until });
     }
     case "clan.supporter_end":
-      return `the clan's Supporter subscription ended`;
+      return t("audit.supporterEnd");
     case "member.add":
-      return `added ${who} to the clan`;
+      return t("audit.memberAdd", v);
     case "member.approve":
-      return `approved the join request of ${who}`;
+      return t("audit.memberApprove", v);
     case "member.role":
       // Older entries only knew admin/member.
-      if (d.to === "admin") return `made ${who} a clan admin`;
-      if (d.to === "member") return `made ${who} a plain member (was ${roleWithArticle(String(d.from ?? "admin"))})`;
-      return `made ${who} ${roleWithArticle(String(d.to))}`;
+      if (d.to === "admin") return t("audit.roleAdmin", v);
+      if (d.to === "member") return t("audit.roleMember", { who, from: role(d.from ?? "admin") });
+      return t("audit.role", { who, role: role(d.to) });
     case "member.remove":
-      return d.pending ? `declined the join request of ${who}` : `removed ${who} from the clan`;
+      return t(d.pending ? "audit.memberDecline" : "audit.memberRemove", v);
     case "member.account_deleted":
-      return `deleted their account and left the clan`;
+      return t("audit.accountLeft");
     case "invite.create":
-      return `created an invite link`;
+      return t("audit.inviteCreate");
     case "invite.delete":
-      return `deleted an invite link`;
+      return t("audit.inviteDelete");
     case "guest.add":
-      return d.existing ? `added ${who} (already on Seatbit) instead of a guest` : `added the guest ${who}`;
+      return t(d.existing ? "audit.guestAddExisting" : "audit.guestAdd", v);
     case "guest.update":
-      return `edited the guest ${who} (${list(d.fields)})`;
+      return t("audit.guestUpdate", { who, fields: list(d.fields) });
     case "guest.email":
-      return `set the email of the guest ${who} and sent the invite`;
+      return t("audit.guestEmail", v);
     case "guest.delete":
-      return `removed the guest ${d.guest ?? "(name not kept)"}`;
+      return t("audit.guestDelete", { guest: String(d.guest ?? t("audit.nameNotKept")) });
     case "guest.renew_link":
-      return `made a new claim link for the guest ${who}`;
+      return t("audit.guestRenew", v);
     case "guest.claimed":
-      return `took over the guest profile${d.guest ? ` of ${d.guest}` : ""}${d.match ? ` (same ${d.match})` : ""}${d.via === "discord" ? " on Discord" : ""}`;
+      return t(d.guest ? "audit.guestClaimedOf" : "audit.guestClaimed", { ...v, match: match && ` (${match})`, via });
     case "guest.claim_request":
-      return `asked to take over the guest ${d.guest}${d.match ? ` (same ${d.match})` : ""}${d.via === "discord" ? " on Discord" : ""}`;
+      return t("audit.claimRequest", { ...v, match: match && ` (${match})`, via });
     case "guest.discord_link":
-      return `${d.relinked ? "re-linked" : "linked"} the guest ${d.guest} to a Discord member, who takes it over when they sign in`;
+      return t(d.relinked ? "audit.discordRelink" : "audit.discordLink", v);
     case "guest.discord_dm":
-      return `sent the Discord DM with the claim link to the guest ${d.guest} again${d.ok ? "" : " (Discord refused it)"}`;
+      return t(d.ok ? "audit.discordDm" : "audit.discordDmRefused", v);
     case "guest.discord_unlink":
-      return `unlinked the guest ${d.guest} from their Discord member`;
+      return t("audit.discordUnlink", v);
     case "guest.claim_approve":
-      return `confirmed ${who} is the guest ${d.guest}`;
+      return t("audit.claimApprove", v);
     case "guest.claim_decline":
-      return `declined ${who}'s request to take over the guest ${d.guest}`;
+      return t("audit.claimDecline", v);
     case "guest.merged":
-      return `moved the guest ${d.guest ?? ""} over to ${who}'s account${d.via === "discord" ? " on Discord" : ""}`;
+      return t("audit.merged", { ...v, guest: String(d.guest ?? ""), via });
     case "type.save":
-      return d.created ? `created the LAN type ${d.type}` : `edited the LAN type ${d.type}`;
+      return t(d.created ? "audit.typeCreate" : "audit.typeEdit", v);
     case "type.delete":
-      return `deleted the LAN type ${d.type}`;
+      return t("audit.typeDelete", v);
     case "discord.unlink":
-      return `unlinked the Discord channel #${d.channel}`;
+      return t("audit.discordChannelUnlink", v);
     case "platform.role":
-      return d.to === "admin" ? `made ${who} a platform admin` : `removed ${who} as platform admin`;
+      return t(d.to === "admin" ? "audit.platformAdmin" : "audit.platformAdminRemove", v);
     case "settings.save":
-      return `changed platform settings (${list(d.keys)})`;
+      return t("audit.settings", { keys: list(d.keys) });
     case "mail_template.save":
-      return `edited the mail template "${d.template}"`;
+      return t("audit.templateSave", v);
     case "mail_template.reset":
-      return `reset the mail template "${d.template}" to the default`;
+      return t("audit.templateReset", v);
     case "account.delete":
-      return `deleted their account`;
+      return t("audit.accountDelete");
     default:
       return e.action;
   }

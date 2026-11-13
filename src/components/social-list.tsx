@@ -1,12 +1,13 @@
 import { listSocials } from "@/lib/socials";
+import { getT } from "@/i18n/server";
 
 /** A member's socials as a definition list; services with a profile page get a link. */
-export function SocialList({ socials, discordId }: { socials: Record<string, string>; discordId?: string | null }) {
+export async function SocialList({ socials, discordId }: { socials: Record<string, string>; discordId?: string | null }) {
   const rows = listSocials(socials).map((r) =>
     // A linked Discord login gives us their user id, which opens their profile in Discord.
     r.key === "discord" && discordId ? { ...r, href: `https://discord.com/users/${discordId}` } : r,
   );
-  if (rows.length === 0) return <p className="text-sm text-muted">No socials added yet.</p>;
+  if (rows.length === 0) return <p className="text-sm text-muted">{(await getT())("member.noSocials")}</p>;
   return (
     <dl className="space-y-2 text-sm">
       {rows.map((r) => (

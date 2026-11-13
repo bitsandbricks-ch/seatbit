@@ -2,23 +2,31 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ContactEmail, LegalPage, Operator } from "@/components/legal-page";
-import { getLegal } from "@/lib/legal";
+import { getLegal, type Legal } from "@/lib/legal";
 import { billingEnabled } from "@/lib/billing";
+import { getLocale, getT } from "@/i18n/server";
+// i18n-ignore-file: the policy is written once per language, below.
 
-export const metadata: Metadata = {
-  title: "Privacy Policy · Seatbit",
-  description: "What personal data Seatbit and the Seatbit Discord bot process, why, and your rights.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: `${t("footer.privacy")} · Seatbit`, description: t("legal.privacyDescription") };
+}
 
 // Reads the operator settings on every request.
 export const dynamic = "force-dynamic";
 
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
   const legal = getLegal();
   // Operators can use their own document instead of the built-in one.
   if (legal.privacyUrl) redirect(legal.privacyUrl);
   // Stripe only appears where the operator turned on Supporter payments.
   const payments = billingEnabled();
+  return (await getLocale()) === "de" ? <PrivacyDe legal={legal} payments={payments} /> : <PrivacyEn legal={legal} payments={payments} />;
+}
+
+type Props = { legal: Legal; payments: boolean };
+
+function PrivacyEn({ legal, payments }: Props) {
   return (
     <LegalPage title="Privacy Policy">
       <p>
@@ -47,6 +55,7 @@ export default function PrivacyPage() {
         <li>First name and surname</li>
         <li>Your nickname (gamer tag) and, if you set them, other nicknames for certain LAN types or events</li>
         <li>Your choice whether to get reminder emails</li>
+        <li>Your language, if you picked one</li>
       </ul>
 
       <h3>Clans and LAN events</h3>
@@ -99,7 +108,8 @@ export default function PrivacyPage() {
       </ul>
       <p>
         We do not sell your data, do not show ads, do not use tracking or analytics tools, and do not use your data for
-        automated decisions or profiling. Seatbit only sets the cookie needed to keep you signed in.
+        automated decisions or profiling. Seatbit only sets the cookie needed to keep you signed in and, if you pick a
+        language in the footer, a cookie that remembers it.
       </p>
 
       <h2>4. Who can see your data</h2>
@@ -207,6 +217,203 @@ export default function PrivacyPage() {
       <p>
         We may update this policy when Seatbit changes. The date at the top shows the current version. See also our{" "}
         <Link href="/terms">Terms of Service</Link>.
+      </p>
+    </LegalPage>
+  );
+}
+
+function PrivacyDe({ legal, payments }: Props) {
+  return (
+    <LegalPage title="Datenschutzerklärung">
+      <p>
+        Diese Erklärung beschreibt, welche Personendaten Seatbit (die Website und der Seatbit-Discord-Bot) bearbeitet,
+        warum, wie lange und welche Rechte du hast. Sie richtet sich nach dem Schweizer Datenschutzgesetz (DSG) und, wo
+        sie anwendbar ist, der EU-Datenschutz-Grundverordnung (DSGVO).
+      </p>
+
+      <h2>1. Verantwortlicher</h2>
+      <p>Verantwortlich für deine Daten ist:</p>
+      <Operator />
+      <p>Wende dich mit allen Fragen und Anliegen zu deinen Daten an diese Adresse.</p>
+
+      <h2>2. Welche Daten wir bearbeiten</h2>
+
+      <h3>Dein Konto (von Discord)</h3>
+      <p>
+        Du meldest dich mit Discord an. Mit deiner Erlaubnis schickt uns Discord deine Discord-Benutzer-ID, deinen
+        Benutzer- bzw. Anzeigenamen, dein Profilbild und deine E-Mail-Adresse. Wir speichern sie zusammen mit den
+        Login-Tokens von Discord, damit wir dich erkennen und dein Discord-Konto mit deinem Seatbit-Konto verbinden
+        können. Dein Discord-Passwort, deine Serverliste und deine Nachrichten bekommen wir nicht.
+      </p>
+
+      <h3>Dein Profil</h3>
+      <ul>
+        <li>Vor- und Nachname</li>
+        <li>Dein Nickname (Gamertag) und, falls gesetzt, weitere Nicknames für bestimmte LAN-Typen oder Events</li>
+        <li>Deine Wahl, ob du Erinnerungen per E-Mail bekommst</li>
+        <li>Deine Sprache, falls du eine gewählt hast</li>
+      </ul>
+
+      <h3>Clans und LAN-Events</h3>
+      <ul>
+        <li>Zu welchen Clans du gehörst und deine Rolle dort (Mitglied, Admin, wartet auf Freigabe)</li>
+        <li>Pro Event: ob du kommst, unsicher bist oder nicht kommst, ob du ein Ticket gekauft hast, ob ein Lead es bestätigt hat, und deine Notiz</li>
+        <li>Platzwünsche (neben wem du sitzen willst oder nicht, bevorzugte Position oder Platz) und dein zugeteilter Platz</li>
+        <li>Ob du Lead eines Events bist</li>
+        <li>Wenn dich ein Lead als Gast hinzufügt, bevor du ein Konto hast: Name, Nickname und (falls bekannt) E-Mail-Adresse, die er einträgt, sowie deine Antworten und dein Platz bei seinen Events. Die E-Mail dient nur dazu, dir die Einladung zu schicken und dich zu erkennen: Meldest du dich mit einem Discord-Konto an, dessen bestätigte E-Mail übereinstimmt, oder über deinen Übernahme-Link, wandert alles auf dein eigenes Konto und der Gasteintrag wird gelöscht. Sagt ein Lead dem Discord-Bot, welches Discord-Mitglied du bist, speichern wir zusätzlich deine Discord-Benutzer-ID beim Gasteintrag, schicken dir eine DM mit deinem Übernahme-Link und übertragen alles, sobald du dich mit diesem Discord-Konto anmeldest.</li>
+        <li>Inhalte, die Clan-Admins eintragen: Clan-Name, Beschreibung und Avatar, LAN-Typen, Events, Einladungslinks</li>
+      </ul>
+
+      <h3>Discord-Bot</h3>
+      <ul>
+        <li>Pro verknüpftem Kanal: die Discord-Server-ID, Kanal-ID und -Name, zu welchem Clan er gehört, und die Discord-Benutzer-ID der Person, die ihn verknüpft hat</li>
+        <li>Die IDs der Ankündigungen, die der Bot gepostet hat, damit er sie aktuell halten kann</li>
+        <li>Wenn du einen Befehl oder Button nutzt, schickt uns Discord deine Discord-Benutzer-ID, den Server und den Kanal. Damit finden wir dein Seatbit-Konto und speichern zum Beispiel deine Antwort zu einem Event. Bei <code>/claim</code> kommen auch dein Server-Nickname, Anzeigename und Benutzername dazu, die wir mit den Gästen des Clans vergleichen und nicht speichern. Andere Nachrichten liest und speichert der Bot nicht.</li>
+      </ul>
+
+      {payments && (
+        <>
+          <h3>Supporter-Zahlungen</h3>
+          <p>
+            Unterstützt ein Clan-Admin diese Instanz, läuft die Zahlung über die Bezahlseite von Stripe. Stripe erhebt
+            Name, E-Mail-Adresse und Zahlungsdaten (Karte, TWINT oder Wallet) der zahlenden Person. Kartennummern oder
+            TWINT-Daten sehen wir nie. Wir speichern für den Clan nur: die Kunden- und Abo-IDs bei Stripe, ob er jährlich
+            oder monatlich zahlt und bis wann bezahlt ist. Das Protokoll des Clans hält fest, wann er Supporter wurde.
+          </p>
+        </>
+      )}
+
+      <h3>Technische Daten</h3>
+      <ul>
+        <li>Login-Sitzungen mit der IP-Adresse und dem Browser (User Agent), mit denen sie erstellt wurden</li>
+        <li>Ein Protokoll, welche Erinnerungen verschickt wurden, damit niemand dieselbe zweimal bekommt</li>
+        <li>Ein Protokoll der Änderungen von Leads und Admins (zum Beispiel wer einen Platz verschoben, eine Antwort geändert, ein Ticket bestätigt, eine Rolle geändert oder einen Gast bearbeitet hat), mit Zeit, wer die Änderung gemacht hat und wen sie betrifft</li>
+        <li>Server-Logs (Zeit, aufgerufene Seite, IP-Adresse, Fehlermeldungen), die unser Server kurz aufbewahrt</li>
+      </ul>
+
+      <h2>3. Zweck und Rechtsgrundlage</h2>
+      <ul>
+        <li><strong>Um den Dienst für dich und deinen Clan zu betreiben</strong> (Konto, Events, Tickets, Plätze, Discord-Bot). Rechtsgrundlage: Erfüllung unserer Vereinbarung mit dir (Art. 6 Abs. 1 lit. b DSGVO).</li>
+        <li><strong>Um dir Erinnerungen zu schicken</strong> zu Fristen und kommenden Events, per E-Mail und in verknüpften Discord-Kanälen. Rechtsgrundlage: unsere Vereinbarung mit dir; E-Mails kannst du in deinem Profil ausschalten.</li>
+        <li><strong>Um den Dienst sicher zu halten</strong> und Probleme zu beheben (Sitzungen, Logs, Backups). Rechtsgrundlage: unser berechtigtes Interesse an einem funktionierenden, sicheren Dienst (Art. 6 Abs. 1 lit. f DSGVO).</li>
+        {payments && (
+          <li><strong>Um freiwillige Supporter-Zahlungen abzuwickeln</strong> und die vorgeschriebenen Buchhaltungsbelege aufzubewahren. Rechtsgrundlage: unsere Vereinbarung mit der zahlenden Person und unsere gesetzlichen Pflichten (Art. 6 Abs. 1 lit. b und c DSGVO).</li>
+        )}
+        <li><strong>Um gesetzliche Pflichten zu erfüllen.</strong> Rechtsgrundlage: Art. 6 Abs. 1 lit. c DSGVO.</li>
+      </ul>
+      <p>
+        Wir verkaufen deine Daten nicht, zeigen keine Werbung, nutzen keine Tracking- oder Analyse-Tools und treffen
+        keine automatisierten Entscheidungen und kein Profiling. Seatbit setzt nur das Cookie, das dich angemeldet hält,
+        und, wenn du im Footer eine Sprache wählst, ein Cookie, das sie sich merkt.
+      </p>
+
+      <h2>4. Wer deine Daten sieht</h2>
+      <ul>
+        <li><strong>Mitglieder deiner Clans</strong> sehen deinen Namen, Nickname, Avatar und ob du an die Events dieses Clans kommst. Sobald der Sitzplan fixiert ist, sehen sie, wer wo sitzt.</li>
+        <li><strong>Clan-Admins und Event-Leads</strong> sehen zusätzlich Ticketstatus, Notizen und Platzwünsche ihrer Events und können die Teilnehmerliste exportieren. Clan-Admins sehen das Protokoll ihres Clans.</li>
+        <li><strong>Leute in einem verknüpften Discord-Kanal</strong> sehen die Ankündigungen des Bots, inklusive der Nicknames derer, die kommen, unsicher sind oder auf der Warteliste stehen.</li>
+        <li><strong>Plattform-Admins</strong> dieser Seatbit-Instanz können alle Daten sehen, um den Dienst zu betreiben und zu unterstützen.</li>
+      </ul>
+
+      <h2>5. Dienstleister und Übermittlung ins Ausland</h2>
+      <p>
+        {legal.hostingLocation
+          ? `Diese Seatbit-Instanz läuft auf einem Server in ${legal.hostingLocation}.`
+          : "Diese Seatbit-Instanz läuft auf einem Server, den ihr Betreiber gewählt hat."}{" "}
+        Mit diesen Dienstleistern teilen wir Daten nur, soweit nötig:
+      </p>
+      <ul>
+        <li>
+          <strong>Discord Inc.</strong> (USA) für die Anmeldung und den Bot. Discord bearbeitet deine Daten nach seiner
+          eigenen{" "}
+          <a href="https://discord.com/privacy" target="_blank" rel="noreferrer">
+            Datenschutzerklärung
+          </a>
+          . Dein Profilbild wird von den Servern von Discord geladen.
+        </li>
+        <li>
+          <strong>Unser E-Mail-Anbieter</strong>, der die Erinnerungen zustellt und dafür deine E-Mail-Adresse, deinen
+          Namen und den Text der Erinnerung erhält.
+        </li>
+        {payments && (
+          <li>
+            <strong>Stripe Payments Europe, Ltd.</strong> (Irland), zusammen mit Stripe, Inc. (USA), wickelt als unser
+            Zahlungsanbieter die Supporter-Zahlungen ab und bewahrt die gesetzlich vorgeschriebenen Zahlungsbelege auf.
+            Siehe die{" "}
+            <a href="https://stripe.com/privacy" target="_blank" rel="noreferrer">
+              Datenschutzerklärung
+            </a>{" "}
+            von Stripe.
+          </li>
+        )}
+      </ul>
+      <p>
+        Gehen Daten in ein Land ohne angemessenen Datenschutz (wie die USA), stützt sich die Übermittlung auf das
+        Swiss-U.S. bzw. EU-U.S. Data Privacy Framework, wo der Empfänger zertifiziert ist, oder auf die von der
+        EU-Kommission genehmigten und vom EDÖB anerkannten Standardvertragsklauseln.
+      </p>
+
+      <h2>6. Wie lange wir Daten aufbewahren</h2>
+      <ul>
+        <li>Konto-, Profil- und Eventdaten: solange dein Konto besteht. Verlässt du einen Clan, wird deine Mitgliedschaft entfernt.</li>
+        <li>Login-Sitzungen: bis du dich abmeldest oder sie ablaufen.</li>
+        <li>Verknüpfungen mit Discord-Kanälen: bis der Kanal getrennt oder der Bot entfernt wird.</li>
+        <li>Protokolleinträge: ein Jahr.</li>
+        {payments && (
+          <li>Supporter-Angaben eines Clans: solange der Clan besteht. Zahlungsbelege (Quittungen, Beträge, Daten): solange es das Buchhaltungsrecht verlangt, meist zehn Jahre.</li>
+        )}
+        <li>Server-Logs: ein paar Tage. Datenbank-Backups: bis zu 14 Tage.</li>
+      </ul>
+      <p>
+        Du kannst dein Konto selbst in deinem <Link href="/profile?tab=data">Profil</Link> löschen (Deine Daten, Mein
+        Konto löschen). Dann löschen wir Name, E-Mail, Bild, Discord-Verknüpfung, Login-Sitzungen, Nicknames, LAN-IDs,
+        Clan-Mitgliedschaften, Lead-Rollen, Platzwünsche, Plätze, Fahrten, Packlisten und deine Antworten zu kommenden
+        Events. Deine Antworten zu vergangenen Events (kommt oder nicht, Ticket) bleiben bei einem anonymen «Gelöschtes
+        Mitglied», das sich nicht auf dich zurückführen lässt, damit die Event-Geschichte deines Clans aufgeht;
+        Protokolleinträge zeigen dasselbe «Gelöschtes Mitglied». Ein Clan, in dem sonst niemand mit Login übrig ist, wird
+        mit deinem Konto gelöscht. Backups werden innert 14 Tagen überschrieben.
+      </p>
+
+      <h2>7. Deine Rechte</h2>
+      <p>Du hast das Recht:</p>
+      <ul>
+        <li>Auskunft über die Daten zu erhalten, die wir über dich haben, und eine Kopie davon;</li>
+        <li>falsche Daten berichtigen zu lassen (das meiste kannst du in deinem <Link href="/profile">Profil</Link> selbst ändern);</li>
+        <li>deine Daten löschen oder ihre Bearbeitung einschränken zu lassen;</li>
+        <li>deine Daten in einem gängigen maschinenlesbaren Format zu erhalten («Meine Daten herunterladen» im Profil gibt dir alles als JSON-Datei);</li>
+        <li>einer Bearbeitung zu widersprechen, die auf unserem berechtigten Interesse beruht;</li>
+        <li>eine erteilte Einwilligung mit Wirkung für die Zukunft zu widerrufen.</li>
+      </ul>
+      <p>
+        Daten herunterladen und Konto löschen funktionieren direkt in deinem Profil. Für alles andere schreib an{" "}
+        <ContactEmail />. Du kannst dich auch bei einer Datenschutzbehörde beschweren: in der Schweiz beim
+        Eidgenössischen Datenschutz- und Öffentlichkeitsbeauftragten (EDÖB,{" "}
+        <a href="https://www.edoeb.admin.ch" target="_blank" rel="noreferrer">
+          edoeb.admin.ch
+        </a>
+        ), in der EU bei der Behörde deines Landes.
+      </p>
+      <p>
+        Den Zugriff von Seatbit auf dein Discord-Konto kannst du jederzeit in Discord unter Benutzereinstellungen,
+        Autorisierte Apps, entfernen.
+      </p>
+
+      <h2>8. Sicherheit</h2>
+      <p>
+        Alle Verbindungen laufen über HTTPS. Secrets wie Bot-Tokens und SMTP-Passwörter werden verschlüsselt gespeichert.
+        Zugriff auf den Server hat nur der Betreiber.
+      </p>
+
+      <h2>9. Kinder</h2>
+      <p>
+        Seatbit ist nicht für Kinder unter dem Mindestalter von Discord gedacht. Wenn du denkst, dass uns ein Kind ohne
+        Erlaubnis Daten gegeben hat, melde dich, und wir löschen sie.
+      </p>
+
+      <h2>10. Änderungen</h2>
+      <p>
+        Wir können diese Erklärung anpassen, wenn sich Seatbit ändert. Das Datum oben zeigt die aktuelle Fassung. Siehe
+        auch unsere <Link href="/terms">Nutzungsbedingungen</Link>.
       </p>
     </LegalPage>
   );

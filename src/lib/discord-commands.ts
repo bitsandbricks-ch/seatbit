@@ -16,6 +16,7 @@ import {
   type Interaction,
   EPHEMERAL,
   boolOpt,
+  interactionT,
   clanForGuild,
   clip,
   linkButton,
@@ -26,19 +27,21 @@ import {
   seatbitUserFor,
   upcomingLans,
 } from "./discord-common";
-import { ATTENDANCE_LOCKED_MSG, attendanceLocked, getDisplayNames, getLan, getNames, setAttendance, signupClosed, waitlistPositions } from "./lans";
+import { attendanceLocked, getDisplayNames, getLan, getNames, setAttendance, signupClosed, waitlistPositions } from "./lans";
 import { appUrl } from "./mail";
 import { saveNick, saveSeatWishes, saveTicketBought } from "./member-updates";
 import { nameMatches } from "./names";
 import { listGames } from "./games";
 import { type Notice, sendDiscordDm } from "./notify";
+import type { T } from "../i18n/translate";
 
 const { attendance, lanInterest, lanType, nickname, seat } = schema;
 
 type EditReply = (body: Json) => Promise<unknown>;
 
 const BRAND = 0x10b981;
-const openButton = (l: Lan) => ({ type: 2, style: 5, label: "Open in Seatbit", url: lanLink(l) });
+const openButton = (l: Lan, t: T) => ({ type: 2, style: 5, label: t("notice.openInSeatbit"), url: lanLink(l) });
+const openRow = (l: Lan, t: T) => linkButton(t("notice.openInSeatbit"), lanLink(l));
 
 /** Slash command name -> attendance answer. */
 const ANSWERS: Record<string, AttendanceStatus> = { coming: "going", unsure: "maybe", "not-coming": "declined" };
@@ -46,14 +49,10 @@ const INTEREST_FOR: Record<string, InterestAnswer> = { going: "yes", maybe: "may
 
 export const MEMBER_COMMANDS = new Set([...Object.keys(ANSWERS), "status", "ticket", "nick", "wish"]);
 
-const statusLabel: Record<AttendanceStatus, string> = {
-  going: "✅ You're in",
-  maybe: "🤔 Marked as unsure",
-  declined: "❌ Marked as not coming",
-  waitlist: "⏳ It's full, you're on the waitlist",
-};
+const STATUS_ICON: Record<AttendanceStatus, string> = { going: "✅", maybe: "🤔", declined: "❌", waitlist: "⏳" };
+const statusText = (t: T, s: AttendanceStatus) => t(`cmd.status.${s}`);
 
-const when = (l: Lan) => (l.dateTbd ? l.dateHint || "date to be fixed" : fmtWeekday(l.startsAt));
+const when = (l: Lan, t: T) => (l.dateTbd ? l.dateHint || t("cmd.dateOpen") : fmtWeekday(l.startsAt, t.locale));
 
 /**
  * Who's asking and which events they mean: in a linked server only that server's clan,
@@ -64,7 +63,7 @@ function scopeOf(i: Interaction) {
   const serverClan = clanForGuild(i.guild_id);
   const clanIds = serverClan ? [serverClan.id] : me ? myClans(me.id).map((m) => m.clan.id) : [];
   const events = upcomingLans(clanIds).filter((l) => !l.cancelledAt);
-  return { me, serverClan, events };
+  return { me, serverClan, events, t: interactionT(i) };
 }
 
 const myRow = (lanId: string, userId: string) =>
@@ -84,25 +83,25 @@ function pickedEvent(i: Interaction, events: Lan[]): Lan | "unknown" | undefined
   return byName.length === 1 ? byName[0] : "unknown";
 }
 
-const unknownEvent = () => reply("I don't know that event. Pick one from the suggestions while you type, or see `/lans`.");
+const unknownEvent = (t: T) => reply(t("cmd.unknownEvent"));
 
 /** Why the caller can't act on this event, or null when they can. */
-function notMember(me: User, l: Lan) {
+function notMember(me: User, l: Lan, t: T) {
   if (l.clanId && isClanMember(me.id, l.clanId)) return null;
   const c = l.clanId ? getClan(l.clanId) : undefined;
-  return reply(`**${l.name}** is for members of **${c?.name ?? "another clan"}**. Ask to join the clan in Seatbit first.`, {
-    components: c ? [linkButton("Open clan", `${appUrl}/clans/${c.slug}`)] : [],
+  return reply(t("cmd.notMember", { lan: `**${l.name}**`, clan: `**${c?.name ?? t("cmd.anotherClan")}**` }), {
+    components: c ? [linkButton(t("bot.openClan"), `${appUrl}/clans/${c.slug}`)] : [],
   });
 }
 
 /** Several events fit and the caller didn't say which: buttons for each (or a hint for commands with more options). */
-function whichEvent(events: Lan[], button?: (l: Lan) => Json) {
+function whichEvent(events: Lan[], t: T, button?: (l: Lan) => Json) {
   const list = events
     .slice(0, 5)
-    .map((l) => `• **${l.name}** · ${when(l)}`)
+    .map((l) => `• **${l.name}** · ${when(l, t)}`)
     .join("\n");
-  if (!button) return reply(`Which event? Add \`event:\` and pick one:\n${list}`);
-  return reply("Which event?", {
+  if (!button) return reply(`${t("cmd.whichEventAdd")}\n${list}`);
+  return reply(t("cmd.whichEvent"), {
     components: events.slice(0, 5).map((l) => ({ type: 1, components: [button(l)] })),
   });
 }
@@ -110,27 +109,27 @@ function whichEvent(events: Lan[], button?: (l: Lan) => Json) {
 // ---------- Answering ----------
 
 /** Records an interest check answer ("would you come?"). */
-export function answerInterest(l: Lan, me: User, answer: InterestAnswer): Handled {
-  if (!l.interestCheck || l.cancelledAt) return { response: reply("The interest check is over.", { components: [linkButton("Open in Seatbit", lanLink(l))] }) };
-  if (!INTEREST_ANSWERS.includes(answer)) return { response: reply("Unknown answer.") };
-  const denied = notMember(me, l);
+export function answerInterest(l: Lan, me: User, answer: InterestAnswer, t: T): Handled {
+  if (!l.interestCheck || l.cancelledAt) return { response: reply(t("cmd.interestOver"), { components: [openRow(l, t)] }) };
+  if (!INTEREST_ANSWERS.includes(answer)) return { response: reply(t("cmd.unknownAnswer")) };
+  const denied = notMember(me, l, t);
   if (denied) return { response: denied };
   db.insert(lanInterest)
     .values({ lanId: l.id, userId: me.id, answer })
     .onConflictDoUpdate({ target: [lanInterest.lanId, lanInterest.userId], set: { answer } })
     .run();
   void import("./discord").then((d) => d.refreshLanMessagesSoon(l.id)).catch(() => {});
-  const text = { yes: "👍 Noted: you'd come", maybe: "🤔 Noted: maybe", no: "👋 Noted: not this time" }[answer];
-  return { response: reply(`${text} for **${l.name}**. We'll tell you when sign-up opens.`) };
+  const icon = { yes: "👍", maybe: "🤔", no: "👋" }[answer];
+  return { response: reply(`${icon} ${t(`cmd.interest.${answer}`, { lan: `**${l.name}**` })}`) };
 }
 
 /** Coming / unsure / not coming, from a button or a slash command. */
-export function answerEvent(l: Lan, me: User, status: AttendanceStatus, editReply: EditReply): Handled {
-  if (!["going", "maybe", "declined"].includes(status)) return { response: reply("Unknown answer.") };
-  if (l.interestCheck && !l.cancelledAt) return answerInterest(l, me, INTEREST_FOR[status]);
-  if (signupClosed(l)) return { response: reply(`Sign-up for **${l.name}** is closed. Ask a lead if something changed.`) };
-  if (attendanceLocked(myRow(l.id, me.id))) return { response: reply(ATTENDANCE_LOCKED_MSG, { components: [linkButton("Open in Seatbit", lanLink(l))] }) };
-  const denied = notMember(me, l);
+export function answerEvent(l: Lan, me: User, status: AttendanceStatus, editReply: EditReply, t: T): Handled {
+  if (!["going", "maybe", "declined"].includes(status)) return { response: reply(t("cmd.unknownAnswer")) };
+  if (l.interestCheck && !l.cancelledAt) return answerInterest(l, me, INTEREST_FOR[status], t);
+  if (signupClosed(l)) return { response: reply(t("cmd.signupClosed", { lan: `**${l.name}**` })) };
+  if (attendanceLocked(myRow(l.id, me.id))) return { response: reply(t("event.locked"), { components: [openRow(l, t)] }) };
+  const denied = notMember(me, l, t);
   if (denied) return { response: denied };
   return {
     response: { type: 5, data: { flags: EPHEMERAL } }, // "thinking…", answered below
@@ -139,65 +138,66 @@ export function answerEvent(l: Lan, me: User, status: AttendanceStatus, editRepl
         const stored = await setAttendance(l, me.id, status);
         const extra =
           stored === "going"
-            ? " Tick off your ticket with `/ticket` once you have it."
+            ? ` ${t("cmd.tickLater")}`
             : stored === "waitlist"
-              ? ` You're #${waitlistPositions(l.id).get(me.id) ?? "?"} in line; you get a DM when you move up.`
+              ? ` ${t("cmd.inLine", { place: String(waitlistPositions(l.id).get(me.id) ?? "?") })}`
               : "";
         // A DM keeps the confirmation once the ephemeral reply is gone (unless they turned DMs off).
-        const dm = await sendDiscordDm(me, answerDm(l, me, stored));
+        const dm = await sendDiscordDm(me, answerDm(l, me, stored, t));
         await editReply({
-          content: `${statusLabel[stored]} for **${l.name}**.${extra}${dm ? "\n-# I sent you a DM to keep." : ""}`,
-          components: [linkButton("Open in Seatbit", lanLink(l))],
+          content: `${STATUS_ICON[stored]} ${t("cmd.answered", { status: statusText(t, stored), lan: `**${l.name}**` })}${extra}${dm ? `\n-# ${t("cmd.dmToKeep")}` : ""}`,
+          components: [openRow(l, t)],
         });
       } catch (e) {
         console.error("[discord] attendance failed", e);
-        await editReply({ content: "Something went wrong, please try again in Seatbit." }).catch(() => {});
+        await editReply({ content: t("cmd.wentWrong") }).catch(() => {});
       }
     },
   };
 }
 
 /** The confirmation DM after answering on Discord: the answer, the facts and what to do next. */
-function answerDm(l: Lan, me: User, stored: AttendanceStatus): Notice {
+function answerDm(l: Lan, me: User, stored: AttendanceStatus, t: T): Notice {
+  const date = (d: Date) => `**${fmtWhen(d, t.locale)}**`;
   const next = {
-    going: l.paymentDueDate
-      ? `Next: buy your ticket by **${fmtWhen(l.paymentDueDate)}** and tick it off with \`/ticket\` or the button below.`
-      : "Next: buy your ticket and tick it off with `/ticket` or the button below.",
-    waitlist: `You're #${waitlistPositions(l.id).get(me.id) ?? "?"} in line. I'll DM you when you move up.`,
-    maybe: l.signupDeadline ? `Please decide by **${fmtWhen(l.signupDeadline)}**: \`/coming\` or \`/not-coming\`.` : "Decide with `/coming` or `/not-coming` when you know.",
-    declined: "Changed your mind? Use `/coming` while sign-up is open.",
+    going: l.paymentDueDate ? t("cmd.next.goingBy", { date: date(l.paymentDueDate) }) : t("cmd.next.going"),
+    waitlist: t("cmd.next.waitlist", { place: String(waitlistPositions(l.id).get(me.id) ?? "?") }),
+    maybe: l.signupDeadline ? t("cmd.next.maybeBy", { date: date(l.signupDeadline) }) : t("cmd.next.maybe"),
+    declined: t("cmd.next.declined"),
   }[stored];
-  const facts = lanFacts(l)
-    .filter(([k]) => k === "When" || k === "Where" || (stored === "going" && k === "Ticket"))
+  const shown = [t("bot.when"), t("bot.where"), ...(stored === "going" ? [t("bot.ticket")] : [])];
+  const facts = lanFacts(l, t)
+    .filter(([k]) => shown.includes(k))
     .map(([k, v]) => `**${k}:** ${v}`);
   const going = stored === "going" || stored === "waitlist";
   return {
     kind: "signup_confirmed",
-    subject: clip(`${statusLabel[stored].replace(/^\S+ /, "")}: ${l.name}`, 256),
+    locale: t.locale,
+    subject: clip(`${statusText(t, stored)}: ${l.name}`, 256),
     text: "",
     dm: [...facts, "", next].join("\n"),
     url: lanLink(l),
     dmOnly: true,
     buttons: [
-      ...(going ? [{ type: 2, style: 3, label: "I have my ticket", custom_id: `ticket:${l.id}` }] : []),
-      ...(stored === "going" && l.ticketUrl ? [{ type: 2, style: 5, label: "Buy ticket", url: l.ticketUrl }] : []),
+      ...(going ? [{ type: 2, style: 3, label: t("cmd.haveTicket"), custom_id: `ticket:${l.id}` }] : []),
+      ...(stored === "going" && l.ticketUrl ? [{ type: 2, style: 5, label: t("nudge.buyTicket"), url: l.ticketUrl }] : []),
     ],
   };
 }
 
 function answerCommand(i: Interaction, status: AttendanceStatus, editReply: EditReply): Handled {
-  const { me, serverClan, events } = scopeOf(i);
-  if (!me) return { response: notLinked() };
+  const { me, serverClan, events, t } = scopeOf(i);
+  if (!me) return { response: notLinked(t) };
   const picked = pickedEvent(i, events);
-  if (picked === "unknown") return { response: unknownEvent() };
-  if (picked) return answerEvent(picked, me, status, editReply);
+  if (picked === "unknown") return { response: unknownEvent(t) };
+  if (picked) return answerEvent(picked, me, status, editReply, t);
   const open = events.filter((l) => l.interestCheck || !signupClosed(l));
-  if (open.length === 1) return answerEvent(open[0], me, status, editReply);
+  if (open.length === 1) return answerEvent(open[0], me, status, editReply, t);
   if (open.length === 0)
-    return { response: reply(`Nothing to answer right now${serverClan ? ` in **${serverClan.name}**` : ""}. \`/status\` shows your events.`) };
-  const label = { going: "Coming", maybe: "Unsure", declined: "Not coming", waitlist: "" }[status];
+    return { response: reply(serverClan ? t("cmd.nothingToAnswerIn", { clan: `**${serverClan.name}**` }) : t("cmd.nothingToAnswer")) };
+  const label = { going: t("nudge.going"), maybe: t("nudge.maybe"), declined: t("nudge.declined"), waitlist: "" }[status];
   return {
-    response: whichEvent(open, (l) => ({
+    response: whichEvent(open, t, (l) => ({
       type: 2,
       style: status === "going" ? 3 : status === "declined" ? 4 : 2,
       label: clip(`${label}: ${l.name}`, 80),
@@ -209,14 +209,14 @@ function answerCommand(i: Interaction, status: AttendanceStatus, editReply: Edit
 // ---------- Ticket ----------
 
 /** "I have my ticket", from /ticket or its button. */
-export function ticketFor(l: Lan, me: User, bought: boolean): Handled {
-  const denied = notMember(me, l);
+export function ticketFor(l: Lan, me: User, bought: boolean, t: T): Handled {
+  const denied = notMember(me, l, t);
   if (denied) return { response: denied };
   const a = myRow(l.id, me.id);
   if (bought && a?.status !== "going" && a?.status !== "waitlist")
-    return { response: reply(`Say you're coming to **${l.name}** first: \`/coming\`.`) };
+    return { response: reply(t("cmd.comingFirst", { lan: `**${l.name}**` })) };
   try {
-    saveTicketBought(l.id, me.id, bought);
+    saveTicketBought(l.id, me.id, bought, t);
   } catch (e) {
     return { response: reply((e as Error).message) };
   }
@@ -224,32 +224,32 @@ export function ticketFor(l: Lan, me: User, bought: boolean): Handled {
   return {
     response: reply(
       bought
-        ? `🎟️ Noted: you have your ticket for **${l.name}**. A lead will confirm it. Your answer is locked now; ask a lead if your plans change.`
-        : `OK, no ticket for **${l.name}** yet.`,
-      { components: [linkButton("Open in Seatbit", lanLink(l))] },
+        ? `🎟️ ${t("cmd.ticketNoted", { lan: `**${l.name}**` })}`
+        : t("cmd.noTicketYet", { lan: `**${l.name}**` }),
+      { components: [openRow(l, t)] },
     ),
   };
 }
 
 function ticketCommand(i: Interaction): Handled {
-  const { me, events } = scopeOf(i);
-  if (!me) return { response: notLinked() };
+  const { me, events, t } = scopeOf(i);
+  if (!me) return { response: notLinked(t) };
   const bought = boolOpt(i, "bought") ?? true;
   const picked = pickedEvent(i, events);
-  if (picked === "unknown") return { response: unknownEvent() };
-  if (picked) return ticketFor(picked, me, bought);
+  if (picked === "unknown") return { response: unknownEvent(t) };
+  if (picked) return ticketFor(picked, me, bought, t);
   const rows = new Map(events.map((l) => [l.id, myRow(l.id, me.id)]));
   const open = events.filter((l) => {
     const a = rows.get(l.id);
     return a && !a.paid && (a.status === "going" || a.status === "waitlist") && a.ticketBought !== bought;
   });
-  if (open.length === 1) return ticketFor(open[0], me, bought);
-  if (open.length === 0)
-    return { response: reply(bought ? "No event is waiting for your ticket. Say you're coming first with `/coming`." : "You haven't ticked off a ticket anywhere.") };
+  if (open.length === 1) return ticketFor(open[0], me, bought, t);
+  if (open.length === 0) return { response: reply(t(bought ? "cmd.noTicketWaiting" : "cmd.noTicketTicked")) };
   return {
     response: whichEvent(
       open,
-      bought ? (l) => ({ type: 2, style: 3, label: clip(`I have my ticket: ${l.name}`, 80), custom_id: `ticket:${l.id}` }) : undefined,
+      t,
+      bought ? (l) => ({ type: 2, style: 3, label: clip(`${t("cmd.haveTicket")}: ${l.name}`, 80), custom_id: `ticket:${l.id}` }) : undefined,
     ),
   };
 }
@@ -257,31 +257,35 @@ function ticketCommand(i: Interaction): Handled {
 // ---------- Nick ----------
 
 function nickCommand(i: Interaction): Handled {
-  const { me, events } = scopeOf(i);
-  if (!me) return { response: notLinked() };
+  const { me, events, t } = scopeOf(i);
+  if (!me) return { response: notLinked(t) };
   const raw = opt(i, "nick") ?? "";
   const picked = pickedEvent(i, events);
-  if (picked === "unknown") return { response: unknownEvent() };
+  if (picked === "unknown") return { response: unknownEvent(t) };
   try {
     if (!picked) {
       const nick = saveNick(me.id, raw);
-      return { response: reply(`👍 Your nick is **${nick}** now, wherever you haven't set another one.`) };
+      return { response: reply(`👍 ${t("cmd.nickGlobal", { nick: `**${nick}**` })}`) };
     }
-    const denied = notMember(me, picked);
+    const denied = notMember(me, picked, t);
     if (denied) return { response: denied };
     // Nicks belong to the LAN type, so next year's event keeps them; one-off events get their own.
     const type = picked.typeId ? db.select().from(lanType).where(eq(lanType.id, picked.typeId)).get() : undefined;
     const nick = saveNick(me.id, raw, type ? { typeId: type.id } : { lanId: picked.id });
     void import("./discord").then((d) => d.refreshLanMessagesSoon(picked.id)).catch(() => {});
-    return { response: reply(`👍 Your nick is **${nick}** at ${type ? `every **${type.name}** event` : `**${picked.name}**`}.`) };
+    return {
+      response: reply(
+        `👍 ${type ? t("cmd.nickType", { nick: `**${nick}**`, type: `**${type.name}**` }) : t("cmd.nickLan", { nick: `**${nick}**`, lan: `**${picked.name}**` })}`,
+      ),
+    };
   } catch {
-    return { response: reply("A nick needs 1 to 32 characters.") };
+    return { response: reply(t("cmd.nickLength")) };
   }
 }
 
 // ---------- Seat wishes ----------
 
-const POSITIONS = { any: "anywhere", edge: "at the edge", middle: "in the middle" } as const;
+const POSITIONS = { any: "cmd.pos.any", edge: "cmd.pos.edge", middle: "cmd.pos.middle" } as const;
 
 /** People at the event someone can wish to sit near or away from. */
 async function wishPeople(l: Lan, meId: string) {
@@ -297,32 +301,32 @@ const wishEvents = (events: Lan[], meId: string) =>
     return !l.seatsPublishedAt && a && a.status !== "declined";
   });
 
-async function wishSummary(l: Lan, a: Attendance) {
+async function wishSummary(l: Lan, a: Attendance, t: T) {
   const names = await getDisplayNames(l.id, [...a.wishNear, ...a.wishAvoid]);
   const who = (ids: string[]) => ids.map((id) => names.get(id) ?? "?").join(", ");
   const lines = [
-    a.wishNear.length ? `🤝 Near: ${who(a.wishNear)}` : "",
-    a.wishAvoid.length ? `🙅 Not next to: ${who(a.wishAvoid)}` : "",
-    a.wishPosition !== "any" ? `📍 ${POSITIONS[a.wishPosition][0].toUpperCase()}${POSITIONS[a.wishPosition].slice(1)}` : "",
-    a.wishSeat ? `💺 Seat ${a.wishSeat}` : "",
+    a.wishNear.length ? `🤝 ${t("cmd.near")}: ${who(a.wishNear)}` : "",
+    a.wishAvoid.length ? `🙅 ${t("cmd.notNextTo")}: ${who(a.wishAvoid)}` : "",
+    a.wishPosition !== "any" ? `📍 ${t(POSITIONS[a.wishPosition])}` : "",
+    a.wishSeat ? `💺 ${t("cmd.seat", { seat: a.wishSeat })}` : "",
     a.wishNote ? `📝 ${clip(a.wishNote, 300)}` : "",
   ].filter(Boolean);
   return lines.join("\n");
 }
 
 async function wishCommand(i: Interaction): Promise<Json> {
-  const { me, events } = scopeOf(i);
-  if (!me) return notLinked();
+  const { me, events, t } = scopeOf(i);
+  if (!me) return notLinked(t);
   const picked = pickedEvent(i, events);
-  if (picked === "unknown") return unknownEvent();
+  if (picked === "unknown") return unknownEvent(t);
   const open = wishEvents(events, me.id);
   const l = picked ?? (open.length === 1 ? open[0] : undefined);
-  if (!l) return open.length ? whichEvent(open) : reply("No event takes seat wishes from you right now. Say you're coming first with `/coming`.");
-  const denied = notMember(me, l);
+  if (!l) return open.length ? whichEvent(open, t) : reply(t("cmd.noWishEvent"));
+  const denied = notMember(me, l, t);
   if (denied) return denied;
-  if (l.seatsPublishedAt) return reply(`The seat plan for **${l.name}** is final. Ask a lead if you need to move.`);
+  if (l.seatsPublishedAt) return reply(t("cmd.planFinal", { lan: `**${l.name}**` }));
   const a = myRow(l.id, me.id);
-  if (!a || a.status === "declined") return reply(`Say you're coming to **${l.name}** first: \`/coming\`.`);
+  if (!a || a.status === "declined") return reply(t("cmd.comingFirst", { lan: `**${l.name}**` }));
 
   const near = opt(i, "near");
   const avoid = opt(i, "avoid");
@@ -331,13 +335,13 @@ async function wishCommand(i: Interaction): Promise<Json> {
   const note = opt(i, "note");
   const clear = boolOpt(i, "clear") ?? false;
   const changes = [near, avoid, position, seatWish, note].some((v) => v !== undefined) || clear;
-  const open_ = [openButton(l)];
+  const open_ = [openButton(l, t)];
   if (!changes) {
-    const now = await wishSummary(l, a);
+    const now = await wishSummary(l, a, t);
     return reply(
       now
-        ? `Your seat wishes for **${l.name}**:\n${now}\n\n-# Change them with \`/wish\` options, or \`/wish clear:True\` to start over.`
-        : `No seat wishes for **${l.name}** yet. Add some with \`/wish near:\`, \`avoid:\`, \`position:\`, \`seat:\` or \`note:\`.`,
+        ? `${t("cmd.yourWishes", { lan: `**${l.name}**` })}\n${now}\n\n-# ${t("cmd.changeWishes")}`
+        : t("cmd.noWishes", { lan: `**${l.name}**` }),
       { components: [{ type: 1, components: open_ }] },
     );
   }
@@ -353,7 +357,7 @@ async function wishCommand(i: Interaction): Promise<Json> {
   const nearP = near ? person(near) : undefined;
   const avoidP = avoid ? person(avoid) : undefined;
   if ((near && !nearP) || (avoid && !avoidP))
-    return reply("I don't know who you mean. Pick the person from the suggestions while you type; only people who answered for this event are listed.");
+    return reply(t("cmd.unknownPerson"));
 
   let w = clear
     ? { near: [] as string[], avoid: [] as string[], position: "any" as const, seat: "", note: "" }
@@ -363,15 +367,15 @@ async function wishCommand(i: Interaction): Promise<Json> {
   if (position && position in POSITIONS) w = { ...w, position };
   if (seatWish !== undefined) w = { ...w, seat: seatWish };
   if (note !== undefined) w = { ...w, note };
-  if (w.near.length > 10 || w.avoid.length > 10) return reply("That's more than 10 people. Start over with `/wish clear:True`.");
+  if (w.near.length > 10 || w.avoid.length > 10) return reply(t("cmd.tooMany"));
   try {
     saveSeatWishes(l.id, me.id, w);
   } catch {
-    return reply("That didn't work: a seat is at most 12 characters, a note at most 300.");
+    return reply(t("cmd.wishTooLong"));
   }
   const saved = myRow(l.id, me.id)!;
-  const now = await wishSummary(l, saved);
-  return reply(`👍 Seat wishes for **${l.name}** saved:\n${now || "none (anywhere is fine)"}\n\n-# The leads see them when they plan the seats.`, {
+  const now = await wishSummary(l, saved, t);
+  return reply(`👍 ${t("cmd.wishesSaved", { lan: `**${l.name}**` })}\n${now || t("cmd.noneAnywhere")}\n\n-# ${t("cmd.leadsSee")}`, {
     components: [{ type: 1, components: open_ }],
   });
 }
@@ -381,7 +385,7 @@ async function wishCommand(i: Interaction): Promise<Json> {
 const STEP_ICON: Record<StepState, string> = { done: "✅", pending: "⏳", todo: "⬜" };
 
 /** One event's card for /status: your answer, the checklist (nick, ticket, seat) and what's due next. */
-async function statusCard(l: Lan, me: User) {
+async function statusCard(l: Lan, me: User, t: T) {
   const a = myRow(l.id, me.id);
   const seats = db.select().from(seat).where(eq(seat.lanId, l.id)).all();
   const nicks = db.select().from(nickname).where(eq(nickname.userId, me.id)).all();
@@ -393,9 +397,10 @@ async function statusCard(l: Lan, me: User) {
   const lines: string[] = [];
   if (l.interestCheck) {
     const mine = db.select().from(lanInterest).where(and(eq(lanInterest.lanId, l.id), eq(lanInterest.userId, me.id))).get()?.answer;
-    lines.push(`Interest check: ${mine ? { yes: "you'd come", maybe: "maybe", no: "not this time" }[mine] : "**no answer yet**"}`);
+    lines.push(`${t("cmd.interestCheck")}: ${mine ? t(`cmd.interestMine.${mine}`) : `**${t("cmd.noAnswerYet")}**`}`);
   } else {
     const steps = buildChecklist({
+      t,
       lan: l,
       attendance: a,
       hasNick,
@@ -408,25 +413,32 @@ async function statusCard(l: Lan, me: User) {
         return { voted: voted.length, toInstall: voted.filter((g) => !g.myInstalled).length };
       })(),
     });
-    if (!a) lines.push("⬜ **No answer yet**: `/coming`, `/unsure` or `/not-coming`");
+    if (!a) lines.push(`⬜ **${t("cmd.noAnswerYet")}**: \`/coming\`, \`/unsure\` ${t("cmd.or")} \`/not-coming\``);
     else if (a.status !== "going")
-      lines.push({ maybe: "🤔 You said **unsure**", declined: "❌ You're **not coming**", waitlist: `⏳ You're on the **waitlist** (#${waitlistPositions(l.id).get(me.id) ?? "?"})`, going: "" }[a.status]);
+      lines.push(
+        {
+          maybe: `🤔 ${t("cmd.youUnsure")}`,
+          declined: `❌ ${t("cmd.youNotComing")}`,
+          waitlist: `⏳ ${t("cmd.youWaitlist", { place: String(waitlistPositions(l.id).get(me.id) ?? "?") })}`,
+          going: "",
+        }[a.status],
+      );
     // Not coming: the rest of the checklist doesn't apply.
     for (const s of a?.status === "declined" ? [] : steps) {
       if (s.key === "going" && a?.status !== "going") continue;
       const hint = s.key === "nick" && hasNick && nick ? `**${nick}**` : s.hint;
-      lines.push(`${STEP_ICON[s.state]} ${s.title}${s.optional && s.state !== "done" ? " (optional)" : ""}: ${hint}`);
+      lines.push(`${STEP_ICON[s.state]} ${s.title}${s.optional && s.state !== "done" ? ` (${t("checklist.optional")})` : ""}: ${hint}`);
     }
     if (a && a.status !== "declined" && !l.seatsPublishedAt) {
-      const wishes = await wishSummary(l, a);
-      if (wishes) lines.push(`\n**Seat wishes**\n${wishes}`);
+      const wishes = await wishSummary(l, a, t);
+      if (wishes) lines.push(`\n**${t("cmd.seatWishes")}**\n${wishes}`);
     }
   }
-  const due = nextDeadline(l);
+  const due = nextDeadline(l, new Date(), t);
   if (due) lines.push(`\n${due}`);
   return {
     card: {
-      title: clip(`${l.name} · ${when(l)}`, 256),
+      title: clip(`${l.name} · ${when(l, t)}`, 256),
       url: lanLink(l),
       color: BRAND,
       description: clip(lines.join("\n"), 4000),
@@ -437,30 +449,30 @@ async function statusCard(l: Lan, me: User) {
 }
 
 async function statusCommand(i: Interaction): Promise<Json> {
-  const { me, serverClan, events } = scopeOf(i);
-  if (!me) return notLinked();
+  const { me, serverClan, events, t } = scopeOf(i);
+  if (!me) return notLinked(t);
   const picked = pickedEvent(i, events);
-  if (picked === "unknown") return unknownEvent();
+  if (picked === "unknown") return unknownEvent(t);
   if (picked) {
-    const denied = notMember(me, picked);
+    const denied = notMember(me, picked, t);
     if (denied) return denied;
-    const { card, attendance: a } = await statusCard(picked, me);
+    const { card, attendance: a } = await statusCard(picked, me, t);
     const buttons: Json[] = [];
     if (!signupClosed(picked) && !attendanceLocked(a) && !picked.interestCheck && a?.status !== "going" && a?.status !== "waitlist")
-      buttons.push({ type: 2, style: 3, label: "Coming", custom_id: `att:${picked.id}:going` });
+      buttons.push({ type: 2, style: 3, label: t("nudge.going"), custom_id: `att:${picked.id}:going` });
     if (a && !a.paid && !a.ticketBought && (a.status === "going" || a.status === "waitlist"))
-      buttons.push({ type: 2, style: 3, label: "I have my ticket", custom_id: `ticket:${picked.id}` });
-    buttons.push(openButton(picked));
+      buttons.push({ type: 2, style: 3, label: t("cmd.haveTicket"), custom_id: `ticket:${picked.id}` });
+    buttons.push(openButton(picked, t));
     return { type: 4, data: { flags: EPHEMERAL, embeds: [card], components: [{ type: 1, components: buttons }], allowed_mentions: { parse: [] } } };
   }
   const mine = events.filter((l) => isClanMember(me.id, l.clanId ?? "")).slice(0, 5);
-  if (mine.length === 0) return reply(`No upcoming events${serverClan ? ` in **${serverClan.name}**` : ""} for you right now.`);
-  const cards = await Promise.all(mine.map((l) => statusCard(l, me).then((c) => c.card)));
+  if (mine.length === 0) return reply(serverClan ? t("cmd.noEventsIn", { clan: `**${serverClan.name}**` }) : t("cmd.noEvents"));
+  const cards = await Promise.all(mine.map((l) => statusCard(l, me, t).then((c) => c.card)));
   return {
     type: 4,
     data: {
       flags: EPHEMERAL,
-      content: events.length > 5 ? "-# Your next 5 events. Add `event:` for another one." : undefined,
+      content: events.length > 5 ? `-# ${t("cmd.next5")}` : undefined,
       embeds: cards,
       components: [{ type: 1, components: mine.map((l) => ({ type: 2, style: 5, label: clip(l.name, 80), url: lanLink(l) })) }],
       allowed_mentions: { parse: [] },
@@ -484,10 +496,11 @@ export function handleMemberCommand(i: Interaction, editReply: EditReply): Handl
 /** The "I have my ticket" button from /ticket and /status. */
 export function handleTicketButton(i: Interaction): Handled {
   const l = getLan(i.data?.custom_id?.slice("ticket:".length) ?? "");
-  if (!l) return { response: reply("This LAN doesn't exist anymore.") };
+  const t = interactionT(i);
+  if (!l) return { response: reply(t("bot.lanGone")) };
   const me = seatbitUserFor(i.member?.user.id ?? i.user?.id ?? "");
-  if (!me) return { response: notLinked() };
-  return ticketFor(l, me, true);
+  if (!me) return { response: notLinked(t) };
+  return ticketFor(l, me, true, t);
 }
 
 /** Suggestions while typing `event:`, `near:` or `avoid:` in a member command. */
@@ -497,7 +510,7 @@ export function memberAutocomplete(i: Interaction): Json | Promise<Json> | undef
   const focused = i.data?.options?.find((o) => o.focused);
   const q = String(focused?.value ?? "").trim();
   const choices = (list: { name: string; value: string }[]) => ({ type: 8, data: { choices: list.slice(0, 25) } });
-  const { me, events } = scopeOf(i);
+  const { me, events, t } = scopeOf(i);
 
   if (focused?.name === "event") {
     // Each command suggests the events it can act on first.
@@ -506,7 +519,7 @@ export function memberAutocomplete(i: Interaction): Json | Promise<Json> | undef
     if (me && name === "ticket") list = events.filter((l) => myRow(l.id, me.id)?.status === "going" || myRow(l.id, me.id)?.status === "waitlist");
     if (name in ANSWERS) list = events.filter((l) => l.interestCheck || !signupClosed(l));
     if (!list.length) list = events;
-    return choices(list.filter((l) => !q || nameMatches(l.name, q)).map((l) => ({ name: clip(`${l.name} · ${when(l)}`, 100), value: l.id })));
+    return choices(list.filter((l) => !q || nameMatches(l.name, q)).map((l) => ({ name: clip(`${l.name} · ${when(l, t)}`, 100), value: l.id })));
   }
 
   if (name === "wish" && me && (focused?.name === "near" || focused?.name === "avoid")) {

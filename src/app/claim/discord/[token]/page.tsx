@@ -4,6 +4,7 @@ import { claimGuestFromDiscord } from "@/app/clan-actions";
 import { btnPrimary, btnSecondary, cardPage, cardPageTitle } from "@/components/ui";
 import { discordTicketState } from "@/lib/guest-claim";
 import { getCurrentUser, isProfileComplete } from "@/lib/session";
+import { getT } from "@/i18n/server";
 
 /**
  * Where the bot's /claim sends people who had no Seatbit account yet: sign in with
@@ -12,6 +13,7 @@ import { getCurrentUser, isProfileComplete } from "@/lib/session";
 export default async function DiscordClaimPage({ params }: PageProps<"/claim/discord/[token]">) {
   const { token } = await params;
   const here = `/claim/discord/${token}`;
+  const t = await getT();
   const me = await getCurrentUser();
   if (!me) redirect(`/login?next=${encodeURIComponent(here)}`);
   if (!isProfileComplete(me)) redirect(`/welcome?next=${encodeURIComponent(here)}`);
@@ -19,20 +21,14 @@ export default async function DiscordClaimPage({ params }: PageProps<"/claim/dis
   const clanLink = st.kind !== "invalid" ? `/clans/${st.clan.slug}` : "/";
 
   if (st.kind === "invalid" || st.kind === "gone" || st.kind === "wrong_discord") {
-    const [title, text] =
-      st.kind === "invalid"
-        ? ["Link no longer works", "It's older than a day. Run /claim in your clan's Discord server again for a new one."]
-        : st.kind === "gone"
-          ? ["Already taken over", "That guest isn't waiting anymore. If it was you, you're all set; otherwise talk to your leads."]
-          : st.linked
-            ? ["Different Discord account", "This link is for the Discord account that ran /claim. Sign in with that one."]
-            : ["Link Discord first", "This link is for the Discord account that ran /claim. Link it on your profile, then open the link again."];
+    const k = st.kind === "invalid" ? "invalid" : st.kind === "gone" ? "gone" : st.linked ? "wrong" : "unlinked";
+    const [title, text] = [t(`discordClaim.${k}`), t(`discordClaim.${k}Hint`)];
     return (
       <div className={cardPage}>
         <h1 className={cardPageTitle}>{title}</h1>
         <p className="text-sm text-muted">{text}</p>
         <Link href={st.kind === "wrong_discord" && !st.linked ? "/profile" : clanLink} className={`${btnSecondary} w-full`}>
-          {st.kind === "wrong_discord" && !st.linked ? "Open profile" : "Go to Seatbit"}
+          {t(st.kind === "wrong_discord" && !st.linked ? "discordClaim.openProfile" : "claimLink.goTo")}
         </Link>
       </div>
     );
@@ -42,13 +38,12 @@ export default async function DiscordClaimPage({ params }: PageProps<"/claim/dis
   if (st.kind === "pending") {
     return (
       <div className={cardPage}>
-        <h1 className={cardPageTitle}>Waiting for an admin</h1>
+        <h1 className={cardPageTitle}>{t("claimGuest.waiting")}</h1>
         <p className="text-sm text-muted">
-          You asked to take over <span className="text-fg">{guest.name}</span> in {st.clan.name}. An admin will confirm it, and
-          you&apos;ll get a message when they did.
+          {t.rich("discordClaim.pending", { name: <span className="text-fg">{guest.name}</span>, clan: st.clan.name })}
         </p>
         <Link href={clanLink} className={`${btnSecondary} w-full`}>
-          Open {st.clan.name}
+          {t("discordClaim.open", { clan: st.clan.name })}
         </Link>
       </div>
     );
@@ -56,13 +51,12 @@ export default async function DiscordClaimPage({ params }: PageProps<"/claim/dis
 
   return (
     <div className={cardPage}>
-      <h1 className={cardPageTitle}>Hi {me.firstName}!</h1>
+      <h1 className={cardPageTitle}>{t("claimLink.hi", { name: me.firstName })}</h1>
       <p className="text-sm text-muted">
-        On Discord you said you&apos;re <span className="text-fg">{guest.name}</span> in {st.clan.name}. Take it over to see their
-        events, tickets and seat with your own account.
+        {t.rich("discordClaim.said", { name: <span className="text-fg">{guest.name}</span>, clan: st.clan.name })}
       </p>
       <form action={claimGuestFromDiscord.bind(null, token)}>
-        <button className={`${btnPrimary} w-full`}>That&apos;s me, take it over</button>
+        <button className={`${btnPrimary} w-full`}>{t("claimGuest.meTake")}</button>
       </form>
     </div>
   );

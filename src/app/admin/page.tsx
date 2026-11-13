@@ -8,9 +8,11 @@ import { lanDay } from "@/lib/format";
 import { requireAdmin } from "@/lib/session";
 import { getLegal } from "@/lib/legal";
 import { getDefaultNames } from "@/lib/lans";
+import { getT } from "@/i18n/server";
 
 export default async function AdminPage() {
   const me = await requireAdmin();
+  const t = await getT();
   const lans = db
     .select()
     .from(schema.lan)
@@ -29,37 +31,43 @@ export default async function AdminPage() {
   return (
     <Page>
       <PageHeader
-        title="Platform admin"
-        subtitle="All clans, events and users on this Seatbit. Clan admins manage their own clan."
+        title={t("adminLog.platformAdmin")}
+        subtitle={t("admin.subtitle")}
         actions={
           <>
             <Link href="/admin/log" className={btnSecondary}>
-              Audit log
+              {t("clanHeader.log")}
             </Link>
             <Link href="/admin/settings" className={btnSecondary}>
-              Platform settings
+              {t("clanSettings.platformSettings")}
             </Link>
           </>
         }
       />
       {!getLegal().complete && (
         <Notice tone="warn">
-          Add who runs this instance (name and contact email) under{" "}
-          <Link href="/admin/settings?tab=legal" className="underline">
-            Platform settings → Operator &amp; legal
-          </Link>
-          . The Terms of Service and Privacy Policy show these details.
+          {t.rich("admin.legalMissing", {
+            link: (
+              <Link href="/admin/settings?tab=legal" className="underline">
+                {t("admin.legalLink")}
+              </Link>
+            ),
+          })}
         </Notice>
       )}
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
-        <Stat label="Clans" value={clans.length} />
-        <Stat label="Upcoming" value={lans.filter((l) => l.endsAt >= now).length} />
-        <Stat label="Users" value={users.filter((u) => !u.isGuest).length} hint={`${users.filter((u) => u.isGuest).length} guests${deleted ? ` · ${deleted} deleted` : ""}`} />
+        <Stat label={t("admin.clans")} value={clans.length} />
+        <Stat label={t("clanPage.upcoming")} value={lans.filter((l) => l.endsAt >= now).length} />
+        <Stat
+          label={t("admin.users")}
+          value={users.filter((u) => !u.isGuest).length}
+          hint={`${t("admin.guests", { count: users.filter((u) => u.isGuest).length })}${deleted ? ` · ${t("admin.deleted", { count: deleted })}` : ""}`}
+        />
       </div>
 
-      <Card title={`Clans (${clans.length})`}>
+      <Card title={`${t("admin.clans")} (${clans.length})`}>
         {clans.length === 0 ? (
-          <p className="text-sm text-muted">No clans yet.</p>
+          <p className="text-sm text-muted">{t("admin.noClans")}</p>
         ) : (
           <ul className="-my-1 divide-y divide-line">
             {clans.map((c) => (
@@ -69,12 +77,12 @@ export default async function AdminPage() {
                   <span className="min-w-0">
                     <span className="block truncate">{c.name}</span>
                     <span className="block text-xs font-normal text-muted">
-                      {members.filter((m) => m.clanId === c.id && m.role !== "pending").length} members
+                      {t("common.members", { count: members.filter((m) => m.clanId === c.id && m.role !== "pending").length })}
                     </span>
                   </span>
                 </Link>
                 <Link href={`/clans/${c.slug}/settings`} className={`${btnGhost} shrink-0`}>
-                  Settings
+                  {t("admin.settings")}
                 </Link>
               </li>
             ))}
@@ -84,7 +92,7 @@ export default async function AdminPage() {
 
       <Card title={`LANs (${lans.length})`}>
         {lans.length === 0 ? (
-          <p className="text-sm text-muted">No LANs yet. Clan admins add them from their clan page.</p>
+          <p className="text-sm text-muted">{t("admin.noLans")}</p>
         ) : (
           <ul className="-my-1 divide-y divide-line">
             {lans.map((l) => {
@@ -101,18 +109,17 @@ export default async function AdminPage() {
                     <span className="min-w-0">
                       <span className="block font-medium">
                         {l.name}
-                        {isPast && <span className="ml-2 text-xs font-normal text-faint">past</span>}
+                        {isPast && <span className="ml-2 text-xs font-normal text-faint">{t("admin.past")}</span>}
                       </span>
                       <span className="block text-xs text-muted">
-                        {lanDay(l)} · {clans.find((c) => c.id === l.clanId)?.name ?? "No clan"}
+                        {lanDay(l, t.locale)} · {clans.find((c) => c.id === l.clanId)?.name ?? t("admin.noClan")}
                       </span>
                     </span>
                     <span className="flex gap-1.5">
                       <Pill>
-                        {going.length}
-                        {l.capacity ? ` / ${l.capacity}` : ""} going
+                        {t("admin.going", { n: `${going.length}${l.capacity ? ` / ${l.capacity}` : ""}` })}
                       </Pill>
-                      {noTicket ? <Pill tone="red">{noTicket} no ticket</Pill> : null}
+                      {noTicket ? <Pill tone="red">{t("admin.noTicket", { count: noTicket })}</Pill> : null}
                     </span>
                   </Link>
                 </li>
@@ -122,20 +129,20 @@ export default async function AdminPage() {
         )}
       </Card>
 
-      <Card title={`Users (${users.length})`}>
+      <Card title={`${t("admin.users")} (${users.length})`}>
         <ul className="-my-1 divide-y divide-line">
           {users.map((u) => (
             <li key={u.id} className="flex min-h-12 items-center justify-between gap-3 py-2">
               <span className="min-w-0">
                 <span className="flex items-center gap-2">
                   <span className="truncate font-medium">{people.get(u.id)?.full ?? u.name}</span>
-                  {u.role === "admin" ? <Pill tone="emerald">admin</Pill> : u.isGuest ? <Pill>guest</Pill> : null}
+                  {u.role === "admin" ? <Pill tone="emerald">{t("admin.admin")}</Pill> : u.isGuest ? <Pill>{t("clanSettings.guest")}</Pill> : null}
                 </span>
-                <span className="block truncate text-xs text-muted">{u.isGuest ? "Guest, no login yet" : u.email}</span>
+                <span className="block truncate text-xs text-muted">{u.isGuest ? t("admin.guestNoLogin") : u.email}</span>
               </span>
               {u.id !== me.id && !u.isGuest && (
                 <form action={setUserRole.bind(null, u.id, u.role === "admin" ? "member" : "admin")} className="shrink-0">
-                  <button className={btnGhost}>{u.role === "admin" ? "Remove admin" : "Make admin"}</button>
+                  <button className={btnGhost}>{t(u.role === "admin" ? "admin.removeAdmin" : "admin.makeAdmin")}</button>
                 </form>
               )}
             </li>

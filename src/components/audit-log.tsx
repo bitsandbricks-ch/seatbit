@@ -5,6 +5,7 @@ import { getAvatars } from "@/lib/avatars";
 import { fmtDate, relative } from "@/lib/format";
 import { Avatar } from "./avatar";
 import { EmptyState, btnGhost, btnSecondary } from "./ui";
+import type { T } from "@/i18n/translate";
 
 export type AuditFilter = { group?: AuditGroup; lan?: string; clan?: string; page?: number };
 
@@ -35,7 +36,9 @@ export function AuditLog({
   clans,
   clanNames,
   keep = {},
+  t,
 }: {
+  t: T;
   /** Extra query values the filter form keeps (e.g. tab=log). */
   keep?: Record<string, string>;
   rows: AuditEntry[];
@@ -52,7 +55,8 @@ export function AuditLog({
   /** Shows the clan on each entry (platform log). */
   clanNames?: Map<string, string>;
 }) {
-  const name = auditNames(rows);
+  const name = auditNames(rows, t("audit.someone"));
+  const loc = t.locale;
   const avatars = getAvatars(rows.map((r) => r.actorId).filter((x): x is string => !!x));
   const chip = (on: boolean) =>
     `inline-flex min-h-8 items-center whitespace-nowrap rounded-full border px-3 text-sm transition ${
@@ -63,13 +67,13 @@ export function AuditLog({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-1.5" role="group" aria-label="Kind of change">
+      <div className="flex flex-wrap gap-1.5" role="group" aria-label={t("auditLog.kind")}>
         <Link href={href({ ...base, group: undefined })} className={chip(!filter.group)} scroll={false}>
-          All
+          {t("auditLog.all")}
         </Link>
         {(Object.keys(AUDIT_GROUPS) as AuditGroup[]).map((g) => (
           <Link key={g} href={href({ ...base, group: g })} className={chip(filter.group === g)} scroll={false}>
-            {AUDIT_GROUPS[g].label}
+            {t(`auditLog.group.${g}`)}
           </Link>
         ))}
       </div>
@@ -83,9 +87,9 @@ export function AuditLog({
           {clans && filter.lan && <input type="hidden" name="lan" value={filter.lan} />}
           {events && events.length > 0 && (
             <label className="flex min-w-0 items-center gap-2">
-              <span className="text-muted">Event</span>
+              <span className="text-muted">{t("stats.event")}</span>
               <select name="lan" defaultValue={filter.lan ?? ""} className="min-h-10 min-w-0 rounded-md border border-line bg-raised px-2 text-fg">
-                <option value="">All events</option>
+                <option value="">{t("auditLog.allEvents")}</option>
                 {events.map((e) => (
                   <option key={e.id} value={e.id}>
                     {e.name}
@@ -98,8 +102,8 @@ export function AuditLog({
             <label className="flex min-w-0 items-center gap-2">
               <span className="text-muted">Clan</span>
               <select name="clan" defaultValue={filter.clan ?? ""} className="min-h-10 min-w-0 rounded-md border border-line bg-raised px-2 text-fg">
-                <option value="">All clans</option>
-                <option value="none">Platform only</option>
+                <option value="">{t("auditLog.allClans")}</option>
+                <option value="none">{t("auditLog.platformOnly")}</option>
                 {clans.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
@@ -108,13 +112,13 @@ export function AuditLog({
               </select>
             </label>
           )}
-          <button className={btnSecondary}>Show</button>
+          <button className={btnSecondary}>{t("auditLog.show")}</button>
         </form>
       )}
 
       {rows.length === 0 ? (
-        <EmptyState icon="box" title="Nothing logged yet">
-          Changes by leads and admins show up here: seat moves, answer changes, roles, guests, publishing and cancelling.
+        <EmptyState icon="box" title={t("auditLog.empty")}>
+          {t("auditLog.emptyHint")}
         </EmptyState>
       ) : (
         <ol className="-my-1 divide-y divide-line">
@@ -131,15 +135,15 @@ export function AuditLog({
               </span>
               <span className="min-w-0 flex-1 text-sm">
                 <span className="block">
-                  <span className="font-medium text-fg">{r.actorId ? name(r.actorId, "Deleted member") : "Seatbit"}</span>{" "}
-                  <span className="text-fg/90">{describeAudit(r, name)}</span>
+                  <span className="font-medium text-fg">{r.actorId ? name(r.actorId, t("auditLog.deletedMember")) : "Seatbit"}</span>{" "}
+                  <span className="text-fg/90">{describeAudit(r, name, t)}</span>
                 </span>
                 <span className="block text-xs text-muted">
-                  <time dateTime={r.at.toISOString()} title={fmtDate(r.at)}>
-                    {fmtDate(r.at)}
+                  <time dateTime={r.at.toISOString()} title={fmtDate(r.at, loc)}>
+                    {fmtDate(r.at, loc)}
                   </time>
-                  <span className="text-faint"> · {relative(r.at, now)}</span>
-                  {clanNames && <span className="text-faint"> · {r.clanId ? clanNames.get(r.clanId) ?? "deleted clan" : "platform"}</span>}
+                  <span className="text-faint"> · {relative(r.at, now, loc)}</span>
+                  {clanNames && <span className="text-faint"> · {r.clanId ? clanNames.get(r.clanId) ?? t("auditLog.deletedClan") : t("auditLog.platform")}</span>}
                 </span>
               </span>
             </li>
@@ -148,19 +152,19 @@ export function AuditLog({
       )}
 
       {pages > 1 && (
-        <nav aria-label="Pages" className="flex flex-wrap items-center justify-between gap-2 text-sm">
+        <nav aria-label={t("pager.pages")} className="flex flex-wrap items-center justify-between gap-2 text-sm">
           <span className="text-muted">
-            {page * AUDIT_PAGE_SIZE + 1}–{Math.min(total, (page + 1) * AUDIT_PAGE_SIZE)} <span className="text-faint">of {total}</span>
+            {page * AUDIT_PAGE_SIZE + 1}–{Math.min(total, (page + 1) * AUDIT_PAGE_SIZE)} <span className="text-faint">{t("pager.of", { total })}</span>
           </span>
           <span className="flex gap-1">
             {page > 0 && (
               <Link href={href({ ...filter, page: page - 1 })} className={btnGhost}>
-                ‹ Newer
+                ‹ {t("auditLog.newer")}
               </Link>
             )}
             {page < pages - 1 && (
               <Link href={href({ ...filter, page: page + 1 })} className={btnGhost}>
-                Older ›
+                {t("auditLog.older")} ›
               </Link>
             )}
           </span>

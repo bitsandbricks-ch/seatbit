@@ -3,8 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { botIdentity, commands, discordEnabled, registerCommands } from "@/lib/discord-api";
 import { mailTarget, sendMail, verifySmtp } from "@/lib/mail";
-import { PREVIEW_VARS, type MailTemplateId, renderTemplate, resetTemplate, saveTemplate, templateDef } from "@/lib/mail-templates";
+import { type MailTemplateId, renderTemplate, resetTemplate, saveTemplate, templateDef } from "@/lib/mail-templates";
+import { previewVars } from "@/lib/mail-fill";
+import { isLocale } from "@/i18n/config";
+
+const asLocale = (v: string) => (isLocale(v) ? v : "en");
 import { requireAdmin } from "@/lib/session";
+import { getT } from "@/i18n/server";
+import type { MessageKey } from "@/i18n/translate";
 import { audit } from "@/lib/audit";
 import {
   SETTINGS,
@@ -30,6 +36,7 @@ const errMsg = (e: unknown) => (e instanceof Error ? e.message : String(e));
  */
 export async function saveSettings(group: SettingGroup, _prev: ActionResult, form: FormData): Promise<ActionResult> {
   const me = await requireAdmin();
+  const t = await getT();
   if (!(group in SETTING_GROUPS)) return done(false, "Unknown section");
 
   const ops: ({ key: string; set: string } | { key: string; clear: true })[] = [];
@@ -49,10 +56,17 @@ export async function saveSettings(group: SettingGroup, _prev: ActionResult, for
     }
   }
 
-  const errors = ops.flatMap((o) => ("set" in o ? [checkSetting(o.key, o.set)] : [])).filter(Boolean);
+  // Validation messages in the admin's language, English from settings.ts as the fallback.
+  const local = (key: string, msg: string | null) => {
+    if (!msg) return msg;
+    const k = `settingDefs.${key.replace(".", "_")}.invalid`;
+    const v = t(k as MessageKey);
+    return v === k ? msg : `${t(`settingDefs.${key.replace(".", "_")}.label` as MessageKey)}: ${v}`;
+  };
+  const errors = ops.flatMap((o) => ("set" in o ? [local(o.key, checkSetting(o.key, o.set))] : [])).filter(Boolean);
   if (errors.length) return done(false, errors.join(". "));
   if (ops.some((o) => "set" in o && SETTINGS.find((d) => d.key === o.key)?.kind === "secret") && !canEncrypt()) {
-    return done(false, "Secrets can't be saved: set SETTINGS_ENCRYPTION_KEY or BETTER_AUTH_SECRET on the server first.");
+    return done(false, t("adminSettings.noKey"));
   }
 
   for (const o of ops) {
@@ -62,75 +76,81 @@ export async function saveSettings(group: SettingGroup, _prev: ActionResult, for
   // Only the setting names: values can be secrets.
   if (ops.length) audit({ actorId: me.id, action: "settings.save", data: { group, keys: ops.map((o) => o.key) } });
   revalidatePath("/", "layout");
-  return done(true, ops.length ? `Saved ${ops.length} change${ops.length === 1 ? "" : "s"}.` : "Nothing changed.");
+  return done(true, ops.length ? t("adminSettings.savedN", { count: ops.length }) : t("adminSettings.nothing"));
 }
 
 /** Checks the SMTP login and sends a test mail to the admin. */
 export async function sendTestMail(): Promise<ActionResult> {
   const me = await requireAdmin();
+  const t = await getT();
   const target = mailTarget();
-  if (target.kind === "console") return done(false, "No SMTP host is configured, so mail only goes to the server log.");
+  if (target.kind === "console") return done(false, t("adminSettings.noSmtp"));
   try {
     await verifySmtp();
     await sendMail(
       me.email,
-      "Seatbit test mail",
-      `Hi ${me.name},\n\nthis is a test mail from the Seatbit platform settings. If you can read it, email works.`,
+      t("adminSettings.testSubject"),
+      t("adminSettings.testBody", { name: me.name }),
     );
-    return done(true, `Test mail sent to ${me.email}.`);
+    return done(true, t("adminSettings.testSent", { email: me.email }));
   } catch (e) {
-    return done(false, `SMTP failed: ${errMsg(e)}`);
+    return done(false, t("adminSettings.smtpFailed", { error: errMsg(e) }));
   }
 }
 
 /** Checks the bot token and registers the slash commands. */
 export async function setupDiscordBot(): Promise<ActionResult> {
   await requireAdmin();
-  if (!discordEnabled()) return done(false, "Set the application ID and bot token first.");
+  const t = await getT();
+  if (!discordEnabled()) return done(false, t("adminSettings.botFirst"));
   try {
     const bot = await botIdentity();
     await registerCommands();
-    return done(true, `Connected as ${bot.username}. Registered ${commands.map((c) => "/" + c.name).join(", ")}.`);
+    return done(true, t("adminSettings.botOk", { name: bot.username, commands: commands.map((c) => "/" + c.name).join(", ") }));
   } catch (e) {
     const m = errMsg(e);
-    return done(false, m.includes("-> 401") ? "Discord rejected the bot token (401). Check it and save again." : m);
+    return done(false, m.includes("-> 401") ? t("adminSettings.bot401") : m);
   }
 }
 
 /** Saves an edited mail template. Parts equal to the default remove the override. */
-export async function saveMailTemplate(id: string, _prev: ActionResult, form: FormData): Promise<ActionResult> {
+export async function saveMailTemplate(id: string, lang: string, _prev: ActionResult, form: FormData): Promise<ActionResult> {
   const me = await requireAdmin();
+  const t = await getT();
   const part = (k: string) => String(form.get(k) ?? "");
   const parts = { subject: part("subject"), body: part("body"), button: part("button"), note: part("note") };
-  if (Object.values(parts).some((v) => v.length > 8000)) return done(false, "That's too long for an email template.");
-  if (!parts.subject.trim() || !parts.body.trim()) return done(false, "Subject and text can't be empty.");
+  if (Object.values(parts).some((v) => v.length > 8000)) return done(false, t("adminSettings.tooLong"));
+  if (!parts.subject.trim() || !parts.body.trim()) return done(false, t("adminSettings.emptyParts"));
   try {
-    saveTemplate(id, parts, me.id);
+    saveTemplate(id, parts, me.id, asLocale(lang));
   } catch (e) {
     return done(false, errMsg(e));
   }
-  audit({ actorId: me.id, action: "mail_template.save", data: { template: templateDef(id).title } });
+  audit({ actorId: me.id, action: "mail_template.save", data: { template: templateDef(id).title, language: asLocale(lang) } });
   revalidatePath("/admin/settings");
-  return done(true, "Saved.");
+  return done(true, t("common.saved"));
 }
 
 /** Brings back the built-in text of a mail template. */
-export async function resetMailTemplate(id: string): Promise<ActionResult> {
+export async function resetMailTemplate(id: string, lang: string): Promise<ActionResult> {
   const me = await requireAdmin();
-  resetTemplate(id);
-  audit({ actorId: me.id, action: "mail_template.reset", data: { template: templateLabel(id) } });
+  const t = await getT();
+  resetTemplate(id, asLocale(lang));
+  audit({ actorId: me.id, action: "mail_template.reset", data: { template: templateLabel(id), language: asLocale(lang) } });
   revalidatePath("/admin/settings");
-  return done(true, "Back to the default text.");
+  return done(true, t("adminSettings.resetDone"));
 }
 
 /** Sends a template to the admin, filled with example values. */
-export async function sendTemplateTest(id: string): Promise<ActionResult> {
+export async function sendTemplateTest(id: string, lang: string): Promise<ActionResult> {
   const me = await requireAdmin();
+  const t = await getT();
   try {
     templateDef(id);
-    const m = renderTemplate(id as MailTemplateId, { ...PREVIEW_VARS, firstName: me.firstName || me.name });
+    const loc = asLocale(lang);
+    const m = renderTemplate(id as MailTemplateId, { ...previewVars(loc), firstName: me.firstName || me.name }, loc);
     await sendMail(me.email, `[Test] ${m.subject}`, m.text, m.html);
-    return done(true, mailTarget().kind === "console" ? "No SMTP set up, so it went to the server log." : `Sent to ${me.email}.`);
+    return done(true, mailTarget().kind === "console" ? t("adminSettings.toLog") : t("adminSettings.sentTo", { email: me.email }));
   } catch (e) {
     return done(false, errMsg(e));
   }

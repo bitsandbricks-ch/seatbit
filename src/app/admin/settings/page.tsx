@@ -7,13 +7,18 @@ import { requireAdmin } from "@/lib/session";
 import { billingEnabled, billingProblems, supporterClans } from "@/lib/billing";
 import { fmtDay } from "@/lib/format";
 import { LOGIN_METHODS } from "@/lib/auth";
-import { SETTING_GROUPS, type SettingGroup, canEncrypt, settingsForAdmin } from "@/lib/settings";
-import { MAIL_TEMPLATES, getTemplate, savedTemplates } from "@/lib/mail-templates";
+import { type SettingGroup, type SettingView, canEncrypt, settingsForAdmin } from "@/lib/settings";
+import { MAIL_TEMPLATES, defaultParts, getTemplate, savedTemplates } from "@/lib/mail-templates";
+import { LOCALES, LOCALE_NAMES, isLocale, type Locale } from "@/i18n/config";
 import type { FactRow } from "@/lib/mail-fill";
 import { MailTemplateEditor } from "@/components/mail-template-editor";
+import { getT } from "@/i18n/server";
+import type { MessageKey, T } from "@/i18n/translate";
 import { resetMailTemplate, saveMailTemplate, saveSettings, sendTemplateTest, sendTestMail, setupDiscordBot } from "./actions";
 
-export const metadata = { title: "Platform settings · Seatbit" };
+export async function generateMetadata() {
+  return { title: `${(await getT())("clanSettings.platformSettings")} · Seatbit` };
+}
 
 function Url({ label, value }: { label: string; value: string }) {
   return (
@@ -24,26 +29,33 @@ function Url({ label, value }: { label: string; value: string }) {
   );
 }
 
-const TABS = [
-  { id: "mail", label: "Email" },
-  { id: "discord", label: "Discord" },
-  { id: "google", label: "Google" },
-  { id: "general", label: "General" },
-  { id: "automation", label: "Reminders" },
-  { id: "legal", label: "Operator & legal" },
-  { id: "billing", label: "Supporters" },
-  { id: "templates", label: "Mail templates" },
-  { id: "server", label: "Server" },
-] as const;
-type TabId = (typeof TABS)[number]["id"];
+const TABS = ["mail", "discord", "google", "general", "automation", "legal", "billing", "templates", "server"] as const;
+type TabId = (typeof TABS)[number];
+
+/** A setting's label, help and choices in the admin's language (settings.ts keeps the English source). */
+function localized(s: SettingView, t: T): SettingView {
+  const slug = s.key.replace(".", "_");
+  const tf = (k: string, fb: string | undefined) => {
+    const v = t(k as MessageKey);
+    return v === k ? fb : v;
+  };
+  return {
+    ...s,
+    label: tf(`settingDefs.${slug}.label`, s.label) ?? s.label,
+    help: tf(`settingDefs.${slug}.help`, s.help),
+    options: s.options?.map((o) => ({ ...o, label: tf(`settingDefs.${slug}.options.${o.value}`, o.label) ?? o.label })),
+  };
+}
 
 export default async function SettingsPage({ searchParams }: PageProps<"/admin/settings">) {
   await requireAdmin();
-  const { tab: rawTab } = await searchParams;
+  const t = await getT();
+  const { tab: rawTab, lang: rawLang } = await searchParams;
+  const mailLang: Locale = isLocale(rawLang) ? rawLang : t.locale;
   // Google login is switched off in code (LOGIN_METHODS), so its settings tab is hidden.
-  const tabs = TABS.filter((t) => t.id !== "google" || LOGIN_METHODS.google);
-  const tab: TabId = tabs.some((t) => t.id === rawTab) ? (rawTab as TabId) : "mail";
-  const all = settingsForAdmin();
+  const tabs = TABS.filter((x) => x !== "google" || LOGIN_METHODS.google);
+  const tab: TabId = tabs.some((x) => x === rawTab) ? (rawTab as TabId) : "mail";
+  const all = settingsForAdmin().map((s) => localized(s, t));
   const fields = (g: SettingGroup) => all.filter((s) => s.group === g);
   const keySource = process.env.SETTINGS_ENCRYPTION_KEY
     ? "SETTINGS_ENCRYPTION_KEY"
@@ -58,8 +70,8 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
 
   const section = (g: SettingGroup, extra?: React.ReactNode) => (
     <div>
-      <Card title={SETTING_GROUPS[g].title}>
-        <p className="-mt-2 mb-4 text-sm text-muted">{SETTING_GROUPS[g].help}</p>
+      <Card title={t(`settingGroups.${g}.title`)}>
+        <p className="-mt-2 mb-4 text-sm text-muted">{t(`settingGroups.${g}.help`)}</p>
         {extra && <div className="mb-4 space-y-1 rounded-md border border-line bg-ink/50 p-3">{extra}</div>}
         <SettingsSection fields={fields(g)} action={saveSettings.bind(null, g)} />
       </Card>
@@ -70,28 +82,26 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
     <Page>
       <PageHeader
         back={{ href: "/admin", label: "Admin" }}
-        title="Platform settings"
-        subtitle="Saved values override the server's env vars; clear a field to fall back. Secrets are stored encrypted and never shown again."
+        title={t("clanSettings.platformSettings")}
+        subtitle={t("adminSettings.subtitle")}
       />
 
       {!keySource && (
         <Notice tone="warn">
-          {canEncrypt()
-            ? "No BETTER_AUTH_SECRET or SETTINGS_ENCRYPTION_KEY is set, so secrets are encrypted with a development key. Set one before going live."
-            : "Secrets can't be saved until BETTER_AUTH_SECRET or SETTINGS_ENCRYPTION_KEY is set on the server."}
+          {t(canEncrypt() ? "adminSettings.devKey" : "adminSettings.noKey")}
         </Notice>
       )}
       {all.some((s) => s.undecryptable) && (
         <Notice tone="danger">
-          Some saved secrets can&apos;t be decrypted, probably because the encryption key changed. They are ignored
-          until you enter them again.
+          {t("adminSettings.undecryptable")}
         </Notice>
       )}
 
       <Tabs
-        tabs={tabs.map((t) => ({
-          ...t,
-          badge: all.some((x) => x.group === t.id && x.undecryptable) ? "!" : undefined,
+        tabs={tabs.map((id) => ({
+          id,
+          label: t(`adminSettings.tab.${id}`),
+          badge: all.some((x) => x.group === id && x.undecryptable) ? "!" : undefined,
         }))}
         active={tab}
         hrefFor={(id) => `/admin/settings?tab=${id}`}
@@ -105,12 +115,10 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
           <>
             <p className="text-xs text-muted">
               {mail.kind === "smtp"
-                ? `Sending through ${mail.host}.`
-                : mail.kind === "url"
-                  ? "Sending through the SMTP_URL environment variable. A host saved here takes over."
-                  : "No SMTP host set: mails are printed to the server log only."}
+                ? t("adminSettings.sendingVia", { host: mail.host })
+                : t(mail.kind === "url" ? "adminSettings.sendingUrl" : "adminSettings.noSmtp")}
             </p>
-            <ActionButton action={sendTestMail}>Send test mail to me</ActionButton>
+            <ActionButton action={sendTestMail}>{t("adminSettings.testMail")}</ActionButton>
           </>,
         )}
 
@@ -120,80 +128,87 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
           <>
             <div className="mb-2 space-y-1 text-xs text-muted">
               <p>
-                <span className="font-semibold text-fg">First sign-in:</span> login is Discord-only, so the
-                application ID and client secret must be set as <code>DISCORD_CLIENT_ID</code> and{" "}
-                <code>DISCORD_CLIENT_SECRET</code> env vars before anyone can sign in and open this page. After that
-                you can change them here.
+                {t.rich("adminSettings.firstSignIn", {
+                  b: <span className="font-semibold text-fg">{t("adminSettings.firstSignInLabel")}</span>,
+                  id: <code>DISCORD_CLIENT_ID</code>,
+                  secret: <code>DISCORD_CLIENT_SECRET</code>,
+                })}
               </p>
               {loginFromDb && (
                 <p className="text-warn">
-                  The login credentials below are saved here and override the env vars. If you save wrong ones, nobody
-                  can sign in; undo with{" "}
-                  <code>node scripts/admin.mjs reset-setting discord.clientSecret</code> (and{" "}
-                  <code>discord.clientId</code>) in the container.
+                  {t.rich("adminSettings.loginFromDb", {
+                    cmd: <code>node scripts/admin.mjs reset-setting discord.clientSecret</code>,
+                    id: <code>discord.clientId</code>,
+                  })}
                 </p>
               )}
             </div>
-            <Url label="OAuth2 redirect" value={`${appUrl}/api/auth/callback/discord`} />
-            <Url label="Interactions endpoint URL" value={`${appUrl}/api/discord/interactions`} />
+            <Url label={t("adminSettings.oauthRedirect")} value={`${appUrl}/api/auth/callback/discord`} />
+            <Url label={t("adminSettings.interactions")} value={`${appUrl}/api/discord/interactions`} />
             {invite && (
               <div className="text-xs">
                 <a href={invite} target="_blank" rel="noreferrer" className="text-bit hover:underline">
-                  Bot invite link
+                  {t("adminSettings.botInvite")}
                 </a>
               </div>
             )}
             <div className="pt-2">
-              <ActionButton action={setupDiscordBot}>Check bot & register slash commands</ActionButton>
+              <ActionButton action={setupDiscordBot}>{t("adminSettings.checkBot")}</ActionButton>
             </div>
           </>,
         )}
 
       {tab === "google" &&
-        section("google", <Url label="Authorized redirect URI" value={`${appUrl}/api/auth/callback/google`} />)}
+        section("google", <Url label={t("adminSettings.googleRedirect")} value={`${appUrl}/api/auth/callback/google`} />)}
 
-      {tab === "automation" && section("automation", <Url label="Cron URL" value={`${appUrl}/api/cron/reminders`} />)}
+      {tab === "automation" && section("automation", <Url label={t("adminSettings.cronUrl")} value={`${appUrl}/api/cron/reminders`} />)}
 
       {tab === "legal" &&
         section(
           "legal",
           <p className="text-xs text-muted">
-            The built-in <a href="/terms" className="text-bit hover:underline">Terms of Service</a> and{" "}
-            <a href="/privacy" className="text-bit hover:underline">Privacy Policy</a> are a starting point written for
-            Swiss and EU law, filled in with the details below. Check that they fit how you run your instance, or link
-            your own documents.
+            {t.rich("adminSettings.legalHint", {
+              terms: (
+                <a href="/terms" className="text-bit hover:underline">
+                  {t("footer.terms")}
+                </a>
+              ),
+              privacy: (
+                <a href="/privacy" className="text-bit hover:underline">
+                  {t("footer.privacy")}
+                </a>
+              ),
+            })}
           </p>,
         )}
 
       {tab === "billing" &&
         section(
           "billing",
-          <BillingInfo />,
+          <BillingInfo t={t} />,
         )}
 
-      {tab === "templates" && <TemplatesTab />}
+      {tab === "templates" && <TemplatesTab loc={mailLang} t={t} />}
 
       {tab === "server" && (
-        <Card title="Server environment">
-          <p className="-mt-2 mb-3 text-sm text-muted">
-            These are needed before the app starts, so they can only be changed in the server&apos;s environment.
-          </p>
+        <Card title={t("adminSettings.serverEnv")}>
+          <p className="-mt-2 mb-3 text-sm text-muted">{t("adminSettings.serverEnvHint")}</p>
           <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[max-content_1fr]">
-            <dt className="text-faint">Public URL (BETTER_AUTH_URL)</dt>
+            <dt className="text-faint">{t("adminSettings.publicUrl")} (BETTER_AUTH_URL)</dt>
             <dd className="break-all">{appUrl}</dd>
-            <dt className="text-faint">Session secret (BETTER_AUTH_SECRET)</dt>
-            <dd>{process.env.BETTER_AUTH_SECRET ? "Set" : <span className="text-warn">Not set</span>}</dd>
-            <dt className="text-faint">Settings encryption key</dt>
+            <dt className="text-faint">{t("adminSettings.sessionSecret")} (BETTER_AUTH_SECRET)</dt>
+            <dd>{process.env.BETTER_AUTH_SECRET ? t("adminSettings.set") : <span className="text-warn">{t("adminSettings.notSet")}</span>}</dd>
+            <dt className="text-faint">{t("adminSettings.encKey")}</dt>
             <dd>
               {keySource === "SETTINGS_ENCRYPTION_KEY" ? (
                 "SETTINGS_ENCRYPTION_KEY"
               ) : keySource ? (
-                "Derived from BETTER_AUTH_SECRET (rotating it means re-entering saved secrets)"
+                t("adminSettings.derived")
               ) : (
-                <span className="text-warn">Development key</span>
+                <span className="text-warn">{t("adminSettings.devKeyShort")}</span>
               )}
             </dd>
-            <dt className="text-faint">Timezone (TZ)</dt>
+            <dt className="text-faint">{t("adminSettings.timezone")} (TZ)</dt>
             <dd>{process.env.TZ ?? Intl.DateTimeFormat().resolvedOptions().timeZone}</dd>
           </dl>
         </Card>
@@ -203,29 +218,33 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
 }
 
 /** Webhook URL, what's still missing, and which clans support the instance right now. */
-function BillingInfo() {
+function BillingInfo({ t }: { t: T }) {
   const problems = billingProblems();
   const supporters = supporterClans();
   return (
     <>
-      <Url label="Webhook endpoint" value={`${appUrl}/api/billing/stripe/webhook`} />
+      <Url label={t("adminSettings.webhook")} value={`${appUrl}/api/billing/stripe/webhook`} />
       <p className="text-xs text-muted">
-        Events: <code>checkout.session.completed</code>, <code>invoice.paid</code>,{" "}
-        <code>customer.subscription.deleted</code>. Turn on the payment methods (card, TWINT, Apple Pay, Google Pay) and
-        the customer portal in the Stripe Dashboard.
+        {t.rich("adminSettings.stripeEvents", {
+          events: (
+            <>
+              <code>checkout.session.completed</code>, <code>invoice.paid</code>, <code>customer.subscription.deleted</code>
+            </>
+          ),
+        })}
       </p>
-      {problems.length > 0 && <p className="text-xs text-warn">Still missing: {problems.join(", ")}.</p>}
-      {!billingEnabled() && problems.length === 0 && <p className="text-xs text-muted">Off: clan admins don&apos;t see anything about payments.</p>}
+      {problems.length > 0 && <p className="text-xs text-warn">{t("adminSettings.missing", { list: problems.join(", ") })}</p>}
+      {!billingEnabled() && problems.length === 0 && <p className="text-xs text-muted">{t("adminSettings.billingOff")}</p>}
       {supporters.length > 0 && (
         <p className="text-xs text-muted">
-          Supporters:{" "}
+          {t("adminSettings.supporters")}{" "}
           {supporters.map((c, i) => (
             <span key={c.slug}>
               {i > 0 && ", "}
               <a href={`/clans/${c.slug}`} className="text-bit hover:underline">
                 {c.name}
               </a>{" "}
-              ({c.plan === "month" ? "monthly" : "yearly"}, until {c.until ? fmtDay(c.until) : "–"})
+              ({t(c.plan === "month" ? "adminSettings.monthly" : "adminSettings.yearly")}, {t("adminSettings.until", { date: c.until ? fmtDay(c.until) : "–" })})
             </span>
           ))}
         </p>
@@ -234,34 +253,59 @@ function BillingInfo() {
   );
 }
 
-function TemplatesTab() {
+// Placeholders whose meaning differs in one template.
+const VAR_VARIANT: Record<string, Record<string, string>> = {
+  guestInvite: { firstName: "firstName_guest", link: "link_claim" },
+  reminderPayment: { deadline: "deadline_ticket" },
+  eventPublished: { deadline: "deadline_optional" },
+  signupOpen: { deadline: "deadline_optional" },
+  reminderEvent: { seat: "seat_final" },
+};
+
+function varHelp(t: T, id: string, name: string, fallback: string) {
+  const key = `mailVar.${VAR_VARIANT[id]?.[name] ?? name}`;
+  const v = t(key as MessageKey);
+  return v === key ? fallback : v;
+}
+
+function TemplatesTab({ loc, t: tr }: { loc: Locale; t: T }) {
   const saved = savedTemplates();
   return (
     <div className="space-y-5">
-      <p className="max-w-2xl text-sm text-muted">
-        The emails Seatbit sends. They all share one layout: the clan in the header, &quot;Hi name,&quot;, your text, a
-        box with the event facts, a button and a small print line. Change the wording to fit your clan; placeholders like{" "}
-        {"{firstName}"} are filled in for each person. Reset brings back the built-in text.
-      </p>
+      <p className="max-w-2xl text-sm text-muted">{tr("adminSettings.templatesHint", { placeholder: "{firstName}" })}</p>
+      <p className="max-w-2xl text-sm text-muted">{tr("adminSettings.templatesLang")}</p>
+      <div className="flex flex-wrap gap-2" role="group" aria-label={tr("adminSettings.templateLang")}>
+        {LOCALES.map((l) => (
+          <a
+            key={l}
+            href={`?tab=templates&lang=${l}`}
+            aria-current={l === loc ? "true" : undefined}
+            className={`rounded-full border px-3 py-1.5 text-sm ${l === loc ? "border-bit bg-bit-soft text-fg" : "border-line text-muted hover:text-fg"}`}
+          >
+            {LOCALE_NAMES[l]}
+          </a>
+        ))}
+      </div>
       {MAIL_TEMPLATES.map((t) => {
-        const s = saved.get(t.id);
-        const defaults = { subject: t.subject, body: t.body, button: t.button, note: t.note };
+        const s = saved.get(t.id)?.[loc];
+        const defaults = defaultParts(t.id, loc);
         return (
-          <Card key={t.id} title={t.title}>
+          <Card key={`${t.id}-${loc}`} title={tr(`mailtpl.${t.id}.title` as MessageKey)}>
             <MailTemplateEditor
               appUrl={appUrl}
               t={{
                 id: t.id,
-                when: t.when,
-                vars: t.vars,
+                when: tr(`mailtpl.${t.id}.when` as MessageKey),
+                vars: Object.fromEntries(Object.entries(t.vars).map(([k, v]) => [k, varHelp(tr, t.id, k, v)])),
                 facts: t.facts.map((f) => [...f] as FactRow),
-                current: getTemplate(t.id),
+                current: getTemplate(t.id, loc),
                 defaults,
                 edited: !!s,
+                locale: loc,
               }}
-              save={saveMailTemplate.bind(null, t.id)}
-              reset={resetMailTemplate.bind(null, t.id)}
-              test={sendTemplateTest.bind(null, t.id)}
+              save={saveMailTemplate.bind(null, t.id, loc)}
+              reset={resetMailTemplate.bind(null, t.id, loc)}
+              test={sendTemplateTest.bind(null, t.id, loc)}
             />
           </Card>
         );

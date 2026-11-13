@@ -1,3 +1,4 @@
+import { makeT, type T } from "../i18n/translate";
 /**
  * Seat planning with member wishes. Pure functions, no DB access.
  *
@@ -108,7 +109,7 @@ export function planSeats(seats: PlanSeat[], people: PlanPerson[], everyone: Pla
 export type WishCheck = { userId: string; ok: string[]; missed: string[] };
 
 /** Which wishes the current seating meets, per person with wishes. */
-export function checkWishes(seats: PlanSeat[], everyone: PlanPerson[], nameOf: (id: string) => string) {
+export function checkWishes(seats: PlanSeat[], everyone: PlanPerson[], nameOf: (id: string) => string, t: T = makeT("en")) {
   const seatOf = new Map(seats.filter((s) => s.userId).map((s) => [s.userId!, s]));
   const edges = edgeSet(seats);
   const out: WishCheck[] = [];
@@ -120,16 +121,16 @@ export function checkWishes(seats: PlanSeat[], everyone: PlanPerson[], nameOf: (
     for (const n of p.near) {
       const o = seatOf.get(n);
       if (!o) continue;
-      (dist(mine, o) <= 2 ? ok : missed).push(`near ${nameOf(n)}`);
+      (dist(mine, o) <= 2 ? ok : missed).push(t("wishCheck.near", { name: nameOf(n) }));
     }
     for (const a of p.avoid) {
       const o = seatOf.get(a);
       if (!o) continue;
-      (dist(mine, o) === 1 ? missed : ok).push(`not next to ${nameOf(a)}`);
+      (dist(mine, o) === 1 ? missed : ok).push(t("wishCheck.notNextTo", { name: nameOf(a) }));
     }
-    if (p.position === "edge") (edges.has(mine.id) ? ok : missed).push("at the edge");
-    if (p.position === "middle") (edges.has(mine.id) ? missed : ok).push("in the middle");
-    if (p.seat) (mine.label.toUpperCase() === p.seat.toUpperCase() ? ok : missed).push(`seat ${p.seat}`);
+    if (p.position === "edge") (edges.has(mine.id) ? ok : missed).push(t("wishCheck.edge"));
+    if (p.position === "middle") (edges.has(mine.id) ? missed : ok).push(t("wishCheck.middle"));
+    if (p.seat) (mine.label.toUpperCase() === p.seat.toUpperCase() ? ok : missed).push(t("wishCheck.seat", { seat: p.seat }));
     if (ok.length || missed.length) out.push({ userId: p.userId, ok, missed });
   }
   return out;

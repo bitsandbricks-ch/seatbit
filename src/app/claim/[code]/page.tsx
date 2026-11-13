@@ -6,18 +6,20 @@ import { btnPrimary, cardPage, cardPageTitle } from "@/components/ui";
 import { getClan } from "@/lib/clans";
 import { getCurrentUser, isProfileComplete } from "@/lib/session";
 import { redirect } from "next/navigation";
+import { getT } from "@/i18n/server";
 
 /** A guest's personal link: signing in through it moves the guest's spot to your account. */
 export default async function ClaimPage({ params }: PageProps<"/claim/[code]">) {
   const { code } = await params;
+  const t = await getT();
   const g = db.select().from(schema.user).where(eq(schema.user.claimCode, code)).get();
   if (!g?.isGuest) {
     return (
       <div className={cardPage}>
-        <h1 className={cardPageTitle}>Link no longer works</h1>
-        <p className="text-sm text-muted">It was used already or replaced. Ask your lead for a new one.</p>
+        <h1 className={cardPageTitle}>{t("claimLink.gone")}</h1>
+        <p className="text-sm text-muted">{t("claimLink.goneHint")}</p>
         <Link href="/" className="text-sm text-bit hover:underline">
-          Go to Seatbit
+          {t("claimLink.goTo")}
         </Link>
       </div>
     );
@@ -30,14 +32,16 @@ export default async function ClaimPage({ params }: PageProps<"/claim/[code]">) 
 
   return (
     <div className={cardPage}>
-      <h1 className="text-xl font-semibold">Hi {me.firstName}!</h1>
+      <h1 className="text-xl font-semibold">{t("claimLink.hi", { name: me.firstName })}</h1>
       <p className="text-sm text-muted">
-        {clan ? `The leads of ${clan.name}` : "A lead"} added you as <span className="text-fg">{g.name}</span>
-        {going > 0 ? ` and signed you up for ${going} event${going === 1 ? "" : "s"}` : ""}. Take it over to see your events,
-        tickets and seat with your own account.
+        {t.rich(going > 0 ? (clan ? "claimLink.addedClanEvents" : "claimLink.addedEvents") : clan ? "claimLink.addedClan" : "claimLink.added", {
+          clan: clan?.name ?? "",
+          name: <span className="text-fg">{g.name}</span>,
+          count: going,
+        })}
       </p>
       <form action={claimGuest.bind(null, code)}>
-        <button className={`${btnPrimary} w-full`}>That&apos;s me, take it over</button>
+        <button className={`${btnPrimary} w-full`}>{t("claimGuest.meTake")}</button>
       </form>
     </div>
   );

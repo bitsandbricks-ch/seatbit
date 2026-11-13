@@ -6,7 +6,8 @@ import { PagerBar, matches, usePager } from "./pager";
 import { Pill, Verified, btnGhost, btnSecondary, input } from "./ui";
 import { Avatar } from "./avatar";
 import type { AvatarData } from "@/lib/avatars";
-import { MEMBER_ROLES, ROLE_INFO, type MemberRole } from "@/lib/clan-roles";
+import { MEMBER_ROLES, type MemberRole } from "@/lib/clan-roles";
+import { useT } from "@/i18n/client";
 import { RolePill } from "./role-pill";
 
 const PAGE_SIZE = 20;
@@ -19,6 +20,7 @@ export function ClanMemberGrid({
   slug: string;
   members: { id: string; name: string; role: MemberRole; guest?: boolean; avatar?: AvatarData }[];
 }) {
+  const t = useT();
   const [q, setQ] = useState("");
   const shown = members.filter((m) => !q || matches(m.name, q));
   const pager = usePager(shown, 48);
@@ -31,10 +33,10 @@ export function ClanMemberGrid({
             setQ(e.target.value);
             pager.reset();
           }}
-          placeholder={`Search ${members.length} members`}
+          placeholder={t("memberList.searchN", { count: members.length })}
           className={input}
           type="search"
-          aria-label="Search members"
+          aria-label={t("memberList.search")}
         />
       )}
       <ul className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
@@ -51,14 +53,14 @@ export function ClanMemberGrid({
               </span>
               <span className="flex shrink-0 gap-1">
                 <RolePill role={m.role} />
-                {m.guest && <Pill>guest</Pill>}
+                {m.guest && <Pill>{t("clanSettings.guest")}</Pill>}
               </span>
             </Link>
           </li>
         ))}
-        {shown.length === 0 && <li className="py-4 text-center text-sm text-muted sm:col-span-full">Nobody matches “{q}”.</li>}
+        {shown.length === 0 && <li className="py-4 text-center text-sm text-muted sm:col-span-full">{t("memberList.noMatchQ", { q })}</li>}
       </ul>
-      <PagerBar pager={pager} noun="members" />
+      <PagerBar pager={pager} members />
     </div>
   );
 }
@@ -78,12 +80,12 @@ export type ClanMemberRow = {
 };
 
 type RoleFilter = "all" | MemberRole;
-const roleFilters: { id: RoleFilter; label: string; test: (m: ClanMemberRow) => boolean }[] = [
-  { id: "all", label: "all", test: () => true },
-  { id: "admin", label: "admins", test: (m) => m.role === "admin" },
-  { id: "organizer", label: "event managers", test: (m) => m.role === "organizer" },
-  { id: "recruiter", label: "recruiters", test: (m) => m.role === "recruiter" },
-  { id: "member", label: "members", test: (m) => m.role === "member" && !m.isGuest },
+const roleFilters: { id: RoleFilter; test: (m: ClanMemberRow) => boolean }[] = [
+  { id: "all", test: () => true },
+  { id: "admin", test: (m) => m.role === "admin" },
+  { id: "organizer", test: (m) => m.role === "organizer" },
+  { id: "recruiter", test: (m) => m.role === "recruiter" },
+  { id: "member", test: (m) => m.role === "member" && !m.isGuest },
 ];
 
 /** Clan settings › Members: search, role filter and pages, with the admin actions per person. */
@@ -101,6 +103,7 @@ export function ClanMemberAdmin({
   canSetRoles: boolean;
   members: ClanMemberRow[];
 }) {
+  const t = useT();
   const [q, setQ] = useState("");
   const [role, setRole] = useState<RoleFilter>("all");
   const [pending, start] = useTransition();
@@ -115,7 +118,7 @@ export function ClanMemberAdmin({
       try {
         await fn();
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Something went wrong");
+        setError(e instanceof Error ? e.message : t("memberList.error"));
       }
     });
 
@@ -134,7 +137,7 @@ export function ClanMemberAdmin({
             }}
             className={`${role === f.id ? btnSecondary + " !border-bit" : btnGhost} shrink-0 !rounded-full !py-1`}
           >
-            {f.label} <span className="text-faint">{members.filter(f.test).length}</span>
+            {t(`memberList.filter.${f.id}`)} <span className="text-faint">{members.filter(f.test).length}</span>
           </button>
         ))}
       </div>
@@ -144,10 +147,10 @@ export function ClanMemberAdmin({
           setQ(e.target.value);
           pager.reset();
         }}
-        placeholder="Search name, nick or email"
+        placeholder={t("memberList.searchAdmin")}
         className={input}
         type="search"
-        aria-label="Search members"
+        aria-label={t("memberList.search")}
       />
       {error && <p className="text-sm text-danger">{error}</p>}
       <ul className="divide-y divide-line">
@@ -161,7 +164,7 @@ export function ClanMemberAdmin({
                   {m.name}
                 </Link>{" "}
                 {!m.isGuest && <Verified />} <RolePill role={m.role} />
-                {m.isGuest && <Pill>guest</Pill>}
+                {m.isGuest && <Pill>{t("clanSettings.guest")}</Pill>}
               </span>
               <span className="block truncate text-xs text-muted">
                 {m.full !== m.name && `${m.full} · `}
@@ -174,9 +177,9 @@ export function ClanMemberAdmin({
                 <button
                   type="button"
                   className={`${btnGhost} text-xs text-danger`}
-                  onClick={() => confirm(`Remove the guest ${m.name}?`) && run(() => deleteGuest(clanId, m.id))}
+                  onClick={() => confirm(t("memberList.removeGuestQ", { name: m.name })) && run(() => deleteGuest(clanId, m.id))}
                 >
-                  Remove
+                  {t("memberList.remove")}
                 </button>
               ) : (
                 <>
@@ -185,12 +188,12 @@ export function ClanMemberAdmin({
                       key={m.role}
                       defaultValue={m.role}
                       disabled={m.role === "admin" && lastAdmin}
-                      title={m.role === "admin" && lastAdmin ? "The clan needs at least one admin. Make someone else admin first." : undefined}
-                      aria-label={`Role of ${m.name}`}
+                      title={m.role === "admin" && lastAdmin ? t("memberList.needsAdmin") : undefined}
+                      aria-label={t("memberList.roleOf", { name: m.name })}
                       className={`${input} !w-auto !py-1 text-xs`}
                       onChange={(e) => {
                         const to = e.target.value as MemberRole;
-                        if (m.role === "admin" && m.id === meId && !confirm("Give up your own admin rights? You can't undo this yourself.")) {
+                        if (m.role === "admin" && m.id === meId && !confirm(t("memberList.giveUpAdmin"))) {
                           e.target.value = m.role;
                           return;
                         }
@@ -199,7 +202,7 @@ export function ClanMemberAdmin({
                     >
                       {MEMBER_ROLES.map((r) => (
                         <option key={r} value={r}>
-                          {ROLE_INFO[r].label}
+                          {t(`roles.${r}`)}
                         </option>
                       ))}
                     </select>
@@ -209,9 +212,9 @@ export function ClanMemberAdmin({
                       type="button"
                       disabled={m.role === "admin" && lastAdmin}
                       className={`${btnGhost} text-xs text-danger`}
-                      onClick={() => confirm(`Remove ${m.name} from the clan?`) && run(() => removeClanMember(clanId, m.id))}
+                      onClick={() => confirm(t("memberList.removeQ", { name: m.name })) && run(() => removeClanMember(clanId, m.id))}
                     >
-                      Remove
+                      {t("memberList.remove")}
                     </button>
                   )}
                 </>
@@ -219,9 +222,9 @@ export function ClanMemberAdmin({
             </span>
           </li>
         ))}
-        {shown.length === 0 && <li className="py-6 text-center text-sm text-muted">Nobody matches.</li>}
+        {shown.length === 0 && <li className="py-6 text-center text-sm text-muted">{t("memberList.noMatch")}</li>}
       </ul>
-      <PagerBar pager={pager} noun="members" />
+      <PagerBar pager={pager} members />
     </div>
   );
 }

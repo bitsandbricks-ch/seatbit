@@ -1,4 +1,5 @@
 "use server";
+import { err, getT, tr } from "@/i18n/server";
 
 import { and, eq, inArray, ne, or } from "drizzle-orm";
 import { rolesWith } from "@/lib/clan-roles";
@@ -34,7 +35,7 @@ const lanUrl = (l: Lan, tab?: string) => `${appUrl}/lans/${l.id}${tab ? `?tab=${
 /** A lead ticks (or unticks) that they booked someone's seat on the event site. */
 export async function adminSetSeatBooked(lanId: string, userId: string, booked: boolean) {
   const me = await requireLanManager(lanId);
-  setSeatBooked(lanId, userId, booked);
+  setSeatBooked(lanId, userId, booked, await getT());
   if (userId !== me.id) auditLan(mustGetLan(lanId), me.id, "seatbooked.set", { targetUserId: userId, data: { booked } });
   lanPath(lanId);
 }
@@ -65,29 +66,29 @@ export async function requestSeatSwap(lanId: string, toUserId: string, note = ""
   const me = await requireUser();
   const l = mustGetLan(lanId);
   if (!canViewLan(me, lanId)) throw new Error("Not found");
-  if (!l.seatsPublishedAt) throw new Error("Swaps open once the leads finalize the seat plan.");
-  if (toUserId === me.id) throw new Error("Pick someone else.");
+  if (!l.seatsPublishedAt) throw await err("errors.swapsLater");
+  if (toUserId === me.id) throw await err("errors.pickElse");
   const mine = seatOf(lanId, me.id);
   const theirs = seatOf(lanId, toUserId);
-  if (!mine) throw new Error("You don't have a seat yet.");
-  if (!theirs) throw new Error("They don't have a seat.");
+  if (!mine) throw await err("errors.noSeatYet");
+  if (!theirs) throw await err("errors.theyNoSeat");
   const open = db
     .select()
     .from(seatSwap)
     .where(and(eq(seatSwap.lanId, lanId), inArray(seatSwap.status, [...OPEN]), or(eq(seatSwap.fromUserId, me.id), eq(seatSwap.toUserId, me.id))))
     .all();
-  if (open.some((s) => s.fromUserId === me.id)) throw new Error("You already asked someone. Cancel that request first.");
-  if (open.some((s) => s.fromUserId === toUserId)) throw new Error("They already asked you. Answer their request instead.");
+  if (open.some((s) => s.fromUserId === me.id)) throw await err("errors.askedAlready");
+  if (open.some((s) => s.fromUserId === toUserId)) throw await err("errors.theyAsked");
   db.insert(seatSwap).values({ lanId, fromUserId: me.id, toUserId, note: note.trim().slice(0, 200) }).run();
   const names = await getDisplayNames(lanId, [me.id]);
   notifyLater(() =>
-    notify(toUserId, {
+    notify(toUserId, (t) => ({
       kind: "seat_swap",
-      subject: `${names.get(me.id)} wants to swap seats at ${l.name}`,
-      text: `${names.get(me.id)} (seat ${mine.label}) asks to swap with your seat ${theirs.label} at ${l.name}.${note.trim() ? `\n\n"${note.trim().slice(0, 200)}"` : ""}\n\nAccept or decline on the event page. A lead approves the swap afterwards.`,
+      subject: t("notice.swapAsk", { name: names.get(me.id) ?? "", lan: l.name }),
+      text: `${t("notice.swapAskText", { name: names.get(me.id) ?? "", mine: mine.label, theirs: theirs.label, lan: l.name })}${note.trim() ? `\n\n«${note.trim().slice(0, 200)}»` : ""}\n\n${t("notice.swapAskHow")}`,
       url: lanUrl(l),
       dmOnly: true,
-    }),
+    })),
   );
   lanPath(lanId);
 }
@@ -96,7 +97,7 @@ export async function requestSeatSwap(lanId: string, toUserId: string, note = ""
 export async function answerSeatSwap(swapId: string, accept: boolean) {
   const me = await requireUser();
   const s = db.select().from(seatSwap).where(eq(seatSwap.id, swapId)).get();
-  if (!s || s.toUserId !== me.id || s.status !== "pending") throw new Error("This request is no longer open.");
+  if (!s || s.toUserId !== me.id || s.status !== "pending") throw await err("errors.requestGone");
   const l = mustGetLan(s.lanId);
   db.update(seatSwap)
     .set({ status: accept ? "accepted" : "declined", decidedAt: accept ? null : new Date() })
@@ -105,23 +106,21 @@ export async function answerSeatSwap(swapId: string, accept: boolean) {
   const names = await getDisplayNames(l.id, [s.fromUserId, s.toUserId]);
   const [a, b] = [names.get(s.fromUserId), names.get(s.toUserId)];
   notifyLater(async () => {
-    await notify(s.fromUserId, {
+    await notify(s.fromUserId, (t) => ({
       kind: "seat_swap",
-      subject: accept ? `${b} agreed to swap seats` : `${b} declined your seat swap`,
-      text: accept
-        ? `${b} agreed to swap seats with you at ${l.name}. A lead still has to approve it.`
-        : `${b} doesn't want to swap seats at ${l.name}.`,
+      subject: t(accept ? "notice.swapAgreed" : "notice.swapDeclined", { name: b ?? "" }),
+      text: t(accept ? "notice.swapAgreedText" : "notice.swapDeclinedText", { name: b ?? "", lan: l.name }),
       url: lanUrl(l),
       dmOnly: true,
-    });
+    }));
     if (accept)
       for (const o of orgasOf(l))
-        await sendDiscordDm(o, {
+        await sendDiscordDm(o, (t) => ({
           kind: "seat_swap",
-          subject: `Seat swap to approve: ${a} ⇄ ${b}`,
-          text: `${a} and ${b} want to swap seats at ${l.name}. Approve or reject it on the Seats tab.`,
+          subject: t("notice.swapApprove", { a: a ?? "", b: b ?? "" }),
+          text: t("notice.swapApproveText", { a: a ?? "", b: b ?? "", lan: l.name }),
           url: `${appUrl}/lans/${l.id}/manage?tab=seats`,
-        });
+        }));
   });
   lanPath(l.id);
 }
@@ -140,7 +139,7 @@ export async function decideSeatSwap(swapId: string, approve: boolean) {
   const s = db.select().from(seatSwap).where(eq(seatSwap.id, swapId)).get();
   if (!s) throw new Error("Not found");
   const me = await requireLanManager(s.lanId);
-  if (!OPEN.includes(s.status as (typeof OPEN)[number])) throw new Error("This request is already closed.");
+  if (!OPEN.includes(s.status as (typeof OPEN)[number])) throw await err("errors.requestClosed");
   const l = mustGetLan(s.lanId);
   const logDecision = () =>
     auditLan(l, me.id, "swap.decide", { targetUserId: s.fromUserId, data: { approved: approve, otherUserId: s.toUserId } });
@@ -149,20 +148,20 @@ export async function decideSeatSwap(swapId: string, approve: boolean) {
     logDecision();
     notifyLater(async () => {
       for (const uid of [s.fromUserId, s.toUserId])
-        await notify(uid, {
+        await notify(uid, (t) => ({
           kind: "seat_swap",
-          subject: `Seat swap at ${l.name} not approved`,
-          text: `The leads didn't approve the seat swap at ${l.name}. Your seat stays the same. Ask them if you want to know why.`,
+          subject: t("notice.swapRejected", { lan: l.name }),
+          text: t("notice.swapRejectedText", { lan: l.name }),
           url: lanUrl(l),
           dmOnly: true,
-        });
+        }));
     });
     lanPath(l.id);
     return;
   }
   const a = seatOf(l.id, s.fromUserId);
   const b = seatOf(l.id, s.toUserId);
-  if (!a || !b) throw new Error("One of them no longer has a seat. Reject the request.");
+  if (!a || !b) throw await err("errors.swapNoSeat");
   db.transaction((tx) => {
     tx.update(seat).set({ userId: null }).where(inArray(seat.id, [a.id, b.id])).run();
     tx.update(seat).set({ userId: s.toUserId }).where(eq(seat.id, a.id)).run();
@@ -207,7 +206,7 @@ const gameInput = z.object({
 
 async function requireLanViewer(lanId: string) {
   const me = await requireUser();
-  if (!canViewLan(me, lanId)) throw new Error("Join the clan first");
+  if (!canViewLan(me, lanId)) throw await err("errors.joinFirst");
   return me;
 }
 
@@ -227,8 +226,8 @@ export async function addGame(lanId: string, formData: FormData): Promise<{ erro
     .where(eq(game.lanId, lanId))
     .all()
     .find((g) => g.name.toLowerCase() === parsed.data.name.toLowerCase());
-  if (existing) return { error: `${existing.name} is already on the list. Vote for it instead.` };
-  if (db.select().from(game).where(eq(game.lanId, lanId)).all().length >= 50) return { error: "The list is full (50 games)." };
+  if (existing) return { error: await tr("errors.gameExists", { name: existing.name }) };
+  if (db.select().from(game).where(eq(game.lanId, lanId)).all().length >= 50) return { error: await tr("errors.gamesFull") };
   const g = db.insert(game).values({ lanId, ...parsed.data, addedBy: me.id }).returning().get();
   db.insert(gameVote).values({ gameId: g.id, userId: me.id, vote: true }).run();
   lanPath(lanId);
@@ -240,7 +239,7 @@ export async function deleteGame(gameId: string) {
   const me = await requireUser();
   const g = db.select().from(game).where(eq(game.id, gameId)).get();
   if (!g) return;
-  if (g.addedBy !== me.id && !isLanManager(me, g.lanId)) throw new Error("Only who added it or a lead can remove it.");
+  if (g.addedBy !== me.id && !isLanManager(me, g.lanId)) throw await err("errors.gameRemove");
   db.delete(game).where(eq(game.id, gameId)).run();
   lanPath(g.lanId);
 }
@@ -263,8 +262,8 @@ export async function setGameMark(gameId: string, field: "vote" | "installed", v
 export async function nudgeMissing(lanId: string, step: string, userIds?: string[]): Promise<NudgeResult> {
   await requireLanManager(lanId);
   const l = mustGetLan(lanId);
-  if (!l.publishedAt) throw new Error("Publish the event first. Members can't see drafts.");
-  if (l.cancelledAt) throw new Error("This event is cancelled.");
+  if (!l.publishedAt) throw await err("errors.publishFirst");
+  if (l.cancelledAt) throw await err("errors.cancelled");
   if (!NUDGE_STEPS.includes(step as NudgeStep)) throw new Error("Unknown step");
   const r = await nudge(l, step as NudgeStep, userIds);
   lanPath(lanId);

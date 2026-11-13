@@ -4,6 +4,7 @@ import { AuthForm } from "@/components/auth-form";
 import { cardPage, cardPageTitle } from "@/components/ui";
 import { enabledProviders, signupOpen } from "@/lib/auth";
 import { getCurrentUser } from "@/lib/session";
+import { getT } from "@/i18n/server";
 
 export default async function RegisterPage({ searchParams }: PageProps<"/register">) {
   const raw = (await searchParams).next;
@@ -14,12 +15,13 @@ export default async function RegisterPage({ searchParams }: PageProps<"/registe
   // Without email sign-up, Discord's button both signs in and creates accounts: one page is enough.
   if (!providers.email) redirect(next === "/" ? "/login" : `/login?next=${encodeURIComponent(next)}`);
   if (!signupOpen()) {
+    const t = await getT();
     return (
       <div className={`${cardPage} text-sm`}>
-        <h1 className={cardPageTitle}>Sign-ups are closed</h1>
-        <p className="text-muted">New accounts can&apos;t be created right now. Ask a Seatbit admin to open sign-ups.</p>
+        <h1 className={cardPageTitle}>{t("pages.signupClosed")}</h1>
+        <p className="text-muted">{t("pages.signupClosedHint")}</p>
         <Link href="/login" className="text-bit hover:underline">
-          Sign in with an existing account
+          {t("pages.signInExisting")}
         </Link>
       </div>
     );

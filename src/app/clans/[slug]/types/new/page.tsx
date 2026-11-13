@@ -3,16 +3,18 @@ import { Card, Columns, Page, PageHeader } from "@/components/ui";
 import { LanTypeForm } from "@/components/lan-type-form";
 import { clanCan, getClanBySlug } from "@/lib/clans";
 import { requireUser } from "@/lib/session";
+import { getT } from "@/i18n/server";
 
 export default async function NewLanTypePage({ params }: PageProps<"/clans/[slug]/types/new">) {
   const { slug } = await params;
   const me = await requireUser();
+  const t = await getT();
   const c = getClanBySlug(slug);
   if (!c) notFound();
   if (!clanCan(me, c.id, "events")) redirect(`/clans/${slug}`);
   return (
     <Page>
-      <PageHeader back={{ href: `/clans/${c.slug}/settings?tab=types`, label: "LAN types" }} title="Add a LAN type" />
+      <PageHeader back={{ href: `/clans/${c.slug}/settings?tab=types`, label: t("clanPage.links.types") }} title={t("typePage.add")} />
       <Columns>
       <Card>
         <LanTypeForm

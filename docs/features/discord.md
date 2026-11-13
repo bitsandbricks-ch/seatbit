@@ -61,6 +61,10 @@ Members can do the everyday things straight from Discord, in the clan's server o
 
 The same rules apply as on the website: once you have a ticket, your answer is locked and only leads can change it; sign-up closes at the *answer by* date; you only see and answer your own clan's events. The `event:` option suggests the matching events as you type.
 
+## Language
+
+Replies to one person follow their own language; posts in a channel use the clan's **Language of Discord posts**. See [Languages](languages.md#discord).
+
 ## Per event
 
 *Manage → Discord & WhatsApp* on an event: re-post the announcement or post a reminder by hand.

@@ -6,36 +6,36 @@ import { Card, Columns, Page, PageHeader, btnDanger } from "@/components/ui";
 import { LanTypeForm } from "@/components/lan-type-form";
 import { clanCan, getClanBySlug } from "@/lib/clans";
 import { requireUser } from "@/lib/session";
+import { getT } from "@/i18n/server";
 
 export default async function EditLanTypePage({ params }: PageProps<"/clans/[slug]/types/[id]">) {
   const { slug, id } = await params;
   const me = await requireUser();
+  const t = await getT();
   const c = getClanBySlug(slug);
   if (!c) notFound();
   if (!clanCan(me, c.id, "events")) redirect(`/clans/${slug}`);
-  const t = db
+  const ty = db
     .select()
     .from(schema.lanType)
     .where(and(eq(schema.lanType.id, id), eq(schema.lanType.clanId, c.id)))
     .get();
-  if (!t) notFound();
+  if (!ty) notFound();
   return (
     <Page>
-      <PageHeader back={{ href: `/clans/${c.slug}/settings?tab=types`, label: "LAN types" }} title={t.name} />
+      <PageHeader back={{ href: `/clans/${c.slug}/settings?tab=types`, label: t("clanPage.links.types") }} title={ty.name} />
       <Columns
         aside={
-          <Card title="Delete type">
-            <p className="mb-3 text-sm text-muted">
-              Events of this type are kept, but members&apos; nicks for this type are deleted.
-            </p>
-            <form action={deleteLanType.bind(null, t.id)}>
-              <button className={btnDanger}>Delete {t.name}</button>
+          <Card title={t("typePage.delete")}>
+            <p className="mb-3 text-sm text-muted">{t("typePage.deleteHint")}</p>
+            <form action={deleteLanType.bind(null, ty.id)}>
+              <button className={btnDanger}>{t("typePage.deleteName", { name: ty.name })}</button>
             </form>
           </Card>
         }
       >
       <Card>
-        <LanTypeForm values={{ ...t, clanId: c.id, capacity: t.capacity?.toString() ?? "", answerDaysBefore: t.answerDaysBefore?.toString() ?? "" }} />
+        <LanTypeForm values={{ ...ty, clanId: c.id, capacity: ty.capacity?.toString() ?? "", answerDaysBefore: ty.answerDaysBefore?.toString() ?? "" }} />
       </Card>
       </Columns>
     </Page>

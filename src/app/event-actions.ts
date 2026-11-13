@@ -1,4 +1,5 @@
 "use server";
+import { err, tr } from "@/i18n/server";
 
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -33,9 +34,9 @@ const lanPath = (id: string) => {
 export async function schedulePublish(lanId: string, at: string | null): Promise<{ error?: string } | void> {
   const me = await requireLanManager(lanId);
   const l = mustGetLan(lanId);
-  if (l.publishedAt) return { error: "The event is already published." };
+  if (l.publishedAt) return { error: await tr("errors.alreadyPublished") };
   const when = at ? new Date(at) : null;
-  if (when && isNaN(when.getTime())) return { error: "Pick a valid date and time." };
+  if (when && isNaN(when.getTime())) return { error: await tr("errors.validDate") };
   if (when && when <= new Date()) {
     await publishEvent(lanId, new Date(), me.id);
   } else {
@@ -51,8 +52,8 @@ export async function schedulePublish(lanId: string, at: string | null): Promise
 export async function setMyInterest(lanId: string, answer: InterestAnswer) {
   const me = await requireUser();
   const l = mustGetLan(lanId);
-  if (!canViewLan(me, lanId)) throw new Error("Join the clan first");
-  if (!l.interestCheck || l.cancelledAt) throw new Error("The interest check is over.");
+  if (!canViewLan(me, lanId)) throw await err("errors.joinFirst");
+  if (!l.interestCheck || l.cancelledAt) throw await err("errors.interestOver");
   if (!INTEREST_ANSWERS.includes(answer)) throw new Error("Bad answer");
   db.insert(lanInterest)
     .values({ lanId, userId: me.id, answer })
@@ -67,7 +68,7 @@ export async function openSignupNow(lanId: string): Promise<{ error?: string; se
   const me = await requireLanManager(lanId);
   const l = mustGetLan(lanId);
   if (!l.interestCheck) return {};
-  if (l.dateTbd) return { error: "Set the date first (Settings tab), then open sign-up." };
+  if (l.dateTbd) return { error: await tr("errors.dateFirst") };
   auditLan(l, me.id, "event.signup_open");
   const sent = await openSignup(l);
   lanPath(lanId);
@@ -163,8 +164,8 @@ export async function postNews(lanId: string, text: string): Promise<{ error?: s
   const me = await requireLanManager(lanId);
   const l = mustGetLan(lanId);
   const t = text.trim();
-  if (!t) return { error: "Write something first." };
-  if (t.length > 2000) return { error: "Keep it under 2000 characters." };
+  if (!t) return { error: await tr("errors.writeFirst") };
+  if (t.length > 2000) return { error: await tr("errors.max2000") };
   db.insert(lanNews).values({ lanId, authorId: me.id, text: t }).run();
   const author = (await getDisplayNames(lanId, [me.id])).get(me.id) ?? me.firstName;
   lanPath(lanId);
@@ -204,9 +205,9 @@ export async function setMyInterests(clanId: string, typeIds: string[] | null) {
 export async function setArrived(lanId: string, userId: string | null, arrived: boolean) {
   const me = await requireUser();
   const target = userId ?? me.id;
-  if (target !== me.id && !isLanManager(me, lanId)) throw new Error("Only leads can check in others");
+  if (target !== me.id && !isLanManager(me, lanId)) throw await err("errors.leadsCheckIn");
   const a = db.select().from(attendance).where(and(eq(attendance.lanId, lanId), eq(attendance.userId, target))).get();
-  if (!a || a.status !== "going") throw new Error("Only people coming can check in.");
+  if (!a || a.status !== "going") throw await err("errors.comingCheckIn");
   db.update(attendance)
     .set({ arrivedAt: arrived ? new Date() : null })
     .where(eq(attendance.id, a.id))

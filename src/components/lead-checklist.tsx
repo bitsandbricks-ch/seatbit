@@ -1,18 +1,20 @@
 import Link from "next/link";
 import type { LeadStep } from "@/lib/lead-checklist";
+import { getT } from "@/i18n/server";
 
 /** The leads' to-do list on Manage → Overview; each open step links to where it's done. */
-export function LeadChecklist({ steps }: { steps: LeadStep[] }) {
+export async function LeadChecklist({ steps }: { steps: LeadStep[] }) {
+  const t = await getT();
   const done = steps.filter((s) => s.state === "done").length;
   const all = done === steps.length;
   return (
-    <section aria-label="Lead checklist" className="rounded-card border border-line bg-surface p-3 sm:p-4">
+    <section aria-label={t("leadSteps.heading")} className="rounded-card border border-line bg-surface p-3 sm:p-4">
       <div className="mb-3 flex items-center gap-3">
-        <h2 className="text-sm font-semibold text-fg">Lead checklist</h2>
+        <h2 className="text-sm font-semibold text-fg">{t("leadSteps.heading")}</h2>
         <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-raised">
           <div className="h-full bg-bit transition-all" style={{ width: `${steps.length ? (done / steps.length) * 100 : 0}%` }} />
         </div>
-        <span className={`text-sm ${all ? "font-medium text-bit" : "text-muted"}`}>{all ? "All set" : `${done} / ${steps.length}`}</span>
+        <span className={`text-sm ${all ? "font-medium text-bit" : "text-muted"}`}>{all ? t("checklist.allSet") : `${done} / ${steps.length}`}</span>
       </div>
       {/* Desktop: every step in one row (scrolls sideways if the screen is too narrow), never a second row. */}
       <ol className="grid gap-x-4 gap-y-3 sm:grid-cols-2 lg:grid-flow-col lg:grid-cols-none lg:auto-cols-[minmax(7rem,1fr)] lg:gap-x-3 lg:overflow-x-auto">

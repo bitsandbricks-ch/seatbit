@@ -16,6 +16,8 @@ import { PagerBar, matches, usePager } from "./pager";
 import { btnGhost, btnSecondary, input } from "./ui";
 import { Avatar } from "./avatar";
 import type { AvatarData } from "@/lib/avatars";
+import { useT } from "@/i18n/client";
+import type { MessageKey } from "@/i18n/translate";
 
 export type AttendanceRow = {
   id: string;
@@ -42,38 +44,38 @@ export type AttendanceRow = {
 };
 
 const statuses: AttendanceStatus[] = ["going", "waitlist", "maybe", "declined"];
-const statusLabel: Record<AttendanceStatus, string> = {
-  going: "coming",
-  waitlist: "waitlist",
-  maybe: "unsure",
-  declined: "not coming",
+const statusLabel: Record<AttendanceStatus, MessageKey> = {
+  going: "bot.you.going",
+  waitlist: "bot.you.waitlist",
+  maybe: "bot.you.maybe",
+  declined: "bot.you.declined",
 };
 const statusOrder: Record<AttendanceStatus, number> = { going: 0, waitlist: 1, maybe: 2, declined: 3 };
 
 /** Extra "who still needs something" filters on top of the status chips. */
 const needs = {
-  all: { label: "Everyone", test: () => true },
-  ticketOpen: { label: "Ticket not confirmed", test: (r: AttendanceRow) => r.status !== "declined" && !r.paid },
-  ticketReported: { label: "Ticket reported, confirm it", test: (r: AttendanceRow) => r.ticketBought && !r.paid },
-  noSeat: { label: "Coming, no seat yet", test: (r: AttendanceRow) => r.status === "going" && !r.seatId },
+  all: { label: "attendees.need.all", test: () => true },
+  ticketOpen: { label: "attendees.need.ticketOpen", test: (r: AttendanceRow) => r.status !== "declined" && !r.paid },
+  ticketReported: { label: "attendees.need.ticketReported", test: (r: AttendanceRow) => r.ticketBought && !r.paid },
+  noSeat: { label: "attendees.need.noSeat", test: (r: AttendanceRow) => r.status === "going" && !r.seatId },
   notBooked: {
-    label: "Seat not booked on event site",
+    label: "attendees.need.notBooked",
     test: (r: AttendanceRow) => r.status === "going" && !!r.seatId && r.seatBooked === false,
   },
-  noLanId: { label: "No LAN ID", test: (r: AttendanceRow) => r.status !== "declined" && !r.lanAccount },
-  hasNote: { label: "Has a note", test: (r: AttendanceRow) => !!r.note },
-} satisfies Record<string, { label: string; test: (r: AttendanceRow) => boolean }>;
+  noLanId: { label: "attendees.need.noLanId", test: (r: AttendanceRow) => r.status !== "declined" && !r.lanAccount },
+  hasNote: { label: "attendees.need.hasNote", test: (r: AttendanceRow) => !!r.note },
+} satisfies Record<string, { label: MessageKey; test: (r: AttendanceRow) => boolean }>;
 type Need = keyof typeof needs;
 
 const byText = (a: string | null, b: string | null) =>
   (a ?? "\uffff").localeCompare(b ?? "\uffff", undefined, { numeric: true, sensitivity: "base" });
 const sorts = {
-  status: { label: "Status", cmp: (a: AttendanceRow, b: AttendanceRow) => statusOrder[a.status] - statusOrder[b.status] || byText(a.name, b.name) },
-  nick: { label: "Nick", cmp: (a: AttendanceRow, b: AttendanceRow) => byText(a.nick, b.nick) },
-  name: { label: "Name", cmp: (a: AttendanceRow, b: AttendanceRow) => byText(a.name, b.name) },
-  seat: { label: "Seat", cmp: (a: AttendanceRow, b: AttendanceRow) => byText(a.seat, b.seat) || byText(a.name, b.name) },
-  lanId: { label: "LAN ID", cmp: (a: AttendanceRow, b: AttendanceRow) => byText(a.lanAccount || null, b.lanAccount || null) || byText(a.name, b.name) },
-} satisfies Record<string, { label: string; cmp: (a: AttendanceRow, b: AttendanceRow) => number }>;
+  status: { label: "attendees.col.status", cmp: (a: AttendanceRow, b: AttendanceRow) => statusOrder[a.status] - statusOrder[b.status] || byText(a.name, b.name) },
+  nick: { label: "attendees.col.nick", cmp: (a: AttendanceRow, b: AttendanceRow) => byText(a.nick, b.nick) },
+  name: { label: "attendees.col.name", cmp: (a: AttendanceRow, b: AttendanceRow) => byText(a.name, b.name) },
+  seat: { label: "attendees.col.seat", cmp: (a: AttendanceRow, b: AttendanceRow) => byText(a.seat, b.seat) || byText(a.name, b.name) },
+  lanId: { label: "attendees.col.lanId", cmp: (a: AttendanceRow, b: AttendanceRow) => byText(a.lanAccount || null, b.lanAccount || null) || byText(a.name, b.name) },
+} satisfies Record<string, { label: MessageKey; cmp: (a: AttendanceRow, b: AttendanceRow) => number }>;
 type Sort = keyof typeof sorts;
 
 const PAGE_SIZE = 20;
@@ -93,6 +95,7 @@ export function AttendanceTable({
   rows: AttendanceRow[];
   others: { id: string; name: string }[];
 }) {
+  const t = useT();
   const [pending, start] = useTransition();
   const [addUser, setAddUser] = useState("");
   const [filter, setFilter] = useState<AttendanceStatus | "all">("all");
@@ -120,7 +123,7 @@ export function AttendanceTable({
             }}
             className={`${filter === s ? btnSecondary + " !border-bit" : btnGhost} shrink-0 !rounded-full !py-1`}
           >
-            {s === "all" ? "all" : statusLabel[s]}{" "}
+            {s === "all" ? t("attendees.all") : t(statusLabel[s])}{" "}
             <span className="text-faint">{s === "all" ? rows.length : rows.filter((r) => r.status === s).length}</span>
           </button>
         ))}
@@ -132,10 +135,10 @@ export function AttendanceTable({
             setQ(e.target.value);
             pager.reset();
           }}
-          placeholder="Search nick, name, email, LAN ID, seat or note"
+          placeholder={t("attendees.search")}
           className={input}
           type="search"
-          aria-label="Search attendees"
+          aria-label={t("attendees.searchLabel")}
         />
         <div className="grid grid-cols-2 gap-2 sm:contents">
           <select
@@ -145,11 +148,11 @@ export function AttendanceTable({
               pager.reset();
             }}
             className={`${input} sm:!w-auto`}
-            aria-label="Only show"
+            aria-label={t("attendees.onlyShow")}
           >
             {Object.entries(needs).map(([k, v]) => (
               <option key={k} value={k}>
-                {k === "all" ? "Show: everyone" : `${v.label} (${rows.filter(v.test).length})`}
+                {k === "all" ? t("attendees.showEveryone") : `${t(v.label)} (${rows.filter(v.test).length})`}
               </option>
             ))}
           </select>
@@ -157,11 +160,11 @@ export function AttendanceTable({
             value={sort}
             onChange={(e) => setSort(e.target.value as Sort)}
             className={`${input} sm:!w-auto`}
-            aria-label="Sort by"
+            aria-label={t("attendees.sortBy")}
           >
             {Object.entries(sorts).map(([k, v]) => (
               <option key={k} value={k}>
-                Sort: {v.label}
+                {t("attendees.sort", { by: t(v.label) })}
               </option>
             ))}
           </select>
@@ -169,7 +172,7 @@ export function AttendanceTable({
       </div>
       {narrowed && (
         <p className="flex flex-wrap items-center gap-2 text-sm text-muted">
-          {visible.length} of {rows.length} shown
+          {t("attendees.shown", { shown: visible.length, count: rows.length })}
           <button
             type="button"
             className={`${btnGhost} !min-h-0 !px-2 !py-0.5 text-xs`}
@@ -180,7 +183,7 @@ export function AttendanceTable({
               pager.reset();
             }}
           >
-            Clear filters
+            {t("attendees.clearFilters")}
           </button>
         </p>
       )}
@@ -188,12 +191,12 @@ export function AttendanceTable({
       {/* Phones: one card per person. Desktop: one row per person in a table-like list. */}
       <ul className="space-y-2 lg:space-y-0 lg:divide-y lg:divide-line lg:overflow-hidden lg:rounded-card lg:border lg:border-line lg:bg-surface">
         <li aria-hidden className={`hidden gap-3 bg-raised/40 px-4 py-2 text-[11px] font-medium uppercase tracking-wide text-muted lg:grid ${cols}`}>
-          <span>Member</span>
-          <span>Status</span>
-          <span>Seat</span>
-          <span>Ticket</span>
-          <span>LAN ID</span>
-          <span>Note</span>
+          <span>{t("attendees.col.member")}</span>
+          <span>{t("attendees.col.status")}</span>
+          <span>{t("attendees.col.seat")}</span>
+          <span>{t("bot.ticket")}</span>
+          <span>{t("attendees.col.lanId")}</span>
+          <span>{t("attendees.col.note")}</span>
           <span />
         </li>
         {pager.items.map((r) => (
@@ -222,9 +225,9 @@ export function AttendanceTable({
                       target="_blank"
                       rel="noreferrer"
                       className="ml-2 text-xs font-normal text-bit hover:underline"
-                      title="Profile on the event's site"
+                      title={t("attendees.profileTitle")}
                     >
-                      Profile ↗
+                      {t("attendees.profile")} ↗
                     </a>
                   )}
                 </p>
@@ -237,15 +240,15 @@ export function AttendanceTable({
               <button
                 className={`${btnGhost} shrink-0 !px-2 text-xs !text-danger lg:hidden`}
                 onClick={() =>
-                  confirm(`Remove ${r.name} from this LAN?`) && run(() => adminRemoveAttendance(lanId, r.userId))
+                  confirm(t("attendees.removeConfirm", { name: r.name })) && run(() => adminRemoveAttendance(lanId, r.userId))
                 }
               >
-                Remove
+                {t("attendees.remove")}
               </button>
             </div>
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:contents">
               <label className="block">
-                <span className="mb-1 block text-[11px] uppercase tracking-wide text-muted lg:sr-only">Status</span>
+                <span className="mb-1 block text-[11px] uppercase tracking-wide text-muted lg:sr-only">{t("attendees.col.status")}</span>
                 <select
                   key={r.status}
                   defaultValue={r.status}
@@ -254,13 +257,13 @@ export function AttendanceTable({
                 >
                   {statuses.map((s) => (
                     <option key={s} value={s}>
-                      {statusLabel[s]}
+                      {t(statusLabel[s])}
                     </option>
                   ))}
                 </select>
               </label>
               <label className="block">
-                <span className="mb-1 block text-[11px] uppercase tracking-wide text-muted lg:sr-only">Seat</span>
+                <span className="mb-1 block text-[11px] uppercase tracking-wide text-muted lg:sr-only">{t("attendees.col.seat")}</span>
                 {r.status === "going" && seats.length > 0 ? (
                   <select
                     key={r.seatId ?? "none"}
@@ -274,7 +277,7 @@ export function AttendanceTable({
                       .map((s) => (
                         <option key={s.id} value={s.id}>
                           {s.label}
-                          {s.locked ? " (held)" : ""}
+                          {s.locked ? ` (${t("attendees.held")})` : ""}
                         </option>
                       ))}
                   </select>
@@ -283,7 +286,7 @@ export function AttendanceTable({
                 )}
                 {r.seat && r.seatBooked != null && (
                   <span className={`mt-0.5 block text-[11px] ${r.seatBooked ? "text-bit" : "text-warn"}`}>
-                    {r.seatBooked ? "✓ booked on site" : "not booked on site"}
+                    {r.seatBooked ? `✓ ${t("attendees.bookedOnSite")}` : t("attendees.notBookedOnSite")}
                   </span>
                 )}
               </label>
@@ -296,12 +299,12 @@ export function AttendanceTable({
                   className="h-5 w-5 accent-bit"
                 />
                 <span>
-                  Ticket ok
-                  {r.ticketBought && !r.paid && <span className="ml-1 text-xs text-warn">(reported)</span>}
+                  {t("attendees.ticketOk")}
+                  {r.ticketBought && !r.paid && <span className="ml-1 text-xs text-warn">({t("attendees.reported")})</span>}
                 </span>
               </label>
               <label className="block">
-                <span className="mb-1 block text-[11px] uppercase tracking-wide text-muted lg:sr-only">LAN ID</span>
+                <span className="mb-1 block text-[11px] uppercase tracking-wide text-muted lg:sr-only">{t("attendees.col.lanId")}</span>
                 <input
                   key={r.lanAccount}
                   defaultValue={r.lanAccount}
@@ -311,11 +314,11 @@ export function AttendanceTable({
                   maxLength={40}
                   className={`${input} !py-1.5 font-mono`}
                   placeholder="—"
-                  aria-label={`LAN ID of ${r.name}`}
+                  aria-label={t("attendees.lanIdOf", { name: r.name })}
                 />
               </label>
               <label className="block sm:col-span-4 lg:col-span-1">
-                <span className="mb-1 block text-[11px] uppercase tracking-wide text-muted lg:sr-only">Note</span>
+                <span className="mb-1 block text-[11px] uppercase tracking-wide text-muted lg:sr-only">{t("attendees.col.note")}</span>
                 <input
                   defaultValue={r.note}
                   onBlur={(e) => e.target.value !== r.note && run(() => adminSetNote(r.id, e.target.value))}
@@ -327,21 +330,21 @@ export function AttendanceTable({
             <button
               className={`${btnGhost} !hidden !px-2 text-xs hover:!text-danger lg:!inline-flex`}
               onClick={() =>
-                confirm(`Remove ${r.name} from this LAN?`) && run(() => adminRemoveAttendance(lanId, r.userId))
+                confirm(t("attendees.removeConfirm", { name: r.name })) && run(() => adminRemoveAttendance(lanId, r.userId))
               }
             >
-              Remove
+              {t("attendees.remove")}
             </button>
           </li>
         ))}
-        {visible.length === 0 && <li className="py-6 text-center text-sm text-muted">Nobody here.</li>}
+        {visible.length === 0 && <li className="py-6 text-center text-sm text-muted">{t("attendees.nobody")}</li>}
       </ul>
       <PagerBar pager={pager} />
 
       {others.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 border-t border-line pt-4">
           <select value={addUser} onChange={(e) => setAddUser(e.target.value)} className={`${input} min-w-0 flex-1 sm:!w-auto sm:flex-none`}>
-            <option value="">Add a member…</option>
+            <option value="">{t("attendees.addMember")}</option>
             {others.map((o) => (
               <option key={o.id} value={o.id}>
                 {o.name}
@@ -358,18 +361,14 @@ export function AttendanceTable({
               })
             }
           >
-            Add as coming
+            {t("attendees.addAsComing")}
           </button>
         </div>
       )}
       <details className="rounded-card border border-line bg-surface p-3">
-        <summary className="cursor-pointer text-sm font-medium">Add a guest without an account</summary>
-        <p className="mb-3 mt-2 text-sm text-muted">
-          For people not on Seatbit yet. They&apos;re signed up as coming and can get a seat right away. Add their email
-          and Seatbit mails them an invite; signing in with Discord on that address takes over this spot. Their personal
-          link is also under Clan settings › Members.
-        </p>
-        <GuestForm action={addGuestToLan.bind(null, lanId)} submitLabel="Add guest as coming" />
+        <summary className="cursor-pointer text-sm font-medium">{t("attendees.addGuest")}</summary>
+        <p className="mb-3 mt-2 text-sm text-muted">{t("attendees.addGuestHint")}</p>
+        <GuestForm action={addGuestToLan.bind(null, lanId)} submitLabel={t("attendees.addGuestSubmit")} />
       </details>
     </div>
   );

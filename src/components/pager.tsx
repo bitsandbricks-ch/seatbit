@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { btnGhost, btnSecondary } from "./ui";
 import { nameMatches } from "@/lib/names";
+import { useT } from "@/i18n/client";
 
 /**
  * Client-side paging for long lists (clan members, attendees). Keeps the page
@@ -36,7 +37,9 @@ export function usePager<T>(items: T[], pageSize: number) {
 export type Pager = ReturnType<typeof usePager>;
 
 /** "1–20 of 34" with page buttons and "Show all". Hidden when everything fits on one page. */
-export function PagerBar({ pager, noun = "people" }: { pager: Pager; noun?: string }) {
+/** `members` counts members instead of people in "All 34 …". */
+export function PagerBar({ pager, members }: { pager: Pager; members?: boolean }) {
+  const t = useT();
   const { page, pages, total, from, to, showAll, pageSize } = pager;
   if (total <= pageSize) return null;
   // Page numbers: first, last and the ones around the current page; "…" for gaps.
@@ -46,15 +49,13 @@ export function PagerBar({ pager, noun = "people" }: { pager: Pager; noun?: stri
     else if (nums[nums.length - 1] !== "gap") nums.push("gap");
   }
   return (
-    <nav aria-label="Pages" className="flex flex-wrap items-center justify-between gap-2 text-sm">
+    <nav aria-label={t("pager.pages")} className="flex flex-wrap items-center justify-between gap-2 text-sm">
       <span className="text-muted">
         {showAll ? (
-          <>
-            All {total} {noun}
-          </>
+          t(members ? "pager.allMembers" : "pager.allPeople", { count: total })
         ) : (
           <>
-            {from}–{to} <span className="text-faint">of {total}</span>
+            {from}–{to} <span className="text-faint">{t("pager.of", { total })}</span>
           </>
         )}
       </span>
@@ -66,7 +67,7 @@ export function PagerBar({ pager, noun = "people" }: { pager: Pager; noun?: stri
               className={`${btnGhost} !px-2`}
               disabled={page === 0}
               onClick={() => pager.setPage(page - 1)}
-              aria-label="Previous page"
+              aria-label={t("pager.prev")}
             >
               ‹
             </button>
@@ -92,14 +93,14 @@ export function PagerBar({ pager, noun = "people" }: { pager: Pager; noun?: stri
               className={`${btnGhost} !px-2`}
               disabled={page >= pages - 1}
               onClick={() => pager.setPage(page + 1)}
-              aria-label="Next page"
+              aria-label={t("pager.next")}
             >
               ›
             </button>
           </>
         )}
         <button type="button" className={`${btnGhost} text-xs`} onClick={() => pager.setShowAll(!showAll)}>
-          {showAll ? "Show pages" : "Show all"}
+          {t(showAll ? "pager.showPages" : "pager.showAll")}
         </button>
       </span>
     </nav>

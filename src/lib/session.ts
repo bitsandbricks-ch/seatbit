@@ -51,7 +51,10 @@ export function isLanManager(u: { id: string; role: string }, lanId: string) {
 
 export async function requireLanManager(lanId: string) {
   const u = await requireUser();
-  if (!isLanManager(u, lanId)) throw new Error("Only leads of this LAN can do that");
+  if (!isLanManager(u, lanId)) {
+    const { err } = await import("@/i18n/server");
+    throw await err("errors.perm.lead");
+  }
   return u;
 }
 
@@ -73,17 +76,13 @@ export function visibleLans<T extends { id: string; publishedAt: Date | null }>(
   return lans.filter((l) => l.publishedAt || isLanManager(u, l.id));
 }
 
-const PERM_ERROR: Record<ClanPermission, string> = {
-  settings: "Only clan admins can do that",
-  roles: "Only clan admins can change roles",
-  members: "Only clan admins and recruiters can do that",
-  events: "Only clan admins and event managers can do that",
-  stats: "You can't see this clan's stats",
-  log: "You can't see this clan's audit log",
-};
 
 export async function requireClanPermission(clanId: string, perm: ClanPermission) {
   const u = await requireUser();
-  if (!clanCan(u, clanId, perm)) throw new Error(PERM_ERROR[perm]);
+  if (!clanCan(u, clanId, perm)) {
+    // Lazy: the i18n server module imports this file.
+    const { err } = await import("@/i18n/server");
+    throw await err(`errors.perm.${perm}`);
+  }
   return u;
 }

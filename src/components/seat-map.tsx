@@ -160,7 +160,7 @@ export function SeatMap({
 
   function onCell(row: number, col: number, s?: SeatView) {
     if (admin && layout) {
-      if (s?.userId && !confirm(`${s.label} is taken by ${s.name ?? s.nick}. Remove the seat anyway?`)) return;
+      if (s?.userId && !confirm(t("seatFlow.removeTakenQ", { seat: s.label, name: s.name ?? s.nick }))) return;
       return run(() => toggleSeatCell(lanId, row, col));
     }
     if (!s) return;

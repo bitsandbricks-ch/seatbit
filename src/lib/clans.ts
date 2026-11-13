@@ -92,8 +92,8 @@ export const AVATAR_MIME: Record<string, string> = Object.fromEntries(
 /** Stores an uploaded avatar and returns its file name. */
 export async function saveAvatar(clanId: string, file: File) {
   const ext = IMAGE_TYPES[file.type];
-  if (!ext) throw new Error("Use a PNG, JPG, WebP or GIF image.");
-  if (file.size > 2 * 1024 * 1024) throw new Error("The image must be smaller than 2 MB.");
+  if (!ext) throw await imageError("errors.imageType");
+  if (file.size > 2 * 1024 * 1024) throw await imageError("errors.imageSize");
   fs.mkdirSync(uploadsDir, { recursive: true });
   const name = `clan-${clanId}-${Date.now()}.${ext}`;
   fs.writeFileSync(path.join(uploadsDir, name), Buffer.from(await file.arrayBuffer()));
@@ -102,4 +102,10 @@ export async function saveAvatar(clanId: string, file: File) {
 
 export function avatarUrl(c: { id: string; avatar: string | null }) {
   return c.avatar ? `/clan-avatar/${c.id}?v=${encodeURIComponent(c.avatar)}` : null;
+}
+
+/** Upload errors in the uploader's language. Loaded lazily: scripts import this file without a request. */
+export async function imageError(key: "errors.imageType" | "errors.imageSize") {
+  const { err } = await import("@/i18n/server");
+  return err(key);
 }

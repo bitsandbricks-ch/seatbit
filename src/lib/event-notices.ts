@@ -9,6 +9,8 @@ import { fmtDate } from "./format";
 import { appUrl } from "./mail";
 import { notify } from "./notify";
 import { eventMailVars, renderTemplate } from "./mail-templates";
+import { localeOf } from "../i18n/user-locale";
+import type { Locale } from "../i18n/config";
 import { auditLan } from "./audit";
 
 const { lan, user, clanMember, attendance, lanInterest, reminderLog } = schema;
@@ -84,7 +86,18 @@ async function sendEach(
   return sent;
 }
 
-const deadlineVar = (l: Lan) => (l.signupDeadline ? fmtDate(l.signupDeadline) : "");
+const deadlineVar = (l: Lan, loc: Locale) => (l.signupDeadline ? fmtDate(l.signupDeadline, loc) : "");
+
+/** Renders an event mail in the member's language, with the placeholders every event mail has. */
+const eventMail = (
+  id: Parameters<typeof renderTemplate>[0],
+  l: Lan,
+  u: User,
+  extra: (loc: Locale) => Record<string, string | null | undefined> = () => ({}),
+) => {
+  const loc = localeOf(u);
+  return renderTemplate(id, { ...eventMailVars(l, u, loc), ...extra(loc) }, loc);
+};
 
 /**
  * Makes a draft live: members see it, the Discord channels get the post and interested members a
@@ -106,8 +119,8 @@ export async function publishEvent(lanId: string, now = new Date(), by: string |
       "published",
       (u) =>
         l.interestCheck
-          ? renderTemplate("interestCheck", eventMailVars(l, u))
-          : renderTemplate("eventPublished", { ...eventMailVars(l, u), deadline: deadlineVar(l) }),
+          ? eventMail("interestCheck", l, u)
+          : eventMail("eventPublished", l, u, (loc) => ({ deadline: deadlineVar(l, loc) })),
       { reminder: true },
     ).catch((e) => console.error("[event-notices] publish notices failed", e));
   }
@@ -144,7 +157,7 @@ export async function openSignup(l: Lan) {
     after,
     interestedMembers(after).filter((u) => !saidNo.has(u.id)),
     "signup_open",
-    (u) => renderTemplate("signupOpen", { ...eventMailVars(after, u), deadline: deadlineVar(after) }),
+    (u) => eventMail("signupOpen", after, u, (loc) => ({ deadline: deadlineVar(after, loc) })),
     { reminder: true },
   );
 }
@@ -158,7 +171,7 @@ export async function cancelEvent(l: Lan, reason: string) {
   await refreshLanMessages(l.id).catch(() => {});
   if (!l.publishedAt) return 0;
   return sendEach(after, involvedMembers(after), "cancelled", (u) =>
-    renderTemplate("eventCancelled", { ...eventMailVars(after, u), reason }),
+    eventMail("eventCancelled", after, u, () => ({ reason })),
   );
 }
 
@@ -174,7 +187,7 @@ export async function sendNews(l: Lan, text: string, author: string) {
   if (!l.publishedAt) return 0;
   const { postLanNews } = await import("./discord");
   await postLanNews(l, text, author).catch((e) => console.error("[discord] news failed", e));
-  return sendEach(l, involvedMembers(l), null, (u) => renderTemplate("eventNews", { ...eventMailVars(l, u), news: text, author }), {
+  return sendEach(l, involvedMembers(l), null, (u) => eventMail("eventNews", l, u, () => ({ news: text, author })), {
     reminder: true,
   });
 }

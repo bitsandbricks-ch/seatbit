@@ -6,6 +6,8 @@ import { fmtDate } from "./format";
 import { isGuestEmail } from "./guests";
 import { appUrl } from "./mail";
 import { notify, type Notice } from "./notify";
+import { makeT } from "../i18n/translate";
+import { localeOf } from "../i18n/user-locale";
 
 const { attendance, clanMember, user, seat, nickname, reminderLog, lanInterest, account } = schema;
 
@@ -159,61 +161,64 @@ export function whoIsMissing(l: Lan): MissingGroup[] {
   return (Object.keys(groups) as MissingStep[]).filter((s) => groups[s].length > 0).map((step) => ({ step, people: groups[step] }));
 }
 
-/** The nudge for one step. Short and friendly: it comes from a lead, not a robot deadline. */
+/** The nudge for one step, in the member's language. Short and friendly: it comes from a lead, not a robot deadline. */
 function nudgeMessage(step: NudgeStep, l: Lan, u: User): Notice {
+  const t = makeT(localeOf(u));
   const url = `${appUrl}/lans/${l.id}`;
-  const by = (d: Date | null, what: string) => (d ? ` ${what} ${fmtDate(d)}.` : "");
+  const by = (d: Date | null, key: "nudge.answerBy" | "nudge.decideBy" | "nudge.buyBy") =>
+    d ? ` ${t(key, { date: fmtDate(d, t.locale) })}` : "";
+  const hi = t("mail.hi", { name: u.firstName || u.name });
   const attButtons = [
-    { type: 2, style: 3, label: "Coming", custom_id: `att:${l.id}:going` },
-    { type: 2, style: 2, label: "Unsure", custom_id: `att:${l.id}:maybe` },
-    { type: 2, style: 4, label: "Not coming", custom_id: `att:${l.id}:declined` },
+    { type: 2, style: 3, label: t("nudge.going"), custom_id: `att:${l.id}:going` },
+    { type: 2, style: 2, label: t("nudge.maybe"), custom_id: `att:${l.id}:maybe` },
+    { type: 2, style: 4, label: t("nudge.declined"), custom_id: `att:${l.id}:declined` },
   ];
-  const base = { kind: "reminder" as const, url };
+  const base = { kind: "reminder" as const, url, locale: t.locale };
   switch (step) {
     case "interest":
       return {
         ...base,
-        subject: `${l.name}: would you come?`,
-        text: `Hi ${u.name},\n\nthe leads are checking who'd come to ${l.name}. It's not binding, it just helps them decide. Yes, maybe or no?\n\n${url}`,
+        subject: t("nudge.interest", { lan: l.name }),
+        text: `${hi}\n\n${t("nudge.interestText", { lan: l.name })}\n\n${url}`,
         buttons: [
-          { type: 2, style: 3, label: "Yes", custom_id: `int:${l.id}:yes` },
-          { type: 2, style: 2, label: "Maybe", custom_id: `int:${l.id}:maybe` },
-          { type: 2, style: 4, label: "No", custom_id: `int:${l.id}:no` },
+          { type: 2, style: 3, label: t("nudge.yes"), custom_id: `int:${l.id}:yes` },
+          { type: 2, style: 2, label: t("nudge.maybeShort"), custom_id: `int:${l.id}:maybe` },
+          { type: 2, style: 4, label: t("nudge.no"), custom_id: `int:${l.id}:no` },
         ],
       };
     case "answer":
       return {
         ...base,
-        subject: `${l.name}: are you coming?`,
-        text: `Hi ${u.name},\n\nthe leads are still waiting for your answer for ${l.name}. Coming, unsure or not coming?${by(l.signupDeadline, "Please answer by")}\n\n${url}`,
+        subject: t("nudge.answer", { lan: l.name }),
+        text: `${hi}\n\n${t("nudge.answerText", { lan: l.name })}${by(l.signupDeadline, "nudge.answerBy")}\n\n${url}`,
         buttons: attButtons,
       };
     case "unsure":
       return {
         ...base,
-        subject: `${l.name}: still unsure?`,
-        text: `Hi ${u.name},\n\nyou said you're unsure about ${l.name}. Do you know yet? The leads need a yes or no to plan tickets and seats.${by(l.signupDeadline, "Please decide by")}\n\n${url}`,
+        subject: t("nudge.unsure", { lan: l.name }),
+        text: `${hi}\n\n${t("nudge.unsureText", { lan: l.name })}${by(l.signupDeadline, "nudge.decideBy")}\n\n${url}`,
         buttons: attButtons,
       };
     case "ticket":
       return {
         ...base,
-        subject: `${l.name}: get your ticket`,
-        text: `Hi ${u.name},\n\nyou're coming to ${l.name}, but you haven't got your ticket yet.${l.ticketUrl ? ` Buy it here: ${l.ticketUrl}.` : ""}${by(l.paymentDueDate, "Please buy it by")} Then tick "I have my ticket" in Seatbit.\n\n${url}`,
-        buttons: l.ticketUrl ? [{ type: 2, style: 5, label: "Buy ticket", url: l.ticketUrl }] : undefined,
+        subject: t("nudge.ticket", { lan: l.name }),
+        text: `${hi}\n\n${t("nudge.ticketText", { lan: l.name })}${l.ticketUrl ? ` ${t("nudge.buyHere", { url: l.ticketUrl })}` : ""}${by(l.paymentDueDate, "nudge.buyBy")} ${t("nudge.tickIt")}\n\n${url}`,
+        buttons: l.ticketUrl ? [{ type: 2, style: 5, label: t("nudge.buyTicket"), url: l.ticketUrl }] : undefined,
       };
     case "nick":
       return {
         ...base,
-        subject: `${l.name}: what's your nick?`,
-        text: `Hi ${u.name},\n\nplease add the nickname you want on the seat plan for ${l.name}.\n\n${url}`,
+        subject: t("nudge.nick", { lan: l.name }),
+        text: `${hi}\n\n${t("nudge.nickText", { lan: l.name })}\n\n${url}`,
       };
     case "seat":
       return {
         ...base,
         url: `${url}?tab=seats`,
-        subject: `${l.name}: pick your seat`,
-        text: `Hi ${u.name},\n\nyou can pick your own seat for ${l.name} until the leads finalize the plan. Take a free one on the Seats tab.\n\n${url}?tab=seats`,
+        subject: t("nudge.seat", { lan: l.name }),
+        text: `${hi}\n\n${t("nudge.seatText", { lan: l.name })}\n\n${url}?tab=seats`,
       };
   }
 }

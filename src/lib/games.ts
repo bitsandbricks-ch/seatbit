@@ -3,6 +3,8 @@ import { db, schema } from "@/db";
 import type { Lan, User } from "@/db/schema";
 import { appUrl } from "./mail";
 import { notify } from "./notify";
+import { makeT } from "../i18n/translate";
+import { localeOf } from "../i18n/user-locale";
 
 const { game, gameVote, attendance, user, reminderLog } = schema;
 const DAY = 24 * 60 * 60 * 1000;
@@ -59,6 +61,7 @@ export function gamesReminderDue(l: Lan, now = new Date()) {
 
 /** The reminder text for one member: every top game, marking the ones they already installed. */
 function gamesText(l: Lan, u: User) {
+  const t = makeT(localeOf(u));
   const games = reminderGames(l.id);
   const done = new Set(
     db
@@ -72,11 +75,12 @@ function gamesText(l: Lan, u: User) {
   if (open.length === 0) return null;
   const total = open.reduce((n, g) => n + (g.sizeGb ?? 0), 0);
   const lines = games.map(
-    (g) => `${done.has(g.id) ? "✓" : "•"} ${g.name}${g.sizeGb ? ` (${g.sizeGb} GB)` : ""} · ${g.votes} vote(s)`,
+    (g) => `${done.has(g.id) ? "✓" : "•"} ${g.name}${g.sizeGb ? ` (${g.sizeGb} GB)` : ""} · ${t("notice.votes", { count: g.votes })}`,
   );
   return {
-    subject: `${l.name}: install your games before you leave`,
-    text: `Hi ${u.name},\n\n${l.name} starts soon. Install and update these games at home, so the LAN network isn't busy with downloads:\n\n${lines.join("\n")}\n\n${total ? `Still to download: about ${total} GB. ` : ""}Tick off what you installed: ${appUrl}/lans/${l.id}?tab=games`,
+    locale: t.locale,
+    subject: t("notice.games", { lan: l.name }),
+    text: `${t("mail.hi", { name: u.firstName || u.name })}\n\n${t("notice.gamesText", { lan: l.name })}\n\n${lines.join("\n")}\n\n${total ? `${t("notice.gamesTotal", { gb: total })} ` : ""}${t("notice.gamesTick", { url: `${appUrl}/lans/${l.id}?tab=games` })}`,
   };
 }
 

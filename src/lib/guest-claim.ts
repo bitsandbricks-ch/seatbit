@@ -7,6 +7,8 @@ import { clanRole, getClan } from "./clans";
 import { isMemberRole } from "./clan-roles";
 import { getDefaultNames } from "./lans";
 import { fmtDate, fmtDay } from "./format";
+import { clanLocale } from "../i18n/user-locale";
+import { makeT, type T } from "../i18n/translate";
 import { moveLanAccounts } from "./lan-accounts";
 import { appUrl } from "./mail";
 import { sendTemplate } from "./mail-templates";
@@ -85,12 +87,12 @@ export function mergeGuestInto(g: User, meId: string) {
       const me = db.select().from(schema.user).where(eq(schema.user.id, meId)).get();
       const c = db.select().from(schema.clan).where(eq(schema.clan.id, clanId)).get();
       if (!me || !c) return;
-      await notifyClanAdmins(clanId, {
+      await notifyClanAdmins(clanId, (t) => ({
         kind: "guest_claimed",
-        subject: `${g.name} claimed their guest profile`,
-        text: `${g.name} signed up and took over their guest profile in ${c.name}. They're now ${me.name}, with their events, seat and nick.`,
+        subject: t("notice.guestClaimed", { guest: g.name }),
+        text: t("notice.guestClaimedText", { guest: g.name, clan: c.name, name: me.name }),
         url: `${appUrl}/clans/${c.slug}/settings?tab=members`,
-      });
+      }));
     });
   }
 }
@@ -142,13 +144,20 @@ export async function sendGuestInvite(guestId: string, inviter: string) {
         .orderBy(asc(schema.lan.startsAt))
         .all()
     : [];
-  await sendTemplate(g.inviteEmail, "guestInvite", {
-    firstName: g.firstName || g.name,
-    clan: clan?.name ?? "your clan",
-    inviter,
-    events: lans.map((l) => `${l.name} (${fmtDay(l.startsAt)})`).join(", "),
-    link: `${appUrl}/claim/${g.claimCode}`,
-  });
+  // Guests have no profile yet: the clan's language decides.
+  const loc = clanLocale(clan);
+  await sendTemplate(
+    g.inviteEmail,
+    "guestInvite",
+    {
+      firstName: g.firstName || g.name,
+      clan: clan?.name ?? makeT(loc)("mail.yourClan"),
+      inviter,
+      events: lans.map((l) => `${l.name} (${fmtDay(l.startsAt)})`).join(", "),
+      link: `${appUrl}/claim/${g.claimCode}`,
+    },
+    loc,
+  );
   db.update(schema.user).set({ invitedAt: new Date() }).where(eq(schema.user.id, g.id)).run();
   return true;
 }
@@ -308,14 +317,14 @@ export function claimOrRequestGuest(c: Clan, s: Pick<GuestSuggestion, "guest" | 
   audit({ actorId: me.id, action: "guest.claim_request", clanId: c.id, targetUserId: me.id, data: { guest: g.name, match: s.match, via } });
   const who = getDefaultNames([me.id]).get(me.id)?.full ?? me.name;
   notifyLater(() =>
-    notifyClanAdmins(c.id, {
+    notifyClanAdmins(c.id, (t) => ({
       kind: "guest_claim_request",
-      subject: `${who} says they're ${g.name}`,
-      text: `${who} asked to take over the guest ${g.name} in ${c.name}${s.match ? ` (same ${s.match})` : ""}${
-        via === "discord" ? " from Discord" : ""
-      }. Check it's really them, then approve or decline it in the clan's member list.`,
+      subject: t("notice.claimRequest", { name: who, guest: g.name }),
+      text: `${t("notice.claimRequestText", { name: who, guest: g.name, clan: c.name })}${s.match ? ` ${t(s.match === "nick" ? "notice.sameNick" : "notice.sameName")}` : ""}${
+        via === "discord" ? ` ${t("notice.fromDiscord")}` : ""
+      }. ${t("notice.claimRequestHow")}`,
       url: `${appUrl}/clans/${c.slug}/settings?tab=members`,
-    }),
+    })),
   );
   return "requested" as const;
 }
@@ -397,13 +406,16 @@ export function discordTicketState(token: string, me: User) {
 }
 
 /** What the guest page says about the Discord member a lead linked the guest to. */
-export function guestDiscordLines(g: User): string[] {
-  if (!g.guestDiscordId) return ["Not linked to a Discord member."];
+export function guestDiscordLines(g: User, t: T = makeT("en")): string[] {
+  if (!g.guestDiscordId) return [t("guestDiscord.notLinked")];
   const by = g.guestDiscordLinkedBy ? getDefaultNames([g.guestDiscordLinkedBy]).get(g.guestDiscordLinkedBy)?.full : undefined;
+  const loc = t.locale;
   return [
-    `Linked to ${g.guestDiscordName ?? "a Discord member"}`,
-    g.guestDiscordLinkedAt ? `Linked ${fmtDate(g.guestDiscordLinkedAt)}${by ? ` by ${by}` : ""}` : "",
-    g.guestDiscordDmAt ? `Claim link DMed ${fmtDate(g.guestDiscordDmAt)}` : "The bot couldn't DM them the claim link yet",
-    "Their first sign-in with that Discord account takes the guest over.",
+    t("guestDiscord.linkedTo", { name: g.guestDiscordName ?? t("guestDiscord.aMember") }),
+    g.guestDiscordLinkedAt
+      ? t(by ? "guestDiscord.linkedAtBy" : "guestDiscord.linkedAt", { date: fmtDate(g.guestDiscordLinkedAt, loc), by })
+      : "",
+    g.guestDiscordDmAt ? t("guestDiscord.dmed", { date: fmtDate(g.guestDiscordDmAt, loc) }) : t("guestDiscord.noDm"),
+    t("guestDiscord.takesOver"),
   ].filter(Boolean);
 }

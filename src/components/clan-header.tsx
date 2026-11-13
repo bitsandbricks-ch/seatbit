@@ -3,7 +3,8 @@ import { and, eq, gt } from "drizzle-orm";
 import type { ReactNode } from "react";
 import { db, schema } from "@/db";
 import type { Clan, ClanRole } from "@/db/schema";
-import { MANAGE_TAB_PERMS, isMemberRole, roleWithArticle, type ClanPermission } from "@/lib/clan-roles";
+import { MANAGE_TAB_PERMS, isMemberRole, type ClanPermission } from "@/lib/clan-roles";
+import { getT } from "@/i18n/server";
 import { joinClan } from "@/app/clan-actions";
 import { isSupporter } from "@/lib/billing";
 import { ClanAvatar } from "./clan-avatar";
@@ -17,7 +18,6 @@ export const CLAN_MANAGE_TABS = ["general", "members", "guests", "types", "invit
 export type ClanViewTab = (typeof CLAN_VIEW_TABS)[number];
 export type ClanManageTab = (typeof CLAN_MANAGE_TABS)[number];
 
-const joinPolicyText = { open: "Open to join", approval: "Join on request", invite: "Invite only" } as const;
 
 /** Where a tab lives: stats has its own page, the rest are ?tab= on the clan or settings page. */
 export function clanTabHref(slug: string, mode: "view" | "manage", tab: string) {
@@ -35,7 +35,7 @@ export function manageTabsFor(perms: Set<ClanPermission>) {
  * and recruiters get the View / Manage switch (like on events), with the manage tabs their role allows.
  * Switching keeps you on Members if you're there.
  */
-export function ClanHeader({
+export async function ClanHeader({
   clan: c,
   role,
   perms,
@@ -49,6 +49,7 @@ export function ClanHeader({
   mode: "view" | "manage";
   tab: string;
 }) {
+  const t = await getT();
   const manageTabs = manageTabsFor(perms);
   const canManage = manageTabs.length > 0;
   const seesDrafts = perms.has("events");
@@ -90,23 +91,28 @@ export function ClanHeader({
             .filter((l) => seesDrafts || l.publishedAt).length
         : 0;
     tabs = [
-      { id: "overview", label: "Overview" },
-      ...(isMember || canManage ? [{ id: "events", label: "Events", count: upcoming || undefined }] : []),
-      { id: "members", label: "Members", count: active.length },
-      ...(perms.has("stats") ? [{ id: "stats", label: "Stats" }] : []),
+      { id: "overview", label: t("event.tabs.overview") },
+      ...(isMember || canManage ? [{ id: "events", label: t("clanHeader.events"), count: upcoming || undefined }] : []),
+      { id: "members", label: t("clanPage.members"), count: active.length },
+      ...(perms.has("stats") ? [{ id: "stats", label: t("clanHeader.stats") }] : []),
     ];
   } else {
     const types = db.select({ id: schema.lanType.id }).from(schema.lanType).where(eq(schema.lanType.clanId, c.id)).all().length;
     const all: Record<ClanManageTab, Tab> = {
-      general: { id: "general", label: "General" },
-      members: { id: "members", label: "Members", count: active.length - guests, badge: pending ? `${pending} waiting` : undefined },
-      guests: { id: "guests", label: "Guests", count: guests },
-      types: { id: "types", label: "LAN types", count: types },
-      invites: { id: "invites", label: "Invite links" },
-      chat: { id: "chat", label: "Discord & WhatsApp" },
-      log: { id: "log", label: "Audit log" },
+      general: { id: "general", label: t("clanHeader.general") },
+      members: {
+        id: "members",
+        label: t("clanPage.members"),
+        count: active.length - guests,
+        badge: pending ? t("clanPage.links.waiting", { count: pending }) : undefined,
+      },
+      guests: { id: "guests", label: t("clanPage.links.guests"), count: guests },
+      types: { id: "types", label: t("clanPage.links.types"), count: types },
+      invites: { id: "invites", label: t("clanPage.links.invites") },
+      chat: { id: "chat", label: t("manage.tabs.chat") },
+      log: { id: "log", label: t("clanHeader.log") },
     };
-    tabs = manageTabs.map((t) => all[t]);
+    tabs = manageTabs.map((x) => all[x]);
   }
 
   let actions: ReactNode = null;
@@ -115,7 +121,7 @@ export function ClanHeader({
       <>
         {mode === "view" && perms.has("events") && (
           <Link href={`/clans/${c.slug}/lans/new`} className={btnPrimary}>
-            <span aria-hidden>+</span> New event
+            <span aria-hidden>+</span> {t("home.newEvent")}
           </Link>
         )}
         <ViewManageSwitch
@@ -129,11 +135,11 @@ export function ClanHeader({
   } else if (!role && c.joinPolicy !== "invite") {
     actions = (
       <form action={joinClan.bind(null, c.id)}>
-        <button className={btnPrimary}>{c.joinPolicy === "open" ? "Join" : "Ask to join"}</button>
+        <button className={btnPrimary}>{c.joinPolicy === "open" ? t("clans.join") : t("clans.askToJoin")}</button>
       </form>
     );
   } else if (role === "pending") {
-    actions = <Pill tone="amber">Waiting for approval</Pill>;
+    actions = <Pill tone="amber">{t("clanPage.waitingApproval")}</Pill>;
   }
 
   return (
@@ -142,20 +148,20 @@ export function ClanHeader({
         avatar={<ClanAvatar clan={c} size={56} />}
         eyebrow={
           <Link href="/clans" className="hover:text-fg">
-            Clan
+            {t("clanHeader.clan")}
           </Link>
         }
         title={c.name}
         subtitle={
           <>
-            {active.length} {active.length === 1 ? "member" : "members"}
-            <span className="text-faint"> · {joinPolicyText[c.joinPolicy]}</span>
+            {t("common.members", { count: active.length })}
+            <span className="text-faint"> · {t(`clanHeader.policy.${c.joinPolicy}`)}</span>
             {isMemberRole(role) && role !== "member" && (
-              <span className="text-faint"> · you&apos;re {roleWithArticle(role)}</span>
+              <span className="text-faint"> · {t("clanHeader.youAre", { role: t(`roleA.${role}`) })}</span>
             )}
             {isSupporter(c) && (
               <span className="ml-2 align-middle">
-                <SupporterBadge />
+                <SupporterBadge title={t("support.badge")} />
               </span>
             )}
           </>
@@ -165,8 +171,8 @@ export function ClanHeader({
       <Tabs
         tabs={tabs}
         active={tab}
-        hrefFor={(t) => clanTabHref(c.slug, mode, t)}
-        label={mode === "view" ? "Clan sections" : "Clan settings"}
+        hrefFor={(x) => clanTabHref(c.slug, mode, x)}
+        label={mode === "view" ? t("clanHeader.sections") : t("clanPage.links.general")}
       />
     </>
   );

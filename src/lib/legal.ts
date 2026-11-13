@@ -31,4 +31,4 @@ export function getLegal() {
 export type Legal = ReturnType<typeof getLegal>;
 
 /** Date of the current version of the built-in Terms of Service and Privacy Policy texts. */
-export const LEGAL_LAST_UPDATED = "12 November 2026";
+export const LEGAL_LAST_UPDATED = new Date(2026, 10, 13);

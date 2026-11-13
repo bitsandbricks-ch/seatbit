@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { inArray } from "drizzle-orm";
 import { db, schema } from "@/db";
-import { IMAGE_TYPES, uploadsDir } from "./clans";
+import { IMAGE_TYPES, imageError, uploadsDir } from "./clans";
 
 /**
  * Personal colours members pick from. Bright enough for the dark theme and
@@ -83,8 +83,8 @@ export function avatarMap(users: AvatarUser[]) {
 /** Stores an uploaded profile picture and returns its file name. */
 export async function saveUserAvatar(userId: string, file: File) {
   const ext = IMAGE_TYPES[file.type];
-  if (!ext) throw new Error("Use a PNG, JPG, WebP or GIF image.");
-  if (file.size > 2 * 1024 * 1024) throw new Error("The image must be smaller than 2 MB.");
+  if (!ext) throw await imageError("errors.imageType");
+  if (file.size > 2 * 1024 * 1024) throw await imageError("errors.imageSize");
   fs.mkdirSync(uploadsDir, { recursive: true });
   const name = `user-${userId}-${Date.now()}.${ext}`;
   fs.writeFileSync(path.join(uploadsDir, name), Buffer.from(await file.arrayBuffer()));
