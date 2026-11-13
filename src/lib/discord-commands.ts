@@ -30,8 +30,8 @@ import { ATTENDANCE_LOCKED_MSG, attendanceLocked, getDisplayNames, getLan, getNa
 import { appUrl } from "./mail";
 import { saveNick, saveSeatWishes, saveTicketBought } from "./member-updates";
 import { nameMatches } from "./names";
+import { listGames } from "./games";
 import { type Notice, sendDiscordDm } from "./notify";
-import { bookedButton } from "./seat-booking";
 
 const { attendance, lanInterest, lanType, nickname, seat } = schema;
 
@@ -387,7 +387,7 @@ async function statusCard(l: Lan, me: User) {
   const nicks = db.select().from(nickname).where(eq(nickname.userId, me.id)).all();
   const hasNick = nicks.some((n) => (n.lanId === null && n.typeId === null) || n.lanId === l.id || (!!l.typeId && n.typeId === l.typeId));
   // Lead assignments stay private until the plan is final; a self-picked seat shows while picking is on.
-  const showSeat = !!l.seatsPublishedAt || (l.seatPicking && !l.seatsPublishedAt);
+  const showSeat = !!l.seatsPublishedAt || l.seatPicking;
   const mySeat = showSeat ? (seats.find((s) => s.userId === me.id)?.label ?? null) : null;
   const nick = (await getNames(l.id, [me.id])).get(me.id)?.nick;
   const lines: string[] = [];
@@ -403,6 +403,10 @@ async function statusCard(l: Lan, me: User) {
       hasSeatPlan: seats.length > 0,
       freeSeats: seats.filter((s) => !s.userId && !s.locked).length,
       waitlistPlace: a?.status === "waitlist" ? waitlistPositions(l.id).get(me.id) : undefined,
+      games: (() => {
+        const voted = listGames(l.id, me.id).filter((g) => g.votes > 0);
+        return { voted: voted.length, toInstall: voted.filter((g) => !g.myInstalled).length };
+      })(),
     });
     if (!a) lines.push("⬜ **No answer yet**: `/coming`, `/unsure` or `/not-coming`");
     else if (a.status !== "going")
@@ -411,7 +415,7 @@ async function statusCard(l: Lan, me: User) {
     for (const s of a?.status === "declined" ? [] : steps) {
       if (s.key === "going" && a?.status !== "going") continue;
       const hint = s.key === "nick" && hasNick && nick ? `**${nick}**` : s.hint;
-      lines.push(`${STEP_ICON[s.state]} ${s.title}: ${hint}`);
+      lines.push(`${STEP_ICON[s.state]} ${s.title}${s.optional && s.state !== "done" ? " (optional)" : ""}: ${hint}`);
     }
     if (a && a.status !== "declined" && !l.seatsPublishedAt) {
       const wishes = await wishSummary(l, a);
@@ -440,16 +444,12 @@ async function statusCommand(i: Interaction): Promise<Json> {
   if (picked) {
     const denied = notMember(me, picked);
     if (denied) return denied;
-    const { card, attendance: a, mySeat } = await statusCard(picked, me);
+    const { card, attendance: a } = await statusCard(picked, me);
     const buttons: Json[] = [];
     if (!signupClosed(picked) && !attendanceLocked(a) && !picked.interestCheck && a?.status !== "going" && a?.status !== "waitlist")
       buttons.push({ type: 2, style: 3, label: "Coming", custom_id: `att:${picked.id}:going` });
     if (a && !a.paid && !a.ticketBought && (a.status === "going" || a.status === "waitlist"))
       buttons.push({ type: 2, style: 3, label: "I have my ticket", custom_id: `ticket:${picked.id}` });
-    if (picked.externalPlanUrl && picked.seatsPublishedAt && mySeat && a?.status === "going" && !a.seatBooked) {
-      buttons.push(bookedButton(picked.id));
-      buttons.push({ type: 2, style: 5, label: "Event seat plan", url: picked.externalPlanUrl });
-    }
     buttons.push(openButton(picked));
     return { type: 4, data: { flags: EPHEMERAL, embeds: [card], components: [{ type: 1, components: buttons }], allowed_mentions: { parse: [] } } };
   }

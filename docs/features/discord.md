@@ -23,7 +23,7 @@ A Discord server belongs to one clan.
 | **Announcements** | Each published event is posted with **Coming / Unsure / Not coming** buttons. The attendee list on the post updates live, also for answers on the website, and shows tickets, seat bookings and the next deadline. Pinned if the bot has *Pin Messages*. Turns red when the event is cancelled. |
 | **Reminders** | Answer, ticket and "starts soon" reminders as cards with the deadline, the ticket link and who's still open, pinging the members they apply to. |
 | **News** | With a thread or a channel per event (see below), lead news is posted there too. |
-| **DMs** | When something changes for a member (their seat, the final plan, moving up from the waitlist, reminders, nudges), with buttons like *I booked it*. Answering on Discord (buttons or `/coming`, `/unsure`, `/not-coming`) also sends a confirmation DM with the date, place and next step, since the reply in the channel is only visible for a while. Members can turn DMs off on their profile. |
+| **DMs** | When something changes for a member (their seat, the final plan, moving up from the waitlist, reminders, nudges), with buttons like *I have my ticket*. Answering on Discord (buttons or `/coming`, `/unsure`, `/not-coming`) also sends a confirmation DM with the date, place and next step, since the reply in the channel is only visible for a while. Members can turn DMs off on their profile. |
 | **Join requests** | Admins and recruiters get a DM when someone asks to join or claims a guest. |
 | **Server invite** | Members who aren't on the server see **Join our Discord** on the clan page. The bot creates the invite if it has *Create Invite*; otherwise paste your own invite link in the clan settings. |
 
@@ -48,7 +48,7 @@ Members can do the everyday things straight from Discord, in the clan's server o
 | Command | What it does |
 | --- | --- |
 | `/coming`, `/unsure`, `/not-coming` | Answer for an event. During an interest check, this answers *Would you come?* instead. If several events are open, the bot asks which one with a button each, or pick one with `event:`. |
-| `/status` | Your next events with your answer, nick, ticket, seat, seat wishes and the next deadline, the same checklist as on the event page. `/status event:<name>` shows one event with buttons like **I have my ticket** and **I booked it**. |
+| `/status` | Your next events with your answer and the same checklist as on the event page (nick, ticket, seat pick or wishes, seat confirmed by the leads, games), your seat wishes and the next deadline. `/status event:<name>` shows one event with buttons like **Coming** and **I have my ticket**. |
 | `/ticket` | Tick off that you bought your ticket. `bought:False` takes it back until a lead confirmed it. |
 | `/nick nick:<nick>` | Your default nick. With `event:` it's your nick for that event's LAN type (or that one event, if it has no type). |
 | `/wish` | Shows your seat wishes. Change them with `near:` and `avoid:` (one person each time, suggested from the people who answered), `position:` (anywhere, edge, middle), `seat:` and `note:`. `clear:True` starts over. Closes when the seat plan is final. |

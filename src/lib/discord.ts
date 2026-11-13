@@ -9,7 +9,6 @@ import { getDisplayNames, getLan, signupClosed } from "./lans";
 import { type Json, api, discordEnabled } from "./discord-api";
 import type { DiscordMode } from "./discord-modes";
 import { getSetting } from "./settings";
-import { setSeatBooked } from "./seat-booking";
 import { appUrl } from "./mail";
 import { audit } from "./audit";
 import { claimableGuests, claimOrRequestGuest, discordClaimTicket, guestSuggestions, mergeGuestInto } from "./guest-claim";
@@ -597,22 +596,15 @@ export function handleInteraction(i: Interaction): Handled {
     return { response: { type: 8, data: { choices } } };
   }
 
-  // "I booked it" button in seat DMs: the member booked their seat on the event's own seat plan.
+  // "I booked it" button in older seat DMs: the leads book seats on the event site now.
   if (i.type === 3 && i.data?.custom_id?.startsWith("booked:")) {
     const l = getLan(i.data.custom_id.slice("booked:".length));
     if (!l) return { response: reply("This LAN doesn't exist anymore.") };
-    const me = seatbitUserFor(discordUser);
-    if (!me) return { response: notLinked() };
-    try {
-      const label = setSeatBooked(l.id, me.id, true);
-      return {
-        response: reply(`👍 Noted: you booked seat **${label}** for **${l.name}**. Thanks!`, {
-          components: [linkButton("Open in Seatbit", lanLink(l))],
-        }),
-      };
-    } catch (e) {
-      return { response: reply((e as Error).message, { components: [linkButton("Open in Seatbit", lanLink(l))] }) };
-    }
+    return {
+      response: reply(`No need: the leads book your seat for **${l.name}** on the event site.`, {
+        components: [linkButton("Open in Seatbit", lanLink(l))],
+      }),
+    };
   }
 
   // Interest check and attendance buttons (announcements, reminders, /lans, /coming)

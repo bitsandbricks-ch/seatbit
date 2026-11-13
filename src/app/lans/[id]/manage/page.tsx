@@ -27,7 +27,9 @@ import { clanCan, getClan } from "@/lib/clans";
 import { SeatFlow } from "@/components/seat-flow";
 import { checkWishes } from "@/lib/seating";
 import { getLanAccounts } from "@/lib/lan-accounts";
-import { RemindToBookButton } from "@/components/seat-booking";
+import { LeadBookingList } from "@/components/seat-booking";
+import { LeadChecklist } from "@/components/lead-checklist";
+import { buildLeadChecklist } from "@/lib/lead-checklist";
 import { SeatSwapApprovals, type SwapView } from "@/components/seat-swaps";
 import { WhoIsMissing, type MissingGroupView } from "@/components/who-is-missing";
 import { MISSING_STEPS, NUDGE_COOLDOWN_MS, whoIsMissing, type MissingStep } from "@/lib/missing";
@@ -185,6 +187,17 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
       note: s.note,
     }));
   const swapsToApprove = swaps.filter((s) => s.status === "accepted").length;
+  const leadSteps = buildLeadChecklist({
+    lan: l,
+    going: going.length,
+    ticketsToConfirm: ticketsReported,
+    ticketsConfirmed,
+    seats: seats.length,
+    seated,
+    booked: bookedCount,
+    spotsToFill: spotToFill ? Math.min(free ?? 0, waitlist.length) : 0,
+    swapsToApprove,
+  });
   const news = db
     .select()
     .from(schema.lanNews)
@@ -202,6 +215,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
   const fixes: Partial<Record<MissingStep, MissingGroupView["fix"]>> = {
     confirm: { href: `/lans/${l.id}/manage?tab=attendees`, label: "Confirm on the Attendees tab" },
     assign: { href: `/lans/${l.id}/manage?tab=seats`, label: "Assign on the Seats tab" },
+    book: { href: `/lans/${l.id}/manage?tab=seats#booking`, label: "Book on the Seats tab" },
   };
   const hints: Record<MissingStep, string> = {
     interest: "Haven't said if they'd come. The nudge asks yes, maybe or no (with buttons in the DM).",
@@ -210,7 +224,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
     ticket: "Coming, but haven't ticked that they have a ticket. The nudge links the ticket shop and the deadline.",
     nick: "Coming without a nickname for the seat plan.",
     seat: "Self pick is on and they have a ticket, but no seat yet.",
-    book: "Have a seat here but haven't ticked that they booked it on the event's seat plan.",
+    book: "Have a final seat, but no lead ticked it as booked on the event's seat plan yet.",
     confirm: "Said they bought a ticket. Check it and confirm it.",
     assign: "Coming, but without a seat in the group's block.",
   };
@@ -263,36 +277,38 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
             <Card title="Seat swaps" actions={swapsToApprove > 0 && <Pill tone="amber">{swapsToApprove} to approve</Pill>}>
               <p className="mb-3 text-sm text-muted">
                 Members asked each other to swap. Approving swaps the two seats and tells both.
-                {l.externalPlanUrl && " They then need to rebook on the event site."}
+                {l.externalPlanUrl && " Then rebook both seats on the event site."}
               </p>
               <SeatSwapApprovals swaps={swaps} />
             </Card>
           )}
           {seats.length > 0 && l.seatsPublishedAt && (
             <Card
+              id="booking"
               title="Booking on the event site"
               actions={l.externalPlanUrl ? <Pill tone={bookedCount === seatedGoing.length ? "emerald" : "amber"}>{bookedCount} / {seatedGoing.length} booked</Pill> : undefined}
             >
               {l.externalPlanUrl ? (
                 <div className="space-y-3 text-sm">
                   <p className="text-muted">
-                    Everyone books their seat on the{" "}
+                    Book each seat on the{" "}
                     <a href={l.externalPlanUrl} target="_blank" rel="noreferrer" className="text-bit hover:underline">
                       event&apos;s seat plan
                     </a>{" "}
-                    themselves and ticks &ldquo;I booked it&rdquo; (on the event page or in the Discord DM). A new seat
-                    clears the tick.
+                    and tick it off here. Members see it in their checklist. A new seat clears the tick.
                   </p>
-                  {seatedGoing.length > bookedCount && (
-                    <p>
-                      <span className="text-faint">Not booked yet: </span>
-                      {seatedGoing
-                        .filter((r) => !r.seatBooked)
-                        .map((r) => `${names.get(r.userId) ?? "?"} (${seatOf.get(r.userId)})`)
-                        .join(", ")}
-                    </p>
-                  )}
-                  <RemindToBookButton lanId={l.id} open={seatedGoing.length - bookedCount} />
+                  <LeadBookingList
+                    lanId={l.id}
+                    rows={seatedGoing
+                      .map((r) => ({
+                        userId: r.userId,
+                        name: names.get(r.userId) ?? "?",
+                        seat: seatOf.get(r.userId) ?? "",
+                        lanAccount: lanIds.get(r.userId) || undefined,
+                        booked: r.seatBooked,
+                      }))
+                      .sort((x, y) => x.seat.localeCompare(y.seat, undefined, { numeric: true }))}
+                  />
                 </div>
               ) : (
                 <p className="text-sm text-muted">
@@ -399,6 +415,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
             </Card>
           </div>
           <div className="min-w-0 space-y-4 sm:space-y-6 lg:col-start-1 lg:row-start-1">
+          <LeadChecklist steps={leadSteps} />
           {spotToFill && (
             <Notice tone="warn">
               {free === 1 ? "A spot is" : `${free} spots are`} free and {waitlist.length} on the waitlist. You move people up

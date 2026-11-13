@@ -14,7 +14,7 @@ export type LanFormValues = {
   location: string;
   websiteUrl: string;
   ticketUrl: string;
-  /** The event's own seat plan, where members book their seat. Optional (older callers leave it out). */
+  /** The event's own seat plan, where the leads book the seats. Optional (older callers leave it out). */
   externalPlanUrl?: string;
   /** Profile link pattern with {id}; empty = the LAN type's. */
   profileUrl?: string;
@@ -157,7 +157,7 @@ export function LanForm({ values, types }: { values: LanFormValues; types: TypeO
         </Field>
         <Field
           label="Event seat plan"
-          hint="Where members book their seat on the event's own site (e.g. the lal.gg Sitzplan). The link changes every year, so set it per event."
+          hint="Where the leads book the group's seats on the event's own site (e.g. the lal.gg Sitzplan). The link changes every year, so set it per event."
         >
           <Input type="url" name="externalPlanUrl" defaultValue={values.externalPlanUrl ?? ""} placeholder="https://" />
         </Field>

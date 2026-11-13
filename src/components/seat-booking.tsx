@@ -1,62 +1,49 @@
 "use client";
 import { useState, useTransition } from "react";
-import { adminRemindToBook, setMySeatBooked } from "@/app/lan-extras-actions";
-import { btnSecondary } from "./ui";
+import { adminSetSeatBooked } from "@/app/lan-extras-actions";
 
-/** "I booked it on the event's seat plan" checkbox, with a link to that plan. */
-export function BookedToggle({ lanId, booked, planUrl }: { lanId: string; booked: boolean; planUrl: string }) {
+export type BookingRow = { userId: string; name: string; seat: string; lanAccount?: string; booked: boolean };
+
+/** The leads' list for booking everyone's seat on the event's own seat plan, one tick per person. */
+export function LeadBookingList({ lanId, rows }: { lanId: string; rows: BookingRow[] }) {
+  return (
+    <ul className="divide-y divide-line">
+      {rows.map((r) => (
+        <BookingItem key={r.userId} lanId={lanId} row={r} />
+      ))}
+    </ul>
+  );
+}
+
+function BookingItem({ lanId, row }: { lanId: string; row: BookingRow }) {
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   return (
-    <div className="space-y-2">
-      <a href={planUrl} target="_blank" rel="noreferrer" className="inline-flex text-sm text-bit hover:underline">
-        Open the event&apos;s seat plan <span aria-hidden>↗</span>
-      </a>
-      <label className="flex items-center gap-3 rounded-md border border-line bg-raised px-3 py-2.5 text-sm">
+    <li className="py-2">
+      <label className="flex min-h-11 items-center gap-3 text-sm">
         <input
           type="checkbox"
-          key={String(booked)}
-          defaultChecked={booked}
+          key={String(row.booked)}
+          defaultChecked={row.booked}
           disabled={pending}
           onChange={(e) => {
             const v = e.target.checked;
             start(async () => {
               setError(null);
               try {
-                await setMySeatBooked(lanId, v);
+                await adminSetSeatBooked(lanId, row.userId, v);
               } catch (err) {
                 setError(err instanceof Error ? err.message : "Failed");
               }
             });
           }}
-          className="h-5 w-5 accent-bit"
+          className="h-5 w-5 shrink-0 accent-bit"
         />
-        <span>I booked it</span>
+        <span className="w-12 shrink-0 font-mono font-semibold text-fg">{row.seat}</span>
+        <span className="min-w-0 flex-1 truncate text-fg">{row.name}</span>
+        {row.lanAccount && <span className="shrink-0 font-mono text-xs text-muted">ID {row.lanAccount}</span>}
       </label>
       {error && <p className="text-sm text-danger">{error}</p>}
-    </div>
-  );
-}
-
-/** Lead button: DM/mail everyone who hasn't booked their seat on the event site yet. */
-export function RemindToBookButton({ lanId, open }: { lanId: string; open: number }) {
-  const [pending, start] = useTransition();
-  const [msg, setMsg] = useState<string | null>(null);
-  return (
-    <div className="flex flex-wrap items-center gap-3">
-      <button
-        disabled={pending || open === 0}
-        className={btnSecondary}
-        onClick={() =>
-          start(async () => {
-            const n = await adminRemindToBook(lanId);
-            setMsg(`Reminded ${n} member(s).`);
-          })
-        }
-      >
-        Remind {open} who haven&apos;t booked
-      </button>
-      {msg && <span className="text-sm text-bit">{msg}</span>}
-    </div>
+    </li>
   );
 }

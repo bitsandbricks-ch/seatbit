@@ -17,18 +17,21 @@ export const input =
 export const label = "mb-1.5 block text-xs font-medium uppercase tracking-wide text-muted";
 
 export function Card({
+  id,
   title,
   actions,
   children,
   className = "",
 }: {
+  /** Anchor for links into the card. */
+  id?: string;
   title?: ReactNode;
   actions?: ReactNode;
   children: ReactNode;
   className?: string;
 }) {
   return (
-    <section className={`min-w-0 rounded-card border border-line bg-surface p-4 sm:p-5 ${className}`}>
+    <section id={id} className={`min-w-0 scroll-mt-20 rounded-card border border-line bg-surface p-4 sm:p-5 ${className}`}>
       {(title || actions) && (
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2 sm:mb-4">
           {title && <h2 className="text-base font-semibold tracking-tight text-fg sm:text-lg">{title}</h2>}
