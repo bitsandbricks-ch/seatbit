@@ -39,7 +39,7 @@ export function ClanForm({
       </Field>
       <Field
         label="How are members shown?"
-        hint='Applies to event pages, the clan page and the Discord bot. Orgas and admins still see full names where they manage events and members. Without a nick of their own, people show as "Mike K.".'
+        hint='Applies to event pages, the clan page, the Discord bot and the orga views. Orgas still see the full name in small print where they manage events and members. Without a nick of their own, people show as "Mike K.".'
       >
         <select name="nameDisplay" defaultValue={clan?.nameDisplay ?? "full"} className={input}>
           {NAME_DISPLAYS.map((d) => (

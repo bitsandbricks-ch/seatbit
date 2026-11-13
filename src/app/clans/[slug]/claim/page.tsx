@@ -25,6 +25,7 @@ export default async function ClaimGuestPage({ params }: PageProps<"/clans/[slug
   if (me.isGuest || !isMemberRole(role) || c.guestClaims === "off") redirect(`/clans/${slug}`);
 
   const all = guestSuggestions(c.id, me.id);
+  // Full names whatever the clan shows: people are looking for their own real name here.
   const names = getDefaultNames(all.map((s) => s.guest.id));
   const roles = new Map(
     all.length

@@ -21,7 +21,10 @@ export type AttendanceRow = {
   id: string;
   userId: string;
   nick: string;
+  /** As the clan shows names. */
   name: string;
+  /** Name "Nick" Surname, shown small when the clan's display leaves part of it out. */
+  full: string;
   email: string;
   status: AttendanceStatus;
   paid: boolean;
@@ -100,7 +103,7 @@ export function AttendanceTable({
   const [q, setQ] = useState("");
   const visible = rows
     .filter((r) => (filter === "all" || r.status === filter) && needs[need].test(r))
-    .filter((r) => !q || matches(`${r.nick} ${r.name} ${r.email} ${r.lanAccount} ${r.seat ?? ""} ${r.note}`, q))
+    .filter((r) => !q || matches(`${r.nick} ${r.name} ${r.full} ${r.email} ${r.lanAccount} ${r.seat ?? ""} ${r.note}`, q))
     .sort(sorts[sort].cmp);
   const pager = usePager(visible, PAGE_SIZE);
   const narrowed = filter !== "all" || need !== "all" || q !== "";
@@ -226,6 +229,7 @@ export function AttendanceTable({
                   )}
                 </p>
                 <p className="truncate text-xs text-muted">
+                  {r.full !== r.name && `${r.full} · `}
                   {r.email}
                 </p>
               </div>
