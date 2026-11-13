@@ -362,6 +362,14 @@ export function describeAudit(
       return t("audit.chargeAmount", v);
     case "payment.remind":
       return t("audit.chargeRemind", v);
+    case "payment.stripe_connect":
+      return t("audit.stripeConnect");
+    case "payment.stripe_ready":
+      return t("audit.stripeReady");
+    case "payment.stripe_disconnect":
+      return t("audit.stripeDisconnect");
+    case "payment.refund":
+      return t("audit.chargeRefund", v);
     case "payment.report":
       return t("audit.chargeReport", v);
     case "payment.mark":

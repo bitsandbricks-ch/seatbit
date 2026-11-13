@@ -177,6 +177,10 @@ export const clan = sqliteTable("clan", {
   /** Suspended by platform staff: hidden from members, no joining, the bot stays quiet. */
   suspendedAt: integer("suspended_at", { mode: "timestamp_ms" }),
   suspendedReason: text("suspended_reason"),
+  /** The clan's own Stripe account (Connect, Standard) for paying charges online. See src/lib/connect.ts. */
+  stripeAccountId: text("stripe_account_id"),
+  /** Stripe says the account can take payments (onboarding done). */
+  stripeChargesEnabled: integer("stripe_charges_enabled", { mode: "boolean" }).default(false).notNull(),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
 });
 
@@ -945,6 +949,8 @@ export const chargeItem = sqliteTable(
     paidAt: integer("paid_at", { mode: "timestamp_ms" }),
     /** Who marked it paid or waived (null for Stripe or the member's own report). */
     markedBy: text("marked_by").references(() => user.id, { onDelete: "set null" }),
+    /** The Stripe PaymentIntent when it was paid online (on the clan's account), for refunds. */
+    stripePaymentId: text("stripe_payment_id"),
     /** Last reminder about it, by hand or before the due date. */
     remindedAt: integer("reminded_at", { mode: "timestamp_ms" }),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),

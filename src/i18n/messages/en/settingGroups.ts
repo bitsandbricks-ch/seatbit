@@ -8,5 +8,6 @@ export const settingGroups = {
   billing: { title: "Supporter payments", help: "Optional. Lets clans support this instance with a voluntary yearly or monthly payment, and people give one-off donations, through Stripe. Supporters and donors get a badge and a thank-you, never extra features. Off by default." },
   ops: { title: "Platform Discord", help: "Optional. Channels on your own Discord server where the bot tells the platform team what happens on this instance. The bot must be in that server." },
   maintenance: { title: "Maintenance banner", help: "A banner on every page, e.g. before an upgrade. It disappears on its own when the end time has passed." },
+  connect: { title: "Online payments for clans", help: "Optional. Clans connect their own Stripe account and members pay what they owe the clan online (card, TWINT). The money goes straight to the clan; this instance is the Stripe Connect platform. Uses the Stripe secret key from Supporter payments. Off by default." },
   legal: { title: "Operator & legal", help: "Who runs this Seatbit instance. Shown on the Terms of Service and Privacy Policy pages. Fill this in before you invite people, or link your own documents instead." },
 };

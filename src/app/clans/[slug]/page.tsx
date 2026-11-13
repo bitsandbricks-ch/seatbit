@@ -356,7 +356,7 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
         </Columns>
       )}
 
-      {tab === "payments" && <MyPayments t={t} clan={c} lines={myLines} />}
+      {tab === "payments" && <MyPayments t={t} clan={c} lines={myLines} status={typeof sp.paid === "string" ? sp.paid : undefined} />}
 
       {tab === "members" && (
         <Card

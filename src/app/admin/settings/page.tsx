@@ -7,11 +7,13 @@ import { requireAdmin } from "@/lib/session";
 import { OWNER_SETTING_GROUPS, platformCan } from "@/lib/platform-roles";
 import { billingEnabled, billingProblems, supporterClans } from "@/lib/billing";
 import { donationProblems, donationsEnabled } from "@/lib/donations";
+import { connectEnabled, connectProblems } from "@/lib/connect";
 import { fmtDay } from "@/lib/format";
 import { LOGIN_METHODS } from "@/lib/auth";
 import { type SettingGroup, canEncrypt, getSetting, resolveSetting, settingsForAdmin } from "@/lib/settings";
 import { localized } from "@/lib/settings-i18n";
 import { MAIL_TEMPLATES, defaultParts, getTemplate, savedTemplates } from "@/lib/mail-templates";
+import { FIXED_MAIL_IDS, fixedMailInfo, previewFixedMail } from "@/lib/system-mail";
 import { LOCALES, LOCALE_NAMES, isLocale, type Locale } from "@/i18n/config";
 import type { FactRow } from "@/lib/mail-fill";
 import { MailTemplateEditor } from "@/components/mail-template-editor";
@@ -26,6 +28,7 @@ import {
   saveMaintenance,
   saveSettings,
   sendTemplateTest,
+  sendSystemMailTest,
   sendTestMail,
   setupDiscordBot,
   testOpsChannels,
@@ -44,7 +47,7 @@ function Url({ label, value }: { label: string; value: string }) {
   );
 }
 
-const TABS = ["mail", "discord", "google", "general", "automation", "maintenance", "legal", "billing", "templates", "server"] as const;
+const TABS = ["mail", "discord", "google", "general", "automation", "maintenance", "legal", "billing", "connect", "templates", "server"] as const;
 type TabId = (typeof TABS)[number];
 
 export default async function SettingsPage({ searchParams }: PageProps<"/admin/settings">) {
@@ -222,6 +225,8 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
           <BillingInfo t={t} />,
         )}
 
+      {tab === "connect" && section("connect", <ConnectInfo t={t} />)}
+
       {tab === "templates" && <TemplatesTab loc={mailLang} t={t} />}
 
       {tab === "server" && (
@@ -307,6 +312,28 @@ function BillingInfo({ t }: { t: T }) {
   );
 }
 
+/** Connect webhook URL and its events, and what's still missing. */
+function ConnectInfo({ t }: { t: T }) {
+  const problems = connectProblems();
+  return (
+    <>
+      <Url label={t("adminSettings.connectWebhook")} value={`${appUrl}/api/payments/stripe/webhook`} />
+      <p className="text-xs text-muted">
+        {t.rich("adminSettings.connectEvents", {
+          events: (
+            <>
+              <code>checkout.session.completed</code>, <code>checkout.session.async_payment_succeeded</code>, <code>charge.refunded</code>,{" "}
+              <code>account.updated</code>, <code>account.application.deauthorized</code>
+            </>
+          ),
+        })}
+      </p>
+      {problems.length > 0 && <p className="text-xs text-warn">{t("adminSettings.missing", { list: problems.join(", ") })}</p>}
+      {!connectEnabled() && problems.length === 0 && <p className="text-xs text-muted">{t("adminSettings.connectOff")}</p>}
+    </>
+  );
+}
+
 // Placeholders whose meaning differs in one template.
 const VAR_VARIANT: Record<string, Record<string, string>> = {
   guestInvite: { firstName: "firstName_guest", link: "link_claim" },
@@ -361,6 +388,30 @@ function TemplatesTab({ loc, t: tr }: { loc: Locale; t: T }) {
               reset={resetMailTemplate.bind(null, t.id, loc)}
               test={sendTemplateTest.bind(null, t.id, loc)}
             />
+          </Card>
+        );
+      })}
+      <h2 className="pt-4 text-lg font-semibold">{tr("systemMail.adminTitle")}</h2>
+      <p className="max-w-2xl text-sm text-muted">{tr("systemMail.adminHint")}</p>
+      {FIXED_MAIL_IDS.map((id) => {
+        const info = fixedMailInfo(id, tr);
+        const m = previewFixedMail(id, loc);
+        return (
+          <Card key={`${id}-${loc}`} title={info.title}>
+            <div className="space-y-4">
+              <p className="text-sm text-muted">{info.when}</p>
+              <div className="min-w-0">
+                <p className="mb-1 text-[11px] uppercase tracking-wide text-faint">{tr("templateEditor.preview")}</p>
+                <p className="mb-2 truncate text-sm font-medium">{m.subject}</p>
+                <iframe
+                  title={tr("templateEditor.previewOf", { id })}
+                  srcDoc={m.html}
+                  sandbox=""
+                  className="h-[480px] w-full rounded-md border border-line bg-white"
+                />
+              </div>
+              <ActionButton action={sendSystemMailTest.bind(null, id, loc)}>{tr("templateEditor.test")}</ActionButton>
+            </div>
           </Card>
         );
       })}

@@ -1,0 +1,15 @@
+date: 2026-11-13
+type: improved
+audience: admins
+pr: [116]
+en:
+  title: "Test mail and upgrade notes in the mail layout"
+  text: >-
+    The SMTP test mail and the upgrade notes for platform admins now use the mail layout too.
+    Admin → Settings → Mail templates shows these fixed mails with a preview and a test button.
+de:
+  title: "Testmail und Upgrade-Hinweise im Mail-Layout"
+  text: >-
+    Die SMTP-Testmail und die Upgrade-Hinweise für Plattform-Admins nutzen jetzt auch das
+    Mail-Layout. Admin → Einstellungen → Mail-Vorlagen zeigt diese festen Mails mit Vorschau und
+    Testknopf.

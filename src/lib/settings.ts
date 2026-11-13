@@ -66,6 +66,10 @@ export const SETTING_GROUPS = {
     title: "Maintenance banner",
     help: "A banner on every page, e.g. before an upgrade. It disappears on its own when the end time has passed.",
   },
+  connect: {
+    title: "Online payments for clans",
+    help: "Optional. Clans connect their own Stripe account and members pay what they owe the clan online (card, TWINT). The money goes straight to the clan; this instance is the Stripe Connect platform. Uses the Stripe secret key from Supporter payments. Off by default.",
+  },
   legal: {
     title: "Operator & legal",
     help: "Who runs this Seatbit instance. Shown on the Terms of Service and Privacy Policy pages. Fill this in before you invite people, or link your own documents instead.",
@@ -456,6 +460,36 @@ export const SETTINGS: SettingDef[] = [
     kind: "text",
     help: "The banner disappears after this. Empty: it stays until you remove the message.",
     validate: (v) => (isLocalDateTime(v) ? null : "Pick a date and time"),
+  },
+
+  // Online payments for clans (Stripe Connect). Off unless an operator turns it on.
+  {
+    key: "connect.enabled",
+    group: "connect",
+    label: "Online payments for clans",
+    kind: "bool",
+    env: "CLAN_STRIPE",
+    default: "false",
+    help: "When on, clan admins can connect their clan's own Stripe account in Manage → Payments, and members get a \"Pay online\" button. Needs Connect turned on in your Stripe Dashboard, the Stripe secret key and the Connect webhook secret.",
+  },
+  {
+    key: "connect.webhookSecret",
+    group: "connect",
+    label: "Connect webhook signing secret",
+    kind: "secret",
+    env: "STRIPE_CONNECT_WEBHOOK_SECRET",
+    help: "From a second webhook endpoint in Stripe that listens to events on connected accounts, for the URL shown above.",
+    validate: (v) => (/^whsec_\S+$/.test(v) ? null : "Starts with whsec_"),
+  },
+  {
+    key: "connect.feePercent",
+    group: "connect",
+    label: "Platform fee (%)",
+    kind: "number",
+    env: "CLAN_STRIPE_FEE_PERCENT",
+    default: "0",
+    help: "Optional share of each clan payment that goes to you, on top of Stripe's own fees (which the clan pays). 0 = nothing.",
+    validate: (v) => (/^\d{1,2}(\.\d{1,2})?$/.test(v) && +v <= 20 ? null : "A number from 0 to 20"),
   },
 
   // Automation

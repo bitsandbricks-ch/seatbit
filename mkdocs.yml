@@ -133,7 +133,7 @@ nav:
           - Discord app and bot: installation/discord.md
           - Email: installation/email.md
           - Operator, privacy and terms: installation/legal.md
-          - Stripe (supporters and donations): installation/stripe.md
+          - Stripe (payments): installation/stripe.md
       - Operate:
           - Backups, upgrades and admin CLI: installation/operations.md
   - Development:

@@ -1,4 +1,4 @@
-# Stripe (supporters and donations)
+# Stripe (payments)
 
 Seatbit is free, with every feature, for every clan. If you host an instance for others, you can let clans **support** it with a voluntary yearly (or monthly) payment, and let anyone give a **one-off donation**, through [Stripe](https://stripe.com). Supporters and donors get a small badge and a thank-you; nothing else changes. There are no plans, limits or locked features. You can turn on either one or both.
 
@@ -65,3 +65,45 @@ When it works, switch Stripe to live mode, create the product, prices and webhoo
 ## Legal texts
 
 With payments or donations on, the built-in [Terms of Service](legal.md) get a *Supporter payments* (and/or *Donations*) section (voluntary, no extra features, cancel any time, your refund policy) and the Privacy Policy names Stripe as payment provider. If you use your own documents, add the same there. Seatbit doesn't issue invoices with VAT; Stripe sends receipts.
+
+## Online payments for clans
+
+Separately from the Supporter badge, clans can let their members **pay what they owe the clan** online (dues, ticket money, see [Clan payments](../features/payments.md)). This uses [Stripe Connect](https://docs.stripe.com/connect): your instance is the *platform*, and every clan connects **its own Stripe account**.
+
+- Members pay with Stripe Checkout as a *direct charge* on the clan's account. The money goes straight to the clan, never through you.
+- Each clan's account is a **Standard** account: the clan signs Stripe's terms, goes through Stripe's identity checks itself, has the full Stripe Dashboard, pays Stripe's fees and handles refunds and disputes there. Stripe, not you, carries the risk of failed or disputed payments.
+- You can keep a share of each payment (**Platform fee**, default 0). If you do, check what that means for you (it's income, and Stripe may ask more questions about your platform).
+
+This is **off by default** and independent of Supporter payments; it only needs the Stripe secret key from above.
+
+### Set it up
+
+1. In the Stripe Dashboard, open **Connect** and finish the platform setup (platform profile, branding shown on the clans' onboarding). Stripe asks you to accept the Connect platform terms.
+2. Add a **second webhook endpoint** under *Developers → Webhooks*, set to listen to **events on connected accounts**, with the URL shown in Seatbit (`https://seatbit.example.com/api/payments/stripe/webhook`) and these events:
+    - `checkout.session.completed`
+    - `checkout.session.async_payment_succeeded`
+    - `charge.refunded`
+    - `account.updated`
+    - `account.application.deauthorized`
+
+    Copy its **signing secret** (`whsec_…`).
+3. In Seatbit, open **Admin → Platform settings → Clan payments**, enter the Connect webhook signing secret, set a platform fee if you want one, and turn on **Online payments for clans**. The Stripe secret key is the one on the *Supporters* tab (or `STRIPE_SECRET_KEY`). A restricted key also needs write access to *Connect* (accounts and account links).
+
+### What clans do
+
+A clan admin opens *Manage → Payments* and presses **Connect Stripe**. Stripe asks for who runs the clan and the bank account for payouts. Back in Seatbit, the card shows **Members can pay online**, and every open line gets a **Pay online** button. Payment methods are whatever the clan turns on in its own Stripe Dashboard (TWINT needs CHF).
+
+### How it works
+
+- Seatbit stores the clan's Stripe account ID and whether it can take payments, and for each paid line the Stripe payment ID. Card and TWINT details stay with Stripe.
+- `checkout.session.completed` (or `…async_payment_succeeded` for slower methods) marks the line **paid online**. A full refund in the clan's dashboard (`charge.refunded`) sets it back to open, so the lead can waive it if that was the point.
+- `account.updated` keeps "can take payments" current; `account.application.deauthorized` unlinks a clan that removed your platform in Stripe. **Unlink Stripe account** in Seatbit only forgets the link; the clan's Stripe account stays theirs.
+- Every event is checked against the signing secret and applied once.
+
+### Try it in test mode
+
+With test keys, the clan onboarding offers test data, and payments work with [test cards](https://docs.stripe.com/testing). Forward Connect events locally with:
+
+```sh
+stripe listen --forward-connect-to localhost:3000/api/payments/stripe/webhook
+```

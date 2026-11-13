@@ -70,6 +70,12 @@ function TermsEn({ legal, payments, subs, donations, n, refund }: Props) {
         assignments of that event. Clan admins and leads must only use this information to organise the group&apos;s
         trip to the LAN, and must not copy it elsewhere for other purposes.
       </p>
+      <p>
+        Clans can use Seatbit to keep track of money they collect from their members (dues, ticket money, shared
+        costs). Any such payment is between the member and the clan; we are not a party to it and do not hold or pass
+        on the money. Where a clan takes payments online, they are processed by Stripe on the clan&apos;s own Stripe
+        account, and the clan is responsible for refunds and questions about them.
+      </p>
 
       <h2>4. The Discord bot</h2>
       <ul>
@@ -207,6 +213,12 @@ function TermsDe({ legal, payments, subs, donations, n, refund }: Props) {
         und können Mitglieder annehmen, hinzufügen oder entfernen. Leads eines Events sehen und bearbeiten Teilnahme,
         Ticketstatus, Platzwünsche und Platzzuteilung dieses Events. Clan-Admins und Leads dürfen diese Angaben nur
         nutzen, um die Reise der Gruppe an die LAN zu organisieren, und sie nicht für andere Zwecke anderswohin kopieren.
+      </p>
+      <p>
+        Clans können mit Seatbit festhalten, welches Geld sie von ihren Mitgliedern einziehen (Beiträge, Ticketgeld,
+        geteilte Kosten). Jede solche Zahlung ist eine Sache zwischen Mitglied und Clan; wir sind nicht Partei, halten
+        das Geld nicht und leiten es nicht weiter. Nimmt ein Clan Zahlungen online an, wickelt Stripe sie über das
+        eigene Stripe-Konto des Clans ab, und der Clan ist für Rückerstattungen und Fragen dazu zuständig.
       </p>
 
       <h2>4. Der Discord-Bot</h2>

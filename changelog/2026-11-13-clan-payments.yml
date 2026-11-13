@@ -4,12 +4,11 @@ pr: 112
 en:
   title: Clan payments
   text: >-
-    Clans can track yearly dues, ticket money and shared costs: who owes what and who paid. The
-    money goes to the clan directly; nothing is paid through Seatbit. Each clan turns it on in
-    Manage → Payments.
+    Clans can collect dues and ticket money from their members. Leads see who has paid, members tap
+    "I've paid", and Seatbit reminds people before the due date. Turn it on under Manage → Payments.
 de:
   title: Clan-Zahlungen
   text: >-
-    Clans können Jahresbeiträge, Ticketgeld und geteilte Kosten verwalten: wer was schuldet und wer
-    bezahlt hat. Das Geld geht direkt an den Clan; über Seatbit wird nichts bezahlt. Jeder Clan
-    schaltet es unter Verwalten → Zahlungen ein.
+    Clans können Mitgliederbeiträge und Ticketgeld einziehen. Leads sehen, wer bezahlt hat, Mitglieder
+    tippen auf «Ich habe bezahlt», und Seatbit erinnert vor dem Fälligkeitsdatum. Einschalten unter
+    Verwalten → Zahlungen.

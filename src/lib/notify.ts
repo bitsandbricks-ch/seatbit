@@ -3,7 +3,8 @@ import { and, eq, inArray, ne } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Lan, User } from "@/db/schema";
 import { api, discordEnabled } from "./discord-api";
-import { appUrl, sendMail } from "./mail";
+import { appUrl, deliverMail } from "./mail";
+import { renderNotice } from "./system-mail";
 import { rolesWith } from "./clan-roles";
 import type { Locale } from "../i18n/config";
 import { makeT, type T } from "../i18n/translate";
@@ -87,11 +88,16 @@ const clip = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1)}…`
  * bare link, then adds the link back as a visible "Open in Seatbit" link.
  */
 export function dmBody(text: string, url?: string, open = "Open in Seatbit") {
+  const t = noticeBody(text, url);
+  return url ? `${t}\n\n[${open}](${url})` : t;
+}
+
+/** A notice's text without greeting, footer and bare link, for a layout that adds those itself. */
+export function noticeBody(text: string, url?: string) {
   let t = text.replace(/^(Hi|Hallo)\b[^\n]*,\s*\n+/, "").replace(/\n*--\n[\s\S]*$/, "");
   if (url) t = t.split(url).join("").replace(/\n*(Details|Your seat and details|Pick your seat|Link):?\s*$/i, "");
   t = t.trim();
-  t = t.charAt(0).toUpperCase() + t.slice(1);
-  return url ? `${t}\n\n[${open}](${url})` : t;
+  return t.charAt(0).toUpperCase() + t.slice(1);
 }
 
 /** Why a DM couldn't be sent, so the profile test button and the logs can say it plainly. */
@@ -183,7 +189,11 @@ export async function notify(userOrId: User | string, nf: NoticeFor): Promise<No
   let email = false;
   if (wantsMail) {
     try {
-      await sendMail(u.email, n.subject, n.text, n.html);
+      // Plain-text notices get the shared mail layout too.
+      const m = n.html
+        ? { subject: n.subject, text: n.text, html: n.html }
+        : renderNotice({ subject: n.subject, body: noticeBody(n.text, n.url), url: n.url, firstName: u.firstName || u.name }, n.locale ?? "en");
+      await deliverMail(u.email, m);
       email = true;
     } catch (e) {
       // Constant format string: the address is user data and must not be read as printf placeholders.

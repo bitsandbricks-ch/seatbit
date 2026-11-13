@@ -1,11 +1,12 @@
 import Link from "next/link";
 import type { ChargeItemStatus, Clan } from "@/db/schema";
-import { reportPaid } from "@/app/payment-actions";
+import { connectStripe, disconnectStripe, payOnline, reportPaid } from "@/app/payment-actions";
+import { clanTakesOnline, connectEnabled, dashboardUrl, platformFee, refreshAccount } from "@/lib/connect";
 import { fmtDate, fmtDay } from "@/lib/format";
 import { fmtAmount } from "@/lib/money";
 import { clanCharges, isOwed, type ChargeSummary, type MyLine } from "@/lib/payments";
 import type { T } from "@/i18n/translate";
-import { Card, Columns, EmptyState, Pill, btnGhost, btnPrimary, btnSecondary } from "./ui";
+import { Card, Columns, EmptyState, Notice, Pill, btnGhost, btnPrimary, btnSecondary } from "./ui";
 import { PaymentSettingsForm } from "./payment-forms";
 
 const TONE: Record<ChargeItemStatus, "red" | "amber" | "emerald" | "zinc"> = { open: "red", reported: "amber", paid: "emerald", waived: "zinc" };
@@ -21,16 +22,19 @@ export function PaymentInfo({ t, clan: c }: { t: T; clan: Pick<Clan, "paymentInf
 }
 
 /** Manage → Payments: the switch, how members pay, and every charge with how many have paid. */
-export function PaymentsManageTab({ t, clan: c }: { t: T; clan: Clan }) {
+export async function PaymentsManageTab({ t, clan: c, canSettings, stripe }: { t: T; clan: Clan; canSettings: boolean; stripe?: string }) {
   const charges = c.paymentsEnabled ? clanCharges(c.id) : [];
   const open = charges.filter((x) => x.owed > 0);
   const done = charges.filter((x) => x.owed === 0);
   return (
     <Columns
       aside={
-        <Card title={t("payments.settings")}>
-          <PaymentSettingsForm clanId={c.id} enabled={c.paymentsEnabled} info={c.paymentInfo} />
-        </Card>
+        <>
+          <Card title={t("payments.settings")}>
+            <PaymentSettingsForm clanId={c.id} enabled={c.paymentsEnabled} info={c.paymentInfo} />
+          </Card>
+          {c.paymentsEnabled && <OnlineCard t={t} clan={c} canSettings={canSettings} status={stripe} />}
+        </>
       }
     >
       {!c.paymentsEnabled ? (
@@ -61,6 +65,64 @@ export function PaymentsManageTab({ t, clan: c }: { t: T; clan: Clan }) {
         </>
       )}
     </Columns>
+  );
+}
+
+/** Connect the clan's own Stripe account so members can pay online. Only where the operator turned it on. */
+async function OnlineCard({ t, clan, canSettings, status }: { t: T; clan: Clan; canSettings: boolean; status?: string }) {
+  if (!connectEnabled()) return null;
+  let c = clan;
+  // Back from Stripe's onboarding (or the webhook was slow): ask Stripe how far the account is.
+  if (c.stripeAccountId && !c.stripeChargesEnabled && (status === "return" || status === "refresh")) {
+    c = await refreshAccount(c).catch(() => c);
+  }
+  const fee = platformFee(10000);
+  return (
+    <Card title={t("payments.online.title")}>
+      <div className="space-y-3 text-sm">
+        {status === "error" && <Notice tone="danger">{t("payments.online.error")}</Notice>}
+        {c.stripeAccountId && c.stripeChargesEnabled ? (
+          <>
+            <p className="flex items-center gap-2 font-medium text-bit">
+              <span aria-hidden>✓</span> {t("payments.online.ready")}
+            </p>
+            <p className="text-muted">{t("payments.online.readyText")}</p>
+            <a href={dashboardUrl(c.stripeAccountId)} target="_blank" rel="noreferrer" className={btnSecondary}>
+              {t("payments.online.dashboard")}
+            </a>
+          </>
+        ) : c.stripeAccountId ? (
+          <>
+            <p className="text-warn">{t("payments.online.pending")}</p>
+            {canSettings && (
+              <form action={connectStripe.bind(null, c.id)}>
+                <button className={btnPrimary}>{t("payments.online.continue")}</button>
+              </form>
+            )}
+          </>
+        ) : (
+          <>
+            <p className="text-muted">{t("payments.online.pitch")}</p>
+            {canSettings ? (
+              <form action={connectStripe.bind(null, c.id)}>
+                <button className={btnPrimary}>{t("payments.online.connect")}</button>
+              </form>
+            ) : (
+              <p className="text-xs text-faint">{t("payments.online.adminsOnly")}</p>
+            )}
+          </>
+        )}
+        <p className="text-xs text-faint">
+          {t("payments.online.fees")}
+          {fee > 0 && ` ${t("payments.online.platformFee", { percent: fee / 100 })}`}
+        </p>
+        {c.stripeAccountId && canSettings && (
+          <form action={disconnectStripe.bind(null, c.id)}>
+            <button className={`${btnGhost} text-xs !text-danger`}>{t("payments.online.disconnect")}</button>
+          </form>
+        )}
+      </div>
+    </Card>
   );
 }
 
@@ -103,13 +165,18 @@ function ChargeList({ t, slug, charges }: { t: T; slug: string; charges: ChargeS
 }
 
 /** A member's own lines: what's owed with an "I've paid" button, then what's done. */
-export function MyPayments({ t, clan: c, lines }: { t: T; clan: Clan; lines: MyLine[] }) {
+export function MyPayments({ t, clan: c, lines, status }: { t: T; clan: Clan; lines: MyLine[]; status?: string }) {
   const owed = lines.filter((l) => isOwed(l.status));
   const done = lines.filter((l) => !isOwed(l.status));
+  const online = clanTakesOnline(c);
   return (
+    <>
+    {status === "thanks" && <Notice>{t("payments.online.thanks")}</Notice>}
+    {status === "error" && <Notice tone="danger">{t("payments.online.error")}</Notice>}
     <Columns
       aside={
         <Card title={t("payments.howToPay")}>
+          {online && <p className="mb-2 text-sm text-muted">{t("payments.online.orTransfer")}</p>}
           <PaymentInfo t={t} clan={c} />
         </Card>
       }
@@ -124,9 +191,14 @@ export function MyPayments({ t, clan: c, lines }: { t: T; clan: Clan; lines: MyL
                 <LineText t={t} line={l} />
                 <span className="flex items-center gap-2">
                   <span className="font-semibold tabular-nums">{fmtAmount(l.amountCents, l.charge.currency)}</span>
+                  {online && (
+                    <form action={payOnline.bind(null, l.id)}>
+                      <button className={btnPrimary}>{t("payments.online.pay")}</button>
+                    </form>
+                  )}
                   {l.status === "open" ? (
                     <form action={reportPaid.bind(null, l.id, true)}>
-                      <button className={btnSecondary}>{t("payments.iPaid")}</button>
+                      <button className={online ? btnGhost : btnSecondary}>{t("payments.iPaid")}</button>
                     </form>
                   ) : (
                     <form action={reportPaid.bind(null, l.id, false)} className="flex items-center gap-1">
@@ -157,6 +229,7 @@ export function MyPayments({ t, clan: c, lines }: { t: T; clan: Clan; lines: MyL
         </Card>
       )}
     </Columns>
+    </>
   );
 }
 

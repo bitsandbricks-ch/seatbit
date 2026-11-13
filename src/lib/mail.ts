@@ -43,21 +43,25 @@ function transport() {
   return g.__seatbitMail.transport;
 }
 
+export type RenderedMail = { subject: string; text: string; html: string };
+
 /**
- * Sends an email. Without an SMTP host (admin settings or env), the mail is
- * logged to the console instead, so local development works without a mail server.
+ * Hands a finished mail to SMTP. Don't call this from feature code: send through
+ * `sendTemplate` (mail-templates.ts), `sendSystemMail` or `notify`, so every mail
+ * gets the shared layout. `npm run check:mail` enforces that.
+ * Without an SMTP host (admin settings or env), the mail is logged to the console
+ * instead, so local development works without a mail server.
  */
-/** `html` is optional: templated mails send HTML with `text` as the plain-text part. */
-export async function sendMail(to: string, subject: string, text: string, html?: string) {
+export async function deliverMail(to: string, m: RenderedMail) {
   if (isGuestEmail(to)) return; // guests have no real address
   const t = transport();
   const from = getSetting("mail.from") ?? "Seatbit <noreply@localhost>";
   if (!t) {
-    console.log(`\n[mail] (no SMTP configured, not sent)\nTo: ${to}\nSubject: ${subject}\n\n${text}\n`);
+    console.log(`\n[mail] (no SMTP configured, not sent)\nTo: ${to}\nSubject: ${m.subject}\n\n${m.text}\n`);
     return;
   }
   try {
-    await t.sendMail({ from, to, subject, text, ...(html && { html }) });
+    await t.sendMail({ from, to, subject: m.subject, text: m.text, html: m.html });
     recordMail(true);
   } catch (e) {
     recordMail(false, e);

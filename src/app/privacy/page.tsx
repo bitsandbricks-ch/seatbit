@@ -6,6 +6,7 @@ import { getLegal, type Legal } from "@/lib/legal";
 import { billingEnabled } from "@/lib/billing";
 import { backupKeepDays } from "@/lib/backup";
 import { donationsEnabled } from "@/lib/donations";
+import { connectEnabled } from "@/lib/connect";
 import { getLocale, getT } from "@/i18n/server";
 // i18n-ignore-file: the policy is written once per language, below.
 
@@ -25,12 +26,15 @@ export default async function PrivacyPage() {
   const payments = billingEnabled() || donationsEnabled();
   // The backup retention from the platform settings; 0 (keep all) is said as "as long as needed".
   const backupDays = backupKeepDays();
-  return (await getLocale()) === "de" ? <PrivacyDe legal={legal} payments={payments} backupDays={backupDays} /> : <PrivacyEn legal={legal} payments={payments} backupDays={backupDays} />;
+  // Clans' own Stripe accounts only where online clan payments are on.
+  const online = connectEnabled();
+  const props = { legal, payments, backupDays, online };
+  return (await getLocale()) === "de" ? <PrivacyDe {...props} /> : <PrivacyEn {...props} />;
 }
 
-type Props = { legal: Legal; payments: boolean; backupDays: number };
+type Props = { legal: Legal; payments: boolean; backupDays: number; online: boolean };
 
-function PrivacyEn({ legal, payments, backupDays }: Props) {
+function PrivacyEn({ legal, payments, backupDays, online }: Props) {
   return (
     <LegalPage title="Privacy Policy">
       <p>
@@ -68,7 +72,7 @@ function PrivacyEn({ legal, payments, backupDays }: Props) {
         <li>For each event: whether you are coming, unsure or not coming, whether you bought a ticket, whether a lead confirmed it, and any note you add</li>
         <li>Seat wishes (people you want to sit near or not next to, preferred position or seat) and the seat you are assigned</li>
         <li>Whether you are a lead of an event</li>
-        <li>If your clan uses clan payments: what the clan&apos;s leads charged you (dues, ticket money, shared costs), the amount, whether you paid, how (cash, bank, TWINT) and when, and who ticked it off. The money itself never goes through Seatbit.</li>
+        <li>If your clan uses clan payments: what the clan&apos;s leads charged you (dues, ticket money, shared costs), the amount, whether you paid, how (cash, bank, TWINT, online) and when, and who ticked it off. The money itself never goes through Seatbit.</li>
         <li>If a lead adds you as a guest before you have an account: the name, nickname and (if they have it) email address they enter, and your answers and seat for their events. The email is only used to send you the invite and to recognise you: when you sign in with a Discord account whose verified email matches, or through your claim link, this moves to your own account and the guest entry is deleted. If a lead tells the Discord bot which Discord member you are, we also keep your Discord user ID with the guest entry, send you one DM with your claim link, and move everything over when you sign in with that Discord account.</li>
         <li>Content clan admins enter: clan name, description and avatar, LAN types, events, invite links</li>
       </ul>
@@ -152,6 +156,17 @@ function PrivacyEn({ legal, payments, backupDays }: Props) {
           <strong>Our email provider</strong>, which delivers reminder emails and receives your email address, name and
           the reminder text.
         </li>
+        {online && (
+          <li>
+            <strong>Stripe</strong>, for clans that take payments online: you pay on Stripe&apos;s checkout page directly
+            to the clan&apos;s own Stripe account. For that payment the clan and Stripe are responsible for your data, not
+            us; we only learn that the line was paid and Stripe&apos;s payment ID. See Stripe&apos;s{" "}
+            <a href="https://stripe.com/privacy" target="_blank" rel="noreferrer">
+              privacy policy
+            </a>
+            .
+          </li>
+        )}
         {payments && (
           <li>
             <strong>Stripe Payments Europe, Ltd.</strong> (Ireland), together with Stripe, Inc. (USA), processes Supporter
@@ -238,7 +253,7 @@ function PrivacyEn({ legal, payments, backupDays }: Props) {
   );
 }
 
-function PrivacyDe({ legal, payments, backupDays }: Props) {
+function PrivacyDe({ legal, payments, backupDays, online }: Props) {
   return (
     <LegalPage title="Datenschutzerklärung">
       <p>
@@ -276,7 +291,7 @@ function PrivacyDe({ legal, payments, backupDays }: Props) {
         <li>Pro Event: ob du kommst, unsicher bist oder nicht kommst, ob du ein Ticket gekauft hast, ob ein Lead es bestätigt hat, und deine Notiz</li>
         <li>Platzwünsche (neben wem du sitzen willst oder nicht, bevorzugte Position oder Platz) und dein zugeteilter Platz</li>
         <li>Ob du Lead eines Events bist</li>
-        <li>Falls dein Clan Clan-Zahlungen nutzt: was die Leads des Clans dir verrechnet haben (Beiträge, Ticketgeld, geteilte Kosten), der Betrag, ob du bezahlt hast, wie (bar, Bank, TWINT) und wann, und wer es abgehakt hat. Das Geld selbst fliesst nie über Seatbit.</li>
+        <li>Falls dein Clan Clan-Zahlungen nutzt: was die Leads des Clans dir verrechnet haben (Beiträge, Ticketgeld, geteilte Kosten), der Betrag, ob du bezahlt hast, wie (bar, Bank, TWINT, online) und wann, und wer es abgehakt hat. Das Geld selbst fliesst nie über Seatbit.</li>
         <li>Wenn dich ein Lead als Gast hinzufügt, bevor du ein Konto hast: Name, Nickname und (falls bekannt) E-Mail-Adresse, die er einträgt, sowie deine Antworten und dein Platz bei seinen Events. Die E-Mail dient nur dazu, dir die Einladung zu schicken und dich zu erkennen: Meldest du dich mit einem Discord-Konto an, dessen bestätigte E-Mail übereinstimmt, oder über deinen Übernahme-Link, wandert alles auf dein eigenes Konto und der Gasteintrag wird gelöscht. Sagt ein Lead dem Discord-Bot, welches Discord-Mitglied du bist, speichern wir zusätzlich deine Discord-Benutzer-ID beim Gasteintrag, schicken dir eine DM mit deinem Übernahme-Link und übertragen alles, sobald du dich mit diesem Discord-Konto anmeldest.</li>
         <li>Inhalte, die Clan-Admins eintragen: Clan-Name, Beschreibung und Avatar, LAN-Typen, Events, Einladungslinks</li>
       </ul>
@@ -360,6 +375,18 @@ function PrivacyDe({ legal, payments, backupDays }: Props) {
           <strong>Unser E-Mail-Anbieter</strong>, der die Erinnerungen zustellt und dafür deine E-Mail-Adresse, deinen
           Namen und den Text der Erinnerung erhält.
         </li>
+        {online && (
+          <li>
+            <strong>Stripe</strong>, für Clans, die online Zahlungen annehmen: Du bezahlst auf der Bezahlseite von Stripe
+            direkt auf das eigene Stripe-Konto des Clans. Für diese Zahlung sind der Clan und Stripe für deine Daten
+            verantwortlich, nicht wir; wir erfahren nur, dass die Zeile bezahlt ist, und die Zahlungs-ID von Stripe. Siehe
+            die{" "}
+            <a href="https://stripe.com/privacy" target="_blank" rel="noreferrer">
+              Datenschutzerklärung
+            </a>{" "}
+            von Stripe.
+          </li>
+        )}
         {payments && (
           <li>
             <strong>Stripe Payments Europe, Ltd.</strong> (Irland), zusammen mit Stripe, Inc. (USA), wickelt als unser

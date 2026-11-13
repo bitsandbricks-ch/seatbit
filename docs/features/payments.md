@@ -1,6 +1,6 @@
 # Clan payments
 
-Collect money from your own members: yearly dues, the ticket money for an event, a shared cost. Seatbit keeps the list of who owes what and who paid; the money goes to the clan directly (cash, bank transfer, TWINT). Nothing is paid through Seatbit.
+Collect money from your own members: yearly dues, the ticket money for an event, a shared cost. Seatbit keeps the list of who owes what and who paid; the money goes to the clan directly (cash, bank transfer, TWINT, or online to the clan's own Stripe account).
 
 **Who:** clan admins and event managers run it, members see what they owe · **Where:** clan *Manage → Payments*, and the *Payments* tab on the clan page
 
@@ -55,6 +55,15 @@ Members get a **Payments** tab on the clan page once they're on a charge: what t
 
 </figure>
 </div>
+
+## Pay online
+
+If the operator turned on [online payments for clans](../installation/stripe.md#online-payments-for-clans), a clan admin can connect the clan's **own Stripe account** in *Manage → Payments → Online payments*. Stripe asks who runs the clan and where payouts go. After that:
+
+- Members see **Pay online** next to everything they owe and pay with TWINT or card (whatever the clan turned on in Stripe).
+- The money goes straight to the clan's Stripe account. The line is ticked off by itself as *Paid online*.
+- Refunds happen in the clan's Stripe Dashboard; a full refund opens the line again.
+- The clan pays Stripe's fees. The card says if the operator keeps a platform fee.
 
 Reminders follow the member's notification settings: mails only with email reminders on, DMs only with Discord DMs on. Guests have no address, so they get nothing; a lead collects from them in person.
 

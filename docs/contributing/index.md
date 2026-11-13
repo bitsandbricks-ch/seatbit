@@ -19,6 +19,7 @@ Seatbit is a small open-source project. Bug reports, ideas, docs fixes and code 
     ```sh
     npm run lint
     npm run check:i18n      # UI text that skips t()
+    npm run check:mail      # mail sent outside the template helpers
     npm run check:changelog # changelog entries
     npm run typecheck
     npm run build
