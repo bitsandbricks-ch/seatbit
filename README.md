@@ -13,7 +13,7 @@ Seatbit helps a clan or group of friends go to LAN parties run by others (think 
 
 | | |
 | --- | --- |
-| [**Features**](https://bitsandbricks-ch.github.io/seatbit/features/) | Events, attendance, seats, clans and guests, travel, games, food, Discord bot, audit log |
+| [**Features**](https://bitsandbricks-ch.github.io/seatbit/features/) | Events, attendance, seats, clans and guests, travel, games, food, shared costs, Discord bot, audit log |
 | [**Installation**](https://bitsandbricks-ch.github.io/seatbit/installation/) | Docker, Kubernetes, configuration, Discord app, email, Stripe, operator details |
 | [**Development**](https://bitsandbricks-ch.github.io/seatbit/development/) | Local setup with demo data, architecture, migrations, screenshots, CI |
 | [**Contributing**](https://bitsandbricks-ch.github.io/seatbit/contributing/) | Pull request flow, code guidelines, docs, AI agents |
@@ -22,7 +22,7 @@ Seatbit helps a clan or group of friends go to LAN parties run by others (think 
 
 - **Attendance and tickets:** coming / unsure / not coming, waitlist, deadlines with email and Discord reminders, leads confirm tickets.
 - **Seat plan** of the group's block (e.g. `F1-F16, F19-F22`): seat wishes, self pick, drag and drop planner, then everyone books the same seat on the event's own site.
-- **At the LAN:** rides and places to sleep, private packing lists, game votes, food orders.
+- **At the LAN:** rides and places to sleep, private packing lists, game votes, food orders, shared costs.
 - **Clans** with roles, guests, invite links, **clan payments** (dues, ticket money, who paid) and a **Discord bot** with answer buttons.
 - **Self-hosted:** one container, SQLite, every setting in the browser.
 

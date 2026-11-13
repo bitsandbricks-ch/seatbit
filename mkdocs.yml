@@ -114,6 +114,7 @@ nav:
           - Travel and packing list: features/travel-packing.md
           - Games: features/games.md
           - Food orders: features/food.md
+          - Shared costs: features/shared-costs.md
           - Emergency contact and diet: features/emergency.md
       - Integrations:
           - Discord and WhatsApp: features/discord.md

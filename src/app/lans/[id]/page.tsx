@@ -33,6 +33,9 @@ import { GAMES_REMINDER_DAYS, listGames } from "@/lib/games";
 import { SeatSwapPanel, type SwapView } from "@/components/seat-swaps";
 import { CheckInButton, DeleteNewsButton, InterestButtons } from "@/components/event-extras";
 import { FoodOrders, type FoodOrderCardView } from "@/components/food-orders";
+import { SharedCosts, type CostPerson } from "@/components/shared-costs";
+import { costPeople, eventCosts } from "@/lib/costs";
+import { fmtAmount } from "@/lib/money";
 import { EventPaymentsCard } from "@/components/clan-payments";
 import { clanPaymentsOn, memberLines } from "@/lib/payments";
 import { canSeeEmergency, dietCount } from "@/lib/emergency";
@@ -43,7 +46,7 @@ import { httpHref } from "@/lib/safe-url";
 
 const { attendance, seat, nickname } = schema;
 
-const TABS = ["overview", "seats", "attendees", "travel", "gear", "games", "food"] as const;
+const TABS = ["overview", "seats", "attendees", "travel", "gear", "games", "food", "costs"] as const;
 
 /** Link previews (WhatsApp, Discord, ...): name, date and place of published events; drafts stay generic. */
 export async function generateMetadata({ params }: PageProps<"/lans/[id]">): Promise<Metadata> {
@@ -268,6 +271,35 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
         }))
       : [];
 
+  // Shared costs: who paid what for the group and who owes whom. Same currency as food orders.
+  const costs = eventCosts(id);
+  const myCostBalance = costs.balances.get(me.id) ?? 0;
+  const costIds = tab === "costs" ? [...costPeople(id)] : [];
+  const costNames =
+    tab === "costs"
+      ? Object.fromEntries(
+          await getDisplayNames(id, [
+            ...new Set([
+              ...costIds,
+              me.id,
+              ...costs.expenses.flatMap((e) => [e.paidBy, ...(e.createdBy ? [e.createdBy] : []), ...e.shares.map((x) => x.userId)]),
+              ...costs.settlements.flatMap((x) => [x.fromUserId, x.toUserId, ...(x.createdBy ? [x.createdBy] : [])]),
+            ]),
+          ]),
+        )
+      : {};
+  const goingIds = new Set(going.map((r) => r.userId));
+  const costPeopleList: CostPerson[] =
+    tab === "costs"
+      ? [...new Set([...costIds, ...(isAdmin ? [me.id] : [])])]
+          .map((uid) => ({ id: uid, name: costNames[uid] ?? "?", going: goingIds.has(uid) }))
+          .sort((a, b) => Number(b.id === me.id) - Number(a.id === me.id) || Number(b.going) - Number(a.going) || a.name.localeCompare(b.name))
+      : [];
+  const costDates: Record<string, string> =
+    tab === "costs"
+      ? Object.fromEntries([...costs.expenses, ...costs.settlements].map((x) => [x.id, fmtDate(new Date(x.createdAt), t.locale)]))
+      : {};
+
   // Seat swaps: open requests I'm part of, and who I could swap with.
   const swapRows =
     published && mySeatLabel
@@ -428,6 +460,11 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           { id: "gear", label: t("event.tabs.gear") },
           { id: "games", label: t("event.tabs.games"), badge: my?.status === "going" && gamesToInstall ? t("event.tabs.toInstall", { count: gamesToInstall }) : undefined },
           { id: "food", label: t("event.tabs.food"), badge: openFood ? t("event.tabs.open", { count: openFood }) : undefined },
+          {
+            id: "costs",
+            label: t("event.tabs.costs"),
+            badge: myCostBalance < 0 ? t("event.tabs.owe", { amount: fmtAmount(-myCostBalance, currency) }) : undefined,
+          },
         ]}
         active={tab}
         hrefFor={(tb) => (tb === "overview" ? `/lans/${l.id}` : `/lans/${l.id}?tab=${tb}`)}
@@ -478,6 +515,24 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           canOrder={canOrderFood && !l.cancelledAt}
           currency={currency}
           announceHint={!l.publishedAt ? t("event.draftNoDm") : null}
+        />
+      )}
+
+      {tab === "costs" && (
+        <SharedCosts
+          lanId={l.id}
+          meId={me.id}
+          currency={currency}
+          expenses={costs.expenses}
+          settlements={costs.settlements}
+          balances={Object.fromEntries(costs.balances)}
+          transfers={costs.transfers}
+          totalCents={costs.totalCents}
+          people={costPeopleList}
+          names={costNames}
+          canAdd={isAdmin || canTakePart}
+          isLead={isAdmin}
+          dates={costDates}
         />
       )}
 
