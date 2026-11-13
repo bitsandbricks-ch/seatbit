@@ -9,6 +9,7 @@ import { isLocale } from "@/i18n/config";
 
 const asLocale = (v: string) => (isLocale(v) ? v : "en");
 import { requireAdmin } from "@/lib/session";
+import { OWNER_SETTING_GROUPS, platformCan } from "@/lib/platform-roles";
 import { getT } from "@/i18n/server";
 import type { MessageKey } from "@/i18n/translate";
 import { audit } from "@/lib/audit";
@@ -38,6 +39,8 @@ export async function saveSettings(group: SettingGroup, _prev: ActionResult, for
   const me = await requireAdmin();
   const t = await getT();
   if (!(group in SETTING_GROUPS)) return done(false, "Unknown section");
+  // Billing and legal details are the owner's business.
+  if (OWNER_SETTING_GROUPS.includes(group) && !platformCan(me, "owner")) return done(false, t("errors.perm.platform"));
 
   const ops: ({ key: string; set: string } | { key: string; clear: true })[] = [];
   for (const d of SETTINGS.filter((s) => s.group === group)) {

@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 /**
- * Seatbit admin CLI: manage platform admins and recover from bad login settings,
+ * Seatbit admin CLI: manage platform roles and recover from bad login settings,
  * straight on the database. Works in the container while the app is running:
  *
  *   kubectl exec deploy/seatbit -- node scripts/admin.mjs list
  *   kubectl exec deploy/seatbit -- node scripts/admin.mjs grant mike@example.com
+ *   kubectl exec deploy/seatbit -- node scripts/admin.mjs grant anna@example.com --role=moderator
  *   kubectl exec deploy/seatbit -- node scripts/admin.mjs revoke 123456789012345678
  *   kubectl exec deploy/seatbit -- node scripts/admin.mjs reset-setting discord.clientSecret
  *
@@ -20,12 +21,15 @@ const dbFile = process.env.DATABASE_PATH ?? path.join(process.cwd(), "data", "la
 
 const USAGE = `Usage: node scripts/admin.mjs <command>
 
-  list                    List platform admins
+  list                    List platform staff (owners, admins, moderators, support)
   users [search]          List users (optionally filtered)
-  grant <user|email>      Make a user a platform admin. If no user matches an
-                          email yet, it is added to the admin emails setting,
-                          so that person becomes admin on first sign-in.
-  revoke <user>           Remove platform admin
+  grant <user|email> [--role=owner|admin|moderator|support]
+                          Give a user a platform role (default: owner). If no
+                          user matches an email yet, it is added to the admin
+                          emails setting, so that person becomes owner on
+                          first sign-in.
+  revoke <user>           Remove the user's platform role
+  unsuspend <user>        Lift a suspension
   reset-setting <key>     Remove a value saved in Platform settings, so the
                           env var applies again (e.g. discord.clientId,
                           discord.clientSecret if a bad value locks everyone out)
@@ -36,6 +40,8 @@ const USAGE = `Usage: node scripts/admin.mjs <command>
 const [cmd, ...rest] = process.argv.slice(2);
 const flags = rest.filter((a) => a.startsWith("--"));
 const arg = rest.filter((a) => !a.startsWith("--")).join(" ").trim();
+const STAFF = ["owner", "admin", "moderator", "support"];
+const isStaff = (u) => STAFF.includes(u.role);
 
 function open() {
   try {
@@ -53,7 +59,7 @@ function fail(msg) {
 }
 
 const USERS_SQL = `
-  SELECT u.id, u.name, u.email, u.role, u.created_at AS createdAt,
+  SELECT u.id, u.name, u.email, u.role, u.suspended_at AS suspendedAt, u.created_at AS createdAt,
          (SELECT a.account_id FROM account a WHERE a.user_id = u.id AND a.provider_id = 'discord' LIMIT 1) AS discordId,
          (SELECT group_concat(DISTINCT n.nick) FROM nickname n WHERE n.user_id = u.id) AS nicks
   FROM user u`;
@@ -80,7 +86,8 @@ function findUsers(db, q) {
 function fmt(u) {
   const nicks = u.nicks ? ` aka ${u.nicks.split(",").join(", ")}` : "";
   const discord = u.discordId ? ` discord:${u.discordId}` : "";
-  return `${u.role === "admin" ? "[admin] " : "        "}${u.name || "(no name)"}${nicks} <${u.email}>${discord}  id:${u.id}`;
+  const tag = isStaff(u) ? `[${u.role}]` : "";
+  return `${tag.padEnd(12)}${u.name || "(no name)"}${nicks} <${u.email}>${discord}  id:${u.id}${u.suspendedAt ? "  SUSPENDED" : ""}`;
 }
 
 function one(db, q) {
@@ -111,10 +118,10 @@ const db = cmd && cmd !== "help" && cmd !== "--help" && cmd !== "-h" ? open() : 
 
 switch (cmd) {
   case "list": {
-    const admins = allUsers(db).filter((u) => u.role === "admin");
-    console.log(admins.length ? admins.map(fmt).join("\n") : "No platform admins yet. The first person to sign in becomes one.");
+    const staff = allUsers(db).filter(isStaff);
+    console.log(staff.length ? staff.map(fmt).join("\n") : "No platform staff yet. The first person to sign in becomes owner.");
     const pending = adminEmails(db).filter((e) => !allUsers(db).some((u) => u.email.toLowerCase() === e.toLowerCase()));
-    if (pending.length) console.log(`\nBecome admin on first sign-in: ${pending.join(", ")}`);
+    if (pending.length) console.log(`\nBecome owner on first sign-in: ${pending.join(", ")}`);
     break;
   }
   case "users": {
@@ -124,17 +131,20 @@ switch (cmd) {
     break;
   }
   case "grant": {
+    const role = (flags.find((f) => f.startsWith("--role="))?.slice(7) ?? "owner").toLowerCase();
+    if (!STAFF.includes(role)) fail(`Unknown role "${role}". Use one of: ${STAFF.join(", ")}`);
     const u = one(db, arg);
     if (u) {
-      if (u.role === "admin") console.log(`${u.name} is already a platform admin.`);
+      if (u.role === role) console.log(`${u.name} is already ${role}.`);
       else {
-        db.prepare("UPDATE user SET role = 'admin', updated_at = ? WHERE id = ?").run(Date.now(), u.id);
-        console.log(`${u.name} <${u.email}> is now a platform admin.`);
+        db.prepare("UPDATE user SET role = ?, updated_at = ? WHERE id = ?").run(role, Date.now(), u.id);
+        console.log(`${u.name} <${u.email}> is now ${role}.`);
       }
     } else if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(arg)) {
+      if (role !== "owner") fail("Only the owner role can be given before the first sign-in. Give other roles once they've signed in.");
       const emails = adminEmails(db);
       if (!emails.some((e) => e.toLowerCase() === arg.toLowerCase())) saveAdminEmails(db, [...emails, arg]);
-      console.log(`No user with ${arg} yet. They'll become a platform admin when they first sign in with Discord (the email must match their Discord account's email).`);
+      console.log(`No user with ${arg} yet. They'll become owner when they first sign in with Discord (the email must match their Discord account's email).`);
     } else {
       fail(`No user matches "${arg}". Try: node scripts/admin.mjs users ${arg}`);
     }
@@ -143,18 +153,28 @@ switch (cmd) {
   case "revoke": {
     const u = one(db, arg);
     if (!u) fail(`No user matches "${arg}". Try: node scripts/admin.mjs users`);
-    if (u.role !== "admin") console.log(`${u.name} is not a platform admin.`);
+    if (!isStaff(u)) console.log(`${u.name} has no platform role.`);
     else {
-      const others = allUsers(db).filter((x) => x.role === "admin" && x.id !== u.id).length;
-      if (!others && !flags.includes("--force")) fail(`${u.name} is the last platform admin. Add --force to remove anyway.`);
+      const others = allUsers(db).filter((x) => x.role === "owner" && x.id !== u.id).length;
+      if (u.role === "owner" && !others && !flags.includes("--force")) fail(`${u.name} is the last owner. Add --force to remove anyway.`);
       db.prepare("UPDATE user SET role = 'member', updated_at = ? WHERE id = ?").run(Date.now(), u.id);
-      console.log(`${u.name} <${u.email}> is no longer a platform admin.`);
+      console.log(`${u.name} <${u.email}> no longer has a platform role.`);
     }
     const emails = adminEmails(db);
     const kept = emails.filter((e) => e.toLowerCase() !== u.email.toLowerCase());
     if (kept.length !== emails.length) {
       saveAdminEmails(db, kept);
       console.log(`Also removed ${u.email} from the admin emails setting.`);
+    }
+    break;
+  }
+  case "unsuspend": {
+    const u = one(db, arg);
+    if (!u) fail(`No user matches "${arg}". Try: node scripts/admin.mjs users`);
+    if (!u.suspendedAt) console.log(`${u.name} is not suspended.`);
+    else {
+      db.prepare("UPDATE user SET suspended_at = NULL, suspended_reason = NULL, updated_at = ? WHERE id = ?").run(Date.now(), u.id);
+      console.log(`${u.name} <${u.email}> can sign in again.`);
     }
     break;
   }

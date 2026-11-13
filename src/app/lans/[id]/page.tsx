@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { ReportButton } from "@/components/report-button";
+import { SuspendedClan } from "@/components/suspended-clan";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { and, desc, eq, inArray } from "drizzle-orm";
@@ -75,6 +77,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
     // Shared links: people who can't open the event yet see what it is and how to get in, instead of a 404.
     // No redirect for signed-out visitors either, so link previews keep this page's metadata.
     const clan = l.publishedAt && l.clanId ? getClan(l.clanId) : undefined;
+    if (viewer && clan?.suspendedAt) return <SuspendedClan name={clan.name} />;
     if (!clan) {
       if (!viewer) redirect(`/login?next=${encodeURIComponent(here)}`);
       notFound();
@@ -638,6 +641,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           </details>
         </Columns>
       )}
+      {!isAdmin && <ReportButton lanId={l.id} />}
     </Page>
   );
 }

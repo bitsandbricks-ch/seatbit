@@ -113,6 +113,7 @@ nav:
           - Audit log: features/audit-log.md
           - Supporter badge: features/supporters.md
           - Platform admin: features/admin.md
+          - Reports and suspensions: features/moderation.md
   - Installation:
       - installation/index.md
       - Run it:

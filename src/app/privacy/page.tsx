@@ -93,6 +93,7 @@ function PrivacyEn({ legal, payments }: Props) {
         <li>Login sessions, with the IP address and browser (user agent) they were created from</li>
         <li>A log of which reminders were sent, so nobody gets the same one twice</li>
         <li>An audit log of changes leads and admins make (for example who moved a seat, changed someone&apos;s answer, confirmed a ticket, changed a role or edited a guest), with the time, who made the change and who it was about</li>
+        <li>Reports you send about a clan or event (reason, your message, the time), seen only by the platform staff who handle them; and, if your account is suspended, when and why</li>
         <li>Server logs (time, requested page, IP address, error messages) that our server keeps for a short time</li>
       </ul>
 
@@ -288,6 +289,7 @@ function PrivacyDe({ legal, payments }: Props) {
         <li>Login-Sitzungen mit der IP-Adresse und dem Browser (User Agent), mit denen sie erstellt wurden</li>
         <li>Ein Protokoll, welche Erinnerungen verschickt wurden, damit niemand dieselbe zweimal bekommt</li>
         <li>Ein Protokoll der Änderungen von Leads und Admins (zum Beispiel wer einen Platz verschoben, eine Antwort geändert, ein Ticket bestätigt, eine Rolle geändert oder einen Gast bearbeitet hat), mit Zeit, wer die Änderung gemacht hat und wen sie betrifft</li>
+        <li>Meldungen, die du zu einem Clan oder Event schickst (Grund, deine Nachricht, Zeit), die nur die Plattform-Mitarbeitenden sehen, die sie bearbeiten; und falls dein Konto gesperrt wird, wann und warum</li>
         <li>Server-Logs (Zeit, aufgerufene Seite, IP-Adresse, Fehlermeldungen), die unser Server kurz aufbewahrt</li>
       </ul>
 

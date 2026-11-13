@@ -19,7 +19,7 @@ npm run seed                   # demo clan, events, people
 npm run dev
 ```
 
-Open <http://localhost:3000>. The database is `./data/lan.db`; delete it to start over. Without seeding, the first account you create becomes platform admin.
+Open <http://localhost:3000>. The database is `./data/lan.db`; delete it to start over. Without seeding, the first account you create becomes platform owner.
 
 ### Demo data
 
@@ -27,7 +27,8 @@ Open <http://localhost:3000>. The database is `./data/lan.db`; delete it to star
 
 | User | Role | Password |
 | --- | --- | --- |
-| `alex@example.com` | Platform admin, clan admin, lead | `seatbit-demo` |
+| `alex@example.com` | Platform owner, clan admin, lead | `seatbit-demo` |
+| `oliver@example.com` | Platform moderator | `seatbit-demo` |
 | `anna@example.com` | Member | `seatbit-demo` |
 
 ### Discord locally

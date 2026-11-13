@@ -26,6 +26,7 @@ import { appUrl } from "@/lib/mail";
 import { missingServers, setServerInvite } from "@/lib/discord-invite";
 import { notify, notifyClanAdmins, notifyLater } from "@/lib/notify";
 import { requireClanPermission, requireLanManager, requireUser } from "@/lib/session";
+import { platformCan } from "@/lib/platform-roles";
 import { adminSetAttendance, type FormState } from "./actions";
 import { getDefaultNames } from "@/lib/lans";
 import { audit } from "@/lib/audit";
@@ -116,8 +117,10 @@ export async function joinClan(clanId: string, next?: unknown) {
   const me = await requireUser();
   const c = getClan(clanId);
   if (!c) throw new Error("Clan not found");
-  if (c.joinPolicy === "invite" && me.role !== "admin") throw await err("errors.inviteOnly");
-  const role = c.joinPolicy === "open" || me.role === "admin" ? "member" : "pending";
+  if (c.suspendedAt) throw await err("errors.clanSuspended");
+  const staff = platformCan(me, "clans");
+  if (c.joinPolicy === "invite" && !staff) throw await err("errors.inviteOnly");
+  const role = c.joinPolicy === "open" || staff ? "member" : "pending";
   db.insert(clanMember).values({ clanId, userId: me.id, role }).onConflictDoNothing().run();
   if (role === "pending") {
     notifyLater(() =>

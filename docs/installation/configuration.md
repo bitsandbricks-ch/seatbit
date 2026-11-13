@@ -22,7 +22,7 @@ A value saved in the platform settings wins over the environment variable. Clear
 | --- | --- | --- |
 | **General** | | |
 | Allow new accounts | `SIGNUP_OPEN` | `true` |
-| Admin emails (become platform admin on sign-up) | `ADMIN_EMAILS` | |
+| Admin emails (become platform owner on sign-up) | `ADMIN_EMAILS` | |
 | Default language (`en` or `de`): for browsers that want neither, mails to people without a choice and clans without their own Discord language | `DEFAULT_LOCALE` | `en` |
 | Currency for food orders | `FOOD_CURRENCY` | `CHF` |
 | **Email** | | |

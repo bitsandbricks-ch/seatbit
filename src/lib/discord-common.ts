@@ -55,7 +55,9 @@ export function seatbitUserFor(discordUserId: string) {
     .from(account)
     .where(and(eq(account.providerId, "discord"), eq(account.accountId, discordUserId)))
     .get()?.userId;
-  return userId ? db.select().from(user).where(eq(user.id, userId)).get() : undefined;
+  const u = userId ? db.select().from(user).where(eq(user.id, userId)).get() : undefined;
+  // Suspended and deleted accounts get treated like unlinked Discord users.
+  return u && !u.suspendedAt && !u.deletedAt ? u : undefined;
 }
 
 export const notLinked = (t: T) =>
@@ -77,7 +79,9 @@ export function interactionT(i: Interaction): T {
 export function clanForGuild(guildId: string | undefined): Clan | undefined {
   if (!guildId) return undefined;
   const ch = db.select().from(discordChannel).where(eq(discordChannel.guildId, guildId)).get();
-  return ch ? getClan(ch.clanId) : undefined;
+  const c = ch ? getClan(ch.clanId) : undefined;
+  // A suspended clan's server acts like an unlinked one.
+  return c && !c.suspendedAt ? c : undefined;
 }
 
 /** A top-level option's value as text. */

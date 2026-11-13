@@ -12,7 +12,7 @@ Run your own Seatbit instance. Seatbit is one Node.js process with a SQLite data
 ## Steps
 
 1. Start the container with [Docker](docker.md) or on [Kubernetes](kubernetes.md) with a few [environment variables](configuration.md).
-2. Sign in with Discord. **The first account becomes platform admin.**
+2. Sign in with Discord. **The first account becomes platform owner.**
 3. Open **Admin → Platform settings** and set up [email](email.md), the [Discord bot](discord.md) and the [operator details for the privacy policy and terms](legal.md).
 4. Create your clan and invite your people. See [Clans and roles](../features/clans.md).
 5. Set up [backups](operations.md#backups).
