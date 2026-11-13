@@ -152,6 +152,26 @@ export async function copyForNextYear(lanId: string) {
   for (const uid of orgas) {
     if (uid === me.id || !l.clanId || isClanMember(uid, l.clanId)) db.insert(lanOrga).values({ lanId: row.id, userId: uid }).run();
   }
+  // This event's own lead to-dos come along (not their ticks); clan and type to-dos apply anyway.
+  const own = db.select().from(schema.leadTask).where(eq(schema.leadTask.lanId, l.id)).all();
+  const ids = new Map(own.map((x) => [x.id, crypto.randomUUID()]));
+  if (own.length) {
+    db.insert(schema.leadTask)
+      .values(
+        own.map((x) => ({
+          id: ids.get(x.id)!,
+          clanId: x.clanId,
+          lanId: row.id,
+          title: x.title,
+          note: x.note,
+          dueDays: x.dueDays,
+          contactId: x.contactId,
+          sort: x.sort,
+          after: x.after.map((d) => (d.startsWith("task:") && ids.has(d.slice(5)) ? `task:${ids.get(d.slice(5))}` : d)),
+        })),
+      )
+      .run();
+  }
   auditLan(row, me.id, "event.copy", { data: { from: l.name } });
   addClanAdminsAsOrgas(row.id, l.clanId);
   revalidatePath("/");

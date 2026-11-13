@@ -31,6 +31,10 @@ import { getLanAccounts } from "@/lib/lan-accounts";
 import { LeadBookingList } from "@/components/seat-booking";
 import { LeadChecklist } from "@/components/lead-checklist";
 import { buildLeadChecklist } from "@/lib/lead-checklist";
+import { buildLeadTasks, contactsOf, lanTaskStates, tasksForLan } from "@/lib/lead-tasks";
+import { LeadTasks } from "@/components/lead-tasks";
+import { LeadTaskEditor } from "@/components/lead-task-editor";
+import { ContactDetails } from "@/components/lead-contacts";
 import { SeatSwapApprovals, type SwapView } from "@/components/seat-swaps";
 import { WhoIsMissing, type MissingGroupView } from "@/components/who-is-missing";
 import { MISSING_STEPS, NUDGE_COOLDOWN_MS, whoIsMissing, type MissingStep } from "@/lib/missing";
@@ -202,6 +206,24 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
     swapsToApprove,
     t,
   });
+  // The leads' own to-dos (clan, LAN type, this event) and the LAN organizers' contacts.
+  const lanTypeRow = l.typeId ? db.select().from(schema.lanType).where(eq(schema.lanType.id, l.typeId)).get() : undefined;
+  const contacts = lanTypeRow ? contactsOf(lanTypeRow.id) : [];
+  const taskDefs = tab === "overview" ? tasksForLan(l) : [];
+  const leadTasks = buildLeadTasks({
+    lan: l,
+    tasks: taskDefs,
+    states: lanTaskStates(l.id, taskDefs.map((x) => x.id)),
+    steps: leadSteps,
+    contacts,
+    now,
+    t,
+  });
+  const eventTasks = taskDefs.filter((x) => x.lanId === l.id);
+  const canEditTypes = !!lanClan && clanCan(me, lanClan.id, "events");
+  const leadOptions = orgaIds
+    .map((uid) => ({ id: uid, name: names.get(uid) ?? userById.get(uid)?.name ?? "?" }))
+    .sort((a, b) => a.name.localeCompare(b.name));
   const news = db
     .select()
     .from(schema.lanNews)
@@ -402,6 +424,20 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
         // Same shape as the event page: the main things on the left, dates in a sidebar on the right.
         <div className="grid grid-cols-1 items-start gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_22rem]">
           <div className="order-last space-y-4 sm:space-y-6 lg:order-none lg:col-start-2 lg:row-start-1">
+            <Card id="contacts" title={t("contacts.heading")}>
+              {contacts.length ? (
+                <ul className="space-y-3">
+                  {contacts.map((c) => (
+                    <li key={c.id}>
+                      <ContactDetails c={c} t={t} />
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-muted">{lanTypeRow ? t("contacts.none") : t("contacts.noType")}</p>
+              )}
+              {lanTypeRow && <p className="mt-3 text-xs text-faint">{t("contacts.fromType", { type: lanTypeRow.name })}</p>}
+            </Card>
             <Card title={t("manage.dates")}>
               <dl className="space-y-3 text-sm">
                 <DateItem t={t} label={t("notice.field.answerBy")} d={l.signupDeadline} now={now} />
@@ -456,6 +492,37 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               href={`/lans/${l.id}/manage?tab=seats`}
             />
           </div>
+
+          <LeadTasks
+            lanId={l.id}
+            tasks={leadTasks}
+            leads={leadOptions}
+            names={new Map([...names, ...leadOptions.map((o) => [o.id, o.name] as [string, string])])}
+            editLinks={
+              canEditTypes && lanClan
+                ? [
+                    ...(lanTypeRow
+                      ? [{ href: `/clans/${lanClan.slug}/types/${lanTypeRow.id}#lead-tasks`, label: t("leadTasks.editType", { type: lanTypeRow.name }) }]
+                      : []),
+                    { href: `/clans/${lanClan.slug}/settings?tab=types#lead-tasks`, label: t("leadTasks.editClan") },
+                  ]
+                : []
+            }
+          >
+            {l.clanId && (
+              <details className="mt-3 rounded-card border border-line p-3">
+                <summary className="cursor-pointer text-sm font-medium text-bit">{t("leadTasks.addForEvent")}</summary>
+                <div className="mt-3">
+                  <LeadTaskEditor
+                    scope={{ lanId: l.id }}
+                    tasks={eventTasks.map(({ id, title, note, after, dueDays, contactId }) => ({ id, title, note, after, dueDays, contactId }))}
+                    depTasks={taskDefs.map((x) => ({ id: x.id, title: x.title }))}
+                    contacts={contacts.map((c) => ({ id: c.id, name: c.name }))}
+                  />
+                </div>
+              </details>
+            )}
+          </LeadTasks>
 
           <Card title={t("manage.news")}>
             <NewsComposer lanId={l.id} published={!!l.publishedAt} />

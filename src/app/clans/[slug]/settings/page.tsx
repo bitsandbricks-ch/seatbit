@@ -43,6 +43,8 @@ import { discordEnabled, inviteUrl } from "@/lib/discord-api";
 import { clanServers } from "@/lib/discord-invite";
 import { AuditLog, auditQuery, parseAuditFilter } from "@/components/audit-log";
 import { auditEntries, auditedEvents } from "@/lib/audit";
+import { ensureDefaultTasks, tasksAt } from "@/lib/lead-tasks";
+import { LeadTaskEditor } from "@/components/lead-task-editor";
 import { getT } from "@/i18n/server";
 import type { T } from "@/i18n/translate";
 
@@ -380,7 +382,10 @@ async function ChatTab({ t, clanId }: { t: T; clanId: string }) {
 
 function TypesTab({ t, clanId, slug }: { t: T; clanId: string; slug: string }) {
   const types = db.select().from(schema.lanType).where(eq(schema.lanType.clanId, clanId)).orderBy(asc(schema.lanType.name)).all();
+  ensureDefaultTasks(clanId);
+  const clanTasks = tasksAt({ clanId });
   return (
+    <div className="space-y-4 sm:space-y-6">
     <Card
       title={t("clanPage.links.types")}
       actions={
@@ -423,6 +428,16 @@ function TypesTab({ t, clanId, slug }: { t: T; clanId: string; slug: string }) {
         </ul>
       )}
     </Card>
+    <Card id="lead-tasks" title={t("leadTasks.allHeading")}>
+      <p className="mb-3 text-sm text-muted">{t("leadTasks.allHint")}</p>
+      <LeadTaskEditor
+        scope={{ clanId }}
+        tasks={clanTasks.map(({ id, title, note, after, dueDays, contactId }) => ({ id, title, note, after, dueDays, contactId }))}
+        depTasks={clanTasks.map((x) => ({ id: x.id, title: x.title }))}
+        contacts={[]}
+      />
+    </Card>
+    </div>
   );
 }
 

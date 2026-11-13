@@ -86,6 +86,8 @@ A **LAN type** describes a LAN party you go to regularly, e.g. *Lock & Load* or 
 | Member profile link | Optional. A member's profile on the event's own site, with `{id}` where their LAN ID goes, e.g. `https://example.com/user/?id={id}`. See [Profile links](#profile-links). |
 | Discord | Where the bot posts these events, their reminders and news: the linked channel, a thread per event or a channel per event. See [Discord](discord.md#thread-or-channel-per-event). |
 
+A LAN type's page also holds its **organizer contacts** and its **lead to-dos**, see [Lead to-dos and contacts](lead-todos.md).
+
 Members set a nick and their user ID **per LAN type**, so they enter their name for the event's own site once, not every year.
 
 ![LAN types](../screenshots/desktop-lan-types.png){ .shot }
