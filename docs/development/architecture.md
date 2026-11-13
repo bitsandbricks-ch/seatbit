@@ -69,7 +69,7 @@ The UI is in English and German, without locale prefixes in the URL. `src/i18n/s
 
 ## Toasts
 
-After a save, a change or a failure the app shows a short note at the bottom of the screen (above the tab bar on phones): green with a tick when it worked, red with the reason when it didn't. `<Toaster />` in the root layout shows them; they stay across page changes, pause while hovered or focused, and are announced to screen readers (errors right away, the rest politely).
+After a save, a change or a failure the app shows a short note at the bottom of the screen (above the tab bar on phones, in the bottom right corner on wider screens): green with a tick when it worked, red with the reason when it didn't. `<Toaster />` in the root layout shows them; they stay across page changes, pause while hovered or focused, and are announced to screen readers (errors right away, the rest politely).
 
 Every server action reports through the helpers in `src/components/action-form.tsx`, so it looks the same everywhere:
 

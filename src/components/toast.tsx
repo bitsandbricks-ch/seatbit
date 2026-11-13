@@ -112,8 +112,9 @@ export function Toaster() {
     </ol>
   );
   return (
-    // Phones: above the bottom tab bar. Desktop: bottom centre, out of the way of the commit hash.
-    <div className="pointer-events-none fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-50 flex justify-center px-4 sm:bottom-6">
+    // Phones: above the bottom tab bar. Wider screens: bottom right corner, clear of the centred
+    // footer links (the commit hash has the left corner).
+    <div className="pointer-events-none fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-50 flex justify-center px-4 sm:inset-x-auto sm:right-4 sm:bottom-4 sm:w-96 sm:px-0">
       <div className="w-full max-w-sm">
         {region("success")}
         {region("error")}
