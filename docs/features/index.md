@@ -18,6 +18,7 @@ Seatbit has three kinds of users:
 | [Languages](languages.md) | English and German, per person, for the app, mails and Discord. | Everyone |
 | [Light and dark theme](theme.md) | Light, dark or follow the device, from the top bar. | Everyone |
 | [Event lifecycle](events.md) | Create from a LAN type, drafts, publish or schedule, interest check, news, cancel, copy for next year. | Leads |
+| [Lead to-dos and contacts](lead-todos.md) | The leads' own to-dos per clan, LAN type or event (with due dates and steps they wait for), and the LAN organizers' contacts. | Leads |
 | [Attendance and tickets](attendance.md) | Coming / unsure / not coming, waitlist, checklist, tickets, attendee list and CSV export. | Members, leads |
 | [Seats](seats.md) | The group's seat block, seat wishes, self pick, planner, final plan, booking on the event site, swaps. | Members, leads |
 | [Reminders and who's missing](reminders.md) | Automatic reminders before deadlines, manual reminders and one-tap nudges. | Leads |
