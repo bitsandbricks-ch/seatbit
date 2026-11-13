@@ -60,15 +60,22 @@ spec:
     metadata:
       labels: { app: seatbit }
     spec:
+      automountServiceAccountToken: false  # Seatbit doesn't talk to the Kubernetes API
       securityContext:
+        runAsNonRoot: true
         runAsUser: 1001
         runAsGroup: 1001
         fsGroup: 1001
+        seccompProfile: { type: RuntimeDefault }
       containers:
         - name: seatbit
           image: ghcr.io/bitsandbricks-ch/seatbit:main
           ports:
             - containerPort: 3000
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: [ALL] }
           envFrom:
             - secretRef: { name: seatbit }
           env:
@@ -77,6 +84,8 @@ spec:
           volumeMounts:
             - { name: data, mountPath: /data }
             - { name: backups, mountPath: /backups }
+            - { name: tmp, mountPath: /tmp }
+            - { name: next-cache, mountPath: /app/.next/cache }
           readinessProbe:
             httpGet: { path: /api/health, port: 3000 }
           livenessProbe:
@@ -90,6 +99,8 @@ spec:
           persistentVolumeClaim: { claimName: seatbit-data }
         - name: backups
           persistentVolumeClaim: { claimName: seatbit-backups }
+        - { name: tmp, emptyDir: {} }
+        - { name: next-cache, emptyDir: {} }
 ---
 apiVersion: v1
 kind: Service
@@ -106,7 +117,7 @@ Add an Ingress (or Gateway route) for your domain pointing at the `seatbit` serv
 
 ## Read-only root filesystem
 
-The app works with `readOnlyRootFilesystem: true` if `/tmp` and `/app/.next/cache` are writable, e.g. with `emptyDir` volumes.
+The deployment above runs with `readOnlyRootFilesystem: true`: only `/data`, `/backups`, `/tmp` and `/app/.next/cache` are writable. More hardening (network policies, ingress, secrets) is in [Security hardening](security.md).
 
 ## Backups
 

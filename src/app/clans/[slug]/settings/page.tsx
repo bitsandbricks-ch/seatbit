@@ -34,7 +34,8 @@ import { Card, Columns, Page, btnDanger, btnGhost, btnPrimary, btnSecondary } fr
 import { appUrl } from "@/lib/mail";
 import { getDefaultNames } from "@/lib/lans";
 import { avatarData } from "@/lib/avatars";
-import { clanPerms, clanRole, getClanBySlug } from "@/lib/clans";
+import { clanPerms, clanRole, clanmateIds, getClanBySlug } from "@/lib/clans";
+import { platformCan } from "@/lib/platform-roles";
 import { MEMBER_ROLES, isMemberRole } from "@/lib/clan-roles";
 import { fmtDate } from "@/lib/format";
 import { requireUser } from "@/lib/session";
@@ -79,6 +80,8 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
   const active = members.filter((m) => m.role !== "pending");
   const guests = active.filter((m) => m.u.isGuest);
   const inClan = new Set(members.map((m) => m.u.id));
+  const seeAll = platformCan(me, "clans");
+  const mates = clanmateIds(me.id);
   const others = db
     .select({
       id: schema.user.id,
@@ -90,7 +93,8 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
     .from(schema.user)
     .where(and(eq(schema.user.isGuest, false), isNull(schema.user.deletedAt)))
     .all()
-    .filter((u) => !inClan.has(u.id));
+    // Only people who share a clan with this lead (platform staff see everyone), not the whole instance.
+    .filter((u) => !inClan.has(u.id) && (seeAll || mates.has(u.id)));
   // Members and guests as the clan shows names; the full name stays next to it, because admins need to know who's who.
   const people = getDefaultNames([...members.map((m) => m.u.id), ...others.map((u) => u.id)], c.nameDisplay);
   const userOf = (id: string) => members.find((m) => m.u.id === id)!.u;

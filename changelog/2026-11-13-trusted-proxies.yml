@@ -1,0 +1,13 @@
+date: 2026-11-13
+type: new
+audience: admins
+en:
+  title: Security hardening guide and trusted proxies setting
+  text: >-
+    The docs have a new security hardening page for operators. The new Trusted proxies setting
+    tells Seatbit which reverse proxies sit in front of it.
+de:
+  title: Anleitung zur Absicherung und Einstellung für vertrauenswürdige Proxys
+  text: >-
+    Die Doku hat eine neue Seite zur Absicherung für Betreiber. Die neue Einstellung
+    «Vertrauenswürdige Proxys» sagt Seatbit, welche Reverse-Proxys davor stehen.
