@@ -158,7 +158,7 @@ export default function PrivacyPage() {
         <li>Server logs: a few days. Database backups: up to 14 days.</li>
       </ul>
       <p>
-        You can delete your account yourself on your <Link href="/profile">profile</Link> (Your data, Delete my
+        You can delete your account yourself on your <Link href="/profile?tab=data">profile</Link> (Your data, Delete my
         account). We then delete your name, email, picture, Discord link, login sessions, nicknames, LAN IDs, clan
         memberships, lead roles, seat wishes, seats, rides, packing lists and your answers to upcoming events. Your
         answers to past events (coming or not, ticket) stay with an anonymous &ldquo;Deleted member&rdquo; that

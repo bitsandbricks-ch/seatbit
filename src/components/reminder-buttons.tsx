@@ -27,7 +27,8 @@ export function ReminderButtons({
   };
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="w-full text-sm text-muted sm:w-auto">{t("reminderButtons.now")}</span>
         {counts.signup !== null && (
           <button disabled={draft || pending || !counts.signup} className={btnSecondary} onClick={() => send("signup", counts.signup!)}>
             {t("reminderButtons.signup", { count: counts.signup })}

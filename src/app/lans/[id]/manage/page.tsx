@@ -57,7 +57,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
   const { id } = await params;
   const sp = await searchParams;
   const tab: Tab = TABS.some(([x]) => x === sp.tab) ? (sp.tab as Tab) : "overview";
-  const me = await requireUser();
+  const me = await requireUser({ next: `/lans/${id}/manage` });
   const t = await getT();
   const l = getLan(id);
   if (!l) notFound();
@@ -398,6 +398,8 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
         hrefFor={(tb) => `/lans/${l.id}/manage?tab=${tb}`}
       />
 
+      {/* Full width, so all steps fit in one row on desktop. */}
+      {tab === "overview" && <LeadChecklist steps={leadSteps} />}
       {tab === "overview" && (
         // Same shape as the event page: the main things on the left, dates in a sidebar on the right.
         <div className="grid grid-cols-1 items-start gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_22rem]">
@@ -421,7 +423,6 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
             </Card>
           </div>
           <div className="min-w-0 space-y-4 sm:space-y-6 lg:col-start-1 lg:row-start-1">
-          <LeadChecklist steps={leadSteps} />
           {spotToFill && (
             <Notice tone="warn">
               {t("manage.spotsFree", { count: free ?? 0, waiting: waitlist.length })}{" "}
@@ -430,7 +431,8 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               </Link>
             </Notice>
           )}
-          <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+          {/* The numbers at a glance, one compact strip; each opens the tab with the details. */}
+          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-card border border-line bg-line sm:grid-cols-4">
             <Stat
               label={t("bot.coming")}
               value={`${going.length}${l.capacity ? ` / ${l.capacity}` : ""}`}
@@ -737,10 +739,10 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
 
 function Stat({ label, value, sub, href }: { label: string; value: string; sub: string; href: string }) {
   return (
-    <Link href={href} className="rounded-card border border-line bg-surface p-4 hover:border-muted/50">
-      <p className="text-xs uppercase tracking-wide text-faint">{label}</p>
-      <p className="mt-1 text-2xl font-bold tabular-nums">{value}</p>
-      <p className="text-xs text-muted">{sub}</p>
+    <Link href={href} className="min-w-0 bg-surface px-3 py-2.5 transition hover:bg-raised sm:px-4 sm:py-3">
+      <p className="truncate text-xs text-muted">{label}</p>
+      <p className="text-xl font-bold tabular-nums">{value}</p>
+      <p className="truncate text-xs text-faint">{sub}</p>
     </Link>
   );
 }

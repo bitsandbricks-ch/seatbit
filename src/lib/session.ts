@@ -17,11 +17,15 @@ export const getCurrentUser = cache(async () => {
   return u && !u.deletedAt ? u : null;
 });
 
-/** Signed-in user. Until they've given first name and surname (e.g. right after a Discord sign-up) they're sent to /welcome. */
-export async function requireUser(opts?: { allowIncomplete?: boolean }) {
+/**
+ * Signed-in user. Until they've given first name and surname (e.g. right after a Discord sign-up) they're sent to /welcome.
+ * `next` is where to come back to after signing in or finishing the profile (a shared event link, say).
+ */
+export async function requireUser(opts?: { allowIncomplete?: boolean; next?: string }) {
   const u = await getCurrentUser();
-  if (!u) redirect("/login");
-  if (!opts?.allowIncomplete && !isProfileComplete(u)) redirect("/welcome");
+  const back = opts?.next ? `?next=${encodeURIComponent(opts.next)}` : "";
+  if (!u) redirect(`/login${back}`);
+  if (!opts?.allowIncomplete && !isProfileComplete(u)) redirect(`/welcome${back}`);
   return u;
 }
 

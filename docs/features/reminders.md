@@ -21,7 +21,7 @@ Seatbit reminds people before deadlines by itself. Leads can also remind by hand
 
 ## Manual reminders
 
-*Manage → Overview* has buttons to remind **everyone who hasn't answered**, **everyone without a ticket** or **everyone coming** right now, even if they got the automatic reminder already.
+*Manage → Overview* has **Remind now** buttons for **Undecided** (everyone who hasn't answered), **No ticket** (everyone without a ticket) and **Everyone coming**, to remind them right now, even if they got the automatic reminder already.
 
 ## Who's missing
 

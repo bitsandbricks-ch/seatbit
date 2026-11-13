@@ -105,15 +105,23 @@ export async function updateProfile(formData: FormData) {
   const me = await requireUser({ allowIncomplete: true });
   const firstName = personName.parse(formData.get("firstName"));
   const lastName = personName.parse(formData.get("lastName"));
-  const emailReminders = formData.get("emailReminders") === "on";
-  // Only the profile form has the DM checkbox; other forms leave the setting alone.
-  const discordDms = formData.has("discordDmsShown") ? formData.get("discordDms") === "on" : undefined;
   db.update(user)
-    .set({ firstName, lastName, name: `${firstName} ${lastName}`, emailReminders, ...(discordDms !== undefined && { discordDms }) })
+    .set({ firstName, lastName, name: `${firstName} ${lastName}` })
     .where(eq(user.id, me.id))
     .run();
   if (formData.has("nick")) saveNick(me.id, String(formData.get("nick")));
   revalidatePath("/", "layout");
+}
+
+/** Profile › Notifications: email reminders and Discord DMs. */
+export async function updateNotifications(_: AppearanceState, formData: FormData): Promise<AppearanceState> {
+  const me = await requireUser();
+  db.update(user)
+    .set({ emailReminders: formData.get("emailReminders") === "on", discordDms: formData.get("discordDms") === "on" })
+    .where(eq(user.id, me.id))
+    .run();
+  revalidatePath("/", "layout");
+  return { ok: true };
 }
 
 /** Gaming and social handles on the member's profile. Empty fields are dropped. */
@@ -165,10 +173,10 @@ export async function sendTestDm() {
     kind: "test",
     subject: t("notice.testDm"),
     text: t("notice.testDmText"),
-    url: `${appUrl}/profile`,
+    url: `${appUrl}/profile?tab=notifications`,
     dmOnly: true,
   }));
-  redirect(`/profile?dm=${r.ok ? "ok" : r.problem}#dms`);
+  redirect(`/profile?tab=notifications&dm=${r.ok ? "ok" : r.problem}#dms`);
 }
 
 /** First-login form: saves the names and nickname, then continues to the app. */

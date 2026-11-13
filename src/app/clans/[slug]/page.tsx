@@ -11,7 +11,6 @@ import { Card, Columns, EmptyState, Notice, Page, Pill, StatusBadge, btnGhost, b
 import { lanDay, lanRange } from "@/lib/format";
 import { clanPerms, clanRole, getClanBySlug } from "@/lib/clans";
 import { MANAGE_TAB_PERMS, isMemberRole } from "@/lib/clan-roles";
-import { isSupporter } from "@/lib/billing";
 import { pickNick } from "@/lib/lans";
 import { personLabel } from "@/lib/names";
 import { avatarData } from "@/lib/avatars";
@@ -194,14 +193,6 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
         <Columns
           aside={
             <>
-              {isMember && isSupporter(c) && (
-                <p className="rounded-card border border-bit/30 bg-bit-soft p-3 text-sm text-fg/90">
-                  <span aria-hidden className="text-bit">
-                    ♥
-                  </span>{" "}
-                  {t("clanPage.supporter", { clan: c.name })}
-                </p>
-              )}
               {c.description && (
                 <Card title={t("clanPage.about")}>
                   <p className="whitespace-pre-wrap text-sm text-fg/90">{c.description}</p>
