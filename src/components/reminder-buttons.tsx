@@ -1,8 +1,9 @@
 "use client";
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 import { adminSendReminder } from "@/app/actions";
 import { btnSecondary } from "./ui";
 import { useT } from "@/i18n/client";
+import { useRunAction } from "./action-form";
 
 export function ReminderButtons({
   lanId,
@@ -16,13 +17,12 @@ export function ReminderButtons({
 }) {
   const t = useT();
   const [pending, start] = useTransition();
-  const [msg, setMsg] = useState<string | null>(null);
+  const act = useRunAction();
   const send = (kind: "signup" | "payment" | "event", n: number) => {
     const what = t(`manage.reminderKind.${kind}`);
     if (!confirm(t("reminderButtons.confirm", { what, count: n }))) return;
     start(async () => {
-      const sent = await adminSendReminder(lanId, kind);
-      setMsg(t("reminderButtons.sent", { what, count: sent }));
+      await act(() => adminSendReminder(lanId, kind), (sent) => t("reminderButtons.sent", { what, count: sent }));
     });
   };
   return (
@@ -44,7 +44,6 @@ export function ReminderButtons({
         </button>
       </div>
       {draft && <p className="text-sm text-muted">{t("reminderButtons.draft")}</p>}
-      {msg && <p className="text-sm text-bit">{msg}</p>}
     </div>
   );
 }

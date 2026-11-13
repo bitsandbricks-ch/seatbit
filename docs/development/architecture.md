@@ -67,6 +67,20 @@ The UI is in English and German, without locale prefixes in the URL. `src/i18n/s
 - Server actions translate what reaches people: `throw await err("errors.joinFirst")` and `{ error: await tr("errors.pickClan") }` from `src/i18n/server.ts`. Pure guards nobody hits through the UI ("Bad status") stay English.
 - `npm run check:i18n` (also in CI) parses every `.tsx` and fails on JSX text, user-facing attributes (`title`, `label`, `placeholder`, ...) and `confirm()` text that don't go through `t()`. Brand names and ALL-CAPS words are allowed; `// i18n-ignore` marks a deliberate exception, `i18n-ignore-file` a file written once per language (the legal pages, `TermsEn` / `TermsDe`).
 
+## Toasts
+
+After a save, a change or a failure the app shows a short note at the bottom of the screen (above the tab bar on phones): green with a tick when it worked, red with the reason when it didn't. `<Toaster />` in the root layout shows them; they stay across page changes, pause while hovered or focused, and are announced to screen readers (errors right away, the rest politely).
+
+Every server action reports through the helpers in `src/components/action-form.tsx`, so it looks the same everywhere:
+
+| Called from | Use |
+| --- | --- |
+| A plain form, also in a server component | `<ActionForm action={saveThing.bind(null, id)}>`; `done="deleted"` / `"removed"` changes the note, `done={false}` drops it (actions that leave for Stripe or another page). |
+| `useActionState` | `useToastAction(action, initial, success?)`, same signature. |
+| A button or transition | `const act = useRunAction();` then `start(async () => void (await act(() => saveThing(id))))`. It resolves to `true` when it worked. |
+
+`success` is the note for a good result: leave it out for *Saved.*, pass a text, a function of the result (`(n) => t("chat.posted", { count: n })`) or `false`. A result like `{ error }` or `{ ok: false, message }` shows as an error, `{ ok: true, message }` uses its message. A thrown error shows its text when it came from `throw await err("errors.…")`; production builds hide the text of any other thrown error, so those show *That didn't work*. Client-only notes call `toast.success()` / `toast.error()` from `src/components/toast.tsx`. Don't add inline "Saved" texts or error paragraphs next to buttons.
+
 ## Mail
 
 Every email goes out in the same layout (`renderMail` in `src/lib/mail-fill.ts`), in the recipient's language. There are three ways to send one, and no other:

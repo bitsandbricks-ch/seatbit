@@ -188,6 +188,18 @@ const SHOTS: Shot[] = [
   { name: "phone-profile", who: "anna", path: "/profile", full: true },
   { name: "phone-profile-lans", who: "anna", path: "/profile?tab=lans", full: true },
   { name: "phone-profile-notifications", who: "anna", path: "/profile?tab=notifications", full: true },
+  {
+    // The toast after a save (src/components/toast.tsx).
+    name: "phone-toast",
+    who: "anna",
+    path: "/profile?tab=notifications",
+    act: async (page) => {
+      await page.getByRole("button", { name: "Save", exact: true }).click();
+      await page.locator("ol[aria-live] li").first().waitFor();
+      // Let the slide-in finish.
+      await page.waitForTimeout(400);
+    },
+  },
   // German: same pages with a Swiss German browser.
   { name: "phone-event-de", who: "anna", path: LAKESIDE, full: true, lang: "de" },
   { name: "phone-profile-de", who: "anna", path: "/profile", lang: "de" },

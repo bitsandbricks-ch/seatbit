@@ -1,13 +1,14 @@
 "use client";
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 import { setMyTicketBought } from "@/app/actions";
 import { useT } from "@/i18n/client";
+import { useRunAction } from "./action-form";
 
 /** "I have my ticket" checkbox for members (sets ticketBought). Locked once a lead confirmed the ticket. */
 export function TicketConfirm({ lanId, bought, confirmed, label }: { lanId: string; bought: boolean; confirmed: boolean; label?: string }) {
   const t = useT();
   const [pending, start] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const run = useRunAction();
   return (
     <div>
       <label className="flex items-center gap-3 rounded-md border border-line bg-raised px-3 py-2.5 text-sm">
@@ -19,12 +20,7 @@ export function TicketConfirm({ lanId, bought, confirmed, label }: { lanId: stri
           onChange={(e) => {
             const v = e.target.checked;
             start(async () => {
-              setError(null);
-              try {
-                await setMyTicketBought(lanId, v);
-              } catch (err) {
-                setError(err instanceof Error ? err.message : t("eventUi.failed"));
-              }
+              await run(() => setMyTicketBought(lanId, v));
             });
           }}
           className="h-5 w-5 accent-bit"
@@ -34,7 +30,6 @@ export function TicketConfirm({ lanId, bought, confirmed, label }: { lanId: stri
           {confirmed && <span className="ml-1 text-xs text-muted">{t("eventUi.confirmedByLead")}</span>}
         </span>
       </label>
-      {error && <p className="mt-1 text-sm text-danger">{error}</p>}
     </div>
   );
 }

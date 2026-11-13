@@ -8,6 +8,7 @@ import { fmtDay, fmtMoney } from "@/lib/format";
 import { getLegal } from "@/lib/legal";
 import { requireUser } from "@/lib/session";
 import { getT } from "@/i18n/server";
+import { ActionForm } from "@/components/action-form";
 
 export default async function DonatePage({ searchParams }: PageProps<"/donate">) {
   if (!donationsEnabled()) notFound();
@@ -55,7 +56,7 @@ export default async function DonatePage({ searchParams }: PageProps<"/donate">)
         }
       >
         <Card title={t("donate.formTitle")}>
-          <form action={startDonation} className="space-y-5">
+          <ActionForm action={startDonation} className="space-y-5" done={false}>
             <fieldset>
               <legend className={label}>{t("donate.amount")}</legend>
               <div className="flex flex-wrap gap-2">
@@ -116,7 +117,7 @@ export default async function DonatePage({ searchParams }: PageProps<"/donate">)
                 })}
               </p>
             </div>
-          </form>
+          </ActionForm>
         </Card>
       </Columns>
     </Page>

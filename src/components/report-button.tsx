@@ -1,5 +1,6 @@
 "use client";
-import { useActionState, useState } from "react";
+import { useState } from "react";
+import { useToastAction } from "./action-form";
 import { reportContent, type ReportState } from "@/app/moderation-actions";
 import { REPORT_REASONS } from "@/lib/report-reasons";
 import { btnGhost, btnPrimary, input } from "./ui";
@@ -12,7 +13,7 @@ import { useT } from "@/i18n/client";
 export function ReportButton({ clanId, lanId }: { clanId?: string; lanId?: string }) {
   const t = useT();
   const [open, setOpen] = useState(false);
-  const [state, action, pending] = useActionState<ReportState, FormData>(reportContent, undefined);
+  const [state, action, pending] = useToastAction<ReportState>(reportContent, undefined, false);
   const what = lanId ? "event" : "clan";
 
   if (state?.ok)
@@ -48,7 +49,6 @@ export function ReportButton({ clanId, lanId }: { clanId?: string; lanId?: strin
         <span className="mb-1 block text-xs text-muted">{t("report.message")}</span>
         <textarea name="message" rows={3} maxLength={2000} className={input} />
       </label>
-      {state?.error && <p className="text-danger">{state.error}</p>}
       <div className="flex flex-wrap gap-2">
         <button className={btnPrimary} disabled={pending}>
           {t("report.send")}

@@ -1,5 +1,6 @@
 "use client";
-import { useActionState, useState } from "react";
+import { useState } from "react";
+import { useToastAction } from "./action-form";
 import { saveLan, type FormState } from "@/app/actions";
 import { DateTimePicker } from "./date-time-picker";
 import { PROFILE_URL_HINT } from "@/lib/profile-link";
@@ -45,7 +46,7 @@ const valid = (d: Date | null): d is Date => !!d && !isNaN(d.getTime());
 
 export function LanForm({ values, types }: { values: LanFormValues; types: TypeOption[] }) {
   const t = useT();
-  const [state, action, pending] = useActionState<FormState, FormData>(saveLan, undefined);
+  const [, action, pending] = useToastAction<FormState>(saveLan, undefined);
   const [typeId, setTypeId] = useState(values.typeId);
   const [startsAt, setStartsAt] = useState(values.startsAt);
   const [endsAt, setEndsAt] = useState(values.endsAt);
@@ -210,7 +211,6 @@ export function LanForm({ values, types }: { values: LanFormValues; types: TypeO
       <Field label={t("lanForm.description")}>
         <textarea name="description" defaultValue={values.description} rows={4} className={input} />
       </Field>
-      {state?.error && <p className="text-sm text-danger">{state.error}</p>}
       <button disabled={pending} className={btnPrimary}>
         {values.id ? t("lanForm.saveChanges") : t("lanForm.saveDraft")}
       </button>

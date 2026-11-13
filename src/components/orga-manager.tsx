@@ -3,6 +3,7 @@ import { useState, useTransition } from "react";
 import { addOrga, removeOrga } from "@/app/actions";
 import { btnGhost, btnSecondary, input } from "./ui";
 import { useT } from "@/i18n/client";
+import { useRunAction } from "./action-form";
 
 export function OrgaManager({
   lanId,
@@ -15,6 +16,7 @@ export function OrgaManager({
 }) {
   const t = useT();
   const [pending, start] = useTransition();
+  const act = useRunAction();
   const [pick, setPick] = useState("");
   return (
     <div className={`space-y-3 ${pending ? "opacity-70" : ""}`}>
@@ -26,7 +28,7 @@ export function OrgaManager({
             <button
               aria-label={t("orgas.remove", { name: o.name })}
               className={`${btnGhost} !rounded-full !px-2 !py-0 text-muted`}
-              onClick={() => start(() => removeOrga(lanId, o.id))}
+              onClick={() => start(async () => void (await act(() => removeOrga(lanId, o.id))))}
             >
               ×
             </button>
@@ -48,8 +50,7 @@ export function OrgaManager({
             className={btnSecondary}
             onClick={() =>
               start(async () => {
-                await addOrga(lanId, pick);
-                setPick("");
+                if (await act(() => addOrga(lanId, pick))) setPick("");
               })
             }
           >

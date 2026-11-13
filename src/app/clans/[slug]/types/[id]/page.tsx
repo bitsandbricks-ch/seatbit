@@ -12,6 +12,7 @@ import { contactsOf, ensureDefaultTasks, tasksAt } from "@/lib/lead-tasks";
 import { LeadTaskEditor } from "@/components/lead-task-editor";
 import { LeadContactEditor } from "@/components/lead-contact-editor";
 import { setClanLeadTasks } from "@/app/lead-task-actions";
+import { ActionForm } from "@/components/action-form";
 
 export default async function EditLanTypePage({ params }: PageProps<"/clans/[slug]/types/[id]">) {
   const { slug, id } = await params;
@@ -37,9 +38,9 @@ export default async function EditLanTypePage({ params }: PageProps<"/clans/[slu
         aside={
           <Card title={t("typePage.delete")}>
             <p className="mb-3 text-sm text-muted">{t("typePage.deleteHint")}</p>
-            <form action={deleteLanType.bind(null, ty.id)}>
+            <ActionForm action={deleteLanType.bind(null, ty.id)} done="deleted">
               <button className={btnDanger}>{t("typePage.deleteName", { name: ty.name })}</button>
-            </form>
+            </ActionForm>
           </Card>
         }
       >
@@ -52,7 +53,7 @@ export default async function EditLanTypePage({ params }: PageProps<"/clans/[slu
       </Card>
       <Card id="lead-tasks" title={t("leadTasks.typeHeading")}>
         <p className="mb-3 text-sm text-muted">{t("leadTasks.typeHint")}</p>
-        <form action={setClanLeadTasks.bind(null, ty.id)} className="mb-4 flex flex-wrap items-center gap-3 text-sm">
+        <ActionForm action={setClanLeadTasks.bind(null, ty.id)} className="mb-4 flex flex-wrap items-center gap-3 text-sm">
           <label className="flex items-center gap-2">
             <input type="checkbox" name="on" defaultChecked={ty.clanLeadTasks} className="accent-bit" />
             {t("leadTasks.useClanTasks")}
@@ -61,7 +62,7 @@ export default async function EditLanTypePage({ params }: PageProps<"/clans/[slu
           <Link href={`/clans/${c.slug}/settings?tab=types#lead-tasks`} className="text-bit hover:underline">
             {t("leadTasks.editClan")}
           </Link>
-        </form>
+        </ActionForm>
         <LeadTaskEditor
           scope={{ typeId: ty.id }}
           tasks={own.map(({ id, title, note, after, dueDays, contactId }) => ({ id, title, note, after, dueDays, contactId }))}

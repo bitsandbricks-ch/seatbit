@@ -12,6 +12,7 @@ import { canClaimDirectly, guestSuggestions, type GuestSuggestion } from "@/lib/
 import { getDefaultNames } from "@/lib/lans";
 import { requireUser } from "@/lib/session";
 import { getT } from "@/i18n/server";
+import { ActionForm } from "@/components/action-form";
 
 /**
  * "Did the leads add you already?": a member picks the guest that is them. Guests with
@@ -79,18 +80,18 @@ export default async function ClaimGuestPage({ params }: PageProps<"/clans/[slug
         </span>
         <span className="flex w-full shrink-0 flex-wrap justify-end gap-2 sm:w-auto">
           {s.status === "pending" && s.claimId ? (
-            <form action={cancelGuestClaim.bind(null, s.claimId)}>
+            <ActionForm action={cancelGuestClaim.bind(null, s.claimId)} done="removed">
               <button className={btnGhost}>{t("claimGuest.cancel")}</button>
-            </form>
+            </ActionForm>
           ) : s.status === "declined" ? null : (
             <>
-              <form action={claimGuestAsMember.bind(null, c.id, s.guest.id)}>
+              <ActionForm action={claimGuestAsMember.bind(null, c.id, s.guest.id)} done={false}>
                 <button className={s.match ? btnPrimary : btnSecondary}>{t(direct ? "claimGuest.meTake" : "claimGuest.me")}</button>
-              </form>
+              </ActionForm>
               {s.match && (
-                <form action={dismissGuestSuggestion.bind(null, c.id, s.guest.id)}>
+                <ActionForm action={dismissGuestSuggestion.bind(null, c.id, s.guest.id)} done="removed">
                   <button className={btnGhost}>{t("claimGuest.notMe")}</button>
-                </form>
+                </ActionForm>
               )}
             </>
           )}

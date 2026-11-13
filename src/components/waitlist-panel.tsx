@@ -6,6 +6,7 @@ import { Avatar } from "./avatar";
 import { Segmented, btnGhost, btnSecondary } from "./ui";
 import type { AvatarData } from "@/lib/avatars";
 import { useT } from "@/i18n/client";
+import { useRunAction } from "./action-form";
 
 export type WaitlistEntry = {
   userId: string;
@@ -35,7 +36,8 @@ export function WaitlistPanel({
 }) {
   const t = useT();
   const [pending, start] = useTransition();
-  const run = (fn: () => Promise<unknown>) => start(async () => void (await fn()));
+  const act = useRunAction();
+  const run = (fn: () => Promise<unknown>) => start(async () => void (await act(() => fn())));
 
   return (
     <div className={`space-y-4 ${pending ? "opacity-70" : ""}`}>

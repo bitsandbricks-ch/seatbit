@@ -7,6 +7,7 @@ import { getClan } from "@/lib/clans";
 import { getCurrentUser, isProfileComplete } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { getT } from "@/i18n/server";
+import { ActionForm } from "@/components/action-form";
 
 /** A guest's personal link: signing in through it moves the guest's spot to your account. */
 export default async function ClaimPage({ params }: PageProps<"/claim/[code]">) {
@@ -40,9 +41,9 @@ export default async function ClaimPage({ params }: PageProps<"/claim/[code]">) 
           count: going,
         })}
       </p>
-      <form action={claimGuest.bind(null, code)}>
+      <ActionForm action={claimGuest.bind(null, code)} done={false}>
         <button className={`${btnPrimary} w-full`}>{t("claimGuest.meTake")}</button>
-      </form>
+      </ActionForm>
     </div>
   );
 }

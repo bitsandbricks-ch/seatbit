@@ -7,6 +7,7 @@ import { btnPrimary, cardPage, cardPageTitle } from "@/components/ui";
 import { getCurrentUser } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { getT } from "@/i18n/server";
+import { ActionForm } from "@/components/action-form";
 
 export default async function JoinPage({ params }: PageProps<"/join/[code]">) {
   const { code } = await params;
@@ -22,9 +23,9 @@ export default async function JoinPage({ params }: PageProps<"/join/[code]">) {
           <ClanAvatar clan={c} size={88} />
           <p className="text-sm text-muted">{t("joinPage.invited")}</p>
           <h1 className={cardPageTitle}>{c.name}</h1>
-          <form action={joinWithInvite.bind(null, code)}>
+          <ActionForm action={joinWithInvite.bind(null, code)} done={false}>
             <button className={btnPrimary}>{t("joinPage.join")}</button>
-          </form>
+          </ActionForm>
         </div>
     </div>
   );

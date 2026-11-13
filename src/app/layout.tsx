@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
 import { Header } from "@/components/header";
 import { MaintenanceBanner } from "@/components/maintenance-banner";
+import { Toaster } from "@/components/toast";
 import { donationsEnabled } from "@/lib/donations";
 import { getLegal } from "@/lib/legal";
 import { LanguageLinks } from "@/components/language-switch";
@@ -113,6 +114,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           className="fixed bottom-2 left-3 z-20 hidden text-[11px] text-faint sm:block"
           title={commitTitle}
         />
+        <Toaster />
         </I18nProvider>
       </body>
     </html>

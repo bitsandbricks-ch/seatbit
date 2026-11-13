@@ -3,6 +3,7 @@ import { useState, useTransition } from "react";
 import { setMySeatWishes } from "@/app/actions";
 import { btnPrimary, input } from "./ui";
 import { useT } from "@/i18n/client";
+import { useRunAction } from "./action-form";
 
 type Wishes = { near: string[]; avoid: string[]; position: "any" | "edge" | "middle"; seat: string; note: string };
 
@@ -20,7 +21,7 @@ export function SeatWishes({
   const t = useT();
   const [w, setW] = useState<Wishes>(initial);
   const [pending, start] = useTransition();
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const run = useRunAction();
   const toggle = (key: "near" | "avoid", id: string) =>
     setW((cur) => {
       const other = key === "near" ? "avoid" : "near";
@@ -122,18 +123,12 @@ export function SeatWishes({
           className={btnPrimary}
           onClick={() =>
             start(async () => {
-              try {
-                await setMySeatWishes(lanId, w);
-                setMsg({ ok: true, text: t("wishes.saved") });
-              } catch (e) {
-                setMsg({ ok: false, text: e instanceof Error ? e.message : t("eventUi.failed") });
-              }
+              await run(() => setMySeatWishes(lanId, w), t("wishes.saved"));
             })
           }
         >
           {t("wishes.save")}
         </button>
-        {msg && <span className={msg.ok ? "text-bit" : "text-danger"}>{msg.text}</span>}
       </div>
     </div>
   );

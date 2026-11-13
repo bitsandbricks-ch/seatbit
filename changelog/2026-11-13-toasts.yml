@@ -1,0 +1,12 @@
+date: 2026-11-13
+type: improved
+en:
+  title: Notes when something is saved or fails
+  text: >-
+    Saving or changing something now shows a short note at the bottom of the screen, green when it worked and red with
+    the reason when it didn't. A failed save no longer replaces the page with an error.
+de:
+  title: Meldungen beim Speichern und bei Fehlern
+  text: >-
+    Wenn du etwas speicherst oder änderst, erscheint unten eine kurze Meldung: grün, wenn es geklappt hat, rot mit dem
+    Grund, wenn nicht. Ein fehlgeschlagenes Speichern ersetzt die Seite nicht mehr durch eine Fehlermeldung.

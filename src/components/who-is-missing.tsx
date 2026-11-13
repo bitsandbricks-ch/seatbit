@@ -7,6 +7,8 @@ import { relative } from "@/lib/format";
 import { Avatar } from "./avatar";
 import { Card, Notice, Pill, btnPrimary, btnSecondary } from "./ui";
 import { useT } from "@/i18n/client";
+import { useRunAction } from "./action-form";
+import { toast } from "./toast";
 
 export type MissingPersonView = {
   userId: string;
@@ -156,7 +158,7 @@ function MemberGroup({
 }) {
   const t = useT();
   const [pending, start] = useTransition();
-  const [msg, setMsg] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
+  const act = useRunAction();
   // Evaluated once per render; the server re-renders after every nudge.
   const [now] = useState(() => Date.now());
   const cooling = (p: MissingPersonView) => !!p.nudgedAt && now - new Date(p.nudgedAt).getTime() < cooldownMs;
@@ -164,16 +166,14 @@ function MemberGroup({
   const ready = g.people.filter((p) => reachable(p) && !cooling(p));
   const send = (userIds?: string[]) =>
     start(async () => {
-      setMsg(null);
-      try {
-        const r = await nudgeMissing(lanId, g.step, userIds);
-        const parts = [t("missing.nudged", { count: r.sent })];
-        if (r.skipped) parts.push(t("missing.skipped", { count: r.skipped }));
-        if (r.unreachable) parts.push(t("missing.unreachable", { count: r.unreachable }));
-        setMsg({ tone: r.sent ? "ok" : "err", text: parts.join(" · ") });
-      } catch (e) {
-        setMsg({ tone: "err", text: e instanceof Error ? e.message : t("eventUi.failed") });
-      }
+      let r: Awaited<ReturnType<typeof nudgeMissing>> | undefined;
+      await act(async () => void (r = await nudgeMissing(lanId, g.step, userIds)), false);
+      if (!r) return;
+      const parts = [t("missing.nudged", { count: r.sent })];
+      if (r.skipped) parts.push(t("missing.skipped", { count: r.skipped }));
+      if (r.unreachable) parts.push(t("missing.unreachable", { count: r.unreachable }));
+      // Nobody reached is worth a second look, so it shows as a problem.
+      (r.sent ? toast.success : toast.error)(parts.join(" · "));
     });
   return (
     <Card
@@ -207,7 +207,6 @@ function MemberGroup({
           )
         }
       />
-      {msg && <p className={`mt-2 text-sm ${msg.tone === "ok" ? "text-bit" : "text-warn"}`}>{msg.text}</p>}
     </Card>
   );
 }

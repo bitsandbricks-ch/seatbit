@@ -8,6 +8,7 @@ import { clanCharges, isOwed, type ChargeSummary, type MyLine } from "@/lib/paym
 import type { T } from "@/i18n/translate";
 import { Card, Columns, EmptyState, Notice, Pill, btnGhost, btnPrimary, btnSecondary } from "./ui";
 import { PaymentSettingsForm } from "./payment-forms";
+import { ActionForm } from "@/components/action-form";
 
 const TONE: Record<ChargeItemStatus, "red" | "amber" | "emerald" | "zinc"> = { open: "red", reported: "amber", paid: "emerald", waived: "zinc" };
 
@@ -95,18 +96,18 @@ async function OnlineCard({ t, clan, canSettings, status }: { t: T; clan: Clan; 
           <>
             <p className="text-warn">{t("payments.online.pending")}</p>
             {canSettings && (
-              <form action={connectStripe.bind(null, c.id)}>
+              <ActionForm action={connectStripe.bind(null, c.id)} done={false}>
                 <button className={btnPrimary}>{t("payments.online.continue")}</button>
-              </form>
+              </ActionForm>
             )}
           </>
         ) : (
           <>
             <p className="text-muted">{t("payments.online.pitch")}</p>
             {canSettings ? (
-              <form action={connectStripe.bind(null, c.id)}>
+              <ActionForm action={connectStripe.bind(null, c.id)} done={false}>
                 <button className={btnPrimary}>{t("payments.online.connect")}</button>
-              </form>
+              </ActionForm>
             ) : (
               <p className="text-xs text-faint">{t("payments.online.adminsOnly")}</p>
             )}
@@ -117,9 +118,9 @@ async function OnlineCard({ t, clan, canSettings, status }: { t: T; clan: Clan; 
           {fee > 0 && ` ${t("payments.online.platformFee", { percent: fee / 100 })}`}
         </p>
         {c.stripeAccountId && canSettings && (
-          <form action={disconnectStripe.bind(null, c.id)}>
+          <ActionForm action={disconnectStripe.bind(null, c.id)}>
             <button className={`${btnGhost} text-xs !text-danger`}>{t("payments.online.disconnect")}</button>
-          </form>
+          </ActionForm>
         )}
       </div>
     </Card>
@@ -192,19 +193,19 @@ export function MyPayments({ t, clan: c, lines, status }: { t: T; clan: Clan; li
                 <span className="flex items-center gap-2">
                   <span className="font-semibold tabular-nums">{fmtAmount(l.amountCents, l.charge.currency)}</span>
                   {online && (
-                    <form action={payOnline.bind(null, l.id)}>
+                    <ActionForm action={payOnline.bind(null, l.id)} done={false}>
                       <button className={btnPrimary}>{t("payments.online.pay")}</button>
-                    </form>
+                    </ActionForm>
                   )}
                   {l.status === "open" ? (
-                    <form action={reportPaid.bind(null, l.id, true)}>
+                    <ActionForm action={reportPaid.bind(null, l.id, true)}>
                       <button className={online ? btnGhost : btnSecondary}>{t("payments.iPaid")}</button>
-                    </form>
+                    </ActionForm>
                   ) : (
-                    <form action={reportPaid.bind(null, l.id, false)} className="flex items-center gap-1">
+                    <ActionForm action={reportPaid.bind(null, l.id, false)} className="flex items-center gap-1">
                       <LineStatus t={t} status={l.status} />
                       <button className={`${btnGhost} text-xs`}>{t("payments.undoReport")}</button>
-                    </form>
+                    </ActionForm>
                   )}
                 </span>
               </li>

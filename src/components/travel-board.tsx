@@ -11,6 +11,7 @@ import {
 import type { TravelKind } from "@/db/schema";
 import { Field, Input, Pill, Segmented, btnGhost, btnPrimary, btnSecondary } from "./ui";
 import { useT } from "@/i18n/client";
+import { useRunAction } from "./action-form";
 
 export type TravelPostView = {
   id: string;
@@ -44,19 +45,14 @@ export function TravelBoard({
 }) {
   const [kind, setKind] = useState<TravelKind>("ride");
   const [form, setForm] = useState<{ mode: "offer" | "request"; post?: TravelPostView } | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
+  const act = useRunAction();
   const t = useT();
 
   const run = (fn: () => Promise<unknown>, after?: () => void) =>
     start(async () => {
-      setError(null);
-      try {
-        await fn();
-        after?.();
-      } catch (e) {
-        setError(e instanceof Error ? e.message : t("eventUi.failed"));
-      }
+      if (!(await act(fn))) return;
+      after?.();
     });
 
   const list = posts.filter((p) => p.kind === kind);
@@ -123,7 +119,6 @@ export function TravelBoard({
           {t(`travel.${kind}.sayComing`)}
         </p>
       )}
-      {error && <p className="text-sm text-danger">{error}</p>}
 
       {sorted.length === 0 && <p className="text-sm text-muted">{t(`travel.${kind}.empty`)}</p>}
 

@@ -1,5 +1,6 @@
 "use client";
-import { useActionState, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { useToastAction } from "./action-form";
 import { updateAppearance, type AppearanceState } from "@/app/actions";
 import type { AvatarData } from "@/lib/avatars";
 import { Avatar } from "./avatar";
@@ -28,7 +29,7 @@ export function AppearanceForm({
   name: string;
 }) {
   const t = useT();
-  const [state, action, pending] = useActionState<AppearanceState, FormData>(updateAppearance, {});
+  const [, action, pending] = useToastAction<AppearanceState>(updateAppearance, {});
   const [style, setStyle] = useState<Style>(initial.style);
   const [color, setColor] = useState(initial.color);
   const [icon, setIcon] = useState(initial.icon);
@@ -141,8 +142,6 @@ export function AppearanceForm({
         <button className={btnPrimary} disabled={pending}>
           {pending ? t("common.saving") : t("common.save")}
         </button>
-        {state.error && <p className="text-sm text-danger">{state.error}</p>}
-        {state.ok && !pending && <p className="text-sm text-bit">{t("common.saved")}</p>}
       </div>
     </form>
   );

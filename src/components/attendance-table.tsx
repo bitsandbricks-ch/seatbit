@@ -17,6 +17,7 @@ import { btnGhost, btnSecondary, input } from "./ui";
 import { Avatar } from "./avatar";
 import type { AvatarData } from "@/lib/avatars";
 import { useT } from "@/i18n/client";
+import { useRunAction } from "./action-form";
 import type { MessageKey } from "@/i18n/translate";
 
 export type AttendanceRow = {
@@ -96,11 +97,12 @@ export function AttendanceTable({
 }) {
   const t = useT();
   const [pending, start] = useTransition();
+  const act = useRunAction();
   const [addUser, setAddUser] = useState("");
   const [filter, setFilter] = useState<AttendanceStatus | "all">("all");
   const [need, setNeed] = useState<Need>("all");
   const [sort, setSort] = useState<Sort>("status");
-  const run = (fn: () => Promise<unknown>) => start(async () => void (await fn()));
+  const run = (fn: () => Promise<unknown>) => start(async () => void (await act(() => fn())));
 
   const [q, setQ] = useState("");
   const visible = rows

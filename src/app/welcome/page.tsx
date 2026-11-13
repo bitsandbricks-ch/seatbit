@@ -8,6 +8,7 @@ import { isProfileComplete, requireUser } from "@/lib/session";
 import { getT } from "@/i18n/server";
 import { LanguageLinks } from "@/components/language-switch";
 import { BrandMark } from "@/components/brand-mark";
+import { ActionForm } from "@/components/action-form";
 
 /** First login: ask for the real name and the gamer tag (Discord only gives us a display name). */
 export default async function WelcomePage({ searchParams }: PageProps<"/welcome">) {
@@ -33,7 +34,7 @@ export default async function WelcomePage({ searchParams }: PageProps<"/welcome"
           {t("language.label")}: <LanguageLinks />
         </p>
       </div>
-      <form action={completeProfile} className="space-y-4">
+      <ActionForm action={completeProfile} className="space-y-4" done={false}>
         <input type="hidden" name="next" value={next} />
         <div className="grid grid-cols-2 gap-3">
           <Field label={t("auth.firstName")}>
@@ -48,7 +49,7 @@ export default async function WelcomePage({ searchParams }: PageProps<"/welcome"
         </Field>
         <p className="text-xs text-muted">{t("welcome.reminders", { email: me.email })}</p>
         <button className={`${btnPrimary} w-full`}>{t("welcome.continue")}</button>
-      </form>
+      </ActionForm>
     </div>
   );
 }

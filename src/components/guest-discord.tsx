@@ -1,8 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useToastAction } from "./action-form";
 import type { ActionResult } from "@/app/admin/settings/actions";
-import { Result } from "./settings-section";
 import { btnGhost, btnSecondary } from "./ui";
 import { useT } from "@/i18n/client";
 
@@ -24,8 +23,8 @@ export function GuestDiscordLink({
   unlink: Act;
 }) {
   const t = useT();
-  const [sent, resendAction, sending] = useActionState(resend, undefined);
-  const [dropped, unlinkAction, unlinking] = useActionState(unlink, undefined);
+  const [, resendAction, sending] = useToastAction(resend, undefined);
+  const [, unlinkAction, unlinking] = useToastAction(unlink, undefined);
   return (
     <div className="space-y-2">
       <ul className="space-y-0.5 text-sm">
@@ -49,7 +48,6 @@ export function GuestDiscordLink({
           </form>
         </div>
       )}
-      <Result state={sent ?? dropped} />
       <p className="text-xs text-faint">
         {t(linked ? "guestDiscord.relink" : "guestDiscord.howToLink")}
       </p>

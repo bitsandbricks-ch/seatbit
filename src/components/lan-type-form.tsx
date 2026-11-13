@@ -1,5 +1,5 @@
 "use client";
-import { useActionState } from "react";
+import { useToastAction } from "./action-form";
 import { saveLanType, type FormState } from "@/app/actions";
 import { DISCORD_MODES, type DiscordMode } from "@/lib/discord-modes";
 import { useT } from "@/i18n/client";
@@ -26,7 +26,7 @@ export type LanTypeValues = {
 
 export function LanTypeForm({ values }: { values: LanTypeValues }) {
   const t = useT();
-  const [state, action, pending] = useActionState<FormState, FormData>(saveLanType, undefined);
+  const [, action, pending] = useToastAction<FormState>(saveLanType, undefined);
   return (
     <form action={action} className="space-y-5">
       {values.id && <input type="hidden" name="id" value={values.id} />}
@@ -84,7 +84,6 @@ export function LanTypeForm({ values }: { values: LanTypeValues }) {
       <Field label={t("lanForm.description")}>
         <textarea name="description" defaultValue={values.description} rows={3} className={input} />
       </Field>
-      {state?.error && <p className="text-sm text-danger">{state.error}</p>}
       <button disabled={pending} className={btnPrimary}>
         {values.id ? t("typeForm.save") : t("typeForm.add")}
       </button>

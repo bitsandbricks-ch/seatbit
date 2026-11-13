@@ -22,6 +22,7 @@ import { missingServers } from "@/lib/discord-invite";
 import { claimableGuests, guestSuggestions } from "@/lib/guest-claim";
 import { getT } from "@/i18n/server";
 import type { T } from "@/i18n/translate";
+import { ActionForm } from "@/components/action-form";
 
 export default async function ClanPage({ params, searchParams }: PageProps<"/clans/[slug]">) {
   const { slug } = await params;
@@ -149,9 +150,9 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
     .map((l) => ({ ...l, href: l.tab === "general" ? `/clans/${c.slug}/settings` : `/clans/${c.slug}/settings?tab=${l.tab}` }));
 
   const leave = role && (
-    <form action={leaveClan.bind(null, c.id)} className="flex justify-end">
+    <ActionForm action={leaveClan.bind(null, c.id)} className="flex justify-end" done={false}>
       <button className={`${btnGhost} hover:!text-danger`}>{role === "pending" ? t("clanPage.cancelRequest") : t("clanPage.leave")}</button>
-    </form>
+    </ActionForm>
   );
 
   return (

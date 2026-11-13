@@ -3,6 +3,7 @@ import { useState, useTransition } from "react";
 import { answerSeatSwap, cancelSeatSwap, decideSeatSwap, requestSeatSwap } from "@/app/lan-extras-actions";
 import { Pill, btnGhost, btnPrimary, btnSecondary, input } from "./ui";
 import { useT } from "@/i18n/client";
+import { useRunAction } from "./action-form";
 
 export type SwapView = {
   id: string;
@@ -19,17 +20,12 @@ export type SwapView = {
 function useAction() {
   const t = useT();
   const [pending, start] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const act = useRunAction();
   const run = (fn: () => Promise<unknown>) =>
     start(async () => {
-      setError(null);
-      try {
-        await fn();
-      } catch (e) {
-        setError(e instanceof Error ? e.message : t("eventUi.failed"));
-      }
+      await act(fn);
     });
-  return { pending, error, run, t };
+  return { pending, run, t };
 }
 
 /** Member side: ask someone to swap, answer requests, see where yours stands. */
@@ -48,7 +44,7 @@ export function SeatSwapPanel({
   /** Open requests I'm part of. */
   swaps: SwapView[];
 }) {
-  const { pending, error, run, t } = useAction();
+  const { pending, run, t } = useAction();
   const [to, setTo] = useState("");
   const [note, setNote] = useState("");
   const outgoing = swaps.find((s) => s.fromUserId === meId);
@@ -125,14 +121,13 @@ export function SeatSwapPanel({
           </div>
         </form>
       )}
-      {error && <p className="text-danger">{error}</p>}
     </div>
   );
 }
 
 /** Lead side: approve or reject swaps; pending ones are shown as waiting. */
 export function SeatSwapApprovals({ swaps }: { swaps: SwapView[] }) {
-  const { pending, error, run, t } = useAction();
+  const { pending, run, t } = useAction();
   return (
     <div className="space-y-2 text-sm">
       <ul className="space-y-2">
@@ -162,7 +157,6 @@ export function SeatSwapApprovals({ swaps }: { swaps: SwapView[] }) {
           </li>
         ))}
       </ul>
-      {error && <p className="text-danger">{error}</p>}
     </div>
   );
 }

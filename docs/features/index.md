@@ -38,5 +38,9 @@ Seatbit has three kinds of users:
 
 - **Mobile-first.** Every page works on a phone; desktop gets wider layouts, side panels and drag and drop.
 - **Dates** are 24h, Swiss style: *Sat 14.11.2026, 18:00*. Every date field is a text box that also takes typed or pasted dates (`14.11.2026 18:00`, `14.11. 18`).
+- **Notes at the bottom.** Saving or changing something shows a short note at the bottom of the screen: green when it worked, red with the reason when it didn't. It goes away on its own; tap the cross to close it sooner.
+
+    ![A "Saved." note above the tab bar on a phone](../screenshots/phone-toast.png){ .shot width="280" }
+
 - **People** are shown as *Anna "Nova" Frei*: first name, nick, surname.
 - **View / Manage:** clan and event pages have a *View* mode for everyone and a *Manage* mode for people with a role.

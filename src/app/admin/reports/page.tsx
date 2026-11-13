@@ -10,6 +10,7 @@ import { platformCan } from "@/lib/platform-roles";
 import { listReports, openReportCount } from "@/lib/reports";
 import { requirePlatform } from "@/lib/session";
 import { getT } from "@/i18n/server";
+import { ActionForm } from "@/components/action-form";
 
 /** The moderators' queue: reports on clans and events, open first. */
 export default async function ReportsPage({ searchParams }: PageProps<"/admin/reports">) {
@@ -98,24 +99,24 @@ export default async function ReportsPage({ searchParams }: PageProps<"/admin/re
                         {t("moderation.handledBy", { name: who(r.handledBy), date: r.handledAt ? fmtDate(r.handledAt, t.locale) : "" })}
                       </p>
                       {r.note && <p className="whitespace-pre-wrap text-muted">{r.note}</p>}
-                      <form action={updateReport.bind(null, r.id, "open")}>
+                      <ActionForm action={updateReport.bind(null, r.id, "open")}>
                         <button className={btnGhost}>{t("moderation.reopen")}</button>
-                      </form>
+                      </ActionForm>
                     </div>
                   )}
                   {canSuspend && c && (
                     <div className="border-t border-line pt-3">
                       {c.suspendedAt ? (
-                        <form action={unsuspendClanAction.bind(null, c.id)}>
+                        <ActionForm action={unsuspendClanAction.bind(null, c.id)}>
                           <button className={btnGhost}>{t("moderation.restoreClan", { name: c.name })}</button>
-                        </form>
+                        </ActionForm>
                       ) : (
                         <details>
                           <summary className={`${btnGhost} cursor-pointer list-none !text-danger`}>{t("moderation.suspendClan", { name: c.name })}</summary>
-                          <form action={suspendClanAction.bind(null, c.id)} className="mt-2 flex flex-wrap gap-2">
+                          <ActionForm action={suspendClanAction.bind(null, c.id)} className="mt-2 flex flex-wrap gap-2">
                             <input name="reason" className={`${input} min-w-0 flex-1`} placeholder={t("moderation.reasonPlaceholder")} maxLength={500} />
                             <button className={btnDanger}>{t("moderation.suspend")}</button>
-                          </form>
+                          </ActionForm>
                         </details>
                       )}
                     </div>

@@ -1,5 +1,6 @@
 "use client";
-import { useActionState, useState } from "react";
+import { useState } from "react";
+import { useToastAction } from "./action-form";
 import { deleteMyAccount, type DeleteState } from "@/app/account-actions";
 import { btnDanger, btnGhost, btnSecondary, input } from "./ui";
 import { useT } from "@/i18n/client";
@@ -22,7 +23,7 @@ export function YourData({
   const t = useT();
   const [open, setOpen] = useState(false);
   const [typed, setTyped] = useState("");
-  const [state, action, pending] = useActionState<DeleteState, FormData>(deleteMyAccount, undefined);
+  const [, action, pending] = useToastAction<DeleteState>(deleteMyAccount, undefined, false);
   const blocked = blockingClans.length > 0 || lastPlatformAdmin;
 
   return (
@@ -88,7 +89,6 @@ export function YourData({
                 </label>
               </>
             )}
-            {state?.error && <p className="text-danger">{state.error}</p>}
             <div className="flex flex-wrap gap-2">
               {!blocked && (
                 <button className={btnDanger} disabled={pending || typed.trim().toUpperCase() !== "DELETE"}>

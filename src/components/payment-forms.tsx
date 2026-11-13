@@ -1,5 +1,6 @@
 "use client";
-import { useActionState, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
+import { useRunAction, useToastAction } from "./action-form";
 import type { ChargeItemStatus, ChargeKind, PaidVia } from "@/db/schema";
 import {
   addToCharge,
@@ -21,7 +22,7 @@ const textarea = `${input} min-h-20`;
 /** Manage → Payments sidebar: payments on or off for the clan, and how members pay. */
 export function PaymentSettingsForm({ clanId, enabled, info }: { clanId: string; enabled: boolean; info: string }) {
   const t = useT();
-  const [state, action, pending] = useActionState(savePaymentSettings.bind(null, clanId), undefined);
+  const [, action, pending] = useToastAction(savePaymentSettings.bind(null, clanId), undefined);
   return (
     <form action={action} className="space-y-3">
       <label className="flex items-start gap-2 text-sm">
@@ -34,8 +35,6 @@ export function PaymentSettingsForm({ clanId, enabled, info }: { clanId: string;
       <Field label={t("payments.infoLabel")} hint={t("payments.infoHint")}>
         <textarea name="paymentInfo" defaultValue={info} maxLength={1000} rows={4} className={textarea} placeholder={t("payments.infoPlaceholder")} />
       </Field>
-      {state?.error && <p className="text-sm text-danger">{state.error}</p>}
-      {state?.ok && state.message && <p className="text-sm text-bit">{state.message}</p>}
       <button disabled={pending} className={btnSecondary}>
         {t("common.save")}
       </button>
@@ -61,7 +60,7 @@ export function ChargeForm({
   lanId?: string;
 }) {
   const t = useT();
-  const [state, action, pending] = useActionState(createCharge.bind(null, clanId), undefined);
+  const [, action, pending] = useToastAction(createCharge.bind(null, clanId), undefined);
   const [kind, setKind] = useState<ChargeKind>(initialLan ? "event" : "dues");
   const [lanId, setLanId] = useState(initialLan ?? "");
   const [who, setWho] = useState<"members" | "going" | "pick">(initialLan ? "going" : "members");
@@ -188,7 +187,6 @@ export function ChargeForm({
         <span>{t("payments.form.notify")}</span>
       </label>
 
-      {state?.error && <p className="text-sm text-danger">{state.error}</p>}
       <button disabled={pending} className={btnPrimary}>
         {pending ? t("payments.form.creating") : t("payments.form.create")}
       </button>
@@ -199,7 +197,7 @@ export function ChargeForm({
 /** Title, due date and note of an existing charge. */
 export function ChargeEditForm({ chargeId, title, note, dueAt }: { chargeId: string; title: string; note: string; dueAt: string }) {
   const t = useT();
-  const [state, action, pending] = useActionState(updateCharge.bind(null, chargeId), undefined);
+  const [, action, pending] = useToastAction(updateCharge.bind(null, chargeId), undefined);
   return (
     <form action={action} className="space-y-3">
       <Field label={t("payments.form.title")}>
@@ -212,8 +210,6 @@ export function ChargeEditForm({ chargeId, title, note, dueAt }: { chargeId: str
       <Field label={t("payments.form.note")}>
         <textarea name="note" maxLength={1000} rows={2} defaultValue={note} className={textarea} />
       </Field>
-      {state?.error && <p className="text-sm text-danger">{state.error}</p>}
-      {state?.ok && state.message && <p className="text-sm text-bit">{state.message}</p>}
       <button disabled={pending} className={btnSecondary}>
         {t("common.save")}
       </button>
@@ -224,7 +220,7 @@ export function ChargeEditForm({ chargeId, title, note, dueAt }: { chargeId: str
 /** Puts more people on a charge. */
 export function AddPeopleForm({ chargeId, people, amount }: { chargeId: string; people: PersonOption[]; amount: string }) {
   const t = useT();
-  const [state, action, pending] = useActionState(addToCharge.bind(null, chargeId), undefined);
+  const [, action, pending] = useToastAction(addToCharge.bind(null, chargeId), undefined);
   if (!people.length) return <p className="text-sm text-muted">{t("payments.everyoneOn")}</p>;
   return (
     <form action={action} className="space-y-3">
@@ -246,7 +242,6 @@ export function AddPeopleForm({ chargeId, people, amount }: { chargeId: string; 
         <input type="checkbox" name="notify" defaultChecked className="mt-0.5 h-4 w-4 accent-bit" />
         <span>{t("payments.form.notify")}</span>
       </label>
-      {state?.error && <p className="text-sm text-danger">{state.error}</p>}
       <button disabled={pending} className={btnSecondary}>
         {t("payments.add")}
       </button>
@@ -272,7 +267,7 @@ const VIAS: PaidVia[] = ["cash", "bank", "twint", "other"];
 export function ChargeLines({ chargeId, currency, lines }: { chargeId: string; currency: string; lines: LineView[] }) {
   const t = useT();
   const [pending, start] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const act = useRunAction();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [via, setVia] = useState<PaidVia>("cash");
   const [editing, setEditing] = useState<string | null>(null);
@@ -280,14 +275,9 @@ export function ChargeLines({ chargeId, currency, lines }: { chargeId: string; c
 
   const run = (fn: () => Promise<unknown>) =>
     start(async () => {
-      setError(null);
-      try {
-        await fn();
-        setSelected(new Set());
-        setEditing(null);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : t("eventUi.failed"));
-      }
+      if (!(await act(fn))) return;
+      setSelected(new Set());
+      setEditing(null);
     });
 
   const toggle = (id: string) =>
@@ -332,7 +322,6 @@ export function ChargeLines({ chargeId, currency, lines }: { chargeId: string; c
           </span>
         </div>
       )}
-      {error && <p className="text-sm text-danger">{error}</p>}
       <ul className="divide-y divide-line">
         {lines.map((l) => {
           const isOwed = l.status === "open" || l.status === "reported";

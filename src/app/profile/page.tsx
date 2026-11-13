@@ -27,6 +27,7 @@ import { profileLink } from "@/lib/profile-link";
 import { getT } from "@/i18n/server";
 import type { T } from "@/i18n/translate";
 import { LanguageSelect } from "@/components/language-switch";
+import { ActionForm } from "@/components/action-form";
 
 const DM_RESULTS = ["ok", "dms_off", "guest", "bot_not_set_up", "no_discord", "cant_dm", "error"] as const;
 
@@ -98,7 +99,7 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
           }
         >
           <Card title={t("profile.names")}>
-            <form action={updateProfile} className="space-y-4">
+            <ActionForm action={updateProfile} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <Field label={t("auth.firstName")}>
                   <Input name="firstName" defaultValue={me.firstName} required maxLength={40} autoComplete="given-name" />
@@ -111,7 +112,7 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
                 <Input name="nick" defaultValue={defaultNick} maxLength={32} autoComplete="nickname" />
               </Field>
               <button className={btnPrimary}>{t("common.save")}</button>
-            </form>
+            </ActionForm>
           </Card>
         </Columns>
       )}
@@ -161,7 +162,7 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
           <Card title={t("profile.messages")}>
             <NotificationsForm email={me.email} emailReminders={me.emailReminders} discordDms={me.discordDms} hasDiscord={hasDiscord} />
             {hasDiscord && me.discordDms && (
-              <form action={sendTestDm} id="dms" className="mt-4 scroll-mt-32 space-y-2 border-t border-line pt-4">
+              <ActionForm action={sendTestDm} id="dms" className="mt-4 scroll-mt-32 space-y-2 border-t border-line pt-4" done={false}>
                 <button className={btnSecondary}>{t("profile.testDm")}</button>
                 {dmResult && <p className={`text-sm ${dmParam === "ok" ? "text-bit" : "text-muted"}`}>{dmResult}</p>}
                 {joinServers.length > 0 && (
@@ -182,7 +183,7 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
                     })}
                   </p>
                 )}
-              </form>
+              </ActionForm>
             )}
           </Card>
           {types.length > 0 && (

@@ -3,6 +3,7 @@ import { useState, useTransition } from "react";
 import { postDiscordReminder, postLanToDiscord } from "@/app/actions";
 import { btnSecondary } from "./ui";
 import { useT } from "@/i18n/client";
+import { useRunAction } from "./action-form";
 
 type Kind = "signup" | "payment" | "event";
 
@@ -22,7 +23,7 @@ export function DiscordButtons({
 }) {
   const t = useT();
   const [pending, start] = useTransition();
-  const [msg, setMsg] = useState<string | null>(null);
+  const act = useRunAction();
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap gap-2">
@@ -31,8 +32,7 @@ export function DiscordButtons({
           disabled={draft || pending || !channels}
           onClick={() =>
             start(async () => {
-              const n = await postLanToDiscord(lanId);
-              setMsg(n ? t("chat.posted", { count: n }) : t("chat.refreshed"));
+              await act(() => postLanToDiscord(lanId), (n) => (n ? t("chat.posted", { count: n }) : t("chat.refreshed")));
             })
           }
         >
@@ -46,8 +46,7 @@ export function DiscordButtons({
             onClick={() => {
               if (!confirm(t("chat.confirmReminder", { label: k.label, count: channels }))) return;
               start(async () => {
-                const n = await postDiscordReminder(lanId, k.kind);
-                setMsg(t("chat.postedReminder", { label: k.label, count: n }));
+                await act(() => postDiscordReminder(lanId, k.kind), (n) => t("chat.postedReminder", { label: k.label, count: n }));
               });
             }}
           >
@@ -56,7 +55,6 @@ export function DiscordButtons({
         ))}
       </div>
       {draft && <p className="text-sm text-muted">{t("chat.draft")}</p>}
-      {msg && <p className="text-sm text-bit">{msg}</p>}
     </div>
   );
 }

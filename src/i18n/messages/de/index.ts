@@ -91,6 +91,7 @@ import { suspended } from "./suspended";
 import { swaps } from "./swaps";
 import { systemMail } from "./systemMail";
 import { templateEditor } from "./templateEditor";
+import { toast } from "./toast";
 import { travel } from "./travel";
 import { typeForm } from "./typeForm";
 import { typePage } from "./typePage";
@@ -191,6 +192,7 @@ export const de: Messages = {
   swaps,
   systemMail,
   templateEditor,
+  toast,
   travel,
   typeForm,
   typePage,

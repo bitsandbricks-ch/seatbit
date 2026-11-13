@@ -14,6 +14,7 @@ import { isDonorClan } from "@/lib/donations";
 import { Tabs, type Tab } from "./tabs";
 import { PageHeader, Pill, btnPrimary } from "./ui";
 import { ViewManageSwitch } from "./view-manage-switch";
+import { ActionForm } from "@/components/action-form";
 
 export const CLAN_VIEW_TABS = ["overview", "events", "members", "payments", "stats"] as const;
 export const CLAN_MANAGE_TABS = ["general", "members", "guests", "types", "invites", "chat", "payments", "log"] as const;
@@ -151,9 +152,9 @@ export async function ClanHeader({
     );
   } else if (!role && c.joinPolicy !== "invite") {
     actions = (
-      <form action={joinClan.bind(null, c.id)}>
+      <ActionForm action={joinClan.bind(null, c.id)} done={false}>
         <button className={btnPrimary}>{c.joinPolicy === "open" ? t("clans.join") : t("clans.askToJoin")}</button>
-      </form>
+      </ActionForm>
     );
   } else if (role === "pending") {
     actions = <Pill tone="amber">{t("clanPage.waitingApproval")}</Pill>;

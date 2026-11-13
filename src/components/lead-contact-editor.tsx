@@ -1,11 +1,13 @@
 "use client";
-import { useActionState, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { useToastAction } from "./action-form";
 import { deleteLeadContact, saveLeadContact } from "@/app/lead-task-actions";
 import type { FormState } from "@/app/actions";
 import type { LeadContact } from "@/db/schema";
 import { useT } from "@/i18n/client";
 import { ContactDetails } from "./lead-contacts";
 import { Field, Input, btnGhost, btnPrimary, btnSecondary, input } from "./ui";
+import { ActionForm } from "@/components/action-form";
 
 type Contact = Omit<LeadContact, "createdAt" | "typeId">;
 
@@ -32,9 +34,9 @@ export function LeadContactEditor({ typeId, contacts }: { typeId: string; contac
                   <button type="button" className={btnGhost} onClick={() => setEditing(c.id)}>
                     {t("contacts.edit")}
                   </button>
-                  <form action={deleteLeadContact.bind(null, c.id)}>
+                  <ActionForm action={deleteLeadContact.bind(null, c.id)} done="deleted">
                     <button className={`${btnGhost} text-danger`}>{t("contacts.delete")}</button>
-                  </form>
+                  </ActionForm>
                 </span>
               </li>
             ),
@@ -53,7 +55,7 @@ export function LeadContactEditor({ typeId, contacts }: { typeId: string; contac
 
 function ContactForm({ typeId, contact: c, onDone }: { typeId: string; contact?: Contact; onDone: () => void }) {
   const t = useT();
-  const [state, action, pending] = useActionState<FormState, FormData>(saveLeadContact, undefined);
+  const [state, action, pending] = useToastAction<FormState>(saveLeadContact, undefined);
   useEffect(() => {
     if (state?.ok) onDone();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -85,7 +87,6 @@ function ContactForm({ typeId, contact: c, onDone }: { typeId: string; contact?:
       <Field label={t("contacts.note")}>
         <textarea name="note" defaultValue={c?.note} rows={2} maxLength={1000} className={input} />
       </Field>
-      {state?.error && <p className="text-sm text-danger">{state.error}</p>}
       <div className="flex gap-2">
         <button disabled={pending} className={btnPrimary}>
           {c ? t("contacts.save") : t("contacts.add")}

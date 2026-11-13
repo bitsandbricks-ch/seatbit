@@ -1,5 +1,5 @@
 "use client";
-import { useActionState } from "react";
+import { useToastAction } from "./action-form";
 import { updateNotifications, type AppearanceState } from "@/app/actions";
 import { useT } from "@/i18n/client";
 import { btnPrimary } from "./ui";
@@ -17,7 +17,7 @@ export function NotificationsForm({
   hasDiscord: boolean;
 }) {
   const t = useT();
-  const [state, action, pending] = useActionState<AppearanceState, FormData>(updateNotifications, {});
+  const [, action, pending] = useToastAction<AppearanceState>(updateNotifications, {});
   const row = "flex cursor-pointer items-start gap-3 rounded-md border border-line bg-raised/40 p-3 text-sm";
   return (
     <form action={action} className="space-y-3">
@@ -42,7 +42,6 @@ export function NotificationsForm({
         <button disabled={pending} className={btnPrimary}>
           {t("common.save")}
         </button>
-        {state.ok && !pending && <p className="text-sm text-bit">{t("common.saved")}</p>}
       </div>
     </form>
   );
