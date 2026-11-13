@@ -142,7 +142,8 @@ export async function priceLabel(plan: SupportPlan): Promise<string | null> {
     const p = await stripe("GET", `/prices/${encodeURIComponent(id)}`, undefined, 3_000);
     if (typeof p.unit_amount === "number" && p.currency) {
       const amount = p.unit_amount % 100 === 0 ? String(p.unit_amount / 100) : (p.unit_amount / 100).toFixed(2);
-      info = { label: `${String(p.currency).toUpperCase()} ${amount} / ${p.recurring?.interval ?? plan}` };
+      // The interval ("/ year") is added in the reader's language.
+      info = { label: `${String(p.currency).toUpperCase()} ${amount}` };
     }
   } catch {
     // Labels fall back to "Yearly" / "Monthly".

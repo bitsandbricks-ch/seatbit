@@ -2,15 +2,17 @@
 import { useActionState, useEffect, useRef } from "react";
 import type { FormState } from "@/app/actions";
 import { Field, Input, btnPrimary, btnSecondary } from "./ui";
+import { useT } from "@/i18n/client";
 
 /** Adds a guest member: someone without a login yet, managed by the leads. */
 export function GuestForm({
   action,
-  submitLabel = "Add guest",
+  submitLabel,
 }: {
   action: (s: FormState, f: FormData) => Promise<FormState>;
   submitLabel?: string;
 }) {
+  const t = useT();
   const [state, formAction, pending] = useActionState(action, undefined);
   const ref = useRef<HTMLFormElement>(null);
   useEffect(() => {
@@ -19,23 +21,23 @@ export function GuestForm({
   return (
     <form ref={ref} action={formAction} className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
-        <Field label="First name">
+        <Field label={t("auth.firstName")}>
           <Input name="firstName" required maxLength={40} />
         </Field>
-        <Field label="Surname">
+        <Field label={t("auth.surname")}>
           <Input name="lastName" required maxLength={40} />
         </Field>
       </div>
-      <Field label="Nickname">
+      <Field label={t("auth.nickname")}>
         <Input name="nick" maxLength={32} />
       </Field>
-      <Field label="Email (optional)" hint="We mail them an invite. Signing in with a Discord account on this address takes the spot over automatically.">
+      <Field label={t("guestForm.emailOptional")} hint={t("guestForm.emailHint")}>
         <Input name="email" type="email" maxLength={200} autoComplete="off" />
       </Field>
       {state?.error && <p className="text-sm text-danger">{state.error}</p>}
       {state?.ok && state.message && <p className="text-sm text-bit">{state.message}</p>}
       <button disabled={pending} className={btnSecondary}>
-        {pending ? "Adding…" : submitLabel}
+        {pending ? t("guestForm.adding") : (submitLabel ?? t("clanSettings.addGuestSubmit"))}
       </button>
     </form>
   );
@@ -49,6 +51,7 @@ export function GuestEmailForm({
   action: (s: FormState, f: FormData) => Promise<FormState>;
   email: string | null;
 }) {
+  const t = useT();
   const [state, formAction, pending] = useActionState(action, undefined);
   return (
     <form action={formAction} className="space-y-1">
@@ -59,12 +62,12 @@ export function GuestEmailForm({
           required
           maxLength={200}
           defaultValue={email ?? ""}
-          placeholder="Their email"
-          aria-label="Guest email"
+          placeholder={t("guestForm.theirEmail")}
+          aria-label={t("guestForm.guestEmail")}
           className="min-w-0 flex-1"
         />
         <button disabled={pending} className={`${btnSecondary} text-xs`}>
-          {pending ? "Sending…" : email ? "Send invite again" : "Send invite"}
+          {pending ? t("eventUi.sending") : t(email ? "guestForm.sendAgain" : "guestForm.send")}
         </button>
       </div>
       {state?.error && <p className="text-xs text-danger">{state.error}</p>}
@@ -88,45 +91,46 @@ export function GuestEditForm({
   guest: { firstName: string; lastName: string; nick: string; email: string };
   types: GuestEditTypeRow[];
 }) {
+  const t = useT();
   const [state, formAction, pending] = useActionState(action, undefined);
   return (
     <form action={formAction} className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
-        <Field label="First name">
+        <Field label={t("auth.firstName")}>
           <Input name="firstName" required maxLength={40} defaultValue={guest.firstName} />
         </Field>
-        <Field label="Surname">
+        <Field label={t("auth.surname")}>
           <Input name="lastName" required maxLength={40} defaultValue={guest.lastName} />
         </Field>
       </div>
-      <Field label="Nickname" hint="Used everywhere unless a LAN type has its own.">
+      <Field label={t("auth.nickname")} hint={t("guestForm.nickHint")}>
         <Input name="nick" maxLength={32} defaultValue={guest.nick} />
       </Field>
       {types.length > 0 && (
         <fieldset className="space-y-3">
-          <legend className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">Per LAN type</legend>
-          {types.map((t) => (
-            <div key={t.id} className="rounded-md border border-line p-3">
-              <p className="mb-2 text-sm font-medium">{t.name}</p>
+          <legend className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">{t("guestForm.perType")}</legend>
+          {types.map((ty) => (
+            <div key={ty.id} className="rounded-md border border-line p-3">
+              <p className="mb-2 text-sm font-medium">{ty.name}</p>
               <div className="grid gap-3 sm:grid-cols-2">
                 <Field label="Nick">
-                  <Input name={`nick_${t.id}`} maxLength={32} defaultValue={t.nick} placeholder={guest.nick || "Same as default"} />
+                  <Input name={`nick_${ty.id}`} maxLength={32} defaultValue={ty.nick} placeholder={guest.nick || t("guestForm.sameAsDefault")} />
                 </Field>
-                <Field label="LAN ID">
-                  <Input name={`lanId_${t.id}`} maxLength={40} defaultValue={t.lanId} placeholder="e.g. participant number" />
+                <Field label={t("guestForm.lanId")}>
+                  <Input name={`lanId_${ty.id}`} maxLength={40} defaultValue={ty.lanId} placeholder={t("guestForm.lanIdPlaceholder")} />
                 </Field>
               </div>
             </div>
           ))}
         </fieldset>
       )}
-      <Field label="Email" hint="Changing it mails them the invite. If the address already has a Seatbit account, the guest is merged into it.">
+      <Field label={t("member.email")} hint={t("guestForm.emailEditHint")}>
         <Input name="email" type="email" maxLength={200} autoComplete="off" defaultValue={guest.email} />
       </Field>
       {state?.error && <p className="text-sm text-danger">{state.error}</p>}
       {state?.ok && state.message && <p className="text-sm text-bit">{state.message}</p>}
       <button disabled={pending} className={btnPrimary}>
-        {pending ? "Saving…" : "Save guest"}
+        {pending ? t("common.saving") : t("guestForm.save")}
       </button>
     </form>
   );

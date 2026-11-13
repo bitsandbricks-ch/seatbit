@@ -2,6 +2,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { btnSecondary, input } from "./ui";
 import { nameMatches } from "@/lib/names";
+import { useT } from "@/i18n/client";
 
 export function AddMemberForm({
   clanId,
@@ -12,6 +13,7 @@ export function AddMemberForm({
   users: { id: string; name: string; email: string }[];
   action: (clanId: string, userId: string) => Promise<void>;
 }) {
+  const t = useT();
   const [q, setQ] = useState("");
   const [pending, start] = useTransition();
   const hits = useMemo(
@@ -27,7 +29,8 @@ export function AddMemberForm({
         type="search"
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        placeholder="Search Seatbit users by name or nick"
+        placeholder={t("addMember.search")}
+        aria-label={t("addMember.search")}
         className={input}
       />
       {hits.length > 0 && (
@@ -42,13 +45,13 @@ export function AddMemberForm({
                 className={`${btnSecondary} !py-1 text-xs`}
                 onClick={() => start(() => action(clanId, u.id))}
               >
-                Add
+                {t("addMember.add")}
               </button>
             </li>
           ))}
         </ul>
       )}
-      {q.trim().length >= 2 && hits.length === 0 && <p className="text-sm text-muted">No user found.</p>}
+      {q.trim().length >= 2 && hits.length === 0 && <p className="text-sm text-muted">{t("addMember.none")}</p>}
     </div>
   );
 }

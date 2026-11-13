@@ -11,6 +11,7 @@ import { isMemberRole } from "@/lib/clan-roles";
 import { canClaimDirectly, guestSuggestions, type GuestSuggestion } from "@/lib/guest-claim";
 import { getDefaultNames } from "@/lib/lans";
 import { requireUser } from "@/lib/session";
+import { getT } from "@/i18n/server";
 
 /**
  * "Did the leads add you already?": a member picks the guest that is them. Guests with
@@ -19,6 +20,7 @@ import { requireUser } from "@/lib/session";
 export default async function ClaimGuestPage({ params }: PageProps<"/clans/[slug]/claim">) {
   const { slug } = await params;
   const me = await requireUser();
+  const t = await getT();
   const c = getClanBySlug(slug);
   if (!c) notFound();
   const role = clanRole(me.id, c.id);
@@ -67,27 +69,27 @@ export default async function ClaimGuestPage({ params }: PageProps<"/clans/[slug
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-center gap-2">
             <span className="truncate font-medium">{names.get(s.guest.id)?.full ?? s.guest.name}</span>
-            {s.match && <Pill tone="emerald">Same {s.match}</Pill>}
-            {s.status === "pending" && <Pill tone="amber">Waiting for an admin</Pill>}
-            {s.status === "declined" && <Pill tone="red">Declined</Pill>}
+            {s.match && <Pill tone="emerald">{t(s.match === "nick" ? "clanSettings.sameNick" : "clanSettings.sameName")}</Pill>}
+            {s.status === "pending" && <Pill tone="amber">{t("claimGuest.waiting")}</Pill>}
+            {s.status === "declined" && <Pill tone="red">{t("claimGuest.declined")}</Pill>}
           </span>
           <span className="block truncate text-xs text-muted">
-            {events.length ? `Signed up for ${events.join(", ")}` : "Not signed up for anything yet"}
+            {events.length ? t("claimGuest.signedUp", { events: events.join(", ") }) : t("claimGuest.notSignedUp")}
           </span>
         </span>
         <span className="flex w-full shrink-0 flex-wrap justify-end gap-2 sm:w-auto">
           {s.status === "pending" && s.claimId ? (
             <form action={cancelGuestClaim.bind(null, s.claimId)}>
-              <button className={btnGhost}>Cancel request</button>
+              <button className={btnGhost}>{t("claimGuest.cancel")}</button>
             </form>
           ) : s.status === "declined" ? null : (
             <>
               <form action={claimGuestAsMember.bind(null, c.id, s.guest.id)}>
-                <button className={s.match ? btnPrimary : btnSecondary}>{direct ? "That's me, take it over" : "That's me"}</button>
+                <button className={s.match ? btnPrimary : btnSecondary}>{t(direct ? "claimGuest.meTake" : "claimGuest.me")}</button>
               </form>
               {s.match && (
                 <form action={dismissGuestSuggestion.bind(null, c.id, s.guest.id)}>
-                  <button className={btnGhost}>Not me</button>
+                  <button className={btnGhost}>{t("claimGuest.notMe")}</button>
                 </form>
               )}
             </>
@@ -101,48 +103,45 @@ export default async function ClaimGuestPage({ params }: PageProps<"/clans/[slug
     <Page>
       <PageHeader
         back={{ href: `/clans/${c.slug}`, label: c.name }}
-        title="Are you already on the list?"
-        subtitle="Leads sometimes add people as guests before they sign up. If one of them is you, take it over to keep their events, seat and nicks."
+        title={t("claimGuest.title")}
+        subtitle={t("claimGuest.subtitle")}
       />
       <Columns
         aside={
-          <Card title="How it works">
+          <Card title={t("claimGuest.how")}>
             <ul className="list-disc space-y-1.5 pl-5 text-sm text-muted">
               <li>
-                {c.guestClaims === "match"
-                  ? "A guest with the same name or nick as you moves over to your account right away."
-                  : "An admin of the clan checks it's really you, then everything moves over."}
+                {t(c.guestClaims === "match" ? "claimGuest.howMatch" : "claimGuest.howAdmin")}
               </li>
-              {c.guestClaims === "match" && <li>Picking any other guest asks an admin first.</li>}
-              <li>You can ask for one guest at a time.</li>
-              <li>Got a personal link from your leads? Opening it takes the guest over straight away.</li>
+              {c.guestClaims === "match" && <li>{t("claimGuest.howOther")}</li>}
+              <li>{t("claimGuest.howOne")}</li>
+              <li>{t("claimGuest.howLink")}</li>
             </ul>
           </Card>
         }
       >
         {pending && (
           <Notice>
-            You asked to take over <span className="font-semibold">{pending.guest.name}</span>. The admins of {c.name} were told
-            and will confirm it.
+            {t.rich("claimGuest.pending", { name: <span className="font-semibold">{pending.guest.name}</span>, clan: c.name })}
           </Notice>
         )}
-        <Card title={suggested.length ? "Looks like you" : "Guests of the clan"}>
+        <Card title={t(suggested.length ? "claimGuest.looksLikeYou" : "claimGuest.clanGuests")}>
           {all.length === 0 ? (
-            <p className="text-sm text-muted">There are no guests in {c.name} right now, so there&apos;s nothing to take over.</p>
+            <p className="text-sm text-muted">{t("claimGuest.none", { clan: c.name })}</p>
           ) : suggested.length ? (
             <ul className="-my-3 divide-y divide-line">{suggested.map(row)}</ul>
           ) : (
-            <p className="text-sm text-muted">No guest has your name or nick. If one of the others below is you, pick it.</p>
+            <p className="text-sm text-muted">{t("claimGuest.noMatch")}</p>
           )}
         </Card>
         {others.length > 0 && (
-          <Card title={suggested.length ? "Other guests" : `All guests (${others.length})`}>
+          <Card title={suggested.length ? t("claimGuest.others") : `${t("claimGuest.all")} (${others.length})`}>
             <ul className="-my-3 divide-y divide-line">{others.map(row)}</ul>
           </Card>
         )}
         <div className="flex justify-end">
           <Link href={`/clans/${c.slug}`} className={btnGhost}>
-            None of these, continue
+            {t("claimGuest.noneOfThese")}
           </Link>
         </div>
       </Columns>

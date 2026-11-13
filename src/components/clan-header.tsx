@@ -161,7 +161,7 @@ export async function ClanHeader({
             )}
             {isSupporter(c) && (
               <span className="ml-2 align-middle">
-                <SupporterBadge />
+                <SupporterBadge title={t("support.badge")} />
               </span>
             )}
           </>

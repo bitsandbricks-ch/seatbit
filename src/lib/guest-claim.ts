@@ -8,7 +8,7 @@ import { isMemberRole } from "./clan-roles";
 import { getDefaultNames } from "./lans";
 import { fmtDate, fmtDay } from "./format";
 import { clanLocale } from "../i18n/user-locale";
-import { makeT } from "../i18n/translate";
+import { makeT, type T } from "../i18n/translate";
 import { moveLanAccounts } from "./lan-accounts";
 import { appUrl } from "./mail";
 import { sendTemplate } from "./mail-templates";
@@ -406,13 +406,16 @@ export function discordTicketState(token: string, me: User) {
 }
 
 /** What the guest page says about the Discord member a lead linked the guest to. */
-export function guestDiscordLines(g: User): string[] {
-  if (!g.guestDiscordId) return ["Not linked to a Discord member."];
+export function guestDiscordLines(g: User, t: T = makeT("en")): string[] {
+  if (!g.guestDiscordId) return [t("guestDiscord.notLinked")];
   const by = g.guestDiscordLinkedBy ? getDefaultNames([g.guestDiscordLinkedBy]).get(g.guestDiscordLinkedBy)?.full : undefined;
+  const loc = t.locale;
   return [
-    `Linked to ${g.guestDiscordName ?? "a Discord member"}`,
-    g.guestDiscordLinkedAt ? `Linked ${fmtDate(g.guestDiscordLinkedAt)}${by ? ` by ${by}` : ""}` : "",
-    g.guestDiscordDmAt ? `Claim link DMed ${fmtDate(g.guestDiscordDmAt)}` : "The bot couldn't DM them the claim link yet",
-    "Their first sign-in with that Discord account takes the guest over.",
+    t("guestDiscord.linkedTo", { name: g.guestDiscordName ?? t("guestDiscord.aMember") }),
+    g.guestDiscordLinkedAt
+      ? t(by ? "guestDiscord.linkedAtBy" : "guestDiscord.linkedAt", { date: fmtDate(g.guestDiscordLinkedAt, loc), by })
+      : "",
+    g.guestDiscordDmAt ? t("guestDiscord.dmed", { date: fmtDate(g.guestDiscordDmAt, loc) }) : t("guestDiscord.noDm"),
+    t("guestDiscord.takesOver"),
   ].filter(Boolean);
 }

@@ -10,10 +10,12 @@ import { clanStats, pct, type MemberStats } from "@/lib/clan-stats";
 import { fmtDay } from "@/lib/format";
 import { getDefaultNames } from "@/lib/lans";
 import { requireUser } from "@/lib/session";
+import { getT } from "@/i18n/server";
 
 export default async function ClanStatsPage({ params }: PageProps<"/clans/[slug]/stats">) {
   const { slug } = await params;
   const me = await requireUser();
+  const t = await getT();
   const c = getClanBySlug(slug);
   if (!c) notFound();
   const perms = clanPerms(me, c.id);
@@ -45,28 +47,37 @@ export default async function ClanStatsPage({ params }: PageProps<"/clans/[slug]
       <ClanHeader clan={c} role={clanRole(me.id, c.id)} perms={perms} mode="view" tab="stats" />
 
       <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
-        <StatTile label="Members" value={String(totalMembers)} sub={guests ? `${guests} guests without login` : "all with login"} />
-        <StatTile label="Events" value={String(past.length)} sub={`past · ${upcoming.length} upcoming`} />
         <StatTile
-          label="Answer rate"
+          label={t("stats.members")}
+          value={String(totalMembers)}
+          sub={guests ? t("stats.guestsNoLogin", { count: guests }) : t("stats.allLogin")}
+        />
+        <StatTile label={t("stats.events")} value={String(past.length)} sub={t("stats.pastUpcoming", { count: upcoming.length })} />
+        <StatTile
+          label={t("stats.answerRate")}
           value={pct(sum(past, "answered"), sum(past, "asked"))}
-          sub="of people asked, past events"
+          sub={t("stats.answerRateSub")}
         />
         <StatTile
-          label="Turnout"
+          label={t("stats.turnout")}
           value={pct(sum(past, "going"), sum(past, "asked"))}
-          sub={past.length ? `avg ${Math.round((sum(past, "going") / past.length) * 10) / 10} per event` : "no past events yet"}
+          sub={
+            past.length
+              ? t("stats.avg", { n: Math.round((sum(past, "going") / past.length) * 10) / 10 })
+              : t("stats.noPast")
+          }
         />
       </div>
 
       {events.length === 0 ? (
-        <EmptyState icon="calendar" title="No events yet">
-          Stats show up once the clan has its first event.
+        <EmptyState icon="calendar" title={t("stats.noEvents")}>
+          {t("stats.noEventsHint")}
         </EmptyState>
       ) : (
         <>
-          <Card title="Asked, answered and attended per event">
+          <Card title={t("stats.chartTitle")}>
             <EventTurnoutChart
+              t={t}
               points={events.map((e) => ({
                 id: e.lan.id,
                 name: e.lan.name,
@@ -79,24 +90,24 @@ export default async function ClanStatsPage({ params }: PageProps<"/clans/[slug]
             />
           </Card>
 
-          <Card title="Events in detail">
+          <Card title={t("stats.detail")}>
             <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
               <table className="w-full min-w-[46rem] text-sm tabular-nums">
                 <thead>
                   <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-muted">
-                    <th className="py-2 pr-3 font-medium">Event</th>
-                    <th className="px-2 py-2 text-right font-medium">Asked</th>
-                    <th className="px-2 py-2 text-right font-medium" title="Answered (of them before the answer-by date)">
-                      Answered
+                    <th className="py-2 pr-3 font-medium">{t("stats.event")}</th>
+                    <th className="px-2 py-2 text-right font-medium">{t("stats.asked")}</th>
+                    <th className="px-2 py-2 text-right font-medium" title={t("stats.answeredTitle")}>
+                      {t("stats.answered")}
                     </th>
-                    <th className="px-2 py-2 text-right font-medium">Coming</th>
-                    <th className="px-2 py-2 text-right font-medium">Unsure</th>
-                    <th className="px-2 py-2 text-right font-medium">Not coming</th>
-                    <th className="px-2 py-2 text-right font-medium">No answer</th>
-                    <th className="px-2 py-2 text-right font-medium" title="Confirmed by a lead / reported by the member">
-                      Tickets
+                    <th className="px-2 py-2 text-right font-medium">{t("stats.coming")}</th>
+                    <th className="px-2 py-2 text-right font-medium">{t("stats.unsure")}</th>
+                    <th className="px-2 py-2 text-right font-medium">{t("stats.notComing")}</th>
+                    <th className="px-2 py-2 text-right font-medium">{t("stats.noAnswer")}</th>
+                    <th className="px-2 py-2 text-right font-medium" title={t("stats.ticketsTitle")}>
+                      {t("stats.tickets")}
                     </th>
-                    <th className="py-2 pl-2 text-right font-medium">Seats</th>
+                    <th className="py-2 pl-2 text-right font-medium">{t("stats.seats")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line">
@@ -109,20 +120,20 @@ export default async function ClanStatsPage({ params }: PageProps<"/clans/[slug]
                             {e.lan.name}
                           </Link>
                           <span className="block text-xs text-muted">
-                            {fmtDay(e.lan.startsAt)} {!e.past && <Pill tone="amber">upcoming</Pill>}
+                            {fmtDay(e.lan.startsAt)} {!e.past && <Pill tone="amber">{t("stats.upcoming")}</Pill>}
                           </span>
                         </td>
                         <td className="px-2 py-2 text-right">{e.asked}</td>
                         <td className="px-2 py-2 text-right">
                           {e.answered} <span className="text-xs text-faint">{pct(e.answered, e.asked)}</span>
                           {e.lan.signupDeadline && (
-                            <span className="block text-xs text-faint">{e.answeredOnTime} on time</span>
+                            <span className="block text-xs text-faint">{t("stats.onTime", { count: e.answeredOnTime })}</span>
                           )}
                         </td>
                         <td className="px-2 py-2 text-right font-semibold text-bit">
                           {e.going}
                           {e.lan.capacity != null && <span className="font-normal text-faint"> / {e.lan.capacity}</span>}
-                          {e.waitlist > 0 && <span className="block text-xs font-normal text-muted">+{e.waitlist} waitlist</span>}
+                          {e.waitlist > 0 && <span className="block text-xs font-normal text-muted">{t("stats.waitlist", { count: e.waitlist })}</span>}
                         </td>
                         <td className="px-2 py-2 text-right">{e.maybe || "–"}</td>
                         <td className="px-2 py-2 text-right">{e.declined || "–"}</td>
@@ -140,7 +151,7 @@ export default async function ClanStatsPage({ params }: PageProps<"/clans/[slug]
                           {e.seats ? (
                             <>
                               {e.seatsAssigned} <span className="text-faint">/ {e.seats}</span>
-                              {e.lan.seatsPublishedAt && <span className="block text-xs text-faint">final</span>}
+                              {e.lan.seatsPublishedAt && <span className="block text-xs text-faint">{t("stats.final")}</span>}
                             </>
                           ) : (
                             "–"
@@ -152,76 +163,77 @@ export default async function ClanStatsPage({ params }: PageProps<"/clans/[slug]
                 </tbody>
               </table>
             </div>
-            <p className="mt-3 text-xs text-faint">
-              Asked = everyone in the clan when the event started, plus anyone who answered. People who left the clan
-              since aren&apos;t counted. Tickets: confirmed by a lead / reported by the member. Seats: assigned / the
-              group&apos;s seats.
-            </p>
+            <p className="mt-3 text-xs text-faint">{t("stats.foot")}</p>
           </Card>
 
           <div className="grid items-start gap-4 sm:gap-6 md:grid-cols-2">
-            <Card title="Most active">
+            <Card title={t("stats.mostActive")}>
               <MemberList
+                guestLabel={t("clanSettings.guest")}
                 slug={c.slug}
                 avatars={avatars}
                 list={mostActive}
                 label={label}
-                empty="Nobody has come to a past event yet."
+                empty={t("stats.mostActiveEmpty")}
                 right={(m) => (
                   <>
-                    <span className="font-semibold text-fg">{m.attended}</span> of {m.asked}
+                    {t.rich("stats.of", { n: <span className="font-semibold text-fg">{m.attended}</span>, total: m.asked })}
                     <span className="block text-xs text-faint">
-                      {m.lastAttended ? `last ${fmtDay(m.lastAttended.startsAt)}` : ""}
+                      {m.lastAttended ? t("stats.last", { date: fmtDay(m.lastAttended.startsAt) }) : ""}
                     </span>
                   </>
                 )}
               />
             </Card>
-            <Card title="Often no answer">
-              <p className="mb-3 text-sm text-muted">Past events these members never answered for.</p>
+            <Card title={t("stats.quiet")}>
+              <p className="mb-3 text-sm text-muted">{t("stats.quietHint")}</p>
               <MemberList
+                guestLabel={t("clanSettings.guest")}
                 slug={c.slug}
                 avatars={avatars}
                 list={quiet}
                 label={label}
-                empty="Everyone answered every time."
+                empty={t("stats.quietEmpty")}
                 right={(m) => (
                   <>
-                    <span className="font-semibold text-warn">{m.asked - m.answered}</span> of {m.asked}
+                    {t.rich("stats.of", { n: <span className="font-semibold text-warn">{m.asked - m.answered}</span>, total: m.asked })}
                   </>
                 )}
               />
             </Card>
-            <Card title="Left it at unsure">
-              <p className="mb-3 text-sm text-muted">Past events where the answer stayed &ldquo;unsure&rdquo;.</p>
+            <Card title={t("stats.unsureTitle")}>
+              <p className="mb-3 text-sm text-muted">{t("stats.unsureHint")}</p>
               <MemberList
+                guestLabel={t("clanSettings.guest")}
                 slug={c.slug}
                 avatars={avatars}
                 list={unsure}
                 label={label}
-                empty="No open “unsure” answers at past events."
+                empty={t("stats.unsureEmpty")}
                 right={(m) => (
                   <>
-                    <span className="font-semibold text-fg">{m.stayedUnsure}</span> of {m.asked}
+                    {t.rich("stats.of", { n: <span className="font-semibold text-fg">{m.stayedUnsure}</span>, total: m.asked })}
                   </>
                 )}
               />
             </Card>
-            <Card title={`Not at a LAN yet (${neverCame.length})`}>
-              <p className="mb-3 text-sm text-muted">Members who haven&apos;t come to any past event since joining.</p>
+            <Card title={`${t("stats.neverCame")} (${neverCame.length})`}>
+              <p className="mb-3 text-sm text-muted">{t("stats.neverCameHint")}</p>
               <MemberList
+                guestLabel={t("clanSettings.guest")}
                 slug={c.slug}
                 avatars={avatars}
                 list={neverCame.slice(0, 15)}
                 label={label}
-                empty="Everyone has been to at least one LAN."
+                empty={t("stats.neverCameEmpty")}
                 right={(m) => (
                   <>
-                    {m.asked} asked{m.upcomingComing > 0 && <span className="block text-xs text-bit">coming next time</span>}
+                    {t("stats.askedN", { count: m.asked })}
+                    {m.upcomingComing > 0 && <span className="block text-xs text-bit">{t("stats.comingNext")}</span>}
                   </>
                 )}
               />
-              {neverCame.length > 15 && <p className="mt-2 text-xs text-faint">and {neverCame.length - 15} more</p>}
+              {neverCame.length > 15 && <p className="mt-2 text-xs text-faint">{t("stats.more", { count: neverCame.length - 15 })}</p>}
             </Card>
           </div>
         </>
@@ -237,7 +249,9 @@ function MemberList({
   right,
   empty,
   avatars,
+  guestLabel,
 }: {
+  guestLabel: string;
   avatars: Map<string, AvatarData>;
   slug: string;
   list: MemberStats[];
@@ -257,7 +271,7 @@ function MemberList({
             <span className="flex min-w-0 items-center gap-2">
               <Avatar data={avatars.get(m.userId)} size={24} />
               <span className="truncate">{label(m)}</span>
-              {m.isGuest && <Pill>guest</Pill>}
+              {m.isGuest && <Pill>{guestLabel}</Pill>}
             </span>
             <span className="shrink-0 text-right text-muted tabular-nums">{right(m)}</span>
           </Link>

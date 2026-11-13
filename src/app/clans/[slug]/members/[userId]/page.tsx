@@ -23,10 +23,13 @@ import { pct } from "@/lib/clan-stats";
 import { isLanManager, requireUser, visibleLans } from "@/lib/session";
 import { profileLink } from "@/lib/profile-link";
 import { SocialList } from "@/components/social-list";
+import { getT } from "@/i18n/server";
+import type { T } from "@/i18n/translate";
 
 export default async function MemberProfilePage({ params }: PageProps<"/clans/[slug]/members/[userId]">) {
   const { slug, userId } = await params;
   const me = await requireUser();
+  const t = await getT();
   const c = getClanBySlug(slug);
   if (!c) notFound();
   if (!isClanMember(me.id, c.id) && me.role !== "admin") notFound();
@@ -58,13 +61,13 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
   // IDs are private, except where the LAN type links them to a profile on the event's site.
   const lanAccounts = db.select().from(schema.lanAccount).where(eq(schema.lanAccount.userId, u.id)).all();
   const typeRows = types
-    .map((t) => {
-      const value = lanAccounts.find((a) => a.typeId === t.id && !a.lanId)?.value;
+    .map((ty) => {
+      const value = lanAccounts.find((a) => a.typeId === ty.id && !a.lanId)?.value;
       return {
-        type: t,
-        nick: nicks.find((n) => n.typeId === t.id && n.isPrimary)?.nick ?? nicks.find((n) => n.typeId === t.id)?.nick,
+        type: ty,
+        nick: nicks.find((n) => n.typeId === ty.id && n.isPrimary)?.nick ?? nicks.find((n) => n.typeId === ty.id)?.nick,
         lanId: seesPrivate ? value : undefined,
-        profile: profileLink(t.profileUrl, value),
+        profile: profileLink(ty.profileUrl, value),
       };
     })
     .filter((r) => r.nick || r.lanId || r.profile);
@@ -86,7 +89,7 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
       a,
       seat: seatVisible ? s!.label : null,
       nick: pickNick(nicks, { lanId: l.id, typeId: l.typeId }, u.name),
-      typeName: types.find((t) => t.id === l.typeId)?.name,
+      typeName: types.find((ty) => ty.id === l.typeId)?.name,
     };
   });
   const upcoming = events.filter((e) => e.lan.endsAt >= now);
@@ -125,63 +128,64 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
             <RolePill role={role} />
             {/* Managers and the member themself also see the full name the clan's display leaves out. */}
             {seesPrivate && fullName !== shownName && <span>{fullName}</span>}
-            {u.isGuest && <Pill>guest · no login yet</Pill>}
-            <span>in the clan since {fmtWeekday(membership.createdAt)}</span>
+            {u.isGuest && <Pill>{t("member.guestNoLogin")}</Pill>}
+            <span>{t("member.since", { date: fmtWeekday(membership.createdAt, t.locale) })}</span>
           </span>
         }
       />
 
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
-        <StatTile label="LANs attended" value={String(attended)} sub={past.length ? `of ${past.length} past` : "no past events"} />
-        <StatTile label="Answered" value={pct(answeredPast, past.length)} sub="of past events" />
         <StatTile
-          label="Coming next"
+          label={t("member.attended")}
+          value={String(attended)}
+          sub={past.length ? t("member.ofPast", { count: past.length }) : t("member.noPast")}
+        />
+        <StatTile label={t("stats.answered")} value={pct(answeredPast, past.length)} sub={t("member.ofPastEvents")} />
+        <StatTile
+          label={t("member.comingNext")}
           value={String(upcoming.filter((e) => e.a?.status === "going").length)}
-          sub={`of ${upcoming.length} upcoming`}
+          sub={t("member.ofUpcoming", { count: upcoming.length })}
         />
       </div>
 
       <div className={columns}>
         <div className={`min-w-0 ${stack}`}>
-          <Card title="Upcoming events">
+          <Card title={t("member.upcoming")}>
             {upcoming.length === 0 ? (
-              <p className="text-sm text-muted">Nothing planned.</p>
+              <p className="text-sm text-muted">{t("member.nothingPlanned")}</p>
             ) : (
-              <EventList events={upcoming} showTicket={seesPrivate} />
+              <EventList t={t} events={upcoming} showTicket={seesPrivate} />
             )}
           </Card>
-          <Card title="Past events">
+          <Card title={t("member.past")}>
             {past.length === 0 ? (
-              <p className="text-sm text-muted">No past events since joining.</p>
+              <p className="text-sm text-muted">{t("member.noPastSince")}</p>
             ) : (
-              <EventList events={past} showTicket={seesPrivate} past />
+              <EventList t={t} events={past} showTicket={seesPrivate} past />
             )}
           </Card>
         </div>
 
         <div className={`min-w-0 ${stack}`}>
           {u.isGuest && isManager && (
-            <Card title="Edit guest">
-              <p className="mb-3 text-sm text-muted">
-                {u.firstName || u.name} hasn&apos;t claimed this spot yet, so admins keep the details up to date. It all
-                carries over when they sign in.
-              </p>
+            <Card title={t("member.editGuest")}>
+              <p className="mb-3 text-sm text-muted">{t("member.editGuestHint", { name: u.firstName || u.name })}</p>
               <GuestEditForm
                 action={updateGuest.bind(null, c.id, u.id)}
                 guest={{ firstName: u.firstName, lastName: u.lastName, nick: defaultNick, email: u.inviteEmail ?? "" }}
-                types={types.map((t) => ({
-                  id: t.id,
-                  name: t.name,
-                  nick: nicks.find((n) => n.typeId === t.id && !n.lanId)?.nick ?? "",
-                  lanId: lanAccounts.find((a) => a.typeId === t.id && !a.lanId)?.value ?? "",
+                types={types.map((ty) => ({
+                  id: ty.id,
+                  name: ty.name,
+                  nick: nicks.find((n) => n.typeId === ty.id && !n.lanId)?.nick ?? "",
+                  lanId: lanAccounts.find((a) => a.typeId === ty.id && !a.lanId)?.value ?? "",
                 }))}
               />
             </Card>
           )}
-          <Card title="Nicks">
+          <Card title={t("member.nicks")}>
             <dl className="space-y-2 text-sm">
               <div className="flex justify-between gap-3">
-                <dt className="text-muted">Default</dt>
+                <dt className="text-muted">{t("member.default")}</dt>
                 <dd className="truncate font-medium">{defaultNick || "—"}</dd>
               </div>
               {typeRows.map((r) => (
@@ -191,7 +195,7 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
                     <span className="block truncate font-medium">{r.nick ?? defaultNick ?? "—"}</span>
                     {r.profile ? (
                       <a href={r.profile} target="_blank" rel="noreferrer" className="block truncate text-xs text-bit hover:underline">
-                        {r.lanId ? `ID ${r.lanId}` : "Profile"} ↗
+                        {r.lanId ? `ID ${r.lanId}` : t("member.profile")} ↗
                       </a>
                     ) : (
                       r.lanId && <span className="block truncate text-xs text-faint">ID {r.lanId}</span>
@@ -201,32 +205,34 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
               ))}
             </dl>
             {seesPrivate && typeRows.some((r) => r.lanId) && (
-              <p className="mt-3 text-xs text-faint">LAN IDs are only shown to clan admins and {isSelf ? "you" : "the member"}. Profile links on an event&apos;s site are shown to the whole clan.</p>
+              <p className="mt-3 text-xs text-faint">{t(isSelf ? "member.idsPrivateSelf" : "member.idsPrivate")}</p>
             )}
           </Card>
 
-          <Card title="Socials">
+          <Card title={t("member.socials")}>
             <SocialList socials={u.socials ?? {}} discordId={discord?.accountId} />
           </Card>
 
           {seesPrivate && (
-            <Card title="Contact">
+            <Card title={t("member.contact")}>
               <dl className="space-y-2 text-sm">
                 {u.isGuest ? (
                   <>
-                    <Row label="Email">{u.inviteEmail ?? "not known"}</Row>
-                    <Row label="Invite">
-                      {u.invitedAt ? `mailed ${fmtDate(u.invitedAt)}` : u.inviteEmail ? "not sent yet" : "no email, send the link"}
+                    <Row label={t("member.email")}>{u.inviteEmail ?? t("member.notKnown")}</Row>
+                    <Row label={t("member.invite")}>
+                      {u.invitedAt
+                        ? t("member.mailed", { date: fmtDate(u.invitedAt, t.locale) })
+                        : t(u.inviteEmail ? "member.notSent" : "member.noEmailLink")}
                     </Row>
                   </>
                 ) : (
                   <>
-                    <Row label="Email">
+                    <Row label={t("member.email")}>
                       <a href={`mailto:${u.email}`} className="text-bit hover:underline">
                         {u.email}
                       </a>
                     </Row>
-                    {isManager && <Row label="Discord">{discord ? "linked" : "not linked"}</Row>}
+                    {isManager && <Row label="Discord">{t(discord ? "clanSettings.linked" : "member.notLinked")}</Row>}
                   </>
                 )}
               </dl>
@@ -235,7 +241,7 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
                   <p className="text-xs font-medium uppercase tracking-wide text-muted">Discord</p>
                   <GuestDiscordLink
                     linked={!!u.guestDiscordId}
-                    lines={guestDiscordLines(u)}
+                    lines={guestDiscordLines(u, t)}
                     resend={resendGuestDiscordDm.bind(null, c.id, u.id)}
                     unlink={unlinkGuestDiscord.bind(null, c.id, u.id)}
                   />
@@ -243,16 +249,16 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
               )}
               {u.isGuest && isManager && u.claimCode && (
                 <div className="mt-3 space-y-1">
-                  <p className="text-xs text-muted">Claim link: whoever opens it takes over this guest.</p>
+                  <p className="text-xs text-muted">{t("member.claimLink")}</p>
                   <CopyField value={`${appUrl}/claim/${u.claimCode}`} />
                 </div>
               )}
-              <p className="mt-3 text-xs text-faint">Only clan admins and recruiters{isSelf && !isManager ? " and you" : ""} see this.</p>
+              <p className="mt-3 text-xs text-faint">{t(isSelf && !isManager ? "member.onlyManagersYou" : "member.onlyManagers")}</p>
             </Card>
           )}
 
           {isManager && (
-            <Card title="Clan role">
+            <Card title={t("member.clanRole")}>
               <MemberAdminActions
                 clanId={c.id}
                 slug={c.slug}
@@ -282,10 +288,12 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 }
 
 function EventList({
+  t,
   events,
   showTicket,
   past,
 }: {
+  t: T;
   events: { lan: Lan; a: Attendance | null; seat: string | null; nick: string; typeName?: string }[];
   showTicket: boolean;
   past?: boolean;
@@ -298,16 +306,16 @@ function EventList({
             <span className="min-w-0">
               <span className="block truncate font-medium">{l.name}</span>
               <span className="block truncate text-xs text-muted">
-                {lanWeekday(l)}
+                {lanWeekday(l, t.locale)}
                 {typeName && ` · ${typeName}`}
-                {a?.status === "going" && ` · as ${nick}`}
+                {a?.status === "going" && ` · ${t("member.asNick", { nick })}`}
               </span>
             </span>
             <span className="flex shrink-0 flex-wrap justify-end gap-1">
               {past && a?.status === "going" ? (
-                <Pill tone="emerald">{seat ? `Attended · ${seat}` : "Attended"}</Pill>
+                <Pill tone="emerald">{seat ? `${t("clanPage.attended")} · ${seat}` : t("clanPage.attended")}</Pill>
               ) : past && !a ? (
-                <Pill>No answer</Pill>
+                <Pill>{t("stats.noAnswer")}</Pill>
               ) : (
                 <StatusBadge status={a?.status} seat={seat} />
               )}
@@ -315,7 +323,13 @@ function EventList({
                 !past &&
                 a &&
                 a.status !== "declined" &&
-                (a.paid ? <Pill tone="emerald">ticket ok</Pill> : a.ticketBought ? <Pill tone="amber">reported</Pill> : <Pill tone="red">no ticket</Pill>)}
+                (a.paid ? (
+                  <Pill tone="emerald">{t("event.ticketOk")}</Pill>
+                ) : a.ticketBought ? (
+                  <Pill tone="amber">{t("event.reported")}</Pill>
+                ) : (
+                  <Pill tone="red">{t("event.noTicket")}</Pill>
+                ))}
             </span>
           </Link>
         </li>

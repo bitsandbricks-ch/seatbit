@@ -449,7 +449,7 @@ function GuestsTab({
       aside={
         <Card title={t("clanSettings.addGuest")}>
           <p className="mb-3 text-sm text-muted">{t("clanSettings.addGuestHint")}</p>
-          <GuestForm action={addGuest.bind(null, clanId)} />
+          <GuestForm action={addGuest.bind(null, clanId)} submitLabel={t("clanSettings.addGuestSubmit")} />
         </Card>
       }
     >
@@ -509,7 +509,7 @@ function GuestsTab({
                           <p className="text-xs text-muted">Discord</p>
                           <GuestDiscordLink
                             linked={!!u.guestDiscordId}
-                            lines={guestDiscordLines(u)}
+                            lines={guestDiscordLines(u, t)}
                             resend={resendGuestDiscordDm.bind(null, clanId, u.id)}
                             unlink={unlinkGuestDiscord.bind(null, clanId, u.id)}
                           />
@@ -543,6 +543,7 @@ function LogTab({ t, clanId, slug, sp }: { t: T; clanId: string; slug: string; s
     <Card title={t("clanHeader.log")}>
       <p className="mb-4 text-sm text-muted">{t("clanSettings.logHint")}</p>
       <AuditLog
+        t={t}
         rows={rows}
         total={total}
         page={page}
