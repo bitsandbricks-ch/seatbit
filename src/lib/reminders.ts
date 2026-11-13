@@ -58,7 +58,8 @@ function recipients(kind: ReminderKind, l: Lan): User[] {
     case "payment":
       return members.filter((m) => {
         const a = byUser.get(m.id);
-        return a && (a.status === "going" || a.status === "waitlist") && !a.paid && !a.ticketBought;
+        // Not the waitlist: without a spot in the group a ticket may be wasted money.
+        return a && a.status === "going" && !a.paid && !a.ticketBought;
       });
     case "event":
       return members.filter((m) => byUser.get(m.id)?.status === "going");

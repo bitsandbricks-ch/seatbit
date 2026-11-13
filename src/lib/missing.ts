@@ -141,7 +141,8 @@ export function whoIsMissing(l: Lan): MissingGroup[] {
     }
     for (const r of rows) {
       if (r.status !== "going" && r.status !== "waitlist") continue;
-      if (!r.paid && !r.ticketBought) add("ticket", r.userId);
+      // Waitlisted people aren't chased for a ticket, but one they reported still needs confirming.
+      if (!r.paid && !r.ticketBought && r.status === "going") add("ticket", r.userId);
       else if (!r.paid && r.ticketBought) add("confirm", r.userId);
     }
     for (const r of going) {

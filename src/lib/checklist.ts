@@ -71,7 +71,9 @@ export function buildChecklist(input: {
       ? t("checklist.ticket.done")
       : a?.ticketBought
         ? t("checklist.ticket.pending")
-        : t("checklist.ticket.todo"),
+        : a?.status === "waitlist"
+          ? t("checklist.ticket.waitlist")
+          : t("checklist.ticket.todo"),
   });
 
   if (hasSeatPlan && going) {

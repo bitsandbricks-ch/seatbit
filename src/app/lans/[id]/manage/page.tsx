@@ -108,7 +108,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
     (u) => u.emailReminders && memberIds.has(u.id) && (!inLan.has(u.id) || rows.find((r) => r.userId === u.id)?.status === "maybe"),
   ).length;
   const unpaid = rows.filter(
-    (r) => (r.status === "going" || r.status === "waitlist") && !r.paid && !r.ticketBought && wantsMail(r.userId),
+    (r) => r.status === "going" && !r.paid && !r.ticketBought && wantsMail(r.userId),
   ).length;
   const going = rows.filter((r) => r.status === "going");
 

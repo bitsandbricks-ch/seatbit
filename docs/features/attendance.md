@@ -43,6 +43,8 @@ When someone stops coming (or a lead raises the spots), what happens depends on 
 
 Turning *Next in line moves up* back on fills the free spots right away.
 
+People on the waitlist get no ticket reminders or nudges, and their checklist says to wait with buying one until they move up: without a spot in the group's block a ticket may be wasted money. If they already bought one, they can still tick it off and the leads can confirm it.
+
 While people are waiting, a new *Coming* answer always queues up behind them, even when a spot is free, so nobody jumps the line.
 
 **For leads**, the *Waitlist* card on *Manage → Attendees* shows the line with each person's place, how long they've waited and whether they already have a ticket:
