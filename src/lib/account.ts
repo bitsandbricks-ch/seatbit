@@ -226,6 +226,7 @@ export function exportUserData(userId: string) {
     .where(or(eq(schema.seatSwap.fromUserId, userId), eq(schema.seatSwap.toUserId, userId)))
     .all();
   const news = db.select().from(schema.lanNews).where(eq(schema.lanNews.authorId, userId)).all();
+  const donations = db.select().from(schema.donation).where(eq(schema.donation.userId, userId)).all();
   const accounts = db.select().from(schema.account).where(eq(schema.account.userId, userId)).all();
   const sessions = db.select().from(schema.session).where(eq(schema.session.userId, userId)).all();
   const logRows = db
@@ -323,6 +324,14 @@ export function exportUserData(userId: string) {
       at: s.createdAt,
     })),
     orgaNewsPosted: news.map((n) => ({ event: event(n.lanId), text: n.text, at: n.createdAt })),
+    donations: donations.map((d) => ({
+      amount: d.amount / 100,
+      currency: d.currency,
+      forClan: d.clanId ? clans.get(d.clanId) ?? "(deleted clan)" : null,
+      showBadge: d.showBadge,
+      refundedAt: d.refundedAt,
+      at: d.createdAt,
+    })),
     auditLog: logRows.map((r) => ({
       at: r.at,
       by: r.actorId === userId ? "you" : logName(r.actorId, "Seatbit"),

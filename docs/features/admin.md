@@ -27,7 +27,7 @@ The first account is always admin. Add more with the **Admin emails** setting, i
 | **Reminders** | Check interval, cron secret. | [Configuration](../installation/configuration.md#reminders-without-a-long-running-process) |
 | **Maintenance** | Banner on every page for planned or ongoing downtime. | [Maintenance banner](#maintenance-banner) |
 | **Operator & legal** | Operator details, own terms and privacy URLs, source URL. | [Operator, privacy and terms](../installation/legal.md) |
-| **Supporters** | Stripe keys and prices. | [Stripe](../installation/stripe.md) |
+| **Supporters** | Stripe keys and prices, donations and their suggested amounts. | [Stripe](../installation/stripe.md), [Donations](donations.md) |
 | **Mail templates** | The wording of every email. | [Email](../installation/email.md#mail-templates) |
 | **Server** | Startup values (read-only). | [Configuration](../installation/configuration.md#startup-environment-only) |
 
@@ -54,10 +54,10 @@ The bot can tell the team running the instance what happens, in a private **ops 
 
 | Kind | Posted when |
 | --- | --- |
-| **Upgrades** | A new version started, with the link to the changes. |
+| **Upgrades** | A new version started, with the link to the changes and whether the slash commands were re-registered. The announcements channel gets the version with the titles of the merged pull requests (GitHub sources only) or the link. |
 | **Errors** | A page, action or background job fails. The same error is posted at most once every 15 minutes; query strings and token-like parts of the path are left out. |
 | **New clans** | Someone creates a clan. |
-| **Supporter payments** | A clan starts, renews or ends a supporter subscription. |
+| **Supporter payments** | A clan starts, renews or ends a supporter subscription, or someone donates (or gets a donation refunded). |
 | **Abuse reports** | Someone reports a clan or an event. |
 
 An optional public **announcements channel** (for example on your community server) gets new versions with their changes, maintenance notices you choose to post, and announcements you write under *Post an announcement* on the same tab.

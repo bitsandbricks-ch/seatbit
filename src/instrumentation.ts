@@ -36,6 +36,7 @@ export async function register() {
   const { afterUpgrade, onUpgrade } = await import("./lib/upgrade");
   const { announceUpgradeOnDiscord } = await import("./lib/ops");
   onUpgrade(announceUpgradeOnDiscord);
+  (await import("./lib/ops-hooks")).registerOpsHooks();
   setTimeout(
     () =>
       void runJob("upgrade", () => afterUpgrade()).catch((e) => {
