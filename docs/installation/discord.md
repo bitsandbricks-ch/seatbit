@@ -24,6 +24,10 @@ The page also shows the **bot invite link**. Clan admins find the same link in t
 !!! note "Servers that added the bot before threads and event channels"
     The bot keeps working without the new permissions: it then posts reminders and news in the linked channel instead. To use threads or a channel per event, give the bot's role *Create Public Threads*, *Send Messages in Threads* and *Manage Channels* in the server settings, or add the bot again with the new invite link.
 
+## Platform channels
+
+Optionally, the same bot can post to the platform team's own channels: an ops channel (upgrades, errors, new clans, supporter payments, abuse reports) and a public announcements channel. See [Platform Discord](../features/admin.md#platform-discord).
+
 ## Privacy
 
 The bot only receives the commands and button clicks addressed to it, never other messages. Data it stores is listed in the built-in privacy policy.

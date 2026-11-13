@@ -35,6 +35,9 @@ export default async function AdminPage() {
         subtitle={t("admin.subtitle")}
         actions={
           <>
+            <Link href="/admin/health" className={btnSecondary}>
+              {t("health.title")}
+            </Link>
             <Link href="/admin/log" className={btnSecondary}>
               {t("clanHeader.log")}
             </Link>

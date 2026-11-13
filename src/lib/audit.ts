@@ -297,6 +297,12 @@ export function describeAudit(
       return t(d.to === "admin" ? "audit.platformAdmin" : "audit.platformAdminRemove", v);
     case "settings.save":
       return t("audit.settings", { keys: list(d.keys) });
+    case "settings.maintenance":
+      return t("audit.maintenance", v);
+    case "settings.maintenance_clear":
+      return t("audit.maintenanceClear");
+    case "settings.announce":
+      return t("audit.announce", v);
     case "mail_template.save":
       return t("audit.templateSave", v);
     case "mail_template.reset":
