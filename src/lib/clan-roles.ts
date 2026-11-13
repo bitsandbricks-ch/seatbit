@@ -11,9 +11,9 @@ export type MemberRole = (typeof MEMBER_ROLES)[number];
  * settings: clan details, Discord, delete the clan. roles: give and take roles.
  * members: approve requests, add and remove members, guests, invite links.
  * events: create and run every clan event, LAN types. stats: the clan's stats page.
- * log: the clan's audit log.
+ * log: the clan's audit log. payments: charges to members (dues, ticket money) and who paid.
  */
-export const CLAN_PERMISSIONS = ["settings", "roles", "members", "events", "stats", "log"] as const;
+export const CLAN_PERMISSIONS = ["settings", "roles", "members", "events", "stats", "log", "payments"] as const;
 export type ClanPermission = (typeof CLAN_PERMISSIONS)[number];
 
 export const ROLE_INFO: Record<MemberRole, { label: string; description: string; perms: readonly ClanPermission[] }> = {
@@ -24,8 +24,8 @@ export const ROLE_INFO: Record<MemberRole, { label: string; description: string;
   },
   organizer: {
     label: "Event manager",
-    description: "Creates and runs every clan event and edits LAN types. Sees stats and the audit log.",
-    perms: ["events", "stats", "log"],
+    description: "Creates and runs every clan event, edits LAN types and collects payments. Sees stats and the audit log.",
+    perms: ["events", "stats", "log", "payments"],
   },
   recruiter: {
     label: "Recruiter",
@@ -60,6 +60,7 @@ export const MANAGE_TAB_PERMS = {
   types: "events",
   invites: "members",
   chat: "settings",
+  payments: "payments",
   log: "log",
 } as const satisfies Record<string, ClanPermission>;
 

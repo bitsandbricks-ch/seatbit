@@ -23,7 +23,8 @@ A value saved in the platform settings wins over the environment variable. Clear
 | Allow new accounts | `SIGNUP_OPEN` | `true` |
 | Admin emails (become platform owner on sign-up) | `ADMIN_EMAILS` | |
 | Default language (`en` or `de`): for browsers that want neither, mails to people without a choice and clans without their own Discord language | `DEFAULT_LOCALE` | `en` |
-| Currency for food orders | `FOOD_CURRENCY` | `CHF` |
+| Currency for food orders (also the default for new clan charges) | `FOOD_CURRENCY` | `CHF` |
+| Clan payments: clans can track dues, ticket money and who paid ([more](../features/payments.md)) | `CLAN_PAYMENTS` | `true` |
 | **Email** | | |
 | SMTP host, port, encryption | `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURITY` | –, `587`, `starttls` |
 | Username, password | `SMTP_USER`, `SMTP_PASSWORD` | |

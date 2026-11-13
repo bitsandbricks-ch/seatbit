@@ -33,6 +33,8 @@ import { GAMES_REMINDER_DAYS, listGames } from "@/lib/games";
 import { SeatSwapPanel, type SwapView } from "@/components/seat-swaps";
 import { CheckInButton, DeleteNewsButton, InterestButtons } from "@/components/event-extras";
 import { FoodOrders, type FoodOrderCardView } from "@/components/food-orders";
+import { EventPaymentsCard } from "@/components/clan-payments";
+import { clanPaymentsOn, memberLines } from "@/lib/payments";
 import { foodCurrency, isAcceptingItems, listFoodOrders, orderText } from "@/lib/food";
 import { getT } from "@/i18n/server";
 import type { T } from "@/i18n/translate";
@@ -94,6 +96,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
   }
   const me = viewer;
   const lanClan = l.clanId ? getClan(l.clanId) : undefined;
+  const myPayments = lanClan && clanPaymentsOn(lanClan) ? memberLines(me.id, { lanId: l.id }) : [];
   const now = new Date();
 
   const rows = db.select().from(attendance).where(eq(attendance.lanId, id)).all();
@@ -523,6 +526,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
         // Phones: the event first, details last.
         <Columns
           aside={
+            <>
+            {lanClan && <EventPaymentsCard t={t} clan={lanClan} lines={myPayments} />}
             <Card title={t("event.details")}>
               <dl className="space-y-3 text-sm">
                 <DateRow label={t("event.answerBy")} d={l.signupDeadline} now={now} t={t} />
@@ -568,6 +573,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
                 </div>
               )}
             </Card>
+            </>
           }
         >
           {l.description && (

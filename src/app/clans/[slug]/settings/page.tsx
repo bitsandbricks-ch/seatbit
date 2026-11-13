@@ -23,6 +23,7 @@ import { Avatar } from "@/components/avatar";
 import { ClanHeader, manageTabsFor } from "@/components/clan-header";
 import { ClanForm } from "@/components/clan-form";
 import { SupportCard } from "@/components/support-card";
+import { PaymentsManageTab } from "@/components/clan-payments";
 import { AddMemberForm } from "@/components/add-member-form";
 import { CopyField } from "@/components/copy-field";
 import { GuestEditForm, GuestForm } from "@/components/guest-form";
@@ -104,7 +105,7 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
 
   return (
     <Page>
-      <ClanHeader clan={c} role={clanRole(me.id, c.id)} perms={perms} mode="manage" tab={tab} />
+      <ClanHeader clan={c} meId={me.id} role={clanRole(me.id, c.id)} perms={perms} mode="manage" tab={tab} />
 
       {tab === "general" && (
         <Columns
@@ -243,6 +244,8 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
       {tab === "guests" && <GuestsTab t={t} clanId={c.id} slug={c.slug} guests={guests.map((g) => g.u)} names={people} />}
 
       {tab === "chat" && <ChatTab t={t} clanId={c.id} />}
+
+      {tab === "payments" && <PaymentsManageTab t={t} clan={c} />}
 
       {tab === "log" && <LogTab t={t} clanId={c.id} slug={c.slug} sp={sp} />}
 

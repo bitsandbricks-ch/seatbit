@@ -8,6 +8,7 @@ export const auditLog = {
     members: "Members & roles",
     guests: "Guests",
     settings: "Settings",
+    payments: "Payments",
   },
   allEvents: "All events",
   allClans: "All clans",

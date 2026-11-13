@@ -22,7 +22,8 @@ export type BackupFile = { name: string; size: number; at: Date };
 export type BackupStatus = {
   running: boolean;
   lastOk?: { name: string; at: Date; ms: number };
-  lastError?: { message: string; at: Date };
+  /** `key`/`vars`: a translatable explanation for problems people can fix (folder missing, not writable). */
+  lastError?: { message: string; at: Date; key?: BackupProblem; vars?: Record<string, string | number> };
 };
 
 // Shared across module instances (instrumentation, server actions, route handlers).
@@ -90,6 +91,43 @@ export function databaseSize(): number | null {
   }
 }
 
+export type BackupProblem = "backups.notWritable" | "backups.noFolder";
+
+/** A setup problem with the backup folder: an English message for logs and ops, a key for the admin page. */
+export class BackupError extends Error {
+  constructor(
+    message: string,
+    readonly key: BackupProblem,
+    readonly vars: Record<string, string | number>,
+  ) {
+    super(message);
+  }
+}
+
+/**
+ * Creates the folder if needed and checks that this process can write to it. SQLite only says
+ * "unable to open database file" otherwise, which doesn't point at the folder or its owner.
+ */
+function checkFolder(dir: string) {
+  const uid = process.getuid?.() ?? "?";
+  try {
+    fs.mkdirSync(dir, { recursive: true });
+  } catch (e) {
+    const code = (e as NodeJS.ErrnoException).code ?? "";
+    throw new BackupError(`Can't create the backup folder ${dir} (${code}) as uid ${uid}`, "backups.noFolder", { dir, uid, code });
+  }
+  try {
+    fs.accessSync(dir, fs.constants.W_OK);
+  } catch {
+    let owner = "?";
+    try {
+      const st = fs.statSync(dir);
+      owner = `${st.uid}:${st.gid}, mode ${(st.mode & 0o777).toString(8)}`;
+    } catch {}
+    throw new BackupError(`The backup folder ${dir} isn't writable for uid ${uid} (owner ${owner})`, "backups.notWritable", { dir, uid, owner });
+  }
+}
+
 const stamp = (d: Date) => d.toISOString().replace(/[-:]/g, "").replace("T", "-").slice(0, 15);
 
 /**
@@ -104,7 +142,7 @@ export function createBackup(): Promise<BackupFile> {
   // runJob: shows on the Health page; reportError: the ops Discord channel (deduped).
   s.job = runJob("backup", async () => {
     const dir = backupDir();
-    fs.mkdirSync(dir, { recursive: true });
+    checkFolder(dir);
     let name = `seatbit-${stamp(new Date())}.db`;
     // Two backups in the same second (button pressed right after the schedule): add a second.
     for (let i = 1; fs.existsSync(path.join(dir, name)); i++) name = `seatbit-${stamp(new Date(Date.now() + i * 1000))}.db`;
@@ -140,7 +178,11 @@ export function createBackup(): Promise<BackupFile> {
       return f;
     })
     .catch((e: unknown) => {
-      s.lastError = { message: e instanceof Error ? e.message : String(e), at: new Date() };
+      s.lastError = {
+        message: e instanceof Error ? e.message : String(e),
+        at: new Date(),
+        ...(e instanceof BackupError && { key: e.key, vars: e.vars }),
+      };
       console.error("[backup] failed", e);
       reportError("backup", e);
       throw e;

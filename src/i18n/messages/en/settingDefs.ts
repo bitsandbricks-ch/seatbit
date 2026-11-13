@@ -23,6 +23,7 @@ export const settingDefs = {
   legal_sourceUrl: { label: "Source code URL", help: "Linked as \"Source\" in the footer. If you run a changed version, point this to your fork (the AGPL asks you to offer your changes to your users).", invalid: "Enter a full http(s) URL" },
   i18n_defaultLocale: { label: "Default language", help: "Used when a browser asks for neither English nor German, for mails to people who haven't picked a language, and for Discord posts of clans without their own language.", options: { en: "English", de: "Deutsch" } },
   food_currency: { label: "Currency for food orders", help: "Shown next to prices on the Food tab, e.g. CHF or EUR." },
+  payments_enabled: { label: "Clan payments", help: "Lets clans track money they collect from their members (dues, ticket money, shared costs) and who paid. Each clan still turns it on in its own settings. No money goes through Seatbit." },
   billing_enabled: { label: "Supporter payments", help: "When on, clan admins see a \"Support Seatbit\" card in their clan settings, and the terms and privacy pages get a payments section. Needs the secret key, webhook secret and at least the annual price." },
   billing_stripeSecretKey: { label: "Stripe secret key", help: "Stripe Dashboard → Developers → API keys. Use a restricted key or sk_test_… while you try it out.", invalid: "Starts with sk_test_, sk_live_, rk_test_ or rk_live_" },
   billing_webhookSecret: { label: "Webhook signing secret", help: "From the webhook endpoint you add in Stripe for the URL shown above.", invalid: "Starts with whsec_" },

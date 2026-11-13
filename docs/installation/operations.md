@@ -24,6 +24,8 @@ Mount `/backups` as its **own volume**, so a broken data volume doesn't take the
 
 The privacy policy says how long backups are kept, from the **Keep backups for** setting.
 
+If *Admin → Backups* says the folder **isn't writable**, the volume on `/backups` belongs to another user. The server runs as uid 1001: on Kubernetes set `fsGroup: 1001` in the pod's `securityContext` (as in the [example](kubernetes.md#example)). For volume types that ignore `fsGroup` (hostPath, some NFS shares), run `chown -R 1001:1001` on the folder, or use an init container that does. With Docker: `sudo chown -R 1001:1001 backups`.
+
 ### Backups from a cron job instead
 
 If you'd rather back up from outside, set **Backup every** to `0` and run the script that is in the image:

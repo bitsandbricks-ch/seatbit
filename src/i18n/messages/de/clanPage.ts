@@ -15,6 +15,7 @@ export const clanPage: Messages["clanPage"] = {
     invites: "Einladungslinks",
     invitesSub: "Leute direkt beitreten lassen",
     chatSub: "Bot, Kanäle, Einladungen",
+    paymentsSub: "Beiträge, Ticketgeld, wer bezahlt hat",
   },
   cancelRequest: "Anfrage zurückziehen",
   leave: "Clan verlassen",

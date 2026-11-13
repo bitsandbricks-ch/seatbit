@@ -10,6 +10,7 @@ export const auditLog: Messages["auditLog"] = {
     members: "Mitglieder & Rollen",
     guests: "Gäste",
     settings: "Einstellungen",
+    payments: "Zahlungen",
   },
   allEvents: "Alle Events",
   allClans: "Alle Clans",
