@@ -1,0 +1,14 @@
+date: 2026-11-11
+type: new
+pr: [26, 28, 30, 37]
+en:
+  title: "Seat plan"
+  text: >-
+    See the clan's seats on a map with compact or large seats and a details pane. Leads edit seats
+    right in the map: assign, swap, move, hold and rename.
+de:
+  title: "Sitzplan"
+  text: >-
+    Sieh die Plätze des Clans auf einer Karte, mit kompakten oder grossen Plätzen und einem
+    Detailbereich. Leads bearbeiten die Plätze direkt in der Karte: zuweisen, tauschen, verschieben,
+    reservieren und umbenennen.

@@ -1,0 +1,13 @@
+date: 2026-11-11
+type: new
+pr: 34
+en:
+  title: "Seat booking, seat swaps and a game list"
+  text: >-
+    Mark when you booked your seat on the LAN's own site, ask others to swap seats, and say which
+    games you want to play.
+de:
+  title: "Platzbuchung, Platztausch und Spieleliste"
+  text: >-
+    Markiere, wenn du deinen Platz auf der Seite der LAN gebucht hast, frag andere nach einem
+    Platztausch und sag, welche Spiele du spielen willst.

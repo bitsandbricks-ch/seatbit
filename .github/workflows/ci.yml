@@ -49,6 +49,8 @@ jobs:
         run: npm run check:i18n
       - name: Mail goes through templates
         run: npm run check:mail
+      - name: Changelog entries
+        run: npm run check:changelog
       - name: Typecheck
         run: npm run typecheck
       - name: Build

@@ -1,0 +1,13 @@
+date: 2026-11-13
+type: improved
+pr: 105
+en:
+  title: "Your «I have my ticket» counts"
+  text: >-
+    Tickets are trust based: when you tick that you have your ticket, it counts without a lead
+    confirming it. A seat you picked shows in green.
+de:
+  title: "Dein «Ich habe mein Ticket» zählt"
+  text: >-
+    Tickets beruhen auf Vertrauen: Hakst du an, dass du dein Ticket hast, zählt das ohne Bestätigung
+    durch einen Lead. Ein gewählter Platz erscheint grün.

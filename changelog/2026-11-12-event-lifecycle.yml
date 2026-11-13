@@ -1,0 +1,14 @@
+date: 2026-11-12
+type: new
+pr: [38, 41, 61]
+en:
+  title: "Drafts, interest checks and check-in"
+  text: >-
+    Events start as drafts and can open with an interest check. Leads can schedule publishing, post
+    news, cancel an event or copy it for next year, and check people in at the LAN.
+de:
+  title: "Entwürfe, Interessensabfrage und Check-in"
+  text: >-
+    Events starten als Entwurf und können mit einer Interessensabfrage beginnen. Leads können die
+    Veröffentlichung planen, News posten, ein Event absagen oder fürs nächste Jahr kopieren und
+    Leute an der LAN einchecken.

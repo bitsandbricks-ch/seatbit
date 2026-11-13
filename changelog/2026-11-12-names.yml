@@ -1,0 +1,13 @@
+date: 2026-11-12
+type: improved
+pr: [39, 58, 83]
+en:
+  title: "Names shown as Name \"Nick\" Surname"
+  text: >-
+    People show up the same way everywhere. Real accounts get a check mark, and each clan can choose
+    how names are shown.
+de:
+  title: "Namen als Vorname «Nick» Nachname"
+  text: >-
+    Personen erscheinen überall gleich. Echte Konten bekommen ein Häkchen, und jeder Clan kann
+    wählen, wie Namen angezeigt werden.

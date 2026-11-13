@@ -1,0 +1,12 @@
+date: 2026-11-11
+type: new
+audience: admins
+pr: [15, 17]
+en:
+  title: "Editable mail templates"
+  text: >-
+    Platform admins can change the text of every mail Seatbit sends.
+de:
+  title: "Bearbeitbare Mailvorlagen"
+  text: >-
+    Plattform-Admins können den Text jeder Mail anpassen, die Seatbit verschickt.

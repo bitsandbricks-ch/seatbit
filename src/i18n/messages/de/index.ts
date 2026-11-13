@@ -13,6 +13,7 @@ import { auditLog } from "./auditLog";
 import { auth } from "./auth";
 import { backups } from "./backups";
 import { bot } from "./bot";
+import { changelog } from "./changelog";
 import { chart } from "./chart";
 import { chat } from "./chat";
 import { checklist } from "./checklist";
@@ -112,6 +113,7 @@ export const de: Messages = {
   auth,
   backups,
   bot,
+  changelog,
   chart,
   chat,
   checklist,

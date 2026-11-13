@@ -1,0 +1,12 @@
+date: 2026-11-12
+type: improved
+pr: 40
+en:
+  title: "Clan page with View and Manage"
+  text: >-
+    The clan page has tabs and a switch between viewing and managing; guests can be edited there.
+de:
+  title: "Clanseite mit Ansehen und Verwalten"
+  text: >-
+    Die Clanseite hat Tabs und einen Wechsel zwischen Ansehen und Verwalten; Gäste lassen sich dort
+    bearbeiten.

@@ -1,0 +1,15 @@
+date: 2026-11-11
+type: new
+pr: [14, 18, 25, 27]
+en:
+  title: "Discord messages when something changes for you"
+  text: >-
+    You get a direct message for reminders, when you move up from the waitlist, when the seat plan
+    is out and more. Turn them off on your profile; a test button tells you why a message didn't
+    arrive.
+de:
+  title: "Discord-Nachrichten, wenn sich für dich etwas ändert"
+  text: >-
+    Du bekommst eine Direktnachricht bei Erinnerungen, wenn du von der Warteliste nachrückst, wenn
+    der Sitzplan steht und mehr. Abschalten kannst du sie im Profil; ein Test-Knopf sagt dir, warum
+    eine Nachricht nicht ankam.

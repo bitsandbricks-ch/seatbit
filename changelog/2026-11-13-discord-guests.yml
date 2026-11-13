@@ -1,0 +1,13 @@
+date: 2026-11-13
+type: new
+pr: 87
+en:
+  title: "Manage Discord-linked guests"
+  text: >-
+    Leads can re-link a guest to another Discord account, see the details, send the message again or
+    unlink.
+de:
+  title: "Mit Discord verknüpfte Gäste verwalten"
+  text: >-
+    Leads können einen Gast mit einem anderen Discord-Konto verknüpfen, Details ansehen, die
+    Nachricht erneut senden oder die Verknüpfung lösen.

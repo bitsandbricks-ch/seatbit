@@ -1,0 +1,11 @@
+date: 2026-11-13
+type: new
+pr: 103
+en:
+  title: "Light theme"
+  text: >-
+    Switch between dark, light and your device's setting in the top bar.
+de:
+  title: "Helles Design"
+  text: >-
+    Wechsle oben in der Leiste zwischen dunkel, hell und der Einstellung deines Geräts.

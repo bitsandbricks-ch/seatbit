@@ -1,0 +1,15 @@
+date: 2026-11-12
+type: new
+audience: admins
+pr: [42, 74, 81]
+en:
+  title: "Self-hosting: legal pages, docs and version hash"
+  text: >-
+    Operator details, terms and privacy are settings per instance. Seatbit is open source (AGPL-3.0)
+    with docs for setup and every feature. The page corner shows which build is running.
+de:
+  title: "Selbst hosten: Rechtliches, Doku und Versionskennung"
+  text: >-
+    Betreiberangaben, Nutzungsbedingungen und Datenschutz sind Einstellungen pro Instanz. Seatbit
+    ist Open Source (AGPL-3.0) mit Doku zur Einrichtung und zu allen Funktionen. Die Ecke der Seite
+    zeigt, welcher Build läuft.

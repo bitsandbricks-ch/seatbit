@@ -1,0 +1,13 @@
+date: 2026-11-13
+type: new
+pr: 111
+en:
+  title: "Lead to-dos and organizer contacts"
+  text: >-
+    Each event has to-dos for its leads, with due dates and who does it, and the contacts at the
+    LAN's organizers. Clans set them up once per LAN type.
+de:
+  title: "Lead-To-dos und Kontakte der Veranstalter"
+  text: >-
+    Jedes Event hat To-dos für seine Leads, mit Fälligkeit und Zuständigkeit, und die Kontakte bei
+    den Veranstaltern der LAN. Clans legen sie einmal pro LAN-Typ fest.
