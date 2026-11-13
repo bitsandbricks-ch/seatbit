@@ -1842,6 +1842,8 @@ export const en = {
     failed: "Backup failed: {error}",
     deleted: "Deleted {name}.",
     notFound: "That backup doesn't exist any more.",
+    notWritable: "the folder {dir} isn't writable for the server (user {uid}; the folder belongs to {owner}). Mount a volume there that uid 1001 can write to (fsGroup: 1001 on Kubernetes), or pick another folder below.",
+    noFolder: "the folder {dir} can't be created ({code}, user {uid}). Mount a volume there or pick another folder below.",
     restoreTitle: "Restore a backup",
     restore1: "Stop Seatbit (scale the deployment to 0, or stop the container).",
     restore2: "Copy the backup over the database file (DATABASE_PATH, /data/seatbit.db in the image).",

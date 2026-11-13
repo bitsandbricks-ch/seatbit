@@ -1844,6 +1844,8 @@ export const de: Messages = {
     failed: "Backup fehlgeschlagen: {error}",
     deleted: "{name} gelöscht.",
     notFound: "Dieses Backup gibt es nicht mehr.",
+    notWritable: "Der Server kann nicht in den Ordner {dir} schreiben (Benutzer {uid}; der Ordner gehört {owner}). Häng dort ein Volume ein, in das uid 1001 schreiben darf (fsGroup: 1001 auf Kubernetes), oder wähl unten einen anderen Ordner.",
+    noFolder: "Der Ordner {dir} lässt sich nicht erstellen ({code}, Benutzer {uid}). Häng dort ein Volume ein oder wähl unten einen anderen Ordner.",
     restoreTitle: "Backup zurückspielen",
     restore1: "Seatbit stoppen (Deployment auf 0 skalieren oder Container stoppen).",
     restore2: "Das Backup über die Datenbankdatei kopieren (DATABASE_PATH, im Image /data/seatbit.db).",
