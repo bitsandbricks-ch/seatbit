@@ -26,6 +26,7 @@ import { clanSettings } from "./clanSettings";
 import { cmd } from "./cmd";
 import { colors } from "./colors";
 import { common } from "./common";
+import { contacts } from "./contacts";
 import { discordClaim } from "./discordClaim";
 import { display } from "./display";
 import { donate } from "./donate";
@@ -43,6 +44,7 @@ import { joinPage } from "./joinPage";
 import { lanForm } from "./lanForm";
 import { language } from "./language";
 import { leadSteps } from "./leadSteps";
+import { leadTasks } from "./leadTasks";
 import { legal } from "./legal";
 import { mail } from "./mail";
 import { mailtpl } from "./mailtpl";
@@ -121,6 +123,7 @@ export const de: Messages = {
   cmd,
   colors,
   common,
+  contacts,
   discordClaim,
   display,
   donate,
@@ -138,6 +141,7 @@ export const de: Messages = {
   lanForm,
   language,
   leadSteps,
+  leadTasks,
   legal,
   mail,
   mailtpl,

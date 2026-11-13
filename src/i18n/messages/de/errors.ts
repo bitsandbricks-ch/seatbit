@@ -1,6 +1,9 @@
 import type { Messages } from "../en";
 
 export const errors: Messages["errors"] = {
+  taskTitle: "Gib dem To-do einen Titel.",
+  taskGone: "Dieses To-do oder dieser Kontakt existiert nicht mehr.",
+  contactName: "Gib dem Kontakt einen Namen.",
   perm: {
     platform: "Deine Plattform-Rolle erlaubt das nicht.",
     settings: "Das können nur Clan-Admins.",

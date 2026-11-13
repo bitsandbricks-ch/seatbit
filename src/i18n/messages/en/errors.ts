@@ -1,4 +1,7 @@
 export const errors = {
+  taskTitle: "Give the to-do a title.",
+  taskGone: "That to-do or contact doesn't exist any more.",
+  contactName: "Give the contact a name.",
   perm: {
     platform: "Your platform role doesn't allow that.",
     settings: "Only clan admins can do that.",

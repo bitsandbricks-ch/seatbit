@@ -353,6 +353,51 @@ export async function seedDemo({ force = false, discord = false } = {}) {
       ])
       .run();
 
+    // ---------- Lead to-dos and organizer contacts ----------
+    // The clan's starter to-dos (what ensureDefaultTasks adds), plus Lakeside LAN's own ones and contacts.
+    tx.update(s.clan).set({ leadTasksSeeded: true }).where(eq(s.clan.id, clanId)).run();
+    tx.insert(s.leadContact)
+      .values([
+        {
+          id: "demo-contact-seats",
+          typeId: lakeside,
+          name: "Jonas Beispiel",
+          role: "Seat planning",
+          email: "seats@example.com",
+          discord: "jonas.lakeside",
+          note: "Wants the seat list as one mail with seat, nickname and LAN ID.",
+        },
+        {
+          id: "demo-contact-crew",
+          typeId: lakeside,
+          name: "Lakeside LAN crew",
+          role: "Tickets and general questions",
+          email: "info@example.com",
+          phone: "+41 79 123 45 67",
+          url: "https://example.com/lakeside-lan",
+        },
+      ])
+      .run();
+    tx.insert(s.leadTask)
+      .values([
+        { id: "demo-task-block", clanId, title: "Ask the organizers for a group seat block", note: "Tell them roughly how many of you are coming and ask by when they need the final list.", after: [], dueDays: 60, sort: 0 },
+        { id: "demo-task-list", clanId, title: "Send the seat list to the organizers", note: "Who sits where, with nicknames or LAN IDs if they ask for them.", after: ["finalize"], dueDays: 14, sort: 1 },
+        { id: "demo-task-arrival", clanId, title: "Share arrival and setup info with the group", note: "Check-in times, parking, what to bring. Post it as lead news so everyone gets it.", after: ["tickets"], dueDays: 3, sort: 2 },
+        { id: "demo-task-thanks", clanId, title: "Thank the organizers and note what to do better", note: "Write down what worked and what didn't, so next year's leads know.", after: [], dueDays: -3, sort: 3 },
+        { id: "demo-task-lal-block", clanId, typeId: lakeside, title: "Email Jonas the group block wish (row F)", after: [], dueDays: 75, contactId: "demo-contact-seats", sort: 4 },
+        { id: "demo-task-lal-check", clanId, typeId: lakeside, title: "Check all our seats show as booked on the Lakeside plan", after: ["book", "task:demo-task-list"], dueDays: 5, contactId: "demo-contact-seats", sort: 5 },
+        { id: "demo-task-parking", clanId, lanId: events.lakeside, title: "Reserve parking for the two cars", note: "The hall has 10 spots for groups, ask the crew.", after: [], dueDays: 7, contactId: "demo-contact-crew", sort: 6 },
+      ])
+      .run();
+    tx.insert(s.lanTask)
+      .values([
+        { lanId: events.lakeside, taskId: "demo-task-block", doneAt: at(-38, 19, 30), doneById: ids.alex, assigneeId: ids.alex },
+        { lanId: events.lakeside, taskId: "demo-task-lal-block", doneAt: at(-38, 19, 45), doneById: ids.alex, assigneeId: ids.alex },
+        { lanId: events.lakeside, taskId: "demo-task-list", assigneeId: ids.ben },
+        { lanId: events.lakeside, taskId: "demo-task-parking", assigneeId: ids.alex },
+      ])
+      .run();
+
     // Interest check answers for the Retro Weekend (Anna hasn't answered yet).
     const interest: [string, "yes" | "maybe" | "no"][] = [
       ["alex", "yes"], ["ben", "yes"], ["chiara", "maybe"], ["finn", "yes"], ["lea", "no"], ["rafael", "yes"], ["nina", "maybe"],

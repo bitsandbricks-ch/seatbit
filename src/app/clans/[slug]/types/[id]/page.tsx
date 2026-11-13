@@ -2,11 +2,16 @@ import { notFound, redirect } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { deleteLanType } from "@/app/actions";
-import { Card, Columns, Page, PageHeader, btnDanger } from "@/components/ui";
+import Link from "next/link";
+import { Card, Columns, Page, PageHeader, btnDanger, btnSecondary } from "@/components/ui";
 import { LanTypeForm } from "@/components/lan-type-form";
 import { clanCan, getClanBySlug } from "@/lib/clans";
 import { requireUser } from "@/lib/session";
 import { getT } from "@/i18n/server";
+import { contactsOf, ensureDefaultTasks, tasksAt } from "@/lib/lead-tasks";
+import { LeadTaskEditor } from "@/components/lead-task-editor";
+import { LeadContactEditor } from "@/components/lead-contact-editor";
+import { setClanLeadTasks } from "@/app/lead-task-actions";
 
 export default async function EditLanTypePage({ params }: PageProps<"/clans/[slug]/types/[id]">) {
   const { slug, id } = await params;
@@ -21,6 +26,10 @@ export default async function EditLanTypePage({ params }: PageProps<"/clans/[slu
     .where(and(eq(schema.lanType.id, id), eq(schema.lanType.clanId, c.id)))
     .get();
   if (!ty) notFound();
+  ensureDefaultTasks(c.id);
+  const contacts = contactsOf(ty.id);
+  const own = tasksAt({ clanId: c.id, typeId: ty.id });
+  const clanWide = ty.clanLeadTasks ? tasksAt({ clanId: c.id }) : [];
   return (
     <Page>
       <PageHeader back={{ href: `/clans/${c.slug}/settings?tab=types`, label: t("clanPage.links.types") }} title={ty.name} />
@@ -36,6 +45,29 @@ export default async function EditLanTypePage({ params }: PageProps<"/clans/[slu
       >
       <Card>
         <LanTypeForm values={{ ...ty, clanId: c.id, capacity: ty.capacity?.toString() ?? "", answerDaysBefore: ty.answerDaysBefore?.toString() ?? "" }} />
+      </Card>
+      <Card id="contacts" title={t("contacts.heading")}>
+        <p className="mb-3 text-sm text-muted">{t("contacts.hint")}</p>
+        <LeadContactEditor typeId={ty.id} contacts={contacts.map(({ id, name, role, email, discord, phone, url, note }) => ({ id, name, role, email, discord, phone, url, note }))} />
+      </Card>
+      <Card id="lead-tasks" title={t("leadTasks.typeHeading")}>
+        <p className="mb-3 text-sm text-muted">{t("leadTasks.typeHint")}</p>
+        <form action={setClanLeadTasks.bind(null, ty.id)} className="mb-4 flex flex-wrap items-center gap-3 text-sm">
+          <label className="flex items-center gap-2">
+            <input type="checkbox" name="on" defaultChecked={ty.clanLeadTasks} className="accent-bit" />
+            {t("leadTasks.useClanTasks")}
+          </label>
+          <button className={btnSecondary}>{t("leadTasks.useClanTasksSave")}</button>
+          <Link href={`/clans/${c.slug}/settings?tab=types#lead-tasks`} className="text-bit hover:underline">
+            {t("leadTasks.editClan")}
+          </Link>
+        </form>
+        <LeadTaskEditor
+          scope={{ typeId: ty.id }}
+          tasks={own.map(({ id, title, note, after, dueDays, contactId }) => ({ id, title, note, after, dueDays, contactId }))}
+          depTasks={[...clanWide, ...own].map((x) => ({ id: x.id, title: x.title }))}
+          contacts={contacts.map((x) => ({ id: x.id, name: x.name }))}
+        />
       </Card>
       </Columns>
     </Page>
