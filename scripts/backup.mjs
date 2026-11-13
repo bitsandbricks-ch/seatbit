@@ -1,7 +1,8 @@
 /**
  * Online SQLite backup, safe while the app is running (uses SQLite's backup API).
  * Writes BACKUP_DIR/seatbit-YYYYMMDD-HHMMSS.db and deletes backups older than
- * BACKUP_KEEP_DAYS (default 14). Used by the k8s backup CronJob:
+ * BACKUP_KEEP_DAYS (default 14). Seatbit makes these backups itself (Admin → Backups);
+ * this script is for setups that turn that off and back up from a cron job instead:
  *   node scripts/backup.mjs
  */
 import Database from "better-sqlite3";
@@ -20,8 +21,10 @@ const db = new Database(src, { readonly: true, fileMustExist: true });
 await db.backup(target);
 db.close();
 
-// Sanity check the copy before pruning older ones.
-const check = new Database(target, { readonly: true });
+// Sanity check the copy before pruning older ones. The copy inherits WAL mode; make it a
+// plain single file, so no -wal/-shm files are left next to it.
+const check = new Database(target);
+check.pragma("journal_mode = DELETE");
 const result = check.pragma("integrity_check", { simple: true });
 check.close();
 if (result !== "ok") {

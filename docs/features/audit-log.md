@@ -18,7 +18,7 @@ Members' own answers aren't listed. Entries are kept for **one year**. Filter by
 
 ## Platform audit log
 
-*Admin → Audit log* shows the log of every clan plus platform changes: settings (by name, never their values), platform roles, mail templates and deleted accounts. Filter by clan or kind of change.
+*Admin → Audit log* shows the log of every clan plus platform changes: settings (by name, never their values), platform roles, mail templates, deleted accounts and database backups (made by hand, downloaded or deleted). Filter by clan or kind of change.
 
 ![Platform audit log](../screenshots/desktop-admin-audit-log.png){ .shot }
 

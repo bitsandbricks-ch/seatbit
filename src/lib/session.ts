@@ -7,6 +7,7 @@ import { getAuth } from "./auth";
 import { clanCan, isClanMember } from "./clans";
 import type { ClanPermission } from "./clan-roles";
 import { db, schema } from "@/db";
+import { touchActivity } from "./usage";
 
 export const getCurrentUser = cache(async () => {
   const s = await getAuth().api.getSession({ headers: await headers() });
@@ -14,7 +15,9 @@ export const getCurrentUser = cache(async () => {
   // Read fresh from DB so role changes apply immediately.
   const u = await db.query.user.findFirst({ where: eq(schema.user.id, s.user.id) });
   // A deleted account is signed out everywhere, even if a session cookie is still around.
-  return u && !u.deletedAt ? u : null;
+  if (!u || u.deletedAt) return null;
+  touchActivity(u.id);
+  return u;
 });
 
 /**

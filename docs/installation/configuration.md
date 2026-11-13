@@ -14,7 +14,6 @@ A value saved in the platform settings wins over the environment variable. Clear
 | `DATABASE_PATH` | `./data/lan.db` (`/data/seatbit.db` in the image) | SQLite file. Uploads go to `uploads/` next to it. |
 | `TZ` | `Europe/Zurich` in the image | Timezone for dates in forms, emails and Discord. |
 | `ALLOW_EMAIL_LOGIN` | off | `1` turns on email and password login. For development and tests only. |
-| `BACKUP_DIR`, `BACKUP_KEEP_DAYS` | `/backups`, `14` | For `scripts/backup.mjs`. |
 
 ## Platform settings
 
@@ -46,6 +45,10 @@ A value saved in the platform settings wins over the environment variable. Clear
 | Stripe secret key, webhook signing secret | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | |
 | Annual and monthly price ID | `STRIPE_PRICE_ANNUAL`, `STRIPE_PRICE_MONTHLY` | |
 | Refund policy (sentence in the terms) | `BILLING_REFUND_POLICY` | full refund within 14 days |
+| **Backups** (on *Admin → Backups*, see [Backups](operations.md#backups)) | | |
+| Backup every (hours, `0` = off) | `BACKUP_INTERVAL_HOURS` | `24` |
+| Keep backups for (days, `0` = keep all; the privacy policy shows this number) | `BACKUP_KEEP_DAYS` | `14` |
+| Backup folder (absolute path) | `BACKUP_DIR` | `/backups` in the image, else `./backups` |
 
 Passwords, client secrets and tokens are encrypted (AES-256-GCM) before they are stored and never shown again; the page only shows whether one is set and its last four characters.
 

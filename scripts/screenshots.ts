@@ -204,6 +204,9 @@ const SHOTS: Shot[] = [
   { name: "desktop-admin-legal", who: "alex", path: "/admin/settings?tab=legal", full: true },
   { name: "desktop-admin-billing", who: "alex", path: "/admin/settings?tab=billing", full: true },
   { name: "desktop-admin-templates", who: "alex", path: "/admin/settings?tab=templates" },
+  { name: "desktop-admin-backups", who: "alex", path: "/admin/backups", full: true },
+  { name: "desktop-admin-usage", who: "alex", path: "/admin/stats", full: true },
+  { name: "phone-admin-usage", who: "alex", path: "/admin/stats" },
   { name: "desktop-privacy", who: "alex", path: "/privacy" },
 ];
 
@@ -236,6 +239,9 @@ async function main() {
     SEATBIT_FAKE_NOW: NOW,
     NODE_OPTIONS: [process.env.NODE_OPTIONS, `--require "${path.join(ROOT, "scripts", "fake-now.cjs")}"`].filter(Boolean).join(" "),
     REMINDER_INTERVAL_MINUTES: "0",
+    // Backups go to the temp dir; the newest demo backup is recent, so the scheduler doesn't add one.
+    BACKUP_DIR: path.join(dir, "backups"),
+    BACKUP_INTERVAL_HOURS: "24",
     // Fake Discord app, so the login button and Discord settings show up. Nothing talks to Discord.
     DISCORD_CLIENT_ID: "1234567890123456789",
     DISCORD_CLIENT_SECRET: "screenshots-only",
@@ -260,6 +266,7 @@ async function main() {
 
   run("npx", ["tsx", "scripts/seed-demo.ts", "--discord"], env, true);
   const sessions = createSessions(dbFile, ["alex", "anna", "sara"]);
+  demoBackups(dbFile, path.join(dir, "backups"));
 
   // Own process group, so stopping it also stops the Next.js worker processes.
   const server = spawn(path.join(ROOT, "node_modules", ".bin", "next"), [dev ? "dev" : "start", "-p", String(PORT)], {
@@ -371,6 +378,20 @@ function createSessions(dbFile: string, who: string[]) {
   }
   sqlite.close();
   return out;
+}
+
+/** A week of nightly backups (copies of the demo database) with fixed times, for the backups page. */
+function demoBackups(dbFile: string, dir: string) {
+  fs.mkdirSync(dir, { recursive: true });
+  const p2 = (n: number) => String(n).padStart(2, "0");
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(Date.parse(NOW) - i * 86400_000);
+    d.setUTCHours(2, 30, 0, 0);
+    const name = `seatbit-${d.getUTCFullYear()}${p2(d.getUTCMonth() + 1)}${p2(d.getUTCDate())}-023000.db`;
+    const file = path.join(dir, name);
+    fs.copyFileSync(dbFile, file);
+    fs.utimesSync(file, d, d);
+  }
 }
 
 function run(cmd: string, args: string[], env: NodeJS.ProcessEnv, quiet = false) {

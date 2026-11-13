@@ -7,7 +7,8 @@ import { requireAdmin } from "@/lib/session";
 import { billingEnabled, billingProblems, supporterClans } from "@/lib/billing";
 import { fmtDay } from "@/lib/format";
 import { LOGIN_METHODS } from "@/lib/auth";
-import { type SettingGroup, type SettingView, canEncrypt, settingsForAdmin } from "@/lib/settings";
+import { type SettingGroup, canEncrypt, settingsForAdmin } from "@/lib/settings";
+import { localized } from "@/lib/settings-i18n";
 import { MAIL_TEMPLATES, defaultParts, getTemplate, savedTemplates } from "@/lib/mail-templates";
 import { LOCALES, LOCALE_NAMES, isLocale, type Locale } from "@/i18n/config";
 import type { FactRow } from "@/lib/mail-fill";
@@ -31,21 +32,6 @@ function Url({ label, value }: { label: string; value: string }) {
 
 const TABS = ["mail", "discord", "google", "general", "automation", "legal", "billing", "templates", "server"] as const;
 type TabId = (typeof TABS)[number];
-
-/** A setting's label, help and choices in the admin's language (settings.ts keeps the English source). */
-function localized(s: SettingView, t: T): SettingView {
-  const slug = s.key.replace(".", "_");
-  const tf = (k: string, fb: string | undefined) => {
-    const v = t(k as MessageKey);
-    return v === k ? fb : v;
-  };
-  return {
-    ...s,
-    label: tf(`settingDefs.${slug}.label`, s.label) ?? s.label,
-    help: tf(`settingDefs.${slug}.help`, s.help),
-    options: s.options?.map((o) => ({ ...o, label: tf(`settingDefs.${slug}.options.${o.value}`, o.label) ?? o.label })),
-  };
-}
 
 export default async function SettingsPage({ searchParams }: PageProps<"/admin/settings">) {
   await requireAdmin();

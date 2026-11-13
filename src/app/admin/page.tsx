@@ -7,6 +7,7 @@ import { ClanAvatar } from "@/components/clan-avatar";
 import { lanDay } from "@/lib/format";
 import { requireAdmin } from "@/lib/session";
 import { getLegal } from "@/lib/legal";
+import { backupStatus } from "@/lib/backup";
 import { getDefaultNames } from "@/lib/lans";
 import { getT } from "@/i18n/server";
 
@@ -35,6 +36,12 @@ export default async function AdminPage() {
         subtitle={t("admin.subtitle")}
         actions={
           <>
+            <Link href="/admin/stats" className={btnSecondary}>
+              {t("admin.usage")}
+            </Link>
+            <Link href="/admin/backups" className={btnSecondary}>
+              {t("admin.backups")}
+            </Link>
             <Link href="/admin/log" className={btnSecondary}>
               {t("clanHeader.log")}
             </Link>
@@ -44,6 +51,17 @@ export default async function AdminPage() {
           </>
         }
       />
+      {backupStatus().lastError && (
+        <Notice tone="danger">
+          {t.rich("admin.backupFailed", {
+            link: (
+              <Link href="/admin/backups" className="underline">
+                {t("admin.backups")}
+              </Link>
+            ),
+          })}
+        </Notice>
+      )}
       {!getLegal().complete && (
         <Notice tone="warn">
           {t.rich("admin.legalMissing", {
