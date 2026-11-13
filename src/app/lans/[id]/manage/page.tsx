@@ -11,9 +11,10 @@ import { ReminderButtons } from "@/components/reminder-buttons";
 import { SeatMap } from "@/components/seat-map";
 import { avatarMap } from "@/lib/avatars";
 import { EventHeader } from "@/components/event-header";
-import { Card, Page, Pill, btnDanger, btnSecondary } from "@/components/ui";
+import { Card, Notice, Page, Pill, btnDanger, btnSecondary } from "@/components/ui";
 import { fmtDate, relative, toInputValue } from "@/lib/format";
-import { getLan, getNames, interestSwitch, seatView } from "@/lib/lans";
+import { freeSpots, getLan, getNames, interestSwitch, seatView, waitlistOf } from "@/lib/lans";
+import { WaitlistPanel } from "@/components/waitlist-panel";
 import { dueKinds } from "@/lib/reminders";
 import { isLanManager, requireUser } from "@/lib/session";
 import { OrgaManager } from "@/components/orga-manager";
@@ -75,9 +76,9 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
     .from(user)
     .all()
     .filter((u) => memberIds.has(u.id) || rows.some((r) => r.userId === u.id));
-  const people = await getNames(id, users.map((u) => u.id), "full");
-  // Full "Name "Nick" Surname" everywhere; the bare nick only inside small seat cells.
-  const names = new Map([...people].map(([uid, n]) => [uid, n.full]));
+  const people = await getNames(id, users.map((u) => u.id));
+  // Names as the clan shows them (the bare nick only inside small seat cells); the attendee list keeps the full name next to it for ticket checks.
+  const names = new Map([...people].map(([uid, n]) => [uid, n.label]));
   const avatars = avatarMap(users);
   const lanIds = getLanAccounts(l, rows.map((r) => r.userId));
   const profilePat = profilePattern(
@@ -119,6 +120,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
         nick: people.get(r.userId)?.nick ?? u.name,
         avatar: avatars.get(r.userId),
         name: names.get(r.userId) ?? u.name,
+        full: people.get(r.userId)?.full ?? u.name,
         email: u.isGuest ? (u.inviteEmail ? `guest, invited at ${u.inviteEmail}` : "guest, no login yet") : u.email,
         status: r.status,
         paid: r.paid,
@@ -132,6 +134,18 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
       };
     })
     .sort((a, b) => statusOrder[a.status] - statusOrder[b.status] || a.name.localeCompare(b.name));
+
+  const free = freeSpots(l);
+  const waitlist = waitlistOf(id).map((r) => ({
+    userId: r.userId,
+    name: names.get(r.userId) ?? userById.get(r.userId)?.name ?? "?",
+    full: people.get(r.userId)?.full ?? userById.get(r.userId)?.name ?? "?",
+    avatar: avatars.get(r.userId),
+    since: `since ${fmtDate(r.waitlistedAt ?? r.createdAt)}`,
+    ticket: r.paid ? ("confirmed" as const) : r.ticketBought ? ("reported" as const) : null,
+  }));
+  // Orgas pick by hand and a spot is free: say so on the overview.
+  const spotToFill = !l.waitlistAuto && waitlist.length > 0 && !!free;
 
   const due = dueKinds(l);
   const planPeople = going.map((r) => ({
@@ -181,7 +195,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
   // Who's missing: per step, who still owes something. Names for people outside the clan list come from getNames too.
   const missing = whoIsMissing(l);
   const missingIds = [...new Set(missing.flatMap((g) => g.people.map((p) => p.userId)))];
-  const missingNames = missingIds.some((uid) => !names.has(uid)) ? await getNames(id, missingIds, "full") : null;
+  const missingNames = missingIds.some((uid) => !names.has(uid)) ? await getNames(id, missingIds) : null;
   const memberMissing = new Set(
     missing.filter((g) => MISSING_STEPS[g.step].who === "member").flatMap((g) => g.people.map((p) => p.userId)),
   ).size;
@@ -209,7 +223,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
     people: g.people
       .map((p) => ({
         userId: p.userId,
-        name: names.get(p.userId) ?? missingNames?.get(p.userId)?.full ?? "?",
+        name: names.get(p.userId) ?? missingNames?.get(p.userId)?.label ?? "?",
         avatar: avatars.get(p.userId),
         discord: p.reach.discord,
         email: p.reach.email,
@@ -385,6 +399,15 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
             </Card>
           </div>
           <div className="min-w-0 space-y-4 sm:space-y-6 lg:col-start-1 lg:row-start-1">
+          {spotToFill && (
+            <Notice tone="warn">
+              {free === 1 ? "A spot is" : `${free} spots are`} free and {waitlist.length} on the waitlist. You move people up
+              by hand for this event.{" "}
+              <Link href={`/lans/${l.id}/manage?tab=attendees#waitlist`} className="font-medium underline">
+                Pick who moves up
+              </Link>
+            </Notice>
+          )}
           <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
             <Stat label="Coming" value={`${going.length}${l.capacity ? ` / ${l.capacity}` : ""}`} sub={`${count("waitlist")} waitlist`} href={`/lans/${l.id}/manage?tab=attendees`} />
             <Stat label="Unsure / no answer" value={`${count("maybe")} / ${noAnswer}`} sub={`${count("declined")} not coming · who's missing →`} href={`/lans/${l.id}/manage?tab=missing`} />
@@ -458,6 +481,28 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
         </div>
       )}
 
+      {tab === "attendees" && (l.capacity != null || waitlist.length > 0) && (
+        <div id="waitlist" className="mb-4 scroll-mt-20 sm:mb-6">
+          <Card
+            title={`Waitlist (${waitlist.length})`}
+            actions={
+              l.capacity != null && (
+                <Pill tone={free ? "emerald" : "amber"}>
+                  {going.length} / {l.capacity} coming
+                </Pill>
+              )
+            }
+          >
+            <WaitlistPanel
+              lanId={l.id}
+              entries={waitlist}
+              free={free}
+              auto={l.waitlistAuto}
+              profileBase={lanClan ? `/clans/${lanClan.slug}/members/` : null}
+            />
+          </Card>
+        </div>
+      )}
       {tab === "attendees" && (
         <AttendanceTable
           lanId={l.id}

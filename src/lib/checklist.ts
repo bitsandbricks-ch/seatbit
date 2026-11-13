@@ -11,8 +11,10 @@ export function buildChecklist(input: {
   seatLabel: string | null;
   hasSeatPlan: boolean;
   freeSeats: number;
+  /** Place on the waitlist (1 = next), when waitlisted. */
+  waitlistPlace?: number;
 }): ChecklistStep[] {
-  const { lan, attendance: a, hasNick, seatLabel, hasSeatPlan, freeSeats } = input;
+  const { lan, attendance: a, hasNick, seatLabel, hasSeatPlan, freeSeats, waitlistPlace } = input;
   const steps: ChecklistStep[] = [];
 
   steps.push({
@@ -23,7 +25,9 @@ export function buildChecklist(input: {
       a?.status === "going"
         ? "You're going."
         : a?.status === "waitlist"
-          ? "You're on the waitlist."
+          ? waitlistPlace
+            ? `You're #${waitlistPlace} on the waitlist.`
+            : "You're on the waitlist."
           : lan.signupDeadline
             ? "Answer before the deadline."
             : "Let the orgas know.",

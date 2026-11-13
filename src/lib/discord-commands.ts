@@ -26,7 +26,7 @@ import {
   seatbitUserFor,
   upcomingLans,
 } from "./discord-common";
-import { ATTENDANCE_LOCKED_MSG, attendanceLocked, getDisplayNames, getLan, getNames, setAttendance, signupClosed } from "./lans";
+import { ATTENDANCE_LOCKED_MSG, attendanceLocked, getDisplayNames, getLan, getNames, setAttendance, signupClosed, waitlistPositions } from "./lans";
 import { appUrl } from "./mail";
 import { saveNick, saveSeatWishes, saveTicketBought } from "./member-updates";
 import { nameMatches } from "./names";
@@ -136,7 +136,12 @@ export function answerEvent(l: Lan, me: User, status: AttendanceStatus, editRepl
     later: async () => {
       try {
         const stored = await setAttendance(l, me.id, status);
-        const extra = stored === "going" ? " Tick off your ticket with `/ticket` once you have it." : "";
+        const extra =
+          stored === "going"
+            ? " Tick off your ticket with `/ticket` once you have it."
+            : stored === "waitlist"
+              ? ` You're #${waitlistPositions(l.id).get(me.id) ?? "?"} in line; you get a DM when you move up.`
+              : "";
         await editReply({ content: `${statusLabel[stored]} for **${l.name}**.${extra}`, components: [linkButton("Open in Seatbit", lanLink(l))] });
       } catch (e) {
         console.error("[discord] attendance failed", e);
@@ -363,10 +368,11 @@ async function statusCard(l: Lan, me: User) {
       seatLabel: mySeat,
       hasSeatPlan: seats.length > 0,
       freeSeats: seats.filter((s) => !s.userId && !s.locked).length,
+      waitlistPlace: a?.status === "waitlist" ? waitlistPositions(l.id).get(me.id) : undefined,
     });
     if (!a) lines.push("⬜ **No answer yet**: `/coming`, `/unsure` or `/not-coming`");
     else if (a.status !== "going")
-      lines.push({ maybe: "🤔 You said **unsure**", declined: "❌ You're **not coming**", waitlist: "⏳ You're on the **waitlist**", going: "" }[a.status]);
+      lines.push({ maybe: "🤔 You said **unsure**", declined: "❌ You're **not coming**", waitlist: `⏳ You're on the **waitlist** (#${waitlistPositions(l.id).get(me.id) ?? "?"})`, going: "" }[a.status]);
     // Not coming: the rest of the checklist doesn't apply.
     for (const s of a?.status === "declined" ? [] : steps) {
       if (s.key === "going" && a?.status !== "going") continue;

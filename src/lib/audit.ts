@@ -80,7 +80,7 @@ export function changedFields<T extends Record<string, unknown>>(before: T, afte
 
 export const AUDIT_GROUPS = {
   events: { label: "Events", prefixes: ["event.", "orga.", "news."] },
-  attendance: { label: "Answers & tickets", prefixes: ["attendance.", "ticket.", "lanid.", "arrived.", "seatbooked."] },
+  attendance: { label: "Answers & tickets", prefixes: ["attendance.", "waitlist.", "ticket.", "lanid.", "arrived.", "seatbooked."] },
   seats: { label: "Seats", prefixes: ["seat.", "seats.", "swap."] },
   members: { label: "Members & roles", prefixes: ["member.", "invite.", "clan.", "platform.", "account."] },
   guests: { label: "Guests", prefixes: ["guest."] },
@@ -186,6 +186,12 @@ export function describeAudit(e: AuditEntry, name: (id: string | null | undefine
       return `deleted an orga news post${at}`;
     case "attendance.set":
       return `changed the answer of ${who}${at} from ${st(d.from)} to ${st(d.to)}`;
+    case "waitlist.move_up":
+      return `moved ${who} up from the waitlist${at}`;
+    case "waitlist.reorder":
+      return `moved ${who} ${d.dir === "up" ? "up" : "down"} one place on the waitlist${at}`;
+    case "waitlist.auto":
+      return d.on ? `let the waitlist${at} move up by itself` : `switched the waitlist${at} to moving up by hand`;
     case "attendance.remove":
       return `removed ${who} from the attendees${at}`;
     case "ticket.confirm":
@@ -259,7 +265,11 @@ export function describeAudit(e: AuditEntry, name: (id: string | null | undefine
     case "guest.claim_request":
       return `asked to take over the guest ${d.guest}${d.match ? ` (same ${d.match})` : ""}${d.via === "discord" ? " on Discord" : ""}`;
     case "guest.discord_link":
-      return `linked the guest ${d.guest} to a Discord member, who takes it over when they sign in`;
+      return `${d.relinked ? "re-linked" : "linked"} the guest ${d.guest} to a Discord member, who takes it over when they sign in`;
+    case "guest.discord_dm":
+      return `sent the Discord DM with the claim link to the guest ${d.guest} again${d.ok ? "" : " (Discord refused it)"}`;
+    case "guest.discord_unlink":
+      return `unlinked the guest ${d.guest} from their Discord member`;
     case "guest.claim_approve":
       return `confirmed ${who} is the guest ${d.guest}`;
     case "guest.claim_decline":

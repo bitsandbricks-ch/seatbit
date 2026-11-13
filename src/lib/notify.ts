@@ -17,6 +17,7 @@ export type NoticeKind =
   | "reminder"
   | (string & {}) // mail template ids
   | "waitlist_promoted"
+  | "waitlist_spot"
   | "seats_published"
   | "seat_changed"
   | "lan_changed"

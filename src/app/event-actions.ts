@@ -131,6 +131,7 @@ export async function copyForNextYear(lanId: string) {
       paymentDueDate: YEAR(l.paymentDueDate),
       price: l.price,
       capacity: l.capacity,
+      waitlistAuto: l.waitlistAuto,
       reminderDays: l.reminderDays,
       seatRows: l.seatRows,
       seatCols: l.seatCols,

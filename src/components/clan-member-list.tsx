@@ -65,7 +65,10 @@ export function ClanMemberGrid({
 
 export type ClanMemberRow = {
   id: string;
+  /** As the clan shows names. */
   name: string;
+  /** Name "Nick" Surname, shown small when the clan's display leaves part of it out. */
+  full: string;
   nick: string;
   /** Email, or "No login yet" for guests. */
   sub: string;
@@ -103,7 +106,7 @@ export function ClanMemberAdmin({
   const [pending, start] = useTransition();
   const [error, setError] = useState("");
   const test = roleFilters.find((f) => f.id === role)!.test;
-  const shown = members.filter((m) => test(m) && (!q || matches(`${m.name} ${m.nick} ${m.sub}`, q)));
+  const shown = members.filter((m) => test(m) && (!q || matches(`${m.name} ${m.full} ${m.nick} ${m.sub}`, q)));
   const pager = usePager(shown, PAGE_SIZE);
   const lastAdmin = members.filter((m) => m.role === "admin").length <= 1;
   const run = (fn: () => Promise<unknown>) =>
@@ -161,6 +164,7 @@ export function ClanMemberAdmin({
                 {m.isGuest && <Pill>guest</Pill>}
               </span>
               <span className="block truncate text-xs text-muted">
+                {m.full !== m.name && `${m.full} · `}
                 {m.sub}
               </span>
             </span>

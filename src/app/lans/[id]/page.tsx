@@ -12,7 +12,7 @@ import { Avatar } from "@/components/avatar";
 import { getAvatars, type AvatarData } from "@/lib/avatars";
 import { Card, Columns, Page, Pill, StatusBadge, Verified } from "@/components/ui";
 import { fmtDate, fmtTime, relative } from "@/lib/format";
-import { ATTENDANCE_LOCKED_MSG, attendanceLocked, getDisplayNames, getLan, getNames, pickNick, seatView, signupClosed } from "@/lib/lans";
+import { ATTENDANCE_LOCKED_MSG, attendanceLocked, getDisplayNames, getLan, getNames, pickNick, seatView, signupClosed, waitlistPositions } from "@/lib/lans";
 import { canViewLan, isLanManager, requireUser } from "@/lib/session";
 import { getClan } from "@/lib/clans";
 import { rolesWith } from "@/lib/clan-roles";
@@ -108,6 +108,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
       .filter((r) => r.status === st)
       .sort((a, b) => (names.get(a.userId) ?? "").localeCompare(names.get(b.userId) ?? ""));
   const going = group("going");
+  const linePos = waitlistPositions(id);
+  const myPlace = my?.status === "waitlist" ? linePos.get(me.id) : undefined;
   const isAdmin = isLanManager(me, id);
   const published = !!l.seatsPublishedAt;
   // Optional self-pick step: members choose their own seat until the orgas finalize the plan.
@@ -122,6 +124,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
     seatLabel: mySeatLabel,
     hasSeatPlan: seats.length > 0,
     freeSeats: seats.filter((s) => !s.userId && !s.locked).length,
+    waitlistPlace: myPlace,
   });
   const full = l.capacity != null && going.length >= l.capacity;
   const myInterest =
@@ -312,7 +315,11 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           )}
           {my?.status === "waitlist" && (
             <p className="mt-3 text-sm text-seat-taken">
-              The LAN is full. You&apos;re on the waitlist and will get an email if a spot opens up.
+              The group is full. You&apos;re <strong>#{myPlace ?? "?"}</strong> on the waitlist.{" "}
+              {l.waitlistAuto
+                ? "When a spot opens, the first in line moves up by itself and gets an email and a Discord DM."
+                : "When a spot opens, the orgas pick who moves up and you get an email and a Discord DM."}{" "}
+              Not coming any more? Answer &quot;Not coming&quot; so the next person gets the spot sooner.
             </p>
           )}
           {onTheDay && my?.status === "going" && (
@@ -442,7 +449,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           actions={full && <Pill tone="red">Full · new sign-ups go on the waitlist</Pill>}
         >
           <AttendeeList title="Coming" list={going} profileBase={profileBase} names={names} verified={verified} avatars={avatars} profiles={profiles} seatOf={seatOf} showPaid={isAdmin} meId={me.id} />
-          <AttendeeList title="Waitlist" list={group("waitlist")} profileBase={profileBase} names={names} verified={verified} avatars={avatars} profiles={profiles} seatOf={seatOf} showPaid={isAdmin} meId={me.id} />
+          <AttendeeList title="Waitlist" positions={linePos} list={group("waitlist")} profileBase={profileBase} names={names} verified={verified} avatars={avatars} profiles={profiles} seatOf={seatOf} showPaid={isAdmin} meId={me.id} />
           <AttendeeList title="Unsure" list={group("maybe")} profileBase={profileBase} names={names} verified={verified} avatars={avatars} profiles={profiles} seatOf={seatOf} showPaid={false} meId={me.id} />
           {group("declined").length > 0 && <p className="mt-3 text-xs text-muted">{group("declined").length} can&apos;t make it.</p>}
         </Card>
@@ -632,7 +639,10 @@ function AttendeeList({
   profileBase,
   avatars,
   profiles,
+  positions,
 }: {
+  /** Waitlist: keep the line's order and show each person's place instead of sorting by name. */
+  positions?: Map<string, number>;
   avatars: Map<string, AvatarData>;
   /** Links to each attendee's profile on the event's own site. */
   profiles: Map<string, string>;
@@ -652,6 +662,7 @@ function AttendeeList({
   const item = (a: (typeof list)[number]) => (
     <li key={a.id} className="flex min-h-10 items-center justify-between gap-2 rounded-bit bg-raised/60 px-3 py-1.5 text-sm">
       <span className="flex min-w-0 items-center gap-2">
+      {positions && <span className="w-5 shrink-0 text-right font-mono text-xs text-muted">{positions.get(a.userId) ?? "?"}</span>}
       <Avatar data={avatars.get(a.userId)} size={22} />
       {profileBase ? (
         <Link
@@ -684,7 +695,8 @@ function AttendeeList({
   );
   // Me first, then by name, so the folded part never hides your own row.
   const sorted = [...list].sort(
-    (a, b) => Number(b.userId === meId) - Number(a.userId === meId) || (names.get(a.userId) ?? "").localeCompare(names.get(b.userId) ?? ""),
+    (a, b) =>
+      (positions ? (positions.get(a.userId) ?? 1e9) - (positions.get(b.userId) ?? 1e9) : 0) || Number(b.userId === meId) - Number(a.userId === meId) || (names.get(a.userId) ?? "").localeCompare(names.get(b.userId) ?? ""),
   );
   const fold = sorted.length > FIRST + 3;
   return (

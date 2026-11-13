@@ -30,7 +30,30 @@ The event page shows your answer and checklist at the top, then the tabs **Overv
 
 ### Waitlist
 
-When the group's spots are full, new *Coming* answers go on the **waitlist**. When someone drops out, the next person moves up automatically and gets an email.
+When the group's spots (*Spots* on the event) are full, new *Coming* answers go on the **waitlist**. It's a line: whoever answered first is first. People waiting see their place (*You're #2 on the waitlist*) on the event page, in their checklist and in the bot's reply on Discord. The Attendees tab and the Discord announcement list the waitlist in order.
+
+![Waitlist on the event page](../screenshots/phone-waitlist.png){ .shot width="300" }
+
+When someone stops coming (or an orga raises the spots), what happens depends on the event's setting under *Manage → Attendees → Waitlist*:
+
+| Setting | When a spot opens |
+| --- | --- |
+| **Next in line moves up** (default) | The first person in line moves to *Coming* by themselves and gets an email and a Discord DM ("You're in"). |
+| **Orgas pick** | Nobody moves on their own. The orgas get an email and a DM, and the event's overview says how many spots are free. An orga moves someone up by hand, e.g. after asking who still has time. |
+
+Turning *Next in line moves up* back on fills the free spots right away.
+
+While people are waiting, a new *Coming* answer always queues up behind them, even when a spot is free, so nobody jumps the line.
+
+**For orgas**, the *Waitlist* card on *Manage → Attendees* shows the line with each person's place, how long they've waited and whether they already have a ticket:
+
+- **↑ / ↓** move someone one place up or down.
+- **Move to coming** takes them off the waitlist now and tells them. This also works when the group is full: the orga goes over the limit on purpose.
+- Changing someone's answer in the attendee list works too. Setting someone to *waitlist* puts them at the end of the line.
+
+Every move is in the [audit log](audit-log.md).
+
+![Waitlist for orgas](../screenshots/desktop-manage-waitlist.png){ .shot }
 
 ## Checklist
 

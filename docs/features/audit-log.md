@@ -9,7 +9,7 @@ A log of what orgas and admins changed in a clan and its events, so you can see 
 ## What's logged
 
 - Seats: moves, swaps, auto-assign, finalizing the plan
-- Answers changed by orgas, confirmed tickets
+- Answers changed by orgas, waitlist moves (moved up, reordered, auto or by hand), confirmed tickets
 - Orga and clan roles, join approvals, guest edits and guest claims
 - Publishing, cancelling and editing events
 - Supporter status (when [supporter payments](supporters.md) are on)
