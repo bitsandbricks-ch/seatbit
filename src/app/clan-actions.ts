@@ -23,6 +23,7 @@ import {
   sendGuestInvite,
 } from "@/lib/guest-claim";
 import { appUrl } from "@/lib/mail";
+import { opsT, postOps } from "@/lib/ops";
 import { missingServers, setServerInvite } from "@/lib/discord-invite";
 import { notify, notifyClanAdmins, notifyLater } from "@/lib/notify";
 import { requireClanPermission, requireLanManager, requireUser } from "@/lib/session";
@@ -47,6 +48,8 @@ const clanInput = z.object({
   locale: z.union([z.enum(LOCALES), z.literal("").transform(() => null)]).default(null),
 });
 
+const JOIN_LABEL = { approval: "clanForm.joinApproval", open: "clanForm.joinOpen", invite: "clanForm.joinInvite" } as const;
+
 export async function createClan(_: FormState, formData: FormData): Promise<FormState> {
   const me = await requireUser();
   const parsed = clanInput.safeParse({
@@ -64,6 +67,15 @@ export async function createClan(_: FormState, formData: FormData): Promise<Form
     .returning()
     .get();
   db.insert(clanMember).values({ clanId: row.id, userId: me.id, role: "admin" }).run();
+  const ot = opsT();
+  void postOps("clan", {
+    title: ot("ops.newClan", { name: row.name }),
+    url: `${appUrl}/clans/${row.slug}`,
+    fields: [
+      { name: ot("ops.createdBy"), value: me.name },
+      { name: ot("clanForm.join"), value: ot(JOIN_LABEL[row.joinPolicy]) },
+    ],
+  });
   revalidatePath("/", "layout");
   redirect(`/clans/${row.slug}`);
 }

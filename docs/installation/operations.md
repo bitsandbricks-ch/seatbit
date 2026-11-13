@@ -24,10 +24,18 @@ docker compose pull && docker compose up -d
 
 There is one database, so run a single instance and stop the old container before the new one starts (`Recreate` strategy on Kubernetes).
 
+After the start, Seatbit takes care of the rest:
+
+- **Discord slash commands** are registered again when the update changed them (needs the bot token and application ID). If that fails, the notice below says so; then click **Check bot & register slash commands** under *Admin → Platform settings → Discord*.
+- **Platform admins get a notice** by mail and Discord DM, once per new version: the new version, a link to what changed in the source repository (the *Source code URL* setting) and whether anything is left to do. The very first start and builds without git information send nothing.
+
 ## Logs and health
 
 - `GET /api/health` answers `{"ok":true}` while the server and database work.
 - Errors, sent reminders and (without SMTP) emails go to the container log.
+- *Admin → Health* shows version, database size, mail and Discord status, background jobs and recent errors ([Health](../features/admin.md#health)).
+- Set an ops channel to get errors, upgrades and other platform events on Discord ([Platform Discord](../features/admin.md#platform-discord)).
+- Before planned downtime, put up a [maintenance banner](../features/admin.md#maintenance-banner).
 
 ## Admin CLI
 

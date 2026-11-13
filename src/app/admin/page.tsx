@@ -10,6 +10,7 @@ import { STAFF_ROLES, assignableRoles, canSetRole, isStaff, outranks, platformCa
 import { openReportCount } from "@/lib/reports";
 import type { T } from "@/i18n/translate";
 import { getLegal } from "@/lib/legal";
+import { donationsEnabled } from "@/lib/donations";
 import { getDefaultNames } from "@/lib/lans";
 import { getT } from "@/i18n/server";
 
@@ -18,6 +19,7 @@ export default async function AdminPage() {
   const t = await getT();
   const can = {
     settings: platformCan(me, "settings"),
+    owner: platformCan(me, "owner"),
     clans: platformCan(me, "clans"),
     reports: platformCan(me, "reports"),
     suspend: platformCan(me, "suspend"),
@@ -52,9 +54,17 @@ export default async function AdminPage() {
                 {openReports > 0 && <Pill tone="red">{openReports}</Pill>}
               </Link>
             )}
+            <Link href="/admin/health" className={btnSecondary}>
+              {t("health.title")}
+            </Link>
             <Link href="/admin/log" className={btnSecondary}>
               {t("clanHeader.log")}
             </Link>
+            {can.owner && donationsEnabled() && (
+              <Link href="/admin/donations" className={btnSecondary}>
+                {t("adminDonations.title")}
+              </Link>
+            )}
             {can.settings && (
               <Link href="/admin/settings" className={btnSecondary}>
                 {t("clanSettings.platformSettings")}

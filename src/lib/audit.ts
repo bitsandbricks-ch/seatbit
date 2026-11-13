@@ -2,7 +2,7 @@ import "server-only";
 import { and, count, desc, eq, inArray, isNull, lt, type SQL } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { AuditEntry } from "@/db/schema";
-import { fmtDay } from "./format";
+import { fmtDay, fmtMoney } from "./format";
 import { getDefaultNames } from "./lans";
 import { isMemberRole, type MemberRole } from "./clan-roles";
 import { STAFF_ROLES, type StaffRole } from "./platform-roles";
@@ -243,10 +243,19 @@ export function describeAudit(
       return t("audit.clanDelete", v);
     case "clan.supporter": {
       const until = typeof d.until === "number" ? t("audit.until", { date: fmtDay(new Date(d.until)) }) : "";
+      if (d.donation) return t("audit.supporterDonation", { until });
       return t(d.renewed ? "audit.supporterRenewed" : "audit.supporter", { until });
     }
     case "clan.supporter_end":
       return t("audit.supporterEnd");
+    case "platform.donation": {
+      const amount = typeof d.amount === "number" && typeof d.currency === "string" ? fmtMoney(d.amount, d.currency) : "";
+      return t(e.clanId ? "audit.donationClan" : "audit.donation", { amount });
+    }
+    case "platform.donation_refund": {
+      const amount = typeof d.amount === "number" && typeof d.currency === "string" ? fmtMoney(d.amount, d.currency) : "";
+      return t("audit.donationRefund", { amount });
+    }
     case "member.add":
       return t("audit.memberAdd", v);
     case "member.approve":
@@ -318,6 +327,12 @@ export function describeAudit(
       return t("audit.reportReopen");
     case "settings.save":
       return t("audit.settings", { keys: list(d.keys) });
+    case "settings.maintenance":
+      return t("audit.maintenance", v);
+    case "settings.maintenance_clear":
+      return t("audit.maintenanceClear");
+    case "settings.announce":
+      return t("audit.announce", v);
     case "mail_template.save":
       return t("audit.templateSave", v);
     case "mail_template.reset":

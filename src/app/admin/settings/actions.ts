@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { botIdentity, commands, discordEnabled, registerCommands } from "@/lib/discord-api";
-import { mailTarget, sendMail, verifySmtp } from "@/lib/mail";
+import { appUrl, mailTarget, sendMail, verifySmtp } from "@/lib/mail";
 import { type MailTemplateId, renderTemplate, resetTemplate, saveTemplate, templateDef } from "@/lib/mail-templates";
 import { previewVars } from "@/lib/mail-fill";
 import { isLocale } from "@/i18n/config";
@@ -13,6 +13,8 @@ import { OWNER_SETTING_GROUPS, platformCan } from "@/lib/platform-roles";
 import { getT } from "@/i18n/server";
 import type { MessageKey } from "@/i18n/translate";
 import { audit } from "@/lib/audit";
+import { announceChannel, opsChannel, opsT, postAnnouncement, testChannels } from "@/lib/ops";
+import { currentMaintenance, maintenanceTitle } from "@/lib/maintenance";
 import {
   SETTINGS,
   SETTING_GROUPS,
@@ -165,4 +167,73 @@ function templateLabel(id: string) {
   } catch {
     return id;
   }
+}
+
+/** Posts a test message to the ops and announcements channels. */
+export async function testOpsChannels(): Promise<ActionResult> {
+  const me = await requireAdmin();
+  const t = await getT();
+  if (!discordEnabled()) return done(false, t("adminSettings.botFirst"));
+  if (!opsChannel() && !announceChannel()) return done(false, t("adminSettings.opsNoChannel"));
+  const res = await testChannels({ title: t("adminSettings.opsTestTitle"), text: t("adminSettings.opsTestText", { name: me.name }) });
+  const bad = res.filter((r) => !r.ok);
+  if (bad.length)
+    return done(
+      false,
+      bad.map((r) => t("adminSettings.opsTestFailed", { channel: t(`adminSettings.opsChannel.${r.channel}`), error: hintFor(r.error ?? "", t) })).join(" "),
+    );
+  return done(true, t("adminSettings.opsTestOk", { count: res.length }));
+}
+
+/** Discord's usual answers when the bot can't post, in words an admin can act on. */
+function hintFor(error: string, t: Awaited<ReturnType<typeof getT>>) {
+  if (error.includes("-> 403")) return t("adminSettings.opsNoAccess");
+  if (error.includes("-> 404")) return t("adminSettings.opsNotFound");
+  return error;
+}
+
+/** Posts an announcement the admin wrote to the public announcements channel. */
+export async function postPlatformAnnouncement(_prev: ActionResult, form: FormData): Promise<ActionResult> {
+  const me = await requireAdmin();
+  const t = await getT();
+  const title = String(form.get("title") ?? "").trim();
+  const text = String(form.get("text") ?? "").trim();
+  if (!title || title.length > 200 || text.length > 3500) return done(false, t("adminSettings.announceInvalid"));
+  if (!announceChannel()) return done(false, t("adminSettings.announceNoChannel"));
+  const ok = await postAnnouncement({ title, text: text || undefined, url: appUrl });
+  if (!ok) return done(false, t("adminSettings.announceFailed"));
+  audit({ actorId: me.id, action: "settings.announce", data: { title } });
+  return done(true, t("adminSettings.announceOk"));
+}
+
+/** Saves the maintenance banner; "clear" removes it. Optionally posts it to the announcements channel. */
+export async function saveMaintenance(_prev: ActionResult, form: FormData): Promise<ActionResult> {
+  const me = await requireAdmin();
+  const t = await getT();
+  const clear = form.get("clear") === "1";
+  const values = {
+    "maintenance.message": clear ? "" : String(form.get("message") ?? "").trim(),
+    "maintenance.startsAt": clear ? "" : String(form.get("startsAt") ?? "").trim(),
+    "maintenance.endsAt": clear ? "" : String(form.get("endsAt") ?? "").trim(),
+  };
+  if (values["maintenance.message"].length > 500) return done(false, t("adminSettings.maintenanceTooLong"));
+  for (const [k, v] of Object.entries(values)) if (v && checkSetting(k, v)) return done(false, t("adminSettings.maintenanceBadDate"));
+  const s = values["maintenance.startsAt"];
+  const e = values["maintenance.endsAt"];
+  if (s && e && new Date(e) <= new Date(s)) return done(false, t("adminSettings.maintenanceOrder"));
+  for (const [k, v] of Object.entries(values)) {
+    if (v) setSetting(k, v, me.id);
+    else if (resolveSetting(k).source === "database") clearSetting(k);
+  }
+  audit({ actorId: me.id, action: clear ? "settings.maintenance_clear" : "settings.maintenance", data: { message: values["maintenance.message"] } });
+  let posted = false;
+  const m = currentMaintenance();
+  if (!clear && m && form.get("announce") === "on") {
+    const it = opsT();
+    posted = await postAnnouncement({ title: maintenanceTitle(m, it), text: m.message, url: appUrl });
+  }
+  revalidatePath("/", "layout");
+  if (clear) return done(true, t("adminSettings.maintenanceCleared"));
+  if (!m) return done(true, values["maintenance.message"] ? t("adminSettings.maintenancePast") : t("adminSettings.maintenanceCleared"));
+  return done(true, posted ? t("adminSettings.maintenanceSavedPosted") : t("common.saved"));
 }

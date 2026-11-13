@@ -1,5 +1,7 @@
 import nodemailer, { type Transporter } from "nodemailer";
 import { isGuestEmail } from "./guests";
+import { recordMail } from "./jobs";
+import { reportError } from "./ops";
 import { getNumberSetting, getSetting, settingsFingerprint } from "./settings";
 
 export const appUrl = (process.env.BETTER_AUTH_URL ?? "http://localhost:3000").replace(/\/$/, "");
@@ -54,7 +56,14 @@ export async function sendMail(to: string, subject: string, text: string, html?:
     console.log(`\n[mail] (no SMTP configured, not sent)\nTo: ${to}\nSubject: ${subject}\n\n${text}\n`);
     return;
   }
-  await t.sendMail({ from, to, subject, text, ...(html && { html }) });
+  try {
+    await t.sendMail({ from, to, subject, text, ...(html && { html }) });
+    recordMail(true);
+  } catch (e) {
+    recordMail(false, e);
+    reportError("mail", e, [{ name: "SMTP", value: getSetting("smtp.host") ?? "SMTP_URL" }], "mail");
+    throw e;
+  }
 }
 
 /** Checks the SMTP connection and login without sending anything. */

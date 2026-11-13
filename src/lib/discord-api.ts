@@ -2,7 +2,11 @@
  * Minimal Discord REST client. Credentials come from the platform settings
  * (admin UI or env vars); no "server-only", so scripts can import it.
  */
-import { getSetting } from "./settings";
+import { createHash } from "node:crypto";
+import { getSetting, rememberState } from "./settings";
+
+/** app_setting key holding the hash of the last registered command set. */
+export const COMMANDS_STATE = "state.discordCommands";
 
 // Overridable for local testing against a mock server.
 const API = process.env.DISCORD_API_BASE ?? "https://discord.com/api/v10";
@@ -201,10 +205,17 @@ function localized<T>(node: T): T {
   return o as T;
 }
 
+/** Fingerprint of the commands as Seatbit registers them, so a startup can tell whether Discord has the current set. */
+export function commandsHash() {
+  return createHash("sha256").update(JSON.stringify(localized(commands))).digest("hex").slice(0, 16);
+}
+
 export async function registerCommands() {
   const id = appId();
   if (!id || !botToken()) throw new Error("The Discord application ID and bot token are required");
-  return api("PUT", `/applications/${id}/commands`, localized(commands));
+  const r = await api("PUT", `/applications/${id}/commands`, localized(commands));
+  rememberState(COMMANDS_STATE, commandsHash());
+  return r;
 }
 
 /** Bot invite link with the permissions it needs. */

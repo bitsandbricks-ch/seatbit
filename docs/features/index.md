@@ -27,6 +27,7 @@ Seatbit has three kinds of users:
 | [Discord and WhatsApp](discord.md) | Bot announcements with answer buttons, reminders, DMs, slash commands; WhatsApp texts. | Clan admins, leads |
 | [Audit log](audit-log.md) | What leads and admins changed. | Admins, event managers, recruiters |
 | [Supporter badge](supporters.md) | Optional voluntary payments for clans (off by default). | Clan admins |
+| [Donations](donations.md) | Optional one-off donations to the instance, with a Donor badge (off by default). | Everyone |
 | [Platform admin](admin.md) | Platform roles, all clans, events and users, platform settings, mail templates. | Platform staff |
 | [Reports and suspensions](moderation.md) | Members report clans and events, moderators handle them and suspend users or clans. | Everyone, moderators |
 

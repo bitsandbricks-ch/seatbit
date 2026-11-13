@@ -496,7 +496,8 @@ export async function adminSetPaid(attendanceId: string, paid: boolean) {
   const a = db.select().from(attendance).where(eq(attendance.id, attendanceId)).get();
   if (!a) return;
   const me = await requireLanManager(a.lanId);
-  db.update(attendance).set({ paid }).where(eq(attendance.id, attendanceId)).run();
+  // Trust based: the lead's tick is the same as the member's "I have my ticket" (e.g. for a guest), not a confirmation step.
+  db.update(attendance).set({ paid, ticketBought: paid }).where(eq(attendance.id, attendanceId)).run();
   if (a.paid !== paid) auditLan(mustGetLan(a.lanId), me.id, "ticket.confirm", { targetUserId: a.userId, data: { paid } });
   refreshLanMessagesSoon(a.lanId);
   lanPath(a.lanId);

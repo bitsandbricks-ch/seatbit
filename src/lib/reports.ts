@@ -3,6 +3,8 @@ import { and, count, desc, eq, gt, inArray, isNull } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { ReportReason, ReportStatus } from "@/db/schema";
 import { audit } from "./audit";
+import { appUrl } from "./mail";
+import { opsT, postOps } from "./ops";
 
 const { report, user, clan, lan, session } = schema;
 
@@ -60,6 +62,17 @@ export function fileReport(input: {
     .returning({ id: report.id })
     .get();
   audit({ actorId: input.reporterId, action: "report.file", data: { report: row.id, reason: input.reason, kind: l ? "event" : "clan" } });
+  const t = opsT();
+  void postOps("report", {
+    title: t("ops.newReport", { subject: l ? l.name : (c?.name ?? "") }),
+    text: input.message.trim() || undefined,
+    url: `${appUrl}/admin/reports`,
+    fields: [
+      { name: t("ops.reportKind"), value: t(l ? "moderation.kindEvent" : "moderation.kindClan") },
+      { name: t("report.reason"), value: t(`report.reasons.${input.reason}`) },
+      ...(l && c ? [{ name: t("moderation.kindClan"), value: c.name }] : []),
+    ],
+  });
   return { ok: true, id: row.id };
 }
 
