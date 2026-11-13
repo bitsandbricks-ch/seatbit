@@ -1,4 +1,5 @@
 import { eq, inArray } from "drizzle-orm";
+import { makeT, type T } from "@/i18n/translate";
 import { db, schema } from "@/db";
 import type { FoodOrderStatus } from "@/db/schema";
 import { getSetting } from "./settings";
@@ -114,16 +115,16 @@ export function listFoodOrders(lanId: string): FoodOrderView[] {
 }
 
 /** Plain text of an order to read out on the phone or paste into a chat. */
-export function orderText(o: FoodOrderView, names: Map<string, string> | Record<string, string>, currency: string) {
+export function orderText(o: FoodOrderView, names: Map<string, string> | Record<string, string>, currency: string, t: T = makeT("en")) {
   const name = (id: string) => (names instanceof Map ? names.get(id) : names[id]) ?? "?";
   const lines = [
     `${o.title}${o.shop ? ` · ${o.shop}` : ""}`,
     "",
     ...o.summary.map((s) => `${s.qty}x ${s.item}`),
     "",
-    `${o.itemCount} item(s)${o.totalCents != null ? ` · ${currency} ${fmtMoney(o.totalCents)}` : ""}`,
+    `${t("food.textItems", { count: o.itemCount })}${o.totalCents != null ? ` · ${currency} ${fmtMoney(o.totalCents)}` : ""}`,
     "",
-    "Per person:",
+    t("food.textPerPerson"),
     ...o.people.map(
       (p) =>
         `${name(p.userId)}: ${p.items.map((i) => `${i.qty}x ${i.item}${i.note ? ` (${i.note})` : ""}`).join(", ")}${

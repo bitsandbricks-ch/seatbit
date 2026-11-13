@@ -2,6 +2,7 @@
 import { progress, type ChecklistStep } from "@/lib/checklist";
 import type { ReactNode } from "react";
 import { TicketConfirm } from "./ticket-confirm";
+import { useT } from "@/i18n/client";
 
 export function LanChecklist({
   lanId,
@@ -61,7 +62,8 @@ export function LanChecklist({
 }
 
 function OptionalTag({ s }: { s: ChecklistStep }) {
-  return s.optional && s.state !== "done" ? <span className="ml-1.5 text-xs font-normal text-faint">optional</span> : null;
+  const t = useT();
+  return s.optional && s.state !== "done" ? <span className="ml-1.5 text-xs font-normal text-faint">{t("checklist.optional")}</span> : null;
 }
 
 function StepIcon({ s, i }: { s: ChecklistStep; i: number }) {
@@ -93,17 +95,18 @@ function ChecklistStrip({
   ticketBought: boolean;
   canReportTicket: boolean;
 }) {
+  const t = useT();
   // Open optional steps don't hold back "All set".
   const all = done === total;
   return (
-    <section aria-label="Your checklist" className="rounded-card border border-line bg-surface p-3 sm:p-4">
+    <section aria-label={t("checklist.title")} className="rounded-card border border-line bg-surface p-3 sm:p-4">
       <div className="mb-3 flex items-center gap-3">
-        <h2 className="text-sm font-semibold text-fg">Your checklist</h2>
+        <h2 className="text-sm font-semibold text-fg">{t("checklist.title")}</h2>
         {answer}
         <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-raised">
           <div className="h-full bg-bit transition-all" style={{ width: `${total ? (done / total) * 100 : 0}%` }} />
         </div>
-        <span className={`text-sm ${all ? "font-medium text-bit" : "text-muted"}`}>{all ? "All set" : `${done} / ${total}`}</span>
+        <span className={`text-sm ${all ? "font-medium text-bit" : "text-muted"}`}>{all ? t("checklist.allSet") : `${done} / ${total}`}</span>
       </div>
       <ol className={`grid gap-x-4 gap-y-3 sm:grid-cols-2 ${steps.length >= 4 ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
         {steps.map((s, i) => (

@@ -1,5 +1,6 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { AttendanceButtons } from "@/components/attendance-buttons";
@@ -11,10 +12,11 @@ import { SeatMap } from "@/components/seat-map";
 import { Avatar } from "@/components/avatar";
 import { getAvatars, type AvatarData } from "@/lib/avatars";
 import { Card, Columns, LockedAnswerBadge, Page, Pill, StatusBadge, Verified } from "@/components/ui";
-import { fmtDate, fmtTime, relative } from "@/lib/format";
-import { ATTENDANCE_LOCKED_MSG, attendanceLocked, getDisplayNames, getLan, getNames, pickNick, seatView, signupClosed, waitlistPositions } from "@/lib/lans";
-import { canViewLan, isLanManager, requireUser } from "@/lib/session";
-import { getClan } from "@/lib/clans";
+import { fmtDate, fmtTime, lanRange, relative } from "@/lib/format";
+import { attendanceLocked, getDisplayNames, getLan, getNames, pickNick, seatView, signupClosed, waitlistPositions } from "@/lib/lans";
+import { canViewLan, getCurrentUser, isLanManager, isProfileComplete } from "@/lib/session";
+import { clanRole, getClan } from "@/lib/clans";
+import { EventInvite } from "@/components/event-invite";
 import { rolesWith } from "@/lib/clan-roles";
 import { EventHeader } from "@/components/event-header";
 import { buildChecklist, onTheDay } from "@/lib/checklist";
@@ -30,26 +32,64 @@ import { SeatSwapPanel, type SwapView } from "@/components/seat-swaps";
 import { CheckInButton, DeleteNewsButton, InterestButtons } from "@/components/event-extras";
 import { FoodOrders, type FoodOrderCardView } from "@/components/food-orders";
 import { foodCurrency, isAcceptingItems, listFoodOrders, orderText } from "@/lib/food";
+import { getT } from "@/i18n/server";
+import type { T } from "@/i18n/translate";
 
 const { attendance, seat, nickname } = schema;
 
-const ANSWER_TEXT: Record<string, string> = {
-  going: "You're coming",
-  maybe: "You're unsure",
-  declined: "You can't make it",
-  waitlist: "You're on the waitlist",
-  none: "No answer yet",
-};
-
 const TABS = ["overview", "seats", "attendees", "travel", "gear", "games", "food"] as const;
+
+/** Link previews (WhatsApp, Discord, ...): name, date and place of published events; drafts stay generic. */
+export async function generateMetadata({ params }: PageProps<"/lans/[id]">): Promise<Metadata> {
+  const l = getLan((await params).id);
+  if (!l?.publishedAt) return {};
+  const clan = l.clanId ? getClan(l.clanId) : undefined;
+  const t = await getT();
+  const description = [
+    l.cancelledAt ? t("share.cancelled") : null,
+    lanRange(l, t.locale),
+    l.location,
+    clan && t("share.eventOf", { clan: clan.name }),
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  return {
+    title: `${l.name} · Seatbit`,
+    description,
+    openGraph: { title: l.name, description, type: "website", siteName: "Seatbit", url: `/lans/${l.id}` },
+    twitter: { card: "summary_large_image", title: l.name, description },
+  };
+}
 
 export default async function LanPage({ params, searchParams }: PageProps<"/lans/[id]">) {
   const { id } = await params;
   const sp = await searchParams;
   const tab = TABS.find((t) => t === sp.tab) ?? "overview";
-  const me = await requireUser();
+  const here = `/lans/${id}${tab === "overview" ? "" : `?tab=${tab}`}`;
+  const viewer = await getCurrentUser();
+  if (viewer && !isProfileComplete(viewer)) redirect(`/welcome?next=${encodeURIComponent(here)}`);
+  const t = await getT();
   const l = getLan(id);
-  if (!l || !canViewLan(me, id)) notFound();
+  if (!l) notFound();
+  if (!viewer || !canViewLan(viewer, id)) {
+    // Shared links: people who can't open the event yet see what it is and how to get in, instead of a 404.
+    // No redirect for signed-out visitors either, so link previews keep this page's metadata.
+    const clan = l.publishedAt && l.clanId ? getClan(l.clanId) : undefined;
+    if (!clan) {
+      if (!viewer) redirect(`/login?next=${encodeURIComponent(here)}`);
+      notFound();
+    }
+    return (
+      <EventInvite
+        lan={l}
+        clan={clan}
+        signedIn={!!viewer}
+        pending={!!viewer && clanRole(viewer.id, clan.id) === "pending"}
+        here={here}
+      />
+    );
+  }
+  const me = viewer;
   const lanClan = l.clanId ? getClan(l.clanId) : undefined;
   const now = new Date();
 
@@ -129,6 +169,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
     waitlistPlace: myPlace,
     games: { voted: games.filter((g) => g.votes > 0).length, toInstall: gamesToInstall },
     now,
+    t,
   });
   const full = l.capacity != null && going.length >= l.capacity;
   const myInterest =
@@ -207,11 +248,11 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
     tab === "food"
       ? foodOrders.map((o) => ({
           ...o,
-          text: orderText(o, foodNames, currency),
+          text: orderText(o, foodNames, currency, t),
           canRun: o.createdBy === me.id || isAdmin,
           accepting: isAcceptingItems(o, now),
           closesTime: o.closesAt ? fmtTime(o.closesAt) : null,
-          closesLabel: o.closesAt ? fmtDate(o.closesAt) : null,
+          closesLabel: o.closesAt ? fmtDate(o.closesAt, t.locale) : null,
         }))
       : [];
 
@@ -238,7 +279,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
     note: s.note,
   }));
   const swapCard = published && mySeatLabel && my?.status === "going" && (
-    <Card title="Swap seats">
+    <Card title={t("event.swapSeats")}>
       <SeatSwapPanel
         lanId={l.id}
         meId={me.id}
@@ -257,16 +298,16 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
     <span className="flex flex-wrap items-center gap-2">
       {l.externalPlanUrl && (
         <a href={l.externalPlanUrl} target="_blank" rel="noreferrer" className="text-sm text-bit hover:underline">
-          Event seat plan <span aria-hidden>↗</span>
+          {t("event.eventSeatPlan")} <span aria-hidden>↗</span>
         </a>
       )}
-      {picking && seats.length > 0 && <Pill tone="emerald">Pick your seat</Pill>}
-      {published ? <Pill tone="emerald">Final</Pill> : seats.length > 0 && <Pill tone="amber">Not final yet</Pill>}
+      {picking && seats.length > 0 && <Pill tone="emerald">{t("event.pickYourSeat")}</Pill>}
+      {published ? <Pill tone="emerald">{t("event.final")}</Pill> : seats.length > 0 && <Pill tone="amber">{t("event.notFinal")}</Pill>}
     </span>
   );
   const wishesCard = my?.status === "going" && !published && seats.length > 0 && (
-    <Card title="Seat wishes">
-      <p className="mb-3 text-sm text-muted">Tell the leads where you&apos;d like to sit. They plan the seats after the deadline.</p>
+    <Card title={t("event.seatWishes")}>
+      <p className="mb-3 text-sm text-muted">{t("event.seatWishesIntro")}</p>
       <SeatWishes
         lanId={l.id}
         people={rows
@@ -297,23 +338,23 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
       {/* Your answer and your checklist sit above the tabs, so they show on every tab. */}
       <div className={`grid items-stretch gap-4 ${showChecklist && !compactAnswer ? "lg:grid-cols-[20rem_minmax(0,1fr)] 2xl:grid-cols-[22rem_minmax(0,1fr)]" : ""}`}>
         {compactAnswer ? null : l.interestCheck && !l.cancelledAt ? (
-        <section aria-label="Would you come?" className="rounded-card border border-line bg-surface p-3 sm:p-4">
-          <h2 className="mb-1 text-sm font-semibold text-fg">Would you come?</h2>
-          <p className="mb-3 text-sm text-muted">Not binding: it helps the leads decide. You can sign up properly later.</p>
+        <section aria-label={t("event.wouldYouCome")} className="rounded-card border border-line bg-surface p-3 sm:p-4">
+          <h2 className="mb-1 text-sm font-semibold text-fg">{t("event.wouldYouCome")}</h2>
+          <p className="mb-3 text-sm text-muted">{t("event.notBinding")}</p>
           <InterestButtons lanId={l.id} current={myInterest} />
         </section>
         ) : (
-        <section aria-label="Your attendance" className="rounded-card border border-line bg-surface p-3 sm:p-4">
+        <section aria-label={t("event.yourAttendance")} className="rounded-card border border-line bg-surface p-3 sm:p-4">
           <div className="mb-3 flex items-center justify-between gap-2">
-            <h2 className="text-sm font-semibold text-fg">Your answer</h2>
+            <h2 className="text-sm font-semibold text-fg">{t("event.yourAnswer")}</h2>
             <StatusBadge status={my?.status} seat={seatOf.get(me.id)} />
           </div>
           {locked || closed ? (
             // Locked (ticket bought) or sign-up closed: just show the answer, no buttons.
             <div>
-              <p className="text-lg font-semibold text-fg">{ANSWER_TEXT[my?.status ?? "none"]}</p>
+              <p className="text-lg font-semibold text-fg">{t(`event.answer.${my?.status ?? "none"}`)}</p>
               <p className="mt-1 text-sm text-muted">
-                {l.cancelledAt ? "The event is cancelled." : locked ? ATTENDANCE_LOCKED_MSG : "Sign-up is closed."}
+                {l.cancelledAt ? t("event.cancelled") : locked ? t("event.locked") : t("event.signupClosed")}
               </p>
             </div>
           ) : (
@@ -321,20 +362,17 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           )}
           {my?.status === "waitlist" && (
             <p className="mt-3 text-sm text-seat-taken">
-              The group is full. You&apos;re <strong>#{myPlace ?? "?"}</strong> on the waitlist.{" "}
-              {l.waitlistAuto
-                ? "When a spot opens, the first in line moves up by itself and gets an email and a Discord DM."
-                : "When a spot opens, the leads pick who moves up and you get an email and a Discord DM."}{" "}
-              Not coming any more? Answer &quot;Not coming&quot; so the next person gets the spot sooner.
+              {t.rich("event.waitlistPlace", { place: <strong>#{myPlace ?? "?"}</strong> })}{" "}
+              {l.waitlistAuto ? t("event.waitlistAuto") : t("event.waitlistManual")} {t("event.waitlistLeave")}
             </p>
           )}
           {atTheVenue && my?.status === "going" && (
             <div className="mt-3 space-y-2 border-t border-line pt-3">
               <CheckInButton lanId={l.id} arrived={!!my.arrivedAt} />
               <p className="text-xs text-muted">
-                {arrived.length} of {going.length} here
+                {t("event.hereCount", { arrived: arrived.length, going: going.length })}
                 {onTheWay.length > 0 && onTheWay.length <= 12 && (
-                  <> · on the way: {onTheWay.map((r) => names.get(r.userId) ?? "?").join(", ")}</>
+                  <> · {t("event.onTheWay", { names: onTheWay.map((r) => names.get(r.userId) ?? "?").join(", ") })}</>
                 )}
               </p>
             </div>
@@ -344,7 +382,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
         {showChecklist && (
           <LanChecklist
             variant="strip"
-            answer={compactAnswer && <LockedAnswerBadge status={my.status} note={ATTENDANCE_LOCKED_MSG} />}
+            answer={compactAnswer && <LockedAnswerBadge status={my.status} />}
             lanId={l.id}
             steps={steps}
             ticketBought={my.ticketBought}
@@ -355,23 +393,21 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
 
       <Tabs
         tabs={[
-          { id: "overview", label: "Overview" },
-          { id: "seats", label: "Seats", badge: picking && seats.length > 0 ? "pick yours" : undefined },
-          { id: "attendees", label: "Attendees", count: going.length },
-          { id: "travel", label: "Travel", badge: openRequests ? `${openRequests} looking` : undefined },
-          { id: "gear", label: "Packing list" },
-          { id: "games", label: "Games", badge: my?.status === "going" && gamesToInstall ? `${gamesToInstall} to install` : undefined },
-          { id: "food", label: "Food", badge: openFood ? `${openFood} open` : undefined },
+          { id: "overview", label: t("event.tabs.overview") },
+          { id: "seats", label: t("event.tabs.seats"), badge: picking && seats.length > 0 ? t("event.tabs.pickYours") : undefined },
+          { id: "attendees", label: t("event.tabs.attendees"), count: going.length },
+          { id: "travel", label: t("event.tabs.travel"), badge: openRequests ? t("event.tabs.looking", { count: openRequests }) : undefined },
+          { id: "gear", label: t("event.tabs.gear") },
+          { id: "games", label: t("event.tabs.games"), badge: my?.status === "going" && gamesToInstall ? t("event.tabs.toInstall", { count: gamesToInstall }) : undefined },
+          { id: "food", label: t("event.tabs.food"), badge: openFood ? t("event.tabs.open", { count: openFood }) : undefined },
         ]}
         active={tab}
-        hrefFor={(t) => (t === "overview" ? `/lans/${l.id}` : `/lans/${l.id}?tab=${t}`)}
+        hrefFor={(tb) => (tb === "overview" ? `/lans/${l.id}` : `/lans/${l.id}?tab=${tb}`)}
       />
 
       {tab === "travel" && (
         <div>
-          <p className="mb-4 max-w-2xl text-sm text-muted">
-            Share rides and places to sleep, grouped by town. Join a ride with free seats, or post where you need one from.
-          </p>
+          <p className="mb-4 max-w-2xl text-sm text-muted">{t("event.travelIntro")}</p>
           <TravelBoard lanId={l.id} posts={travelViews} meId={me.id} canPost={canTakePart} isManager={isAdmin} />
         </div>
       )}
@@ -404,7 +440,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           meId={me.id}
           canOrder={canOrderFood && !l.cancelledAt}
           currency={currency}
-          announceHint={!l.publishedAt ? "The event is still a draft, so nobody gets a DM." : null}
+          announceHint={!l.publishedAt ? t("event.draftNoDm") : null}
         />
       )}
 
@@ -413,8 +449,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           {seats.length > 0 && my?.status === "going" && (picking || mySeatLabel) && !my.paid && !my.ticketBought && (
             <p className="rounded-md border border-warn/30 bg-warn/10 px-3 py-2 text-sm text-warn">
               {mySeatLabel
-                ? `You have seat ${mySeatLabel}. Tick "I have my ticket" in your checklist above.`
-                : `Tick "I have my ticket" in your checklist above, then pick your seat.`}
+                ? t("event.haveSeatTicket", { seat: mySeatLabel })
+                : t("event.tickTicketThenPick")}
             </p>
           )}
           {seats.length > 0 && (published || isAdmin || picking) ? (
@@ -425,7 +461,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
               meId={me.id}
               mode={picking && my?.status === "going" && (my.ticketBought || my.paid) ? "pick" : "view"}
               seats={seats.map((s) => seatView(s, people, avatars))}
-              title="Our seats"
+              title={t("event.ourSeats")}
               actions={seatPills}
             >
               {wishesCard}
@@ -434,11 +470,14 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           ) : (
             <div className="grid items-start gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_22rem]">
               <div className="min-w-0 space-y-4 sm:space-y-6">
-                <Card title="Our seats" actions={seatPills}>
+                <Card title={t("event.ourSeats")} actions={seatPills}>
                   <p className="text-sm text-muted">
                     {seats.length === 0
-                      ? "The leads haven't entered the group's seats yet."
-                      : `The group has ${seats.length} seats (${seats[0]?.label}${seats.length > 1 ? `–${seats[seats.length - 1]?.label}` : ""}). The leads assign them after the deadline and then finalize the seat plan here.`}
+                      ? t("event.noSeatsYet")
+                      : t("event.groupSeats", {
+                          count: seats.length,
+                          range: `${seats[0]?.label}${seats.length > 1 ? `–${seats[seats.length - 1]?.label}` : ""}`,
+                        })}
                   </p>
                 </Card>
                 {wishesCard}
@@ -450,13 +489,13 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
 
       {tab === "attendees" && (
         <Card
-          title={`Attendees (${going.length}${l.capacity ? ` / ${l.capacity}` : ""})`}
-          actions={full && <Pill tone="red">Full · new sign-ups go on the waitlist</Pill>}
+          title={l.capacity ? t("event.attendeesTitleOf", { count: going.length, capacity: l.capacity }) : t("event.attendeesTitle", { count: going.length })}
+          actions={full && <Pill tone="red">{t("event.fullWaitlist")}</Pill>}
         >
-          <AttendeeList title="Coming" list={going} profileBase={profileBase} names={names} verified={verified} avatars={avatars} profiles={profiles} seatOf={seatOf} showPaid={isAdmin} meId={me.id} />
-          <AttendeeList title="Waitlist" positions={linePos} list={group("waitlist")} profileBase={profileBase} names={names} verified={verified} avatars={avatars} profiles={profiles} seatOf={seatOf} showPaid={isAdmin} meId={me.id} />
-          <AttendeeList title="Unsure" list={group("maybe")} profileBase={profileBase} names={names} verified={verified} avatars={avatars} profiles={profiles} seatOf={seatOf} showPaid={false} meId={me.id} />
-          {group("declined").length > 0 && <p className="mt-3 text-xs text-muted">{group("declined").length} can&apos;t make it.</p>}
+          <AttendeeList t={t} title={t("event.coming")} list={going} profileBase={profileBase} names={names} verified={verified} avatars={avatars} profiles={profiles} seatOf={seatOf} showPaid={isAdmin} meId={me.id} />
+          <AttendeeList t={t} title={t("event.waitlist")} positions={linePos} list={group("waitlist")} profileBase={profileBase} names={names} verified={verified} avatars={avatars} profiles={profiles} seatOf={seatOf} showPaid={isAdmin} meId={me.id} />
+          <AttendeeList t={t} title={t("event.unsure")} list={group("maybe")} profileBase={profileBase} names={names} verified={verified} avatars={avatars} profiles={profiles} seatOf={seatOf} showPaid={false} meId={me.id} />
+          {group("declined").length > 0 && <p className="mt-3 text-xs text-muted">{t("event.cantMakeIt", { count: group("declined").length })}</p>}
         </Card>
       )}
 
@@ -465,26 +504,26 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
         // Phones: the event first, dates last.
         <div className="grid grid-cols-1 items-start gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_22rem]">
           <div className="order-last min-w-0 space-y-4 sm:space-y-6 lg:order-none lg:col-start-2 lg:row-span-2 lg:row-start-1">
-            <Card title="Dates">
+            <Card title={t("event.dates")}>
               <dl className="space-y-3 text-sm">
-                <DateRow label="Answer by" d={l.signupDeadline} now={now} />
-                <DateRow label="Buy ticket by" d={l.paymentDueDate} now={now} />
+                <DateRow label={t("event.answerBy")} d={l.signupDeadline} now={now} t={t} />
+                <DateRow label={t("event.buyTicketBy")} d={l.paymentDueDate} now={now} t={t} />
                 {l.price && (
                   <div className="flex justify-between">
-                    <dt className="text-muted">Ticket price</dt>
+                    <dt className="text-muted">{t("event.ticketPrice")}</dt>
                     <dd>{l.price}</dd>
                   </div>
                 )}
                 {my && (my.status === "going" || my.status === "waitlist") && l.paymentDueDate && (
                   <div className="flex justify-between">
-                    <dt className="text-muted">Your ticket</dt>
+                    <dt className="text-muted">{t("event.yourTicket")}</dt>
                     <dd>
                       {my.paid ? (
-                        <Pill tone="emerald">Confirmed</Pill>
+                        <Pill tone="emerald">{t("event.ticketConfirmed")}</Pill>
                       ) : my.ticketBought ? (
-                        <Pill tone="amber">Reported</Pill>
+                        <Pill tone="amber">{t("event.ticketReported")}</Pill>
                       ) : (
-                        <Pill tone="red">Open</Pill>
+                        <Pill tone="red">{t("event.ticketOpen")}</Pill>
                       )}
                     </dd>
                   </div>
@@ -495,13 +534,13 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
 
           <div className="min-w-0 space-y-4 sm:space-y-6 lg:col-start-1 lg:row-start-1">
             {news.length > 0 && (
-              <Card title="News from the leads">
+              <Card title={t("event.news")}>
                 <ul className="space-y-4">
                   {news.slice(0, 5).map((n) => (
                     <li key={n.id} className="text-sm">
                       <p className="whitespace-pre-wrap text-fg/90">{n.text}</p>
                       <p className="mt-1 flex items-center gap-3 text-xs text-faint">
-                        {n.authorId ? (newsNames.get(n.authorId) ?? "Lead") : "Lead"} · {fmtDate(n.createdAt)}
+                        {(n.authorId && newsNames.get(n.authorId)) || t("event.lead")} · {fmtDate(n.createdAt, t.locale)}
                         {isAdmin && <DeleteNewsButton id={n.id} />}
                       </p>
                     </li>
@@ -519,24 +558,24 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
             <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
               <Link href={`/lans/${l.id}?tab=seats`} scroll={false} className="group rounded-card border border-line bg-surface p-4 transition hover:border-bit/50 sm:p-5">
                 <p className="flex items-center justify-between text-xs font-medium uppercase tracking-wide text-muted">
-                  Your seat <span className="text-bit transition group-hover:translate-x-0.5" aria-hidden>→</span>
+                  {t("event.yourSeat")} <span className="text-bit transition group-hover:translate-x-0.5" aria-hidden>→</span>
                 </p>
                 <p className="mt-1 font-mono text-2xl font-bold text-fg">{seatOf.get(me.id) ?? mySeatLabel ?? "–"}</p>
                 <p className="mt-1 text-sm text-muted">
                   {seats.length === 0
-                    ? "Seats not entered yet"
+                    ? t("event.seatsNotEntered")
                     : published
-                      ? `Seat plan final · ${seats.filter((s) => !s.userId && !s.locked).length} free`
+                      ? t("event.planFinalFree", { count: seats.filter((s) => !s.userId && !s.locked).length })
                       : picking
                         ? mySeatLabel
-                          ? "Not final yet · leads finalize the plan"
-                          : "Self pick is on · take a free seat"
-                        : "Leads finalize the seat plan soon"}
+                          ? t("event.pickNotFinal")
+                          : t("event.pickOn")
+                        : t("event.finalizeSoon")}
                 </p>
               </Link>
               <Link href={`/lans/${l.id}?tab=attendees`} scroll={false} className="group rounded-card border border-line bg-surface p-4 transition hover:border-bit/50 sm:p-5">
                 <p className="flex items-center justify-between text-xs font-medium uppercase tracking-wide text-muted">
-                  Who&apos;s coming <span className="text-bit transition group-hover:translate-x-0.5" aria-hidden>→</span>
+                  {t("event.whosComing")} <span className="text-bit transition group-hover:translate-x-0.5" aria-hidden>→</span>
                 </p>
                 <p className="mt-1 text-2xl font-bold text-fg">
                   {going.length}
@@ -545,15 +584,15 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
                 <p className="mt-1 truncate text-sm text-muted">
                   {going.length
                     ? going.slice(0, 4).map((a) => names.get(a.userId)).join(", ") + (going.length > 4 ? ` +${going.length - 4}` : "")
-                    : "Nobody yet"}
-                  {group("waitlist").length > 0 && ` · ${group("waitlist").length} waiting`}
+                    : t("event.nobodyYet")}
+                  {group("waitlist").length > 0 && ` · ${t("event.waiting", { count: group("waitlist").length })}`}
                 </p>
               </Link>
             </div>
 
             <div className="grid items-start gap-4 sm:gap-6 md:grid-cols-2">
-              <Card title={orgaIds.length ? "Leads" : "Contact"}>
-                <p className="mb-3 text-sm text-muted">Questions about this LAN? Ask the leads.</p>
+              <Card title={orgaIds.length ? t("event.leads") : t("event.contact")}>
+                <p className="mb-3 text-sm text-muted">{t("event.askLeads")}</p>
                 <ul className="space-y-2">
                   {orgas.map((o) => (
                     <li key={o.id} className="flex items-center justify-between gap-2 text-sm">
@@ -567,45 +606,45 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
                         )}
                       </span>
                       <a href={`mailto:${o.email}?subject=${encodeURIComponent(l.name)}`} className="text-bit hover:underline">
-                        Email
+                        {t("event.email")}
                       </a>
                     </li>
                   ))}
                 </ul>
               </Card>
 
-              <Card title={lanType ? `Your nick & ID at ${lanType.name}` : "Your nick & ID at this LAN"}>
+              <Card title={lanType ? t("event.nickAtType", { type: lanType.name }) : t("event.nickAtLan")}>
                 <p className="mb-3 text-sm text-muted">
-                  Shown as <strong className="text-fg">{myNick}</strong>.{" "}
-                  {lanType
-                    ? `The nick you set here is used for every ${lanType.name} event. `
-                    : "The nick you set here is used for this LAN only. "}
-                  Your default nick is on your{" "}
-                  <Link href="/profile" className="text-bit hover:underline">
-                    profile
-                  </Link>
-                  .
+                  {t.rich("event.shownAs", { nick: <strong className="text-fg">{myNick}</strong> })}{" "}
+                  {lanType ? t("event.nickForType", { type: lanType.name }) : t("event.nickForLan")}{" "}
+                  {t.rich("event.defaultNick", {
+                    profile: (
+                      <Link href="/profile" className="text-bit hover:underline">
+                        {t("event.profileLink")}
+                      </Link>
+                    ),
+                  })}
                 </p>
                 {lanType ? (
-                  <NickManager nicks={myNicks} typeId={lanType.id} placeholder={`Your ${lanType.name} nick`} />
+                  <NickManager nicks={myNicks} typeId={lanType.id} placeholder={t("event.typeNick", { type: lanType.name })} />
                 ) : (
                   <NickManager nicks={myNicks} lanId={l.id} />
                 )}
                 <div className="mt-4 border-t border-line pt-4">
-                  <h3 className="mb-1 text-sm font-medium text-fg">{lanType ? `Your ${lanType.name} ID` : "Your ID at this LAN"}</h3>
+                  <h3 className="mb-1 text-sm font-medium text-fg">{lanType ? t("event.typeId", { type: lanType.name }) : t("event.lanIdTitle")}</h3>
                   <p className="mb-2 text-sm text-muted">
-                    Optional: your user ID or ticket number on the LAN&apos;s own site, so the leads can match you up.
-                    {pattern
-                      ? " The attendee list links it to your profile there."
-                      : " Only leads see it."}
+                    {t("event.lanIdIntro")} {pattern ? t("event.lanIdLinked") : t("event.lanIdLeads")}
                   </p>
-                  <LanIdForm value={myLanId} lanId={l.id} label={lanType ? `${lanType.name} ID` : "LAN ID"} />
+                  <LanIdForm value={myLanId} lanId={l.id} label={lanType ? t("profile.typeId", { type: lanType.name }) : t("profile.lanId")} />
                   {myProfile && (
                     <p className="mt-1.5 truncate text-xs text-muted">
-                      Your profile:{" "}
-                      <a href={myProfile} target="_blank" rel="noreferrer" className="text-bit hover:underline">
-                        {myProfile}
-                      </a>
+                      {t.rich("profile.yourProfileLink", {
+                        url: (
+                          <a href={myProfile} target="_blank" rel="noreferrer" className="text-bit hover:underline">
+                            {myProfile}
+                          </a>
+                        ),
+                      })}
                     </p>
                   )}
                 </div>
@@ -619,21 +658,22 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
 }
 
 
-function DateRow({ label, d, now }: { label: string; d: Date | null; now: Date }) {
+function DateRow({ label, d, now, t }: { label: string; d: Date | null; now: Date; t: T }) {
   if (!d) return null;
   const past = d < now;
   return (
     <div className="flex justify-between gap-2">
       <dt className="text-muted">{label}</dt>
       <dd className="text-right">
-        {fmtDate(d)}
-        <span className={`block text-xs ${past ? "text-faint" : "text-warn"}`}>{relative(d, now)}</span>
+        {fmtDate(d, t.locale)}
+        <span className={`block text-xs ${past ? "text-faint" : "text-warn"}`}>{relative(d, now, t.locale)}</span>
       </dd>
     </div>
   );
 }
 
 function AttendeeList({
+  t,
   title,
   list,
   names,
@@ -646,6 +686,7 @@ function AttendeeList({
   profiles,
   positions,
 }: {
+  t: T;
   /** Waitlist: keep the line's order and show each person's place instead of sorting by name. */
   positions?: Map<string, number>;
   avatars: Map<string, AvatarData>;
@@ -687,14 +728,14 @@ function AttendeeList({
             href={profiles.get(a.userId)}
             target="_blank"
             rel="noreferrer"
-            title="Profile on the event's site"
+            title={t("event.profileOnSite")}
             className="rounded-full border border-line px-2 py-0.5 text-xs text-bit hover:border-bit/50 hover:underline"
           >
-            Profile ↗
+            {t("event.profileShort")}
           </a>
         )}
         {seatOf.get(a.userId) && <Pill>{seatOf.get(a.userId)}</Pill>}
-        {showPaid && (a.paid ? <Pill tone="emerald">ticket ok</Pill> : a.ticketBought ? <Pill tone="amber">reported</Pill> : <Pill tone="red">no ticket</Pill>)}
+        {showPaid && (a.paid ? <Pill tone="emerald">{t("event.ticketOk")}</Pill> : a.ticketBought ? <Pill tone="amber">{t("event.reported")}</Pill> : <Pill tone="red">{t("event.noTicket")}</Pill>)}
       </span>
     </li>
   );
@@ -711,7 +752,7 @@ function AttendeeList({
       {fold && (
         <details className="group mt-1">
           <summary className="cursor-pointer list-none py-2 text-sm text-bit hover:underline group-open:hidden">
-            Show all {sorted.length}
+            {t("event.showAll", { count: sorted.length })}
           </summary>
           <ul className="grid gap-1 sm:grid-cols-2 xl:grid-cols-3">{sorted.slice(FIRST).map(item)}</ul>
         </details>

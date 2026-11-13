@@ -1,6 +1,8 @@
 "use server";
 
 import { and, eq, isNull, sql } from "drizzle-orm";
+import { LOCALES } from "@/i18n/config";
+import { getT } from "@/i18n/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -40,6 +42,8 @@ const clanInput = z.object({
   joinPolicy: z.enum(["approval", "open", "invite"]).default("approval"),
   guestClaims: z.enum(GUEST_CLAIM_MODES).default("approval"),
   nameDisplay: z.enum(NAME_DISPLAYS).default("full"),
+  // "" = the instance default
+  locale: z.union([z.enum(LOCALES), z.literal("").transform(() => null)]).default(null),
 });
 
 export async function createClan(_: FormState, formData: FormData): Promise<FormState> {
@@ -50,8 +54,9 @@ export async function createClan(_: FormState, formData: FormData): Promise<Form
     joinPolicy: formData.get("joinPolicy") ?? "approval",
     guestClaims: formData.get("guestClaims") ?? "approval",
     nameDisplay: formData.get("nameDisplay") ?? "full",
+    locale: formData.get("locale") ?? "",
   });
-  if (!parsed.success) return { error: "Give the clan a name (at least 2 characters)." };
+  if (!parsed.success) return { error: (await getT())("clanForm.nameError") };
   const row = db
     .insert(clan)
     .values({ ...parsed.data, slug: uniqueSlug(parsed.data.name) })
@@ -72,8 +77,9 @@ export async function updateClan(_: FormState, formData: FormData): Promise<Form
     joinPolicy: formData.get("joinPolicy") ?? "approval",
     guestClaims: formData.get("guestClaims") ?? "approval",
     nameDisplay: formData.get("nameDisplay") ?? "full",
+    locale: formData.get("locale") ?? "",
   });
-  if (!parsed.success) return { error: "Give the clan a name (at least 2 characters)." };
+  if (!parsed.success) return { error: (await getT())("clanForm.nameError") };
   let avatar: string | undefined;
   const file = formData.get("avatar");
   if (file instanceof File && file.size > 0) {
@@ -96,6 +102,7 @@ export async function updateClan(_: FormState, formData: FormData): Promise<Form
       before.joinPolicy !== parsed.data.joinPolicy && "join rule",
       before.guestClaims !== parsed.data.guestClaims && "guest claiming",
       before.nameDisplay !== parsed.data.nameDisplay && "name display",
+      (before.locale ?? null) !== parsed.data.locale && "language",
       (avatar || (formData.get("removeAvatar") === "on" && before.avatar)) && "avatar",
     ].filter((f): f is string => !!f);
     if (fields.length) audit({ actorId: me.id, action: "clan.update", clanId, data: { fields } });
@@ -104,8 +111,8 @@ export async function updateClan(_: FormState, formData: FormData): Promise<Form
   redirect(`/clans/${slug}/settings`);
 }
 
-/** Joins an open clan directly, or asks to join an approval clan. */
-export async function joinClan(clanId: string) {
+/** Joins an open clan directly, or asks to join an approval clan. `next`: where to go afterwards (a shared event link). */
+export async function joinClan(clanId: string, next?: unknown) {
   const me = await requireUser();
   const c = getClan(clanId);
   if (!c) throw new Error("Clan not found");
@@ -123,13 +130,17 @@ export async function joinClan(clanId: string) {
     );
   }
   revalidatePath("/", "layout");
-  redirect(afterJoin(c, me.id));
+  // Bound form actions also get the FormData here, so only a same-site path counts.
+  const back = typeof next === "string" && next.startsWith("/") && !next.startsWith("//") ? next : undefined;
+  redirect(afterJoin(c, me.id, back));
 }
 
 /** Where a new member lands: the guest check when the leads seem to have added them already. */
-function afterJoin(c: { id: string; slug: string; guestClaims: string }, userId: string) {
+function afterJoin(c: { id: string; slug: string; guestClaims: string }, userId: string, next?: string) {
   const member = ["member", "admin"].includes(clanRole(userId, c.id) ?? "");
-  return member && c.guestClaims !== "off" && openGuestMatches(c.id, userId).length ? `/clans/${c.slug}/claim` : `/clans/${c.slug}`;
+  if (member && c.guestClaims !== "off" && openGuestMatches(c.id, userId).length) return `/clans/${c.slug}/claim`;
+  // Pending requests go back too: the shared event shows that the request is waiting.
+  return next ?? `/clans/${c.slug}`;
 }
 
 export async function joinWithInvite(code: string) {

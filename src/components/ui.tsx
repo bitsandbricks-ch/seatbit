@@ -1,6 +1,8 @@
-import type { AttendanceStatus } from "@/db/schema";
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
+
+// Small pieces with built-in text live in a client module so they can use the translations.
+export { LockedAnswerBadge, StatusBadge, Verified } from "./ui-client";
 
 /**
  * Buttons and inputs are 40px tall on phones (thumb-sized) and a bit tighter
@@ -43,60 +45,6 @@ export function Card({
   );
 }
 
-const statusStyles: Record<AttendanceStatus | "none", string> = {
-  going: "bg-bit-soft text-bit border-bit/30",
-  maybe: "bg-warn/15 text-warn border-warn/30",
-  declined: "bg-line/60 text-muted border-line",
-  waitlist: "bg-seat-taken/15 text-seat-taken border-seat-taken/30",
-  none: "bg-raised text-muted border-line",
-};
-const statusText: Record<AttendanceStatus | "none", string> = {
-  going: "Attending",
-  maybe: "Unsure",
-  declined: "Not going",
-  waitlist: "Waitlist · full",
-  none: "No answer",
-};
-
-/** A member's status at a LAN: no answer, attending, seat claimed, waitlist (full), maybe, not going. */
-export function StatusBadge({
-  status,
-  seat,
-}: {
-  status: AttendanceStatus | null | undefined;
-  seat?: string | null;
-}) {
-  const s = status ?? "none";
-  return (
-    <span className={`inline-flex whitespace-nowrap rounded-full border px-2 py-0.5 text-xs font-medium ${statusStyles[s]}`}>
-      {s === "going" && seat ? `Seat ${seat}` : statusText[s]}
-    </span>
-  );
-}
-
-/**
- * A locked answer (the member has a ticket) as a small badge instead of the big answer card.
- * Tapping it shows who can still change it; <details> keeps it working without client JS.
- */
-export function LockedAnswerBadge({ status, note }: { status: AttendanceStatus; note: string }) {
-  const label = { going: "Coming", maybe: "Unsure", waitlist: "Waitlist", declined: "Not coming" }[status];
-  return (
-    <details className="relative shrink-0">
-      <summary
-        className={`inline-flex cursor-pointer list-none items-center gap-1 whitespace-nowrap rounded-full border px-2 py-0.5 text-xs font-medium [&::-webkit-details-marker]:hidden ${statusStyles[status]}`}
-        title={note}
-      >
-        <svg viewBox="0 0 16 16" width={12} height={12} aria-hidden className="shrink-0">
-          <path fill="currentColor" d="M4.5 7V5a3.5 3.5 0 0 1 7 0v2h.5A1 1 0 0 1 13 8v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1zm1.5 0h4V5a2 2 0 0 0-4 0z" />
-        </svg>
-        {label}
-        <span className="sr-only">, locked</span>
-      </summary>
-      <p className="absolute left-0 top-full z-20 mt-1.5 w-64 rounded-md border border-line bg-raised p-2.5 text-xs text-fg shadow-lg">{note}</p>
-    </details>
-  );
-}
-
 export function Pill({ children, tone = "zinc" }: { children: ReactNode; tone?: "zinc" | "red" | "emerald" | "amber" }) {
   const tones = {
     zinc: "bg-raised text-fg/90",
@@ -105,30 +53,6 @@ export function Pill({ children, tone = "zinc" }: { children: ReactNode; tone?: 
     amber: "bg-warn/15 text-warn",
   };
   return <span className={`inline-flex items-center whitespace-nowrap rounded-bit px-1.5 py-0.5 text-xs ${tones[tone]}`}>{children}</span>;
-}
-
-/**
- * Check mark after a name: this person has their own account (signed in with Discord),
- * not a guest a lead typed in.
- */
-export function Verified({ size = 14 }: { size?: number }) {
-  return (
-    <svg
-      viewBox="0 0 16 16"
-      width={size}
-      height={size}
-      role="img"
-      aria-label="Verified account"
-      className="inline-block shrink-0 align-[-0.125em] text-bit"
-    >
-      <title>Verified account: signed in themselves, not a guest</title>
-      <path
-        fill="currentColor"
-        d="M8 0.8l1.7 1.3 2.1-.2.8 2 2 .8-.2 2.1L15.7 8l-1.3 1.7.2 2.1-2 .8-.8 2-2.1-.2L8 15.7l-1.7-1.3-2.1.2-.8-2-2-.8.2-2.1L.3 8l1.3-1.7-.2-2.1 2-.8.8-2 2.1.2z"
-      />
-      <path fill="none" stroke="var(--color-ink)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" d="M5.2 8.2l1.9 1.9 3.8-4" />
-    </svg>
-  );
 }
 
 export function Field({ label: l, children, hint }: { label: string; children: ReactNode; hint?: string }) {

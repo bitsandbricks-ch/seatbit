@@ -247,6 +247,19 @@ export const SETTINGS: SettingDef[] = [
   },
 
   {
+    key: "i18n.defaultLocale",
+    group: "general",
+    label: "Default language",
+    kind: "select",
+    env: "DEFAULT_LOCALE",
+    default: "en",
+    options: [
+      { value: "en", label: "English" },
+      { value: "de", label: "Deutsch" },
+    ],
+    help: "Used when a browser asks for neither English nor German, for mails to people who haven't picked a language, and for Discord posts of clans without their own language.",
+  },
+  {
     key: "food.currency",
     group: "general",
     label: "Currency for food orders",

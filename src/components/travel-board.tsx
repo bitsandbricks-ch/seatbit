@@ -10,6 +10,7 @@ import {
 } from "@/app/travel-gear-actions";
 import type { TravelKind } from "@/db/schema";
 import { Field, Input, Pill, Segmented, btnGhost, btnPrimary, btnSecondary } from "./ui";
+import { useT } from "@/i18n/client";
 
 export type TravelPostView = {
   id: string;
@@ -25,37 +26,6 @@ export type TravelPostView = {
   notComing: boolean;
   spots: { userId: string; name: string }[];
 };
-
-const copy = {
-  ride: {
-    offer: "Offer a ride",
-    request: "Need a ride",
-    offerTitle: "drives",
-    requestTitle: "needs a ride",
-    places: "Free seats",
-    town: "Leaving from",
-    townPh: "e.g. Luzern",
-    when: "When",
-    whenPh: "e.g. Fri 16:00, back Sun evening",
-    unit: (n: number) => (n === 1 ? "seat" : "seats"),
-    join: "Join ride",
-    empty: "No rides yet. Got a car with free seats? Offer them, or say where you need a ride from.",
-  },
-  sleep: {
-    offer: "Offer a place to sleep",
-    request: "Need a place to sleep",
-    offerTitle: "has room",
-    requestTitle: "needs a place to sleep",
-    places: "Free places",
-    town: "Town",
-    townPh: "e.g. near the venue",
-    when: "Nights",
-    whenPh: "e.g. Fri and Sat night",
-    unit: (n: number) => (n === 1 ? "place" : "places"),
-    join: "Take a place",
-    empty: "Nobody has offered or asked for a place to sleep yet.",
-  },
-} as const;
 
 const townKey = (t: string) => t.trim().toLowerCase();
 
@@ -76,7 +46,7 @@ export function TravelBoard({
   const [form, setForm] = useState<{ mode: "offer" | "request"; post?: TravelPostView } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
-  const c = copy[kind];
+  const t = useT();
 
   const run = (fn: () => Promise<unknown>, after?: () => void) =>
     start(async () => {
@@ -85,7 +55,7 @@ export function TravelBoard({
         await fn();
         after?.();
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed");
+        setError(e instanceof Error ? e.message : t("eventUi.failed"));
       }
     });
 
@@ -112,17 +82,17 @@ export function TravelBoard({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Segmented
-          label="Travel"
+          label={t("travel.label")}
           value={kind}
           onChange={(k) => {
             setKind(k);
             setForm(null);
           }}
-          options={(["ride", "sleep"] as const).map((k) => ({ id: k, label: k === "ride" ? "Carpool" : "Sleeping", count: count(k) }))}
+          options={(["ride", "sleep"] as const).map((k) => ({ id: k, label: k === "ride" ? t("travel.carpool") : t("travel.sleeping"), count: count(k) }))}
         />
         <p className="text-sm text-muted">
-          <span className="text-bit">{free}</span> free {c.unit(free)} · <span className="text-warn">{looking}</span>{" "}
-          looking
+          <span className="text-bit">{t(`travel.${kind}.free`, { count: free })}</span> ·{" "}
+          <span className="text-warn">{t("travel.looking", { count: looking })}</span>
         </p>
       </div>
 
@@ -141,27 +111,27 @@ export function TravelBoard({
         ) : (
           <div className="flex flex-wrap gap-2">
             <button className={btnPrimary} onClick={() => setForm({ mode: "offer" })}>
-              {c.offer}
+              {t(`travel.${kind}.offer`)}
             </button>
             <button className={btnSecondary} onClick={() => setForm({ mode: "request" })}>
-              {c.request}
+              {t(`travel.${kind}.request`)}
             </button>
           </div>
         )
       ) : (
         <p className="rounded-md bg-raised/60 px-3 py-2 text-sm text-muted">
-          Say you&apos;re coming (or unsure) on the Overview tab to offer or ask for {kind === "ride" ? "a ride" : "a place to sleep"}.
+          {t(`travel.${kind}.sayComing`)}
         </p>
       )}
       {error && <p className="text-sm text-danger">{error}</p>}
 
-      {sorted.length === 0 && <p className="text-sm text-muted">{c.empty}</p>}
+      {sorted.length === 0 && <p className="text-sm text-muted">{t(`travel.${kind}.empty`)}</p>}
 
       <div className="grid items-start gap-x-6 gap-y-4 lg:grid-cols-2">
       {sorted.map((g) => (
         <section key={townKey(g.town)} className="min-w-0">
           <h3 className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted">
-            <span aria-hidden>📍</span> {g.town || "Somewhere"}
+            <span aria-hidden>📍</span> {g.town || t("travel.somewhere")}
           </h3>
           <ul className="space-y-2">
             {g.posts.map((p) => {
@@ -179,10 +149,10 @@ export function TravelBoard({
                     <div className="min-w-0">
                       <p>
                         <span className={`font-semibold ${mine ? "text-bit" : "text-fg"}`}>{p.name}</span>{" "}
-                        <span className="text-muted">{p.mode === "offer" ? c.offerTitle : c.requestTitle}</span>
+                        <span className="text-muted">{p.mode === "offer" ? t(`travel.${kind}.offerTitle`) : t(`travel.${kind}.requestTitle`)}</span>
                         {p.notComing && (
                           <span className="ml-2">
-                            <Pill tone="red">not coming anymore</Pill>
+                            <Pill tone="red">{t("travel.notComing")}</Pill>
                           </span>
                         )}
                       </p>
@@ -192,11 +162,11 @@ export function TravelBoard({
                     <span className="shrink-0">
                       {p.mode === "offer" ? (
                         <Pill tone={left > 0 ? "emerald" : "zinc"}>
-                          {left > 0 ? `${left} of ${p.places} ${c.unit(p.places)} free` : "Full"}
+                          {left > 0 ? t(`travel.${kind}.left`, { left, count: p.places }) : t("travel.full")}
                         </Pill>
                       ) : (
                         <Pill tone="amber">
-                          {p.places} {c.unit(p.places)}
+                          {t(`travel.${kind}.need`, { count: p.places })}
                         </Pill>
                       )}
                     </span>
@@ -209,7 +179,7 @@ export function TravelBoard({
                           <span className={s.userId === meId ? "text-bit" : ""}>{s.name}</span>
                           {(canRemove || s.userId === meId) && (
                             <button
-                              aria-label={`Remove ${s.name}`}
+                              aria-label={t("travel.remove", { name: s.name })}
                               disabled={pending}
                               onClick={() => run(() => leaveTravelOffer(p.id, s.userId))}
                               className="text-muted hover:text-danger"
@@ -225,12 +195,12 @@ export function TravelBoard({
                   <div className="mt-2 flex flex-wrap gap-2">
                     {p.mode === "offer" && !mine && canPost && !iAmIn.has(p.id) && left > 0 && !p.notComing && (
                       <button className={btnPrimary} disabled={pending} onClick={() => run(() => joinTravelOffer(p.id))}>
-                        {c.join}
+                        {t(`travel.${kind}.join`)}
                       </button>
                     )}
                     {iAmIn.has(p.id) && (
                       <button className={btnSecondary} disabled={pending} onClick={() => run(() => leaveTravelOffer(p.id))}>
-                        Leave
+                        {t("travel.leave")}
                       </button>
                     )}
                     {p.mode === "request" &&
@@ -242,13 +212,13 @@ export function TravelBoard({
                           disabled={pending || o.places - o.spots.length < 1}
                           onClick={() => run(() => takeAlong(p.id, o.id))}
                         >
-                          {kind === "ride" ? "Take along" : "Host"}
+                          {t(`travel.${kind}.take`)}
                           {myOffers.length > 1 && ` (${o.town})`}
                         </button>
                       ))}
                     {mine && (
                       <button className={btnGhost} disabled={pending} onClick={() => setForm({ mode: p.mode, post: p })}>
-                        Edit
+                        {t("travel.edit")}
                       </button>
                     )}
                     {canRemove && (
@@ -257,7 +227,7 @@ export function TravelBoard({
                         disabled={pending}
                         onClick={() => run(() => deleteTravelPost(p.id))}
                       >
-                        Delete
+                        {t("travel.delete")}
                       </button>
                     )}
                   </div>
@@ -289,7 +259,7 @@ function PostForm({
   onSave: (v: TravelInput) => void;
   onCancel: () => void;
 }) {
-  const c = copy[kind];
+  const t = useT();
   const [v, setV] = useState({
     town: post?.town ?? "",
     places: String(post?.places ?? (mode === "offer" ? (kind === "ride" ? 3 : 2) : 1)),
@@ -305,24 +275,24 @@ function PostForm({
         onSave({ kind, mode, ...v, places: Number(v.places) });
       }}
     >
-      <p className="font-medium text-fg">{mode === "offer" ? c.offer : c.request}</p>
+      <p className="font-medium text-fg">{mode === "offer" ? t(`travel.${kind}.offer`) : t(`travel.${kind}.request`)}</p>
       <div className="grid gap-3 sm:grid-cols-[1fr_8rem]">
-        <Field label={mode === "request" && kind === "ride" ? "From" : c.town}>
+        <Field label={mode === "request" && kind === "ride" ? t("travel.from") : t(`travel.${kind}.town`)}>
           <Input
             required
             list={listId}
             value={v.town}
             maxLength={40}
-            placeholder={c.townPh}
+            placeholder={t(`travel.${kind}.townPh`)}
             onChange={(e) => setV({ ...v, town: e.target.value })}
           />
           <datalist id={listId}>
-            {towns.map((t) => (
-              <option key={t} value={t} />
+            {towns.map((tn) => (
+              <option key={tn} value={tn} />
             ))}
           </datalist>
         </Field>
-        <Field label={mode === "offer" ? c.places : "People"}>
+        <Field label={mode === "offer" ? t(`travel.${kind}.places`) : t("travel.people")}>
           <Input
             type="number"
             inputMode="numeric"
@@ -334,23 +304,23 @@ function PostForm({
           />
         </Field>
       </div>
-      <Field label={c.when}>
-        <Input value={v.whenText} maxLength={60} placeholder={c.whenPh} onChange={(e) => setV({ ...v, whenText: e.target.value })} />
+      <Field label={t(`travel.${kind}.when`)}>
+        <Input value={v.whenText} maxLength={60} placeholder={t(`travel.${kind}.whenPh`)} onChange={(e) => setV({ ...v, whenText: e.target.value })} />
       </Field>
-      <Field label="Note">
+      <Field label={t("travel.note")}>
         <Input
           value={v.note}
           maxLength={200}
-          placeholder={kind === "ride" ? "e.g. big trunk, room for a tower PC" : "e.g. air mattress, bring a sleeping bag"}
+          placeholder={t(`travel.${kind}.notePh`)}
           onChange={(e) => setV({ ...v, note: e.target.value })}
         />
       </Field>
       <div className="flex gap-2">
         <button type="submit" className={btnPrimary} disabled={pending}>
-          {post ? "Save" : mode === "offer" ? "Post offer" : "Post request"}
+          {post ? t("common.save") : mode === "offer" ? t("travel.postOffer") : t("travel.postRequest")}
         </button>
         <button type="button" className={btnGhost} onClick={onCancel}>
-          Cancel
+          {t("common.cancel")}
         </button>
       </div>
     </form>

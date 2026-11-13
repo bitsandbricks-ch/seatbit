@@ -20,22 +20,18 @@ import { YourData } from "@/components/delete-account";
 import { checkDeletion } from "@/lib/account";
 import { SocialsForm } from "@/components/socials";
 import { profileLink } from "@/lib/profile-link";
+import { getT } from "@/i18n/server";
+import type { T } from "@/i18n/translate";
+import { LanguageSelect } from "@/components/language-switch";
 
-const DM_RESULT: Record<string, string> = {
-  ok: "Test DM sent. Check your Discord DMs from the Seatbit bot.",
-  dms_off: "Discord DMs are off. Tick the box above and save first.",
-  guest: "Guest profiles can't get DMs.",
-  bot_not_set_up: "The Discord bot isn't set up yet (bot token or application ID missing in the platform settings).",
-  no_discord: "Your profile isn't linked to Discord. Link it under sign-in methods below.",
-  cant_dm:
-    "Discord refused the DM. The bot can only DM you if you share a server with it and that server allows DMs from members (Discord: server name → Privacy Settings → Direct Messages).",
-  error: "The DM failed for another reason. The server log has the details.",
-};
+const DM_RESULTS = ["ok", "dms_off", "guest", "bot_not_set_up", "no_discord", "cant_dm", "error"] as const;
 
 export default async function ProfilePage({ searchParams }: PageProps<"/profile">) {
   const me = await requireUser();
+  const t = await getT();
   const dmParam = (await searchParams).dm;
-  const dmResult = typeof dmParam === "string" ? DM_RESULT[dmParam] : undefined;
+  const dmKey = DM_RESULTS.find((k) => k === dmParam);
+  const dmResult = dmKey ? t(`profile.dm.${dmKey}`) : undefined;
   const nicks = db.select().from(schema.nickname).where(eq(schema.nickname.userId, me.id)).all();
   const lanIds = db.select().from(schema.lanAccount).where(eq(schema.lanAccount.userId, me.id)).all();
   const defaultNick = nicks.find((n) => !n.lanId && !n.typeId)?.nick ?? "";
@@ -70,10 +66,10 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
       <Columns
         aside={
           <>
-            <Card title="Sign-in methods">
+            <Card title={t("profile.signInMethods")}>
               <LinkedAccounts linked={accounts.map((a) => a.providerId)} available={enabledProviders()} />
             </Card>
-            <Card title="Your data">
+            <Card title={t("profile.yourData")}>
               <YourData
                 blockingClans={deletion.blockingClans.map((c) => ({ name: c.name, slug: c.slug }))}
                 clansToDelete={deletion.clansToDelete.map((c) => c.name)}
@@ -87,49 +83,50 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
           </>
         }
       >
-      <Card title="Account">
+      <Card title={t("profile.account")}>
         <form action={updateProfile} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
-            <Field label="First name">
+            <Field label={t("auth.firstName")}>
               <Input name="firstName" defaultValue={me.firstName} required maxLength={40} autoComplete="given-name" />
             </Field>
-            <Field label="Surname">
+            <Field label={t("auth.surname")}>
               <Input name="lastName" defaultValue={me.lastName} required maxLength={40} autoComplete="family-name" />
             </Field>
           </div>
-          <Field label="Nickname" hint="Your gamer tag, shown at every LAN unless you set a nick for that LAN type below.">
+          <Field label={t("auth.nickname")} hint={t("profile.nickHint")}>
             <Input name="nick" defaultValue={defaultNick} maxLength={32} autoComplete="nickname" />
           </Field>
           <label className="flex cursor-pointer items-start gap-3 rounded-md border border-line bg-raised/40 p-3 text-sm">
             <input type="checkbox" name="emailReminders" defaultChecked={me.emailReminders} className="mt-0.5" />
             <span>
-              Email reminders
-              <span className="block text-xs text-muted">
-                New events, lead news, deadlines, tickets and the day before a LAN, sent to {me.email}.
-              </span>
+              {t("profile.emailReminders")}
+              <span className="block text-xs text-muted">{t("profile.emailRemindersHint", { email: me.email })}</span>
             </span>
           </label>
           <input type="hidden" name="discordDmsShown" value="1" />
           <label className="flex cursor-pointer items-start gap-3 rounded-md border border-line bg-raised/40 p-3 text-sm">
             <input type="checkbox" name="discordDms" defaultChecked={me.discordDms} className="mt-0.5" />
             <span>
-              Discord DMs
+              {t("profile.discordDms")}
               <span className="block text-xs text-muted">
-                When something changes for me: seat, seat plan, event details, reminders, clan requests.
-                {!hasDiscord && " Link Discord under Sign-in methods to get them."}
+                {t("profile.discordDmsHint")}
+                {!hasDiscord && ` ${t("profile.discordDmsLink")}`}
               </span>
             </span>
           </label>
-          <button className={btnPrimary}>Save</button>
+          <button className={btnPrimary}>{t("common.save")}</button>
         </form>
+        <div className="mt-4 border-t border-line pt-4">
+          <span className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-muted">{t("language.label")}</span>
+          <LanguageSelect saved={me.locale} />
+        </div>
         {hasDiscord && me.discordDms && (
           <form action={sendTestDm} id="dms" className="mt-4 space-y-2 border-t border-line pt-4">
-            <button className={btnSecondary}>Send me a test DM</button>
+            <button className={btnSecondary}>{t("profile.testDm")}</button>
             {dmResult && <p className={`text-sm ${dmParam === "ok" ? "text-bit" : "text-muted"}`}>{dmResult}</p>}
             {joinServers.length > 0 && (
               <p className="text-sm text-muted">
-                Your clan&apos;s servers you&apos;re not on:{" "}
-                {joinServers.map((g, i) => (
+                {t.rich("profile.missingServers", { servers: joinServers.map((g, i) => (
                   <span key={g.guildId}>
                     {i > 0 && ", "}
                     {g.inviteUrl ? (
@@ -140,14 +137,14 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
                       g.guildName
                     )}
                   </span>
-                ))}
+                )) })}
               </p>
             )}
           </form>
         )}
       </Card>
 
-      <Card title="Avatar & colour">
+      <Card title={t("profile.avatar")}>
         <AppearanceForm
           initial={{ style: me.avatarStyle, color: userColor(me), icon: me.icon }}
           colors={PROFILE_COLORS}
@@ -159,27 +156,23 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
         />
       </Card>
 
-      <Card title="Socials">
-        <p className="mb-4 text-sm text-muted">
-          Your gaming and social accounts, so the others can add you. Members of your clans see them on your profile.
-        </p>
+      <Card title={t("profile.socials")}>
+        <p className="mb-4 text-sm text-muted">{t("profile.socialsIntro")}</p>
         <SocialsForm values={me.socials ?? {}} />
       </Card>
 
       {types.length > 0 && (
-        <Card title="Events I hear about">
-          <p className="mb-4 text-sm text-muted">
-            Who gets a message when a new event is published. Pick the kinds of LANs you care about, per clan.
-          </p>
+        <Card title={t("profile.interests")}>
+          <p className="mb-4 text-sm text-muted">{t("profile.interestsIntro")}</p>
           <div className="space-y-5">
             {myClanList
-              .filter((c) => types.some((t) => t.clanId === c.clan.id))
+              .filter((c) => types.some((ty) => ty.clanId === c.clan.id))
               .map((c) => (
                 <div key={c.clan.id}>
                   {myClanList.length > 1 && <h3 className="mb-2 text-sm font-medium text-fg">{c.clan.name}</h3>}
                   <InterestsForm
                     clanId={c.clan.id}
-                    types={types.filter((t) => t.clanId === c.clan.id).map((t) => ({ id: t.id, name: t.name }))}
+                    types={types.filter((ty) => ty.clanId === c.clan.id).map((ty) => ({ id: ty.id, name: ty.name }))}
                     current={memberships.find((m) => m.clanId === c.clan.id)?.interestTypes ?? null}
                   />
                 </div>
@@ -189,21 +182,17 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
       )}
 
       {types.length > 0 && (
-        <Card title="Nicks and IDs per LAN type">
-          <p className="mb-4 text-sm text-muted">
-            One nick per LAN type, used for every event of that type. Leave it empty to use your nickname. Below it,
-            optionally your user ID or ticket number at that LAN (e.g. on lal.gg), so the leads can match you up. Where
-            the LAN type has a profile link, your clan sees the link to your profile on the event&apos;s site.
-          </p>
+        <Card title={t("profile.nicksPerType")}>
+          <p className="mb-4 text-sm text-muted">{t("profile.nicksPerTypeIntro")}</p>
           <div className="space-y-5">
-            {types.map((t) => (
-              <div key={t.id}>
-                <h3 className="mb-2 text-sm font-medium text-fg">{t.name}</h3>
-                <NickManager nicks={nicks} typeId={t.id} />
+            {types.map((ty) => (
+              <div key={ty.id}>
+                <h3 className="mb-2 text-sm font-medium text-fg">{ty.name}</h3>
+                <NickManager nicks={nicks} typeId={ty.id} />
                 <div className="mt-2">
-                  <LanIdForm value={pickLanAccount(lanIds, { id: "", typeId: t.id })} typeId={t.id} label={`${t.name} ID`} />
+                  <LanIdForm value={pickLanAccount(lanIds, { id: "", typeId: ty.id })} typeId={ty.id} label={t("profile.typeId", { type: ty.name })} />
                 </div>
-                <ProfileLinkHint url={profileLink(t.profileUrl, pickLanAccount(lanIds, { id: "", typeId: t.id }))} pattern={t.profileUrl} />
+                <ProfileLinkHint url={profileLink(ty.profileUrl, pickLanAccount(lanIds, { id: "", typeId: ty.id }))} pattern={ty.profileUrl} tr={t} />
               </div>
             ))}
           </div>
@@ -216,19 +205,20 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
 }
 
 /** Under a LAN ID: the profile link it builds, or that the LAN type has one. */
-function ProfileLinkHint({ url, pattern }: { url: string | null; pattern: string }) {
+function ProfileLinkHint({ url, pattern, tr }: { url: string | null; pattern: string; tr: T }) {
   if (!pattern) return null;
   return (
     <p className="mt-1.5 truncate text-xs text-muted">
       {url ? (
-        <>
-          Your profile:{" "}
-          <a href={url} target="_blank" rel="noreferrer" className="text-bit hover:underline">
-            {url}
-          </a>
-        </>
+        tr.rich("profile.yourProfileLink", {
+          url: (
+            <a href={url} target="_blank" rel="noreferrer" className="text-bit hover:underline">
+              {url}
+            </a>
+          ),
+        })
       ) : (
-        "Add your ID to link your profile on the event's site."
+        tr("profile.addIdForLink")
       )}
     </p>
   );
