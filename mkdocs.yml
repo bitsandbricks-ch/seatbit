@@ -114,6 +114,7 @@ nav:
           - Supporter badge: features/supporters.md
           - Donations: features/donations.md
           - Platform admin: features/admin.md
+          - Reports and suspensions: features/moderation.md
   - Installation:
       - installation/index.md
       - Run it:

@@ -4,12 +4,12 @@ import { db, schema } from "@/db";
 import { AuditLog, auditQuery, parseAuditFilter } from "@/components/audit-log";
 import { Card, Page, PageHeader, btnSecondary } from "@/components/ui";
 import { auditEntries } from "@/lib/audit";
-import { requireAdmin } from "@/lib/session";
+import { requirePlatform } from "@/lib/session";
 import { getT } from "@/i18n/server";
 
 /** Platform admins: the audit log of every clan plus platform-wide changes (settings, platform roles, deleted accounts). */
 export default async function AdminLogPage({ searchParams }: PageProps<"/admin/log">) {
-  await requireAdmin();
+  await requirePlatform("view");
   const t = await getT();
   const filter = parseAuditFilter(await searchParams);
   const clans = db.select({ id: schema.clan.id, name: schema.clan.name }).from(schema.clan).orderBy(asc(schema.clan.name)).all();

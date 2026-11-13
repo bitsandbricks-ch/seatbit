@@ -6,7 +6,7 @@ Seatbit uses **one Discord application** for both the "Continue with Discord" lo
 
 1. Go to the [Discord Developer Portal](https://discord.com/developers/applications) and click **New Application**.
 2. **OAuth2:** copy the **Client ID** and reset/copy the **Client Secret**. Add the redirect `https://seatbit.example.com/api/auth/callback/discord` (your `BETTER_AUTH_URL` + `/api/auth/callback/discord`).
-3. Start Seatbit with `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET` set as environment variables and sign in. The first account becomes platform admin. (To pick admins up front, set `ADMIN_EMAILS` to the emails of their Discord accounts.)
+3. Start Seatbit with `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET` set as environment variables and sign in. The first account becomes platform owner. (To pick admins up front, set `ADMIN_EMAILS` to the emails of their Discord accounts.)
 
 !!! warning "Keep the login variables"
     Login is Discord-only, so keep the two variables in place even if you later save the values in the platform settings. If wrong ones are ever saved there, nobody can sign in; `node scripts/admin.mjs reset-setting discord.clientSecret` (and `discord.clientId`) in the container brings back the env values.

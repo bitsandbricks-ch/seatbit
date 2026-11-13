@@ -52,11 +52,12 @@ export function checkDeletion(userId: string): DeletionCheck {
     else clansToDelete.push(c);
   }
   let lastPlatformAdmin = false;
-  if (me?.role === "admin") {
+  // The last owner can't leave while others still use the instance.
+  if (me?.role === "owner") {
     const otherAdmins = db
       .select({ id: user.id })
       .from(user)
-      .where(and(eq(user.role, "admin"), ne(user.id, userId), isNull(user.deletedAt)))
+      .where(and(eq(user.role, "owner"), ne(user.id, userId), isNull(user.deletedAt)))
       .all().length;
     const otherUsers = db
       .select({ id: user.id })
@@ -259,6 +260,7 @@ export function exportUserData(userId: string) {
       email: me.email,
       emailVerified: me.emailVerified,
       platformRole: me.role,
+      suspended: me.suspendedAt ? { at: me.suspendedAt, reason: me.suspendedReason } : null,
       emailReminders: me.emailReminders,
       discordDms: me.discordDms,
       socials: me.socials,
@@ -266,6 +268,12 @@ export function exportUserData(userId: string) {
       createdAt: me.createdAt,
       updatedAt: me.updatedAt,
     },
+    reportsFiled: db
+      .select()
+      .from(schema.report)
+      .where(eq(schema.report.reporterId, me.id))
+      .all()
+      .map((r) => ({ about: r.subject, reason: r.reason, message: r.message, status: r.status, at: r.createdAt })),
     signInMethods: accounts.map((a) => ({ provider: a.providerId, accountId: a.accountId, scope: a.scope, linkedAt: a.createdAt })),
     sessions: sessions.map((s) => ({ createdAt: s.createdAt, expiresAt: s.expiresAt, ipAddress: s.ipAddress, userAgent: s.userAgent })),
     nicknames: nicks.map((n) => ({ nick: n.nick, scope: scope(n), primary: n.isPrimary })),

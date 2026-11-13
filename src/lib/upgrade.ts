@@ -2,7 +2,7 @@
  * After an upgrade: registers the Discord slash commands when they changed, and tells the
  * platform admins (DM and mail) once per new version what changed and whether anything is left to do.
  */
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { COMMANDS_STATE, commandsHash, discordEnabled, registerCommands } from "./discord-api";
 import { getLegal } from "./legal";
@@ -63,7 +63,8 @@ export async function announceUpgrade(commands: CommandSync) {
   const admins = db
     .select()
     .from(schema.user)
-    .where(and(eq(schema.user.role, "admin"), eq(schema.user.isGuest, false)))
+    // Staff who can act on it: owners and admins.
+    .where(and(inArray(schema.user.role, ["owner", "admin"]), eq(schema.user.isGuest, false)))
     .all();
   const link = changesUrl(getLegal().sourceUrl, before, now);
   let sent = 0;

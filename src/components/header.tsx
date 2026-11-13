@@ -3,6 +3,7 @@ import { and, eq, isNull } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { LOGIN_METHODS } from "@/lib/auth";
 import { getCurrentUser } from "@/lib/session";
+import { isStaff } from "@/lib/platform-roles";
 import { BottomNav, TopNav, type NavItem } from "./nav";
 import { SignOutButton } from "./sign-out-button";
 import { Avatar } from "./avatar";
@@ -27,7 +28,7 @@ export async function Header() {
     ? [
         { href: "/", label: t("nav.lans"), icon: "calendar" },
         { href: "/clans", label: t("nav.clans"), icon: "users" },
-        ...(me.role === "admin" ? [{ href: "/admin", label: t("nav.admin"), icon: "shield" } as NavItem] : []),
+        ...(isStaff(me) ? [{ href: "/admin", label: t("nav.admin"), icon: "shield" } as NavItem] : []),
       ]
     : [];
 

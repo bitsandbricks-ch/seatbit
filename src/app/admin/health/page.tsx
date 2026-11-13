@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { Card, Notice, Page, PageHeader, Pill, StatTile, btnSecondary, halves } from "@/components/ui";
-import { requireAdmin } from "@/lib/session";
+import { requirePlatform } from "@/lib/session";
 import { fmtBytes, healthReport, type Check } from "@/lib/health";
 import { fmtDate, relative } from "@/lib/format";
 import { getLegal } from "@/lib/legal";
@@ -44,7 +44,7 @@ function uptime(ms: number, t: T) {
 const JOB_NAMES: Record<string, MessageKey> = { reminders: "health.job.reminders", publish: "health.job.publish", backup: "health.job.backup" };
 
 export default async function HealthPage() {
-  await requireAdmin();
+  await requirePlatform("view");
   const t = await getT();
   const r = await healthReport();
   const now = new Date();

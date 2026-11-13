@@ -17,6 +17,7 @@ import { freeSpots, getLan, getNames, interestSwitch, seatView, waitlistOf } fro
 import { WaitlistPanel } from "@/components/waitlist-panel";
 import { dueKinds } from "@/lib/reminders";
 import { isLanManager, requireUser } from "@/lib/session";
+import { platformCan } from "@/lib/platform-roles";
 import { OrgaManager } from "@/components/orga-manager";
 import { SeatSetup } from "@/components/seat-setup";
 import { Tabs } from "@/components/tabs";
@@ -608,7 +609,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               {!discordEnabled() ? (
                 <p className="text-muted">
                   {t("manage.botNotSetUp")}{" "}
-                  {me.role === "admin" ? (
+                  {platformCan(me, "settings") ? (
                     <Link href="/admin/settings?tab=discord" className="text-bit hover:underline">
                       {t("manage.addBotToken")}
                     </Link>
@@ -721,7 +722,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
             </Card>
           )}
 
-          {me.role === "admin" && (
+          {platformCan(me, "clans") && (
             <Card title={t("manage.dangerZone")}>
               <form action={deleteLan.bind(null, l.id)}>
                 <button className={btnDanger}>{t("manage.deleteLan")}</button>

@@ -4,6 +4,7 @@ import { Card, Notice, Page, PageHeader } from "@/components/ui";
 import { inviteUrl } from "@/lib/discord-api";
 import { appUrl, mailTarget } from "@/lib/mail";
 import { requireAdmin } from "@/lib/session";
+import { OWNER_SETTING_GROUPS, platformCan } from "@/lib/platform-roles";
 import { billingEnabled, billingProblems, supporterClans } from "@/lib/billing";
 import { donationProblems, donationsEnabled } from "@/lib/donations";
 import { fmtDay } from "@/lib/format";
@@ -47,12 +48,15 @@ const TABS = ["mail", "discord", "google", "general", "automation", "maintenance
 type TabId = (typeof TABS)[number];
 
 export default async function SettingsPage({ searchParams }: PageProps<"/admin/settings">) {
-  await requireAdmin();
+  const me = await requireAdmin();
   const t = await getT();
   const { tab: rawTab, lang: rawLang } = await searchParams;
   const mailLang: Locale = isLocale(rawLang) ? rawLang : t.locale;
   // Google login is switched off in code (LOGIN_METHODS), so its settings tab is hidden.
-  const tabs = TABS.filter((x) => x !== "google" || LOGIN_METHODS.google);
+  // Billing and legal only show to owners.
+  const tabs = TABS.filter(
+    (x) => (x !== "google" || LOGIN_METHODS.google) && (!OWNER_SETTING_GROUPS.includes(x) || platformCan(me, "owner")),
+  );
   const tab: TabId = tabs.some((x) => x === rawTab) ? (rawTab as TabId) : "mail";
   const all = settingsForAdmin().map((s) => localized(s, t));
   const fields = (g: SettingGroup) => all.filter((s) => s.group === g);

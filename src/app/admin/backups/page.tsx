@@ -12,7 +12,7 @@ import {
   nextBackupAt,
 } from "@/lib/backup";
 import { fmtBytes, fmtDate, relative } from "@/lib/format";
-import { requireAdmin } from "@/lib/session";
+import { requirePlatform } from "@/lib/session";
 import { settingsForAdmin } from "@/lib/settings";
 import { localized } from "@/lib/settings-i18n";
 import { getT } from "@/i18n/server";
@@ -27,7 +27,7 @@ export async function generateMetadata() {
 
 /** Platform admins: database backups (schedule, list, download, back up now) and where they go. */
 export default async function BackupsPage() {
-  await requireAdmin();
+  await requirePlatform("owner");
   const t = await getT();
   const now = new Date();
   const files = listBackups();

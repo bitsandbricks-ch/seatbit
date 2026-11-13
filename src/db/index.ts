@@ -59,7 +59,7 @@ function backfillDefaultClan(sqlite: Database.Database) {
       sqlite.prepare("INSERT INTO clan (id, name, slug) VALUES (?, 'My clan', 'my-clan')").run(clan.id);
       sqlite
         .prepare(
-          "INSERT OR IGNORE INTO clan_member (clan_id, user_id, role) SELECT ?, id, CASE WHEN role = 'admin' THEN 'admin' ELSE 'member' END FROM user",
+          "INSERT OR IGNORE INTO clan_member (clan_id, user_id, role) SELECT ?, id, CASE WHEN role IN ('admin', 'owner') THEN 'admin' ELSE 'member' END FROM user",
         )
         .run(clan.id);
     }

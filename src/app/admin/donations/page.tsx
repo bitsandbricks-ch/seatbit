@@ -3,12 +3,12 @@ import { Card, EmptyState, Notice, Page, PageHeader, Pill, StatTile, btnSecondar
 import { DONATIONS_PAGE, adminDonations, donationProblems, donationsEnabled } from "@/lib/donations";
 import { fmtDate, fmtMoney } from "@/lib/format";
 import { getDefaultNames } from "@/lib/lans";
-import { requireAdmin } from "@/lib/session";
+import { requirePlatform } from "@/lib/session";
 import { getT } from "@/i18n/server";
 
 /** Platform admins: every one-off donation, newest first, with totals per currency. */
 export default async function AdminDonationsPage({ searchParams }: PageProps<"/admin/donations">) {
-  await requireAdmin();
+  await requirePlatform("owner");
   const t = await getT();
   const sp = await searchParams;
   const page = Math.max(0, Number(sp.page) || 0);

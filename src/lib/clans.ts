@@ -1,10 +1,11 @@
-import { and, eq, ne } from "drizzle-orm";
+import { and, eq, isNull, ne } from "drizzle-orm";
 import fs from "node:fs";
 import path from "node:path";
 import { db, schema } from "@/db";
 import type { ClanRole } from "@/db/schema";
 import { CLAN_PERMISSIONS, roleCan, type ClanPermission } from "./clan-roles";
 import { foldName } from "./names";
+import { platformCan } from "./platform-roles";
 
 const { clan, clanMember } = schema;
 
@@ -25,15 +26,24 @@ export function isClanMember(userId: string, clanId: string) {
   return !!r && r !== "pending";
 }
 
-/** Platform admins may do everything; everyone else what their clan role allows. */
+/** Suspended by platform staff: its members lose access until it's restored. */
+export function isClanSuspended(clanId: string | null | undefined) {
+  if (!clanId) return false;
+  return !!db.select({ s: clan.suspendedAt }).from(clan).where(eq(clan.id, clanId)).get()?.s;
+}
+
+/** Platform owners and admins may do everything; everyone else what their clan role allows (nothing in a suspended clan). */
 export function clanCan(u: Who, clanId: string, perm: ClanPermission) {
-  return u.role === "admin" || roleCan(clanRole(u.id, clanId), perm);
+  if (platformCan(u, "clans")) return true;
+  return !isClanSuspended(clanId) && roleCan(clanRole(u.id, clanId), perm);
 }
 
 /** Everything the user may do in a clan, for pages that show or hide several parts. */
 export function clanPerms(u: Who, clanId: string) {
+  if (platformCan(u, "clans")) return new Set(CLAN_PERMISSIONS);
+  if (isClanSuspended(clanId)) return new Set<ClanPermission>();
   const r = clanRole(u.id, clanId);
-  return new Set(CLAN_PERMISSIONS.filter((p) => u.role === "admin" || roleCan(r, p)));
+  return new Set(CLAN_PERMISSIONS.filter((p) => roleCan(r, p)));
 }
 
 export function myClans(userId: string) {
@@ -41,7 +51,7 @@ export function myClans(userId: string) {
     .select({ clan, role: clanMember.role })
     .from(clanMember)
     .innerJoin(clan, eq(clan.id, clanMember.clanId))
-    .where(and(eq(clanMember.userId, userId), ne(clanMember.role, "pending")))
+    .where(and(eq(clanMember.userId, userId), ne(clanMember.role, "pending"), isNull(clan.suspendedAt)))
     .orderBy(clan.name)
     .all();
 }
