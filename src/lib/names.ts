@@ -1,7 +1,8 @@
 /**
  * How a clan shows its members (clan setting): "full" = Mike "Reyki" Keller,
- * "nameNick" = Mike "Reyki", "nick" = Reyki. Orga and admin views always use "full",
- * because that's what tickets and real-life check-ins need.
+ * "nameNick" = Mike "Reyki", "nick" = Reyki. Clan manage views follow it too, with the
+ * full name next to it where tickets and real-life check-ins need it; logs, exports and
+ * the admin page always use "full".
  */
 export const NAME_DISPLAYS = ["full", "nameNick", "nick"] as const;
 export type NameDisplay = (typeof NAME_DISPLAYS)[number];

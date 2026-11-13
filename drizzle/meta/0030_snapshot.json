@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "31b469e8-3e60-47fb-925b-887e382cd813",
+  "id": "880dcbd5-8899-40a9-bb94-981c05aaf5b1",
   "prevId": "f8984fb7-21de-425c-aa08-53e7b1380bc5",
   "tables": {
     "account": {
@@ -294,13 +294,6 @@
         },
         "arrived_at": {
           "name": "arrived_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "waitlisted_at": {
-          "name": "waitlisted_at",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
@@ -1772,14 +1765,6 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
-        },
-        "waitlist_auto": {
-          "name": "waitlist_auto",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": true
         },
         "reminder_days": {
           "name": "reminder_days",
@@ -3333,6 +3318,34 @@
         "guest_discord_id": {
           "name": "guest_discord_id",
           "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "guest_discord_name": {
+          "name": "guest_discord_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "guest_discord_linked_at": {
+          "name": "guest_discord_linked_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "guest_discord_linked_by": {
+          "name": "guest_discord_linked_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "guest_discord_dm_at": {
+          "name": "guest_discord_dm_at",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false

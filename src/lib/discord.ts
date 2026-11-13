@@ -14,7 +14,7 @@ import { appUrl } from "./mail";
 import { audit } from "./audit";
 import { claimableGuests, claimOrRequestGuest, discordClaimTicket, guestSuggestions, mergeGuestInto } from "./guest-claim";
 import { nameMatches } from "./names";
-import { dmDiscordUser, notify, notifyLater } from "./notify";
+import { type DmResult, dmDiscordUser, notify, notifyLater } from "./notify";
 
 const { discordChannel, discordMessage, channelReminderLog, account, attendance, lan, user } = schema;
 
@@ -628,14 +628,21 @@ export function handleInteraction(i: Interaction): { response: Json | Promise<Js
   if (i.type === 4 && (i.data?.name === "claim" || i.data?.name === "guest")) {
     const c = clanForGuild(i.guild_id);
     const q = String(i.data.options?.find((o) => o.focused)?.value ?? "");
-    // /claim: what's still free for the caller; /guest (orgas): only guests nobody asked for or got linked to yet.
+    // /claim: what's still free for the caller; /guest (orgas): guests nobody asked for, linked ones included so they can be re-linked.
     const me = i.data.name === "claim" ? seatbitUserFor(discordUser) : undefined;
-    const free = c ? (i.data.name === "claim" ? claimableGuests(c.id, me?.id ?? null, discordUser) : claimableGuests(c.id, null)) : [];
+    const free = c
+      ? i.data.name === "claim"
+        ? claimableGuests(c.id, me?.id ?? null, discordUser)
+        : claimableGuests(c.id, null, null, { includeLinked: true })
+      : [];
     const choices = free
       .filter((g) => !q || nameMatches(g.name, q))
       .sort((a, b) => a.name.localeCompare(b.name))
       .slice(0, 25)
-      .map((g) => ({ name: clip(g.name, 100), value: g.id }));
+      .map((g) => ({
+        name: clip(i.data?.name === "guest" && g.guestDiscordId ? `${g.name} · linked to ${g.guestDiscordName ?? "a Discord member"}` : g.name, 100),
+        value: g.id,
+      }));
     return { response: { type: 8, data: { choices } } };
   }
 
@@ -984,8 +991,8 @@ function linkGuestCommand(i: Interaction, editReply: (body: Json) => Promise<unk
   const guestId = String(i.data?.options?.find((o) => o.name === "guest")?.value ?? "");
   // The member option is free text with suggestions; only a picked suggestion is a Discord user id.
   if (!/^\d{15,21}$/.test(targetId)) return { response: reply("Pick the member from the suggestions while you type their name.") };
-  const g = claimableGuests(c.id, null).find((x) => x.id === guestId);
-  if (!g) return { response: reply(`That guest isn't free anymore in **${c.name}**: taken over, already asked for (approve or decline it under Members in Seatbit), or linked to someone. Pick one from the list.`) };
+  const g = claimableGuests(c.id, null, null, { includeLinked: true }).find((x) => x.id === guestId);
+  if (!g) return { response: reply(`That guest isn't free anymore in **${c.name}**: taken over, or someone asked for it (approve or decline it under Members in Seatbit). Pick one from the list.`) };
   const mention = `<@${targetId}>`;
   const existing = seatbitUserFor(targetId);
 
@@ -1003,32 +1010,77 @@ function linkGuestCommand(i: Interaction, editReply: (body: Json) => Promise<unk
     return { response: reply(`👍 Done: ${mention} already has Seatbit, so **${g.name}** moved to their account.`) };
   }
 
-  // One guest per Discord member and clan: a new link replaces an older one.
-  db.update(user)
-    .set({ guestDiscordId: null })
-    .where(and(eq(user.guestClanId, c.id), eq(user.guestDiscordId, targetId)))
-    .run();
-  db.update(user).set({ guestDiscordId: targetId }).where(eq(user.id, g.id)).run();
-  audit({ actorId: me.id, action: "guest.discord_link", clanId: c.id, targetUserId: g.id, data: { guest: g.name } });
+  const same = g.guestDiscordId === targetId;
+  if (!same) {
+    // One guest per Discord member and clan: a new link replaces an older one.
+    db.update(user)
+      .set(UNLINKED)
+      .where(and(eq(user.guestClanId, c.id), eq(user.guestDiscordId, targetId)))
+      .run();
+    db.update(user)
+      .set({ ...UNLINKED, guestDiscordId: targetId, guestDiscordLinkedAt: new Date(), guestDiscordLinkedBy: me.id })
+      .where(eq(user.id, g.id))
+      .run();
+    audit({
+      actorId: me.id,
+      action: "guest.discord_link",
+      clanId: c.id,
+      targetUserId: g.id,
+      data: { guest: g.name, relinked: !!g.guestDiscordId },
+    });
+  }
   const link = `${appUrl}/claim/${g.claimCode}`;
   return {
     response: { type: 5, data: { flags: EPHEMERAL } },
     later: async () => {
-      const dm = await dmDiscordUser(targetId, {
-        kind: "guest_linked",
-        subject: `Your spot in ${c.name} is waiting`,
-        text: `The orgas of ${c.name} added you to Seatbit as ${g.name}. Sign in with this Discord account to see your events, tickets and seat.`,
-        url: link,
-        footer: "Seatbit · sent because an orga of your clan linked you",
-      });
+      if (!same && i.guild_id) {
+        const name = await discordMemberName(i.guild_id, targetId);
+        if (name) db.update(user).set({ guestDiscordName: name }).where(eq(user.id, g.id)).run();
+      }
+      const dm = await sendGuestDiscordDm(g.id);
+      const what = same ? `${mention} was linked to **${g.name}** already` : `👍 Linked: ${mention} is **${g.name}**`;
       await editReply({
         content: dm.ok
-          ? `👍 Linked: ${mention} is **${g.name}**. I DMed them the link; signing in to Seatbit with Discord takes the guest over.`
-          : `👍 Linked: ${mention} is **${g.name}**. Signing in to Seatbit with Discord takes the guest over. I couldn't DM them, so send them this link: ${link}`,
+          ? `${what}. I DMed them the link${same ? " again" : ""}; signing in to Seatbit with Discord takes the guest over.`
+          : `${what}. Signing in to Seatbit with Discord takes the guest over. I couldn't DM them, so send them this link: ${link}`,
         allowed_mentions: { parse: [] },
       }).catch((e) => console.error("[discord] guest link reply failed", e));
     },
   };
+}
+
+/** Clears a guest's Discord link and what we noted about it. */
+export const UNLINKED = { guestDiscordId: null, guestDiscordName: null, guestDiscordLinkedAt: null, guestDiscordLinkedBy: null, guestDiscordDmAt: null };
+
+/** "Nick (@username)" of a server member, or null when Discord won't say. */
+async function discordMemberName(guildId: string, userId: string) {
+  try {
+    const m = await api<GuildMember>("GET", `/guilds/${guildId}/members/${userId}`);
+    const shown = m.nick || m.user.global_name || m.user.username;
+    return clip(m.user.username && shown !== m.user.username ? `${shown} (@${m.user.username})` : `@${shown}`, 100);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * DMs the Discord member an orga linked a guest to the guest's claim link (again), and
+ * notes when it went out. Used by /guest and the "Send the DM again" button on the guest page.
+ */
+export async function sendGuestDiscordDm(guestId: string): Promise<DmResult> {
+  const g = db.select().from(user).where(eq(user.id, guestId)).get();
+  if (!g?.isGuest || !g.guestDiscordId || !g.claimCode) return { ok: false, problem: "no_discord" };
+  const c = g.guestClanId ? getClan(g.guestClanId) : undefined;
+  const clanName = c?.name ?? "your clan";
+  const dm = await dmDiscordUser(g.guestDiscordId, {
+    kind: "guest_linked",
+    subject: `Your spot in ${clanName} is waiting`,
+    text: `The orgas of ${clanName} added you to Seatbit as ${g.name}. Sign in with this Discord account to see your events, tickets and seat.`,
+    url: `${appUrl}/claim/${g.claimCode}`,
+    footer: "Seatbit · sent because an orga of your clan linked you",
+  });
+  if (dm.ok) db.update(user).set({ guestDiscordDmAt: new Date() }).where(eq(user.id, g.id)).run();
+  return dm;
 }
 
 /** Unlinks a channel from Seatbit (clan settings). Checks the caller may manage the channel's clan. */

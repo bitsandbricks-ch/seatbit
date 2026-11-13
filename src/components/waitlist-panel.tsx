@@ -8,7 +8,9 @@ import type { AvatarData } from "@/lib/avatars";
 
 export type WaitlistEntry = {
   userId: string;
+  /** As the clan's name display asks; `full` is Name "Nick" Surname, shown small when it differs. */
   name: string;
+  full: string;
   avatar?: AvatarData;
   /** "since Sat 14.11.2026, 18:00" */
   since: string;
@@ -74,7 +76,7 @@ export function WaitlistPanel({
                   )}
                 </p>
                 <p className="truncate text-xs text-muted">
-                  waiting {e.since}
+                  {e.full !== e.name && `${e.full} · `}waiting {e.since}
                   {e.ticket === "confirmed" && " · ticket confirmed"}
                   {e.ticket === "reported" && " · ticket reported"}
                 </p>

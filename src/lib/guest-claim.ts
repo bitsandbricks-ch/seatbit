@@ -6,7 +6,7 @@ import type { Clan, User } from "@/db/schema";
 import { clanRole, getClan } from "./clans";
 import { isMemberRole } from "./clan-roles";
 import { getDefaultNames } from "./lans";
-import { fmtDay } from "./format";
+import { fmtDate, fmtDay } from "./format";
 import { moveLanAccounts } from "./lan-accounts";
 import { appUrl } from "./mail";
 import { sendTemplate } from "./mail-templates";
@@ -204,9 +204,10 @@ export function unclaimedGuests(clanId: string) {
 /**
  * Unclaimed guests that are still free for this person: not already asked for by
  * someone else (waiting for an admin) and not tied by an orga to another Discord member.
- * Without a person (orga views), guests with an open request or a Discord link are left out.
+ * Without a person (orga views), guests with an open request or a Discord link are left out;
+ * `includeLinked` keeps the linked ones (orgas re-linking a guest to someone else).
  */
-export function claimableGuests(clanId: string, userId: string | null, discordId: string | null = null) {
+export function claimableGuests(clanId: string, userId: string | null, discordId: string | null = null, opts: { includeLinked?: boolean } = {}) {
   const guests = unclaimedGuests(clanId);
   if (!guests.length) return guests;
   const askedByOthers = new Set(
@@ -219,7 +220,9 @@ export function claimableGuests(clanId: string, userId: string | null, discordId
       .map((r) => r.guestId),
   );
   const myDiscord = discordId ?? (userId ? discordIdOfUser(userId) : undefined);
-  return guests.filter((g) => !askedByOthers.has(g.id) && (!g.guestDiscordId || g.guestDiscordId === myDiscord));
+  return guests.filter(
+    (g) => !askedByOthers.has(g.id) && (opts.includeLinked || !g.guestDiscordId || g.guestDiscordId === myDiscord),
+  );
 }
 
 /**
@@ -391,4 +394,16 @@ export function discordTicketState(token: string, me: User) {
   // The bot matched on their Discord names; that counts like a match on the Seatbit profile.
   const claim = { guest: s.guest, match: s.match ?? t.m };
   return { kind: s.status === "pending" ? ("pending" as const) : ("ok" as const), clan: c, claim };
+}
+
+/** What the guest page says about the Discord member an orga linked the guest to. */
+export function guestDiscordLines(g: User): string[] {
+  if (!g.guestDiscordId) return ["Not linked to a Discord member."];
+  const by = g.guestDiscordLinkedBy ? getDefaultNames([g.guestDiscordLinkedBy]).get(g.guestDiscordLinkedBy)?.full : undefined;
+  return [
+    `Linked to ${g.guestDiscordName ?? "a Discord member"}`,
+    g.guestDiscordLinkedAt ? `Linked ${fmtDate(g.guestDiscordLinkedAt)}${by ? ` by ${by}` : ""}` : "",
+    g.guestDiscordDmAt ? `Claim link DMed ${fmtDate(g.guestDiscordDmAt)}` : "The bot couldn't DM them the claim link yet",
+    "Their first sign-in with that Discord account takes the guest over.",
+  ].filter(Boolean);
 }
