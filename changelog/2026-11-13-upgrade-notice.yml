@@ -1,0 +1,14 @@
+date: 2026-11-13
+type: new
+audience: admins
+pr: 106
+en:
+  title: "Slash commands update themselves, admins hear about upgrades"
+  text: >-
+    Changed Discord slash commands are registered on startup, and platform admins get a message when
+    a new version runs.
+de:
+  title: "Slash-Befehle aktualisieren sich selbst, Admins erfahren von Updates"
+  text: >-
+    Geänderte Discord-Slash-Befehle werden beim Start registriert, und Plattform-Admins bekommen
+    eine Nachricht, wenn eine neue Version läuft.

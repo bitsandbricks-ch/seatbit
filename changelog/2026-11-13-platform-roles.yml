@@ -1,0 +1,14 @@
+date: 2026-11-13
+type: new
+audience: admins
+pr: 110
+en:
+  title: "Platform roles and suspensions"
+  text: >-
+    Give the platform team roles (owner, admin, moderator, support) and suspend accounts or clans
+    that break the rules.
+de:
+  title: "Plattform-Rollen und Sperren"
+  text: >-
+    Gib dem Plattform-Team Rollen (Owner, Admin, Moderation, Support) und sperre Konten oder Clans,
+    die gegen die Regeln verstossen.

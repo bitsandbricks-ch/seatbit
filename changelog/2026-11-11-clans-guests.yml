@@ -1,0 +1,15 @@
+date: 2026-11-11
+type: new
+pr: [7, 12, 15]
+en:
+  title: "Clans with members and guests"
+  text: >-
+    A clan can hold guests who don't have an account yet, e.g. friends who only use WhatsApp. Leads
+    add them from an event's Attendees tab, and a guest can take over their profile later with a
+    claim link or by email invite.
+de:
+  title: "Clans mit Mitgliedern und Gästen"
+  text: >-
+    Ein Clan kann Gäste ohne Konto führen, zum Beispiel Freunde, die nur WhatsApp nutzen. Leads
+    fügen sie im Tab «Teilnehmende» eines Events hinzu, und ein Gast kann sein Profil später per
+    Link oder Einladungsmail übernehmen.

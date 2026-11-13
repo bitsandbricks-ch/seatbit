@@ -47,6 +47,8 @@ jobs:
         run: npx drizzle-kit check
       - name: Untranslated text
         run: npm run check:i18n
+      - name: Changelog entries
+        run: npm run check:changelog
       - name: Typecheck
         run: npm run typecheck
       - name: Build

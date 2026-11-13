@@ -14,11 +14,12 @@ Seatbit is a small open-source project. Bug reports, ideas, docs fixes and code 
 ## Pull request flow
 
 1. **Branch.** Work on your own branch (or fork), never on `main`. One topic per branch and pull request.
-2. **Change.** Follow the [code guidelines](guidelines.md). A user-facing or setup change updates the [docs](docs.md) in the same pull request.
+2. **Change.** Follow the [code guidelines](guidelines.md). A user-facing or setup change updates the [docs](docs.md) in the same pull request, and a change people notice adds a [changelog entry](changelog.md) in English and German.
 3. **Check locally.** These must pass before you push:
     ```sh
     npm run lint
     npm run check:i18n      # UI text that skips t()
+    npm run check:changelog # changelog entries
     npm run typecheck
     npm run build
     mkdocs build --strict   # when you touched docs/ or mkdocs.yml

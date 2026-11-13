@@ -73,6 +73,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           <Link href="/privacy" className="hover:text-fg">
             {t("footer.privacy")}
           </Link>
+          <Link href="/changelog" className="hover:text-fg">
+            {t("changelog.footerLink")}
+          </Link>
           <a href={getLegal().sourceUrl} target="_blank" rel="noreferrer" className="hover:text-fg">
             {t("footer.source")}
           </a>

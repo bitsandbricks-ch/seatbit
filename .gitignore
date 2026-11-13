@@ -46,3 +46,6 @@ next-env.d.ts
 
 # docs build (mkdocs)
 /site/
+
+# Python (MkDocs hooks)
+__pycache__/

@@ -1,0 +1,13 @@
+date: 2026-11-11
+type: new
+pr: [29, 32]
+en:
+  title: "Member profiles, avatars and clan stats"
+  text: >-
+    Every member has a profile with an avatar or icon and a personal colour. The clan gets a stats
+    page with who went to which LAN.
+de:
+  title: "Mitgliederprofile, Avatare und Clan-Statistik"
+  text: >-
+    Jedes Mitglied hat ein Profil mit Avatar oder Icon und einer eigenen Farbe. Der Clan bekommt
+    eine Statistikseite, wer an welcher LAN war.

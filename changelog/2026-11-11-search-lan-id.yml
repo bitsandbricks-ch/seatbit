@@ -1,0 +1,13 @@
+date: 2026-11-11
+type: new
+pr: 20
+en:
+  title: "Search and filters for members and attendees"
+  text: >-
+    Long member and attendee lists get search, filters and pages. Each LAN type can ask for an
+    optional LAN ID.
+de:
+  title: "Suche und Filter für Mitglieder und Teilnehmende"
+  text: >-
+    Lange Listen von Mitgliedern und Teilnehmenden haben Suche, Filter und Seiten. Jeder LAN-Typ
+    kann eine optionale LAN-ID abfragen.

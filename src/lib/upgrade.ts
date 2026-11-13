@@ -4,13 +4,16 @@
  */
 import { and, eq, inArray } from "drizzle-orm";
 import { db, schema } from "@/db";
+import { changeLines, getChangelog, type ChangelogEntry } from "./changelog";
 import { COMMANDS_STATE, commandsHash, discordEnabled, registerCommands } from "./discord-api";
 import { getLegal } from "./legal";
 import { appUrl } from "./mail";
 import { notify } from "./notify";
-import { readState, swapState } from "./settings";
+import { readState, rememberState, swapState } from "./settings";
 
 const VERSION_STATE = "state.version";
+// Ids of the changelog entries this instance already announced (JSON array).
+const CHANGELOG_STATE = "state.changelog";
 
 export type CommandSync = { status: "registered" | "unchanged" | "off" } | { status: "failed"; error: string };
 
@@ -31,7 +34,14 @@ export async function syncDiscordCommands(): Promise<CommandSync> {
 
 const short = (sha: string) => sha.slice(0, 7);
 
-export type UpgradeEvent = { before: string; now: string; changesUrl: string; commands: CommandSync };
+export type UpgradeEvent = {
+  before: string;
+  now: string;
+  changesUrl: string;
+  commands: CommandSync;
+  /** Changelog entries that came with this version (all audiences). */
+  changes: ChangelogEntry[];
+};
 type UpgradeListener = (e: UpgradeEvent) => Promise<unknown> | unknown;
 
 // Shared across module instances, like the settings cache.
@@ -50,6 +60,26 @@ export function changesUrl(sourceUrl: string, from: string, to: string) {
 }
 
 /**
+ * Changelog entries this instance hasn't announced yet, and remembers all current ones.
+ * Without a stored list (first start, or the first version with a changelog) nothing is new:
+ * the backfilled history isn't news.
+ */
+export function takeNewChanges(): ChangelogEntry[] {
+  const all = getChangelog();
+  const stored = readState(CHANGELOG_STATE);
+  rememberState(CHANGELOG_STATE, JSON.stringify(all.map((e) => e.id)));
+  if (stored === undefined) return [];
+  let seen: unknown;
+  try {
+    seen = JSON.parse(stored);
+  } catch {
+    return [];
+  }
+  const known = new Set(Array.isArray(seen) ? seen : []);
+  return all.filter((e) => !known.has(e.id));
+}
+
+/**
  * Tells the platform admins once per new version. The first start (nothing stored yet) and
  * builds without git info stay quiet. The compare-and-set keeps two replicas from both sending.
  */
@@ -58,7 +88,10 @@ export async function announceUpgrade(commands: CommandSync) {
   if (!now) return 0;
   const before = readState(VERSION_STATE);
   if (before === now) return 0;
-  if (!swapState(VERSION_STATE, before, now) || !before) return 0;
+  if (!swapState(VERSION_STATE, before, now)) return 0;
+  // Only the replica that won the swap gets here, so entries are announced once.
+  const changes = takeNewChanges();
+  if (!before) return 0;
 
   const admins = db
     .select()
@@ -79,7 +112,16 @@ export async function announceUpgrade(commands: CommandSync) {
       return {
         kind: "platform_upgrade",
         subject: t("notice.upgradeSubject", { version: short(now) }),
-        text: t("notice.upgradeText", { name: u.firstName || u.name, url: appUrl, version: short(now), before: short(before), changes: link, steps }),
+        text: t("notice.upgradeText", {
+          name: u.firstName || u.name,
+          url: appUrl,
+          version: short(now),
+          before: short(before),
+          changes: changes.length
+            ? `${t("changelog.noticeChanges")}\n${changeLines(changes, t.locale)}\n\n${t("changelog.noticeAllChanges", { changes: link })}`
+            : `${t("ops.seeChanges")} ${link}`,
+          steps,
+        }),
         url: `${appUrl}/admin/settings`,
       };
     }).catch((e) => {
@@ -89,7 +131,7 @@ export async function announceUpgrade(commands: CommandSync) {
     if (r.email || r.dm) sent++;
   }
   console.log(`[upgrade] ${short(before)} -> ${short(now)}, told ${sent} platform admin(s)`);
-  const event: UpgradeEvent = { before, now, changesUrl: link, commands };
+  const event: UpgradeEvent = { before, now, changesUrl: link, commands, changes };
   for (const l of listeners) await (async () => l(event))().catch((e) => console.error("[upgrade] listener failed", e));
   return sent;
 }

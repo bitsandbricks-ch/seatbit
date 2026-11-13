@@ -1,0 +1,13 @@
+date: 2026-11-12
+type: new
+pr: 47
+en:
+  title: "Audit log, data export and account deletion"
+  text: >-
+    Clans see who changed what. You can download your data and delete your account from your
+    profile.
+de:
+  title: "Protokoll, Datenexport und Konto löschen"
+  text: >-
+    Clans sehen, wer was geändert hat. Du kannst deine Daten herunterladen und dein Konto im Profil
+    löschen.
