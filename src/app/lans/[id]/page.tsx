@@ -343,8 +343,6 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
             steps={steps}
             ticketBought={my.ticketBought}
             canReportTicket={my.status === "going" || my.status === "waitlist"}
-            planUrl={l.externalPlanUrl || undefined}
-            seatBooked={my.seatBooked}
           />
         )}
       </div>

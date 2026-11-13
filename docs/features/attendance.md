@@ -75,10 +75,11 @@ Your checklist sits above the tabs on every tab of the event, on the LANs list (
 | 3. **Buy your ticket** | You ticked *I bought my ticket* before the *buy ticket by* date; an orga then confirms it. |
 | 4. **Pick your seat** | Only when the orgas turned on [self pick](seats.md#seat-steps): you took a free seat. Needs your ticket first. |
 | 4. **Send seat wishes** (optional) | Instead of *Pick your seat* when self pick is off: you sent [seat wishes](seats.md#seat-steps). Hidden once the plan is final if you sent none. |
-| 5. **Orgas confirm your seat** | The orgas finalized the seat plan and you have a seat. Until then it waits on them (also after you picked your own seat). |
-| 6. **Book your seat on the event site** | Only when the event has its own seat plan: after the group's plan is final, you booked the same seat there and ticked *I booked it*. |
-| **Install the games** (optional) | Only when someone voted for [games](games.md): you marked every voted game as installed. |
-| **Check in at the venue** | Only on the day: you tapped *I'm here*. |
+| 5. **Leads confirm your seat** | The leads finalized the seat plan and you have a seat. Until then it waits on them (also after you picked your own seat). With an event seat plan, the hint says whether the leads already [booked it there](seats.md#book-on-the-event-site). |
+| **Install the games** (optional) | After step 5, when someone voted for [games](games.md): you marked every voted game as installed. |
+| **Check in at the venue** | After step 5, only on the day: you tapped *I'm here*. |
+
+The leads have their own [lead checklist](events.md#lead-checklist).
 
 Optional steps don't hold back *All set* and only count towards the progress once done.
 

@@ -1,7 +1,7 @@
 import type { Attendance, Lan } from "@/db/schema";
 
 export type StepState = "done" | "pending" | "todo";
-export type StepKey = "going" | "nick" | "ticket" | "wishes" | "pick" | "seat" | "book" | "games" | "checkin";
+export type StepKey = "going" | "nick" | "ticket" | "wishes" | "pick" | "seat" | "games" | "checkin";
 export type ChecklistStep = {
   key: StepKey;
   title: string;
@@ -48,7 +48,7 @@ export function buildChecklist(input: {
           : "You're on the waitlist."
         : lan.signupDeadline
           ? "Answer before the deadline."
-          : "Let the orgas know.",
+          : "Let the leads know.",
   });
 
   steps.push({
@@ -64,15 +64,15 @@ export function buildChecklist(input: {
     title: "Buy your ticket",
     state: a?.paid ? "done" : a?.ticketBought ? "pending" : "todo",
     hint: a?.paid
-      ? "Confirmed by the orgas."
+      ? "Confirmed by the leads."
       : a?.ticketBought
-        ? "Waiting for an orga to confirm."
+        ? "Waiting for a lead to confirm."
         : "Buy it from the event, then tick it off here.",
   });
 
   if (hasSeatPlan && going) {
     // Step 4 depends on the event: members pick their own seat (self pick on), or optionally send
-    // wishes and the orgas place them. `seatPicking` stays set after finalizing, so the step stays put.
+    // wishes and the leads place them. `seatPicking` stays set after finalizing, so the step stays put.
     if (lan.seatPicking) {
       steps.push({
         key: "pick",
@@ -83,11 +83,11 @@ export function buildChecklist(input: {
             ? `You sit at ${seatLabel}.`
             : `You took ${seatLabel}. You can still change it on the Seats tab.`
           : final
-            ? "Self pick is closed. The orgas place you."
+            ? "Self pick is closed. The leads place you."
             : hasTicket
               ? freeSeats > 0
                 ? "Take a free seat on the Seats tab."
-                : "No free seats left. The orgas will place you."
+                : "No free seats left. The leads will place you."
               : "Tick that you have your ticket first, then take a free seat on the Seats tab.",
       });
     } else if (!final || hasWishes(a)) {
@@ -100,40 +100,33 @@ export function buildChecklist(input: {
         hint: final
           ? "Sent. The plan is final now."
           : wished
-            ? "Sent. You can change them until the orgas finalize the plan."
+            ? "Sent. You can change them until the leads finalize the plan."
             : "Optional: who you'd like to sit near, on the Seats tab.",
       });
     }
 
-    // Step 5: the orgas always finalize the plan, also after self pick.
+    // Step 5: the leads always finalize the plan, also after self pick. They also book it on the event site.
     steps.push({
       key: "seat",
-      title: "Orgas confirm your seat",
+      title: "Leads confirm your seat",
       state: final && seatLabel ? "done" : lan.seatPicking && !final && !seatLabel ? "todo" : "pending",
       hint: final
         ? seatLabel
-          ? `Seat ${seatLabel}, final.`
-          : "The plan is final but you have no seat yet. An orga will get back to you."
+          ? `Seat ${seatLabel}, final.${lan.externalPlanUrl ? (a.seatBooked ? " Booked on the event site." : " The leads book it on the event site.") : ""}`
+          : "The plan is final but you have no seat yet. A lead will get back to you."
         : seatLabel
-          ? `The orgas check ${seatLabel} and finalize the seat plan.`
+          ? `The leads check ${seatLabel} and finalize the seat plan.`
           : lan.seatPicking
-            ? "Once you picked a seat, the orgas check and finalize the plan."
-            : "The orgas assign the seats and finalize the plan after the deadline.",
+            ? "Once you picked a seat, the leads check and finalize the plan."
+            : "The leads assign the seats and finalize the plan after the deadline.",
     });
   }
 
-  // The event's own seat plan (e.g. lal.gg): members book the seat they got there themselves.
-  if (lan.externalPlanUrl && final && going && seatLabel) {
-    steps.push({
-      key: "book",
-      title: `Book ${seatLabel} on the event site`,
-      state: a.seatBooked ? "done" : "todo",
-      hint: a.seatBooked ? "Booked." : "Reserve the same seat on the event's seat plan, then tick it off.",
-    });
-  }
+  // Games and check-in come after the leads confirmed the seat, so the list stays short until then.
+  const confirmed = final && !!seatLabel;
 
   // Games the group wants to play: install them before the LAN, the venue's internet is slow.
-  if (going && games && games.voted > 0 && now < lan.endsAt) {
+  if (going && confirmed && games && games.voted > 0 && now < lan.endsAt) {
     steps.push({
       key: "games",
       title: "Install the games",
@@ -147,7 +140,7 @@ export function buildChecklist(input: {
   }
 
   // On the day: tell the others you made it.
-  if (going && onTheDay(lan, now)) {
+  if (going && confirmed && onTheDay(lan, now)) {
     steps.push({
       key: "checkin",
       title: "Check in at the venue",

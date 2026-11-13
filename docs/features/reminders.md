@@ -30,7 +30,6 @@ Seatbit reminds people before deadlines by itself. Orgas can also remind by hand
 - no answer to the interest check, no answer at all, or still unsure
 - coming but no ticket yet, or no nickname
 - self pick is on and they have a ticket, but no seat
-- seat not booked on the event's own seat plan
 
 ![Who's missing](../screenshots/desktop-manage-missing.png){ .shot }
 
@@ -43,8 +42,8 @@ Each person shows how a nudge reaches them:
 | *Mail only* | Only email reaches them (no Discord or DMs off). |
 | *Can't reach* | No Discord and email reminders off. |
 
-**Nudge** sends one person a short reminder for that step, **Nudge all** everyone in it. DMs have buttons where they fit (*Coming / Unsure / Not coming*, *Buy ticket*, *I booked it*). Members' DM and email settings are respected, and each person gets at most **one nudge per step every 12 hours**. Nudges are off for drafts and cancelled events.
+**Nudge** sends one person a short reminder for that step, **Nudge all** everyone in it. DMs have buttons where they fit (*Coming / Unsure / Not coming*, *Buy ticket*). Members' DM and email settings are respected, and each person gets at most **one nudge per step every 12 hours**. Nudges are off for drafts and cancelled events.
 
-Your own to-dos come last: **tickets to confirm** and people **without a seat**, linking to the tab where you fix them.
+Your own to-dos come last: **tickets to confirm**, people **without a seat** and **seats to book on the event site**, linking to the tab where you fix them.
 
 ![Who's missing on a phone](../screenshots/phone-manage-missing.png){ .shot width="300" }

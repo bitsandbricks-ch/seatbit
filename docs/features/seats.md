@@ -21,7 +21,7 @@ The **seat plan** shows the group's seat block. Members send seat wishes or pick
 | 2. **Self pick** (optional) | Orgas turn it on; members with a ticket tap a free seat and **Take this seat**, **Move here** or **Give up my seat**. |
 | 3. **Final plan** | Orgas finalize. This closes wishes and self pick, shows everyone the plan and can tell everyone their seat. Later changes notify the people who moved. **Reopen** goes back. |
 
-Seats only count, and everyone sees the plan, once it is final. The member [checklist](attendance.md#checklist) follows these steps: *Pick your seat* (or the optional *Send seat wishes*), then *Orgas confirm your seat*.
+Seats only count, and everyone sees the plan, once it is final. The member [checklist](attendance.md#checklist) follows these steps: *Pick your seat* (or the optional *Send seat wishes*), then *Leads confirm your seat*.
 
 <div class="phones" markdown>
 <figure markdown>
@@ -68,7 +68,7 @@ People coming without a seat are listed under **Not seated yet**: tap one, then 
 
 ## Book on the event site
 
-When the event has an **event seat plan** link, each member gets a checklist step *Book F9 on the event site* and a Discord DM with an **I booked it** button once the plan is final. The Attendees tab shows *booked on site*. A seat change clears the tick, so the member books again.
+When the event has an **event seat plan** link, the leads book everyone's seat there once the plan is final. *Manage → Seats → Booking on the event site* lists every seat with the person and their LAN ID: book it on the event site and tick it off. Members see *Booked on the event site* in their checklist, the Attendees tab shows *booked on site*, and the [lead checklist](events.md#lead-checklist) counts the open ones. A seat change (or an approved swap) clears the tick, so the leads book again.
 
 ## Seat swaps
 

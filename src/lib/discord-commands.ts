@@ -32,7 +32,6 @@ import { saveNick, saveSeatWishes, saveTicketBought } from "./member-updates";
 import { nameMatches } from "./names";
 import { listGames } from "./games";
 import { type Notice, sendDiscordDm } from "./notify";
-import { bookedButton } from "./seat-booking";
 
 const { attendance, lanInterest, lanType, nickname, seat } = schema;
 
@@ -445,16 +444,12 @@ async function statusCommand(i: Interaction): Promise<Json> {
   if (picked) {
     const denied = notMember(me, picked);
     if (denied) return denied;
-    const { card, attendance: a, mySeat } = await statusCard(picked, me);
+    const { card, attendance: a } = await statusCard(picked, me);
     const buttons: Json[] = [];
     if (!signupClosed(picked) && !attendanceLocked(a) && !picked.interestCheck && a?.status !== "going" && a?.status !== "waitlist")
       buttons.push({ type: 2, style: 3, label: "Coming", custom_id: `att:${picked.id}:going` });
     if (a && !a.paid && !a.ticketBought && (a.status === "going" || a.status === "waitlist"))
       buttons.push({ type: 2, style: 3, label: "I have my ticket", custom_id: `ticket:${picked.id}` });
-    if (picked.externalPlanUrl && picked.seatsPublishedAt && mySeat && a?.status === "going" && !a.seatBooked) {
-      buttons.push(bookedButton(picked.id));
-      buttons.push({ type: 2, style: 5, label: "Event seat plan", url: picked.externalPlanUrl });
-    }
     buttons.push(openButton(picked));
     return { type: 4, data: { flags: EPHEMERAL, embeds: [card], components: [{ type: 1, components: buttons }], allowed_mentions: { parse: [] } } };
   }

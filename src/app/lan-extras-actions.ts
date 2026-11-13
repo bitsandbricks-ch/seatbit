@@ -10,7 +10,7 @@ import { getDisplayNames, getLan } from "@/lib/lans";
 import { appUrl } from "@/lib/mail";
 import { notify, notifyLater, notifySeatChanged, sendDiscordDm } from "@/lib/notify";
 import { NUDGE_STEPS, nudge, type NudgeResult, type NudgeStep } from "@/lib/missing";
-import { clearSeatBooked, remindToBook, setSeatBooked } from "@/lib/seat-booking";
+import { clearSeatBooked, setSeatBooked } from "@/lib/seat-booking";
 import { canViewLan, isLanManager, requireLanManager, requireUser } from "@/lib/session";
 import { auditLan } from "@/lib/audit";
 
@@ -31,25 +31,12 @@ const lanUrl = (l: Lan, tab?: string) => `${appUrl}/lans/${l.id}${tab ? `?tab=${
 
 // ---------------- Seat booking on the event site ----------------
 
-/** Member ticks (or unticks) "I booked my seat on the event's seat plan". */
-export async function setMySeatBooked(lanId: string, booked: boolean) {
-  const me = await requireUser();
-  setSeatBooked(lanId, me.id, booked);
-  lanPath(lanId);
-}
-
-/** Orga corrects someone's "booked" tick. */
+/** A lead ticks (or unticks) that they booked someone's seat on the event site. */
 export async function adminSetSeatBooked(lanId: string, userId: string, booked: boolean) {
   const me = await requireLanManager(lanId);
   setSeatBooked(lanId, userId, booked);
   if (userId !== me.id) auditLan(mustGetLan(lanId), me.id, "seatbooked.set", { targetUserId: userId, data: { booked } });
   lanPath(lanId);
-}
-
-/** Orga button: remind everyone with a seat they haven't booked yet. */
-export async function adminRemindToBook(lanId: string): Promise<number> {
-  await requireLanManager(lanId);
-  return remindToBook(mustGetLan(lanId));
 }
 
 // ---------------- Seat swaps ----------------

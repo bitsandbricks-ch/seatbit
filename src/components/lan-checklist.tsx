@@ -1,7 +1,6 @@
 "use client";
 import { progress, type ChecklistStep } from "@/lib/checklist";
 import { TicketConfirm } from "./ticket-confirm";
-import { BookedToggle } from "./seat-booking";
 
 export function LanChecklist({
   lanId,
@@ -9,21 +8,16 @@ export function LanChecklist({
   ticketBought,
   canReportTicket,
   variant = "list",
-  planUrl,
-  seatBooked = false,
 }: {
   lanId: string;
   steps: ChecklistStep[];
   ticketBought: boolean;
   canReportTicket: boolean;
-  /** The event's own seat plan, for the "book your seat" step. */
-  planUrl?: string;
-  seatBooked?: boolean;
   /** list: stacked (sidebar). strip: compact row above the event tabs, shown on every tab. */
   variant?: "list" | "strip";
 }) {
   const { done, total } = progress(steps);
-  if (variant === "strip") return <ChecklistStrip lanId={lanId} steps={steps} done={done} total={total} ticketBought={ticketBought} canReportTicket={canReportTicket} planUrl={planUrl} seatBooked={seatBooked} />;
+  if (variant === "strip") return <ChecklistStrip lanId={lanId} steps={steps} done={done} total={total} ticketBought={ticketBought} canReportTicket={canReportTicket} />;
   return (
     <div className="space-y-4">
       <div className="h-1.5 overflow-hidden rounded-full bg-raised">
@@ -49,11 +43,6 @@ export function LanChecklist({
                 <OptionalTag s={s} />
               </p>
               {s.hint && <p className="text-xs text-muted">{s.hint}</p>}
-              {s.key === "book" && planUrl && (
-                <div className="mt-2">
-                  <BookedToggle lanId={lanId} booked={seatBooked} planUrl={planUrl} />
-                </div>
-              )}
               {s.key === "ticket" && s.state !== "done" && canReportTicket && (
                 <div className="mt-2">
                   <TicketConfirm lanId={lanId} bought={ticketBought} confirmed={false} />
@@ -90,8 +79,6 @@ function ChecklistStrip({
   total,
   ticketBought,
   canReportTicket,
-  planUrl,
-  seatBooked,
 }: {
   lanId: string;
   steps: ChecklistStep[];
@@ -99,8 +86,6 @@ function ChecklistStrip({
   total: number;
   ticketBought: boolean;
   canReportTicket: boolean;
-  planUrl?: string;
-  seatBooked: boolean;
 }) {
   // Open optional steps don't hold back "All set".
   const all = done === total;
@@ -124,11 +109,6 @@ function ChecklistStrip({
                 <OptionalTag s={s} />
               </p>
               {s.hint && <p className="text-xs text-muted">{s.hint}</p>}
-              {s.key === "book" && planUrl && (
-                <div className="mt-2">
-                  <BookedToggle lanId={lanId} booked={seatBooked} planUrl={planUrl} />
-                </div>
-              )}
               {s.key === "ticket" && s.state !== "done" && canReportTicket && (
                 <div className="mt-2">
                   <TicketConfirm lanId={lanId} bought={ticketBought} confirmed={false} />
