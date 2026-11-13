@@ -86,6 +86,7 @@ export const AUDIT_GROUPS = {
   members: { prefixes: ["member.", "invite.", "clan.", "platform.", "account."] },
   guests: { prefixes: ["guest."] },
   settings: { prefixes: ["type.", "discord.", "settings.", "mail_template."] },
+  payments: { prefixes: ["payment."] },
 } as const;
 export type AuditGroup = keyof typeof AUDIT_GROUPS;
 
@@ -303,6 +304,30 @@ export function describeAudit(
       return t("audit.templateReset", v);
     case "account.delete":
       return t("audit.accountDelete");
+    case "payment.settings":
+      return t(d.on ? (d.info ? "audit.paymentsOnInfo" : "audit.paymentsOn") : "audit.paymentsOff");
+    case "payment.charge_create":
+      return t("audit.chargeCreate", v);
+    case "payment.charge_update":
+      return t("audit.chargeUpdate", v);
+    case "payment.charge_delete":
+      return t("audit.chargeDelete", v);
+    case "payment.add":
+      return t("audit.chargeAdd", v);
+    case "payment.remove":
+      return t("audit.chargeRemove", v);
+    case "payment.amount":
+      return t("audit.chargeAmount", v);
+    case "payment.remind":
+      return t("audit.chargeRemind", v);
+    case "payment.report":
+      return t("audit.chargeReport", v);
+    case "payment.mark":
+      if (d.status === "paid") {
+        const how = typeof d.via === "string" && ["cash", "bank", "twint", "stripe"].includes(d.via) ? t(`audit.via.${d.via as "cash"}`) : "";
+        return t("audit.chargePaid", { ...v, how });
+      }
+      return t(d.status === "waived" ? "audit.chargeWaived" : "audit.chargeReopen", v);
     default:
       return e.action;
   }

@@ -64,6 +64,7 @@ function PrivacyEn({ legal, payments }: Props) {
         <li>For each event: whether you are coming, unsure or not coming, whether you bought a ticket, whether a lead confirmed it, and any note you add</li>
         <li>Seat wishes (people you want to sit near or not next to, preferred position or seat) and the seat you are assigned</li>
         <li>Whether you are a lead of an event</li>
+        <li>If your clan uses clan payments: what the clan&apos;s leads charged you (dues, ticket money, shared costs), the amount, whether you paid, how (cash, bank, TWINT) and when, and who ticked it off. The money itself never goes through Seatbit.</li>
         <li>If a lead adds you as a guest before you have an account: the name, nickname and (if they have it) email address they enter, and your answers and seat for their events. The email is only used to send you the invite and to recognise you: when you sign in with a Discord account whose verified email matches, or through your claim link, this moves to your own account and the guest entry is deleted. If a lead tells the Discord bot which Discord member you are, we also keep your Discord user ID with the guest entry, send you one DM with your claim link, and move everything over when you sign in with that Discord account.</li>
         <li>Content clan admins enter: clan name, description and avatar, LAN types, events, invite links</li>
       </ul>
@@ -116,6 +117,7 @@ function PrivacyEn({ legal, payments }: Props) {
       <ul>
         <li><strong>Members of your clans</strong> see your name, nickname, avatar and whether you are coming to that clan&apos;s events. Once the seat plan is final they see who sits where.</li>
         <li><strong>Clan admins and event leads</strong> also see ticket status, notes and seat wishes for their events, and can export the attendee list. Clan admins see their clan&apos;s audit log.</li>
+        <li><strong>Clan admins and event managers</strong> see what each member owes the clan and who paid, if the clan uses clan payments.</li>
         <li><strong>People in a linked Discord channel</strong> see the bot&apos;s announcements, including the nicknames of who is coming, unsure or on the waitlist.</li>
         <li><strong>Platform admins</strong> of this Seatbit instance can see all data to run and support the Service.</li>
       </ul>

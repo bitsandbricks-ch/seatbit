@@ -25,6 +25,7 @@ Seatbit has three kinds of users:
 | [Games](games.md) | Suggest and vote for games, track installs. | Members |
 | [Food orders](food.md) | Group orders at the LAN with a merged order list and who paid. | Members |
 | [Discord and WhatsApp](discord.md) | Bot announcements with answer buttons, reminders, DMs, slash commands; WhatsApp texts. | Clan admins, leads |
+| [Clan payments](payments.md) | Dues, ticket money and shared costs: who owes what, who paid, reminders. | Clan admins, event managers |
 | [Audit log](audit-log.md) | What leads and admins changed. | Admins, event managers, recruiters |
 | [Supporter badge](supporters.md) | Optional voluntary payments for clans (off by default). | Clan admins |
 | [Platform admin](admin.md) | All clans, events and users, platform settings, mail templates. | Platform admins |

@@ -16,7 +16,7 @@
  * users get (fake) Discord accounts instead of passwords, as on a real instance.
  */
 import { hashPassword } from "better-auth/crypto";
-import { count, eq } from "drizzle-orm";
+import { and, count, eq } from "drizzle-orm";
 import { db, schema } from "../src/db";
 
 export const DEMO_PASSWORD = "seatbit-demo";
@@ -124,6 +124,8 @@ export async function seedDemo({ force = false, discord = false } = {}) {
         supporterPlan: "year",
         stripeCustomerId: "cus_demo0000000000",
         stripeSubscriptionId: "sub_demo0000000000",
+        paymentsEnabled: true,
+        paymentInfo: "TWINT 079 000 00 00 (Alex)\nIBAN CH00 0000 0000 0000 0000 0, Pixel Pirates, Luzern",
         createdAt: new Date(Date.now() - 400 * DAY),
       })
       .run();
@@ -544,6 +546,42 @@ export async function seedDemo({ force = false, discord = false } = {}) {
     food.forEach(([orderId, key, item, qty, priceCents, note = "", paid = false], i) =>
       tx.insert(s.foodItem)
         .values({ orderId, userId: ids[key], item, qty, priceCents, note, paid, createdAt: new Date(Date.now() - (food.length - i) * 60_000) })
+        .run(),
+    );
+
+    // Clan payments: yearly dues, the ticket money for the Lakeside LAN, and last year's server (settled).
+    tx.insert(s.charge)
+      .values([
+        { id: "demo-charge-dues", clanId, kind: "dues", title: "Dues 2027", note: "Pays the Discord bot server and the clan's share of the group tables.", currency: "CHF", dueAt: at(20, 23, 59), createdBy: ids.alex, createdAt: at(-10, 20) },
+        { id: "demo-charge-tickets", clanId, kind: "event", lanId: events.lakeside, title: "Tickets", note: "Alex bought the group tickets. CHF 85 each.", currency: "CHF", dueAt: at(2, 23, 59), createdBy: ids.alex, createdAt: at(-14, 19) },
+        { id: "demo-charge-server", clanId, kind: "other", title: "Game server 2026", currency: "CHF", createdBy: ids.chiara, createdAt: at(-200, 19) },
+      ])
+      .run();
+    const going = tx
+      .select({ u: s.attendance.userId })
+      .from(s.attendance)
+      .where(and(eq(s.attendance.lanId, events.lakeside), eq(s.attendance.status, "going")))
+      .all()
+      .map((r) => r.u);
+    const members = PEOPLE.filter((p) => p.key !== "tim").map((p) => ids[p.key]);
+    const paidBy = (id: string): "cash" | "twint" => (id === ids.alex ? "cash" : "twint");
+    // Tickets: most paid, Anna still open (her checklist and clan page show it), Ben says he paid.
+    going.forEach((u, i) => {
+      const status = u === ids.anna || u === ids.marco ? "open" : u === ids.ben ? "reported" : "paid";
+      tx.insert(s.chargeItem)
+        .values({ chargeId: "demo-charge-tickets", userId: u, amountCents: 8500, status, paidVia: status === "paid" ? paidBy(u) : null, paidAt: status === "paid" ? at(-10 + (i % 8), 20) : null, markedBy: status === "paid" ? ids.alex : null, createdAt: at(-14, 19) })
+        .run();
+    });
+    // Dues: about half paid so far, one waived.
+    members.forEach((u, i) => {
+      const status = u === ids.anna ? "open" : u === ids.paula ? "waived" : i % 2 === 0 ? "paid" : "open";
+      tx.insert(s.chargeItem)
+        .values({ chargeId: "demo-charge-dues", userId: u, amountCents: 3000, status, paidVia: status === "paid" ? (i % 4 ? "bank" : "cash") : null, paidAt: status === "paid" ? at(-9 + (i % 7), 19) : null, markedBy: status === "open" ? null : ids.alex, createdAt: at(-10, 20) })
+        .run();
+    });
+    members.slice(0, 8).forEach((u) =>
+      tx.insert(s.chargeItem)
+        .values({ chargeId: "demo-charge-server", userId: u, amountCents: 1250, status: "paid", paidVia: "twint", paidAt: at(-190, 20), markedBy: ids.chiara, createdAt: at(-200, 19) })
         .run(),
     );
 

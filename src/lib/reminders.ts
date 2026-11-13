@@ -138,6 +138,13 @@ export async function runDueReminders(now = new Date()) {
     .where(and(gt(lan.endsAt, now), isNotNull(lan.publishedAt), isNull(lan.cancelledAt), eq(lan.interestCheck, false)))
     .all();
   const result: { lan: string; kind: string; sent: number }[] = [];
+  // Clan payments due soon: not tied to an event.
+  const { runPaymentReminders } = await import("./payments");
+  const paid = await runPaymentReminders(now).catch((e) => {
+    console.error("[reminders] payments failed", e);
+    return 0;
+  });
+  if (paid) result.push({ lan: "", kind: "payment_due", sent: paid });
   for (const l of lans) {
     const kinds = dueKinds(l, now);
     for (const kind of kinds) {

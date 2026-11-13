@@ -226,6 +226,13 @@ export function exportUserData(userId: string) {
     .where(or(eq(schema.seatSwap.fromUserId, userId), eq(schema.seatSwap.toUserId, userId)))
     .all();
   const news = db.select().from(schema.lanNews).where(eq(schema.lanNews.authorId, userId)).all();
+  const charges = db
+    .select({ i: schema.chargeItem, c: schema.charge })
+    .from(schema.chargeItem)
+    .innerJoin(schema.charge, eq(schema.charge.id, schema.chargeItem.chargeId))
+    .where(eq(schema.chargeItem.userId, userId))
+    .orderBy(desc(schema.charge.createdAt))
+    .all();
   const accounts = db.select().from(schema.account).where(eq(schema.account.userId, userId)).all();
   const sessions = db.select().from(schema.session).where(eq(schema.session.userId, userId)).all();
   const logRows = db
@@ -321,6 +328,16 @@ export function exportUserData(userId: string) {
       status: s.status,
       note: s.note,
       at: s.createdAt,
+    })),
+    clanPayments: charges.map(({ i, c }) => ({
+      clan: clans.get(c.clanId) ?? null,
+      what: c.title,
+      event: c.lanId ? event(c.lanId) : null,
+      amount: `${c.currency} ${(i.amountCents / 100).toFixed(2)}`,
+      due: c.dueAt,
+      status: i.status,
+      paidVia: i.paidVia,
+      paidAt: i.paidAt,
     })),
     orgaNewsPosted: news.map((n) => ({ event: event(n.lanId), text: n.text, at: n.createdAt })),
     auditLog: logRows.map((r) => ({
