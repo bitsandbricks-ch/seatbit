@@ -4,6 +4,7 @@ import type { AttendanceStatus, Lan, Nickname } from "@/db/schema";
 import { appUrl } from "./mail";
 import { personLabel, type NameDisplay } from "./names";
 import { eventMailVars, renderTemplate } from "./mail-templates";
+import { localeOf } from "../i18n/user-locale";
 import { notify } from "./notify";
 
 const { attendance, nickname, seat, user, lan } = schema;
@@ -235,7 +236,7 @@ export async function moveUp(l: Lan, userId: string) {
   if (!u) return;
   await notify(u, {
     kind: "waitlistPromoted",
-    ...renderTemplate("waitlistPromoted", eventMailVars(l, u)),
+    ...renderTemplate("waitlistPromoted", eventMailVars(l, u, localeOf(u)), localeOf(u)),
     url: `${appUrl}/lans/${l.id}`,
   }).catch((e) => console.error("[notify] failed", e));
 }

@@ -12,6 +12,7 @@
  */
 import { eq, like } from "drizzle-orm";
 import { db, schema } from "../db";
+import { isLocale, type Locale } from "../i18n/config";
 import { lanStart } from "./format";
 import { appUrl, sendMail } from "./mail";
 import { type FactRow, type TemplateParts, type Vars, buildMail } from "./mail-fill";
@@ -27,6 +28,8 @@ export interface MailTemplate extends TemplateParts {
   when: string;
   vars: Record<string, string>; // placeholder -> what it is
   facts: readonly FactRow[];
+  /** German defaults; fact labels are translated in mail-fill. */
+  de: TemplateParts;
 }
 
 export const PARTS = ["subject", "body", "button", "note"] as const;
@@ -46,6 +49,8 @@ const eventFacts: FactRow[] = [
   ["Venue", "{location}"],
 ];
 const reminderNote = "You get reminders because they're on in your Seatbit profile.";
+const reminderNoteDe = "Du bekommst Erinnerungen, weil sie in deinem Seatbit-Profil eingeschaltet sind.";
+const interestNoteDe = "Du bekommst diese Mails, weil dich diese Art Event interessiert. Ändern kannst du das in deinem Seatbit-Profil.";
 
 export const MAIL_TEMPLATES = [
   {
@@ -68,6 +73,12 @@ export const MAIL_TEMPLATES = [
       "{inviter} added you to {clan} on Seatbit, where we plan LAN parties together: who's coming, tickets and seats.\n\nSign in with Discord to take over your spot. If your Discord account uses this email address, signing in is all it takes.",
     button: "Take over my spot",
     note: "Not you, or not interested? Just ignore this mail.",
+    de: {
+      subject: "{inviter} hat dich bei {clan} auf Seatbit eingetragen",
+      body: "{inviter} hat dich bei {clan} auf Seatbit eingetragen. Dort planen wir LAN-Partys zusammen: wer kommt, Tickets und Plätze.\n\nMelde dich mit Discord an, um deinen Platz zu übernehmen. Wenn dein Discord-Konto diese E-Mail-Adresse nutzt, reicht die Anmeldung.",
+      button: "Meinen Platz übernehmen",
+      note: "Nicht du, oder kein Interesse? Ignoriere diese Mail einfach.",
+    },
   },
   {
     id: "reminderSignup",
@@ -79,6 +90,12 @@ export const MAIL_TEMPLATES = [
     body: "You haven't said yet whether you're coming to {lan}. Please let us know by {deadline}.",
     button: "Answer now",
     note: reminderNote,
+    de: {
+      subject: "Kommst du an {lan}? Entscheide dich bis {deadline}",
+      body: "Du hast noch nicht gesagt, ob du an {lan} kommst. Gib uns bitte bis {deadline} Bescheid.",
+      button: "Jetzt antworten",
+      note: reminderNoteDe,
+    },
   },
   {
     id: "reminderPayment",
@@ -100,6 +117,12 @@ export const MAIL_TEMPLATES = [
     body: "You're coming to {lan}, but haven't marked your ticket as bought yet. Please buy it by {deadline}, then tick it off in your checklist.",
     button: "Open my checklist",
     note: reminderNote,
+    de: {
+      subject: "Kauf dein Ticket für {lan} bis {deadline}",
+      body: "Du kommst an {lan}, hast dein Ticket aber noch nicht als gekauft markiert. Kauf es bitte bis {deadline} und hake es dann in deiner Checkliste ab.",
+      button: "Meine Checkliste öffnen",
+      note: reminderNoteDe,
+    },
   },
   {
     id: "reminderEvent",
@@ -111,6 +134,12 @@ export const MAIL_TEMPLATES = [
     body: "{lan} starts on {start}. See you there!",
     button: "Event details",
     note: reminderNote,
+    de: {
+      subject: "{lan} beginnt bald",
+      body: "{lan} beginnt am {start}. Bis bald!",
+      button: "Event-Details",
+      note: reminderNoteDe,
+    },
   },
   {
     id: "seatsPublished",
@@ -129,6 +158,12 @@ export const MAIL_TEMPLATES = [
     body: "The leads finalized the seat plan for {lan}. {seatInfo}",
     button: "See the seat map",
     note: "",
+    de: {
+      subject: "Der Sitzplan für {lan} steht",
+      body: "Die Leads haben den Sitzplan für {lan} festgelegt. {seatInfo}",
+      button: "Sitzplan ansehen",
+      note: "",
+    },
   },
   {
     id: "waitlistPromoted",
@@ -140,6 +175,12 @@ export const MAIL_TEMPLATES = [
     body: "A spot opened up and you moved from the waitlist to coming for {lan}.",
     button: "Event details",
     note: "",
+    de: {
+      subject: "Du bist dabei: {lan}",
+      body: "Ein Platz ist frei geworden und du bist von der Warteliste nachgerückt: Du kommst an {lan}.",
+      button: "Event-Details",
+      note: "",
+    },
   },
   {
     id: "eventPublished",
@@ -151,6 +192,12 @@ export const MAIL_TEMPLATES = [
     body: "{clan} is going to {lan}. Are you coming? Let us know in Seatbit.",
     button: "Answer now",
     note: "You get these because you're interested in this kind of event. Change it in your Seatbit profile.",
+    de: {
+      subject: "Neues Event: {lan}",
+      body: "{clan} geht an {lan}. Kommst du mit? Sag es uns in Seatbit.",
+      button: "Jetzt antworten",
+      note: interestNoteDe,
+    },
   },
   {
     id: "interestCheck",
@@ -162,6 +209,12 @@ export const MAIL_TEMPLATES = [
     body: "{clan} is thinking about going to {lan}. Would you come? Tell us, so we know whether it's worth getting spots. Nothing is binding yet: sign-up comes later.",
     button: "I'm interested / not",
     note: "You get these because you're interested in this kind of event. Change it in your Seatbit profile.",
+    de: {
+      subject: "Würdest du an {lan} kommen?",
+      body: "{clan} überlegt, an {lan} zu gehen. Würdest du kommen? Sag es uns, damit wir wissen, ob es sich lohnt, Plätze zu holen. Noch ist nichts verbindlich: Die Anmeldung kommt später.",
+      button: "Interessiert / nicht",
+      note: interestNoteDe,
+    },
   },
   {
     id: "signupOpen",
@@ -173,6 +226,12 @@ export const MAIL_TEMPLATES = [
     body: "It's decided: {clan} is going to {lan}. Sign-up is open now, so say if you're coming.",
     button: "Sign up",
     note: "",
+    de: {
+      subject: "Wir gehen an {lan}: jetzt anmelden",
+      body: "Es ist entschieden: {clan} geht an {lan}. Die Anmeldung ist jetzt offen, also sag, ob du kommst.",
+      button: "Anmelden",
+      note: "",
+    },
   },
   {
     id: "eventCancelled",
@@ -184,6 +243,12 @@ export const MAIL_TEMPLATES = [
     body: "The leads cancelled {lan}. Sorry about that!",
     button: "Event page",
     note: "",
+    de: {
+      subject: "{lan} ist abgesagt",
+      body: "Die Leads haben {lan} abgesagt. Tut uns leid!",
+      button: "Zur Event-Seite",
+      note: "",
+    },
   },
   {
     id: "eventNews",
@@ -195,6 +260,12 @@ export const MAIL_TEMPLATES = [
     body: "{news}",
     button: "Event page",
     note: "",
+    de: {
+      subject: "{lan}: News von {author}",
+      body: "{news}",
+      button: "Zur Event-Seite",
+      note: "",
+    },
   },
 ] as const satisfies MailTemplate[];
 
@@ -206,25 +277,35 @@ export function templateDef(id: string): MailTemplate {
   return t;
 }
 
-const key = (id: string, part: Part) => `mailtpl.${id}.${part}`;
+// English keeps the original key so overrides saved before languages existed still apply.
+const key = (id: string, part: Part, loc: Locale) => (loc === "en" ? `mailtpl.${id}.${part}` : `mailtpl.${id}.${part}.${loc}`);
 
-/** Saved overrides, by template id. */
+/** A template's built-in text in a language. */
+export function defaultParts(id: string, loc: Locale): TemplateParts {
+  const def = templateDef(id);
+  const src = loc === "en" ? def : def[loc];
+  return { subject: src.subject, body: src.body, button: src.button, note: src.note };
+}
+
+/** Saved overrides, by template id and language. */
 export function savedTemplates() {
-  const out = new Map<string, Partial<Record<Part, string>> & { updatedAt?: Date }>();
+  const out = new Map<string, Partial<Record<Locale, Partial<Record<Part, string>>>> & { updatedAt?: Date }>();
   for (const r of db.select().from(appSetting).where(like(appSetting.key, "mailtpl.%")).all()) {
-    const [, id, part] = r.key.split(".");
+    const [, id, part, loc = "en"] = r.key.split(".");
+    if (!isLocale(loc)) continue;
     const e = out.get(id) ?? {};
-    if ((PARTS as readonly string[]).includes(part)) e[part as Part] = r.value;
+    const parts = (e[loc] ??= {});
+    if ((PARTS as readonly string[]).includes(part)) parts[part as Part] = r.value;
     if (!e.updatedAt || r.updatedAt > e.updatedAt) e.updatedAt = r.updatedAt;
     out.set(id, e);
   }
   return out;
 }
 
-/** The template's current parts: the saved version, else the default. */
-export function getTemplate(id: string): TemplateParts {
-  const def = templateDef(id);
-  const saved = savedTemplates().get(id);
+/** The template's current parts in a language: the saved version, else the default. */
+export function getTemplate(id: string, loc: Locale = "en"): TemplateParts {
+  const def = defaultParts(id, loc);
+  const saved = savedTemplates().get(id)?.[loc];
   return {
     subject: saved?.subject ?? def.subject,
     body: saved?.body ?? def.body,
@@ -233,13 +314,13 @@ export function getTemplate(id: string): TemplateParts {
   };
 }
 
-/** Saves a template; a part equal to its default removes the override. */
-export function saveTemplate(id: string, parts: TemplateParts, userId: string | null) {
-  const def = templateDef(id);
+/** Saves a template in one language; a part equal to its default removes the override. */
+export function saveTemplate(id: string, parts: TemplateParts, userId: string | null, loc: Locale = "en") {
+  const def = defaultParts(id, loc);
   for (const part of PARTS) {
     let value = parts[part].replace(/\r\n/g, "\n").trim();
     if (part !== "body") value = value.replace(/\s*\n\s*/g, " ");
-    const k = key(id, part);
+    const k = key(id, part, loc);
     if (value === def[part] || (!value && part !== "note")) db.delete(appSetting).where(eq(appSetting.key, k)).run();
     else
       db.insert(appSetting)
@@ -249,19 +330,19 @@ export function saveTemplate(id: string, parts: TemplateParts, userId: string | 
   }
 }
 
-export function resetTemplate(id: string) {
+export function resetTemplate(id: string, loc: Locale = "en") {
   templateDef(id);
-  db.delete(appSetting).where(like(appSetting.key, `mailtpl.${id}.%`)).run();
+  for (const part of PARTS) db.delete(appSetting).where(eq(appSetting.key, key(id, part, loc))).run();
 }
 
-/** Subject, HTML and plain text for one recipient. */
-export function renderTemplate(id: MailTemplateId, vars: Vars) {
-  return buildMail(getTemplate(id), templateDef(id).facts, vars, { appUrl });
+/** Subject, HTML and plain text for one recipient, in their language. */
+export function renderTemplate(id: MailTemplateId, vars: Vars, loc: Locale = "en") {
+  return buildMail(getTemplate(id, loc), templateDef(id).facts, vars, { appUrl, locale: loc });
 }
 
 /** Renders a template and sends it (HTML with a plain-text part). */
-export async function sendTemplate(to: string, id: MailTemplateId, vars: Vars) {
-  const m = renderTemplate(id, vars);
+export async function sendTemplate(to: string, id: MailTemplateId, vars: Vars, loc: Locale = "en") {
+  const m = renderTemplate(id, vars, loc);
   await sendMail(to, m.subject, m.text, m.html);
 }
 
@@ -269,13 +350,14 @@ export async function sendTemplate(to: string, id: MailTemplateId, vars: Vars) {
 export function eventMailVars(
   l: { id: string; name: string; startsAt: Date; endsAt: Date; dateTbd?: boolean; dateHint?: string; location: string; clanId: string | null },
   u: { firstName: string; name: string },
+  loc: Locale = "en",
 ) {
   const c = l.clanId ? db.select({ name: schema.clan.name }).from(schema.clan).where(eq(schema.clan.id, l.clanId)).get() : null;
   return {
     firstName: u.firstName || u.name,
     clan: c?.name ?? "",
     lan: l.name,
-    start: lanStart(l),
+    start: lanStart(l, loc),
     location: l.location,
     link: `${appUrl}/lans/${l.id}`,
   };

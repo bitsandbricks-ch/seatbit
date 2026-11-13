@@ -13,6 +13,9 @@
  * Discord DM text: no greeting or footer, the button as a link.
  */
 
+import type { Locale } from "../i18n/config";
+import { makeT, type T } from "../i18n/translate";
+
 export type Vars = Record<string, string | null | undefined>;
 export type FactRow = readonly [label: string, value: string, mono?: boolean];
 
@@ -78,13 +81,13 @@ function factsBox(rows: FactRow[]) {
 </table>`;
 }
 
-function buttonHtml(url: string, label: string) {
+function buttonHtml(url: string, label: string, t: T) {
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin: 8px 0 24px;">
   <tr><td class="sb-button" align="center" bgcolor="${C.bit}" style="border-radius: 10px; background: ${C.bit};">
     <a href="${esc(url)}" target="_blank" style="display: inline-block; padding: 13px 24px; font-family: ${FONT}; font-size: 15px; font-weight: 700; line-height: 20px; color: ${C.onBit}; text-decoration: none; border-radius: 10px;">${esc(label)}</a>
   </td></tr>
 </table>
-${para(`If the button doesn't work, open this link:<br /><a href="${esc(url)}" target="_blank" style="color: ${C.link}; word-break: break-all;">${esc(url)}</a>`, true)}`;
+${para(`${esc(t("mail.buttonFallback"))}<br /><a href="${esc(url)}" target="_blank" style="color: ${C.link}; word-break: break-all;">${esc(url)}</a>`, true)}`;
 }
 
 export interface MailContent {
@@ -101,13 +104,15 @@ export interface MailContent {
   settingsUrl: string;
   termsUrl: string;
   privacyUrl: string;
+  locale?: Locale;
 }
 
 export function renderMail(m: MailContent): { html: string; text: string; dm: string } {
+  const t = makeT(m.locale ?? "en");
   const paragraphs = m.body.split(/\n{2,}/).filter((p) => p.trim());
   const preheader = (paragraphs[0] ?? "").replace(/\s+/g, " ").slice(0, 140);
   const html = `<!DOCTYPE html>
-<html lang="en">
+<html lang="${t.locale}">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -147,15 +152,15 @@ export function renderMail(m: MailContent): { html: string; text: string; dm: st
           <h1 class="sb-title" style="margin: 0 0 18px; font-family: ${FONT}; font-size: 22px; font-weight: 700; line-height: 28px; letter-spacing: -0.3px; color: ${C.fg};">${esc(m.greeting)}</h1>
           ${paragraphs.map((p) => para(linkify(p).replace(/\n/g, "<br />"))).join("\n")}
           ${factsBox(m.facts)}
-          ${m.button ? buttonHtml(m.button.url, m.button.label) : ""}
+          ${m.button ? buttonHtml(m.button.url, m.button.label, t) : ""}
           ${m.note ? para(linkify(m.note).replace(/\n/g, "<br />"), true) : ""}
         </td></tr>
         <tr><td class="sb-foot" align="center" style="padding: 22px 16px 0; font-family: ${FONT}; font-size: 12px; line-height: 18px; color: ${C.muted};">
-          Sent to you for ${esc(m.header)} on Seatbit.<br />
-          <a href="${esc(m.settingsUrl)}" style="color: ${C.muted}; text-decoration: underline;">Email settings</a>
-          &nbsp;&middot;&nbsp; <a href="${esc(m.privacyUrl)}" style="color: ${C.muted}; text-decoration: underline;">Privacy</a>
-          &nbsp;&middot;&nbsp; <a href="${esc(m.termsUrl)}" style="color: ${C.muted}; text-decoration: underline;">Terms</a><br />
-          Sent with <span class="sb-word" style="font-weight: 800; letter-spacing: -0.2px; color: ${C.fg};">seat</span><span style="font-weight: 800; letter-spacing: -0.2px; color: ${C.bitDeep};">bit</span>
+          ${esc(t("mail.sentFor", { header: m.header }))}<br />
+          <a href="${esc(m.settingsUrl)}" style="color: ${C.muted}; text-decoration: underline;">${esc(t("mail.settings"))}</a>
+          &nbsp;&middot;&nbsp; <a href="${esc(m.privacyUrl)}" style="color: ${C.muted}; text-decoration: underline;">${esc(t("mail.privacy"))}</a>
+          &nbsp;&middot;&nbsp; <a href="${esc(m.termsUrl)}" style="color: ${C.muted}; text-decoration: underline;">${esc(t("mail.terms"))}</a><br />
+          ${esc(t("mail.sentWith"))} <span class="sb-word" style="font-weight: 800; letter-spacing: -0.2px; color: ${C.fg};">seat</span><span style="font-weight: 800; letter-spacing: -0.2px; color: ${C.bitDeep};">bit</span>
         </td></tr>
       </table>
     </td></tr>
@@ -169,7 +174,7 @@ export function renderMail(m: MailContent): { html: string; text: string; dm: st
     m.facts.map(([l, v]) => `${l}: ${v}`).join("\n"),
     m.button ? `${m.button.label}: ${m.button.url}` : "",
     m.note ?? "",
-    `--\nSent with Seatbit. Email settings: ${m.settingsUrl}\nPrivacy: ${m.privacyUrl}\nTerms: ${m.termsUrl}`,
+    `--\n${t("mail.textFooter", { settings: m.settingsUrl, privacy: m.privacyUrl, terms: m.termsUrl })}`,
   ]
     .filter((s) => s.trim())
     .join("\n\n");
@@ -188,49 +193,81 @@ export function renderMail(m: MailContent): { html: string; text: string; dm: st
 
 /** Fills a template's parts and facts and renders the mail. */
 export function buildMail(
-  t: TemplateParts,
+  parts: TemplateParts,
   facts: readonly FactRow[],
   vars: Vars,
-  ctx: { appUrl: string },
+  ctx: { appUrl: string; locale?: Locale },
 ): { subject: string; html: string; text: string; dm: string } {
-  const subject = fill(t.subject, vars).replace(/\s*\n\s*/g, " ");
+  const t = makeT(ctx.locale ?? "en");
+  // Fact labels are written in English in the template list; other languages look them up.
+  const factLabel = (l: string) => (t.locale === "en" ? l : (FACT_LABELS[t.locale]?.[l] ?? l));
+  const subject = fill(parts.subject, vars).replace(/\s*\n\s*/g, " ");
   const filledFacts = facts
-    .map(([l, v, mono]) => [l, fill(v, vars), mono] as FactRow)
+    .map(([l, v, mono]) => [factLabel(l), fill(v, vars), mono] as FactRow)
     .filter(([, v]) => v.trim());
-  const label = fill(t.button, vars);
+  const label = fill(parts.button, vars);
   const link = vars.link?.trim();
   const { html, text, dm } = renderMail({
     subject,
-    greeting: vars.firstName?.trim() ? `Hi ${vars.firstName.trim()},` : "Hi,",
-    body: fill(t.body, vars),
+    greeting: vars.firstName?.trim() ? t("mail.hi", { name: vars.firstName.trim() }) : t("mail.hiAnon"),
+    body: fill(parts.body, vars),
     facts: filledFacts,
     button: link && label ? { label, url: link } : undefined,
-    note: fill(t.note, vars),
+    note: fill(parts.note, vars),
     header: vars.clan?.trim() || "Seatbit",
     logoUrl: `${ctx.appUrl}/brand/icon-192.png`,
     settingsUrl: `${ctx.appUrl}/profile`,
     termsUrl: `${ctx.appUrl}/terms`,
     privacyUrl: `${ctx.appUrl}/privacy`,
+    locale: t.locale,
   });
   return { subject, html, text, dm };
 }
+
+const FACT_LABELS: Partial<Record<Locale, Record<string, string>>> = {
+  de: {
+    Event: "Event",
+    When: "Wann",
+    Venue: "Ort",
+    "Answer by": "Antworten bis",
+    "Buy by": "Kaufen bis",
+    Price: "Preis",
+    "Ticket shop": "Ticketshop",
+    "Your seat": "Dein Platz",
+    Why: "Warum",
+    Clan: "Clan",
+    "Signed up for": "Angemeldet für",
+  },
+};
 
 /** Example values for the admin preview. */
 export const PREVIEW_VARS: Record<string, string> = {
   firstName: "Anna",
   lan: "Lock&Load 2027",
-  start: "12 Mar 2027, 18:00",
+  start: "Fri 12.03.2027, 18:00",
   location: "Forum Fribourg",
   link: "https://seatbit.ch/lans/…",
-  deadline: "1 Feb 2027, 23:59",
+  deadline: "Mon 01.02.2027, 23:59",
   price: "CHF 65",
   ticketUrl: "https://lal.gg/tickets",
   seat: "F7",
   seatInfo: "You're sitting at F7.",
   clan: "The dark lizzards gizzards wizzards",
   inviter: "Mike",
-  events: "Lock&Load 2027 (12 Mar 2027)",
+  events: "Lock&Load 2027 (12.03.2027)",
   reason: "The venue moved the date and most of us can't make the new one.",
   news: "Doors open at 10:00. Bring an extension cord, there are only 2 sockets per seat.",
   author: "Mike",
 };
+
+const PREVIEW_VARS_DE: Record<string, string> = {
+  start: "Fr 12.03.2027, 18:00",
+  deadline: "Mo 01.02.2027, 23:59",
+  seatInfo: "Du sitzt auf F7.",
+  reason: "Die Location hat das Datum verschoben und die meisten von uns können am neuen nicht.",
+  news: "Türöffnung um 10:00. Nimm eine Mehrfachsteckdose mit, es gibt nur 2 Steckdosen pro Platz.",
+};
+
+/** Example values for the admin preview, in a language. */
+export const previewVars = (loc: Locale): Record<string, string> =>
+  loc === "de" ? { ...PREVIEW_VARS, ...PREVIEW_VARS_DE } : PREVIEW_VARS;

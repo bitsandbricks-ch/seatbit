@@ -2,7 +2,8 @@
 
 import { useActionState, useRef, useState } from "react";
 import type { ActionResult } from "@/app/admin/settings/actions";
-import { type FactRow, PREVIEW_VARS, type TemplateParts, buildMail } from "@/lib/mail-fill";
+import { type FactRow, type TemplateParts, buildMail, previewVars } from "@/lib/mail-fill";
+import type { Locale } from "@/i18n/config";
 import { ActionButton, Result } from "./settings-section";
 import { btnPrimary, input, label } from "./ui";
 
@@ -14,6 +15,7 @@ type Tpl = {
   current: TemplateParts;
   defaults: TemplateParts;
   edited: boolean;
+  locale: Locale;
 };
 
 type Field = keyof TemplateParts;
@@ -62,8 +64,9 @@ export function MailTemplateEditor({
     });
   };
 
-  const vars = Object.fromEntries(Object.keys(t.vars).map((k) => [k, PREVIEW_VARS[k] ?? k]));
-  const preview = buildMail(parts, t.facts, vars, { appUrl });
+  const examples = previewVars(t.locale);
+  const vars = Object.fromEntries(Object.keys(t.vars).map((k) => [k, examples[k] ?? k]));
+  const preview = buildMail(parts, t.facts, vars, { appUrl, locale: t.locale });
 
   const line = (f: Field, l: string, hint?: string) => (
     <label className="block">

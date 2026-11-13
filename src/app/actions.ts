@@ -38,7 +38,7 @@ import { PROFILE_COLORS, PROFILE_ICONS, deleteUserAvatarFile, saveUserAvatar } f
 import { audit, auditLan, changedFields } from "@/lib/audit";
 import { cleanName } from "@/lib/names";
 import { saveNick, saveSeatWishes, saveTicketBought, type wishInput } from "@/lib/member-updates";
-import { getLocale } from "@/i18n/server";
+import { getLocale, localeOf, makeT } from "@/i18n/server";
 
 const { attendance, seat, lan, user, lanOrga, lanType } = schema;
 
@@ -848,16 +848,21 @@ export async function publishSeats(lanId: string, notify: boolean): Promise<numb
     const seats = db.select().from(seat).where(eq(seat.lanId, lanId)).all();
     for (const { u } of rows) {
       const mine = seats.find((s) => s.userId === u.id);
+      const ut = makeT(localeOf(u));
       try {
         const r = await notifyMember(u, {
           kind: "seatsPublished",
-          ...renderTemplate("seatsPublished", {
-            ...eventMailVars(l, u),
-            seat: mine?.label,
-            seatInfo: mine
-              ? `You're sitting at ${mine.label}.${l.externalPlanUrl ? " The leads book it on the event site for you." : ""}`
-              : "You don't have a seat yet, a lead will get back to you.",
-          }),
+          ...renderTemplate(
+            "seatsPublished",
+            {
+              ...eventMailVars(l, u, ut.locale),
+              seat: mine?.label,
+              seatInfo: mine
+                ? ut(l.externalPlanUrl ? "mail.seatInfoBook" : "mail.seatInfo", { seat: mine.label })
+                : ut("mail.seatInfoNone"),
+            },
+            ut.locale,
+          ),
           url: `${appUrl}/lans/${l.id}`,
         });
         if (r.email || r.dm) sent++;

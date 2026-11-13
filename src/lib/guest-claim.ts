@@ -7,6 +7,8 @@ import { clanRole, getClan } from "./clans";
 import { isMemberRole } from "./clan-roles";
 import { getDefaultNames } from "./lans";
 import { fmtDate, fmtDay } from "./format";
+import { clanLocale } from "../i18n/user-locale";
+import { makeT } from "../i18n/translate";
 import { moveLanAccounts } from "./lan-accounts";
 import { appUrl } from "./mail";
 import { sendTemplate } from "./mail-templates";
@@ -142,13 +144,20 @@ export async function sendGuestInvite(guestId: string, inviter: string) {
         .orderBy(asc(schema.lan.startsAt))
         .all()
     : [];
-  await sendTemplate(g.inviteEmail, "guestInvite", {
-    firstName: g.firstName || g.name,
-    clan: clan?.name ?? "your clan",
-    inviter,
-    events: lans.map((l) => `${l.name} (${fmtDay(l.startsAt)})`).join(", "),
-    link: `${appUrl}/claim/${g.claimCode}`,
-  });
+  // Guests have no profile yet: the clan's language decides.
+  const loc = clanLocale(clan);
+  await sendTemplate(
+    g.inviteEmail,
+    "guestInvite",
+    {
+      firstName: g.firstName || g.name,
+      clan: clan?.name ?? makeT(loc)("mail.yourClan"),
+      inviter,
+      events: lans.map((l) => `${l.name} (${fmtDay(l.startsAt)})`).join(", "),
+      link: `${appUrl}/claim/${g.claimCode}`,
+    },
+    loc,
+  );
   db.update(schema.user).set({ invitedAt: new Date() }).where(eq(schema.user.id, g.id)).run();
   return true;
 }

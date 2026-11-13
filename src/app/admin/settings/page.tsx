@@ -8,7 +8,8 @@ import { billingEnabled, billingProblems, supporterClans } from "@/lib/billing";
 import { fmtDay } from "@/lib/format";
 import { LOGIN_METHODS } from "@/lib/auth";
 import { SETTING_GROUPS, type SettingGroup, canEncrypt, settingsForAdmin } from "@/lib/settings";
-import { MAIL_TEMPLATES, getTemplate, savedTemplates } from "@/lib/mail-templates";
+import { MAIL_TEMPLATES, defaultParts, getTemplate, savedTemplates } from "@/lib/mail-templates";
+import { LOCALES, LOCALE_NAMES, isLocale, type Locale } from "@/i18n/config";
 import type { FactRow } from "@/lib/mail-fill";
 import { MailTemplateEditor } from "@/components/mail-template-editor";
 import { resetMailTemplate, saveMailTemplate, saveSettings, sendTemplateTest, sendTestMail, setupDiscordBot } from "./actions";
@@ -39,7 +40,8 @@ type TabId = (typeof TABS)[number]["id"];
 
 export default async function SettingsPage({ searchParams }: PageProps<"/admin/settings">) {
   await requireAdmin();
-  const { tab: rawTab } = await searchParams;
+  const { tab: rawTab, lang: rawLang } = await searchParams;
+  const mailLang: Locale = isLocale(rawLang) ? rawLang : "en";
   // Google login is switched off in code (LOGIN_METHODS), so its settings tab is hidden.
   const tabs = TABS.filter((t) => t.id !== "google" || LOGIN_METHODS.google);
   const tab: TabId = tabs.some((t) => t.id === rawTab) ? (rawTab as TabId) : "mail";
@@ -171,7 +173,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
           <BillingInfo />,
         )}
 
-      {tab === "templates" && <TemplatesTab />}
+      {tab === "templates" && <TemplatesTab loc={mailLang} />}
 
       {tab === "server" && (
         <Card title="Server environment">
@@ -234,7 +236,7 @@ function BillingInfo() {
   );
 }
 
-function TemplatesTab() {
+function TemplatesTab({ loc }: { loc: Locale }) {
   const saved = savedTemplates();
   return (
     <div className="space-y-5">
@@ -243,11 +245,27 @@ function TemplatesTab() {
         box with the event facts, a button and a small print line. Change the wording to fit your clan; placeholders like{" "}
         {"{firstName}"} are filled in for each person. Reset brings back the built-in text.
       </p>
+      <p className="max-w-2xl text-sm text-muted">
+        Each mail goes out in the person&apos;s language (guest invites in the clan&apos;s). Every language has its own
+        text.
+      </p>
+      <div className="flex flex-wrap gap-2" role="group" aria-label="Template language">
+        {LOCALES.map((l) => (
+          <a
+            key={l}
+            href={`?tab=templates&lang=${l}`}
+            aria-current={l === loc ? "true" : undefined}
+            className={`rounded-full border px-3 py-1.5 text-sm ${l === loc ? "border-bit bg-bit-soft text-fg" : "border-line text-muted hover:text-fg"}`}
+          >
+            {LOCALE_NAMES[l]}
+          </a>
+        ))}
+      </div>
       {MAIL_TEMPLATES.map((t) => {
-        const s = saved.get(t.id);
-        const defaults = { subject: t.subject, body: t.body, button: t.button, note: t.note };
+        const s = saved.get(t.id)?.[loc];
+        const defaults = defaultParts(t.id, loc);
         return (
-          <Card key={t.id} title={t.title}>
+          <Card key={`${t.id}-${loc}`} title={t.title}>
             <MailTemplateEditor
               appUrl={appUrl}
               t={{
@@ -255,13 +273,14 @@ function TemplatesTab() {
                 when: t.when,
                 vars: t.vars,
                 facts: t.facts.map((f) => [...f] as FactRow),
-                current: getTemplate(t.id),
+                current: getTemplate(t.id, loc),
                 defaults,
                 edited: !!s,
+                locale: loc,
               }}
-              save={saveMailTemplate.bind(null, t.id)}
-              reset={resetMailTemplate.bind(null, t.id)}
-              test={sendTemplateTest.bind(null, t.id)}
+              save={saveMailTemplate.bind(null, t.id, loc)}
+              reset={resetMailTemplate.bind(null, t.id, loc)}
+              test={sendTemplateTest.bind(null, t.id, loc)}
             />
           </Card>
         );

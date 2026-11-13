@@ -5,6 +5,7 @@ import type { Lan, ReminderKind, User } from "@/db/schema";
 import { appUrl } from "./mail";
 import { notify } from "./notify";
 import { eventMailVars, renderTemplate } from "./mail-templates";
+import { localeOf } from "../i18n/user-locale";
 
 const { lan, user, attendance, reminderLog } = schema;
 const DAY = 24 * 60 * 60 * 1000;
@@ -12,24 +13,29 @@ const DAY = 24 * 60 * 60 * 1000;
 const fmt = fmtDate;
 
 function message(kind: ReminderKind, l: Lan, u: User) {
-  const vars = eventMailVars(l, u);
+  const loc = localeOf(u);
+  const vars = eventMailVars(l, u, loc);
   switch (kind) {
     case "signup":
-      return renderTemplate("reminderSignup", { ...vars, deadline: fmt(l.signupDeadline!) });
+      return renderTemplate("reminderSignup", { ...vars, deadline: fmt(l.signupDeadline!, loc) }, loc);
     case "payment":
-      return renderTemplate("reminderPayment", {
-        ...vars,
-        deadline: fmt(l.paymentDueDate!),
-        price: l.price,
-        ticketUrl: l.ticketUrl,
-      });
+      return renderTemplate(
+        "reminderPayment",
+        {
+          ...vars,
+          deadline: fmt(l.paymentDueDate!, loc),
+          price: l.price,
+          ticketUrl: l.ticketUrl,
+        },
+        loc,
+      );
     case "event": {
       const s = db
         .select({ label: schema.seat.label })
         .from(schema.seat)
         .where(and(eq(schema.seat.lanId, l.id), eq(schema.seat.userId, u.id)))
         .get();
-      return renderTemplate("reminderEvent", { ...vars, seat: l.seatsPublishedAt ? s?.label : "" });
+      return renderTemplate("reminderEvent", { ...vars, seat: l.seatsPublishedAt ? s?.label : "" }, loc);
     }
     default:
       return { subject: l.name, text: vars.link };

@@ -3,7 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { botIdentity, commands, discordEnabled, registerCommands } from "@/lib/discord-api";
 import { mailTarget, sendMail, verifySmtp } from "@/lib/mail";
-import { PREVIEW_VARS, type MailTemplateId, renderTemplate, resetTemplate, saveTemplate, templateDef } from "@/lib/mail-templates";
+import { type MailTemplateId, renderTemplate, resetTemplate, saveTemplate, templateDef } from "@/lib/mail-templates";
+import { previewVars } from "@/lib/mail-fill";
+import { isLocale } from "@/i18n/config";
+
+const asLocale = (v: string) => (isLocale(v) ? v : "en");
 import { requireAdmin } from "@/lib/session";
 import { audit } from "@/lib/audit";
 import {
@@ -98,37 +102,38 @@ export async function setupDiscordBot(): Promise<ActionResult> {
 }
 
 /** Saves an edited mail template. Parts equal to the default remove the override. */
-export async function saveMailTemplate(id: string, _prev: ActionResult, form: FormData): Promise<ActionResult> {
+export async function saveMailTemplate(id: string, lang: string, _prev: ActionResult, form: FormData): Promise<ActionResult> {
   const me = await requireAdmin();
   const part = (k: string) => String(form.get(k) ?? "");
   const parts = { subject: part("subject"), body: part("body"), button: part("button"), note: part("note") };
   if (Object.values(parts).some((v) => v.length > 8000)) return done(false, "That's too long for an email template.");
   if (!parts.subject.trim() || !parts.body.trim()) return done(false, "Subject and text can't be empty.");
   try {
-    saveTemplate(id, parts, me.id);
+    saveTemplate(id, parts, me.id, asLocale(lang));
   } catch (e) {
     return done(false, errMsg(e));
   }
-  audit({ actorId: me.id, action: "mail_template.save", data: { template: templateDef(id).title } });
+  audit({ actorId: me.id, action: "mail_template.save", data: { template: templateDef(id).title, language: asLocale(lang) } });
   revalidatePath("/admin/settings");
   return done(true, "Saved.");
 }
 
 /** Brings back the built-in text of a mail template. */
-export async function resetMailTemplate(id: string): Promise<ActionResult> {
+export async function resetMailTemplate(id: string, lang: string): Promise<ActionResult> {
   const me = await requireAdmin();
-  resetTemplate(id);
-  audit({ actorId: me.id, action: "mail_template.reset", data: { template: templateLabel(id) } });
+  resetTemplate(id, asLocale(lang));
+  audit({ actorId: me.id, action: "mail_template.reset", data: { template: templateLabel(id), language: asLocale(lang) } });
   revalidatePath("/admin/settings");
   return done(true, "Back to the default text.");
 }
 
 /** Sends a template to the admin, filled with example values. */
-export async function sendTemplateTest(id: string): Promise<ActionResult> {
+export async function sendTemplateTest(id: string, lang: string): Promise<ActionResult> {
   const me = await requireAdmin();
   try {
     templateDef(id);
-    const m = renderTemplate(id as MailTemplateId, { ...PREVIEW_VARS, firstName: me.firstName || me.name });
+    const loc = asLocale(lang);
+    const m = renderTemplate(id as MailTemplateId, { ...previewVars(loc), firstName: me.firstName || me.name }, loc);
     await sendMail(me.email, `[Test] ${m.subject}`, m.text, m.html);
     return done(true, mailTarget().kind === "console" ? "No SMTP set up, so it went to the server log." : `Sent to ${me.email}.`);
   } catch (e) {
