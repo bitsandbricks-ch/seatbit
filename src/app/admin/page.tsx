@@ -43,6 +43,9 @@ export default async function AdminPage() {
             <Link href="/admin/backups" className={btnSecondary}>
               {t("admin.backups")}
             </Link>
+            <Link href="/admin/health" className={btnSecondary}>
+              {t("health.title")}
+            </Link>
             <Link href="/admin/log" className={btnSecondary}>
               {t("clanHeader.log")}
             </Link>

@@ -85,6 +85,9 @@ After the start, Seatbit takes care of the rest:
 
 - `GET /api/health` answers `{"ok":true}` while the server and database work.
 - Errors, sent reminders and (without SMTP) emails go to the container log.
+- *Admin → Health* shows version, database size, mail and Discord status, background jobs and recent errors ([Health](../features/admin.md#health)).
+- Set an ops channel to get errors, upgrades and other platform events on Discord ([Platform Discord](../features/admin.md#platform-discord)).
+- Before planned downtime, put up a [maintenance banner](../features/admin.md#maintenance-banner).
 
 ## Admin CLI
 

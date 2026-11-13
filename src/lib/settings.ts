@@ -58,6 +58,14 @@ export const SETTING_GROUPS = {
     title: "Supporter payments",
     help: "Optional. Lets clans support this instance with a voluntary yearly or monthly payment, and people give one-off donations, through Stripe. Supporters and donors get a badge and a thank-you, never extra features. Off by default.",
   },
+  ops: {
+    title: "Platform Discord",
+    help: "Optional. Channels on your own Discord server where the bot tells the platform team what happens on this instance. The bot must be in that server.",
+  },
+  maintenance: {
+    title: "Maintenance banner",
+    help: "A banner on every page, e.g. before an upgrade. It disappears on its own when the end time has passed.",
+  },
   legal: {
     title: "Operator & legal",
     help: "Who runs this Seatbit instance. Shown on the Terms of Service and Privacy Policy pages. Fill this in before you invite people, or link your own documents instead.",
@@ -67,6 +75,8 @@ export type SettingGroup = keyof typeof SETTING_GROUPS;
 
 const isInt = (min: number, max: number) => (v: string) =>
   /^\d+$/.test(v) && +v >= min && +v <= max ? null : `Must be a whole number from ${min} to ${max}`;
+/** "2026-11-14T18:00", the date picker's value (server-local time). */
+const isLocalDateTime = (v: string) => /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(v) && !Number.isNaN(new Date(v).getTime());
 const isSnowflake = (v: string) => (/^\d{15,22}$/.test(v) ? null : "Discord ids are 15 to 22 digits");
 
 export const SETTINGS: SettingDef[] = [
@@ -367,6 +377,75 @@ export const SETTINGS: SettingDef[] = [
     env: "BILLING_REFUND_POLICY",
     default: "If you change your mind, write to us within 14 days of a payment and we refund it in full.",
     help: "One or two sentences, shown in the payments section of the built-in Terms of Service.",
+  },
+
+  // Platform Discord: the operator's own ops and announcements channels
+  {
+    key: "ops.channelId",
+    group: "ops",
+    label: "Ops channel ID",
+    kind: "text",
+    env: "OPS_DISCORD_CHANNEL",
+    placeholder: "1234567890123456789",
+    help: "Private channel for the platform team. In Discord: Settings → Advanced → Developer Mode, then right-click the channel → Copy Channel ID.",
+    validate: isSnowflake,
+  },
+  ...(
+    [
+      ["upgrades", "Upgrades", "A new version started, with the link to the changes."],
+      ["errors", "Errors", "Server errors and failed background jobs. The same error is posted at most once every 15 minutes."],
+      ["clans", "New clans", "Someone created a clan."],
+      ["payments", "Supporter payments", "A clan started, renewed or ended a supporter subscription."],
+      ["reports", "Abuse reports", "Someone reported a clan or an event."],
+    ] as const
+  ).map(
+    ([k, label, help]): SettingDef => ({
+      key: `ops.${k}`,
+      group: "ops",
+      label,
+      kind: "bool",
+      env: `OPS_DISCORD_${k.toUpperCase()}`,
+      default: "true",
+      help,
+    }),
+  ),
+  {
+    key: "ops.announceChannelId",
+    group: "ops",
+    label: "Announcements channel ID",
+    kind: "text",
+    env: "ANNOUNCE_DISCORD_CHANNEL",
+    placeholder: "1234567890123456789",
+    help: "Optional public channel, e.g. on your community server: new versions with their changes, maintenance notices and posts you write below.",
+    validate: isSnowflake,
+  },
+
+  // Maintenance banner (edited on its own tab with date pickers)
+  {
+    key: "maintenance.message",
+    group: "maintenance",
+    label: "Message",
+    kind: "text",
+    env: "MAINTENANCE_MESSAGE",
+    placeholder: "Seatbit is updated and may be offline for a few minutes.",
+    help: "Empty: no banner.",
+    validate: (v) => (v.length <= 500 ? null : "At most 500 characters"),
+  },
+  {
+    key: "maintenance.startsAt",
+    group: "maintenance",
+    label: "Starts",
+    kind: "text",
+    help: "Before this, the banner announces the planned downtime. Empty: it's going on now.",
+    validate: (v) => (isLocalDateTime(v) ? null : "Pick a date and time"),
+  },
+  {
+    key: "maintenance.endsAt",
+    group: "maintenance",
+    label: "Ends",
+    kind: "text",
+    help: "The banner disappears after this. Empty: it stays until you remove the message.",
+    validate: (v) => (isLocalDateTime(v) ? null : "Pick a date and time"),
   },
 
   // Automation

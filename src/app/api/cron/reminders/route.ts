@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { runDueReminders } from "@/lib/reminders";
+import { runJob } from "@/lib/jobs";
 import { getSetting } from "@/lib/settings";
 
 /**
@@ -16,6 +17,7 @@ export async function GET(req: Request) {
     given.length === expected.length &&
     crypto.timingSafeEqual(Buffer.from(given), Buffer.from(expected));
   if (!ok) return new Response("Unauthorized", { status: 401 });
-  const sent = await runDueReminders();
+  // Errors reach onRequestError (ops channel); the job state shows on the Health page.
+  const sent = await runJob("reminders", () => runDueReminders());
   return Response.json({ ok: true, sent });
 }

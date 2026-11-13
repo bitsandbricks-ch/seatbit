@@ -17,6 +17,7 @@
  * production (Discord only).
  */
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
+import http from "node:http";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
@@ -28,6 +29,9 @@ import { chromium, type Browser, type BrowserContext, type Page } from "playwrig
 const ROOT = path.resolve(__dirname, "..");
 const OUT = path.join(ROOT, "docs", "screenshots");
 const PORT = 3100;
+const DISCORD_PORT = 3101;
+const OPS_CHANNEL = "1234567890123456781";
+const ANNOUNCE_CHANNEL = "1234567890123456782";
 const BASE = `http://localhost:${PORT}`;
 const SECRET = "screenshots-only-not-a-real-secret-0123456789";
 /**
@@ -67,6 +71,51 @@ function discordClaimTicket() {
   const t = { d: "100000000000001015", g: "demo-guestsara", c: "demo-clan", m: "name", exp: Date.parse(NOW) + 3650 * 86400_000 };
   const data = Buffer.from(JSON.stringify(t)).toString("base64url");
   return `${data}.${crypto.createHmac("sha256", SECRET).update(`discord-claim:${data}`).digest("base64url")}`;
+}
+
+/** The Health page shows live numbers (uptime, memory, paths, commit); pin them so the image only changes with the UI. */
+async function pinHealth(page: Page) {
+  await page.evaluate(() => {
+    const fixed: Record<string, string> = {
+      commit: "0123456789ab",
+      node: "v22.11.0",
+      started: "Tue 10.11.2026, 06:00",
+      file: "/data/seatbit.db",
+      size: "1.4 MB + 96 KB WAL",
+      runs: " · 12 runs",
+      job: "Last OK Thu 12.11.2026, 09:59 (1 minute ago)",
+      since: "Since the server started (Tue 10.11.2026, 06:00). Runs started from the cron URL count too.",
+    };
+    document.querySelectorAll<HTMLElement>("[data-volatile]").forEach((el) => {
+      const v = fixed[el.dataset.volatile ?? ""];
+      // Jobs that never ran keep their "Not run yet".
+      if (v !== undefined && !(el.dataset.volatile === "job" && el.textContent?.startsWith("Not"))) el.textContent = v;
+    });
+    const tiles: [string, string][] = [
+      ["0123456", "v22.11.0"],
+      ["2 d 4 h", "Tue 10.11.2026, 06:00"],
+      ["1.5 MB", "96 KB of it in the WAL"],
+      ["182 MB", "linux x64"],
+    ];
+    document.querySelectorAll("[data-volatile-tiles] > div").forEach((tile, i) => {
+      const [, value, sub] = tile.children;
+      if (tiles[i] && value) value.textContent = tiles[i][0];
+      if (tiles[i] && sub) sub.textContent = tiles[i][1];
+    });
+  });
+}
+
+/** Fills in and saves a planned maintenance, two days after the demo's "today". */
+async function setMaintenance(page: Page) {
+  await page.locator("#maintenance-message").fill("Seatbit moves to a new server. Sign-ups and seat picks pause for about an hour.");
+  const dates = page.locator('input[type="text"][title]');
+  await dates.nth(0).fill("14.11.2026 22:00");
+  await dates.nth(0).press("Enter");
+  await dates.nth(1).fill("14.11.2026 23:00");
+  await dates.nth(1).press("Enter");
+  await page.getByRole("button", { name: "Save" }).click();
+  await page.getByText("Saved.").waitFor();
+  await page.mouse.move(0, 0);
 }
 
 const seat = (label: string) => async (page: Page) => {
@@ -134,7 +183,7 @@ const SHOTS: Shot[] = [
       await page.getByRole("button", { name: "Delete my account…" }).click();
       await page.evaluate(() => {
         const h = [...document.querySelectorAll("h2, h3")].find((e) => e.textContent === "Your data");
-        if (h) window.scrollTo({ top: h.getBoundingClientRect().top + window.scrollY - 90, behavior: "instant" });
+        if (h) window.scrollTo({ top: h.getBoundingClientRect().top + window.scrollY - 150, behavior: "instant" });
       });
       await page.waitForTimeout(300);
     },
@@ -211,6 +260,18 @@ const SHOTS: Shot[] = [
   { name: "phone-donate", who: "anna", path: "/donate", full: true },
   { name: "desktop-admin-donations", who: "alex", path: "/admin/donations" },
   { name: "desktop-privacy", who: "alex", path: "/privacy" },
+  {
+    name: "desktop-admin-ops",
+    who: "alex",
+    path: "/admin/settings?tab=discord",
+    act: async (page) => {
+      await page.getByRole("heading", { name: "Platform Discord" }).evaluate((h) => window.scrollTo({ top: h.getBoundingClientRect().top + window.scrollY - 150, behavior: "instant" }));
+    },
+  },
+  { name: "desktop-admin-health", who: "alex", path: "/admin/health", act: pinHealth, full: true },
+  // These two set the maintenance banner, so they stay last: every later page would show it.
+  { name: "desktop-admin-maintenance", who: "alex", path: "/admin/settings?tab=maintenance", act: setMaintenance },
+  { name: "phone-maintenance-banner", who: "anna", path: "/" },
 ];
 
 const DEVICES: Record<Device, { viewport: { width: number; height: number }; deviceScaleFactor: number; isMobile: boolean; hasTouch: boolean }> = {
@@ -250,6 +311,10 @@ async function main() {
     DISCORD_CLIENT_SECRET: "screenshots-only",
     DISCORD_BOT_TOKEN: "screenshots-only-not-a-real-token",
     DISCORD_PUBLIC_KEY: "0".repeat(64),
+    // A tiny stand-in for Discord's API (fakeDiscord below), so the Health page shows a working bot.
+    DISCORD_API_BASE: `http://127.0.0.1:${DISCORD_PORT}`,
+    OPS_DISCORD_CHANNEL: OPS_CHANNEL,
+    ANNOUNCE_DISCORD_CHANNEL: ANNOUNCE_CHANNEL,
     // Example operator, so the legal pages look like a configured instance.
     LEGAL_OPERATOR_NAME: "Example Gaming Club",
     LEGAL_OPERATOR_ADDRESS: "Example Street 1, 6000 Lucerne, Switzerland",
@@ -283,6 +348,7 @@ async function main() {
   server.stdout?.on("data", (d) => (log += d));
   server.stderr?.on("data", (d) => (log += d));
   let browser: Browser | undefined;
+  const discord = fakeDiscord();
   try {
     await waitForServer(server, () => log);
     browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined });
@@ -346,11 +412,31 @@ async function main() {
     throw e;
   } finally {
     await browser?.close();
+    discord.close();
     try {
       process.kill(-server.pid!, "SIGTERM");
     } catch {}
     fs.rmSync(dir, { recursive: true, force: true });
   }
+}
+
+/**
+ * Answers the few Discord calls the Health page makes (bot user, the two platform
+ * channels) and refuses everything else, as Discord would with a fake token.
+ */
+function fakeDiscord() {
+  const answers: Record<string, unknown> = {
+    "GET /users/@me": { id: "1234567890123456780", username: "Seatbit" },
+    [`GET /channels/${OPS_CHANNEL}`]: { id: OPS_CHANNEL, name: "seatbit-ops" },
+    [`GET /channels/${ANNOUNCE_CHANNEL}`]: { id: ANNOUNCE_CHANNEL, name: "announcements" },
+  };
+  const server = http.createServer((req, res) => {
+    const body = answers[`${req.method} ${req.url}`];
+    res.writeHead(body ? 200 : 401, { "Content-Type": "application/json" });
+    res.end(JSON.stringify(body ?? { message: "401: Unauthorized", code: 0 }));
+  });
+  server.listen(DISCORD_PORT, "127.0.0.1");
+  return server;
 }
 
 /**

@@ -13,6 +13,8 @@ import path from "node:path";
 import Database from "better-sqlite3";
 import { db } from "../db";
 import { getNumberSetting, getSetting } from "./settings";
+import { runJob } from "./jobs";
+import { reportError } from "./ops";
 
 const NAME = /^seatbit-\d{8}-\d{6}\.db$/;
 
@@ -99,7 +101,8 @@ export function createBackup(): Promise<BackupFile> {
   if (s.job) return s.job;
   s.running = true;
   const started = Date.now();
-  s.job = (async () => {
+  // runJob: shows on the Health page; reportError: the ops Discord channel (deduped).
+  s.job = runJob("backup", async () => {
     const dir = backupDir();
     fs.mkdirSync(dir, { recursive: true });
     let name = `seatbit-${stamp(new Date())}.db`;
@@ -129,7 +132,7 @@ export function createBackup(): Promise<BackupFile> {
     pruneBackups();
     const st = fs.statSync(target);
     return { name, size: st.size, at: st.mtime };
-  })()
+  })
     .then((f) => {
       s.lastOk = { name: f.name, at: new Date(), ms: Date.now() - started };
       s.lastError = undefined;
@@ -139,6 +142,7 @@ export function createBackup(): Promise<BackupFile> {
     .catch((e: unknown) => {
       s.lastError = { message: e instanceof Error ? e.message : String(e), at: new Date() };
       console.error("[backup] failed", e);
+      reportError("backup", e);
       throw e;
     })
     .finally(() => {
