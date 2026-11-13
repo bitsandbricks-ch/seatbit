@@ -33,7 +33,7 @@ import { isClanMember } from "@/lib/clans";
 import { lanAccountScope, saveLanAccount } from "@/lib/lan-accounts";
 import { validProfileUrl } from "@/lib/profile-link";
 import { cleanSocials } from "@/lib/socials";
-import { bookedButton, bookingLine, clearSeatBooked } from "@/lib/seat-booking";
+import { clearSeatBooked } from "@/lib/seat-booking";
 import { PROFILE_COLORS, PROFILE_ICONS, deleteUserAvatarFile, saveUserAvatar } from "@/lib/avatars";
 import { audit, auditLan, changedFields } from "@/lib/audit";
 import { cleanName } from "@/lib/names";
@@ -833,7 +833,9 @@ export async function setMySeatWishes(lanId: string, input: z.input<typeof wishI
 export async function publishSeats(lanId: string, notify: boolean): Promise<number> {
   const me = await requireLanManager(lanId);
   const l = mustGetLan(lanId);
-  db.update(lan).set({ seatsPublishedAt: new Date(), seatPicking: false }).where(eq(lan.id, lanId)).run();
+  // seatPicking stays set: it records that the event used self pick (the member checklist keeps that step).
+  // Picking itself is closed by seatsPublishedAt.
+  db.update(lan).set({ seatsPublishedAt: new Date() }).where(eq(lan.id, lanId)).run();
   let sent = 0;
   // Drafts tell nobody; members see the seats once the event is published.
   if (notify && l.publishedAt) {
@@ -853,14 +855,10 @@ export async function publishSeats(lanId: string, notify: boolean): Promise<numb
             ...eventMailVars(l, u),
             seat: mine?.label,
             seatInfo: mine
-              ? [`You're sitting at ${mine.label}.`, bookingLine(l, mine.label)].filter(Boolean).join(" ")
+              ? `You're sitting at ${mine.label}.${l.externalPlanUrl ? " The leads book it on the event site for you." : ""}`
               : "You don't have a seat yet, a lead will get back to you.",
           }),
           url: `${appUrl}/lans/${l.id}`,
-          buttons:
-            mine && l.externalPlanUrl
-              ? [bookedButton(l.id), { type: 2, style: 5, label: "Event seat plan", url: l.externalPlanUrl }]
-              : undefined,
         });
         if (r.email || r.dm) sent++;
       } catch (e) {
@@ -876,7 +874,7 @@ export async function publishSeats(lanId: string, notify: boolean): Promise<numb
 /** Reopens a finalized plan (members can send wishes again; self pick stays off until a lead turns it on). */
 export async function unpublishSeats(lanId: string) {
   const me = await requireLanManager(lanId);
-  db.update(lan).set({ seatsPublishedAt: null }).where(eq(lan.id, lanId)).run();
+  db.update(lan).set({ seatsPublishedAt: null, seatPicking: false }).where(eq(lan.id, lanId)).run();
   auditLan(mustGetLan(lanId), me.id, "seats.reopen");
   lanPath(lanId);
 }

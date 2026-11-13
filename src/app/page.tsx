@@ -6,6 +6,8 @@ import { EmptyState, Page, PageHeader, Pill, StatusBadge, btnPrimary } from "@/c
 import { fmtDay, lanDay, lanWeekday, relative } from "@/lib/format";
 import { requireUser, visibleLans } from "@/lib/session";
 import { buildChecklist, progress } from "@/lib/checklist";
+import { listGames } from "@/lib/games";
+import { waitlistPositions } from "@/lib/lans";
 import { myClans } from "@/lib/clans";
 import { roleCan } from "@/lib/clan-roles";
 import { ClanAvatar } from "@/components/clan-avatar";
@@ -51,7 +53,9 @@ export default async function Home() {
     .all();
   const info = (l: Lan) => {
     const ls = seats.filter((s) => s.lanId === l.id);
-    const mySeat = l.seatsPublishedAt ? (ls.find((s) => s.userId === me.id)?.label ?? null) : null;
+    // A self-picked seat counts while self pick is on; orga assignments stay private until final.
+    const mySeat = l.seatsPublishedAt || l.seatPicking ? (ls.find((s) => s.userId === me.id)?.label ?? null) : null;
+    const voted = listGames(l.id, me.id).filter((g) => g.votes > 0);
     const freeSeats = ls.filter((s) => !s.userId && !s.locked).length;
     const steps = buildChecklist({
       lan: l,
@@ -62,6 +66,9 @@ export default async function Home() {
       seatLabel: mySeat,
       hasSeatPlan: ls.length > 0,
       freeSeats,
+      waitlistPlace: mine.get(l.id)?.status === "waitlist" ? waitlistPositions(l.id).get(me.id) : undefined,
+      games: { voted: voted.length, toInstall: voted.filter((g) => !g.myInstalled).length },
+      now,
     });
     return { mySeat, freeSeats, hasSeats: ls.length > 0, progress: progress(steps) };
   };

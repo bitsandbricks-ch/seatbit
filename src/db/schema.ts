@@ -294,7 +294,8 @@ export const lan = sqliteTable("lan", {
   seatsPublishedAt: integer("seats_published_at", { mode: "timestamp_ms" }),
   /** Whether attendees may pick their own seats. */
   seatingOpen: integer("seating_open", { mode: "boolean" }).default(true).notNull(),
-  // Optional self-pick step: while on (and the plan isn't final), members who are coming choose their own free seat.
+  // Optional self-pick step: while on and the plan isn't final, members who are coming choose their own free seat.
+  // Stays on after finalizing (the event used self pick); reopening the plan turns it off.
   seatPicking: integer("seat_picking", { mode: "boolean" }).default(false).notNull(),
   /**
    * The event's own seat plan (e.g. lal.gg's DotLAN "Sitzplan" page), where each

@@ -6,7 +6,6 @@ import { fmtDate } from "./format";
 import { isGuestEmail } from "./guests";
 import { appUrl } from "./mail";
 import { notify, type Notice } from "./notify";
-import { bookedButton } from "./seat-booking";
 
 const { attendance, clanMember, user, seat, nickname, reminderLog, lanInterest, account } = schema;
 
@@ -21,9 +20,9 @@ export const MISSING_STEPS = {
   ticket: { who: "member", title: "No ticket yet", short: "ticket" },
   nick: { who: "member", title: "No nickname", short: "nickname" },
   seat: { who: "member", title: "Hasn't picked a seat", short: "pick a seat" },
-  book: { who: "member", title: "Seat not booked on the event site", short: "book seat" },
   confirm: { who: "orga", title: "Ticket to confirm", short: "confirm ticket" },
   assign: { who: "orga", title: "No seat assigned", short: "assign seat" },
+  book: { who: "orga", title: "Seat not booked on the event site", short: "book seat" },
 } as const;
 export type MissingStep = keyof typeof MISSING_STEPS;
 export type NudgeStep = { [K in MissingStep]: (typeof MISSING_STEPS)[K]["who"] extends "member" ? K : never }[MissingStep];
@@ -160,7 +159,7 @@ export function whoIsMissing(l: Lan): MissingGroup[] {
 }
 
 /** The nudge for one step. Short and friendly: it comes from a lead, not a robot deadline. */
-function nudgeMessage(step: NudgeStep, l: Lan, u: User, seatLabel?: string): Notice {
+function nudgeMessage(step: NudgeStep, l: Lan, u: User): Notice {
   const url = `${appUrl}/lans/${l.id}`;
   const by = (d: Date | null, what: string) => (d ? ` ${what} ${fmtDate(d)}.` : "");
   const attButtons = [
@@ -215,13 +214,6 @@ function nudgeMessage(step: NudgeStep, l: Lan, u: User, seatLabel?: string): Not
         subject: `${l.name}: pick your seat`,
         text: `Hi ${u.name},\n\nyou can pick your own seat for ${l.name} until the leads finalize the plan. Take a free one on the Seats tab.\n\n${url}?tab=seats`,
       };
-    case "book":
-      return {
-        ...base,
-        subject: `${l.name}: book seat ${seatLabel ?? ""}`.trim(),
-        text: `Hi ${u.name},\n\nyour seat at ${l.name} is ${seatLabel}. Please book it on the event's seat plan:\n${l.externalPlanUrl}\n\nThen tick "I booked it" in Seatbit, so the leads know.\n\n${url}`,
-        buttons: [bookedButton(l.id), { type: 2, style: 5, label: "Event seat plan", url: l.externalPlanUrl }],
-      };
   }
 }
 
@@ -252,7 +244,7 @@ export async function nudge(l: Lan, step: NudgeStep, userIds?: string[]): Promis
       result.unreachable++;
       continue;
     }
-    const r = await notify(u, nudgeMessage(step, l, u, p.detail)).catch(() => ({ email: false, dm: false }));
+    const r = await notify(u, nudgeMessage(step, l, u)).catch(() => ({ email: false, dm: false }));
     // sendMail quietly skips guests; only count a channel the person can actually get.
     if (!(r.dm || (r.email && p.reach.email))) {
       result.unreachable++;

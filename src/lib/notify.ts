@@ -46,7 +46,7 @@ export type Notice = {
   dmOnly?: boolean;
   /** DM footer; the default points to the DM switch on the profile. */
   footer?: string;
-  /** Extra DM buttons next to "Open in Seatbit" (Discord button components, e.g. "I booked it"). */
+  /** Extra DM buttons next to "Open in Seatbit" (Discord button components, e.g. "I have my ticket"). */
   buttons?: Record<string, unknown>[];
 };
 

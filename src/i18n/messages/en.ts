@@ -334,8 +334,6 @@ export const en = {
     notThisTime: "Not this time",
     haveTicket: "I have my ticket",
     confirmedByLead: "(confirmed by a lead)",
-    openPlan: "Open the event's seat plan",
-    booked: "I booked it",
     delete: "Delete",
     checkedIn: "✓ You're checked in (undo)",
     imHere: "I'm here",
@@ -630,6 +628,7 @@ export const en = {
   checklist: {
     title: "Your checklist",
     allSet: "All set",
+    optional: "optional",
     going: {
       title: "Say you're coming",
       done: "You're going.",
@@ -645,20 +644,37 @@ export const en = {
       pending: "Waiting for a lead to confirm.",
       todo: "Buy it from the event, then tick it off here.",
     },
+    pick: {
+      title: "Pick your seat",
+      final: "You sit at {seat}.",
+      took: "You took {seat}. You can still change it on the Seats tab.",
+      closed: "Self pick is closed. The leads place you.",
+      take: "Take a free seat on the Seats tab.",
+      none: "No free seats left. The leads will place you.",
+      ticketFirst: "Tick that you have your ticket first, then take a free seat on the Seats tab.",
+    },
+    wishes: {
+      title: "Send seat wishes",
+      final: "Sent. The plan is final now.",
+      sent: "Sent. You can change them until the leads finalize the plan.",
+      todo: "Optional: who you'd like to sit near, on the Seats tab.",
+    },
     seat: {
-      title: "Get your seat",
+      title: "Leads confirm your seat",
       final: "Seat {seat}, final.",
+      booked: "Booked on the event site.",
+      leadsBook: "The leads book it on the event site.",
       finalNone: "The plan is final but you have no seat yet. A lead will get back to you.",
-      forNow: "Seat {seat} for now. The leads check and finalize the seat plan.",
-      selfPick: "Self pick is on: tick that you have your ticket, then take a free seat on the Seats tab.",
-      soon: "The leads will finalize the seat plan soon.",
-      wishes: "Add seat wishes on the Seats tab. The leads finalize the seat plan after the deadline.",
+      check: "The leads check {seat} and finalize the seat plan.",
+      afterPick: "Once you picked a seat, the leads check and finalize the plan.",
+      assign: "The leads assign the seats and finalize the plan after the deadline.",
     },
-    book: {
-      title: "Book {seat} on the event site",
-      done: "Booked.",
-      todo: "Reserve the same seat on the event's seat plan, then tick it off.",
+    games: {
+      title: "Install the games",
+      done: "All installed.",
+      todo: "{left} of {count} still to install. Tick them off on the Games tab.",
     },
+    checkin: { title: "Check in at the venue", done: "You're here.", todo: 'Tap "I\'m here" when you arrive.' },
   },
 };
 
