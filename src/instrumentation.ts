@@ -24,6 +24,9 @@ export async function register() {
   // Scheduled database backups (interval and folder from the platform settings).
   const { runScheduledBackup } = await import("./lib/backup");
   const backupTick = () => void runScheduledBackup().catch((e) => console.error("[backup] failed", e));
+  // After an upgrade: register changed slash commands and tell the platform admins (once per version).
+  const { afterUpgrade } = await import("./lib/upgrade");
+  setTimeout(() => void afterUpgrade().catch((e) => console.error("[upgrade] failed", e)), 15_000);
   // First check shortly after start, then look every minute whether the interval has passed.
   setTimeout(() => {
     publishTick();

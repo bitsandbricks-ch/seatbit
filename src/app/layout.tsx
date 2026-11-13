@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
 import { Header } from "@/components/header";
+import { donationsEnabled } from "@/lib/donations";
 import { getLegal } from "@/lib/legal";
 import { LanguageLinks } from "@/components/language-switch";
 import { I18nProvider } from "@/i18n/client";
@@ -73,6 +74,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           <a href={getLegal().sourceUrl} target="_blank" rel="noreferrer" className="hover:text-fg">
             {t("footer.source")}
           </a>
+          {donationsEnabled() && (
+            <Link href="/donate" className="hover:text-fg">
+              {t("footer.donate")}
+            </Link>
+          )}
           <LanguageLinks />
           {/* Phones: the screen corner is taken by the tab bar, so the hash stays in the footer. */}
           <CommitLink sourceUrl={getLegal().sourceUrl} className="sm:hidden" title={commitTitle} />

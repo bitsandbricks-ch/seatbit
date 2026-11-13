@@ -91,3 +91,9 @@ export function fmtBytes(n: number) {
   }
   return `${i === 0 ? Math.round(v) : v.toFixed(1)} ${units[i]}`;
 }
+
+/** "CHF 20" or "CHF 12.50", from the smallest unit. */
+export function fmtMoney(amount: number, currency: string) {
+  const v = amount % 100 === 0 ? String(amount / 100) : (amount / 100).toFixed(2);
+  return `${currency.toUpperCase()} ${v}`;
+}

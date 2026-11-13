@@ -207,6 +207,9 @@ const SHOTS: Shot[] = [
   { name: "desktop-admin-backups", who: "alex", path: "/admin/backups", full: true },
   { name: "desktop-admin-usage", who: "alex", path: "/admin/stats", full: true },
   { name: "phone-admin-usage", who: "alex", path: "/admin/stats" },
+  { name: "desktop-donate", who: "alex", path: "/donate" },
+  { name: "phone-donate", who: "anna", path: "/donate", full: true },
+  { name: "desktop-admin-donations", who: "alex", path: "/admin/donations" },
   { name: "desktop-privacy", who: "alex", path: "/privacy" },
 ];
 
@@ -259,6 +262,7 @@ async function main() {
     STRIPE_WEBHOOK_SECRET: "whsec_screenshots_only",
     STRIPE_PRICE_ANNUAL: "price_screenshotsAnnual",
     STRIPE_PRICE_MONTHLY: "price_screenshotsMonthly",
+    DONATIONS_ENABLED: "true",
     ALLOW_EMAIL_LOGIN: "",
     SMTP_HOST: "",
     SMTP_URL: "",

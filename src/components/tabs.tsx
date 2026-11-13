@@ -8,6 +8,8 @@ export type Tab = {
   count?: number;
   /** Something needs attention, e.g. "2 to confirm". Shown in warning colour. */
   badge?: string;
+  /** warn (default): something to do. ok: done, e.g. a picked seat. */
+  badgeTone?: "warn" | "ok";
 };
 
 /**
@@ -51,7 +53,7 @@ export function Tabs({
                     </span>
                   )}
                   {t.badge && (
-                    <span className="rounded-full bg-warn/15 px-1.5 py-px text-[11px] font-medium text-warn">{t.badge}</span>
+                    <span className={`rounded-full px-1.5 py-px text-[11px] font-medium ${t.badgeTone === "ok" ? "bg-bit-soft text-bit" : "bg-warn/15 text-warn"}`}>{t.badge}</span>
                   )}
                 </Link>
               </li>

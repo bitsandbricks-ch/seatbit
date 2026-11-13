@@ -301,7 +301,12 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           {t("event.eventSeatPlan")} <span aria-hidden>↗</span>
         </a>
       )}
-      {picking && seats.length > 0 && <Pill tone="emerald">{t("event.pickYourSeat")}</Pill>}
+      {picking && seats.length > 0 &&
+        (mySeatLabel ? (
+          <Pill tone="emerald">{t("event.seatPicked", { seat: mySeatLabel })}</Pill>
+        ) : (
+          <Pill tone="amber">{t("event.pickYourSeat")}</Pill>
+        ))}
       {published ? <Pill tone="emerald">{t("event.final")}</Pill> : seats.length > 0 && <Pill tone="amber">{t("event.notFinal")}</Pill>}
     </span>
   );
@@ -399,7 +404,13 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
       <Tabs
         tabs={[
           { id: "overview", label: t("event.tabs.overview") },
-          { id: "seats", label: t("event.tabs.seats"), badge: picking && seats.length > 0 ? t("event.tabs.pickYours") : undefined },
+          {
+            id: "seats",
+            label: t("event.tabs.seats"),
+            // Self pick: a to-do until you took a seat, then shows which one (green).
+            badge: picking && seats.length > 0 ? (mySeatLabel ? t("event.tabs.seatPicked", { seat: mySeatLabel }) : t("event.tabs.pickYours")) : undefined,
+            badgeTone: mySeatLabel ? "ok" : "warn",
+          },
           { id: "attendees", label: t("event.tabs.attendees"), count: going.length },
           { id: "travel", label: t("event.tabs.travel"), badge: openRequests ? t("event.tabs.looking", { count: openRequests }) : undefined },
           { id: "gear", label: t("event.tabs.gear") },
@@ -523,10 +534,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
                   <div className="flex justify-between">
                     <dt className="text-muted">{t("event.yourTicket")}</dt>
                     <dd>
-                      {my.paid ? (
-                        <Pill tone="emerald">{t("event.ticketConfirmed")}</Pill>
-                      ) : my.ticketBought ? (
-                        <Pill tone="amber">{t("event.ticketReported")}</Pill>
+                      {my.paid || my.ticketBought ? (
+                        <Pill tone="emerald">{t("event.ticketOk")}</Pill>
                       ) : (
                         <Pill tone="red">{t("event.ticketOpen")}</Pill>
                       )}
@@ -720,7 +729,7 @@ function AttendeeList({
           </a>
         )}
         {seatOf.get(a.userId) && <Pill>{seatOf.get(a.userId)}</Pill>}
-        {showPaid && (a.paid ? <Pill tone="emerald">{t("event.ticketOk")}</Pill> : a.ticketBought ? <Pill tone="amber">{t("event.reported")}</Pill> : <Pill tone="red">{t("event.noTicket")}</Pill>)}
+        {showPaid && (a.paid || a.ticketBought ? <Pill tone="emerald">{t("event.ticketOk")}</Pill> : <Pill tone="red">{t("event.noTicket")}</Pill>)}
       </span>
     </li>
   );

@@ -143,9 +143,8 @@ export function whoIsMissing(l: Lan): MissingGroup[] {
     }
     for (const r of rows) {
       if (r.status !== "going" && r.status !== "waitlist") continue;
-      // Waitlisted people aren't chased for a ticket, but one they reported still needs confirming.
+      // Waitlisted people aren't chased for a ticket. Trust based: a reported ticket needs no confirming.
       if (!r.paid && !r.ticketBought && r.status === "going") add("ticket", r.userId);
-      else if (!r.paid && r.ticketBought) add("confirm", r.userId);
     }
     for (const r of going) {
       if (!withNick.has(r.userId)) add("nick", r.userId);

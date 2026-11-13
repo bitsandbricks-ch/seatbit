@@ -594,6 +594,28 @@ export async function seedDemo({ force = false, discord = false } = {}) {
       .values({ id: "demo-clan-2", name: "Lag Legends", slug: "lag-legends", description: "Retro LAN fans from Bern. Everyone welcome.", joinPolicy: "open" })
       .run();
     tx.insert(s.clanMember).values({ clanId: "demo-clan-2", userId: ids.rafael, role: "admin" }).run();
+
+    // One-off donations (only show where donations are on, like in the screenshots).
+    const gifts: [string, number, string | null, boolean, number][] = [
+      ["anna", 2000, null, true, 12],
+      ["alex", 5000, null, true, 40],
+      ["rafael", 3000, "demo-clan-2", true, 5],
+      ["chiara", 1000, null, false, 80],
+    ];
+    gifts.forEach(([who, amount, forClan, showBadge, daysAgo], i) =>
+      tx.insert(s.donation)
+        .values({
+          stripeSessionId: `cs_demo_${i}`,
+          paymentIntentId: `pi_demo_${i}`,
+          userId: ids[who],
+          clanId: forClan,
+          amount,
+          currency: "CHF",
+          showBadge,
+          createdAt: new Date(Date.now() - daysAgo * DAY),
+        })
+        .run(),
+    );
   });
 
   return { users: PEOPLE.length + 1, password: DEMO_PASSWORD };

@@ -49,6 +49,9 @@ A value saved in the platform settings wins over the environment variable. Clear
 | Backup every (hours, `0` = off) | `BACKUP_INTERVAL_HOURS` | `24` |
 | Keep backups for (days, `0` = keep all; the privacy policy shows this number) | `BACKUP_KEEP_DAYS` | `14` |
 | Backup folder (absolute path) | `BACKUP_DIR` | `/backups` in the image, else `./backups` |
+| One-off donations on/off | `DONATIONS_ENABLED` | `false` |
+| Suggested donation amounts | `DONATION_AMOUNTS` | `10, 20, 50` |
+| Donation currency | `DONATION_CURRENCY` | `CHF` |
 
 Passwords, client secrets and tokens are encrypted (AES-256-GCM) before they are stored and never shown again; the page only shows whether one is set and its last four characters.
 

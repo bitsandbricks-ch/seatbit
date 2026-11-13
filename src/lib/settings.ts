@@ -16,7 +16,7 @@
  * (e.g. `npm run discord:register`) can read settings too.
  */
 import crypto from "node:crypto";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db, schema } from "../db";
 
 const { appSetting } = schema;
@@ -56,7 +56,7 @@ export const SETTING_GROUPS = {
   },
   billing: {
     title: "Supporter payments",
-    help: "Optional. Lets clans support this instance with a voluntary yearly or monthly payment through Stripe. Supporters get a badge and a thank-you, never extra features. Off by default.",
+    help: "Optional. Lets clans support this instance with a voluntary yearly or monthly payment, and people give one-off donations, through Stripe. Supporters and donors get a badge and a thank-you, never extra features. Off by default.",
   },
   legal: {
     title: "Operator & legal",
@@ -322,6 +322,42 @@ export const SETTINGS: SettingDef[] = [
     placeholder: "price_…",
     help: "Optional second option, e.g. CHF 3 per month. Leave empty to offer yearly only.",
     validate: (v) => (/^price_\w+$/.test(v) ? null : "Starts with price_"),
+  },
+  {
+    key: "billing.donationsEnabled",
+    group: "billing",
+    label: "One-off donations",
+    kind: "bool",
+    env: "DONATIONS_ENABLED",
+    default: "false",
+    help: "When on, signed-in people can give a one-off amount at /donate, for themselves or for a clan they manage. Needs the secret key and webhook secret, not the prices.",
+  },
+  {
+    key: "billing.donationAmounts",
+    group: "billing",
+    label: "Suggested amounts",
+    kind: "list",
+    env: "DONATION_AMOUNTS",
+    default: "10, 20, 50",
+    placeholder: "10, 20, 50",
+    help: "Whole amounts offered as buttons, comma-separated. People can also type their own amount.",
+    validate: (v) => {
+      const xs = v.split(",").map((x) => x.trim()).filter(Boolean);
+      return xs.length > 0 && xs.length <= 6 && xs.every((x) => /^\d{1,5}$/.test(x) && +x >= 1)
+        ? null
+        : "1 to 6 whole amounts, comma-separated, e.g. 10, 20, 50";
+    },
+  },
+  {
+    key: "billing.donationCurrency",
+    group: "billing",
+    label: "Donation currency",
+    kind: "text",
+    env: "DONATION_CURRENCY",
+    default: "CHF",
+    placeholder: "CHF",
+    help: "Three-letter currency code. TWINT needs CHF.",
+    validate: (v) => (/^[A-Za-z]{3}$/.test(v.trim()) ? null : "A three-letter code such as CHF or EUR"),
   },
   {
     key: "billing.refundPolicy",
@@ -602,3 +638,32 @@ export function clearSetting(key: string) {
 }
 
 export class SettingError extends Error {}
+
+// ---------- Internal state ----------
+// Small values Seatbit keeps for itself (not settings): stored in app_setting under "state.*",
+// which the settings registry and the admin UI never list.
+
+export function readState(key: string): string | undefined {
+  return db.select().from(appSetting).where(eq(appSetting.key, key)).get()?.value;
+}
+
+export function rememberState(key: string, value: string) {
+  db.insert(appSetting)
+    .values({ key, value, encrypted: false, updatedAt: new Date() })
+    .onConflictDoUpdate({ target: appSetting.key, set: { value, updatedAt: new Date() } })
+    .run();
+}
+
+/** Sets the value only if it still is `expected` (undefined = not set yet). True when this call changed it. */
+export function swapState(key: string, expected: string | undefined, value: string) {
+  if (expected === undefined) {
+    return db.insert(appSetting).values({ key, value, encrypted: false, updatedAt: new Date() }).onConflictDoNothing().run().changes > 0;
+  }
+  return (
+    db
+      .update(appSetting)
+      .set({ value, updatedAt: new Date() })
+      .where(and(eq(appSetting.key, key), eq(appSetting.value, expected)))
+      .run().changes > 0
+  );
+}

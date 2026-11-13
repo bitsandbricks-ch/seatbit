@@ -5,6 +5,7 @@ import { ContactEmail, LegalPage, Operator } from "@/components/legal-page";
 import { getLegal, type Legal } from "@/lib/legal";
 import { billingEnabled } from "@/lib/billing";
 import { backupKeepDays } from "@/lib/backup";
+import { donationsEnabled } from "@/lib/donations";
 import { getLocale, getT } from "@/i18n/server";
 // i18n-ignore-file: the policy is written once per language, below.
 
@@ -21,7 +22,7 @@ export default async function PrivacyPage() {
   // Operators can use their own document instead of the built-in one.
   if (legal.privacyUrl) redirect(legal.privacyUrl);
   // Stripe only appears where the operator turned on Supporter payments.
-  const payments = billingEnabled();
+  const payments = billingEnabled() || donationsEnabled();
   // The backup retention from the platform settings; 0 (keep all) is said as "as long as needed".
   const backupDays = backupKeepDays();
   return (await getLocale()) === "de" ? <PrivacyDe legal={legal} payments={payments} backupDays={backupDays} /> : <PrivacyEn legal={legal} payments={payments} backupDays={backupDays} />;
@@ -87,6 +88,11 @@ function PrivacyEn({ legal, payments, backupDays }: Props) {
             numbers or TWINT details. We store only, for the clan: the Stripe customer and subscription IDs, whether it
             pays yearly or monthly, and until when it is paid. The audit log of the clan notes when it became a
             Supporter.
+          </p>
+          <p>
+            For a one-off donation we store who gave it (and for which clan, if any), the amount and currency, the
+            Stripe checkout and payment IDs, whether a Donor badge may be shown, and whether it was refunded. Your
+            donations are part of your data export.
           </p>
         </>
       )}
@@ -286,6 +292,11 @@ function PrivacyDe({ legal, payments, backupDays }: Props) {
             Name, E-Mail-Adresse und Zahlungsdaten (Karte, TWINT oder Wallet) der zahlenden Person. Kartennummern oder
             TWINT-Daten sehen wir nie. Wir speichern für den Clan nur: die Kunden- und Abo-IDs bei Stripe, ob er jährlich
             oder monatlich zahlt und bis wann bezahlt ist. Das Protokoll des Clans hält fest, wann er Supporter wurde.
+          </p>
+          <p>
+            Bei einer einmaligen Spende speichern wir, wer gespendet hat (und für welchen Clan, falls einer), Betrag und
+            Währung, die Checkout- und Zahlungs-IDs bei Stripe, ob ein Spender-Abzeichen gezeigt werden darf und ob die
+            Spende zurückerstattet wurde. Deine Spenden sind Teil deines Datenexports.
           </p>
         </>
       )}

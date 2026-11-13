@@ -5,6 +5,7 @@ import { inviteUrl } from "@/lib/discord-api";
 import { appUrl, mailTarget } from "@/lib/mail";
 import { requireAdmin } from "@/lib/session";
 import { billingEnabled, billingProblems, supporterClans } from "@/lib/billing";
+import { donationProblems, donationsEnabled } from "@/lib/donations";
 import { fmtDay } from "@/lib/format";
 import { LOGIN_METHODS } from "@/lib/auth";
 import { type SettingGroup, canEncrypt, settingsForAdmin } from "@/lib/settings";
@@ -205,7 +206,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
 
 /** Webhook URL, what's still missing, and which clans support the instance right now. */
 function BillingInfo({ t }: { t: T }) {
-  const problems = billingProblems();
+  const problems = [...new Set([...billingProblems(), ...donationProblems()])];
   const supporters = supporterClans();
   return (
     <>
@@ -214,13 +215,21 @@ function BillingInfo({ t }: { t: T }) {
         {t.rich("adminSettings.stripeEvents", {
           events: (
             <>
-              <code>checkout.session.completed</code>, <code>invoice.paid</code>, <code>customer.subscription.deleted</code>
+              <code>checkout.session.completed</code>, <code>invoice.paid</code>, <code>customer.subscription.deleted</code>,{" "}
+              <code>checkout.session.async_payment_succeeded</code>, <code>charge.refunded</code>
             </>
           ),
         })}
       </p>
       {problems.length > 0 && <p className="text-xs text-warn">{t("adminSettings.missing", { list: problems.join(", ") })}</p>}
-      {!billingEnabled() && problems.length === 0 && <p className="text-xs text-muted">{t("adminSettings.billingOff")}</p>}
+      {!billingEnabled() && !donationsEnabled() && problems.length === 0 && <p className="text-xs text-muted">{t("adminSettings.billingOff")}</p>}
+      {donationsEnabled() && (
+        <p className="text-xs text-muted">
+          <a href="/admin/donations" className="text-bit hover:underline">
+            {t("adminSettings.donationsLink")}
+          </a>
+        </p>
+      )}
       {supporters.length > 0 && (
         <p className="text-xs text-muted">
           {t("adminSettings.supporters")}{" "}
