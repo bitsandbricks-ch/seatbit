@@ -3,9 +3,11 @@ import { useActionState } from "react";
 import { updateSocials, type AppearanceState } from "@/app/actions";
 import { SOCIALS, SOCIAL_MAX } from "@/lib/socials";
 import { Field, Input, btnPrimary } from "./ui";
+import { useT } from "@/i18n/client";
 
 /** Profile › Socials: gaming and social handles shown on the member profile. */
 export function SocialsForm({ values }: { values: Record<string, string> }) {
+  const t = useT();
   const [state, action, pending] = useActionState<AppearanceState, FormData>(updateSocials, {});
   return (
     <form action={action} className="space-y-4">
@@ -18,9 +20,9 @@ export function SocialsForm({ values }: { values: Record<string, string> }) {
       </div>
       <div className="flex items-center gap-3">
         <button disabled={pending} className={btnPrimary}>
-          Save
+          {t("common.save")}
         </button>
-        {state.ok && !pending && <p className="text-sm text-bit">Saved.</p>}
+        {state.ok && !pending && <p className="text-sm text-bit">{t("common.saved")}</p>}
       </div>
     </form>
   );

@@ -1,4 +1,6 @@
+"use client";
 import { setNick } from "@/app/actions";
+import { useT } from "@/i18n/client";
 import type { Nickname } from "@/db/schema";
 import { btnSecondary, input } from "./ui";
 
@@ -7,13 +9,14 @@ export function NickManager({
   nicks,
   lanId = null,
   typeId = null,
-  placeholder = "Your nick",
+  placeholder,
 }: {
   nicks: Nickname[];
   lanId?: string | null;
   typeId?: string | null;
   placeholder?: string;
 }) {
+  const t = useT();
   const current = nicks.find((n) => n.lanId === lanId && n.typeId === typeId)?.nick ?? "";
   return (
     <form action={setNick} className="flex gap-2">
@@ -24,11 +27,11 @@ export function NickManager({
         name="nick"
         defaultValue={current}
         maxLength={32}
-        placeholder={placeholder}
+        placeholder={placeholder ?? t("profile.yourNick")}
         className={input}
-        aria-label="Nickname"
+        aria-label={t("auth.nickname")}
       />
-      <button className={btnSecondary}>Save</button>
+      <button className={btnSecondary}>{t("common.save")}</button>
     </form>
   );
 }

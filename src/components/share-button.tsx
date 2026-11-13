@@ -1,19 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
-
-const TEXT = {
-  share: "Share",
-  shareLabel: "Share this event",
-  copied: "Link copied",
-  copyFailed: "Couldn't copy. Copy the address from the browser bar.",
-};
+import { useT } from "@/i18n/client";
 
 /**
  * Shares a link: the phone's share sheet (WhatsApp, Discord, ...) on touch devices,
  * otherwise copies it and says so in a small toast.
  */
 export function ShareButton({ url, title, text }: { url: string; title: string; text: string }) {
-  const [toast, setToast] = useState<string | null>(null);
+  const t = useT();
+  const [toast, setToast] = useState<"copied" | "copyFailed" | null>(null);
 
   useEffect(() => {
     if (!toast) return;
@@ -32,7 +27,7 @@ export function ShareButton({ url, title, text }: { url: string; title: string; 
         if (e instanceof DOMException && e.name === "AbortError") return;
       }
     }
-    setToast((await copy(url)) ? TEXT.copied : TEXT.copyFailed);
+    setToast((await copy(url)) ? "copied" : "copyFailed");
   }
 
   return (
@@ -42,12 +37,12 @@ export function ShareButton({ url, title, text }: { url: string; title: string; 
         <button
           type="button"
           onClick={share}
-          aria-label={TEXT.shareLabel}
-          title={TEXT.shareLabel}
+          aria-label={t("share.shareLabel")}
+          title={t("share.shareLabel")}
           className="inline-flex min-h-10 items-center gap-1.5 rounded-md px-3.5 text-sm font-medium text-muted transition hover:bg-surface hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bit"
         >
           <ShareIcon />
-          <span>{TEXT.share}</span>
+          <span>{t("share.share")}</span>
         </button>
       </div>
       <div
@@ -59,8 +54,8 @@ export function ShareButton({ url, title, text }: { url: string; title: string; 
       >
         {toast && (
           <span className="inline-flex items-center gap-2">
-            {toast === TEXT.copied && <span aria-hidden className="text-bit">✓</span>}
-            {toast}
+            {toast === "copied" && <span aria-hidden className="text-bit">✓</span>}
+            {t(`share.${toast}`)}
           </span>
         )}
       </div>

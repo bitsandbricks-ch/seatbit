@@ -1,6 +1,8 @@
 "use server";
 
 import { and, eq, isNull, sql } from "drizzle-orm";
+import { LOCALES } from "@/i18n/config";
+import { getT } from "@/i18n/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -40,6 +42,8 @@ const clanInput = z.object({
   joinPolicy: z.enum(["approval", "open", "invite"]).default("approval"),
   guestClaims: z.enum(GUEST_CLAIM_MODES).default("approval"),
   nameDisplay: z.enum(NAME_DISPLAYS).default("full"),
+  // "" = the instance default
+  locale: z.union([z.enum(LOCALES), z.literal("").transform(() => null)]).default(null),
 });
 
 export async function createClan(_: FormState, formData: FormData): Promise<FormState> {
@@ -50,8 +54,9 @@ export async function createClan(_: FormState, formData: FormData): Promise<Form
     joinPolicy: formData.get("joinPolicy") ?? "approval",
     guestClaims: formData.get("guestClaims") ?? "approval",
     nameDisplay: formData.get("nameDisplay") ?? "full",
+    locale: formData.get("locale") ?? "",
   });
-  if (!parsed.success) return { error: "Give the clan a name (at least 2 characters)." };
+  if (!parsed.success) return { error: (await getT())("clanForm.nameError") };
   const row = db
     .insert(clan)
     .values({ ...parsed.data, slug: uniqueSlug(parsed.data.name) })
@@ -72,8 +77,9 @@ export async function updateClan(_: FormState, formData: FormData): Promise<Form
     joinPolicy: formData.get("joinPolicy") ?? "approval",
     guestClaims: formData.get("guestClaims") ?? "approval",
     nameDisplay: formData.get("nameDisplay") ?? "full",
+    locale: formData.get("locale") ?? "",
   });
-  if (!parsed.success) return { error: "Give the clan a name (at least 2 characters)." };
+  if (!parsed.success) return { error: (await getT())("clanForm.nameError") };
   let avatar: string | undefined;
   const file = formData.get("avatar");
   if (file instanceof File && file.size > 0) {
@@ -96,6 +102,7 @@ export async function updateClan(_: FormState, formData: FormData): Promise<Form
       before.joinPolicy !== parsed.data.joinPolicy && "join rule",
       before.guestClaims !== parsed.data.guestClaims && "guest claiming",
       before.nameDisplay !== parsed.data.nameDisplay && "name display",
+      (before.locale ?? null) !== parsed.data.locale && "language",
       (avatar || (formData.get("removeAvatar") === "on" && before.avatar)) && "avatar",
     ].filter((f): f is string => !!f);
     if (fields.length) audit({ actorId: me.id, action: "clan.update", clanId, data: { fields } });

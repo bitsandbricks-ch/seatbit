@@ -4,6 +4,7 @@ import { updateAppearance, type AppearanceState } from "@/app/actions";
 import type { AvatarData } from "@/lib/avatars";
 import { Avatar } from "./avatar";
 import { btnPrimary, label } from "./ui";
+import { useT } from "@/i18n/client";
 
 type Style = "picture" | "icon" | "initials";
 
@@ -26,6 +27,7 @@ export function AppearanceForm({
   initials: string;
   name: string;
 }) {
+  const t = useT();
   const [state, action, pending] = useActionState<AppearanceState, FormData>(updateAppearance, {});
   const [style, setStyle] = useState<Style>(initial.style);
   const [color, setColor] = useState(initial.color);
@@ -47,18 +49,18 @@ export function AppearanceForm({
         <Avatar data={data} size={64} />
         <div className="min-w-0 text-sm">
           <p className="font-medium">{name}</p>
-          <p className="text-muted">Shown on your profile, in member and attendee lists, in stats and on the seat map.</p>
+          <p className="text-muted">{t("profile.appearance.shownWhere")}</p>
         </div>
       </div>
 
       <fieldset>
-        <legend className={label}>Show</legend>
+        <legend className={label}>{t("profile.appearance.show")}</legend>
         <div className="grid gap-2 sm:grid-cols-3">
           {(
             [
-              ["picture", "Picture"],
-              ["icon", "Icon"],
-              ["initials", "Initials"],
+              ["picture", t("profile.appearance.picture")],
+              ["icon", t("profile.appearance.icon")],
+              ["initials", t("profile.appearance.initials")],
             ] as const
           ).map(([id, text]) => (
             <label key={id} className={option(style === id)}>
@@ -73,10 +75,10 @@ export function AppearanceForm({
         <div className="space-y-2 text-sm">
           <p className="text-muted">
             {hasUpload
-              ? "Your uploaded picture. Upload another to replace it."
+              ? t("profile.appearance.uploaded")
               : picture
-                ? "Your Discord picture. Upload one to use something else here."
-                : "Upload a picture. Without one, your initials are shown."}
+                ? t("profile.appearance.discordPicture")
+                : t("profile.appearance.upload")}
           </p>
           <input
             type="file"
@@ -88,11 +90,11 @@ export function AppearanceForm({
             }}
             className="block w-full text-sm text-fg/90 file:mr-3 file:rounded-md file:border-0 file:bg-raised file:px-3 file:py-1.5 file:text-fg"
           />
-          <p className="text-xs text-faint">PNG, JPG, WebP or GIF, up to 2 MB. Square pictures look best.</p>
+          <p className="text-xs text-faint">{t("profile.appearance.formats")}</p>
           {hasUpload && (
             <label className="flex items-center gap-2 text-muted">
               <input type="checkbox" name="removePicture" checked={remove} onChange={(e) => setRemove(e.target.checked)} />
-              Remove my upload{picture ? " (back to Discord picture or initials)" : ""}
+              {picture ? t("profile.appearance.removeBack") : t("profile.appearance.remove")}
             </label>
           )}
         </div>
@@ -100,7 +102,7 @@ export function AppearanceForm({
 
       {style === "icon" && (
         <fieldset>
-          <legend className={label}>Icon</legend>
+          <legend className={label}>{t("profile.appearance.icon")}</legend>
           <div className="grid grid-cols-6 gap-1.5 sm:grid-cols-12">
             {icons.map((i) => (
               <label
@@ -119,7 +121,7 @@ export function AppearanceForm({
       {style !== "icon" && icon && <input type="hidden" name="icon" value={icon} />}
 
       <fieldset>
-        <legend className={label}>Colour</legend>
+        <legend className={label}>{t("profile.appearance.colour")}</legend>
         <div className="flex flex-wrap gap-2">
           {colors.map((c) => (
             <label key={c.id} title={c.label} className="cursor-pointer">
@@ -132,15 +134,15 @@ export function AppearanceForm({
             </label>
           ))}
         </div>
-        <p className="mt-1.5 text-xs text-muted">Used for the ring around your avatar, your seat on the seat map and in lists.</p>
+        <p className="mt-1.5 text-xs text-muted">{t("profile.appearance.colourHint")}</p>
       </fieldset>
 
       <div className="flex items-center gap-3">
         <button className={btnPrimary} disabled={pending}>
-          {pending ? "Saving…" : "Save"}
+          {pending ? t("common.saving") : t("common.save")}
         </button>
         {state.error && <p className="text-sm text-danger">{state.error}</p>}
-        {state.ok && !pending && <p className="text-sm text-bit">Saved.</p>}
+        {state.ok && !pending && <p className="text-sm text-bit">{t("common.saved")}</p>}
       </div>
     </form>
   );

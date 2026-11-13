@@ -1,9 +1,11 @@
 "use client";
 import { useState, useTransition } from "react";
 import { setMyTicketBought } from "@/app/actions";
+import { useT } from "@/i18n/client";
 
 /** "I have my ticket" checkbox for members (sets ticketBought). Locked once a lead confirmed the ticket. */
 export function TicketConfirm({ lanId, bought, confirmed, label }: { lanId: string; bought: boolean; confirmed: boolean; label?: string }) {
+  const t = useT();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   return (
@@ -21,15 +23,15 @@ export function TicketConfirm({ lanId, bought, confirmed, label }: { lanId: stri
               try {
                 await setMyTicketBought(lanId, v);
               } catch (err) {
-                setError(err instanceof Error ? err.message : "Failed");
+                setError(err instanceof Error ? err.message : t("eventUi.failed"));
               }
             });
           }}
           className="h-5 w-5 accent-bit"
         />
         <span>
-          {label ?? "I have my ticket"}
-          {confirmed && <span className="ml-1 text-xs text-muted">(confirmed by a lead)</span>}
+          {label ?? t("eventUi.haveTicket")}
+          {confirmed && <span className="ml-1 text-xs text-muted">{t("eventUi.confirmedByLead")}</span>}
         </span>
       </label>
       {error && <p className="mt-1 text-sm text-danger">{error}</p>}

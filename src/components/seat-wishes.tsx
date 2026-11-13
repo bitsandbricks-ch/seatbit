@@ -2,6 +2,7 @@
 import { useState, useTransition } from "react";
 import { setMySeatWishes } from "@/app/actions";
 import { btnPrimary, input } from "./ui";
+import { useT } from "@/i18n/client";
 
 type Wishes = { near: string[]; avoid: string[]; position: "any" | "edge" | "middle"; seat: string; note: string };
 
@@ -16,6 +17,7 @@ export function SeatWishes({
   seatLabels: string[];
   initial: Wishes;
 }) {
+  const t = useT();
   const [w, setW] = useState<Wishes>(initial);
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -34,7 +36,7 @@ export function SeatWishes({
     <div className="space-y-4 text-sm">
       {people.length > 0 && (
         <div>
-          <p className="mb-2 text-fg/90">Who do you want to sit with, and who not right next to?</p>
+          <p className="mb-2 text-fg/90">{t("wishes.whoNear")}</p>
           <ul className="grid max-h-72 gap-1 overflow-y-auto pr-1 md:grid-cols-2">
             {people.map((p) => {
               const near = w.near.includes(p.id);
@@ -49,7 +51,7 @@ export function SeatWishes({
                       aria-pressed={near}
                       className={`min-h-8 rounded-full px-3 py-1 text-xs font-medium transition ${near ? "bg-bit text-on-bit" : "bg-line/60 text-fg/90 hover:bg-line"}`}
                     >
-                      Near
+                      {t("wishes.near")}
                     </button>
                     <button
                       type="button"
@@ -57,7 +59,7 @@ export function SeatWishes({
                       aria-pressed={avoid}
                       className={`min-h-8 rounded-full px-3 py-1 text-xs font-medium transition ${avoid ? "bg-danger text-on-bit" : "bg-line/60 text-fg/90 hover:bg-line"}`}
                     >
-                      Not next to
+                      {t("wishes.notNextTo")}
                     </button>
                   </span>
                 </li>
@@ -68,13 +70,13 @@ export function SeatWishes({
       )}
 
       <fieldset>
-        <legend className="mb-2 text-fg/90">Where in the row?</legend>
+        <legend className="mb-2 text-fg/90">{t("wishes.where")}</legend>
         <div className="flex gap-2">
           {(
             [
-              ["any", "Don't mind"],
-              ["edge", "At the edge"],
-              ["middle", "In the middle"],
+              ["any", t("wishes.any")],
+              ["edge", t("wishes.edge")],
+              ["middle", t("wishes.middle")],
             ] as const
           ).map(([v, label]) => (
             <button
@@ -92,9 +94,9 @@ export function SeatWishes({
 
       <div className="grid grid-cols-2 gap-2">
         <label className="block">
-          <span className="mb-1 block text-fg/90">Preferred seat</span>
+          <span className="mb-1 block text-fg/90">{t("wishes.preferred")}</span>
           <select value={w.seat} onChange={(e) => setW({ ...w, seat: e.target.value })} className={input}>
-            <option value="">Any</option>
+            <option value="">{t("wishes.anySeat")}</option>
             {seatLabels.map((l) => (
               <option key={l} value={l}>
                 {l}
@@ -103,12 +105,12 @@ export function SeatWishes({
           </select>
         </label>
         <label className="col-span-2 block">
-          <span className="mb-1 block text-fg/90">Anything else for the leads?</span>
+          <span className="mb-1 block text-fg/90">{t("wishes.note")}</span>
           <input
             value={w.note}
             onChange={(e) => setW({ ...w, note: e.target.value })}
             maxLength={300}
-            placeholder="e.g. need a power socket for a second PC"
+            placeholder={t("wishes.notePlaceholder")}
             className={input}
           />
         </label>
@@ -122,14 +124,14 @@ export function SeatWishes({
             start(async () => {
               try {
                 await setMySeatWishes(lanId, w);
-                setMsg({ ok: true, text: "Saved. The leads will try to make it work." });
+                setMsg({ ok: true, text: t("wishes.saved") });
               } catch (e) {
-                setMsg({ ok: false, text: e instanceof Error ? e.message : "Failed" });
+                setMsg({ ok: false, text: e instanceof Error ? e.message : t("eventUi.failed") });
               }
             })
           }
         >
-          Save wishes
+          {t("wishes.save")}
         </button>
         {msg && <span className={msg.ok ? "text-bit" : "text-danger"}>{msg.text}</span>}
       </div>

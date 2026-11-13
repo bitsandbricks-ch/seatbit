@@ -4,8 +4,12 @@ import { ImageResponse } from "next/og";
 import { getLan } from "@/lib/lans";
 import { getClan, uploadsDir } from "@/lib/clans";
 import { lanRange } from "@/lib/format";
+import { instanceLocale, makeT } from "@/i18n/server";
 
-export const alt = "Event on Seatbit";
+// Crawlers send no language, so the card uses the instance's default language.
+export function generateImageMetadata() {
+  return [{ id: "card", alt: makeT(instanceLocale())("share.imageAlt"), size, contentType }];
+}
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -35,6 +39,7 @@ function clanAvatar(file: string | null) {
 
 /** The link preview card for a shared event: event name, date, place and the clan's avatar. Drafts get a plain Seatbit card. */
 export default async function Image({ params }: { params: Promise<{ id: string }> }) {
+  const t = makeT(instanceLocale());
   const l = getLan((await params).id);
   const shown = l?.publishedAt ? l : undefined;
   const clan = shown?.clanId ? getClan(shown.clanId) : undefined;
@@ -77,15 +82,15 @@ export default async function Image({ params }: { params: Promise<{ id: string }
           {clan && <div style={{ fontSize: 36, color: MUTED, display: "flex" }}>{clan.name}</div>}
         </div>
         <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 20 }}>
-          {shown?.cancelledAt && <div style={{ fontSize: 36, color: DANGER, fontWeight: 700 }}>Cancelled</div>}
+          {shown?.cancelledAt && <div style={{ fontSize: 36, color: DANGER, fontWeight: 700 }}>{t("share.cancelled")}</div>}
           <div style={{ fontSize: titleSize, fontWeight: 700, lineHeight: 1.05, letterSpacing: -2, display: "flex" }}>{title}</div>
           {shown ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 40, color: MUTED }}>
-              <div style={{ color: BIT, display: "flex" }}>{lanRange(shown)}</div>
+              <div style={{ color: BIT, display: "flex" }}>{lanRange(shown, t.locale)}</div>
               {shown.location && <div style={{ display: "flex" }}>{shown.location}</div>}
             </div>
           ) : (
-            <div style={{ fontSize: 40, color: MUTED, display: "flex" }}>Who goes to which LAN party, tickets and seats</div>
+            <div style={{ fontSize: 40, color: MUTED, display: "flex" }}>{t("share.tagline")}</div>
           )}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 32, color: MUTED }}>
