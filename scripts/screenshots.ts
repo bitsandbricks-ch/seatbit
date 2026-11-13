@@ -101,6 +101,8 @@ const SHOTS: Shot[] = [
   { name: "phone-clans", who: "anna", path: "/clans" },
   { name: "phone-clan", who: "anna", path: CLAN, full: true },
   { name: "phone-profile", who: "anna", path: "/profile", full: true },
+  { name: "phone-profile-lans", who: "anna", path: "/profile?tab=lans", full: true },
+  { name: "phone-profile-notifications", who: "anna", path: "/profile?tab=notifications", full: true },
   // German: same pages with a Swiss German browser.
   { name: "phone-event-de", who: "anna", path: LAKESIDE, full: true, lang: "de" },
   { name: "phone-profile-de", who: "anna", path: "/profile", lang: "de" },
@@ -108,7 +110,7 @@ const SHOTS: Shot[] = [
   {
     name: "phone-profile-delete",
     who: "anna",
-    path: "/profile",
+    path: "/profile?tab=data",
     act: async (page) => {
       await page.getByRole("button", { name: "Delete my account…" }).click();
       await page.evaluate(() => {

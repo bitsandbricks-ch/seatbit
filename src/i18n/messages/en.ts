@@ -105,10 +105,12 @@ export const en = {
     continue: "Continue",
   },
   profile: {
+    tabs: { account: "Account", look: "Avatar", lans: "LAN nicks & IDs", socials: "Socials", notifications: "Notifications", data: "Your data" },
+    names: "Name and nickname",
+    messages: "Messages",
     signInMethods: "Sign-in methods",
     yourData: "Your data",
-    account: "Account",
-    nickHint: "Your gamer tag, shown at every LAN unless you set a nick for that LAN type below.",
+    nickHint: "Your gamer tag, shown at every LAN unless you set one per LAN type on the LAN nicks & IDs tab.",
     emailReminders: "Email reminders",
     emailRemindersHint: "New events, lead news, deadlines, tickets and the day before a LAN, sent to {email}.",
     discordDms: "Discord DMs",
@@ -121,7 +123,7 @@ export const en = {
       dms_off: "Discord DMs are off. Tick the box above and save first.",
       guest: "Guest profiles can't get DMs.",
       bot_not_set_up: "The Discord bot isn't set up yet (bot token or application ID missing in the platform settings).",
-      no_discord: "Your profile isn't linked to Discord. Link it under sign-in methods below.",
+      no_discord: "Your profile isn't linked to Discord. Link it under Sign-in methods on the Account tab.",
       cant_dm:
         "Discord refused the DM. The bot can only DM you if you share a server with it and that server allows DMs from members (Discord: server name → Privacy Settings → Direct Messages).",
       error: "The DM failed for another reason. The server log has the details.",

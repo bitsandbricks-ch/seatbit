@@ -568,7 +568,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
                   {lanType ? t("event.nickForType", { type: lanType.name }) : t("event.nickForLan")}{" "}
                   {t.rich("event.defaultNick", {
                     profile: (
-                      <Link href="/profile" className="text-bit hover:underline">
+                      <Link href="/profile?tab=lans" className="text-bit hover:underline">
                         {t("event.profileLink")}
                       </Link>
                     ),

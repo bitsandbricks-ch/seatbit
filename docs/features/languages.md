@@ -6,7 +6,7 @@ Seatbit speaks English and German. Everyone picks their own language; the event,
 
 ## Which language you get
 
-1. The language you picked on your profile.
+1. The language you picked on your profile (*Account* tab).
 2. Otherwise the language you picked in the footer (remembered in this browser, also before you sign in).
 3. Otherwise your browser's language, when it's English or German.
 4. Otherwise the instance's **Default language** (platform setting `DEFAULT_LOCALE`, default English).

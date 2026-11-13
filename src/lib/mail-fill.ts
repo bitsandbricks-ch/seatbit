@@ -208,7 +208,7 @@ export function buildMail(
     note: fill(t.note, vars),
     header: vars.clan?.trim() || "Seatbit",
     logoUrl: `${ctx.appUrl}/brand/icon-192.png`,
-    settingsUrl: `${ctx.appUrl}/profile`,
+    settingsUrl: `${ctx.appUrl}/profile?tab=notifications`,
     termsUrl: `${ctx.appUrl}/terms`,
     privacyUrl: `${ctx.appUrl}/privacy`,
   });

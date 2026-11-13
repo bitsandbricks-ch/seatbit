@@ -105,10 +105,12 @@ export const de: Messages = {
     continue: "Weiter",
   },
   profile: {
+    tabs: { account: "Konto", look: "Avatar", lans: "LAN-Nicks & IDs", socials: "Socials", notifications: "Benachrichtigungen", data: "Deine Daten" },
+    names: "Name und Nickname",
+    messages: "Nachrichten",
     signInMethods: "Anmeldemethoden",
     yourData: "Deine Daten",
-    account: "Konto",
-    nickHint: "Dein Gamer-Tag, an jeder LAN sichtbar, ausser du setzt unten einen Nick für den LAN-Typ.",
+    nickHint: "Dein Gamer-Tag, an jeder LAN sichtbar, ausser du setzt im Tab LAN-Nicks & IDs einen pro LAN-Typ.",
     emailReminders: "E-Mail-Erinnerungen",
     emailRemindersHint: "Neue Events, News der Leads, Fristen, Tickets und der Tag vor einer LAN, an {email}.",
     discordDms: "Discord-DMs",
@@ -121,7 +123,7 @@ export const de: Messages = {
       dms_off: "Discord-DMs sind aus. Setz oben das Häkchen und speichere zuerst.",
       guest: "Gastprofile können keine DMs bekommen.",
       bot_not_set_up: "Der Discord-Bot ist noch nicht eingerichtet (Bot-Token oder Application-ID fehlt in den Plattform-Einstellungen).",
-      no_discord: "Dein Profil ist nicht mit Discord verknüpft. Verknüpfe es unten unter Anmeldemethoden.",
+      no_discord: "Dein Profil ist nicht mit Discord verknüpft. Verknüpfe es im Tab Konto unter Anmeldemethoden.",
       cant_dm:
         "Discord hat die DM abgelehnt. Der Bot kann dir nur schreiben, wenn ihr einen Server teilt und dieser DMs von Mitgliedern erlaubt (Discord: Servername → Privatsphäre-Einstellungen → Direktnachrichten).",
       error: "Die DM ist aus einem anderen Grund fehlgeschlagen. Details stehen im Server-Log.",
