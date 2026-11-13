@@ -81,9 +81,13 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
     .where(and(eq(schema.user.isGuest, false), isNull(schema.user.deletedAt)))
     .all()
     .filter((u) => !inClan.has(u.id));
-  const people = getDefaultNames([...members.map((m) => m.u.id), ...others.map((u) => u.id)]);
+  // Members and guests as the clan shows names; the full name stays next to it, because admins need to know who's who.
+  const people = getDefaultNames([...members.map((m) => m.u.id), ...others.map((u) => u.id)], c.nameDisplay);
   const userOf = (id: string) => members.find((m) => m.u.id === id)!.u;
   const fullName = (u: { id: string; name: string }) => people.get(u.id)?.full ?? u.name;
+  const label = (u: { id: string; name: string }) => people.get(u.id)?.label ?? u.name;
+  /** The full name for the small line under a label, when the label leaves part of it out. */
+  const fullHint = (u: { id: string; name: string }) => (label(u) === fullName(u) ? [] : [fullName(u)]);
   const candidates = others
     // Shown as Name "Nick" Surname; don't hand every user's full email address to clan admins.
     .map((u) => ({ id: u.id, name: fullName(u), email: maskEmail(u.email) }))
@@ -143,8 +147,8 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
                 {pending.map(({ u }) => (
                   <li key={u.id} className="flex flex-wrap items-center justify-between gap-2">
                     <span className="min-w-0">
-                      <span className="block truncate font-medium">{fullName(u)}</span>
-                      <span className="block truncate text-xs text-muted">{u.email}</span>
+                      <span className="block truncate font-medium">{label(u)}</span>
+                      <span className="block truncate text-xs text-muted">{[...fullHint(u), u.email].join(" · ")}</span>
                     </span>
                     <span className="flex gap-2">
                       <form action={setClanMemberRole.bind(null, c.id, u.id, "member")}>
@@ -173,10 +177,17 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
                     <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
                       <span className="min-w-0">
                         <span className="block truncate font-medium">
-                          {fullName(u)} <span className="font-normal text-muted">is</span> {fullName(g)}?
+                          {label(u)} <span className="font-normal text-muted">is</span> {label(g)}?
                         </span>
                         <span className="block truncate text-xs text-muted">
-                          {[r.match ? `Same ${r.match}` : "Picked from the list", u.email, `asked ${fmtDate(r.createdAt)}`].join(" · ")}
+                          {[
+                            label(u) !== fullName(u) || label(g) !== fullName(g) ? `${fullName(u)} is ${fullName(g)}?` : "",
+                            r.match ? `Same ${r.match}` : "Picked from the list",
+                            u.email,
+                            `asked ${fmtDate(r.createdAt)}`,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
                         </span>
                       </span>
                       <span className="flex gap-2">
@@ -206,7 +217,8 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
               canSetRoles={perms.has("roles")}
               members={active.filter(({ u }) => !u.isGuest).map(({ u, role }) => ({
                 id: u.id,
-                name: fullName(u),
+                name: label(u),
+                full: fullName(u),
                 nick: people.get(u.id)?.nick ?? "",
                 sub: u.isGuest ? (u.inviteEmail ? `No login yet · ${u.inviteEmail}` : "No login yet") : u.email,
                 role: isMemberRole(role) ? role : "member",
@@ -427,7 +439,7 @@ function GuestsTab({
   clanId: string;
   slug: string;
   guests: User[];
-  names: Map<string, { full: string }>;
+  names: Map<string, { full: string; label: string }>;
 }) {
   const types = db.select().from(schema.lanType).where(eq(schema.lanType.clanId, clanId)).orderBy(asc(schema.lanType.name)).all();
   const ids = guests.map((g) => g.id);
@@ -462,14 +474,16 @@ function GuestsTab({
             <ul className="space-y-2">
               {guests.map((u) => {
                 const nick = typeNicks.find((n) => n.userId === u.id && !n.typeId)?.nick ?? "";
+                const shown = names.get(u.id) ?? { label: u.name, full: u.name };
                 return (
                   <li key={u.id} className="rounded-md border border-line">
                     <details className="group">
                       <summary className="flex min-h-14 cursor-pointer list-none items-center gap-3 p-3 [&::-webkit-details-marker]:hidden">
                         <Avatar data={avatarData(u)} size={36} />
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate font-medium">{names.get(u.id)?.full ?? u.name}</span>
+                          <span className="block truncate font-medium">{shown.label}</span>
                           <span className="block truncate text-xs text-faint">
+                            {shown.label !== shown.full && `${shown.full} · `}
                             {u.inviteEmail
                               ? u.invitedAt
                                 ? `Invited ${fmtDate(u.invitedAt)} at ${u.inviteEmail}`

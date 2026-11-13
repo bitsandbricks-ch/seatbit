@@ -24,9 +24,9 @@ export default async function ClanStatsPage({ params }: PageProps<"/clans/[slug]
   const upcoming = events.filter((e) => !e.past);
   const sum = (list: typeof events, k: "asked" | "answered" | "going") => list.reduce((n, e) => n + e[k], 0);
   const guests = members.filter((m) => m.isGuest).length;
-  const people = getDefaultNames(members.map((m) => m.userId));
+  const people = getDefaultNames(members.map((m) => m.userId), c.nameDisplay);
   const avatars = getAvatars(members.map((m) => m.userId));
-  const label = (m: MemberStats) => people.get(m.userId)?.full ?? m.name;
+  const label = (m: MemberStats) => people.get(m.userId)?.label ?? m.name;
 
   const withPast = members.filter((m) => m.asked > 0);
   const mostActive = [...withPast]

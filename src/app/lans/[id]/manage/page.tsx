@@ -75,9 +75,9 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
     .from(user)
     .all()
     .filter((u) => memberIds.has(u.id) || rows.some((r) => r.userId === u.id));
-  const people = await getNames(id, users.map((u) => u.id), "full");
-  // Full "Name "Nick" Surname" everywhere; the bare nick only inside small seat cells.
-  const names = new Map([...people].map(([uid, n]) => [uid, n.full]));
+  const people = await getNames(id, users.map((u) => u.id));
+  // Names as the clan shows them (the bare nick only inside small seat cells); the attendee list keeps the full name next to it for ticket checks.
+  const names = new Map([...people].map(([uid, n]) => [uid, n.label]));
   const avatars = avatarMap(users);
   const lanIds = getLanAccounts(l, rows.map((r) => r.userId));
   const profilePat = profilePattern(
@@ -119,6 +119,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
         nick: people.get(r.userId)?.nick ?? u.name,
         avatar: avatars.get(r.userId),
         name: names.get(r.userId) ?? u.name,
+        full: people.get(r.userId)?.full ?? u.name,
         email: u.isGuest ? (u.inviteEmail ? `guest, invited at ${u.inviteEmail}` : "guest, no login yet") : u.email,
         status: r.status,
         paid: r.paid,
@@ -181,7 +182,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
   // Who's missing: per step, who still owes something. Names for people outside the clan list come from getNames too.
   const missing = whoIsMissing(l);
   const missingIds = [...new Set(missing.flatMap((g) => g.people.map((p) => p.userId)))];
-  const missingNames = missingIds.some((uid) => !names.has(uid)) ? await getNames(id, missingIds, "full") : null;
+  const missingNames = missingIds.some((uid) => !names.has(uid)) ? await getNames(id, missingIds) : null;
   const memberMissing = new Set(
     missing.filter((g) => MISSING_STEPS[g.step].who === "member").flatMap((g) => g.people.map((p) => p.userId)),
   ).size;
@@ -209,7 +210,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
     people: g.people
       .map((p) => ({
         userId: p.userId,
-        name: names.get(p.userId) ?? missingNames?.get(p.userId)?.full ?? "?",
+        name: names.get(p.userId) ?? missingNames?.get(p.userId)?.label ?? "?",
         avatar: avatars.get(p.userId),
         discord: p.reach.discord,
         email: p.reach.email,

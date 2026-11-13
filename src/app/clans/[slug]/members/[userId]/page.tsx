@@ -104,6 +104,8 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
     .get();
   const role = isMemberRole(membership.role) ? membership.role : "member";
   const avatar = avatarData(u);
+  const shownName = personLabel(u, defaultNick, c.nameDisplay);
+  const fullName = personLabel(u, defaultNick);
 
   return (
     <Page>
@@ -112,14 +114,15 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
         avatar={<Avatar data={avatar} size={56} />}
         title={
           <span className="inline-flex max-w-full items-center gap-2">
-            {/* Managers and the member themself see the full name whatever the clan shows. */}
-            <span className="truncate">{personLabel(u, defaultNick, seesPrivate ? "full" : c.nameDisplay)}</span>
+            <span className="truncate">{shownName}</span>
             {!u.isGuest && <Verified size={20} />}
           </span>
         }
         subtitle={
           <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <RolePill role={role} />
+            {/* Managers and the member themself also see the full name the clan's display leaves out. */}
+            {seesPrivate && fullName !== shownName && <span>{fullName}</span>}
             {u.isGuest && <Pill>guest · no login yet</Pill>}
             <span>in the clan since {fmtWeekday(membership.createdAt)}</span>
           </span>

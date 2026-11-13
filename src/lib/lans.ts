@@ -46,7 +46,7 @@ function personName(u: typeof user.$inferSelect, nick: string, mode: NameDisplay
 
 /**
  * Map userId -> names at a LAN (nick: event > LAN type > default). The label follows the
- * event's clan setting; orga views pass mode "full".
+ * event's clan setting; pass mode "full" for logs, exports and mails.
  */
 export async function getNames(lanId: string, userIds: string[], mode?: NameDisplay) {
   const map = new Map<string, PersonName>();
