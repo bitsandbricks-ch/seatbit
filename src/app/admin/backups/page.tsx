@@ -98,7 +98,7 @@ export default async function BackupsPage() {
                   </span>
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <a href={`/admin/backups/${f.name}`} className={btnSecondary} download>
+                  <a href={`/admin/backups/${encodeURIComponent(f.name)}`} className={btnSecondary} download>
                     {t("backups.download")}
                   </a>
                   <DeleteBackupButton name={f.name} />
