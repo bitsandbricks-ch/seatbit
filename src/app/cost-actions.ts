@@ -9,7 +9,7 @@ import type { User } from "@/db/schema";
 import { costPeople, MAX_EXPENSES } from "@/lib/costs";
 import { getLan } from "@/lib/lans";
 import { parseAmount, splitCents } from "@/lib/money";
-import { canViewLan, isLanManager, requireUser } from "@/lib/session";
+import { canTakePart, isLanManager, requireUser } from "@/lib/session";
 
 const { costExpense, costShare, costSettlement, attendance } = schema;
 
@@ -18,7 +18,7 @@ const costsPath = (lanId: string) => revalidatePath(`/lans/${lanId}`);
 /** Everyone with an answer other than "not coming" can log costs; leads always. */
 function canAdd(me: User, lanId: string) {
   if (isLanManager(me, lanId)) return true;
-  if (!canViewLan(me, lanId)) return false;
+  if (!canTakePart(me, lanId)) return false;
   const a = db
     .select({ status: attendance.status })
     .from(attendance)
@@ -121,7 +121,7 @@ export async function deleteExpense(expenseId: string) {
  */
 export async function recordSettlement(lanId: string, fromUserId: string, toUserId: string, amount: string): Promise<{ error?: string }> {
   const me = await requireUser();
-  if (!getLan(lanId) || !canViewLan(me, lanId)) return { error: await tr("errors.eventGone") };
+  if (!getLan(lanId) || !canTakePart(me, lanId)) return { error: await tr("errors.eventGone") };
   if (me.id !== fromUserId && me.id !== toUserId && !isLanManager(me, lanId)) return { error: await tr("costs.errors.settle") };
   const cents = parseAmount(amount);
   if (cents === null || !Number.isFinite(cents) || cents <= 0) return { error: await tr("costs.errors.amount") };

@@ -71,6 +71,8 @@ export const fx = {
   report: "",
   discordChannel: "1234567890123456789",
   annaClaimable: "demo-guest-anna", // a guest in demo-clan named like Anna
+  annaExpense: "demo-expense-anna", // Anna paid, split with Chiara
+  annaSettlement: "demo-settle-anna", // Chiara paid Anna back
   backup: "seatbit-20261101-030000.db",
 };
 
@@ -131,6 +133,12 @@ export async function setup() {
   // Things that belong to Anna, so others can try to touch them.
   db.insert(s.packingItem).values({ id: fx.annaPackingItem, lanId: fx.lan, userId: ACTORS.member, label: "Headset", packed: false }).run();
   db.insert(s.game).values({ id: fx.annaGame, lanId: fx.lan, name: "Anna's game", addedBy: ACTORS.member }).run();
+  db.insert(s.costExpense).values({ id: fx.annaExpense, lanId: fx.lan, title: "Snacks", amountCents: 2000, paidBy: ACTORS.member, createdBy: ACTORS.member }).run();
+  db.insert(s.costShare).values([
+    { expenseId: fx.annaExpense, userId: ACTORS.member, amountCents: 1000 },
+    { expenseId: fx.annaExpense, userId: ACTORS.organizer, amountCents: 1000 },
+  ]).run();
+  db.insert(s.costSettlement).values({ id: fx.annaSettlement, lanId: fx.lan, fromUserId: ACTORS.organizer, toUserId: ACTORS.member, amountCents: 1000, createdBy: ACTORS.organizer }).run();
   // Payments on, so the charge actions get past "payments are off", and a backup file to download.
   db.insert(s.appSetting).values({ key: "payments.enabled", value: "true" }).onConflictDoNothing().run();
   fs.mkdirSync(process.env.BACKUP_DIR!, { recursive: true });

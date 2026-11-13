@@ -26,6 +26,7 @@ import * as locale from "../../src/app/locale-actions";
 import * as settings from "../../src/app/admin/settings/actions";
 import * as backups from "../../src/app/admin/backups/actions";
 import * as emergency from "../../src/app/emergency-actions";
+import * as costs from "../../src/app/cost-actions";
 import * as metrics from "../../src/app/api/metrics/route";
 import * as leadExport from "../../src/app/lans/[id]/manage/export/route";
 import * as profileExport from "../../src/app/profile/export/route";
@@ -48,6 +49,7 @@ export const MODULES = {
   "admin/settings/actions": settings,
   "admin/backups/actions": backups,
   "emergency-actions": emergency,
+  "cost-actions": costs,
 } as const;
 
 export type Spec = {
@@ -220,6 +222,22 @@ export const SPECS: Spec[] = [
   { name: "food-actions.addFoodItem", allow: [...LAKESIDE_ATTENDEES, ...LAN_MANAGERS], run: () => food.addFoodItem(fx.foodOrder, form({ item: "Margherita", qty: "1", price: "12", note: "" })) },
   { name: "food-actions.removeFoodItem", allow: ["member", ...LAN_MANAGERS], run: () => food.removeFoodItem(fx.annaFoodItem) },
   { name: "food-actions.setFoodPaid", allow: ["member", ...LAN_MANAGERS], run: () => food.setFoodPaid(fx.foodOrder, ACTORS.member, true) },
+
+  // ---------- cost-actions.ts (shared costs at an event) ----------
+  {
+    name: "cost-actions.addExpense",
+    allow: LAKESIDE_ATTENDEES,
+    run: () => costs.addExpense(fx.lan, form({ title: "Pizza", note: "", amount: "30", paidBy: ACTORS.member, people: [ACTORS.member, ACTORS.recruiter] })),
+    positive: "member",
+  },
+  {
+    name: "cost-actions.updateExpense",
+    allow: ["member", ...LAN_MANAGERS],
+    run: () => costs.updateExpense(fx.annaExpense, form({ title: "Snacks and drinks", note: "", amount: "25", paidBy: ACTORS.member, people: [ACTORS.member, ACTORS.organizer] })),
+  },
+  { name: "cost-actions.deleteExpense", allow: ["member", ...LAN_MANAGERS], run: () => costs.deleteExpense(fx.annaExpense) },
+  { name: "cost-actions.recordSettlement", allow: ["member", "recruiter", ...LAN_MANAGERS], run: () => costs.recordSettlement(fx.lan, ACTORS.recruiter, ACTORS.member, "5") },
+  { name: "cost-actions.deleteSettlement", allow: ["member", ...LAN_MANAGERS], run: () => costs.deleteSettlement(fx.annaSettlement) },
 
   // ---------- payment-actions.ts ----------
   { name: "payment-actions.savePaymentSettings", allow: CLAN_PAYMENTS, run: () => payments.savePaymentSettings(fx.clan, undefined, form({ enabled: "on", paymentInfo: "IBAN test" })) },
