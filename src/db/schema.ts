@@ -43,6 +43,12 @@ export const user = sqliteTable("user", {
   // The Discord user an orga said this guest is (via the bot): their Discord sign-in
   // takes the guest over automatically.
   guestDiscordId: text("guest_discord_id"),
+  /** How that Discord member was shown when linked ("Nick (@username)"), for the guest page. */
+  guestDiscordName: text("guest_discord_name"),
+  guestDiscordLinkedAt: integer("guest_discord_linked_at", { mode: "timestamp_ms" }),
+  guestDiscordLinkedBy: text("guest_discord_linked_by"),
+  /** When the bot last DMed them the claim link; null when it couldn't. */
+  guestDiscordDmAt: integer("guest_discord_dm_at", { mode: "timestamp_ms" }),
   // How the member is shown: "picture" = their uploaded picture, else the Discord
   // picture, else initials; "icon" = an emoji on their colour; "initials".
   avatarStyle: text("avatar_style").$type<"picture" | "icon" | "initials">().default("picture").notNull(),

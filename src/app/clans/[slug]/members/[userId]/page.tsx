@@ -6,7 +6,9 @@ import type { Attendance, Lan } from "@/db/schema";
 import { CopyField } from "@/components/copy-field";
 import { MemberAdminActions } from "@/components/member-admin-actions";
 import { GuestEditForm } from "@/components/guest-form";
-import { updateGuest } from "@/app/clan-actions";
+import { resendGuestDiscordDm, unlinkGuestDiscord, updateGuest } from "@/app/clan-actions";
+import { GuestDiscordLink } from "@/components/guest-discord";
+import { guestDiscordLines } from "@/lib/guest-claim";
 import { Card, Page, PageHeader, Pill, StatTile, StatusBadge, Verified, columns, stack } from "@/components/ui";
 import { clanPerms, getClanBySlug, isClanMember } from "@/lib/clans";
 import { isMemberRole } from "@/lib/clan-roles";
@@ -216,7 +218,6 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
                     <Row label="Invite">
                       {u.invitedAt ? `mailed ${fmtDate(u.invitedAt)}` : u.inviteEmail ? "not sent yet" : "no email, send the link"}
                     </Row>
-                    <Row label="Discord">{u.guestDiscordId ? "linked, takes over at their first sign-in" : "not linked (/guest in Discord)"}</Row>
                   </>
                 ) : (
                   <>
@@ -229,6 +230,17 @@ export default async function MemberProfilePage({ params }: PageProps<"/clans/[s
                   </>
                 )}
               </dl>
+              {u.isGuest && isManager && (
+                <div className="mt-3 space-y-1 border-t border-line pt-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted">Discord</p>
+                  <GuestDiscordLink
+                    linked={!!u.guestDiscordId}
+                    lines={guestDiscordLines(u)}
+                    resend={resendGuestDiscordDm.bind(null, c.id, u.id)}
+                    unlink={unlinkGuestDiscord.bind(null, c.id, u.id)}
+                  />
+                </div>
+              )}
               {u.isGuest && isManager && u.claimCode && (
                 <div className="mt-3 space-y-1">
                   <p className="text-xs text-muted">Claim link: whoever opens it takes over this guest.</p>
