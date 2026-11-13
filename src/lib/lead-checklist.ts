@@ -2,6 +2,10 @@ import type { Lan } from "@/db/schema";
 import type { StepState } from "./checklist";
 import { makeT, type T } from "../i18n/translate";
 
+/** Built-in steps a custom to-do can wait for, in checklist order. */
+export const LEAD_STEP_DEPS = ["publish", "seats", "tickets", "assign", "finalize", "book"] as const;
+export type LeadStepDep = (typeof LEAD_STEP_DEPS)[number];
+
 export type LeadStep = { key: string; title: string; state: StepState; hint: string; href?: string };
 
 /** The leads' to-do list for one event, from the counts the Manage page already has. */
@@ -60,22 +64,21 @@ export function buildLeadChecklist(input: {
     });
   }
 
-  const openTickets = going - ticketsConfirmed - ticketsToConfirm;
+  // Tickets go on trust: a member saying "I have my ticket" counts. Confirming is optional.
+  const withTicket = ticketsConfirmed + ticketsToConfirm;
+  const openTickets = going - withTicket;
   steps.push({
     key: "tickets",
     title: t("leadSteps.tickets"),
-    state: going > 0 && ticketsConfirmed === going ? "done" : ticketsToConfirm > 0 ? "todo" : "pending",
+    state: going > 0 && openTickets <= 0 ? "done" : going > 0 ? "pending" : "todo",
     hint:
       going === 0
         ? t("leadSteps.nobody")
-        : ticketsConfirmed === going
-          ? t("leadSteps.allConfirmed", { count: going })
-          : [
-              ticketsToConfirm > 0 && t("leadSteps.toConfirm", { count: ticketsToConfirm }),
-              openTickets > 0 && t("leadSteps.notBought", { count: openTickets }),
-            ]
-              .filter(Boolean)
-              .join(", ") + ".",
+        : openTickets <= 0
+          ? ticketsToConfirm > 0
+            ? t("leadSteps.allHaveToConfirm", { count: going, confirm: ticketsToConfirm })
+            : t("leadSteps.allHave", { count: going })
+          : t("leadSteps.notBought", { count: openTickets }) + ".",
     href: `${base}?tab=attendees`,
   });
 

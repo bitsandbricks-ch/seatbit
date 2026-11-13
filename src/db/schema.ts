@@ -158,6 +158,8 @@ export const clan = sqliteTable("clan", {
   nameDisplay: text("name_display").$type<NameDisplay>().default("full").notNull(),
   /** Language of the bot's posts in the clan's Discord channels; null = the instance default. */
   locale: text("locale"),
+  /** The default lead to-dos were added once; deleting them all later must not bring them back. */
+  leadTasksSeeded: integer("lead_tasks_seeded", { mode: "boolean" }).default(false).notNull(),
   // Voluntary Supporter payments (hosted instances with billing on, see src/lib/billing.ts).
   // supporterUntil is the end of the last paid period; the badge shows while it's in the future.
   supporterUntil: integer("supporter_until", { mode: "timestamp_ms" }),
@@ -258,6 +260,8 @@ export const lanType = sqliteTable("lan_type", {
   discordMode: text("discord_mode").$type<DiscordMode>().default("channel").notNull(),
   /** Link to a member's profile on the event's site, with {id} for their LAN ID (e.g. https://example.com/user/?id={id}). */
   profileUrl: text("profile_url").default("").notNull(),
+  /** Events of this type also get the clan's lead to-dos "for all LAN types", not only their own. */
+  clanLeadTasks: integer("clan_lead_tasks", { mode: "boolean" }).default(true).notNull(),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
 });
 
@@ -835,3 +839,76 @@ export const foodItem = sqliteTable(
 
 export type FoodOrder = typeof foodOrder.$inferSelect;
 export type FoodItem = typeof foodItem.$inferSelect;
+
+// ---------- Lead to-dos and organizer contacts ----------
+
+/**
+ * People at the LAN's own organizers (not the clan) the leads deal with: ticket desk, seat
+ * planner, ... Per LAN type, since the organizers stay the same from year to year.
+ */
+export const leadContact = sqliteTable(
+  "lead_contact",
+  {
+    id: id(),
+    typeId: text("type_id")
+      .notNull()
+      .references(() => lanType.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    /** What they do for the group, e.g. "Seat planning". */
+    role: text("role").default("").notNull(),
+    email: text("email").default("").notNull(),
+    discord: text("discord").default("").notNull(),
+    phone: text("phone").default("").notNull(),
+    url: text("url").default("").notNull(),
+    note: text("note").default("").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  (t) => [index("lead_contact_type_idx").on(t.typeId)],
+);
+
+/**
+ * A to-do the leads tick off by hand. Scope: typeId and lanId null = every event of the clan,
+ * typeId = events of that LAN type, lanId = that one event only.
+ */
+export const leadTask = sqliteTable(
+  "lead_task",
+  {
+    id: id(),
+    clanId: text("clan_id")
+      .notNull()
+      .references(() => clan.id, { onDelete: "cascade" }),
+    typeId: text("type_id").references(() => lanType.id, { onDelete: "cascade" }),
+    lanId: text("lan_id").references(() => lan.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    note: text("note").default("").notNull(),
+    /** Opens once these are done: built-in lead steps ("finalize") or other to-dos ("task:<id>"). */
+    after: text("after", { mode: "json" }).$type<string[]>().default([]).notNull(),
+    /** Due this many days before the event starts (negative = after the start); null = no due date. */
+    dueDays: integer("due_days"),
+    contactId: text("contact_id").references(() => leadContact.id, { onDelete: "set null" }),
+    sort: integer("sort").default(0).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  (t) => [index("lead_task_clan_idx").on(t.clanId)],
+);
+
+/** A to-do's state at one event: who has it, who ticked it and when. */
+export const lanTask = sqliteTable(
+  "lan_task",
+  {
+    lanId: text("lan_id")
+      .notNull()
+      .references(() => lan.id, { onDelete: "cascade" }),
+    taskId: text("task_id")
+      .notNull()
+      .references(() => leadTask.id, { onDelete: "cascade" }),
+    assigneeId: text("assignee_id").references(() => user.id, { onDelete: "set null" }),
+    doneAt: integer("done_at", { mode: "timestamp_ms" }),
+    doneById: text("done_by_id").references(() => user.id, { onDelete: "set null" }),
+  },
+  (t) => [uniqueIndex("lan_task_uq").on(t.lanId, t.taskId)],
+);
+
+export type LeadContact = typeof leadContact.$inferSelect;
+export type LeadTask = typeof leadTask.$inferSelect;
+export type LanTask = typeof lanTask.$inferSelect;

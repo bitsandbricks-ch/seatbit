@@ -193,6 +193,12 @@ export function describeAudit(
       return t("audit.orgaAdd", v);
     case "orga.remove":
       return t("audit.orgaRemove", v);
+    case "lead.task_done":
+      return t("audit.leadTaskDone", v);
+    case "lead.task_undone":
+      return t("audit.leadTaskUndone", v);
+    case "lead.task_assign":
+      return t(e.targetUserId ? "audit.leadTaskAssign" : "audit.leadTaskUnassign", { ...v, who: name(e.targetUserId ?? (d.from as string | undefined), removed) });
     case "news.delete":
       return t("audit.newsDelete", v);
     case "attendance.set":
