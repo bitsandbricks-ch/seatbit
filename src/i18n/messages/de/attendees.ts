@@ -27,7 +27,6 @@ export const attendees: Messages["attendees"] = {
   bookedOnSite: "auf der Seite gebucht",
   notBookedOnSite: "nicht auf der Seite gebucht",
   ticketOk: "Ticket ok",
-  reported: "gemeldet",
   lanIdOf: "LAN-ID von {name}",
   nobody: "Niemand hier.",
   addMember: "Mitglied hinzufügen…",

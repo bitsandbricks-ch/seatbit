@@ -125,15 +125,6 @@ export function claimGuestsByEmail(userId: string) {
   return guests.length;
 }
 
-/** The real (non-guest) account with this email, if there is one. */
-export function accountByEmail(email: string) {
-  return db
-    .select()
-    .from(schema.user)
-    .where(and(eq(schema.user.isGuest, false), sql`lower(${schema.user.email}) = ${normEmail(email)}`))
-    .get();
-}
-
 /** Mails a guest their invite with the claim link, and notes when it went out. */
 export async function sendGuestInvite(guestId: string, inviter: string) {
   const g = db.select().from(schema.user).where(eq(schema.user.id, guestId)).get();

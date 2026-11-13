@@ -25,7 +25,6 @@ export const clanPage = {
   guestMatchNick: "The leads added {guest} as a guest, with the same nick as you. Is that you?",
   check: "Check",
   myClaim: "You asked to take over the guest {guest}. An admin will confirm it.",
-  supporter: "{clan} supports this Seatbit. Thank you!",
   about: "About",
   members: "Members",
   seeAll: "See all {count}",

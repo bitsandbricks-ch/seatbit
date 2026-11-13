@@ -17,16 +17,6 @@ const size = (f: string) => {
   }
 };
 
-/** Bytes as "12.3 MB". */
-export function fmtBytes(n: number) {
-  const units = ["B", "KB", "MB", "GB", "TB"];
-  let i = 0;
-  while (n >= 1024 && i < units.length - 1) {
-    n /= 1024;
-    i++;
-  }
-  return `${n.toFixed(i && n < 10 ? 1 : 0)} ${units[i]}`;
-}
 
 function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
   return Promise.race([p, new Promise<T>((_, reject) => setTimeout(() => reject(new Error(`No answer within ${ms / 1000} s`)), ms))]);

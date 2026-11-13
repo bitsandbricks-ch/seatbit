@@ -1,5 +1,5 @@
 import "server-only";
-import { and, count, desc, eq, inArray, isNull, lt, type SQL } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, lt, type SQL } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { AuditEntry } from "@/db/schema";
 import { fmtDay, fmtMoney } from "./format";
@@ -138,10 +138,6 @@ export function auditedEvents(clanId: string) {
   return ids.length
     ? db.select({ id: schema.lan.id, name: schema.lan.name, startsAt: schema.lan.startsAt }).from(schema.lan).where(inArray(schema.lan.id, ids)).orderBy(desc(schema.lan.startsAt)).all()
     : [];
-}
-
-export function auditCount(clanId: string) {
-  return db.select({ n: count() }).from(auditLog).where(eq(auditLog.clanId, clanId)).get()?.n ?? 0;
 }
 
 /** Names for the people in a page of entries. Removed guests (row gone) show as "a removed guest". */

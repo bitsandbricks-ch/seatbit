@@ -7,6 +7,9 @@ const WD: Record<Locale, string[]> = {
   en: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
   de: ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"],
 };
+/** Cuts text to n characters, with "…" when it was longer (Discord field limits). */
+export const clip = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
+
 const p2 = (n: number) => String(n).padStart(2, "0");
 const dmy = (d: Date) => `${p2(d.getDate())}.${p2(d.getMonth() + 1)}.${d.getFullYear()}`;
 const hm = (d: Date) => `${p2(d.getHours())}:${p2(d.getMinutes())}`;

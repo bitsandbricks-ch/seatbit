@@ -14,7 +14,6 @@ export const leadSteps = {
   tickets: "Everyone has a ticket",
   nobody: "Nobody is coming yet.",
   allConfirmed: "All {count} have one.",
-  toConfirm: "{count} to confirm",
   notBought: "{count} not bought yet",
   assign: "Seat everyone",
   assignPicking: "Members pick, you fill the gaps",

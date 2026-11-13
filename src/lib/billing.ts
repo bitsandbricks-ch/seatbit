@@ -98,7 +98,7 @@ function encode(params: Params, prefix = "", out = new URLSearchParams()) {
 export class BillingError extends Error {}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Obj = Record<string, any>;
+export type Obj = Record<string, any>;
 
 export async function stripe(method: "GET" | "POST" | "DELETE", path: string, params?: Params, timeoutMs = 10_000, account?: string): Promise<Obj> {
   const key = config().secretKey;
@@ -271,7 +271,8 @@ export async function handleStripeEvent(event: Obj): Promise<boolean> {
   return true;
 }
 
-const idOf = (x: unknown): string | undefined => (typeof x === "string" ? x : (x as Obj | null)?.id);
+/** The id of a Stripe field that is either an id or an expanded object. */
+export const idOf = (x: unknown): string | undefined => (typeof x === "string" ? x : (x as Obj | null)?.id);
 
 function findClan(clanId: string | undefined, subscriptionId: string | undefined) {
   if (subscriptionId) {

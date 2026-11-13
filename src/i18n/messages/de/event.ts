@@ -64,8 +64,6 @@ export const event: Messages["event"] = {
   buyTicketBy: "Ticket kaufen bis",
   ticketPrice: "Ticketpreis",
   yourTicket: "Dein Ticket",
-  ticketConfirmed: "Bestätigt",
-  ticketReported: "Gemeldet",
   ticketOpen: "Offen",
   news: "News der Leads",
   lead: "Lead",

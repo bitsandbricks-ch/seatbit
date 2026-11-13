@@ -62,8 +62,6 @@ export const event = {
   buyTicketBy: "Buy ticket by",
   ticketPrice: "Ticket price",
   yourTicket: "Your ticket",
-  ticketConfirmed: "Confirmed",
-  ticketReported: "Reported",
   ticketOpen: "Open",
   news: "News from the leads",
   lead: "Lead",

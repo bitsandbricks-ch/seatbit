@@ -40,7 +40,7 @@ export type Handled = { response: Json | Promise<Json>; later?: () => Promise<vo
 
 export const EPHEMERAL = 64;
 
-export const clip = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
+export { clip } from "./format";
 
 export const reply = (content: string, extra: Json = {}) => ({
   type: 4,

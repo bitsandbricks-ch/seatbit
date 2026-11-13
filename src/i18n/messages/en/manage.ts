@@ -1,7 +1,6 @@
 export const manage = {
   tabs: { attendees: "Attendees", missing: "Who's missing", chat: "Discord & WhatsApp", settings: "Settings" },
   badge: {
-    toConfirm: "{count} to confirm",
     swaps: { one: "{count} swap to approve", other: "{count} swaps to approve" },
     unseated: "{count} unseated",
   },

@@ -12,7 +12,8 @@ export type ChecklistStep = {
   optional?: boolean;
 };
 
-const hasWishes = (a: Attendance) =>
+/** Whether the attendee wished anything about their seat. */
+export const hasWishes = (a: Attendance) =>
   a.wishNear.length > 0 || a.wishAvoid.length > 0 || a.wishPosition !== "any" || !!a.wishSeat || !!a.wishNote;
 
 /** The per-LAN to-do list for an attendee. */

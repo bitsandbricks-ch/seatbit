@@ -6,11 +6,6 @@
  */
 export const NAME_DISPLAYS = ["full", "nameNick", "nick"] as const;
 export type NameDisplay = (typeof NAME_DISPLAYS)[number];
-export const NAME_DISPLAY_LABELS: Record<NameDisplay, string> = {
-  full: 'Name "Nick" Surname',
-  nameNick: 'Name "Nick"',
-  nick: "Nick only",
-};
 
 /**
  * The one way a person is shown in Seatbit (pages, seat map, emails, Discord):

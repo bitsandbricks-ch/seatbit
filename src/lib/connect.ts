@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Charge, ChargeItem, Clan } from "@/db/schema";
 import { audit } from "./audit";
-import { BillingError, stripeApi, stripeKeySet } from "./billing";
+import { BillingError, idOf, stripeApi, stripeKeySet } from "./billing";
 import { appUrl } from "./mail";
 import { clanPaymentsOn } from "./payments";
 import { getBoolSetting, getNumberSetting, getSetting } from "./settings";
@@ -207,7 +207,7 @@ function markPaidOnline(s: Obj, account: string | undefined) {
   }
   // Paid twice (two tabs)? The line stays paid; the clan refunds the second one in its dashboard.
   if (row.it.status === "paid" && row.it.paidVia === "stripe") return;
-  const pi = typeof s.payment_intent === "string" ? s.payment_intent : s.payment_intent?.id;
+  const pi = idOf(s.payment_intent);
   db.update(chargeItem)
     .set({ status: "paid", paidVia: "stripe", paidAt: new Date(), markedBy: null, stripePaymentId: pi ?? null })
     .where(eq(chargeItem.id, row.it.id))
@@ -223,7 +223,7 @@ function markPaidOnline(s: Obj, account: string | undefined) {
 }
 
 function markRefunded(ch: Obj, account: string | undefined) {
-  const pi = typeof ch.payment_intent === "string" ? ch.payment_intent : ch.payment_intent?.id;
+  const pi = idOf(ch.payment_intent);
   if (!pi) return;
   const it = db.select().from(chargeItem).where(eq(chargeItem.stripePaymentId, pi)).get();
   const row = it && lineFor(it.id, account);
