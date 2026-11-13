@@ -253,6 +253,13 @@
       "when": 1794584084826,
       "tag": "0036_lead_tasks",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "6",
+      "when": 1794584597262,
+      "tag": "0037_clan_payments",
+      "breakpoints": true
     }
   ]
 }

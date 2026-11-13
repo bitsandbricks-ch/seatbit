@@ -111,6 +111,7 @@ nav:
       - Integrations:
           - Discord and WhatsApp: features/discord.md
       - Administration:
+          - Clan payments: features/payments.md
           - Audit log: features/audit-log.md
           - Supporter badge: features/supporters.md
           - Donations: features/donations.md
