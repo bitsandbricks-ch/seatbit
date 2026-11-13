@@ -15,7 +15,7 @@ Seatbit uses **one Discord application** for both the "Continue with Discord" lo
 
 1. In the developer portal, **Bot:** reset and copy the **token**.
 2. **General Information:** copy the **Public Key**, and set **Interactions Endpoint URL** to `https://seatbit.example.com/api/discord/interactions`. Seatbit must be running and reachable for Discord to accept it.
-3. In Seatbit, open **Admin → Platform settings → Discord**, enter the bot token and public key, and click **Check bot & register slash commands**. This registers the member commands (`/coming`, `/unsure`, `/not-coming`, `/status`, `/ticket`, `/nick`, `/wish`, `/lans`, `/claim`), `/guest` and `/seatbit`. Click it again after an update that adds commands.
+3. In Seatbit, open **Admin → Platform settings → Discord**, enter the bot token and public key, and click **Check bot & register slash commands**. This registers the member commands (`/coming`, `/unsure`, `/not-coming`, `/status`, `/ticket`, `/nick`, `/wish`, `/lans`, `/claim`), `/guest` and `/seatbit`. After an update that changes the commands, Seatbit registers them again by itself on startup (see [Upgrades](operations.md#upgrades)).
 
 ![Discord settings](../screenshots/desktop-admin-discord.png){ .shot }
 

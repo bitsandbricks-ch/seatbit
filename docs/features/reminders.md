@@ -44,6 +44,6 @@ Each person shows how a nudge reaches them:
 
 **Nudge** sends one person a short reminder for that step, **Nudge all** everyone in it. DMs have buttons where they fit (*Coming / Unsure / Not coming*, *Buy ticket*). Members' DM and email settings are respected, and each person gets at most **one nudge per step every 12 hours**. Nudges are off for drafts and cancelled events.
 
-Your own to-dos come last: **tickets to confirm**, people **without a seat** and **seats to book on the event site**, linking to the tab where you fix them.
+Your own to-dos come last: people **without a seat** and **seats to book on the event site**, linking to the tab where you fix them.
 
 ![Who's missing on a phone](../screenshots/phone-manage-missing.png){ .shot width="300" }

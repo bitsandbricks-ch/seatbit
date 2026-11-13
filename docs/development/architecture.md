@@ -41,6 +41,7 @@ docs/              this site (MkDocs)
 | Module | |
 | --- | --- |
 | `src/lib/settings.ts` | Platform settings: DB value, then env var, then default. Secrets encrypted with AES-256-GCM. |
+| `src/lib/upgrade.ts` | After a new version starts: registers changed slash commands, notifies platform admins once, `onUpgrade()` hook for other channels. |
 | `src/lib/lans.ts`, `checklist.ts` | Events, attendance, waitlist and the member checklist. |
 | `src/lib/seating.ts`, `seat-layout.ts`, `seat-labels.ts` | Seat block parsing, the auto planner and the seat map layout. |
 | `src/lib/reminders.ts` | Due reminders, deduplicated via `reminder_log`. |

@@ -31,6 +31,19 @@ export async function register() {
       console.error("[publish] failed", e);
       reportError("publish", e);
     });
+  // After an upgrade: register changed slash commands and tell the platform admins (once per version),
+  // and the ops and announcements channels.
+  const { afterUpgrade, onUpgrade } = await import("./lib/upgrade");
+  const { announceUpgradeOnDiscord } = await import("./lib/ops");
+  onUpgrade(announceUpgradeOnDiscord);
+  setTimeout(
+    () =>
+      void runJob("upgrade", () => afterUpgrade()).catch((e) => {
+        console.error("[upgrade] failed", e);
+        reportError("upgrade", e);
+      }),
+    15_000,
+  );
   // First check shortly after start, then look every minute whether the interval has passed.
   setTimeout(() => {
     publishTick();

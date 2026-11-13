@@ -16,7 +16,7 @@
  * (e.g. `npm run discord:register`) can read settings too.
  */
 import crypto from "node:crypto";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db, schema } from "../db";
 
 const { appSetting } = schema;
@@ -645,3 +645,32 @@ export function clearSetting(key: string) {
 }
 
 export class SettingError extends Error {}
+
+// ---------- Internal state ----------
+// Small values Seatbit keeps for itself (not settings): stored in app_setting under "state.*",
+// which the settings registry and the admin UI never list.
+
+export function readState(key: string): string | undefined {
+  return db.select().from(appSetting).where(eq(appSetting.key, key)).get()?.value;
+}
+
+export function rememberState(key: string, value: string) {
+  db.insert(appSetting)
+    .values({ key, value, encrypted: false, updatedAt: new Date() })
+    .onConflictDoUpdate({ target: appSetting.key, set: { value, updatedAt: new Date() } })
+    .run();
+}
+
+/** Sets the value only if it still is `expected` (undefined = not set yet). True when this call changed it. */
+export function swapState(key: string, expected: string | undefined, value: string) {
+  if (expected === undefined) {
+    return db.insert(appSetting).values({ key, value, encrypted: false, updatedAt: new Date() }).onConflictDoNothing().run().changes > 0;
+  }
+  return (
+    db
+      .update(appSetting)
+      .set({ value, updatedAt: new Date() })
+      .where(and(eq(appSetting.key, key), eq(appSetting.value, expected)))
+      .run().changes > 0
+  );
+}

@@ -9,6 +9,7 @@
 import { api, discordEnabled } from "./discord-api";
 import { getBoolSetting, getSetting } from "./settings";
 import { type ProblemKind, recordProblem } from "./jobs";
+import type { UpgradeEvent } from "./upgrade";
 import { makeT } from "../i18n/translate";
 import { instanceLocale } from "../i18n/user-locale";
 
@@ -149,4 +150,57 @@ export function safePath(path: string) {
     .split("/")
     .map((seg) => (/^[\w-]{20,}$/.test(seg) ? "…" : seg))
     .join("/");
+}
+
+// ---------- Upgrades ----------
+
+/**
+ * Titles of what changed between two commits, for the announcement: merged pull
+ * request titles from GitHub's compare API, else the commits' first lines. Empty for
+ * other hosts or when GitHub doesn't answer within 5 seconds (the link still works).
+ */
+export async function changeTitles(sourceUrl: string, before: string, now: string): Promise<string[]> {
+  const m = /^https:\/\/github\.com\/([\w.-]+)\/([\w.-]+?)(?:\.git)?\/?$/.exec(sourceUrl);
+  if (!m) return [];
+  try {
+    const res = await fetch(`https://api.github.com/repos/${m[1]}/${m[2]}/compare/${before}...${now}`, {
+      headers: { Accept: "application/vnd.github+json", "User-Agent": "Seatbit" },
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!res.ok) return [];
+    const data = (await res.json()) as { commits?: { commit: { message: string } }[] };
+    const msgs = (data.commits ?? []).map((c) => c.commit.message);
+    const merges = msgs.filter((x) => /^Merge pull request #\d+/.test(x));
+    const titles = merges.length
+      ? merges.map((x) => x.split("\n").slice(1).join(" ").trim() || x.split("\n")[0])
+      : msgs.map((x) => x.split("\n")[0]).filter((x) => !/^Merge /.test(x));
+    return titles.filter(Boolean).reverse().slice(0, 15);
+  } catch {
+    return [];
+  }
+}
+
+/** onUpgrade listener: the ops channel gets the technical notice, the announcements channel what changed. */
+export async function announceUpgradeOnDiscord(e: UpgradeEvent) {
+  const t = opsT();
+  const version = e.now.slice(0, 7);
+  const commands =
+    e.commands.status === "registered"
+      ? t("notice.upgradeCommandsRegistered")
+      : e.commands.status === "failed"
+        ? t("notice.upgradeCommandsFailed", { error: e.commands.error })
+        : t("notice.upgradeNothingToDo");
+  await postOps("upgrade", {
+    title: t("notice.upgradeSubject", { version }),
+    text: commands,
+    url: e.changesUrl,
+    fields: [{ name: t("ops.previous"), value: e.before.slice(0, 7) }],
+  });
+  if (!announceChannel()) return;
+  const titles = await changeTitles(getSetting("legal.sourceUrl") ?? "", e.before, e.now);
+  await postAnnouncement({
+    title: t("notice.upgradeSubject", { version }),
+    text: titles.length ? titles.map((x) => `• ${x}`).join("\n") : t("ops.seeChanges"),
+    url: e.changesUrl,
+  });
 }

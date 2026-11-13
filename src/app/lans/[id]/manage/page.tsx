@@ -165,8 +165,8 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
   const wishChecks = checkWishes(seats, planPeople, (uid) => names.get(uid) ?? "?", t);
   const wishNotes = going.filter((r) => r.wishNote);
   const now = new Date();
-  const ticketsConfirmed = going.filter((r) => r.paid).length;
-  const ticketsReported = going.filter((r) => !r.paid && r.ticketBought).length;
+  // Trust based: the member's own "I have my ticket" counts.
+  const withTicket = going.filter((r) => r.ticketBought || r.paid).length;
   const seated = going.filter((r) => seatOf.has(r.userId)).length;
   const freeSeats = seats.filter((s) => !s.userId && !s.locked).length;
   const count = (st: string) => rows.filter((r) => r.status === st).length;
@@ -193,8 +193,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
   const leadSteps = buildLeadChecklist({
     lan: l,
     going: going.length,
-    ticketsToConfirm: ticketsReported,
-    ticketsConfirmed,
+    withTicket,
     seats: seats.length,
     seated,
     booked: bookedCount,
@@ -384,9 +383,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
           id,
           label: t(label),
           badge:
-            id === "attendees" && ticketsReported
-              ? t("manage.badge.toConfirm", { count: ticketsReported })
-              : id === "missing" && memberMissing
+            id === "missing" && memberMissing
                 ? `${memberMissing}`
                 : id === "seats" && swapsToApprove
                   ? t("manage.badge.swaps", { count: swapsToApprove })
@@ -447,8 +444,8 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
             />
             <Stat
               label={t("bot.tickets")}
-              value={`${ticketsConfirmed} / ${going.length}`}
-              sub={t("manage.badge.toConfirm", { count: ticketsReported })}
+              value={`${withTicket} / ${going.length}`}
+              sub={t("leadSteps.notBought", { count: going.length - withTicket })}
               href={`/lans/${l.id}/manage?tab=attendees`}
             />
             <Stat
@@ -589,7 +586,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
                       name: names.get(r.userId) ?? "?",
                       lanAccount: lanIds.get(r.userId) || undefined,
                       profileUrl: profileLink(profilePat, lanIds.get(r.userId)) ?? undefined,
-                      ticket: r.paid ? ("ok" as const) : r.ticketBought ? ("reported" as const) : ("open" as const),
+                      ticket: r.paid || r.ticketBought ? ("ok" as const) : ("open" as const),
                       wishes: w ? { ok: w.ok, missed: w.missed } : undefined,
                     };
                   })
