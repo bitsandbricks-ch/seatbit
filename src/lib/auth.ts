@@ -16,6 +16,7 @@ const AUTH_KEYS = [
   "google.clientId",
   "google.clientSecret",
   "auth.signupOpen",
+  "auth.trustedProxies",
 ];
 
 function adminEmails() {
@@ -138,6 +139,18 @@ function build() {
             return { data: { ...u, role: isAdmin ? "owner" : "member" } };
           },
         },
+      },
+    },
+    // Login and sign-up rate limits per visitor. Behind a reverse proxy the visitor is the first
+    // X-Forwarded-For entry (from the right) that isn't one of the trusted proxies.
+    rateLimit: { enabled: process.env.NODE_ENV === "production" },
+    advanced: {
+      ipAddress: {
+        ipAddressHeaders: ["x-forwarded-for"],
+        trustedProxies: (getSetting("auth.trustedProxies") ?? "")
+          .split(",")
+          .map((e) => e.trim())
+          .filter(Boolean),
       },
     },
     plugins: [nextCookies()],

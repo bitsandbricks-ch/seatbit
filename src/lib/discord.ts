@@ -31,6 +31,7 @@ import {
   notLinked,
   reply,
   seatbitUserFor,
+  canManageGuild,
   upcomingLans,
 } from "./discord-common";
 
@@ -48,6 +49,9 @@ const ED25519_SPKI_PREFIX = Buffer.from("302a300506032b6570032100", "hex");
 export function verifyDiscordRequest(body: string, signature: string | null, timestamp: string | null) {
   const publicKey = getSetting("discord.publicKey");
   if (!publicKey || !signature || !timestamp) return false;
+  // Signed requests older than five minutes are replays.
+  const ts = Number(timestamp);
+  if (!Number.isFinite(ts) || Math.abs(Date.now() / 1000 - ts) > 300) return false;
   try {
     const key = crypto.createPublicKey({
       key: Buffer.concat([ED25519_SPKI_PREFIX, Buffer.from(publicKey, "hex")]),
@@ -698,6 +702,8 @@ export function handleInteraction(i: Interaction): Handled {
   // /seatbit here|stop|announce (Discord only shows it to members with Manage Server)
   if (i.type === 2 && i.data?.name === "seatbit") {
     if (!i.guild_id || !i.channel_id) return { response: reply(t("bot.useInServer")) };
+    // Discord hides the command from others by default, but server admins can change that: check here too.
+    if (!canManageGuild(i)) return { response: reply(t("bot.needManageServer")) };
     const guildId = i.guild_id;
     const channelId = i.channel_id;
 

@@ -33,6 +33,7 @@ import { isClanMember } from "@/lib/clans";
 import { lanAccountScope, saveLanAccount } from "@/lib/lan-accounts";
 import { validProfileUrl } from "@/lib/profile-link";
 import { cleanSocials } from "@/lib/socials";
+import { optionalHttpUrl, safeNext } from "@/lib/safe-url";
 import { clearSeatBooked } from "@/lib/seat-booking";
 import { PROFILE_COLORS, PROFILE_ICONS, deleteUserAvatarFile, saveUserAvatar } from "@/lib/avatars";
 import { audit, auditLan, changedFields } from "@/lib/audit";
@@ -40,6 +41,7 @@ import { cleanName } from "@/lib/names";
 import { saveNick, saveSeatWishes, saveTicketBought, type wishInput } from "@/lib/member-updates";
 import { err, getLocale, getT, localeOf, makeT, tr } from "@/i18n/server";
 import type { T } from "@/i18n/translate";
+import { enforceLimit, overLimit } from "@/lib/rate-limit";
 
 const { attendance, seat, lan, user, lanOrga, lanType } = schema;
 
@@ -170,6 +172,7 @@ export async function updateAppearance(_: AppearanceState, formData: FormData): 
 /** Sends the member a test DM and shows on the profile whether it arrived, or why not. */
 export async function sendTestDm() {
   const me = await requireUser();
+  await enforceLimit("test", me.id);
   const r = await trySendDiscordDm(me, (t) => ({
     kind: "test",
     subject: t("notice.testDm"),
@@ -186,8 +189,8 @@ export async function completeProfile(formData: FormData) {
   // Keep the language they signed up in, so mails and DMs match it too.
   const me = await requireUser({ allowIncomplete: true });
   if (!me.locale) db.update(user).set({ locale: await getLocale() }).where(eq(user.id, me.id)).run();
-  const next = String(formData.get("next") ?? "/");
-  redirect(next.startsWith("/") && !next.startsWith("//") ? next : "/");
+  const next = formData.get("next");
+  redirect(safeNext(next));
 }
 
 // ---------------- Admin actions ----------------
@@ -216,9 +219,9 @@ const lanInput = z.object({
   name: z.string().trim().min(1).max(100),
   description: z.string().max(5000).default(""),
   location: z.string().max(200).default(""),
-  websiteUrl: z.union([z.literal(""), z.url().max(500)]).default(""),
-  ticketUrl: z.union([z.literal(""), z.url().max(500)]).default(""),
-  externalPlanUrl: z.union([z.literal(""), z.url().max(500)]).default(""),
+  websiteUrl: optionalHttpUrl().default(""),
+  ticketUrl: optionalHttpUrl().default(""),
+  externalPlanUrl: optionalHttpUrl().default(""),
   profileUrl: profileUrlInput,
   startsAt: optDate,
   endsAt: optDate,
@@ -406,10 +409,17 @@ export async function toggleSeatLock(seatId: string) {
   lanPath(s.lanId);
 }
 
+/** Seats only go to people on the event's list. */
+async function requireAttendee(lanId: string, userId: string) {
+  const a = db.select().from(attendance).where(and(eq(attendance.lanId, lanId), eq(attendance.userId, userId))).get();
+  if (!a) throw await err("errors.notOnLan");
+}
+
 export async function adminAssignSeat(seatId: string, userId: string | null) {
   const s = db.select().from(seat).where(eq(seat.id, seatId)).get();
   if (!s) return;
   const me = await requireLanManager(s.lanId);
+  if (userId) await requireAttendee(s.lanId, userId);
   if (s.userId !== userId) {
     clearSeatBooked(s.lanId, [s.userId, userId]);
     const l = mustGetLan(s.lanId);
@@ -527,8 +537,9 @@ export async function adminSendReminder(
   lanId: string,
   kind: "signup" | "payment" | "event",
 ): Promise<number> {
-  await requireLanManager(lanId);
+  const me = await requireLanManager(lanId);
   await requirePublished(mustGetLan(lanId));
+  await enforceLimit("send", me.id);
   return sendReminderNow(mustGetLan(lanId), kind);
 }
 
@@ -546,8 +557,9 @@ export async function unlinkDiscordChannel(channelId: string) {
 }
 
 export async function postDiscordReminder(lanId: string, kind: "signup" | "payment" | "event"): Promise<number> {
-  await requireLanManager(lanId);
+  const me = await requireLanManager(lanId);
   await requirePublished(mustGetLan(lanId));
+  await enforceLimit("send", me.id);
   return postReminderNow(mustGetLan(lanId), kind);
 }
 
@@ -748,8 +760,10 @@ async function pickMySeatOrThrow(lanId: string, seatId: string | null) {
 /** Assigns a seat to an attendee from the attendee list (seatId null = no seat). */
 export async function adminSetSeatFor(lanId: string, userId: string, seatId: string | null) {
   const me = await requireLanManager(lanId);
+  await requireAttendee(lanId, userId);
   const before = db.select().from(seat).where(and(eq(seat.lanId, lanId), eq(seat.userId, userId))).get();
-  const target = seatId ? db.select().from(seat).where(eq(seat.id, seatId)).get() : undefined;
+  const target = seatId ? db.select().from(seat).where(and(eq(seat.id, seatId), eq(seat.lanId, lanId))).get() : undefined;
+  if (seatId && !target) throw await err("errors.noSeat");
   if ((before?.id ?? null) !== seatId) {
     clearSeatBooked(lanId, [userId, target?.userId]);
     const l = mustGetLan(lanId);
@@ -842,7 +856,7 @@ export async function publishSeats(lanId: string, notify: boolean): Promise<numb
   db.update(lan).set({ seatsPublishedAt: new Date() }).where(eq(lan.id, lanId)).run();
   let sent = 0;
   // Drafts tell nobody; members see the seats once the event is published.
-  if (notify && l.publishedAt) {
+  if (notify && l.publishedAt && !overLimit("send", me.id)) {
     const rows = db
       .select({ a: attendance, u: user })
       .from(attendance)
@@ -894,8 +908,8 @@ const lanTypeInput = z.object({
   name: z.string().trim().min(1).max(100),
   description: z.string().max(5000).default(""),
   location: z.string().max(200).default(""),
-  websiteUrl: z.union([z.literal(""), z.url().max(500)]).default(""),
-  ticketUrl: z.union([z.literal(""), z.url().max(500)]).default(""),
+  websiteUrl: optionalHttpUrl().default(""),
+  ticketUrl: optionalHttpUrl().default(""),
   price: z.string().max(50).default(""),
   capacity: z
     .string()

@@ -23,7 +23,8 @@ export type Interaction = {
   guild_id?: string;
   channel_id?: string;
   channel?: { name?: string };
-  member?: { user: DiscordUser; nick?: string | null };
+  /** `permissions`: the caller's resolved permissions in this channel, as a bitfield string. */
+  member?: { user: DiscordUser; nick?: string | null; permissions?: string };
   user?: DiscordUser;
   /** The caller's Discord client language, e.g. "de" or "en-US". */
   locale?: string;
@@ -116,4 +117,17 @@ export function nextDeadline(l: Lan, now = new Date(), t: T = makeT("en")) {
     ] as const
   ).find(([, d]) => d && d > now);
   return next ? `⏰ ${t(next[0], { date: fmtWhen(next[1]!, t.locale) })}` : "";
+}
+
+const MANAGE_GUILD = BigInt(0x20);
+const ADMINISTRATOR = BigInt(0x8);
+
+/** Whether the caller may manage this Discord server (Manage Server or Administrator). */
+export function canManageGuild(i: Interaction) {
+  try {
+    const p = BigInt(i.member?.permissions ?? "0");
+    return (p & MANAGE_GUILD) !== BigInt(0) || (p & ADMINISTRATOR) !== BigInt(0);
+  } catch {
+    return false;
+  }
 }

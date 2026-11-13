@@ -3,6 +3,7 @@ import type { Messages } from "../en";
 export const settingDefs: Messages["settingDefs"] = {
   auth_signupOpen: { label: "Neue Konten erlauben", help: "Wenn aus, können sich nur Leute mit bestehendem Konto anmelden." },
   auth_adminEmails: { label: "Admin-E-Mails", help: "Durch Komma getrennt. Diese werden bei der Registrierung globale Admins. Das erste Konto ist immer Admin.", invalid: "Verwende eine durch Komma getrennte Liste von E-Mail-Adressen" },
+  auth_trustedProxies: { label: "Vertrauenswürdige Proxys", help: "Durch Komma getrennte IP-Bereiche (CIDR) der Reverse-Proxys vor Seatbit. Ihre Einträge in X-Forwarded-For werden übersprungen, um die Adresse der Besucher für die Login-Rate-Begrenzung zu finden.", invalid: "Verwende eine durch Komma getrennte Liste von IP-Bereichen wie 10.0.0.0/8" },
   smtp_host: { label: "SMTP-Host" },
   smtp_port: { label: "Port", invalid: "Muss eine ganze Zahl von 1 bis 65535 sein" },
   smtp_security: { label: "Verschlüsselung", options: { starttls: "STARTTLS (meist Port 587)", tls: "TLS / SMTPS (meist Port 465)", none: "Keine (nur lokale Relays)" } },

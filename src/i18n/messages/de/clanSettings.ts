@@ -6,7 +6,7 @@ export const clanSettings: Messages["clanSettings"] = {
   deleteSub: "Das Supporter-Abo wird ebenfalls gekündigt.",
   delete: "Clan löschen",
   addExisting: "Bestehende Person hinzufügen",
-  addExistingHint: "Jemand, der schon auf Seatbit ist. Für Leute ohne Konto füge einen {guest} hinzu.",
+  addExistingHint: "Jemand, der schon in einem anderen Clan mit dir ist. Alle anderen kommen über einen Einladungslink dazu, oder füge sie als {guest} mit ihrer E-Mail hinzu.",
   guest: "Gast",
   approve: "Annehmen",
   decline: "Ablehnen",

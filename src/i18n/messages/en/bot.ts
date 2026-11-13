@@ -9,6 +9,7 @@ export const bot = {
   you: { label: "you", going: "coming", maybe: "unsure", declined: "not coming", waitlist: "waitlist", none: "no answer" },
   linkToAnswer: "Link Discord on your Seatbit profile to answer from here.",
   useInServer: "Use this in a server channel.",
+  needManageServer: "You need the Manage Server permission on this Discord server for that.",
   needAdmin: "You need to be an admin of a clan in Seatbit to link this server. Create one or ask your clan admin.",
   openSeatbit: "Open Seatbit",
   openClan: "Open clan",

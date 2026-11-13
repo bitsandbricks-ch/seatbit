@@ -24,6 +24,7 @@ import { foodCurrency } from "@/lib/food";
 import { disconnect, lineCheckoutUrl, onboardingUrl } from "@/lib/connect";
 import { requireClanPermission, requireUser } from "@/lib/session";
 import type { FormState } from "./actions";
+import { enforceLimit, overLimit } from "@/lib/rate-limit";
 
 const { charge, chargeItem, clan } = schema;
 const MAX_PEOPLE = 300;
@@ -181,7 +182,7 @@ export async function addToCharge(chargeId: string, _: FormState, formData: Form
     .values(people.map((userId) => ({ chargeId, userId, amountCents: amount })))
     .run();
   audit({ actorId: me.id, action: "payment.add", clanId: ch.clanId, lanId: ch.lanId, data: { title: ch.title, people: people.length } });
-  if (formData.get("notify") === "on") notifyLater(() => notifyNewCharge(c, ch, people.map((userId) => ({ userId, amountCents: amount }))));
+  if (formData.get("notify") === "on" && !overLimit("send", me.id)) notifyLater(() => notifyNewCharge(c, ch, people.map((userId) => ({ userId, amountCents: amount }))));
   refresh(c.slug);
   return { ok: true };
 }
@@ -189,6 +190,7 @@ export async function addToCharge(chargeId: string, _: FormState, formData: Form
 /** Sends the open lines of a charge a reminder now. */
 export async function remindCharge(chargeId: string) {
   const { ch, me, c } = await mustCharge(chargeId);
+  await enforceLimit("send", me.id);
   const lines = openLinesOf(chargeId);
   // Stamped now, so the page shows it at once; the mails and DMs go out after the response.
   db.update(chargeItem)

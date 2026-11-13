@@ -49,6 +49,8 @@ export const errors: Messages["errors"] = {
   comingFirst: "Sag zuerst, dass du kommst.",
   ticketFirst: "Bestätige zuerst, dass du dein Ticket hast.",
   noSeat: "Diesen Platz gibt es nicht.",
+  notOnLan: "Diese Person steht nicht auf der Liste dieses Events.",
+  tooMany: "Das war viel in kurzer Zeit. Bitte warte eine Weile und versuch es dann nochmals.",
   seatHeld: "{seat} ist von den Leads reserviert.",
   seatTaken: "{seat} wurde gerade vergeben. Wähl einen anderen.",
   planFinalAsk: "Der Sitzplan ist fixiert. Frag einen Lead.",

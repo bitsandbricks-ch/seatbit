@@ -10,6 +10,7 @@ import { fmtWeekday } from "./format";
 import { fmtWhen, lanFacts, lanLink } from "./announce";
 import { buildChecklist, type StepState } from "./checklist";
 import { getClan, isClanMember, myClans } from "./clans";
+import { canViewLan } from "./session";
 import type { Json } from "./discord-api";
 import {
   type Handled,
@@ -87,7 +88,8 @@ const unknownEvent = (t: T) => reply(t("cmd.unknownEvent"));
 
 /** Why the caller can't act on this event, or null when they can. */
 function notMember(me: User, l: Lan, t: T) {
-  if (l.clanId && isClanMember(me.id, l.clanId)) return null;
+  // Same rule as the website: clan members, published events only, no suspended clans.
+  if (l.clanId && isClanMember(me.id, l.clanId) && canViewLan(me, l.id)) return null;
   const c = l.clanId ? getClan(l.clanId) : undefined;
   return reply(t("cmd.notMember", { lan: `**${l.name}**`, clan: `**${c?.name ?? t("cmd.anotherClan")}**` }), {
     components: c ? [linkButton(t("bot.openClan"), `${appUrl}/clans/${c.slug}`)] : [],

@@ -11,6 +11,7 @@ export const bot: Messages["bot"] = {
   you: { label: "du", going: "komme", maybe: "unsicher", declined: "komme nicht", waitlist: "Warteliste", none: "keine Antwort" },
   linkToAnswer: "Verknüpfe Discord in deinem Seatbit-Profil, um von hier aus zu antworten.",
   useInServer: "Nutze das in einem Server-Kanal.",
+  needManageServer: "Dafür brauchst du auf diesem Discord-Server die Berechtigung «Server verwalten».",
   needAdmin:
     "Du musst Admin eines Clans in Seatbit sein, um diesen Server zu verknüpfen. Erstelle einen oder frag deinen Clan-Admin.",
   openSeatbit: "Seatbit öffnen",

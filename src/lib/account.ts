@@ -143,6 +143,9 @@ export async function deleteAccount(userId: string) {
     tx.delete(schema.packingItem).where(eq(schema.packingItem.userId, userId)).run();
     tx.delete(schema.reminderLog).where(eq(schema.reminderLog.userId, userId)).run();
     tx.delete(schema.userActivity).where(eq(schema.userActivity.userId, userId)).run();
+    tx.delete(schema.guestClaim).where(eq(schema.guestClaim.userId, userId)).run();
+    tx.update(schema.foodItem).set({ note: "" }).where(eq(schema.foodItem.userId, userId)).run();
+    tx.update(schema.lanTask).set({ assigneeId: null }).where(eq(schema.lanTask.assigneeId, userId)).run();
     tx.update(schema.clanInvite).set({ createdBy: null }).where(eq(schema.clanInvite.createdBy, userId)).run();
     tx.update(schema.game).set({ addedBy: null }).where(eq(schema.game.addedBy, userId)).run();
     tx.update(schema.lanNews).set({ authorId: null }).where(eq(schema.lanNews.authorId, userId)).run();
@@ -165,6 +168,12 @@ export async function deleteAccount(userId: string) {
         claimCode: null,
         inviteEmail: null,
         invitedAt: null,
+        guestDiscordId: null,
+        guestDiscordName: null,
+        guestDiscordLinkedAt: null,
+        guestDiscordLinkedBy: null,
+        guestDiscordDmAt: null,
+        locale: null,
         avatarStyle: "initials",
         avatarFile: null,
         icon: null,
