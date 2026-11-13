@@ -47,7 +47,9 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
     .where(eq(schema.clanMember.clanId, c.id))
     .all();
   const pending = memberRows.filter((m) => m.role === "pending").length;
-  const nicks = db.select().from(schema.nickname).all();
+  const nicks = memberRows.length
+    ? db.select().from(schema.nickname).where(inArray(schema.nickname.userId, memberRows.map((m) => m.u.id))).all()
+    : [];
   const members = memberRows
     .filter((m) => m.role !== "pending")
     .map((m) => ({

@@ -147,7 +147,8 @@ export async function deleteLeadContact(id: string) {
 function taskOfLan(lanId: string, taskId: string) {
   const l = getLan(lanId);
   const x = db.select().from(leadTask).where(eq(leadTask.id, taskId)).get();
-  if (!l || !x || x.clanId !== l.clanId || (x.lanId && x.lanId !== l.id)) return null;
+  // Only a to-do this event actually lists: the clan's, its own type's or its own.
+  if (!l || !x || x.clanId !== l.clanId || (x.lanId && x.lanId !== l.id) || (x.typeId && x.typeId !== l.typeId)) return null;
   return { l, x };
 }
 

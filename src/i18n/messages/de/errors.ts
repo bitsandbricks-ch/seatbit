@@ -16,6 +16,7 @@ export const errors: Messages["errors"] = {
     lead: "Das können nur Leads dieser LAN.",
   },
   clanGone: "Diesen Clan gibt es nicht mehr.",
+  eventGone: "Dieses Event gibt es nicht mehr.",
   chargeGone: "Diese Forderung gibt es nicht mehr.",
   paymentsOff: "Zahlungen sind für diesen Clan ausgeschaltet.",
   clanSuspended: "Dieser Clan ist gesperrt.",

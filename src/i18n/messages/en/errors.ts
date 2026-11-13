@@ -14,6 +14,7 @@ export const errors = {
     lead: "Only leads of this LAN can do that.",
   },
   clanGone: "This clan doesn't exist anymore.",
+  eventGone: "This event doesn't exist anymore.",
   chargeGone: "This charge doesn't exist anymore.",
   paymentsOff: "Payments are turned off for this clan.",
   clanSuspended: "This clan is suspended.",

@@ -43,10 +43,12 @@ export default async function Home() {
     .orderBy(desc(lan.startsAt))
     .limit(10)
     .all();
-  const all = db.select().from(attendance).all();
+  // Only the cards shown need attendance and seats, not every event on the instance.
+  const shownIds = upcoming.map((l) => l.id);
+  const all = shownIds.length ? db.select().from(attendance).where(inArray(attendance.lanId, shownIds)).all() : [];
   const mine = new Map(all.filter((a) => a.userId === me.id).map((a) => [a.lanId, a]));
   const going = (id: string) => all.filter((a) => a.lanId === id && a.status === "going").length;
-  const seats = db.select().from(seat).all();
+  const seats = shownIds.length ? db.select().from(seat).where(inArray(seat.lanId, shownIds)).all() : [];
   const myNicks = db
     .select()
     .from(nickname)

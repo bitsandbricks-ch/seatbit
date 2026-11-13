@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { getLan, getNicks } from "@/lib/lans";
 import { getCurrentUser, isLanManager } from "@/lib/session";
@@ -23,7 +23,9 @@ export async function GET(_: Request, { params }: RouteContext<"/lans/[id]/manag
 
   const rows = db.select().from(schema.attendance).where(eq(schema.attendance.lanId, id)).all();
   const seats = db.select().from(schema.seat).where(eq(schema.seat.lanId, id)).all();
-  const users = new Map(db.select().from(schema.user).all().map((u) => [u.id, u]));
+  const users = new Map(
+    (rows.length ? db.select().from(schema.user).where(inArray(schema.user.id, rows.map((r) => r.userId))).all() : []).map((u) => [u.id, u]),
+  );
   const nicks = await getNicks(id, rows.map((r) => r.userId));
   const lanIds = getLanAccounts(l, rows.map((r) => r.userId));
   const type = l.typeId ? db.select().from(schema.lanType).where(eq(schema.lanType.id, l.typeId)).get() : null;
