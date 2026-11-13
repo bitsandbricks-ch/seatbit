@@ -6,6 +6,8 @@ import { btnGhost, btnPrimary, input } from "./ui";
 import { useT } from "@/i18n/client";
 import { useRunAction } from "./action-form";
 import { httpHref } from "@/lib/safe-url";
+import type { AvatarData } from "@/lib/avatars";
+import { Avatar } from "./avatar";
 
 /** Games to play at the LAN: suggest, vote, and tick off what you installed. */
 export function GameList({
@@ -15,6 +17,7 @@ export function GameList({
   canManage,
   canAdd,
   names,
+  avatars,
   reminderDays,
 }: {
   lanId: string;
@@ -22,8 +25,9 @@ export function GameList({
   meId: string;
   canManage: boolean;
   canAdd: boolean;
-  /** userId -> full name, for the voter list. */
+  /** userId -> name per the clan's name display, for voters and who added a game. */
   names: Record<string, string>;
+  avatars: Record<string, AvatarData>;
   reminderDays: number;
 }) {
   const t = useT();
@@ -66,6 +70,14 @@ export function GameList({
                   )}
                   {g.sizeGb != null && <span className="ml-2 whitespace-nowrap text-xs font-normal text-muted">{g.sizeGb} GB</span>}
                 </p>
+                {g.addedBy && names[g.addedBy] && (
+                  <p className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-muted">
+                    <Avatar data={avatars[g.addedBy]} size={16} ring={false} />
+                    <span className="truncate">
+                      {t("games.addedBy", { name: g.addedBy === meId ? t("games.you") : names[g.addedBy] })}
+                    </span>
+                  </p>
+                )}
                 <p className="truncate text-xs text-muted" title={g.voters.map((v) => names[v] ?? "?").join(", ")}>
                   {t("games.votes", { count: g.votes })}
                   {g.votes ? `: ${g.voters.map((v) => names[v] ?? "?").join(", ")}` : ""} · {t("games.installedCount", { count: g.installed })}

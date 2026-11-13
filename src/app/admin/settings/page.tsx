@@ -198,7 +198,14 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
       {tab === "google" &&
         section("google", <Url label={t("adminSettings.googleRedirect")} value={`${appUrl}/api/auth/callback/google`} />)}
 
-      {tab === "automation" && section("automation", <Url label={t("adminSettings.cronUrl")} value={`${appUrl}/api/cron/reminders`} />)}
+      {tab === "automation" &&
+        section(
+          "automation",
+          <div className="space-y-1">
+            <Url label={t("adminSettings.cronUrl")} value={`${appUrl}/api/cron/reminders`} />
+            <Url label={t("adminSettings.metricsUrl")} value={`${appUrl}/api/metrics`} />
+          </div>,
+        )}
 
       {tab === "legal" &&
         section(

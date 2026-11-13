@@ -39,7 +39,7 @@ export interface SettingDef {
 }
 
 export const SETTING_GROUPS = {
-  general: { title: "General", help: "Who can sign up, who is a global admin, and the currency for food orders." },
+  general: { title: "General", help: "Who can sign up, who is a global admin, and the currency for food orders and shared costs." },
   mail: {
     title: "Email (SMTP relay)",
     help: "Used for reminders and password resets. Without a host, mails are only printed to the server log.",
@@ -49,7 +49,7 @@ export const SETTING_GROUPS = {
     help: "One Discord application is used for both the login button and the bot.",
   },
   google: { title: "Google login", help: "OAuth client for the \"Sign in with Google\" button." },
-  automation: { title: "Reminders & cron", help: "How due reminders are triggered." },
+  automation: { title: "Reminders, cron & metrics", help: "How due reminders are triggered, and the Prometheus metrics endpoint." },
   backup: {
     title: "Backups",
     help: "Seatbit copies its database to the backup folder while it runs. Mount that folder on its own volume and copy the files off the server too.",
@@ -300,12 +300,12 @@ export const SETTINGS: SettingDef[] = [
   {
     key: "food.currency",
     group: "general",
-    label: "Currency for food orders",
+    label: "Currency for food orders and shared costs",
     kind: "text",
     env: "FOOD_CURRENCY",
     default: "CHF",
     placeholder: "CHF",
-    help: "Shown next to prices on the Food tab, e.g. CHF or EUR.",
+    help: "Shown next to prices on the Food and Costs tabs, e.g. CHF or EUR.",
     validate: (v) => (/^[^\s]{1,5}$/.test(v) ? null : "1 to 5 characters, e.g. CHF, EUR or €"),
   },
 
@@ -531,6 +531,14 @@ export const SETTINGS: SettingDef[] = [
     env: "CRON_SECRET",
     help: "Bearer token for GET /api/cron/reminders. Leave unset to disable the endpoint.",
   },
+  {
+    key: "metrics.token",
+    group: "automation",
+    label: "Metrics token",
+    kind: "secret",
+    env: "METRICS_TOKEN",
+    help: "Bearer token for GET /api/metrics (Prometheus). Leave unset to disable the endpoint.",
+  },
 
   // Backups
   {
@@ -562,6 +570,15 @@ export const SETTINGS: SettingDef[] = [
     placeholder: "/backups",
     help: "Folder on the server. Empty: the BACKUP_DIR env var (the container image sets /backups), or ./backups next to the app.",
     validate: (v) => (v.startsWith("/") || /^[A-Za-z]:[\\/]/.test(v) ? null : "Use an absolute path, e.g. /backups"),
+  },
+  {
+    key: "backup.verify",
+    group: "backup",
+    label: "Test each backup by restoring it",
+    kind: "bool",
+    env: "BACKUP_VERIFY",
+    default: "true",
+    help: "After each new backup, the server restores a copy of it in its temp folder, runs the migrations on it and compares it with the live database. Needs free space for one database copy in /tmp.",
   },
 ];
 

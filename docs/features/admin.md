@@ -80,10 +80,10 @@ To count active people, Seatbit notes the **days** someone used it (just the dat
 - **Database:** file, size (and how much of it is still in the WAL), SQLite version, a quick integrity check and row counts.
 - **Email:** the SMTP server, whether the login works, and the last mail sent or failed.
 - **Discord:** the bot's name, how many clan channels are linked, and whether the bot can see the ops and announcements channels.
-- **Background jobs:** reminders, scheduled publishing and database backups, when they last ran and their last error. A failed backup is also posted to the ops channel as an error.
+- **Background jobs:** reminders, scheduled publishing, database backups and their [restore tests](../installation/operations.md#restore-test), when they last ran and their last error. A failed backup or restore test is also posted to the ops channel as an error.
 - **Recent problems:** the last 30 server errors, mail and Discord failures.
 
-Jobs and problems are kept in memory, so they start empty after a restart. For a load balancer or Kubernetes probe use `GET /api/health` instead (see [Operations](../installation/operations.md#logs-and-health)).
+Jobs and problems are kept in memory, so they start empty after a restart. For a load balancer or Kubernetes probe use `GET /api/health` instead (see [Operations](../installation/operations.md#logs-and-health)); for Prometheus, `GET /api/metrics` (see [Metrics](../installation/operations.md#metrics)).
 
 ![Health](../screenshots/desktop-admin-health.png){ .shot }
 

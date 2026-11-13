@@ -144,6 +144,7 @@ export async function deleteAccount(userId: string) {
     tx.delete(schema.reminderLog).where(eq(schema.reminderLog.userId, userId)).run();
     tx.delete(schema.userActivity).where(eq(schema.userActivity.userId, userId)).run();
     tx.delete(schema.guestClaim).where(eq(schema.guestClaim.userId, userId)).run();
+    tx.delete(schema.emergencyInfo).where(eq(schema.emergencyInfo.userId, userId)).run();
     tx.update(schema.foodItem).set({ note: "" }).where(eq(schema.foodItem.userId, userId)).run();
     tx.update(schema.lanTask).set({ assigneeId: null }).where(eq(schema.lanTask.assigneeId, userId)).run();
     tx.update(schema.clanInvite).set({ createdBy: null }).where(eq(schema.clanInvite.createdBy, userId)).run();
@@ -245,6 +246,18 @@ export function exportUserData(userId: string) {
     .orderBy(desc(schema.charge.createdAt))
     .all();
   const donations = db.select().from(schema.donation).where(eq(schema.donation.userId, userId)).all();
+  const paidExpenses = db.select().from(schema.costExpense).where(eq(schema.costExpense.paidBy, userId)).all();
+  const costShares = db
+    .select({ s: schema.costShare, e: schema.costExpense })
+    .from(schema.costShare)
+    .innerJoin(schema.costExpense, eq(schema.costExpense.id, schema.costShare.expenseId))
+    .where(eq(schema.costShare.userId, userId))
+    .all();
+  const costSettlements = db
+    .select()
+    .from(schema.costSettlement)
+    .where(or(eq(schema.costSettlement.fromUserId, userId), eq(schema.costSettlement.toUserId, userId)))
+    .all();
   const accounts = db.select().from(schema.account).where(eq(schema.account.userId, userId)).all();
   const sessions = db.select().from(schema.session).where(eq(schema.session.userId, userId)).all();
   const logRows = db
@@ -258,6 +271,8 @@ export function exportUserData(userId: string) {
   const otherIds = [
     ...atts.flatMap(({ a }) => [...(a.wishNear ?? []), ...(a.wishAvoid ?? [])]),
     ...swaps.flatMap((s) => [s.fromUserId, s.toUserId]),
+    ...costShares.map(({ e }) => e.paidBy),
+    ...costSettlements.flatMap((s) => [s.fromUserId, s.toUserId]),
   ];
   const names = getDefaultNames(otherIds);
   const nameOf = (id: string) => names.get(id)?.full ?? "Deleted member";
@@ -284,6 +299,10 @@ export function exportUserData(userId: string) {
       createdAt: me.createdAt,
       updatedAt: me.updatedAt,
     },
+    emergencyInfo: (() => {
+      const e = db.select().from(schema.emergencyInfo).where(eq(schema.emergencyInfo.userId, me.id)).get();
+      return e ? { contactName: e.contactName, contactPhone: e.contactPhone, dietaryNeeds: e.diet, updatedAt: e.updatedAt } : null;
+    })(),
     reportsFiled: db
       .select()
       .from(schema.report)
@@ -348,6 +367,17 @@ export function exportUserData(userId: string) {
       note: s.note,
       at: s.createdAt,
     })),
+    sharedCosts: {
+      paid: paidExpenses.map((e) => ({ event: event(e.lanId), what: e.title, amountCents: e.amountCents, note: e.note, at: e.createdAt })),
+      shares: costShares.map(({ s, e }) => ({ event: event(e.lanId), what: e.title, paidBy: e.paidBy === userId ? "you" : nameOf(e.paidBy), shareCents: s.amountCents })),
+      paidBack: costSettlements.map((s) => ({
+        event: event(s.lanId),
+        from: s.fromUserId === userId ? "you" : nameOf(s.fromUserId),
+        to: s.toUserId === userId ? "you" : nameOf(s.toUserId),
+        amountCents: s.amountCents,
+        at: s.createdAt,
+      })),
+    },
     clanPayments: charges.map(({ i, c }) => ({
       clan: clans.get(c.clanId) ?? null,
       what: c.title,

@@ -13,7 +13,7 @@ import { getLanAccounts } from "@/lib/lan-accounts";
 import { SeatMap } from "@/components/seat-map";
 import { Avatar } from "@/components/avatar";
 import { getAvatars, type AvatarData } from "@/lib/avatars";
-import { Card, Columns, LockedAnswerBadge, Page, Pill, StatusBadge, Verified } from "@/components/ui";
+import { Card, Columns, LockedAnswerBadge, Notice, Page, Pill, StatusBadge, Verified } from "@/components/ui";
 import { fmtDate, fmtTime, lanRange, relative } from "@/lib/format";
 import { attendanceLocked, getDisplayNames, getLan, getNames, pickNick, seatView, signupClosed, waitlistPositions } from "@/lib/lans";
 import { canViewLan, getCurrentUser, isLanManager, isProfileComplete } from "@/lib/session";
@@ -33,8 +33,12 @@ import { GAMES_REMINDER_DAYS, listGames } from "@/lib/games";
 import { SeatSwapPanel, type SwapView } from "@/components/seat-swaps";
 import { CheckInButton, DeleteNewsButton, InterestButtons } from "@/components/event-extras";
 import { FoodOrders, type FoodOrderCardView } from "@/components/food-orders";
+import { SharedCosts, type CostPerson } from "@/components/shared-costs";
+import { costPeople, eventCosts } from "@/lib/costs";
+import { fmtAmount } from "@/lib/money";
 import { EventPaymentsCard } from "@/components/clan-payments";
 import { clanPaymentsOn, memberLines } from "@/lib/payments";
+import { canSeeEmergency, dietCount } from "@/lib/emergency";
 import { foodCurrency, isAcceptingItems, listFoodOrders, orderText } from "@/lib/food";
 import { getT } from "@/i18n/server";
 import type { T } from "@/i18n/translate";
@@ -42,7 +46,7 @@ import { httpHref } from "@/lib/safe-url";
 
 const { attendance, seat, nickname } = schema;
 
-const TABS = ["overview", "seats", "attendees", "travel", "gear", "games", "food"] as const;
+const TABS = ["overview", "seats", "attendees", "travel", "gear", "games", "food", "costs"] as const;
 
 /** Link previews (WhatsApp, Discord, ...): name, date and place of published events; drafts stay generic. */
 export async function generateMetadata({ params }: PageProps<"/lans/[id]">): Promise<Metadata> {
@@ -236,7 +240,9 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           .map((it) => ({ id: it.id, label: it.label, packed: it.packed }))
       : [];
 
-  const gameNames = tab === "games" ? Object.fromEntries(await getDisplayNames(id, [...new Set(games.flatMap((g) => g.voters))])) : {};
+  const gamePeople = tab === "games" ? [...new Set(games.flatMap((g) => [...g.voters, ...(g.addedBy ? [g.addedBy] : [])]))] : [];
+  const gameNames = Object.fromEntries(await getDisplayNames(id, gamePeople));
+  const gameAvatars = Object.fromEntries(getAvatars(gamePeople));
 
   // Food orders at the LAN: everyone coming can start one or add to one.
   const foodOrders = listFoodOrders(id);
@@ -251,6 +257,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
         )
       : {};
   const currency = foodCurrency();
+  // Leads only: how many coming noted dietary needs; the details stay on the lead page.
+  const foodDiets = tab === "food" && canSeeEmergency(me, l) ? dietCount(id) : 0;
   const foodViews: FoodOrderCardView[] =
     tab === "food"
       ? foodOrders.map((o) => ({
@@ -262,6 +270,35 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           closesLabel: o.closesAt ? fmtDate(o.closesAt, t.locale) : null,
         }))
       : [];
+
+  // Shared costs: who paid what for the group and who owes whom. Same currency as food orders.
+  const costs = eventCosts(id);
+  const myCostBalance = costs.balances.get(me.id) ?? 0;
+  const costIds = tab === "costs" ? [...costPeople(id)] : [];
+  const costNames =
+    tab === "costs"
+      ? Object.fromEntries(
+          await getDisplayNames(id, [
+            ...new Set([
+              ...costIds,
+              me.id,
+              ...costs.expenses.flatMap((e) => [e.paidBy, ...(e.createdBy ? [e.createdBy] : []), ...e.shares.map((x) => x.userId)]),
+              ...costs.settlements.flatMap((x) => [x.fromUserId, x.toUserId, ...(x.createdBy ? [x.createdBy] : [])]),
+            ]),
+          ]),
+        )
+      : {};
+  const goingIds = new Set(going.map((r) => r.userId));
+  const costPeopleList: CostPerson[] =
+    tab === "costs"
+      ? [...new Set([...costIds, ...(isAdmin ? [me.id] : [])])]
+          .map((uid) => ({ id: uid, name: costNames[uid] ?? "?", going: goingIds.has(uid) }))
+          .sort((a, b) => Number(b.id === me.id) - Number(a.id === me.id) || Number(b.going) - Number(a.going) || a.name.localeCompare(b.name))
+      : [];
+  const costDates: Record<string, string> =
+    tab === "costs"
+      ? Object.fromEntries([...costs.expenses, ...costs.settlements].map((x) => [x.id, fmtDate(new Date(x.createdAt), t.locale)]))
+      : {};
 
   // Seat swaps: open requests I'm part of, and who I could swap with.
   const swapRows =
@@ -423,6 +460,11 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           { id: "gear", label: t("event.tabs.gear") },
           { id: "games", label: t("event.tabs.games"), badge: my?.status === "going" && gamesToInstall ? t("event.tabs.toInstall", { count: gamesToInstall }) : undefined },
           { id: "food", label: t("event.tabs.food"), badge: openFood ? t("event.tabs.open", { count: openFood }) : undefined },
+          {
+            id: "costs",
+            label: t("event.tabs.costs"),
+            badge: myCostBalance < 0 ? t("event.tabs.owe", { amount: fmtAmount(-myCostBalance, currency) }) : undefined,
+          },
         ]}
         active={tab}
         hrefFor={(tb) => (tb === "overview" ? `/lans/${l.id}` : `/lans/${l.id}?tab=${tb}`)}
@@ -450,11 +492,20 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
             canManage={isAdmin}
             canAdd={canTakePart || isAdmin}
             names={gameNames}
+            avatars={gameAvatars}
             reminderDays={GAMES_REMINDER_DAYS}
           />
         </div>
       )}
 
+      {tab === "food" && foodDiets > 0 && (
+        <Notice>
+          {t("emergency.foodHint", { count: foodDiets })}{" "}
+          <Link href={`/lans/${l.id}/manage?tab=emergency`} className="font-medium underline">
+            {t("emergency.foodHintLink")}
+          </Link>
+        </Notice>
+      )}
       {tab === "food" && (
         <FoodOrders
           lanId={l.id}
@@ -464,6 +515,24 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           canOrder={canOrderFood && !l.cancelledAt}
           currency={currency}
           announceHint={!l.publishedAt ? t("event.draftNoDm") : null}
+        />
+      )}
+
+      {tab === "costs" && (
+        <SharedCosts
+          lanId={l.id}
+          meId={me.id}
+          currency={currency}
+          expenses={costs.expenses}
+          settlements={costs.settlements}
+          balances={Object.fromEntries(costs.balances)}
+          transfers={costs.transfers}
+          totalCents={costs.totalCents}
+          people={costPeopleList}
+          names={costNames}
+          canAdd={isAdmin || canTakePart}
+          isLead={isAdmin}
+          dates={costDates}
         />
       )}
 

@@ -1,0 +1,11 @@
+date: 2026-11-13
+type: improved
+pr: 125
+en:
+  title: "See who added a game"
+  text: >-
+    The games list of an event shows who suggested each game.
+de:
+  title: "Sehen, wer ein Spiel hinzugefügt hat"
+  text: >-
+    Die Spieleliste eines Events zeigt, wer welches Spiel vorgeschlagen hat.

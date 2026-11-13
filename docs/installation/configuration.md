@@ -24,7 +24,7 @@ A value saved in the platform settings wins over the environment variable. Clear
 | Admin emails (become platform owner on sign-up) | `ADMIN_EMAILS` | |
 | Trusted proxies: IP ranges (CIDR) of your reverse proxy, so the login rate limit sees the visitor's address ([more](security.md#reverse-proxy)) | `TRUSTED_PROXIES` | private ranges (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, loopback, `fc00::/7`) |
 | Default language (`en` or `de`): for browsers that want neither, mails to people without a choice and clans without their own Discord language | `DEFAULT_LOCALE` | `en` |
-| Currency for food orders (also the default for new clan charges) | `FOOD_CURRENCY` | `CHF` |
+| Currency for food orders and shared costs (also the default for new clan charges) | `FOOD_CURRENCY` | `CHF` |
 | Clan payments: clans can track dues, ticket money and who paid ([more](../features/payments.md)) | `CLAN_PAYMENTS` | `true` |
 | **Email** | | |
 | SMTP host, port, encryption | `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURITY` | –, `587`, `starttls` |
@@ -40,6 +40,7 @@ A value saved in the platform settings wins over the environment variable. Clear
 | **Reminders** | | |
 | Reminder check interval (minutes, `0` = off) | `REMINDER_INTERVAL_MINUTES` | `60` |
 | Cron secret for `/api/cron/reminders` | `CRON_SECRET` | |
+| Metrics token for `/api/metrics` (unset = endpoint off, see [Metrics](operations.md#metrics)) | `METRICS_TOKEN` | |
 | **Maintenance** (see [Maintenance banner](../features/admin.md#maintenance-banner)) | | |
 | Banner message (start and end are set in the admin UI) | `MAINTENANCE_MESSAGE` | |
 | **Operator & legal** | | |
@@ -56,6 +57,7 @@ A value saved in the platform settings wins over the environment variable. Clear
 | Backup every (hours, `0` = off) | `BACKUP_INTERVAL_HOURS` | `24` |
 | Keep backups for (days, `0` = keep all; the privacy policy shows this number) | `BACKUP_KEEP_DAYS` | `14` |
 | Backup folder (absolute path) | `BACKUP_DIR` | `/backups` in the image, else `./backups` |
+| Test each backup by restoring it (see [Restore test](operations.md#restore-test)) | `BACKUP_VERIFY` | `true` |
 | One-off donations on/off | `DONATIONS_ENABLED` | `false` |
 | Suggested donation amounts | `DONATION_AMOUNTS` | `10, 20, 50` |
 | Donation currency | `DONATION_CURRENCY` | `CHF` |

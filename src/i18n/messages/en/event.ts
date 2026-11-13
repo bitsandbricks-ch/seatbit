@@ -17,6 +17,8 @@ export const event = {
     gear: "Packing list",
     games: "Games",
     food: "Food",
+    costs: "Costs",
+    owe: "{amount} to pay",
     pickYours: "pick yours",
     seatPicked: "{seat} picked",
     looking: { one: "{count} looking", other: "{count} looking" },

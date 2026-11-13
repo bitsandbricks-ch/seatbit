@@ -31,9 +31,11 @@ import { cmd } from "./cmd";
 import { colors } from "./colors";
 import { common } from "./common";
 import { contacts } from "./contacts";
+import { costs } from "./costs";
 import { discordClaim } from "./discordClaim";
 import { display } from "./display";
 import { donate } from "./donate";
+import { emergency } from "./emergency";
 import { errors } from "./errors";
 import { event } from "./event";
 import { eventUi } from "./eventUi";
@@ -132,9 +134,11 @@ export const en = {
   colors,
   common,
   contacts,
+  costs,
   discordClaim,
   display,
   donate,
+  emergency,
   errors,
   event,
   eventUi,

@@ -18,6 +18,7 @@
 import { hashPassword } from "better-auth/crypto";
 import { and, count, eq } from "drizzle-orm";
 import { db, schema } from "../src/db";
+import { splitCents } from "../src/lib/money";
 
 export const DEMO_PASSWORD = "seatbit-demo";
 
@@ -596,6 +597,38 @@ export async function seedDemo({ force = false, discord = false } = {}) {
         .values({ orderId, userId: ids[key], item, qty, priceCents, note, paid, createdAt: new Date(Date.now() - (food.length - i) * 60_000) })
         .run(),
     );
+
+    // Shared costs: what people paid for the group at the Lakeside LAN, and one payment already settled.
+    const costs: [string, string, string, number, string[], string?][] = [
+      ["demo-cost-fuel", "ben", "Fuel for the van", 6400, ["ben", "anna", "chiara", "lea"], "Zurich and back, four of us."],
+      ["demo-cost-snacks", "anna", "Snacks and energy drinks", 8550, ["anna", "alex", "ben", "chiara", "david", "lea"]],
+      ["demo-cost-power", "alex", "Power strips and LAN cables", 4200, ["alex", "anna", "ben", "chiara", "david", "elena", "finn"], "We keep them in the clan box."],
+    ];
+    costs.forEach(([id, payer, title, amountCents, people, note = ""], i) => {
+      tx.insert(s.costExpense)
+        .values({ id, lanId: events.lakeside, title, amountCents, paidBy: ids[payer], note, createdBy: ids[payer], createdAt: at(-3 + i, 18) })
+        .run();
+      const parts = splitCents(amountCents, people.length);
+      tx.insert(s.costShare)
+        .values(people.map((key, k) => ({ expenseId: id, userId: ids[key], amountCents: parts[k] })))
+        .run();
+    });
+    tx.insert(s.costSettlement)
+      .values({ lanId: events.lakeside, fromUserId: ids.lea, toUserId: ids.ben, amountCents: 1600, createdBy: ids.ben, createdAt: at(-1, 9) })
+      .run();
+
+    // Emergency info (made-up contacts): most of the Lakeside crowd filled it in, a few with dietary needs.
+    const emergency: [string, string, string, string][] = [
+      ["alex", "Petra Brunner (mother)", "+41 79 000 00 01", ""],
+      ["anna", "Lukas Frei (brother)", "+41 79 000 00 02", "Vegetarian"],
+      ["ben", "Sandra Huber", "+41 79 000 00 03", ""],
+      ["chiara", "Marco Rossi (father)", "+41 79 000 00 04", "Nut allergy, carries an EpiPen"],
+      ["lea", "Tom Fischer", "+41 79 000 00 05", "Lactose intolerant"],
+      ["marco", "", "", "No pork"],
+      ["nina", "Eva Wolf (partner)", "+41 79 000 00 06", ""],
+    ];
+    for (const [key, contactName, contactPhone, diet] of emergency)
+      tx.insert(s.emergencyInfo).values({ userId: ids[key], contactName, contactPhone, diet }).run();
 
     // Clan payments: yearly dues, the ticket money for the Lakeside LAN, and last year's server (settled).
     tx.insert(s.charge)
