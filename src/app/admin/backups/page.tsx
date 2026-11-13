@@ -51,7 +51,7 @@ export default async function BackupsPage() {
 
       {status.lastError && (
         <Notice tone="danger">
-          {t("backups.lastError", { when: fmtDate(status.lastError.at, t.locale), error: status.lastError.message })}
+          {t("backups.lastError", { when: fmtDate(status.lastError.at, t.locale), error: status.lastError.key ? t(status.lastError.key, status.lastError.vars) : status.lastError.message })}
         </Notice>
       )}
       {!status.lastError && overdue && files.length > 0 && <Notice tone="warn">{t("backups.overdue")}</Notice>}
