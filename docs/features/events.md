@@ -101,7 +101,7 @@ Leads see **View / Manage** next to the event title. *Manage* has the tabs:
 
 | Tab | |
 | --- | --- |
-| **Overview** | The lead checklist, numbers (coming, unsure, tickets, seats), deadlines, news, [manual reminders](reminders.md#manual-reminders). |
+| **Overview** | The lead checklist, a strip with the numbers (coming, unsure, tickets, seats; each opens its tab), deadlines, news, [manual reminders](reminders.md#manual-reminders). |
 | **Seats** | The seat planner. See [Seats](seats.md#plan-the-seats). |
 | **Attendees** | Answers, tickets, LAN IDs, CSV export. See [Attendance](attendance.md#attendee-list). |
 | **Who's missing** | Who still owes something, with nudges. See [Who's missing](reminders.md#whos-missing). |

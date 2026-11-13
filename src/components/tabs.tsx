@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TabScroll } from "./tab-scroll";
 
 export type Tab = {
   id: string;
@@ -57,6 +58,7 @@ export function Tabs({
             );
           })}
         </ul>
+        <TabScroll active={active} />
       </nav>
     </div>
   );

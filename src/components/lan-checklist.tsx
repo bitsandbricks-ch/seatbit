@@ -98,37 +98,55 @@ function ChecklistStrip({
   const t = useT();
   // Open optional steps don't hold back "All set".
   const all = done === total;
-  return (
-    <section aria-label={t("checklist.title")} className="rounded-card border border-line bg-surface p-3 sm:p-4">
-      <div className="mb-3 flex items-center gap-3">
-        <h2 className="text-sm font-semibold text-fg">{t("checklist.title")}</h2>
-        {answer}
-        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-raised">
-          <div className="h-full bg-bit transition-all" style={{ width: `${total ? (done / total) * 100 : 0}%` }} />
-        </div>
-        <span className={`text-sm ${all ? "font-medium text-bit" : "text-muted"}`}>{all ? t("checklist.allSet") : `${done} / ${total}`}</span>
+  const head = (
+    <div className="flex items-center gap-3">
+      <h2 className="text-sm font-semibold text-fg">{t("checklist.title")}</h2>
+      {answer}
+      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-raised">
+        <div className="h-full bg-bit transition-all" style={{ width: `${total ? (done / total) * 100 : 0}%` }} />
       </div>
-      {/* Desktop: every step in one row (scrolls sideways if the screen is too narrow), never a second row. */}
-      <ol className="grid gap-x-4 gap-y-3 sm:grid-cols-2 lg:grid-flow-col lg:grid-cols-none lg:auto-cols-[minmax(7rem,1fr)] lg:gap-x-3 lg:overflow-x-auto">
-        {steps.map((s, i) => (
-          // Phones: only the steps still open, so the strip stays short above the tabs.
-          <li key={s.key} className={`${s.state === "done" && !all ? "hidden sm:flex" : "flex"} gap-2.5`}>
-            <StepIcon s={s} i={i} />
-            <div className="min-w-0 flex-1">
-              <p className={`text-sm font-medium leading-6 ${s.state === "done" ? "text-muted" : "text-fg"}`}>
-                {s.title}
-                <OptionalTag s={s} />
-              </p>
-              {s.hint && <p className="text-xs text-muted">{s.hint}</p>}
-              {s.key === "ticket" && s.state !== "done" && canReportTicket && (
-                <div className="mt-2">
-                  <TicketConfirm lanId={lanId} bought={ticketBought} confirmed={false} />
-                </div>
-              )}
-            </div>
-          </li>
-        ))}
-      </ol>
+      <span className={`text-sm ${all ? "font-medium text-bit" : "text-muted"}`}>{all ? t("checklist.allSet") : `${done} / ${total}`}</span>
+      {all && (
+        <svg viewBox="0 0 16 16" width={14} height={14} aria-hidden className="shrink-0 text-muted transition group-open:rotate-180">
+          <path fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" d="M4 6l4 4 4-4" />
+        </svg>
+      )}
+    </div>
+  );
+  const list = (
+    // Desktop: every step in one row (scrolls sideways if the screen is too narrow), never a second row.
+    <ol className="mt-3 grid gap-x-4 gap-y-3 sm:grid-cols-2 lg:grid-flow-col lg:grid-cols-none lg:auto-cols-[minmax(7rem,1fr)] lg:gap-x-3 lg:overflow-x-auto">
+      {steps.map((s, i) => (
+        // Phones: only the steps still open, so the strip stays short above the tabs.
+        <li key={s.key} className={`${s.state === "done" && !all ? "hidden sm:flex" : "flex"} gap-2.5`}>
+          <StepIcon s={s} i={i} />
+          <div className="min-w-0 flex-1">
+            <p className={`text-sm font-medium leading-6 ${s.state === "done" ? "text-muted" : "text-fg"}`}>
+              {s.title}
+              <OptionalTag s={s} />
+            </p>
+            {s.hint && <p className="text-xs text-muted">{s.hint}</p>}
+            {s.key === "ticket" && s.state !== "done" && canReportTicket && (
+              <div className="mt-2">
+                <TicketConfirm lanId={lanId} bought={ticketBought} confirmed={false} />
+              </div>
+            )}
+          </div>
+        </li>
+      ))}
+    </ol>
+  );
+  const box = "rounded-card border border-line bg-surface p-3 sm:p-4";
+  // All done: one line that opens on tap, so a finished checklist doesn't push the tabs down.
+  return all ? (
+    <details aria-label={t("checklist.title")} className={`group ${box}`}>
+      <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">{head}</summary>
+      {list}
+    </details>
+  ) : (
+    <section aria-label={t("checklist.title")} className={box}>
+      {head}
+      {list}
     </section>
   );
 }

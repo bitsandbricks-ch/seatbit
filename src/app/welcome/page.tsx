@@ -45,7 +45,6 @@ export default async function WelcomePage({ searchParams }: PageProps<"/welcome"
         <Field label={t("auth.nickname")} hint={t("auth.nickHint")}>
           <Input name="nick" defaultValue={nick.slice(0, 32)} required maxLength={32} autoComplete="nickname" />
         </Field>
-        <input type="hidden" name="emailReminders" value={me.emailReminders ? "on" : ""} />
         <p className="text-xs text-muted">{t("welcome.reminders", { email: me.email })}</p>
         <button className={`${btnPrimary} w-full`}>{t("welcome.continue")}</button>
       </form>
