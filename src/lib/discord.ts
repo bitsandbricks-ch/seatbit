@@ -1,11 +1,11 @@
 import crypto from "node:crypto";
-import { and, asc, eq, gt, inArray, isNotNull } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { db, schema } from "@/db";
-import { INTEREST_ANSWERS, type AttendanceStatus, type Clan, type InterestAnswer, type Lan } from "@/db/schema";
-import { avatarUrl, clanCan, getClan, isClanMember, myClans } from "./clans";
+import type { AttendanceStatus, InterestAnswer, Lan } from "@/db/schema";
+import { avatarUrl, clanCan, getClan, myClans } from "./clans";
 import { roleCan } from "./clan-roles";
 import { type ChatReminderKind, fmtWhen, lanFacts, lanLink, lanSummary } from "./announce";
-import { ATTENDANCE_LOCKED_MSG, attendanceLocked, getDisplayNames, getLan, setAttendance, signupClosed } from "./lans";
+import { getDisplayNames, getLan, signupClosed } from "./lans";
 import { type Json, api, discordEnabled } from "./discord-api";
 import type { DiscordMode } from "./discord-modes";
 import { getSetting } from "./settings";
@@ -15,8 +15,23 @@ import { audit } from "./audit";
 import { claimableGuests, claimOrRequestGuest, discordClaimTicket, guestSuggestions, mergeGuestInto } from "./guest-claim";
 import { nameMatches } from "./names";
 import { dmDiscordUser, notify, notifyLater } from "./notify";
+import { answerEvent, answerInterest, handleMemberCommand, handleTicketButton, memberAutocomplete } from "./discord-commands";
+import {
+  type DiscordUser,
+  type Handled,
+  type Interaction,
+  EPHEMERAL,
+  clanForGuild,
+  clip,
+  linkButton,
+  nextDeadline,
+  notLinked,
+  reply,
+  seatbitUserFor,
+  upcomingLans,
+} from "./discord-common";
 
-const { discordChannel, discordMessage, channelReminderLog, account, attendance, lan, user } = schema;
+const { discordChannel, discordMessage, channelReminderLog, account, attendance, user } = schema;
 
 const appId = () => getSetting("discord.clientId");
 const profileComplete = (u: { firstName: string; lastName: string }) => !!(u.firstName && u.lastName);
@@ -45,7 +60,6 @@ export function verifyDiscordRequest(body: string, signature: string | null, tim
 // ---------- Messages ----------
 
 const BRAND = 0x10b981;
-const clip = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
 const list = (names: string[]) => clip(names.join(", ") || "—", 1024);
 
 /** Discord user ids of members who linked their Discord account, by Seatbit user id. */
@@ -73,18 +87,6 @@ function attendanceButtons(l: Lan, disabled = false) {
       ],
     },
   ];
-}
-
-/** "⏰ Next: buy ticket by Sat 14.11.2026, 18:00", or "" when nothing is due anymore. */
-function nextDeadline(l: Lan, now = new Date()) {
-  const next = (
-    [
-      ["Answer by", l.signupDeadline],
-      ["Buy ticket by", l.paymentDueDate],
-      ["Starts", l.startsAt],
-    ] as const
-  ).find(([, d]) => d && d > now);
-  return next ? `⏰ Next: ${next[0]} ${fmtWhen(next[1]!)}` : "";
 }
 
 /** Interest check buttons: would you come? */
@@ -534,62 +536,6 @@ export async function postLanNews(l: Lan, text: string, author: string) {
 
 // ---------- Slash commands & buttons ----------
 
-type Option = { name: string; type?: number; value?: string; focused?: boolean; options?: Option[] };
-
-type Interaction = {
-  type: number;
-  id: string;
-  token: string;
-  guild_id?: string;
-  channel_id?: string;
-  channel?: { name?: string };
-  member?: { user: DiscordUser; nick?: string | null };
-  user?: DiscordUser;
-  data?: {
-    name?: string;
-    custom_id?: string;
-    options?: Option[];
-    resolved?: { users?: Record<string, DiscordUser>; members?: Record<string, { nick?: string | null }> };
-  };
-};
-
-type DiscordUser = { id: string; username?: string; global_name?: string | null; bot?: boolean };
-
-const EPHEMERAL = 64;
-const reply = (content: string, extra: Json = {}) => ({
-  type: 4,
-  data: { content, flags: EPHEMERAL, allowed_mentions: { parse: [] }, ...extra },
-});
-const linkButton = (label: string, url: string) => ({ type: 1, components: [{ type: 2, style: 5, label, url }] });
-
-const statusLabel: Record<AttendanceStatus, string> = {
-  going: "✅ You're in",
-  maybe: "🤔 Marked as unsure",
-  declined: "❌ Marked as not coming",
-  waitlist: "⏳ It's full, you're on the waitlist",
-};
-
-/** The Seatbit user behind a Discord account, if they linked it. */
-function seatbitUserFor(discordUserId: string) {
-  const userId = db
-    .select()
-    .from(account)
-    .where(and(eq(account.providerId, "discord"), eq(account.accountId, discordUserId)))
-    .get()?.userId;
-  return userId ? db.select().from(user).where(eq(user.id, userId)).get() : undefined;
-}
-
-const notLinked = () =>
-  reply("I don't know who you are in Seatbit yet. Sign in with Discord, or link Discord on your profile, then try again.", {
-    components: [linkButton("Link Discord", `${appUrl}/profile`)],
-  });
-
-/** The clan a Discord server is linked to (all its channels share one clan). */
-function clanForGuild(guildId: string | undefined): Clan | undefined {
-  if (!guildId) return undefined;
-  const ch = db.select().from(discordChannel).where(eq(discordChannel.guildId, guildId)).get();
-  return ch ? getClan(ch.clanId) : undefined;
-}
 
 /** Clans this user may link a server to: only clans they're an admin of (platform admins included). */
 function manageableClans(u: { id: string; role: string }) {
@@ -598,21 +544,11 @@ function manageableClans(u: { id: string; role: string }) {
     .map((m) => m.clan);
 }
 
-const upcomingLans = (clanIds: string[]) =>
-  clanIds.length
-    ? db
-        .select()
-        .from(lan)
-        .where(and(gt(lan.endsAt, new Date()), inArray(lan.clanId, clanIds), isNotNull(lan.publishedAt)))
-        .orderBy(asc(lan.startsAt))
-        .all()
-    : [];
-
 /**
  * Handles a verified interaction. Returns the immediate response, plus an
  * optional task to run after responding (Discord wants an answer within 3s).
  */
-export function handleInteraction(i: Interaction): { response: Json | Promise<Json>; later?: () => Promise<void> } {
+export function handleInteraction(i: Interaction): Handled {
   if (i.type === 1) return { response: { type: 1 } }; // PING
 
   const discordUser = i.member?.user.id ?? i.user?.id ?? "";
@@ -639,10 +575,14 @@ export function handleInteraction(i: Interaction): { response: Json | Promise<Js
     return { response: { type: 8, data: { choices } } };
   }
 
+  // Autocomplete for the member commands' event and person options
+  const suggestions = memberAutocomplete(i);
+  if (suggestions) return { response: suggestions };
+
   // Autocomplete for /seatbit here clan:<…>
   if (i.type === 4 && i.data?.name === "seatbit") {
     const me = seatbitUserFor(discordUser);
-    const q = (sub?.options?.find((o) => o.focused)?.value ?? "").toLowerCase();
+    const q = String(sub?.options?.find((o) => o.focused)?.value ?? "").toLowerCase();
     const choices = (me ? manageableClans(me) : [])
       .filter((c) => c.name.toLowerCase().includes(q) || c.slug.includes(q))
       .slice(0, 25)
@@ -668,61 +608,22 @@ export function handleInteraction(i: Interaction): { response: Json | Promise<Js
     }
   }
 
-  // Interest check button
-  if (i.type === 3 && i.data?.custom_id?.startsWith("int:")) {
-    const [, lanId, answer] = i.data.custom_id.split(":") as [string, string, InterestAnswer];
+  // Interest check and attendance buttons (announcements, reminders, /lans, /coming)
+  if (i.type === 3 && (i.data?.custom_id?.startsWith("int:") || i.data?.custom_id?.startsWith("att:"))) {
+    const [kind, lanId, answer] = i.data.custom_id.split(":");
     const l = getLan(lanId);
     if (!l) return { response: reply("This LAN doesn't exist anymore.") };
-    if (!l.interestCheck || l.cancelledAt) return { response: reply("The interest check is over.", { components: [linkButton("Open in Seatbit", lanLink(l))] }) };
-    if (!INTEREST_ANSWERS.includes(answer)) return { response: reply("Unknown button.") };
     const me = seatbitUserFor(discordUser);
     if (!me) return { response: notLinked() };
-    if (!l.clanId || !isClanMember(me.id, l.clanId)) return { response: reply("This LAN is for members of another clan.") };
-    db.insert(schema.lanInterest)
-      .values({ lanId: l.id, userId: me.id, answer })
-      .onConflictDoUpdate({ target: [schema.lanInterest.lanId, schema.lanInterest.userId], set: { answer } })
-      .run();
-    refreshLanMessagesSoon(l.id);
-    const text = { yes: "👍 Noted: you'd come", maybe: "🤔 Noted: maybe", no: "👋 Noted: not this time" }[answer];
-    return { response: reply(`${text} for **${l.name}**. We'll tell you when sign-up opens.`) };
+    return kind === "int" ? answerInterest(l, me, answer as InterestAnswer) : answerEvent(l, me, answer as AttendanceStatus, editReply);
   }
 
-  // Attendance button
-  if (i.type === 3 && i.data?.custom_id?.startsWith("att:")) {
-    const [, lanId, status] = i.data.custom_id.split(":") as [string, string, AttendanceStatus];
-    const l = getLan(lanId);
-    if (!l) return { response: reply("This LAN doesn't exist anymore.") };
-    if (signupClosed(l)) return { response: reply("Sign-up for this LAN is closed. Ask an orga if something changed.") };
-    if (!["going", "maybe", "declined"].includes(status)) return { response: reply("Unknown button.") };
-    const me = seatbitUserFor(discordUser);
-    if (!me) return { response: notLinked() };
-    const mine = db.select().from(attendance).where(and(eq(attendance.lanId, l.id), eq(attendance.userId, me.id))).get();
-    if (attendanceLocked(mine)) return { response: reply(ATTENDANCE_LOCKED_MSG, { components: [linkButton("Open in Seatbit", lanLink(l))] }) };
-    if (!l.clanId || !isClanMember(me.id, l.clanId)) {
-      const c = l.clanId ? getClan(l.clanId) : undefined;
-      return {
-        response: reply(`This LAN is for members of **${c?.name ?? "another clan"}**. Ask to join the clan in Seatbit first.`, {
-          components: c ? [linkButton("Open clan", `${appUrl}/clans/${c.slug}`)] : [],
-        }),
-      };
-    }
-    return {
-      response: { type: 5, data: { flags: EPHEMERAL } }, // "thinking…", answered below
-      later: async () => {
-        try {
-          const stored = await setAttendance(l, me.id, status);
-          const extra = stored === "going" ? " Tick off your ticket in Seatbit once you have it." : "";
-          await editReply({
-            content: `${statusLabel[stored]} for **${l.name}**.${extra}`,
-            components: [linkButton("Open in Seatbit", lanLink(l))],
-          });
-        } catch (e) {
-          console.error("[discord] attendance failed", e);
-          await editReply({ content: "Something went wrong, please try again in Seatbit." }).catch(() => {});
-        }
-      },
-    };
-  }
+  // "I have my ticket" button from /ticket and /status
+  if (i.type === 3 && i.data?.custom_id?.startsWith("ticket:")) return handleTicketButton(i);
+
+  // Member commands: /coming, /unsure, /not-coming, /status, /ticket, /nick, /wish
+  const member = handleMemberCommand(i, editReply);
+  if (member) return member;
 
   // /claim [guest:<…>], and the "That's me" buttons it shows
   if (i.type === 2 && i.data?.name === "claim") {

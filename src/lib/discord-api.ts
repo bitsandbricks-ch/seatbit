@@ -41,8 +41,70 @@ export async function api<T = Json>(method: string, path: string, body?: unknown
   return (res.status === 204 ? {} : await res.json()) as T;
 }
 
+// The event option of the member commands: suggests the clan's upcoming events; optional when only one fits.
+const eventOption = (description = "Only needed if several events are open") => ({
+  type: 3,
+  name: "event",
+  description,
+  required: false,
+  autocomplete: true,
+});
+
+const answerCommand = (name: string, description: string) => ({ name, description, type: 1, options: [eventOption()] });
+
 /** Slash commands, registered with `npm run discord:register`. */
 export const commands = [
+  answerCommand("coming", "Say you're coming to a LAN"),
+  answerCommand("unsure", "Say you're not sure yet if you come to a LAN"),
+  answerCommand("not-coming", "Say you're not coming to a LAN"),
+  {
+    name: "status",
+    description: "Where you stand: your answer, ticket, nick, seat and what's due next",
+    type: 1,
+    options: [eventOption("Only this event (default: your next ones)")],
+  },
+  {
+    name: "ticket",
+    description: "Tick off that you bought your ticket",
+    type: 1,
+    options: [
+      eventOption(),
+      { type: 5, name: "bought", description: "False takes it back (default: true)", required: false },
+    ],
+  },
+  {
+    name: "nick",
+    description: "Set your nickname, for one LAN type or everywhere",
+    type: 1,
+    options: [
+      { type: 3, name: "nick", description: "Your nick", required: true, min_length: 1, max_length: 32 },
+      eventOption("Use it at this event's LAN type only (default: everywhere)"),
+    ],
+  },
+  {
+    name: "wish",
+    description: "See or change your seat wishes",
+    type: 1,
+    options: [
+      eventOption(),
+      { type: 3, name: "near", description: "Add someone you want to sit near", required: false, autocomplete: true },
+      { type: 3, name: "avoid", description: "Add someone you don't want to sit next to", required: false, autocomplete: true },
+      {
+        type: 3,
+        name: "position",
+        description: "Where in the row",
+        required: false,
+        choices: [
+          { name: "Anywhere", value: "any" },
+          { name: "At the edge", value: "edge" },
+          { name: "In the middle", value: "middle" },
+        ],
+      },
+      { type: 3, name: "seat", description: "A seat you'd like, e.g. F7", required: false, max_length: 12 },
+      { type: 3, name: "note", description: "Anything else the orgas should know", required: false, max_length: 300 },
+      { type: 5, name: "clear", description: "Start over: remove all your wishes first", required: false },
+    ],
+  },
   {
     name: "lans",
     description: "Upcoming LANs and your status, with buttons to answer",

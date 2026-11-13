@@ -17,7 +17,7 @@ The **seat plan** shows the group's seat block. Members send seat wishes or pick
 
 | Step | |
 | --- | --- |
-| 1. **Seat wishes** | Members say who they want to sit with, who not right next to, edge or middle, or a specific seat. |
+| 1. **Seat wishes** | Members say who they want to sit with, who not right next to, edge or middle, or a specific seat. On Discord: `/wish`. |
 | 2. **Self pick** (optional) | Orgas turn it on; members with a ticket tap a free seat and **Take this seat**, **Move here** or **Give up my seat**. |
 | 3. **Final plan** | Orgas finalize. This closes wishes and self pick, shows everyone the plan and can tell everyone their seat. Later changes notify the people who moved. **Reopen** goes back. |
 
