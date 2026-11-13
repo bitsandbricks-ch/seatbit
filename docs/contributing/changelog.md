@@ -1,6 +1,6 @@
 # Changelog entries
 
-Seatbit keeps user-facing release notes in English and German. They show in the app under **What's new** (`/changelog`, linked in the footer), in the [docs changelog](../changelog/index.md), in the platform admins' upgrade notice and in the public announcements Discord channel when a new version runs.
+Seatbit keeps user-facing release notes in English and German. They show in the app under **What's new** (`/changelog`, linked in the footer), in the [docs changelog](../changelog/index.md), and in the upgrade notice to the platform admins (mail, Discord DM and the ops channel) when a new version runs. It is not posted to the public announcements channel or to clan channels.
 
 Seatbit has no version numbers yet: every change that reaches `main` is a release. So **every pull request that changes something people notice adds an entry**: a new feature, a visible improvement, a bug fix. Internal changes (refactoring, CI, dependency bumps, docs only, screenshots) don't.
 
@@ -32,7 +32,7 @@ de:
 | Field | |
 | --- | --- |
 | `type` | **new** for a feature, **improved** for a change to an existing one, **fixed** for a bug fix. |
-| `audience` | **admins** for things only the people running the instance notice (settings, backups, upgrades, the admin pages). The app shows those to the platform team only, and the announcements channel leaves them out. |
+| `audience` | **admins** for things only the people running the instance notice (settings, backups, upgrades, the admin pages). The app shows those to the platform team only. |
 | `en`, `de` | Both are required. `title` is one line (under 120 characters); `text` is optional, one or two sentences of plain text. |
 
 ## Writing
@@ -60,6 +60,5 @@ It checks the YAML, the fields, both languages and the Swiss spelling. CI runs i
 | App, **What's new** | All entries in the person's language; *admins* entries for the platform team only. |
 | Docs, [Changelog](../changelog/index.md) | All entries, English and German pages. |
 | Upgrade notice (mail and DM to platform admins, ops channel) | The entries that came with the new version. |
-| Announcements channel | The new entries for *everyone*, in the instance's language, with a link to *What's new*. Nothing is posted for a version without such entries. |
 
 An instance remembers which entries it announced, so each entry is announced once, on the first start of the version that brought it.

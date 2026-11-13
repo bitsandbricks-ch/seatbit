@@ -10,7 +10,6 @@ import { api, discordEnabled } from "./discord-api";
 import { getBoolSetting, getSetting } from "./settings";
 import { type ProblemKind, recordProblem } from "./jobs";
 import { changeLines } from "./changelog";
-import { appUrl } from "./mail";
 import type { UpgradeEvent } from "./upgrade";
 import { makeT } from "../i18n/translate";
 import { instanceLocale } from "../i18n/user-locale";
@@ -156,7 +155,7 @@ export function safePath(path: string) {
 
 // ---------- Upgrades ----------
 
-/** onUpgrade listener: the ops channel gets the technical notice, the announcements channel what changed. */
+/** onUpgrade listener: the ops channel gets the new version with its changelog entries ; the public announcements channel doesn't get the changelog. */
 export async function announceUpgradeOnDiscord(e: UpgradeEvent) {
   const t = opsT();
   const version = e.now.slice(0, 7);
@@ -171,13 +170,5 @@ export async function announceUpgradeOnDiscord(e: UpgradeEvent) {
     text: e.changes.length ? `${changeLines(e.changes, t.locale)}\n\n${commands}` : commands,
     url: e.changesUrl,
     fields: [{ name: t("ops.previous"), value: e.before.slice(0, 7) }],
-  });
-  // The public channel gets the changelog entries meant for everyone; internal changes stay quiet.
-  const forEveryone = e.changes.filter((c) => c.audience === "everyone");
-  if (!announceChannel() || !forEveryone.length) return;
-  await postAnnouncement({
-    title: t("changelog.announceTitle"),
-    text: `${changeLines(forEveryone, t.locale)}\n\n${t("changelog.announceMore", { url: `${appUrl}/changelog` })}`,
-    url: `${appUrl}/changelog`,
   });
 }

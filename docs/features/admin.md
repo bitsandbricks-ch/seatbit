@@ -93,13 +93,13 @@ The bot can tell the team running the instance what happens, in a private **ops 
 
 | Kind | Posted when |
 | --- | --- |
-| **Upgrades** | A new version started, with the link to the changes and whether the slash commands were re-registered. It lists the version's [changelog](../changelog/index.md) entries. The announcements channel gets the new entries meant for everyone, in the instance's language, with a link to [What's new](whats-new.md); internal versions post nothing there. |
+| **Upgrades** | A new version started, with the link to the changes and whether the slash commands were re-registered. It lists the version's [changelog](../changelog/index.md) entries. |
 | **Errors** | A page, action or background job fails. The same error is posted at most once every 15 minutes; query strings and token-like parts of the path are left out. |
 | **New clans** | Someone creates a clan. |
 | **Supporter payments** | A clan starts, renews or ends a supporter subscription, or someone donates (or gets a donation refunded). |
 | **Abuse reports** | Someone reports a clan or an event. |
 
-An optional public **announcements channel** (for example on your community server) gets what's new in each version (from the changelog), maintenance notices you choose to post, and announcements you write under *Post an announcement* on the same tab.
+An optional public **announcements channel** (for example on your community server) gets maintenance notices you choose to post, and announcements you write under *Post an announcement* on the same tab.
 
 To set it up, add the bot to your server with the invite link on the Discord tab, turn on Developer Mode in Discord (*Settings → Advanced*), right-click each channel → *Copy Channel ID*, paste the IDs and save. **Send a test to the channels** checks that the bot can post there; it needs *View Channel*, *Send Messages* and *Embed Links* in those channels.
 

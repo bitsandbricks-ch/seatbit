@@ -9,7 +9,7 @@ The **What's new** page lists what changed in Seatbit, newest day first, in your
 </figure>
 
 - Entries that only matter to the people who run the instance (settings, backups, upgrades) are marked *Platform admins* and show to the platform team only.
-- When a new version starts, its new entries are posted to the instance's announcements Discord channel, if the operator set one up, and sent to the platform admins with the upgrade notice. See [Upgrades](../installation/operations.md#upgrades).
+- When a new version starts, its new entries go to the platform admins with the upgrade notice (mail, Discord DM and the ops channel). They aren't posted to public or clan channels. See [Upgrades](../installation/operations.md#upgrades).
 - The same list is in these docs: [Changelog](../changelog/index.md) ([Deutsch](../changelog/de.md)).
 
 Developers: every pull request that changes something people notice adds an entry, see [Changelog entries](../contributing/changelog.md).

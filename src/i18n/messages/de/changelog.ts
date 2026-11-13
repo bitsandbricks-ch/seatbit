@@ -7,8 +7,6 @@ export const changelog: Messages["changelog"] = {
   type: { new: "Neu", improved: "Verbessert", fixed: "Behoben" },
   forAdmins: "Plattform-Admins",
   empty: "Noch nichts hier.",
-  announceTitle: "Neu in Seatbit",
-  announceMore: "Alle Änderungen: {url}",
   noticeChanges: "Was ist neu:",
   noticeAllChanges: "Alle Änderungen im Code: {changes}",
 };
