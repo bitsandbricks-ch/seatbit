@@ -28,7 +28,8 @@ export type NoticeKind =
   | "guest_claim_request"
   | "guest_claim_approved"
   | "guest_claim_declined"
-  | "guest_linked";
+  | "guest_linked"
+  | "signup_confirmed";
 
 export type Notice = {
   kind: NoticeKind;
