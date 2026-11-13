@@ -7,6 +7,7 @@ import { LegalNotice } from "@/components/legal-notice";
 import { authClient } from "@/lib/auth-client";
 import { btnPrimary, btnSecondary, Field, Input } from "./ui";
 import { useT } from "@/i18n/client";
+import { BrandMark } from "@/components/brand-mark";
 
 export function AuthForm({
   mode,
@@ -75,8 +76,7 @@ export function AuthForm({
   return (
     <div className="flex min-h-[calc(100dvh-14rem)] flex-col items-center justify-center gap-6">
       <div className="flex flex-col items-center text-center">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/brand/seatbit-mark.svg" alt="" className="h-12 w-12" />
+        <BrandMark className="h-12 w-12" />
         <p className="mt-3 text-balance text-sm text-muted">{t("auth.tagline")}</p>
       </div>
       {notice && (

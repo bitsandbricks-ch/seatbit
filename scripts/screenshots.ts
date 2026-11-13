@@ -54,6 +54,8 @@ type Shot = {
   full?: boolean;
   /** Browser language; the demo users have no saved language, so this picks the UI language. */
   lang?: "de";
+  /** Device colour scheme; the demo users keep the "System" theme, so this picks light or dark. */
+  theme?: "light";
 };
 
 /**
@@ -77,6 +79,11 @@ const seat = (label: string) => async (page: Page) => {
     if (card) window.scrollTo({ top: card.getBoundingClientRect().top + window.scrollY - 140, behavior: "instant" });
   });
   await page.waitForTimeout(300);
+};
+
+const openDisplayMenu = async (page: Page) => {
+  await page.getByRole("button", { name: "Language and theme" }).click();
+  await page.waitForTimeout(200);
 };
 
 // Device comes from the name prefix.
@@ -114,6 +121,10 @@ const SHOTS: Shot[] = [
   // German: same pages with a Swiss German browser.
   { name: "phone-event-de", who: "anna", path: LAKESIDE, full: true, lang: "de" },
   { name: "phone-profile-de", who: "anna", path: "/profile", lang: "de" },
+  { name: "phone-display-menu", who: "anna", path: "/", act: openDisplayMenu },
+  { name: "phone-lans-light", who: "anna", path: "/", theme: "light" },
+  { name: "phone-event-light", who: "anna", path: LAKESIDE, full: true, theme: "light" },
+  { name: "phone-seat-plan-light", who: "anna", path: `${LAKESIDE}?tab=seats`, act: seat("F10"), theme: "light" },
   { name: "phone-member-profile", who: "anna", path: `${CLAN}/members/demo-chiara`, full: true },
   {
     name: "phone-profile-delete",
@@ -152,11 +163,14 @@ const SHOTS: Shot[] = [
   { name: "desktop-lans", who: "alex", path: "/" },
   { name: "desktop-lans-de", who: "alex", path: "/", lang: "de" },
   { name: "desktop-event", who: "alex", path: LAKESIDE },
+  { name: "desktop-event-light", who: "alex", path: LAKESIDE, theme: "light" },
+  { name: "desktop-display-menu-light", who: "alex", path: LAKESIDE, act: openDisplayMenu, theme: "light" },
   { name: "desktop-event-seats", who: "alex", path: `${LAKESIDE}?tab=seats`, act: seat("F9") },
   { name: "desktop-event-attendees", who: "alex", path: `${LAKESIDE}?tab=attendees` },
   { name: "desktop-games", who: "alex", path: `${LAKESIDE}?tab=games` },
   { name: "desktop-food", who: "alex", path: `${LAKESIDE}?tab=food`, full: true },
   { name: "desktop-manage", who: "alex", path: `${LAKESIDE}/manage` },
+  { name: "desktop-manage-light", who: "alex", path: `${LAKESIDE}/manage`, theme: "light" },
   { name: "desktop-manage-de", who: "alex", path: `${LAKESIDE}/manage`, lang: "de" },
   { name: "desktop-clan-stats-de", who: "alex", path: `${CLAN}/stats`, lang: "de" },
   { name: "phone-lead-checklist", who: "alex", path: `${MOUNTAIN}/manage` },
@@ -272,12 +286,12 @@ async function main() {
     const contexts = new Map<string, BrowserContext>();
     for (const shot of shots) {
       const device: Device = shot.name.startsWith("phone-") ? "phone" : "desktop";
-      const key = `${shot.who}:${device}:${shot.lang ?? "en"}`;
+      const key = `${shot.who}:${device}:${shot.lang ?? "en"}:${shot.theme ?? "dark"}`;
       let ctx = contexts.get(key);
       if (!ctx) {
         ctx = await browser.newContext({
           ...DEVICES[device],
-          colorScheme: "dark",
+          colorScheme: shot.theme ?? "dark",
           locale: shot.lang === "de" ? "de-CH" : "en-GB",
           timezoneId: "Europe/Zurich",
           reducedMotion: "reduce",

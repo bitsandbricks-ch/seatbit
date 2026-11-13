@@ -61,6 +61,28 @@ Text on a Bit Green button is `on-bit` (ink), not white. Bit Green on ink is 12:
 `faint` is 4.1:1, so keep it to non-essential hints; `bit-deep` on white is 3.2:1, so use
 it only for the logo and large type and use `bit-ink` (5.3:1) for green text on light.
 
+### Light theme
+
+The app also has a light theme (people pick *Light*, *Dark* or *System* in the top bar). Dark stays the
+brand's home; light is the same tokens with daylight values, set in `brand/tokens.css`:
+
+| Token | Light | Note |
+| --- | --- | --- |
+| `ink` | `#F5F5F7` | Page background |
+| `surface` | `#FFFFFF` | Cards and panels |
+| `raised` | `#EEEEF2` | Inputs, hover, free seats |
+| `line` | `#DCDCE3` | Borders |
+| `fg` | `#111118` | 18.8:1 on surface |
+| `muted` | `#52525B` | 7.7:1 on surface |
+| `faint` | `#6B6B75` | 5.3:1 on surface |
+| `bit` | `#047857` | `bit-ink`, so green text stays AA (5.5:1) |
+| `on-bit` | `#FFFFFF` | White on green fills (5.5:1) |
+| `seat-taken` | `#0369A1` | 5.9:1 |
+| `warn` | `#B45309` | 5.0:1 |
+| `danger` | `#C81E1E` | 5.7:1 |
+
+The light theme uses `seatbit-logo-light.svg` and `seatbit-mark-light.svg`.
+
 ## Typography
 
 - **Geist** (sans) for everything in the UI. Headings Bold/SemiBold with slight negative tracking, body Regular.

@@ -13,9 +13,9 @@ export type TurnoutPoint = {
   coming: number;
 };
 
-// One hue, light to dark: each bar is a subset of the one behind it.
-const ASKED = "#41584f";
-const ANSWERED = "#178a5f";
+// One hue, faint to full: each bar is a subset of the one behind it. Mixed from tokens so both themes work.
+const ASKED = "color-mix(in oklab, var(--color-bit) 28%, var(--color-raised))";
+const ANSWERED = "color-mix(in oklab, var(--color-bit) 60%, var(--color-raised))";
 const COMING = "var(--color-bit)";
 
 /**

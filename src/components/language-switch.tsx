@@ -36,6 +36,8 @@ export function LanguageSelect({ saved }: { saved: string | null }) {
   return (
     <div className="space-y-1.5">
       <select
+        // Remount when the header or footer switch changes the saved language.
+        key={saved ?? "auto"}
         className={input}
         defaultValue={saved ?? "auto"}
         disabled={pending}

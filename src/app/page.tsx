@@ -13,6 +13,7 @@ import { roleCan } from "@/lib/clan-roles";
 import { ClanAvatar } from "@/components/clan-avatar";
 import { getT } from "@/i18n/server";
 import type { T } from "@/i18n/translate";
+import { BrandMark } from "@/components/brand-mark";
 
 const { lan, attendance, seat, nickname } = schema;
 
@@ -206,8 +207,7 @@ async function NoClan() {
   const t = await getT();
   return (
     <div className="mx-auto flex max-w-md flex-col items-center space-y-4 py-10 text-center">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/brand/seatbit-mark.svg" alt="" className="h-12 w-12" />
+      <BrandMark className="h-12 w-12" />
       <h1 className="text-2xl font-bold tracking-tight">{t("home.welcomeTitle")}</h1>
       <p className="text-muted">{t("home.welcomeText")}</p>
       <Link href="/clans" className={btnPrimary}>

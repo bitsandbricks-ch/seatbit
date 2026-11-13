@@ -6,16 +6,28 @@ import { getLegal } from "@/lib/legal";
 import { LanguageLinks } from "@/components/language-switch";
 import { I18nProvider } from "@/i18n/client";
 import { getT } from "@/i18n/server";
+import { THEME_COLORS } from "@/lib/theme";
+import { getTheme } from "@/lib/theme-server";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
-export const viewport: Viewport = {
-  themeColor: "#0b0b0f",
-  colorScheme: "dark",
-  viewportFit: "cover",
-};
+/** Browser toolbar colour follows the theme: fixed when picked, by the device setting for "System". */
+export async function generateViewport(): Promise<Viewport> {
+  const theme = await getTheme();
+  return {
+    themeColor:
+      theme === "system"
+        ? [
+            { media: "(prefers-color-scheme: light)", color: THEME_COLORS.light },
+            { media: "(prefers-color-scheme: dark)", color: THEME_COLORS.dark },
+          ]
+        : THEME_COLORS[theme],
+    colorScheme: theme === "system" ? "dark light" : theme,
+    viewportFit: "cover",
+  };
+}
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.BETTER_AUTH_URL ?? "http://localhost:3000"),
@@ -41,9 +53,11 @@ const badge = "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 te
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const t = await getT();
+  // Set on the server, so the page never flashes the wrong theme. "System" is pure CSS (prefers-color-scheme).
+  const theme = await getTheme();
   const commitTitle = t("footer.commit", { sha: "{sha}" });
   return (
-    <html lang={t.locale} className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    <html lang={t.locale} data-theme={theme === "system" ? undefined : theme} className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans">
         <I18nProvider locale={t.locale}>
         <Header />

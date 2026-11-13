@@ -43,6 +43,14 @@ export const en = {
     hint: "The app's language. Automatic follows your browser.",
     switchTo: "Switch language",
   },
+  display: {
+    menu: "Language and theme",
+    theme: "Theme",
+    system: "System",
+    light: "Light",
+    dark: "Dark",
+    themeHint: "System follows your device. Saved in this browser.",
+  },
   status: {
     going: "Attending",
     maybe: "Unsure",

@@ -21,7 +21,7 @@ The rules every change follows, for humans and [AI agents](agents.md) alike.
 
 - **Mobile-first** with a good desktop layout. Test both.
 - Use the shared components in `src/components/ui.tsx` (`Page`, `PageHeader`, `Card`, `Notice`, ...) and `src/components/tabs.tsx`.
-- **Colours** only via brand tokens (`brand/tokens.css`), never raw values.
+- **Colours** only via brand tokens (`brand/tokens.css`), never raw values. The tokens cover both the dark and the light theme; text on a green fill is `text-on-bit`, never `text-ink`. Check new UI in both themes.
 - Every page uses the root layout width (`max-w-7xl`); don't add your own max-width.
 - **Texts** go through `t()` with an English and a German entry (`src/i18n/messages/`), never as literals in the page (`npm run check:i18n` flags them). German uses "ss", not "ß". See [Architecture](../development/architecture.md#languages).
 

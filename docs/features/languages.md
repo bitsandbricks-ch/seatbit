@@ -2,16 +2,16 @@
 
 Seatbit speaks English and German. Everyone picks their own language; the event, its seats and everybody's names stay the same for all.
 
-**Who:** everyone · **Where:** *Profile › Account › Language*, and the links in the footer
+**Who:** everyone · **Where:** the language and theme button in the top bar, *Profile › Account › Language*, and the links in the footer
 
 ## Which language you get
 
 1. The language you picked on your profile (*Account* tab).
-2. Otherwise the language you picked in the footer (remembered in this browser, also before you sign in).
+2. Otherwise the language you picked in the top bar or the footer (remembered in this browser, also before you sign in).
 3. Otherwise your browser's language, when it's English or German.
 4. Otherwise the instance's **Default language** (platform setting `DEFAULT_LOCALE`, default English).
 
-On your first sign-in Seatbit keeps the language you signed up in. Choose **Automatic** on your profile to follow the browser again.
+All three places change the same setting: switching in the top bar while signed in also saves it on your profile. On your first sign-in Seatbit keeps the language you signed up in. Choose **Automatic** on your profile to follow the browser again.
 
 German uses Swiss spelling ("ss", never "ß"). Dates keep the same 24-hour format in both languages: "Sa 14.11.2026, 18:00".
 

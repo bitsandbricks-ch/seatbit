@@ -6,6 +6,7 @@ import { Field, Input, btnPrimary, cardPage, cardPageTitle } from "@/components/
 import { isProfileComplete, requireUser } from "@/lib/session";
 import { getT } from "@/i18n/server";
 import { LanguageLinks } from "@/components/language-switch";
+import { BrandMark } from "@/components/brand-mark";
 
 /** First login: ask for the real name and the gamer tag (Discord only gives us a display name). */
 export default async function WelcomePage({ searchParams }: PageProps<"/welcome">) {
@@ -24,8 +25,7 @@ export default async function WelcomePage({ searchParams }: PageProps<"/welcome"
   return (
     <div className={`${cardPage} !space-y-6`}>
       <div className="space-y-1">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/brand/seatbit-mark.svg" alt="" className="mb-3 h-10 w-10" />
+        <BrandMark className="mb-3 h-10 w-10" />
         <h1 className={cardPageTitle}>{t("welcome.title")}</h1>
         <p className="text-sm text-muted">{t("welcome.intro")}</p>
         <p className="text-xs text-muted">

@@ -237,7 +237,7 @@ export function DateTimePicker({
           id={popId}
           role="dialog"
           aria-label={t("picker.choose")}
-          className="absolute left-0 z-40 mt-2 w-[19rem] max-w-[calc(100vw-2rem)] rounded-card border border-line bg-surface p-3 shadow-2xl shadow-black/60"
+          className="absolute left-0 z-40 mt-2 w-[19rem] max-w-[calc(100vw-2rem)] rounded-card border border-line bg-surface p-3 shadow-2xl shadow-black/60 light:shadow-black/15"
         >
           <div className="mb-2 flex items-center justify-between">
             <button type="button" onClick={() => shift(-1)} className={`${btnGhost} !min-h-9 !px-2.5`} aria-label={t("picker.prev")}>
