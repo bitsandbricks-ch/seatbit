@@ -750,6 +750,22 @@ export const appSetting = sqliteTable("app_setting", {
   updatedAt: integer("updated_at", { mode: "timestamp_ms" }).default(now).notNull(),
 });
 
+/**
+ * Which days someone used Seatbit (a date, no time, no pages), for the platform usage stats.
+ * At most one row per person and day; rows older than USAGE_KEEP_DAYS are removed.
+ */
+export const userActivity = sqliteTable(
+  "user_activity",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    /** YYYY-MM-DD in the server's time zone. */
+    day: text("day").notNull(),
+  },
+  (t) => [uniqueIndex("user_activity_user_day_idx").on(t.userId, t.day), index("user_activity_day_idx").on(t.day)],
+);
+
 export const INTEREST_ANSWERS = ["yes", "maybe", "no"] as const;
 export type InterestAnswer = (typeof INTEREST_ANSWERS)[number];
 

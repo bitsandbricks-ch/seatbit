@@ -610,6 +610,23 @@ export async function seedDemo({ force = false, discord = false } = {}) {
         .values({ at: at(days, hh), actorId: ids[actor], action, clanId, lanId, targetUserId: target ? ids[target] : null, data })
         .run();
 
+    // A year of "used Seatbit on this day" for the usage stats: some people every few days, some
+    // rarely, everyone more often in the weeks before an event. A fixed pattern, so screenshots don't change.
+    const p2 = (n: number) => String(n).padStart(2, "0");
+    const busy = [events.past, events.lakeside].map((id) => tx.select().from(s.lan).where(eq(s.lan.id, id)).get()?.startsAt.getTime() ?? 0);
+    PEOPLE.forEach((p, i) => {
+      const often = i === 0 ? 50 : 1 + ((i * 37) % 7);
+      for (let d = 365; d >= 0; d--) {
+        const day = new Date(Date.now() - d * DAY);
+        const soon = busy.some((b) => b - day.getTime() > 0 && b - day.getTime() < 21 * DAY);
+        if (((i + 3) * 7919 + d * 104729) % 100 >= (soon ? often * 4 : often)) continue;
+        tx.insert(s.userActivity)
+          .values({ userId: ids[p.key], day: `${day.getFullYear()}-${p2(day.getMonth() + 1)}-${p2(day.getDate())}` })
+          .onConflictDoNothing()
+          .run();
+      }
+    });
+
     // A second, open clan Anna isn't in, so the clan list has something to join.
     tx.insert(s.clan)
       .values({ id: "demo-clan-2", name: "Lag Legends", slug: "lag-legends", description: "Retro LAN fans from Bern. Everyone welcome.", joinPolicy: "open" })

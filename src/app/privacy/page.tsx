@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { ContactEmail, LegalPage, Operator } from "@/components/legal-page";
 import { getLegal, type Legal } from "@/lib/legal";
 import { billingEnabled } from "@/lib/billing";
+import { backupKeepDays } from "@/lib/backup";
 import { donationsEnabled } from "@/lib/donations";
 import { getLocale, getT } from "@/i18n/server";
 // i18n-ignore-file: the policy is written once per language, below.
@@ -22,12 +23,14 @@ export default async function PrivacyPage() {
   if (legal.privacyUrl) redirect(legal.privacyUrl);
   // Stripe only appears where the operator turned on Supporter payments.
   const payments = billingEnabled() || donationsEnabled();
-  return (await getLocale()) === "de" ? <PrivacyDe legal={legal} payments={payments} /> : <PrivacyEn legal={legal} payments={payments} />;
+  // The backup retention from the platform settings; 0 (keep all) is said as "as long as needed".
+  const backupDays = backupKeepDays();
+  return (await getLocale()) === "de" ? <PrivacyDe legal={legal} payments={payments} backupDays={backupDays} /> : <PrivacyEn legal={legal} payments={payments} backupDays={backupDays} />;
 }
 
-type Props = { legal: Legal; payments: boolean };
+type Props = { legal: Legal; payments: boolean; backupDays: number };
 
-function PrivacyEn({ legal, payments }: Props) {
+function PrivacyEn({ legal, payments, backupDays }: Props) {
   return (
     <LegalPage title="Privacy Policy">
       <p>
@@ -101,13 +104,14 @@ function PrivacyEn({ legal, payments }: Props) {
         <li>A log of which reminders were sent, so nobody gets the same one twice</li>
         <li>An audit log of changes leads and admins make (for example who moved a seat, changed someone&apos;s answer, confirmed a ticket, changed a role or edited a guest), with the time, who made the change and who it was about</li>
         <li>Server logs (time, requested page, IP address, error messages) that our server keeps for a short time</li>
+        <li>The days on which you used Seatbit (only the date, no times or pages), for usage statistics that only platform admins see as totals</li>
       </ul>
 
       <h2>3. Why we process it and on what legal basis</h2>
       <ul>
         <li><strong>To run the Service for you and your clan</strong> (account, events, tickets, seats, Discord bot). Legal basis: performing our agreement with you (Art. 6(1)(b) GDPR).</li>
         <li><strong>To send you reminders</strong> about deadlines and upcoming events, by email and in linked Discord channels. Legal basis: our agreement with you; you can switch off emails on your profile.</li>
-        <li><strong>To keep the Service secure</strong> and fix problems (sessions, logs, backups). Legal basis: our legitimate interest in a working, secure service (Art. 6(1)(f) GDPR).</li>
+        <li><strong>To keep the Service secure</strong> and fix problems (sessions, logs, backups), and to see how much it is used (usage statistics). Legal basis: our legitimate interest in a working, secure service (Art. 6(1)(f) GDPR).</li>
         {payments && (
           <li><strong>To handle voluntary Supporter payments</strong> and keep the required bookkeeping records. Legal basis: our agreement with the payer and our legal obligations (Art. 6(1)(b) and (c) GDPR).</li>
         )}
@@ -173,7 +177,10 @@ function PrivacyEn({ legal, payments }: Props) {
         {payments && (
           <li>Supporter details of a clan: as long as the clan exists. Payment records (receipts, amounts, dates): as long as bookkeeping law requires, usually ten years.</li>
         )}
-        <li>Server logs: a few days. Database backups: up to 14 days.</li>
+        <li>Days you used Seatbit: 400 days.</li>
+        <li>
+          Server logs: a few days. Database backups: {backupDays > 0 ? `up to ${backupDays} days` : "as long as needed to restore the Service, then deleted"}.
+        </li>
       </ul>
       <p>
         You can delete your account yourself on your <Link href="/profile?tab=data">profile</Link> (Your data, Delete my
@@ -182,7 +189,7 @@ function PrivacyEn({ legal, payments }: Props) {
         answers to past events (coming or not, ticket) stay with an anonymous &ldquo;Deleted member&rdquo; that
         can&apos;t be traced back to you, so your clan&apos;s event history still adds up; audit log entries show the
         same &ldquo;Deleted member&rdquo;. A clan where nobody else with a login is left is deleted with your account.
-        Backups are overwritten within 14 days.
+        {backupDays > 0 && `Backups are deleted within ${backupDays} days.`}
       </p>
 
       <h2>7. Your rights</h2>
@@ -230,7 +237,7 @@ function PrivacyEn({ legal, payments }: Props) {
   );
 }
 
-function PrivacyDe({ legal, payments }: Props) {
+function PrivacyDe({ legal, payments, backupDays }: Props) {
   return (
     <LegalPage title="Datenschutzerklärung">
       <p>
@@ -303,13 +310,14 @@ function PrivacyDe({ legal, payments }: Props) {
         <li>Ein Protokoll, welche Erinnerungen verschickt wurden, damit niemand dieselbe zweimal bekommt</li>
         <li>Ein Protokoll der Änderungen von Leads und Admins (zum Beispiel wer einen Platz verschoben, eine Antwort geändert, ein Ticket bestätigt, eine Rolle geändert oder einen Gast bearbeitet hat), mit Zeit, wer die Änderung gemacht hat und wen sie betrifft</li>
         <li>Server-Logs (Zeit, aufgerufene Seite, IP-Adresse, Fehlermeldungen), die unser Server kurz aufbewahrt</li>
+        <li>Die Tage, an denen du Seatbit benutzt hast (nur das Datum, keine Uhrzeit und keine Seiten), für Nutzungsstatistiken, die nur Plattform-Admins als Summen sehen</li>
       </ul>
 
       <h2>3. Zweck und Rechtsgrundlage</h2>
       <ul>
         <li><strong>Um den Dienst für dich und deinen Clan zu betreiben</strong> (Konto, Events, Tickets, Plätze, Discord-Bot). Rechtsgrundlage: Erfüllung unserer Vereinbarung mit dir (Art. 6 Abs. 1 lit. b DSGVO).</li>
         <li><strong>Um dir Erinnerungen zu schicken</strong> zu Fristen und kommenden Events, per E-Mail und in verknüpften Discord-Kanälen. Rechtsgrundlage: unsere Vereinbarung mit dir; E-Mails kannst du in deinem Profil ausschalten.</li>
-        <li><strong>Um den Dienst sicher zu halten</strong> und Probleme zu beheben (Sitzungen, Logs, Backups). Rechtsgrundlage: unser berechtigtes Interesse an einem funktionierenden, sicheren Dienst (Art. 6 Abs. 1 lit. f DSGVO).</li>
+        <li><strong>Um den Dienst sicher zu halten</strong> und Probleme zu beheben (Sitzungen, Logs, Backups) und um zu sehen, wie stark er genutzt wird (Nutzungsstatistik). Rechtsgrundlage: unser berechtigtes Interesse an einem funktionierenden, sicheren Dienst (Art. 6 Abs. 1 lit. f DSGVO).</li>
         {payments && (
           <li><strong>Um freiwillige Supporter-Zahlungen abzuwickeln</strong> und die vorgeschriebenen Buchhaltungsbelege aufzubewahren. Rechtsgrundlage: unsere Vereinbarung mit der zahlenden Person und unsere gesetzlichen Pflichten (Art. 6 Abs. 1 lit. b und c DSGVO).</li>
         )}
@@ -377,7 +385,10 @@ function PrivacyDe({ legal, payments }: Props) {
         {payments && (
           <li>Supporter-Angaben eines Clans: solange der Clan besteht. Zahlungsbelege (Quittungen, Beträge, Daten): solange es das Buchhaltungsrecht verlangt, meist zehn Jahre.</li>
         )}
-        <li>Server-Logs: ein paar Tage. Datenbank-Backups: bis zu 14 Tage.</li>
+        <li>Tage, an denen du Seatbit benutzt hast: 400 Tage.</li>
+        <li>
+          Server-Logs: ein paar Tage. Datenbank-Backups: {backupDays > 0 ? `bis zu ${backupDays} Tage` : "solange sie zum Wiederherstellen nötig sind, dann gelöscht"}.
+        </li>
       </ul>
       <p>
         Du kannst dein Konto selbst in deinem <Link href="/profile?tab=data">Profil</Link> löschen (Deine Daten, Mein
@@ -386,7 +397,7 @@ function PrivacyDe({ legal, payments }: Props) {
         Events. Deine Antworten zu vergangenen Events (kommt oder nicht, Ticket) bleiben bei einem anonymen «Gelöschtes
         Mitglied», das sich nicht auf dich zurückführen lässt, damit die Event-Geschichte deines Clans aufgeht;
         Protokolleinträge zeigen dasselbe «Gelöschtes Mitglied». Ein Clan, in dem sonst niemand mit Login übrig ist, wird
-        mit deinem Konto gelöscht. Backups werden innert 14 Tagen überschrieben.
+        mit deinem Konto gelöscht. {backupDays > 0 && `Backups werden innert ${backupDays} Tagen gelöscht.`}
       </p>
 
       <h2>7. Deine Rechte</h2>

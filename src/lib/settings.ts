@@ -50,6 +50,10 @@ export const SETTING_GROUPS = {
   },
   google: { title: "Google login", help: "OAuth client for the \"Sign in with Google\" button." },
   automation: { title: "Reminders & cron", help: "How due reminders are triggered." },
+  backup: {
+    title: "Backups",
+    help: "Seatbit copies its database to the backup folder while it runs. Mount that folder on its own volume and copy the files off the server too.",
+  },
   billing: {
     title: "Supporter payments",
     help: "Optional. Lets clans support this instance with a voluntary yearly or monthly payment, and people give one-off donations, through Stripe. Supporters and donors get a badge and a thank-you, never extra features. Off by default.",
@@ -472,6 +476,38 @@ export const SETTINGS: SettingDef[] = [
     kind: "secret",
     env: "CRON_SECRET",
     help: "Bearer token for GET /api/cron/reminders. Leave unset to disable the endpoint.",
+  },
+
+  // Backups
+  {
+    key: "backup.intervalHours",
+    group: "backup",
+    label: "Backup every (hours)",
+    kind: "number",
+    env: "BACKUP_INTERVAL_HOURS",
+    default: "24",
+    help: "How often the server backs up the database. 0 turns scheduled backups off (for example when a cron job runs scripts/backup.mjs).",
+    validate: isInt(0, 168),
+  },
+  {
+    key: "backup.keepDays",
+    group: "backup",
+    label: "Keep backups for (days)",
+    kind: "number",
+    env: "BACKUP_KEEP_DAYS",
+    default: "14",
+    help: "Older backups are deleted after each new one. The newest backup always stays. 0 keeps all of them. The privacy policy mentions this number.",
+    validate: isInt(0, 3650),
+  },
+  {
+    key: "backup.dir",
+    group: "backup",
+    label: "Backup folder",
+    kind: "text",
+    env: "BACKUP_DIR",
+    placeholder: "/backups",
+    help: "Folder on the server. Empty: the BACKUP_DIR env var (the container image sets /backups), or ./backups next to the app.",
+    validate: (v) => (v.startsWith("/") || /^[A-Za-z]:[\\/]/.test(v) ? null : "Use an absolute path, e.g. /backups"),
   },
 ];
 

@@ -236,8 +236,15 @@
     {
       "idx": 33,
       "version": "6",
-      "when": 1794583744730,
-      "tag": "0034_clan_payments",
+      "when": 1794583573239,
+      "tag": "0034_usage_activity",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "6",
+      "when": 1794583963454,
+      "tag": "0035_clan_payments",
       "breakpoints": true
     }
   ]

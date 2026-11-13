@@ -13,6 +13,8 @@ The first account is always admin. Add more with the **Admin emails** setting, i
 | Section | |
 | --- | --- |
 | **Clans, events, users** | Everything on the instance. Make someone admin or take it away in the user list. Deleted accounts only show as a count. |
+| **Usage** | Accounts, active people, clans and events over time. See [Usage](#usage). |
+| **Backups** | Database backups: schedule, back up now, download. See [Backups](../installation/operations.md#backups). |
 | **Health** | Version, database, mail, Discord and background jobs at a glance. See [Health](#health). |
 | **Audit log** | Every clan's log plus platform changes. See [Audit log](audit-log.md#platform-audit-log). |
 | **Platform settings** | Instance configuration, see below. |
@@ -33,6 +35,23 @@ The first account is always admin. Add more with the **Admin emails** setting, i
 
 ![Platform settings](../screenshots/desktop-admin-discord.png){ .shot }
 
+## Usage
+
+*Admin → Usage* shows how much the instance is used, for the last 12 weeks, the last 12 months or all time:
+
+- **People:** accounts (without guests) and how many of them were **active**, i.e. used Seatbit at least once in that week or month (signed in, answered, changed something).
+- **Clans:** all clans and the active ones: a member was active, or one of the clan's events took place.
+- **Events:** published, not cancelled events by start date, with how many people were going.
+
+The tiles on top show the totals and the last 30 days, the table below has every number.
+
+![Usage](../screenshots/desktop-admin-usage.png){ .shot }
+
+To count active people, Seatbit notes the **days** someone used it (just the date, once a day, no pages or times) and deletes them after 400 days; the privacy policy says so. For the time before that existed, it also counts answers, sign-ins and changes that were already stored, so the charts aren't empty after an update.
+
+## Backups
+
+*Admin → Backups* lists the database backups Seatbit makes by itself, with **Back up now**, download and delete, and the backup settings. Setup, where to store them and how to restore: [Backups](../installation/operations.md#backups).
 ## Health
 
 *Admin → Health* shows how the server is doing. Mail and Discord are checked live each time the page loads (with a 5 second limit), the rest comes from the running server:
@@ -41,7 +60,7 @@ The first account is always admin. Add more with the **Admin emails** setting, i
 - **Database:** file, size (and how much of it is still in the WAL), SQLite version, a quick integrity check and row counts.
 - **Email:** the SMTP server, whether the login works, and the last mail sent or failed.
 - **Discord:** the bot's name, how many clan channels are linked, and whether the bot can see the ops and announcements channels.
-- **Background jobs:** reminders and scheduled publishing, when they last ran and their last error.
+- **Background jobs:** reminders, scheduled publishing and database backups, when they last ran and their last error. A failed backup is also posted to the ops channel as an error.
 - **Recent problems:** the last 30 server errors, mail and Discord failures.
 
 Jobs and problems are kept in memory, so they start empty after a restart. For a load balancer or Kubernetes probe use `GET /api/health` instead (see [Operations](../installation/operations.md#logs-and-health)).

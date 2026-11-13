@@ -85,7 +85,7 @@ export const AUDIT_GROUPS = {
   seats: { prefixes: ["seat.", "seats.", "swap."] },
   members: { prefixes: ["member.", "invite.", "clan.", "platform.", "account."] },
   guests: { prefixes: ["guest."] },
-  settings: { prefixes: ["type.", "discord.", "settings.", "mail_template."] },
+  settings: { prefixes: ["type.", "discord.", "settings.", "mail_template.", "backup."] },
   payments: { prefixes: ["payment."] },
 } as const;
 export type AuditGroup = keyof typeof AUDIT_GROUPS;
@@ -343,6 +343,12 @@ export function describeAudit(
         return t("audit.chargePaid", { ...v, how });
       }
       return t(d.status === "waived" ? "audit.chargeWaived" : "audit.chargeReopen", v);
+    case "backup.create":
+      return t("audit.backupCreate", v);
+    case "backup.download":
+      return t("audit.backupDownload", v);
+    case "backup.delete":
+      return t("audit.backupDelete", v);
     default:
       return e.action;
   }
