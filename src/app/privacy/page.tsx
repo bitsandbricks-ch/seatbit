@@ -262,6 +262,7 @@ function PrivacyDe({ legal, payments }: Props) {
         <li>Pro Event: ob du kommst, unsicher bist oder nicht kommst, ob du ein Ticket gekauft hast, ob ein Lead es bestätigt hat, und deine Notiz</li>
         <li>Platzwünsche (neben wem du sitzen willst oder nicht, bevorzugte Position oder Platz) und dein zugeteilter Platz</li>
         <li>Ob du Lead eines Events bist</li>
+        <li>Falls dein Clan Clan-Zahlungen nutzt: was die Leads des Clans dir verrechnet haben (Beiträge, Ticketgeld, geteilte Kosten), der Betrag, ob du bezahlt hast, wie (bar, Bank, TWINT) und wann, und wer es abgehakt hat. Das Geld selbst fliesst nie über Seatbit.</li>
         <li>Wenn dich ein Lead als Gast hinzufügt, bevor du ein Konto hast: Name, Nickname und (falls bekannt) E-Mail-Adresse, die er einträgt, sowie deine Antworten und dein Platz bei seinen Events. Die E-Mail dient nur dazu, dir die Einladung zu schicken und dich zu erkennen: Meldest du dich mit einem Discord-Konto an, dessen bestätigte E-Mail übereinstimmt, oder über deinen Übernahme-Link, wandert alles auf dein eigenes Konto und der Gasteintrag wird gelöscht. Sagt ein Lead dem Discord-Bot, welches Discord-Mitglied du bist, speichern wir zusätzlich deine Discord-Benutzer-ID beim Gasteintrag, schicken dir eine DM mit deinem Übernahme-Link und übertragen alles, sobald du dich mit diesem Discord-Konto anmeldest.</li>
         <li>Inhalte, die Clan-Admins eintragen: Clan-Name, Beschreibung und Avatar, LAN-Typen, Events, Einladungslinks</li>
       </ul>
@@ -313,6 +314,7 @@ function PrivacyDe({ legal, payments }: Props) {
       <ul>
         <li><strong>Mitglieder deiner Clans</strong> sehen deinen Namen, Nickname, Avatar und ob du an die Events dieses Clans kommst. Sobald der Sitzplan fixiert ist, sehen sie, wer wo sitzt.</li>
         <li><strong>Clan-Admins und Event-Leads</strong> sehen zusätzlich Ticketstatus, Notizen und Platzwünsche ihrer Events und können die Teilnehmerliste exportieren. Clan-Admins sehen das Protokoll ihres Clans.</li>
+        <li><strong>Clan-Admins und Event-Manager</strong> sehen, was jedes Mitglied dem Clan schuldet und wer bezahlt hat, falls der Clan Clan-Zahlungen nutzt.</li>
         <li><strong>Leute in einem verknüpften Discord-Kanal</strong> sehen die Ankündigungen des Bots, inklusive der Nicknames derer, die kommen, unsicher sind oder auf der Warteliste stehen.</li>
         <li><strong>Plattform-Admins</strong> dieser Seatbit-Instanz können alle Daten sehen, um den Dienst zu betreiben und zu unterstützen.</li>
       </ul>
