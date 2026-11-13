@@ -1,5 +1,5 @@
 "use client";
-import { useActionState, useCallback, type ComponentProps } from "react";
+import { useActionState, useCallback, type ComponentProps, type FocusEvent, type FormEvent } from "react";
 import { unstable_rethrow } from "next/navigation";
 import { useT } from "@/i18n/client";
 import { actionErrorText } from "@/lib/action-error";
@@ -93,6 +93,33 @@ export function useToastAction<S, P = FormData>(action: (state: Awaited<S>, payl
   }, initial);
 }
 
+const isToggle = (el: Element) =>
+  el instanceof HTMLSelectElement || (el instanceof HTMLInputElement && ["checkbox", "radio", "file"].includes(el.type));
+const isText = (el: Element) =>
+  el instanceof HTMLTextAreaElement ||
+  (el instanceof HTMLInputElement && ["text", "search", "email", "url", "tel", "number"].includes(el.type));
+
+/**
+ * Auto-save for a form: spread on the <form>. "toggles" saves when a checkbox, radio, select or
+ * file changes (the form keeps its Save button for its text); "all" also saves a text field when
+ * it loses focus with a new value (Enter submits as usual), so the form needs no Save button.
+ * The toast says whether it worked.
+ */
+export function autoSave(mode: "toggles" | "all") {
+  return {
+    onChange: (e: FormEvent<HTMLFormElement>) => {
+      if (isToggle(e.target as Element)) e.currentTarget.requestSubmit();
+    },
+    onBlur:
+      mode === "all"
+        ? (e: FocusEvent<HTMLFormElement>) => {
+            const el = e.target as unknown as HTMLInputElement | HTMLTextAreaElement;
+            if (isText(el) && el.value !== el.defaultValue) e.currentTarget.requestSubmit();
+          }
+        : undefined,
+  };
+}
+
 /**
  * A form that runs a server action and toasts the outcome. Usable from server components.
  * `done` picks the success note ("Saved." by default); false for none, e.g. when the action
@@ -102,14 +129,17 @@ export function ActionForm({
   action,
   done = "saved",
   success,
+  auto,
   ...props
 }: Omit<ComponentProps<"form">, "action"> & {
   action: (form: FormData) => Promise<unknown>;
   done?: "saved" | "deleted" | "removed" | false;
   success?: string;
+  /** Save without a button, see autoSave(). */
+  auto?: "toggles" | "all";
 }) {
   const t = useT();
   const run = useRunAction();
   const text = success ?? (done && t(`toast.${done}`));
-  return <form {...props} action={(form) => run(() => action(form), text).then(() => undefined)} />;
+  return <form {...props} {...(auto ? autoSave(auto) : {})} action={(form) => run(() => action(form), text).then(() => undefined)} />;
 }

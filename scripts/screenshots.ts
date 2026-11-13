@@ -114,7 +114,9 @@ async function setMaintenance(page: Page) {
   await dates.nth(1).fill("14.11.2026 23:00");
   await dates.nth(1).press("Enter");
   await page.getByRole("button", { name: "Save" }).click();
-  await page.getByText("Saved.").waitFor();
+  // The "Saved." toast would cover part of the page; close it.
+  await page.locator("ol[aria-live] li").first().waitFor();
+  await page.locator("ol[aria-live] button").first().click();
   await page.mouse.move(0, 0);
 }
 
@@ -196,8 +198,11 @@ const SHOTS: Shot[] = [
     who: "anna",
     path: "/profile?tab=notifications",
     act: async (page) => {
-      await page.getByRole("button", { name: "Save", exact: true }).click();
+      // Notifications save as soon as a box is ticked; tick it back afterwards for the other shots.
+      const box = page.getByRole("checkbox", { name: /Discord DMs/ });
+      await box.uncheck();
       await page.locator("ol[aria-live] li").first().waitFor();
+      await box.check();
       // Let the slide-in finish.
       await page.waitForTimeout(400);
     },

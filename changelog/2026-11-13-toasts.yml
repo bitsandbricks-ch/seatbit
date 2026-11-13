@@ -1,12 +1,12 @@
 date: 2026-11-13
 type: improved
 en:
-  title: Notes when something is saved or fails
+  title: Notes when something is saved or fails, and fewer Save buttons
   text: >-
     Saving or changing something now shows a short note at the bottom of the screen, green when it worked and red with
-    the reason when it didn't. A failed save no longer replaces the page with an error.
+    the reason when it didn't. Simple settings like notifications, your avatar, nicks and LAN IDs save on their own.
 de:
-  title: Meldungen beim Speichern und bei Fehlern
+  title: Meldungen beim Speichern und weniger Speichern-Knöpfe
   text: >-
     Wenn du etwas speicherst oder änderst, erscheint unten eine kurze Meldung: grün, wenn es geklappt hat, rot mit dem
-    Grund, wenn nicht. Ein fehlgeschlagenes Speichern ersetzt die Seite nicht mehr durch eine Fehlermeldung.
+    Grund, wenn nicht. Einfache Einstellungen wie Benachrichtigungen, Avatar, Nicks und LAN-IDs speichern sich selbst.

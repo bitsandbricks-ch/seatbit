@@ -1,7 +1,7 @@
 import { setMyLanId } from "@/app/actions";
 import { getT } from "@/i18n/server";
 import { LAN_ID_MAX } from "@/lib/lan-accounts";
-import { btnSecondary, input } from "./ui";
+import { input } from "./ui";
 import { ActionForm } from "@/components/action-form";
 
 /**
@@ -21,7 +21,7 @@ export async function LanIdForm({
 }) {
   const t = await getT();
   return (
-    <ActionForm action={setMyLanId} className="flex gap-2">
+    <ActionForm action={setMyLanId} auto="all" className="flex gap-2">
       {lanId && <input type="hidden" name="lanId" value={lanId} />}
       {typeId && <input type="hidden" name="typeId" value={typeId} />}
       <input
@@ -34,7 +34,6 @@ export async function LanIdForm({
         aria-label={label ?? t("profile.lanId")}
         autoComplete="off"
       />
-      <button className={btnSecondary}>{t("common.save")}</button>
     </ActionForm>
   );
 }

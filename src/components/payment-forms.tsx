@@ -1,6 +1,6 @@
 "use client";
 import { useState, useTransition } from "react";
-import { useRunAction, useToastAction } from "./action-form";
+import { autoSave, useRunAction, useToastAction } from "./action-form";
 import type { ChargeItemStatus, ChargeKind, PaidVia } from "@/db/schema";
 import {
   addToCharge,
@@ -24,7 +24,7 @@ export function PaymentSettingsForm({ clanId, enabled, info }: { clanId: string;
   const t = useT();
   const [, action, pending] = useToastAction(savePaymentSettings.bind(null, clanId), undefined);
   return (
-    <form action={action} className="space-y-3">
+    <form action={action} {...autoSave("toggles")} className="space-y-3">
       <label className="flex items-start gap-2 text-sm">
         <input type="checkbox" name="enabled" defaultChecked={enabled} className="mt-0.5 h-4 w-4 accent-bit" />
         <span>

@@ -40,7 +40,7 @@ Seatbit has three kinds of users:
 
 - **Mobile-first.** Every page works on a phone; desktop gets wider layouts, side panels and drag and drop.
 - **Dates** are 24h, Swiss style: *Sat 14.11.2026, 18:00*. Every date field is a text box that also takes typed or pasted dates (`14.11.2026 18:00`, `14.11. 18`).
-- **Notes at the bottom.** Saving or changing something shows a short note at the bottom of the screen: green when it worked, red with the reason when it didn't. It goes away on its own; tap the cross to close it sooner.
+- **Notes at the bottom.** Saving or changing something shows a short note at the bottom of the screen: green when it worked, red with the reason when it didn't. It goes away on its own; tap the cross to close it sooner. Simple settings save on their own, without a Save button: checkboxes and choices as soon as you change them (notifications, avatar, platform roles, "use the clan's to-dos", payments on or off), nick and LAN ID fields when you leave the field or press Enter. Forms with several text fields keep their Save button.
 
     ![A "Saved." note above the tab bar on a phone](../screenshots/phone-toast.png){ .shot width="280" }
 

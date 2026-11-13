@@ -184,7 +184,7 @@ export default async function AdminPage() {
                 {login && u.id !== me.id && (
                   <span className="flex shrink-0 flex-wrap items-center justify-end gap-1">
                     {canSetRole(me, u) && (
-                      <ActionForm action={setPlatformRole.bind(null, u.id)} className="flex items-center gap-1">
+                      <ActionForm action={setPlatformRole.bind(null, u.id)} auto="toggles" className="flex items-center gap-1">
                         <select
                           name="role"
                           defaultValue={u.role}
@@ -197,7 +197,6 @@ export default async function AdminPage() {
                             </option>
                           ))}
                         </select>
-                        <button className={btnGhost}>{t("common.save")}</button>
                       </ActionForm>
                     )}
                     {can.suspend &&
