@@ -187,6 +187,7 @@ const SHOTS: Shot[] = [
   { name: "phone-clan-payments", who: "anna", path: `${CLAN}?tab=payments`, full: true },
   { name: "phone-profile", who: "anna", path: "/profile", full: true },
   { name: "phone-profile-lans", who: "anna", path: "/profile?tab=lans", full: true },
+  { name: "phone-profile-emergency", who: "anna", path: "/profile?tab=emergency" },
   { name: "phone-profile-notifications", who: "anna", path: "/profile?tab=notifications", full: true },
   // German: same pages with a Swiss German browser.
   { name: "phone-event-de", who: "anna", path: LAKESIDE, full: true, lang: "de" },
@@ -219,6 +220,7 @@ const SHOTS: Shot[] = [
   // A lead (Alex) on the phone
   { name: "phone-manage", who: "alex", path: `${LAKESIDE}/manage`, full: true },
   { name: "phone-manage-missing", who: "alex", path: `${LAKESIDE}/manage?tab=missing` },
+  { name: "phone-manage-emergency", who: "alex", path: `${LAKESIDE}/manage?tab=emergency`, full: true },
   { name: "phone-manage-seats", who: "alex", path: `${LAKESIDE}/manage?tab=seats`, act: seat("F12") },
   {
     name: "phone-date-picker",
@@ -250,6 +252,7 @@ const SHOTS: Shot[] = [
   { name: "desktop-manage-attendees", who: "alex", path: `${LAKESIDE}/manage?tab=attendees` },
   { name: "desktop-manage-waitlist", who: "alex", path: `${MOUNTAIN}/manage?tab=attendees` },
   { name: "desktop-manage-missing", who: "alex", path: `${LAKESIDE}/manage?tab=missing`, full: true },
+  { name: "desktop-manage-emergency", who: "alex", path: `${LAKESIDE}/manage?tab=emergency` },
   { name: "desktop-manage-seats", who: "alex", path: `${LAKESIDE}/manage?tab=seats`, act: seat("F12") },
   { name: "desktop-manage-chat", who: "alex", path: `${LAKESIDE}/manage?tab=chat` },
   { name: "desktop-manage-settings", who: "alex", path: `${LAKESIDE}/manage?tab=settings`, full: true },

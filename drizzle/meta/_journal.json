@@ -267,6 +267,13 @@
       "when": 1794585270957,
       "tag": "20261113155430_clan_stripe",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "6",
+      "when": 1794606103447,
+      "tag": "20261113214143_emergency_info",
+      "breakpoints": true
     }
   ]
 }
