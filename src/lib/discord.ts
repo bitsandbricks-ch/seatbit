@@ -5,7 +5,7 @@ import { INTEREST_ANSWERS, type AttendanceStatus, type Clan, type InterestAnswer
 import { avatarUrl, clanCan, getClan, isClanMember, myClans } from "./clans";
 import { roleCan } from "./clan-roles";
 import { type ChatReminderKind, fmtWhen, lanFacts, lanLink, lanSummary } from "./announce";
-import { ATTENDANCE_LOCKED_MSG, attendanceLocked, getDisplayNames, getLan, setAttendance, signupClosed } from "./lans";
+import { ATTENDANCE_LOCKED_MSG, attendanceLocked, getDisplayNames, getLan, setAttendance, signupClosed, waitlistPositions } from "./lans";
 import { type Json, api, discordEnabled } from "./discord-api";
 import type { DiscordMode } from "./discord-modes";
 import { getSetting } from "./settings";
@@ -145,7 +145,7 @@ export async function lanMessage(l: Lan) {
   });
   if (s.maybe.length) fields.push({ name: `Unsure (${s.maybe.length})`, value: list(s.maybe.map((g) => g.name)), inline: false });
   if (s.waitlist.length)
-    fields.push({ name: `Waitlist (${s.waitlist.length})`, value: list(s.waitlist.map((g) => g.name)), inline: false });
+    fields.push({ name: `Waitlist (${s.waitlist.length}, in order)`, value: list(s.waitlist.map((g, i) => `${i + 1}. ${g.name}`)), inline: false });
   // Live status: tickets, seat bookings and what's due next.
   const status = [
     s.going.length ? `🎟️ Tickets: **${s.going.length - s.goingNoTicket}/${s.going.length}**` : "",
@@ -718,7 +718,12 @@ export function handleInteraction(i: Interaction): { response: Json | Promise<Js
       later: async () => {
         try {
           const stored = await setAttendance(l, me.id, status);
-          const extra = stored === "going" ? " Tick off your ticket in Seatbit once you have it." : "";
+          const extra =
+            stored === "going"
+              ? " Tick off your ticket in Seatbit once you have it."
+              : stored === "waitlist"
+                ? ` You're #${waitlistPositions(l.id).get(me.id) ?? "?"} in line; you get a DM when you move up.`
+                : "";
           await editReply({
             content: `${statusLabel[stored]} for **${l.name}**.${extra}`,
             components: [linkButton("Open in Seatbit", lanLink(l))],

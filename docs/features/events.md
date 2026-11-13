@@ -25,7 +25,7 @@ An **event** is one edition of a LAN the group attends. It goes from draft (opti
 | **Start, end** | Set the start and the end follows from the type's usual length. Moving the start later moves the end and the deadlines by the same amount. |
 | **Answer by** | When the group must know who comes (e.g. before booking the seat block). Defaults from the type's days before. |
 | **Buy ticket by** | Deadline for tickets. |
-| **Spots** | How many people the group can bring. When full, new answers go on the [waitlist](attendance.md#waitlist). |
+| **Spots** | How many people the group can bring. When full, new answers go on the [waitlist](attendance.md#waitlist); orgas choose whether the next in line moves up by itself or they pick. |
 | **Seats** | The seats the event gave the group, e.g. `F1-F16, F19-F22`. See [Seats](seats.md). |
 | **Event seat plan** | Link to the event's own seat plan where members book their seat (new every year). |
 | **Member profile link** | A member's profile on the event's site with `{id}` for their LAN ID. Empty uses the LAN type's. See [Profile links](clans.md#profile-links). |

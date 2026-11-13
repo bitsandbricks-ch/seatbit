@@ -277,6 +277,11 @@ export const lan = sqliteTable("lan", {
   price: text("price").default("").notNull(),
   /** Spots the group has at the event (e.g. size of the reserved seat block); null = unlimited. */
   capacity: integer("capacity"),
+  /**
+   * When a spot opens, move the first person on the waitlist to coming by themselves. Off: the orgas
+   * get a notice and pick who moves up (e.g. they want to ask first who still has time).
+   */
+  waitlistAuto: integer("waitlist_auto", { mode: "boolean" }).default(true).notNull(),
   /** Send due-date reminders this many days before a deadline. */
   reminderDays: integer("reminder_days").default(3).notNull(),
   seatRows: integer("seat_rows").default(6).notNull(),
@@ -348,6 +353,11 @@ export const attendance = sqliteTable(
     seatBooked: integer("seat_booked", { mode: "boolean" }).default(false).notNull(),
     /** Checked in at the venue on the day ("I'm here"). */
     arrivedAt: integer("arrived_at", { mode: "timestamp_ms" }),
+    /**
+     * Place in line while on the waitlist (earliest first); null otherwise. Not createdAt: someone who
+     * answered "unsure" weeks ago must not jump ahead of people who said "coming" before them.
+     */
+    waitlistedAt: integer("waitlisted_at", { mode: "timestamp_ms" }),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" })
       .default(now)

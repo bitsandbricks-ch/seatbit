@@ -80,7 +80,7 @@ export function changedFields<T extends Record<string, unknown>>(before: T, afte
 
 export const AUDIT_GROUPS = {
   events: { label: "Events", prefixes: ["event.", "orga.", "news."] },
-  attendance: { label: "Answers & tickets", prefixes: ["attendance.", "ticket.", "lanid.", "arrived.", "seatbooked."] },
+  attendance: { label: "Answers & tickets", prefixes: ["attendance.", "waitlist.", "ticket.", "lanid.", "arrived.", "seatbooked."] },
   seats: { label: "Seats", prefixes: ["seat.", "seats.", "swap."] },
   members: { label: "Members & roles", prefixes: ["member.", "invite.", "clan.", "platform.", "account."] },
   guests: { label: "Guests", prefixes: ["guest."] },
@@ -186,6 +186,12 @@ export function describeAudit(e: AuditEntry, name: (id: string | null | undefine
       return `deleted an orga news post${at}`;
     case "attendance.set":
       return `changed the answer of ${who}${at} from ${st(d.from)} to ${st(d.to)}`;
+    case "waitlist.move_up":
+      return `moved ${who} up from the waitlist${at}`;
+    case "waitlist.reorder":
+      return `moved ${who} ${d.dir === "up" ? "up" : "down"} one place on the waitlist${at}`;
+    case "waitlist.auto":
+      return d.on ? `let the waitlist${at} move up by itself` : `switched the waitlist${at} to moving up by hand`;
     case "attendance.remove":
       return `removed ${who} from the attendees${at}`;
     case "ticket.confirm":
