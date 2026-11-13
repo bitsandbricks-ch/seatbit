@@ -7,6 +7,8 @@ import {
   addGuest,
   deleteGuest,
   renewGuestLink,
+  resendGuestDiscordDm,
+  unlinkGuestDiscord,
   updateGuest,
   createInvite,
   decideGuestClaim,
@@ -24,6 +26,8 @@ import { SupportCard } from "@/components/support-card";
 import { AddMemberForm } from "@/components/add-member-form";
 import { CopyField } from "@/components/copy-field";
 import { GuestEditForm, GuestForm } from "@/components/guest-form";
+import { GuestDiscordLink } from "@/components/guest-discord";
+import { guestDiscordLines } from "@/lib/guest-claim";
 import { ClanMemberAdmin } from "@/components/clan-member-list";
 import { Card, Columns, Page, btnDanger, btnGhost, btnPrimary, btnSecondary } from "@/components/ui";
 import { appUrl } from "@/lib/mail";
@@ -475,7 +479,7 @@ function GuestsTab({
                                 ? `Invited ${fmtDate(u.invitedAt)} at ${u.inviteEmail}`
                                 : u.inviteEmail
                               : "No email yet"}
-                            {u.guestDiscordId && " · Discord member linked"}
+                            {u.guestDiscordId && ` · Discord: ${u.guestDiscordName ?? "linked"}`}
                           </span>
                         </span>
                         <span className={`${btnSecondary} shrink-0 group-open:!border-bit`}>
@@ -502,6 +506,15 @@ function GuestsTab({
                               <button className={`${btnGhost} text-xs`}>New link</button>
                             </form>
                           </span>
+                        </div>
+                        <div className="space-y-1.5 border-t border-line pt-4">
+                          <p className="text-xs text-muted">Discord</p>
+                          <GuestDiscordLink
+                            linked={!!u.guestDiscordId}
+                            lines={guestDiscordLines(u)}
+                            resend={resendGuestDiscordDm.bind(null, clanId, u.id)}
+                            unlink={unlinkGuestDiscord.bind(null, clanId, u.id)}
+                          />
                         </div>
                         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line pt-4">
                           <Link href={`/clans/${slug}/members/${u.id}`} className="text-sm text-bit hover:underline">

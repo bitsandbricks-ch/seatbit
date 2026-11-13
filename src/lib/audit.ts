@@ -259,7 +259,11 @@ export function describeAudit(e: AuditEntry, name: (id: string | null | undefine
     case "guest.claim_request":
       return `asked to take over the guest ${d.guest}${d.match ? ` (same ${d.match})` : ""}${d.via === "discord" ? " on Discord" : ""}`;
     case "guest.discord_link":
-      return `linked the guest ${d.guest} to a Discord member, who takes it over when they sign in`;
+      return `${d.relinked ? "re-linked" : "linked"} the guest ${d.guest} to a Discord member, who takes it over when they sign in`;
+    case "guest.discord_dm":
+      return `sent the Discord DM with the claim link to the guest ${d.guest} again${d.ok ? "" : " (Discord refused it)"}`;
+    case "guest.discord_unlink":
+      return `unlinked the guest ${d.guest} from their Discord member`;
     case "guest.claim_approve":
       return `confirmed ${who} is the guest ${d.guest}`;
     case "guest.claim_decline":

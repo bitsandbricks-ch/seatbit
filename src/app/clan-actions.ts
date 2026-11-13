@@ -27,6 +27,8 @@ import { requireClanPermission, requireLanManager, requireUser } from "@/lib/ses
 import { adminSetAttendance, type FormState } from "./actions";
 import { getDefaultNames } from "@/lib/lans";
 import { audit } from "@/lib/audit";
+import { UNLINKED, sendGuestDiscordDm } from "@/lib/discord";
+import type { ActionResult } from "@/app/admin/settings/actions";
 import { cancelSupport } from "@/lib/billing";
 import { NAME_DISPLAYS, cleanName } from "@/lib/names";
 
@@ -506,6 +508,38 @@ export async function deleteGuest(clanId: string, userId: string) {
 }
 
 /** New claim link; the old one stops working. */
+/** "Send the DM again" on a guest an orga linked to a Discord member. */
+export async function resendGuestDiscordDm(clanId: string, userId: string): Promise<ActionResult> {
+  const me = await requireClanPermission(clanId, "members");
+  const g = requireGuestOf(clanId, userId);
+  if (!g.guestDiscordId) return { ok: false, message: "Not linked to a Discord member.", at: Date.now() };
+  const r = await sendGuestDiscordDm(g.id);
+  audit({ actorId: me.id, action: "guest.discord_dm", clanId, targetUserId: g.id, data: { guest: g.name, ok: r.ok } });
+  revalidatePath("/clans", "layout");
+  return r.ok
+    ? { ok: true, message: "Sent. They got the claim link as a Discord DM.", at: Date.now() }
+    : {
+        ok: false,
+        message:
+          r.problem === "cant_dm"
+            ? "Discord didn't let the bot DM them (no shared server, or DMs off). Send them the claim link yourself."
+            : r.problem === "bot_not_set_up"
+              ? "The Discord bot isn't set up on this instance."
+              : "Couldn't send the DM. Try again later or send the claim link yourself.",
+        at: Date.now(),
+      };
+}
+
+/** Drops a guest's Discord link, so that member's sign-in no longer takes it over. */
+export async function unlinkGuestDiscord(clanId: string, userId: string): Promise<ActionResult> {
+  const me = await requireClanPermission(clanId, "members");
+  const g = requireGuestOf(clanId, userId);
+  db.update(schema.user).set(UNLINKED).where(eq(schema.user.id, g.id)).run();
+  audit({ actorId: me.id, action: "guest.discord_unlink", clanId, targetUserId: g.id, data: { guest: g.name } });
+  revalidatePath("/clans", "layout");
+  return { ok: true, message: "Unlinked.", at: Date.now() };
+}
+
 export async function renewGuestLink(clanId: string, userId: string) {
   const me = await requireClanPermission(clanId, "members");
   requireGuestOf(clanId, userId);
