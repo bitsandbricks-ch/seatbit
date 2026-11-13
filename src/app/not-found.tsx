@@ -1,17 +1,16 @@
 import Link from "next/link";
 import { btnPrimary } from "@/components/ui";
+import { getT } from "@/i18n/server";
 
-export default function NotFound() {
+export default async function NotFound() {
+  const t = await getT();
   return (
     <div className="mx-auto flex max-w-md flex-col items-center py-12 text-center">
       <p className="font-mono text-sm text-bit">404</p>
-      <h1 className="mt-1 text-xl font-bold">This seat is empty</h1>
-      <p className="mt-2 text-sm text-muted">
-        The page doesn&apos;t exist, or it belongs to a clan you&apos;re not in. Ask a lead for an invite link if you
-        think you should see it.
-      </p>
+      <h1 className="mt-1 text-xl font-bold">{t("pages.notFound")}</h1>
+      <p className="mt-2 text-sm text-muted">{t("pages.notFoundHint")}</p>
       <Link href="/" className={`${btnPrimary} mt-6`}>
-        Back to LANs
+        {t("pages.backToLans")}
       </Link>
     </div>
   );

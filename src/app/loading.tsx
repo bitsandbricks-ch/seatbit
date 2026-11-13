@@ -1,10 +1,12 @@
 import { Skeleton } from "@/components/ui";
+import { getT } from "@/i18n/server";
 
 /** Shown while a page's server data loads (navigations on slow phone connections). */
-export default function Loading() {
+export default async function Loading() {
+  const t = await getT();
   return (
     <div className="space-y-6" aria-busy="true" aria-live="polite">
-      <span className="sr-only">Loading…</span>
+      <span className="sr-only">{t("pages.loading")}</span>
       <div className="space-y-2">
         <Skeleton className="h-4 w-40" />
         <Skeleton className="h-8 w-64" />

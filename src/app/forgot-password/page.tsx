@@ -2,14 +2,16 @@
 import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { btnPrimary, cardPage, cardPageTitle, Field, Input } from "@/components/ui";
+import { useT } from "@/i18n/client";
 
 export default function ForgotPasswordPage() {
+  const t = useT();
   const [sent, setSent] = useState(false);
   return (
     <div className={cardPage}>
-      <h1 className={cardPageTitle}>Reset password</h1>
+      <h1 className={cardPageTitle}>{t("pages.resetPassword")}</h1>
       {sent ? (
-        <p className="text-sm text-fg/90">If that address has an account, a reset link is on its way.</p>
+        <p className="text-sm text-fg/90">{t("pages.resetSent")}</p>
       ) : (
         <form
           className="space-y-4"
@@ -20,10 +22,10 @@ export default function ForgotPasswordPage() {
             setSent(true);
           }}
         >
-          <Field label="Email">
+          <Field label={t("auth.email")}>
             <Input name="email" type="email" required />
           </Field>
-          <button className={`${btnPrimary} w-full`}>Send reset link</button>
+          <button className={`${btnPrimary} w-full`}>{t("pages.sendReset")}</button>
         </form>
       )}
     </div>
