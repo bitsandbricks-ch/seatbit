@@ -2,6 +2,10 @@ import type { Lan } from "@/db/schema";
 import type { StepState } from "./checklist";
 import { makeT, type T } from "../i18n/translate";
 
+/** Built-in steps a custom to-do can wait for, in checklist order. */
+export const LEAD_STEP_DEPS = ["publish", "seats", "tickets", "assign", "finalize", "book"] as const;
+export type LeadStepDep = (typeof LEAD_STEP_DEPS)[number];
+
 export type LeadStep = { key: string; title: string; state: StepState; hint: string; href?: string };
 
 /** The leads' to-do list for one event, from the counts the Manage page already has. */

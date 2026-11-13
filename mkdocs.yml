@@ -100,6 +100,7 @@ nav:
           - Light and dark theme: features/theme.md
       - Events:
           - Event lifecycle: features/events.md
+          - Lead to-dos and contacts: features/lead-todos.md
           - Attendance and tickets: features/attendance.md
           - Seats: features/seats.md
           - Reminders and who's missing: features/reminders.md

@@ -135,6 +135,15 @@ const openDisplayMenu = async (page: Page) => {
   await page.waitForTimeout(200);
 };
 
+/** Scrolls a card (by its id) to just below the sticky header. */
+const scrollTo = (id: string) => async (page: Page) => {
+  await page.evaluate((id) => {
+    const el = document.getElementById(id);
+    if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - (window.innerWidth > 640 ? 116 : 112), behavior: "instant" });
+  }, id);
+  await page.waitForTimeout(200);
+};
+
 // Device comes from the name prefix.
 const SHOTS: Shot[] = [
   // Signed out
@@ -234,6 +243,8 @@ const SHOTS: Shot[] = [
   { name: "desktop-manage-de", who: "alex", path: `${LAKESIDE}/manage`, lang: "de" },
   { name: "desktop-clan-stats-de", who: "alex", path: `${CLAN}/stats`, lang: "de" },
   { name: "phone-lead-checklist", who: "alex", path: `${MOUNTAIN}/manage` },
+  { name: "phone-lead-tasks", who: "alex", path: `${LAKESIDE}/manage`, act: scrollTo("lead-tasks") },
+  { name: "desktop-lead-tasks", who: "alex", path: `${LAKESIDE}/manage`, act: scrollTo("lead-tasks") },
   { name: "desktop-manage-attendees", who: "alex", path: `${LAKESIDE}/manage?tab=attendees` },
   { name: "desktop-manage-waitlist", who: "alex", path: `${MOUNTAIN}/manage?tab=attendees` },
   { name: "desktop-manage-missing", who: "alex", path: `${LAKESIDE}/manage?tab=missing`, full: true },
@@ -255,6 +266,7 @@ const SHOTS: Shot[] = [
   { name: "desktop-clan-discord", who: "alex", path: `${CLAN}/settings?tab=chat` },
   { name: "desktop-lan-types", who: "alex", path: `${CLAN}/settings?tab=types` },
   { name: "desktop-lan-type-edit", who: "alex", path: `${CLAN}/types/demo-type-lakeside` },
+  { name: "desktop-lan-type-tasks", who: "alex", path: `${CLAN}/types/demo-type-lakeside`, act: scrollTo("contacts") },
   { name: "desktop-clan-audit-log", who: "alex", path: `${CLAN}/settings?tab=log` },
   { name: "desktop-admin-audit-log", who: "alex", path: "/admin/log" },
   { name: "desktop-profile", who: "alex", path: "/profile" },

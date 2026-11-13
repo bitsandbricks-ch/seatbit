@@ -101,7 +101,7 @@ Leads see **View / Manage** next to the event title. *Manage* has the tabs:
 
 | Tab | |
 | --- | --- |
-| **Overview** | The lead checklist, a strip with the numbers (coming, unsure, tickets, seats; each opens its tab), deadlines, news, [manual reminders](reminders.md#manual-reminders). |
+| **Overview** | The lead checklist, [lead to-dos and organizer contacts](lead-todos.md), a strip with the numbers (coming, unsure, tickets, seats; each opens its tab), deadlines, news, [manual reminders](reminders.md#manual-reminders). |
 | **Seats** | The seat planner. See [Seats](seats.md#plan-the-seats). |
 | **Attendees** | Answers, tickets, LAN IDs, CSV export. See [Attendance](attendance.md#attendee-list). |
 | **Who's missing** | Who still owes something, with nudges. See [Who's missing](reminders.md#whos-missing). |
@@ -127,6 +127,8 @@ The top of *Manage → Overview* lists what the leads still have to do for the e
 | **Finalize the seat plan** | The plan is final. |
 | **Book the seats on the event site** | Only with an event seat plan link: every seat is ticked as booked. See [Seats](seats.md#book-on-the-event-site). |
 | **Approve seat swaps** | Only while swaps wait for approval. |
+
+Below it, the leads' own [to-dos](lead-todos.md) (e.g. *Send the seat list to the organizers*) can wait for these steps and open once they are done.
 
 ### News
 
