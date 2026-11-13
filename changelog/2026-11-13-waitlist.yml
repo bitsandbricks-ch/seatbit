@@ -1,0 +1,14 @@
+date: 2026-11-13
+type: improved
+pr: [88, 101]
+en:
+  title: "Waitlist in order"
+  text: >-
+    The waitlist keeps the order people joined; leads can reorder it and move people up, or pick
+    themselves who gets a spot. People on the waitlist no longer get ticket reminders.
+de:
+  title: "Warteliste in Reihenfolge"
+  text: >-
+    Die Warteliste behält die Reihenfolge der Anmeldung; Leads können sie umstellen und Leute
+    nachrücken lassen oder selbst bestimmen, wer einen Platz bekommt. Wer auf der Warteliste steht,
+    bekommt keine Ticket-Erinnerungen mehr.

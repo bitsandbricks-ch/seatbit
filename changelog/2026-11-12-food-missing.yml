@@ -1,0 +1,13 @@
+date: 2026-11-12
+type: new
+pr: 46
+en:
+  title: "Food orders and «Who's missing»"
+  text: >-
+    Collect food orders per event. Leads see who still has to answer, pay or pick a seat and can
+    nudge them.
+de:
+  title: "Essensbestellungen und «Wer fehlt»"
+  text: >-
+    Sammle Essensbestellungen pro Event. Leads sehen, wer noch antworten, zahlen oder einen Platz
+    wählen muss, und können nachhaken.

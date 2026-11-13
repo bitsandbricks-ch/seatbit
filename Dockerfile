@@ -42,6 +42,8 @@ COPY --from=build --chown=seatbit:seatbit /app/public ./public
 # Migrations run on startup from ./drizzle; backup script for the CronJob;
 # admin CLI (kubectl exec deploy/seatbit -- node scripts/admin.mjs help).
 COPY --from=build --chown=seatbit:seatbit /app/drizzle ./drizzle
+# Changelog entries for the "What's new" page and the upgrade notice (read at runtime).
+COPY --from=build --chown=seatbit:seatbit /app/changelog ./changelog
 COPY --from=build --chown=seatbit:seatbit /app/scripts/backup.mjs /app/scripts/admin.mjs ./scripts/
 USER seatbit
 VOLUME ["/data"]

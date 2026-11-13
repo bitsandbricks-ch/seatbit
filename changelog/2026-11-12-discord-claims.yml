@@ -1,0 +1,13 @@
+date: 2026-11-12
+type: new
+pr: [75, 79, 82]
+en:
+  title: "Claim your guest profile through Discord"
+  text: >-
+    If a lead added you as a guest, the bot can link that profile to your Discord account. Claim
+    lists only show guests nobody has taken yet.
+de:
+  title: "Gastprofil über Discord übernehmen"
+  text: >-
+    Hat dich ein Lead als Gast erfasst, kann der Bot dieses Profil mit deinem Discord-Konto
+    verknüpfen. Listen zeigen nur Gäste, die noch niemand übernommen hat.

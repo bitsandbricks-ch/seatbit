@@ -192,6 +192,7 @@ const SHOTS: Shot[] = [
   { name: "phone-event-de", who: "anna", path: LAKESIDE, full: true, lang: "de" },
   { name: "phone-profile-de", who: "anna", path: "/profile", lang: "de" },
   { name: "phone-display-menu", who: "anna", path: "/", act: openDisplayMenu },
+  { name: "phone-whats-new", who: "anna", path: "/changelog" },
   { name: "phone-lans-light", who: "anna", path: "/", theme: "light" },
   { name: "phone-event-light", who: "anna", path: LAKESIDE, full: true, theme: "light" },
   { name: "phone-seat-plan-light", who: "anna", path: `${LAKESIDE}?tab=seats`, act: seat("F10"), theme: "light" },

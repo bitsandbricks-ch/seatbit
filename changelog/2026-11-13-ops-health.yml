@@ -1,0 +1,14 @@
+date: 2026-11-13
+type: new
+audience: admins
+pr: 108
+en:
+  title: "Ops Discord channels, Health page and maintenance banner"
+  text: >-
+    The platform team gets its own Discord channels for what happens on the instance and public
+    announcements, a Health page, and a banner to announce maintenance.
+de:
+  title: "Ops-Discord-Kanäle, Health-Seite und Wartungsbanner"
+  text: >-
+    Das Plattform-Team bekommt eigene Discord-Kanäle für das Geschehen auf der Instanz und
+    öffentliche Ankündigungen, eine Health-Seite und ein Banner, um Wartungen anzukündigen.

@@ -1,0 +1,12 @@
+date: 2026-11-11
+type: improved
+pr: [13, 31, 35]
+en:
+  title: "Made for phones, works well on desktop"
+  text: >-
+    Every page got a mobile-first pass, one common width and the same header, columns and tabs.
+de:
+  title: "Fürs Handy gemacht, auch am Desktop gut"
+  text: >-
+    Alle Seiten wurden fürs Handy überarbeitet und haben jetzt dieselbe Breite, denselben Kopf,
+    Spalten und Tabs.

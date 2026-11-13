@@ -1,6 +1,6 @@
 export const notice = {
   upgradeSubject: "Seatbit updated to {version}",
-  upgradeText: "Hi {name},\n\nSeatbit at {url} now runs version {version} (before: {before}).\n\nWhat changed: {changes}\n\n{steps}\n\nYou get this because you're a platform admin.",
+  upgradeText: "Hi {name},\n\nSeatbit at {url} now runs version {version} (before: {before}).\n\n{changes}\n\n{steps}\n\nYou get this because you're a platform admin.",
   upgradeCommandsRegistered: "The Discord slash commands changed and were registered automatically. Nothing else to do.",
   upgradeCommandsFailed: "The Discord slash commands changed, but registering them failed ({error}). Click \"Check bot & register slash commands\" under Admin → Platform settings → Discord.",
   upgradeNothingToDo: "Database updates ran on startup. Nothing else to do.",

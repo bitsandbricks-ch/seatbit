@@ -1,0 +1,13 @@
+date: 2026-11-11
+type: improved
+pr: 24
+en:
+  title: "Your answer locks once you have a ticket"
+  text: >-
+    After a ticket is bought or confirmed you can't switch to «not coming» by accident; a lead can
+    still change it.
+de:
+  title: "Deine Antwort ist fix, sobald du ein Ticket hast"
+  text: >-
+    Ist ein Ticket gekauft oder bestätigt, kannst du nicht mehr aus Versehen auf «komme nicht»
+    wechseln; ein Lead kann es noch ändern.

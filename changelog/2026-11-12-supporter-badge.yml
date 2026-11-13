@@ -1,0 +1,13 @@
+date: 2026-11-12
+type: new
+pr: 65
+en:
+  title: "Supporter badge for clans"
+  text: >-
+    Where the operator turns it on, a clan can support the instance with a yearly or monthly payment
+    and gets a Supporter badge. Nothing else depends on it.
+de:
+  title: "Supporter-Abzeichen für Clans"
+  text: >-
+    Wo der Betreiber es einschaltet, kann ein Clan die Instanz mit einer jährlichen oder monatlichen
+    Zahlung unterstützen und bekommt ein Supporter-Abzeichen. Sonst hängt nichts davon ab.

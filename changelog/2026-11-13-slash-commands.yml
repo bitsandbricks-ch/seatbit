@@ -1,0 +1,13 @@
+date: 2026-11-13
+type: new
+pr: [89, 92]
+en:
+  title: "Discord slash commands for members"
+  text: >-
+    Answer, see upcoming LANs and more right in Discord; the bot confirms your answer by direct
+    message.
+de:
+  title: "Discord-Slash-Befehle für Mitglieder"
+  text: >-
+    Antworte, sieh kommende LANs und mehr direkt in Discord; der Bot bestätigt deine Antwort per
+    Direktnachricht.

@@ -1,0 +1,13 @@
+date: 2026-11-11
+type: new
+pr: [15, 17, 19]
+en:
+  title: "Emails with invites for guests"
+  text: >-
+    Guests with an email address get invites and reminders by mail, in a clean layout with a button
+    to the event.
+de:
+  title: "E-Mails mit Einladungen für Gäste"
+  text: >-
+    Gäste mit E-Mail-Adresse bekommen Einladungen und Erinnerungen per Mail, in einem schlichten
+    Layout mit Knopf zum Event.

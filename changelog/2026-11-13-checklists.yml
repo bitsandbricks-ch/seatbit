@@ -1,0 +1,13 @@
+date: 2026-11-13
+type: new
+pr: [93, 100]
+en:
+  title: "Checklists for members and leads"
+  text: >-
+    Each event shows what's next for you: answer, ticket, seat, booking, games, check-in. Leads get
+    their own checklist.
+de:
+  title: "Checklisten für Mitglieder und Leads"
+  text: >-
+    Jedes Event zeigt, was als Nächstes ansteht: antworten, Ticket, Platz, Buchung, Spiele, Check-
+    in. Leads bekommen ihre eigene Checkliste.

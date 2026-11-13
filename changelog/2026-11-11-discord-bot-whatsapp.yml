@@ -1,0 +1,14 @@
+date: 2026-11-11
+type: new
+pr: [3, 16]
+en:
+  title: "Discord bot and WhatsApp texts"
+  text: >-
+    The bot posts events, reminders and who is coming in your clan's Discord channel and can invite
+    members to your server. For WhatsApp groups, Seatbit prepares texts to copy and paste.
+de:
+  title: "Discord-Bot und WhatsApp-Texte"
+  text: >-
+    Der Bot postet Events, Erinnerungen und wer kommt im Discord-Kanal deines Clans und kann
+    Mitglieder auf euren Server einladen. Für WhatsApp-Gruppen bereitet Seatbit Texte zum Kopieren
+    vor.

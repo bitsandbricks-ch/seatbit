@@ -16,5 +16,6 @@ AI coding agents (Claude Code, Codex, Copilot, ...) follow [AGENTS.md](https://g
 | **Screenshots** | Don't commit changed screenshots; the bot pull request on `main` updates them. New shots are fine. See [Screenshots](../development/screenshots.md#screenshots-in-pull-requests). |
 | **Description** | Keep it current with each push. |
 | **Docs** | User-facing or setup changes update `docs/` in the same pull request. |
+| **Changelog** | Changes people notice add a [changelog entry](changelog.md) in English and German. |
 
 Code rules: see [Code guidelines](guidelines.md). AGENTS.md is the source of truth; update both when a rule changes.
