@@ -3,7 +3,7 @@ import { useState, useTransition } from "react";
 import { adminAutoAssignSeats, setSeatsFromList } from "@/app/actions";
 import { btnPrimary, btnSecondary, input } from "./ui";
 
-/** Orga tools: enter the seats the event gave the group, and auto-fill them. */
+/** Lead tools: enter the seats the event gave the group, and auto-fill them. */
 export function SeatSetup({
   lanId,
   current,

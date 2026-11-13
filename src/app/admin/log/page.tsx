@@ -25,7 +25,7 @@ export default async function AdminLogPage({ searchParams }: PageProps<"/admin/l
           </Link>
         }
         title="Audit log"
-        subtitle="Changes by orgas, clan admins and platform admins across all clans. Kept for a year."
+        subtitle="Changes by leads, clan admins and platform admins across all clans. Kept for a year."
         actions={
           <Link href="/admin" className={btnSecondary}>
             Back to admin

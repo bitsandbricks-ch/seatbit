@@ -93,7 +93,7 @@ export async function trySendDiscordDm(u: Pick<User, "id" | "discordDms" | "isGu
   return dmDiscordUser(discordId, n);
 }
 
-/** DMs a Discord user by id, Seatbit account or not (e.g. someone an orga linked a guest to). */
+/** DMs a Discord user by id, Seatbit account or not (e.g. someone a lead linked a guest to). */
 export async function dmDiscordUser(discordId: string, n: Notice): Promise<DmResult> {
   if (!discordEnabled()) return { ok: false, problem: "bot_not_set_up" };
   try {
@@ -189,7 +189,7 @@ export async function notifySeatChanged(l: Lan, userId: string, label: string | 
     subject: label ? `Your seat at ${l.name} is now ${label}` : `You no longer have a seat at ${l.name}`,
     text: label
       ? `Your seat at ${l.name} changed. You're now sitting at ${label}.`
-      : `An orga took you off your seat at ${l.name}. They'll get back to you.`,
+      : `A lead took you off your seat at ${l.name}. They'll get back to you.`,
     url: `${lanUrl(l)}?tab=seats`,
     dmOnly: true,
   });
@@ -229,7 +229,7 @@ export async function notifyLanChanged(before: Lan, after: Lan) {
     await notify(u, {
       kind: "lan_changed",
       subject: `${after.name}: details changed`,
-      text: `Hi ${u.name},\n\nthe orgas changed ${after.name}:\n\n${changes.join("\n")}\n\n${lanUrl(after)}`,
+      text: `Hi ${u.name},\n\nthe leads changed ${after.name}:\n\n${changes.join("\n")}\n\n${lanUrl(after)}`,
       url: lanUrl(after),
     });
   }

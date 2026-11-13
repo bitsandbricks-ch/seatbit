@@ -1,6 +1,6 @@
 /**
  * The event lifecycle beyond the day-to-day: publishing a draft (now or at a set time), the optional
- * interest check, opening sign-up, cancelling, and orga news. Each step tells the right people once.
+ * interest check, opening sign-up, cancelling, and lead news. Each step tells the right people once.
  */
 import { and, eq, inArray, isNotNull, isNull, lte, ne } from "drizzle-orm";
 import { db, schema } from "@/db";
@@ -162,14 +162,14 @@ export async function cancelEvent(l: Lan, reason: string) {
   );
 }
 
-/** Takes back a cancellation (no notices: orgas tell people themselves, e.g. with news). */
+/** Takes back a cancellation (no notices: leads tell people themselves, e.g. with news). */
 export function uncancelEvent(l: Lan) {
   db.update(lan).set({ cancelledAt: null, cancelReason: "" }).where(eq(lan.id, l.id)).run();
   db.delete(reminderLog).where(and(eq(reminderLog.lanId, l.id), eq(reminderLog.kind, "cancelled"))).run();
   void import("./discord").then((d) => d.refreshLanMessagesSoon(l.id)).catch(() => {});
 }
 
-/** Sends orga news to everyone involved. Returns how many got it. */
+/** Sends lead news to everyone involved. Returns how many got it. */
 export async function sendNews(l: Lan, text: string, author: string) {
   if (!l.publishedAt) return 0;
   const { postLanNews } = await import("./discord");

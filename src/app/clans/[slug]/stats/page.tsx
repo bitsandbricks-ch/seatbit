@@ -93,7 +93,7 @@ export default async function ClanStatsPage({ params }: PageProps<"/clans/[slug]
                     <th className="px-2 py-2 text-right font-medium">Unsure</th>
                     <th className="px-2 py-2 text-right font-medium">Not coming</th>
                     <th className="px-2 py-2 text-right font-medium">No answer</th>
-                    <th className="px-2 py-2 text-right font-medium" title="Confirmed by an orga / reported by the member">
+                    <th className="px-2 py-2 text-right font-medium" title="Confirmed by a lead / reported by the member">
                       Tickets
                     </th>
                     <th className="py-2 pl-2 text-right font-medium">Seats</th>
@@ -154,7 +154,7 @@ export default async function ClanStatsPage({ params }: PageProps<"/clans/[slug]
             </div>
             <p className="mt-3 text-xs text-faint">
               Asked = everyone in the clan when the event started, plus anyone who answered. People who left the clan
-              since aren&apos;t counted. Tickets: confirmed by an orga / reported by the member. Seats: assigned / the
+              since aren&apos;t counted. Tickets: confirmed by a lead / reported by the member. Seats: assigned / the
               group&apos;s seats.
             </p>
           </Card>

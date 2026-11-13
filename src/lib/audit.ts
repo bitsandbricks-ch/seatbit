@@ -79,7 +79,7 @@ export function changedFields<T extends Record<string, unknown>>(before: T, afte
 // ---------- Reading ----------
 
 export const AUDIT_GROUPS = {
-  events: { label: "Events", prefixes: ["event.", "orga.", "news."] },
+  events: { label: "Events", prefixes: ["event.", "lead.", "news."] },
   attendance: { label: "Answers & tickets", prefixes: ["attendance.", "waitlist.", "ticket.", "lanid.", "arrived.", "seatbooked."] },
   seats: { label: "Seats", prefixes: ["seat.", "seats.", "swap."] },
   members: { label: "Members & roles", prefixes: ["member.", "invite.", "clan.", "platform.", "account."] },
@@ -179,11 +179,11 @@ export function describeAudit(e: AuditEntry, name: (id: string | null | undefine
     case "event.copy":
       return `copied ${d.from} as next year's draft ${d.event}`;
     case "orga.add":
-      return `made ${who} an orga${at}`;
+      return `made ${who} a lead${at}`;
     case "orga.remove":
-      return `removed ${who} as orga${at}`;
+      return `removed ${who} as lead${at}`;
     case "news.delete":
-      return `deleted an orga news post${at}`;
+      return `deleted a lead news post${at}`;
     case "attendance.set":
       return `changed the answer of ${who}${at} from ${st(d.from)} to ${st(d.to)}`;
     case "waitlist.move_up":
@@ -197,7 +197,7 @@ export function describeAudit(e: AuditEntry, name: (id: string | null | undefine
     case "ticket.confirm":
       return d.paid ? `confirmed the ticket of ${who}${at}` : `took back the ticket confirmation of ${who}${at}`;
     case "attendance.note":
-      return `edited the orga note on ${who}${at}`;
+      return `edited the lead note on ${who}${at}`;
     case "lanid.set":
       return `set the LAN ID of ${who}${at}`;
     case "arrived.set":

@@ -15,7 +15,7 @@ type Clan = Parameters<typeof ClanAvatar>[0]["clan"] & { slug: string; name: str
 const SHARED_TABS = ["overview", "seats", "attendees"];
 
 /**
- * The event's header, the same on the event page and on its manage page. Orgas get a View / Manage switch
+ * The event's header, the same on the event page and on its manage page. Leads get a View / Manage switch
  * next to the title, so editing is always one tap away.
  */
 export function EventHeader({
@@ -98,7 +98,7 @@ function EventStatus({ lan: l, canManage }: { lan: Lan; canManage: boolean }) {
       <section aria-label="Cancelled" className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-danger/50 bg-danger/10 p-3 sm:p-4">
         <div className="min-w-0 text-sm">
           <p className="font-semibold text-danger">Cancelled</p>
-          <p className="text-muted">{l.cancelReason || "The orgas cancelled this event."}</p>
+          <p className="text-muted">{l.cancelReason || "The leads cancelled this event."}</p>
         </div>
         {canManage && <UndoCancelButton lanId={l.id} />}
       </section>
@@ -118,7 +118,7 @@ function EventStatus({ lan: l, canManage }: { lan: Lan; canManage: boolean }) {
             Draft{l.interestCheck ? " · starts with an interest check" : ""}
           </p>
           <p className="text-muted">
-            Only orgas and clan admins see this event. Nothing goes out yet: no Discord post, no messages, no reminders.
+            Only leads and clan admins see this event. Nothing goes out yet: no Discord post, no messages, no reminders.
             {l.publishAt ? (
               <>
                 {" "}
@@ -148,7 +148,7 @@ function EventStatus({ lan: l, canManage }: { lan: Lan; canManage: boolean }) {
         <div className="min-w-0 text-sm">
           <p className="font-semibold text-bit">Interest check</p>
           <p className="text-muted">
-            Would you come? Nothing is binding yet: sign-up, tickets and seats come once the orgas decide.
+            Would you come? Nothing is binding yet: sign-up, tickets and seats come once the leads decide.
             <span className="block text-fg">
               {n("yes")} interested · {n("maybe")} maybe · {n("no")} not
             </span>

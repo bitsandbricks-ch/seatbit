@@ -31,16 +31,16 @@ export const user = sqliteTable("user", {
   emailReminders: integer("email_reminders", { mode: "boolean" }).default(true).notNull(),
   /** Discord DMs from the bot about changes (needs a linked Discord account). */
   discordDms: integer("discord_dms", { mode: "boolean" }).default(true).notNull(),
-  // Guests: members an orga added who have no login yet. They belong to one clan
+  // Guests: members a lead added who have no login yet. They belong to one clan
   // and are taken over by a real account through their claim link.
   isGuest: integer("is_guest", { mode: "boolean" }).default(false).notNull(),
   guestClanId: text("guest_clan_id").references((): AnySQLiteColumn => clan.id, { onDelete: "cascade" }),
   claimCode: text("claim_code").unique(),
-  // A guest's real email address, if the orgas know it: the invite goes there, and a
+  // A guest's real email address, if the leads know it: the invite goes there, and a
   // Discord sign-in with this (verified) address takes the guest over automatically.
   inviteEmail: text("invite_email"),
   invitedAt: integer("invited_at", { mode: "timestamp_ms" }),
-  // The Discord user an orga said this guest is (via the bot): their Discord sign-in
+  // The Discord user a lead said this guest is (via the bot): their Discord sign-in
   // takes the guest over automatically.
   guestDiscordId: text("guest_discord_id"),
   /** How that Discord member was shown when linked ("Nick (@username)"), for the guest page. */
@@ -278,7 +278,7 @@ export const lan = sqliteTable("lan", {
   /** Spots the group has at the event (e.g. size of the reserved seat block); null = unlimited. */
   capacity: integer("capacity"),
   /**
-   * When a spot opens, move the first person on the waitlist to coming by themselves. Off: the orgas
+   * When a spot opens, move the first person on the waitlist to coming by themselves. Off: the leads
    * get a notice and pick who moves up (e.g. they want to ask first who still has time).
    */
   waitlistAuto: integer("waitlist_auto", { mode: "boolean" }).default(true).notNull(),
@@ -286,7 +286,7 @@ export const lan = sqliteTable("lan", {
   reminderDays: integer("reminder_days").default(3).notNull(),
   seatRows: integer("seat_rows").default(6).notNull(),
   seatCols: integer("seat_cols").default(10).notNull(),
-  /** When the orgas finalized the seat plan (the last seat step, also after self pick); members only see seats after this. */
+  /** When the leads finalized the seat plan (the last seat step, also after self pick); members only see seats after this. */
   seatsPublishedAt: integer("seats_published_at", { mode: "timestamp_ms" }),
   /** Whether attendees may pick their own seats. */
   seatingOpen: integer("seating_open", { mode: "boolean" }).default(true).notNull(),
@@ -294,13 +294,13 @@ export const lan = sqliteTable("lan", {
   seatPicking: integer("seat_picking", { mode: "boolean" }).default(false).notNull(),
   /**
    * The event's own seat plan (e.g. lal.gg's DotLAN "Sitzplan" page), where each
-   * member books the seat the orgas gave them. Per event: the plan id changes every year.
+   * member books the seat the leads gave them. Per event: the plan id changes every year.
    */
   externalPlanUrl: text("external_plan_url").default("").notNull(),
   /** Profile link pattern with {id} for the member's LAN ID; empty = the LAN type's. */
   profileUrl: text("profile_url").default("").notNull(),
   /**
-   * When an orga published the event. Null = draft: only orgas and clan admins see it, and nobody is
+   * When a lead published the event. Null = draft: only leads and clan admins see it, and nobody is
    * notified (no Discord post, no reminders) until it's published.
    */
   publishedAt: integer("published_at", { mode: "timestamp_ms" }),
@@ -308,7 +308,7 @@ export const lan = sqliteTable("lan", {
   publishAt: integer("publish_at", { mode: "timestamp_ms" }),
   /**
    * Optional first phase: members only say whether they're interested, before sign-up, tickets and
-   * seats. An orga then opens sign-up (sets it false).
+   * seats. A lead then opens sign-up (sets it false).
    */
   interestCheck: integer("interest_check", { mode: "boolean" }).default(false).notNull(),
   /**
@@ -339,7 +339,7 @@ export const attendance = sqliteTable(
     status: text("status").$type<AttendanceStatus>().notNull(),
     /** Set by the attendee: "I bought my ticket". */
     ticketBought: integer("ticket_bought", { mode: "boolean" }).default(false).notNull(),
-    /** Set by an orga: payment / ticket confirmed. */
+    /** Set by a lead: payment / ticket confirmed. */
     paid: integer("paid", { mode: "boolean" }).default(false).notNull(),
     note: text("note").default("").notNull(),
     /** Seat wishes: user ids to sit near / not next to (JSON arrays). */
@@ -405,7 +405,7 @@ export const nickname = sqliteTable(
 /**
  * A member's own participant number at a LAN (user ID on lal.gg, SwitzerLAN
  * ticket number, ...). Same scopes as nicknames: per LAN type (normal), or per
- * single event when the event has no type. Shown to orgas and in the export.
+ * single event when the event has no type. Shown to leads and in the export.
  */
 export const lanAccount = sqliteTable(
   "lan_account",
@@ -434,7 +434,7 @@ export const seat = sqliteTable(
     col: integer("col").notNull(),
     label: text("label").notNull(),
     userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
-    /** Held seats can't be claimed by members, only assigned by orgas. */
+    /** Held seats can't be claimed by members, only assigned by leads. */
     locked: integer("locked", { mode: "boolean" }).default(false).notNull(),
   },
   (t) => [
@@ -452,7 +452,7 @@ export const REMINDER_KINDS = [
   "book_seat",
   "published",
   "signup_open",
-  // Orga nudges from the "Who's missing" tab (one row per step, re-sent updates sent_at).
+  // Lead nudges from the "Who's missing" tab (one row per step, re-sent updates sent_at).
   "nudge_interest",
   "nudge_answer",
   "nudge_unsure",
@@ -485,7 +485,7 @@ export type SwapStatus = (typeof SWAP_STATUSES)[number];
 
 /**
  * A member asks another seated member to swap seats. The other one accepts,
- * then an orga approves and the seats are swapped ("pending" -> "accepted" -> "approved").
+ * then a lead approves and the seats are swapped ("pending" -> "accepted" -> "approved").
  */
 export const seatSwap = sqliteTable(
   "seat_swap",
@@ -735,7 +735,7 @@ export const lanInterest = sqliteTable(
   (t) => [uniqueIndex("lan_interest_uq").on(t.lanId, t.userId)],
 );
 
-/** Short updates from the orgas to everyone at an event ("doors open 10:00"). */
+/** Short updates from the leads to everyone at an event ("doors open 10:00"). */
 export const lanNews = sqliteTable(
   "lan_news",
   {
@@ -753,7 +753,7 @@ export const lanNews = sqliteTable(
 // ---------- Audit log ----------
 
 /**
- * Changes orgas and admins make (seat moves, answer overrides, role changes, guest edits,
+ * Changes leads and admins make (seat moves, answer overrides, role changes, guest edits,
  * publish/cancel, ...). Clan admins see their clan's entries, platform admins all of them.
  * Names are looked up when the log is shown (actor / target), so a deleted account shows as
  * "Deleted member" here too; `data` only holds non-personal details (seat labels, statuses,

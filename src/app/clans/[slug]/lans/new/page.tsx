@@ -70,7 +70,7 @@ export default async function NewLanPage({ params, searchParams }: PageProps<"/c
           </span>
         )}
         <p className="mt-2 text-xs text-muted">
-          The event belongs to this clan: only its members see it, and its admins and the event&apos;s orgas manage it.
+          The event belongs to this clan: only its members see it, and its admins and the event&apos;s leads manage it.
         </p>
       </div>
       {types.length > 0 && (

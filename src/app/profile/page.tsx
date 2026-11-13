@@ -105,7 +105,7 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
             <span>
               Email reminders
               <span className="block text-xs text-muted">
-                New events, orga news, deadlines, tickets and the day before a LAN, sent to {me.email}.
+                New events, lead news, deadlines, tickets and the day before a LAN, sent to {me.email}.
               </span>
             </span>
           </label>
@@ -192,7 +192,7 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
         <Card title="Nicks and IDs per LAN type">
           <p className="mb-4 text-sm text-muted">
             One nick per LAN type, used for every event of that type. Leave it empty to use your nickname. Below it,
-            optionally your user ID or ticket number at that LAN (e.g. on lal.gg), so the orgas can match you up. Where
+            optionally your user ID or ticket number at that LAN (e.g. on lal.gg), so the leads can match you up. Where
             the LAN type has a profile link, your clan sees the link to your profile on the event&apos;s site.
           </p>
           <div className="space-y-5">

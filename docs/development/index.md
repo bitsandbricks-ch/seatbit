@@ -27,7 +27,7 @@ Open <http://localhost:3000>. The database is `./data/lan.db`; delete it to star
 
 | User | Role | Password |
 | --- | --- | --- |
-| `alex@example.com` | Platform admin, clan admin, orga | `seatbit-demo` |
+| `alex@example.com` | Platform admin, clan admin, lead | `seatbit-demo` |
 | `anna@example.com` | Member | `seatbit-demo` |
 
 ### Discord locally

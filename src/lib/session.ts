@@ -33,7 +33,7 @@ export async function requireAdmin() {
   return u;
 }
 
-/** Platform admins, the clan's admins and event managers, and the LAN's orgas may manage a LAN. */
+/** Platform admins, the clan's admins and event managers, and the LAN's leads may manage a LAN. */
 export function isLanManager(u: { id: string; role: string }, lanId: string) {
   if (u.role === "admin") return true;
   const l = db.select({ clanId: schema.lan.clanId }).from(schema.lan).where(eq(schema.lan.id, lanId)).get();
@@ -47,7 +47,7 @@ export function isLanManager(u: { id: string; role: string }, lanId: string) {
 
 export async function requireLanManager(lanId: string) {
   const u = await requireUser();
-  if (!isLanManager(u, lanId)) throw new Error("Only orgas of this LAN can do that");
+  if (!isLanManager(u, lanId)) throw new Error("Only leads of this LAN can do that");
   return u;
 }
 

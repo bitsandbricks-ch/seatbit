@@ -25,7 +25,7 @@ export default async function WelcomePage({ searchParams }: PageProps<"/welcome"
         <img src="/brand/seatbit-mark.svg" alt="" className="mb-3 h-10 w-10" />
         <h1 className={cardPageTitle}>Welcome to Seatbit</h1>
         <p className="text-sm text-muted">
-          Tell your clan who you are. Your name helps orgas book tickets, your nickname is what everyone sees.
+          Tell your clan who you are. Your name helps leads book tickets, your nickname is what everyone sees.
         </p>
       </div>
       <form action={completeProfile} className="space-y-4">

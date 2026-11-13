@@ -55,7 +55,7 @@ Safeguards, whatever the setting:
 
 - On the website only clan members can claim, never someone still waiting for approval. On Discord, someone who isn't a member yet can ask (see [On Discord](#on-discord)), but that always needs an admin.
 - One open claim per member.
-- A guest someone else already asked for (waiting for an admin), or that an orga tied to another Discord member with `/guest`, isn't offered to anyone else, on the website or on Discord.
+- A guest someone else already asked for (waiting for an admin), or that a lead tied to another Discord member with `/guest`, isn't offered to anyone else, on the website or on Discord.
 - A guest with an email address, or a guest made clan admin, always needs an admin's OK.
 - A name is no proof: check before you approve (the request shows their email and why it was suggested).
 - Declined claims and guests marked *Not me* aren't suggested again.
@@ -74,7 +74,7 @@ The [Seatbit bot](discord.md) does both directions in a server linked to the cla
 
 ![Taking over a guest after /claim on Discord](../screenshots/phone-discord-claim.png){ .shot width="300" }
 
-**Orgas: `/guest guest:<name> member:<name>`.** Needs a Seatbit role that manages members (admin or recruiter); no Discord permission needed. `guest` lists only guests nobody asked for or got linked to yet. `member` searches the Discord server as you type (before you type, by the guest's first name) and leaves out bots and people who are already in the clan on Seatbit.
+**Leads: `/guest guest:<name> member:<name>`.** Needs a Seatbit role that manages members (admin or recruiter); no Discord permission needed. `guest` lists only guests nobody asked for or got linked to yet. `member` searches the Discord server as you type (before you type, by the guest's first name) and leaves out bots and people who are already in the clan on Seatbit.
 
 - If that person already has Seatbit with Discord linked, the guest moves to their account at once and they get a DM.
 - Otherwise the bot DMs them the guest's claim link, and their first sign-in with that Discord account (or linking Discord on their profile) takes the guest over automatically, like the verified email invite. Running `/guest` again for the same person moves the link to the new guest. Running it for an already linked guest links them to someone else instead (the guest list marks those as *linked to …*), or, for the same person, sends the DM again.

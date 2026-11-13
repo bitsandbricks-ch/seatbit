@@ -22,7 +22,7 @@ npm run dev
 
 Open http://localhost:3000. The first account becomes the platform admin. The SQLite database is created in `./data/lan.db`; delete it to start over.
 
-**Demo data:** `npm run seed` fills a fresh database with a demo clan, an upcoming LAN, attendees, seats, travel offers and games (the same data the screenshots use). All demo users have the password `seatbit-demo`, e.g. `alex@example.com` (admin and orga) or `anna@example.com` (member). Use it with `ALLOW_EMAIL_LOGIN=1`.
+**Demo data:** `npm run seed` fills a fresh database with a demo clan, an upcoming LAN, attendees, seats, travel offers and games (the same data the screenshots use). All demo users have the password `seatbit-demo`, e.g. `alex@example.com` (admin and lead) or `anna@example.com` (member). Use it with `ALLOW_EMAIL_LOGIN=1`.
 
 ## Making changes
 

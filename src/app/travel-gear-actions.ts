@@ -67,7 +67,7 @@ export async function saveTravelPost(lanId: string, input: TravelInput, postId?:
   refresh(lanId);
 }
 
-/** The author or an orga removes a post (its passengers/guests are released). */
+/** The author or a lead removes a post (its passengers/guests are released). */
 export async function deleteTravelPost(postId: string) {
   const me = await requireUser();
   const p = mustGetPost(postId);
@@ -104,7 +104,7 @@ export async function joinTravelOffer(postId: string) {
   refresh(p.lanId);
 }
 
-/** Leave an offer you joined, or (as its author or an orga) remove someone from it. */
+/** Leave an offer you joined, or (as its author or a lead) remove someone from it. */
 export async function leaveTravelOffer(postId: string, userId?: string) {
   const me = await requireUser();
   const p = mustGetPost(postId);

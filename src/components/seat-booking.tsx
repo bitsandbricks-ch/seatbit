@@ -38,7 +38,7 @@ export function BookedToggle({ lanId, booked, planUrl }: { lanId: string; booked
   );
 }
 
-/** Orga button: DM/mail everyone who hasn't booked their seat on the event site yet. */
+/** Lead button: DM/mail everyone who hasn't booked their seat on the event site yet. */
 export function RemindToBookButton({ lanId, open }: { lanId: string; open: number }) {
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<string | null>(null);

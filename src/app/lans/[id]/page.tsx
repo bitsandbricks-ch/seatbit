@@ -112,7 +112,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
   const myPlace = my?.status === "waitlist" ? linePos.get(me.id) : undefined;
   const isAdmin = isLanManager(me, id);
   const published = !!l.seatsPublishedAt;
-  // Optional self-pick step: members choose their own seat until the orgas finalize the plan.
+  // Optional self-pick step: members choose their own seat until the leads finalize the plan.
   const picking = l.seatPicking && !published;
   const mySeatLabel = published || picking ? (seats.find((s) => s.userId === me.id)?.label ?? null) : null;
   const steps = buildChecklist({
@@ -265,7 +265,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
   );
   const wishesCard = my?.status === "going" && !published && seats.length > 0 && (
     <Card title="Seat wishes">
-      <p className="mb-3 text-sm text-muted">Tell the orgas where you&apos;d like to sit. They plan the seats after the deadline.</p>
+      <p className="mb-3 text-sm text-muted">Tell the leads where you&apos;d like to sit. They plan the seats after the deadline.</p>
       <SeatWishes
         lanId={l.id}
         people={rows
@@ -293,7 +293,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
         {l.interestCheck && !l.cancelledAt ? (
         <section aria-label="Would you come?" className="rounded-card border border-line bg-surface p-3 sm:p-4">
           <h2 className="mb-1 text-sm font-semibold text-fg">Would you come?</h2>
-          <p className="mb-3 text-sm text-muted">Not binding: it helps the orgas decide. You can sign up properly later.</p>
+          <p className="mb-3 text-sm text-muted">Not binding: it helps the leads decide. You can sign up properly later.</p>
           <InterestButtons lanId={l.id} current={myInterest} />
         </section>
         ) : (
@@ -318,7 +318,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
               The group is full. You&apos;re <strong>#{myPlace ?? "?"}</strong> on the waitlist.{" "}
               {l.waitlistAuto
                 ? "When a spot opens, the first in line moves up by itself and gets an email and a Discord DM."
-                : "When a spot opens, the orgas pick who moves up and you get an email and a Discord DM."}{" "}
+                : "When a spot opens, the leads pick who moves up and you get an email and a Discord DM."}{" "}
               Not coming any more? Answer &quot;Not coming&quot; so the next person gets the spot sooner.
             </p>
           )}
@@ -432,8 +432,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
                 <Card title="Our seats" actions={seatPills}>
                   <p className="text-sm text-muted">
                     {seats.length === 0
-                      ? "The orgas haven't entered the group's seats yet."
-                      : `The group has ${seats.length} seats (${seats[0]?.label}${seats.length > 1 ? `–${seats[seats.length - 1]?.label}` : ""}). The orgas assign them after the deadline and then finalize the seat plan here.`}
+                      ? "The leads haven't entered the group's seats yet."
+                      : `The group has ${seats.length} seats (${seats[0]?.label}${seats.length > 1 ? `–${seats[seats.length - 1]?.label}` : ""}). The leads assign them after the deadline and then finalize the seat plan here.`}
                   </p>
                 </Card>
                 {wishesCard}
@@ -490,13 +490,13 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
 
           <div className="min-w-0 space-y-4 sm:space-y-6 lg:col-start-1 lg:row-start-1">
             {news.length > 0 && (
-              <Card title="News from the orgas">
+              <Card title="News from the leads">
                 <ul className="space-y-4">
                   {news.slice(0, 5).map((n) => (
                     <li key={n.id} className="text-sm">
                       <p className="whitespace-pre-wrap text-fg/90">{n.text}</p>
                       <p className="mt-1 flex items-center gap-3 text-xs text-faint">
-                        {n.authorId ? (newsNames.get(n.authorId) ?? "Orga") : "Orga"} · {fmtDate(n.createdAt)}
+                        {n.authorId ? (newsNames.get(n.authorId) ?? "Lead") : "Lead"} · {fmtDate(n.createdAt)}
                         {isAdmin && <DeleteNewsButton id={n.id} />}
                       </p>
                     </li>
@@ -524,9 +524,9 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
                       ? `Seat plan final · ${seats.filter((s) => !s.userId && !s.locked).length} free`
                       : picking
                         ? mySeatLabel
-                          ? "Not final yet · orgas finalize the plan"
+                          ? "Not final yet · leads finalize the plan"
                           : "Self pick is on · take a free seat"
-                        : "Orgas finalize the seat plan soon"}
+                        : "Leads finalize the seat plan soon"}
                 </p>
               </Link>
               <Link href={`/lans/${l.id}?tab=attendees`} scroll={false} className="group rounded-card border border-line bg-surface p-4 transition hover:border-bit/50 sm:p-5">
@@ -547,8 +547,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
             </div>
 
             <div className="grid items-start gap-4 sm:gap-6 md:grid-cols-2">
-              <Card title={orgaIds.length ? "Orgas" : "Contact"}>
-                <p className="mb-3 text-sm text-muted">Questions about this LAN? Ask the orgas.</p>
+              <Card title={orgaIds.length ? "Leads" : "Contact"}>
+                <p className="mb-3 text-sm text-muted">Questions about this LAN? Ask the leads.</p>
                 <ul className="space-y-2">
                   {orgas.map((o) => (
                     <li key={o.id} className="flex items-center justify-between gap-2 text-sm">
@@ -589,10 +589,10 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
                 <div className="mt-4 border-t border-line pt-4">
                   <h3 className="mb-1 text-sm font-medium text-fg">{lanType ? `Your ${lanType.name} ID` : "Your ID at this LAN"}</h3>
                   <p className="mb-2 text-sm text-muted">
-                    Optional: your user ID or ticket number on the LAN&apos;s own site, so the orgas can match you up.
+                    Optional: your user ID or ticket number on the LAN&apos;s own site, so the leads can match you up.
                     {pattern
                       ? " The attendee list links it to your profile there."
-                      : " Only orgas see it."}
+                      : " Only leads see it."}
                   </p>
                   <LanIdForm value={myLanId} lanId={l.id} label={lanType ? `${lanType.name} ID` : "LAN ID"} />
                   {myProfile && (

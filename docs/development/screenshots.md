@@ -12,7 +12,7 @@ How it works (`scripts/screenshots.ts`):
 
 1. Creates a fresh database in a temp folder and fills it with `scripts/seed-demo.ts`: the clan *Pixel Pirates*, three events, 17 members and a guest.
 2. Starts the production build on port 3100 with an example operator and a fake Discord app (nothing talks to Discord).
-3. Signs in as Alex (admin, orga) or Anna (member) by creating sessions directly, and renders each page with Chromium: phones at 390 px (2x), desktops at 1440 px.
+3. Signs in as Alex (admin, lead) or Anna (member) by creating sessions directly, and renders each page with Chromium: phones at 390 px (2x), desktops at 1440 px.
 4. Saves `docs/screenshots/<name>.png`. Pictures that differ only by rendering noise are left alone, so only real changes show up in git.
 
 The demo world runs at a fixed date (`NOW` in the script, via `scripts/fake-now.cjs`), so relative dates like "in 5 days" don't change from day to day.

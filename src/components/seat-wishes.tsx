@@ -103,7 +103,7 @@ export function SeatWishes({
           </select>
         </label>
         <label className="col-span-2 block">
-          <span className="mb-1 block text-fg/90">Anything else for the orgas?</span>
+          <span className="mb-1 block text-fg/90">Anything else for the leads?</span>
           <input
             value={w.note}
             onChange={(e) => setW({ ...w, note: e.target.value })}
@@ -122,7 +122,7 @@ export function SeatWishes({
             start(async () => {
               try {
                 await setMySeatWishes(lanId, w);
-                setMsg({ ok: true, text: "Saved. The orgas will try to make it work." });
+                setMsg({ ok: true, text: "Saved. The leads will try to make it work." });
               } catch (e) {
                 setMsg({ ok: false, text: e instanceof Error ? e.message : "Failed" });
               }
