@@ -23,7 +23,7 @@ The event page shows your answer and checklist at the top, then the tabs **Overv
 
 ## Answer
 
-**Coming**, **Unsure** or **Not coming**, before the *answer by* date. Also possible with the buttons on the clan's Discord announcement or with `/lans` in Discord.
+**Coming**, **Unsure** or **Not coming**, before the *answer by* date. Also possible with the buttons on the clan's Discord announcement or with `/coming`, `/unsure`, `/not-coming` and `/lans` in Discord. `/status` and `/ticket` work there too (see [Discord commands](discord.md#commands)).
 
 - Once you have a ticket, your answer is **locked**. Orgas can still change it.
 - During an [interest check](events.md#interest-check) the answers are *I'd come / Maybe / Not this time* instead.

@@ -37,8 +37,9 @@ import { bookedButton, bookingLine, clearSeatBooked } from "@/lib/seat-booking";
 import { PROFILE_COLORS, PROFILE_ICONS, deleteUserAvatarFile, saveUserAvatar } from "@/lib/avatars";
 import { audit, auditLan, changedFields } from "@/lib/audit";
 import { cleanName } from "@/lib/names";
+import { saveNick, saveSeatWishes, saveTicketBought, type wishInput } from "@/lib/member-updates";
 
-const { attendance, nickname, seat, lan, user, lanOrga, lanType } = schema;
+const { attendance, seat, lan, user, lanOrga, lanType } = schema;
 
 function mustGetLan(id: string) {
   const l = getLan(id);
@@ -66,35 +67,14 @@ export async function setMyAttendance(lanId: string, status: AttendanceStatus) {
   lanPath(lanId);
 }
 
-const nickInput = z.object({
-  nick: z.string().transform(cleanName).pipe(z.string().min(1).max(32)),
-  lanId: z.string().optional().transform((v) => v || null),
-  typeId: z.string().optional().transform((v) => v || null),
-});
-
-const sameScope = (a: { lanId: string | null; typeId: string | null }, b: typeof a) =>
-  a.lanId === b.lanId && a.typeId === b.typeId;
-
 /** Sets the user's one nick for a scope (default, LAN type or single event). Empty removes it. */
 export async function setNick(formData: FormData) {
   const me = await requireUser();
-  saveNick(me.id, String(formData.get("nick") ?? ""), formData.get("lanId"), formData.get("typeId"));
-  revalidatePath("/", "layout");
-}
-
-function saveNick(userId: string, raw: string, lanId?: FormDataEntryValue | null, typeId?: FormDataEntryValue | null) {
-  const nickRaw = raw.trim();
-  const scope = nickInput.parse({ nick: nickRaw || "-", lanId: lanId ?? undefined, typeId: typeId ?? undefined });
-  if (scope.lanId && scope.typeId) throw new Error("Pick one scope");
-  const mine = db.select().from(nickname).where(eq(nickname.userId, userId)).all();
-  db.transaction((tx) => {
-    for (const n of mine) if (sameScope(n, scope)) tx.delete(nickname).where(eq(nickname.id, n.id)).run();
-    if (nickRaw) {
-      tx.insert(nickname)
-        .values({ userId, lanId: scope.lanId, typeId: scope.typeId, nick: scope.nick, isPrimary: true })
-        .run();
-    }
+  saveNick(me.id, String(formData.get("nick") ?? ""), {
+    lanId: (formData.get("lanId") as string | null) ?? null,
+    typeId: (formData.get("typeId") as string | null) ?? null,
   });
+  revalidatePath("/", "layout");
 }
 
 /**
@@ -567,14 +547,7 @@ export async function setUserRole(userId: string, role: "admin" | "member") {
 
 export async function setMyTicketBought(lanId: string, bought: boolean) {
   const me = await requireUser();
-  const a = db
-    .select()
-    .from(attendance)
-    .where(and(eq(attendance.lanId, lanId), eq(attendance.userId, me.id)))
-    .get();
-  if (!a) throw new Error("Say whether you're coming first");
-  if (a.paid) throw new Error("An orga already confirmed your ticket. Ask them if something changed.");
-  db.update(attendance).set({ ticketBought: bought }).where(eq(attendance.id, a.id)).run();
+  saveTicketBought(lanId, me.id, bought);
   refreshLanMessagesSoon(lanId);
   lanPath(lanId);
 }
@@ -840,35 +813,11 @@ export async function adminAutoAssignSeats(lanId: string, mode: "fill" | "replan
   return plan.size;
 }
 
-const wishInput = z.object({
-  near: z.array(z.string()).max(10),
-  avoid: z.array(z.string()).max(10),
-  position: z.enum(["any", "edge", "middle"]),
-  seat: z.string().trim().max(12),
-  note: z.string().trim().max(300),
-});
-
 export async function setMySeatWishes(lanId: string, input: z.input<typeof wishInput>) {
   const me = await requireUser();
   const l = mustGetLan(lanId);
   if (l.seatsPublishedAt) throw new Error("The seat plan is final. Ask an orga.");
-  const w = wishInput.parse(input);
-  const a = db
-    .select()
-    .from(attendance)
-    .where(and(eq(attendance.lanId, lanId), eq(attendance.userId, me.id)))
-    .get();
-  if (!a) throw new Error("Say you're coming first");
-  db.update(attendance)
-    .set({
-      wishNear: w.near.filter((x) => x !== me.id),
-      wishAvoid: w.avoid.filter((x) => x !== me.id && !w.near.includes(x)),
-      wishPosition: w.position,
-      wishSeat: w.seat.toUpperCase(),
-      wishNote: w.note,
-    })
-    .where(eq(attendance.id, a.id))
-    .run();
+  saveSeatWishes(lanId, me.id, input);
   lanPath(lanId);
 }
 

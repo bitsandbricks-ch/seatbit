@@ -46,6 +46,7 @@ docs/              this site (MkDocs)
 | `src/lib/reminders.ts` | Due reminders, deduplicated via `reminder_log`. |
 | `src/lib/missing.ts` | Who's missing and nudges. |
 | `src/lib/notify.ts`, `mail.ts`, `discord.ts` | Sending to a user by email and Discord DM. |
+| `src/lib/discord-commands.ts`, `member-updates.ts` | Member slash commands (`/coming`, `/status`, `/ticket`, `/nick`, `/wish`); the member updates they share with the website. |
 | `src/lib/announce.ts` | The Discord event announcement with its live attendee list. |
 | `src/lib/audit.ts` | Audit log entries. |
 | `src/lib/billing.ts` | Stripe supporter subscriptions. |

@@ -43,14 +43,23 @@ A thread needs the bot's *Create Public Threads* and *Send Messages in Threads* 
 
 ## Commands
 
+Members can do the everyday things straight from Discord, in the clan's server or in a DM with the bot. Answers are only visible to you. On a server linked to a clan, the commands work on that clan's events; in DMs on the events of all your clans. They need a Discord account linked in Seatbit.
+
 | Command | What it does |
 | --- | --- |
+| `/coming`, `/unsure`, `/not-coming` | Answer for an event. During an interest check, this answers *Would you come?* instead. If several events are open, the bot asks which one with a button each, or pick one with `event:`. |
+| `/status` | Your next events with your answer, nick, ticket, seat, seat wishes and the next deadline, the same checklist as on the event page. `/status event:<name>` shows one event with buttons like **I have my ticket** and **I booked it**. |
+| `/ticket` | Tick off that you bought your ticket. `bought:False` takes it back until an orga confirmed it. |
+| `/nick nick:<nick>` | Your default nick. With `event:` it's your nick for that event's LAN type (or that one event, if it has no type). |
+| `/wish` | Shows your seat wishes. Change them with `near:` and `avoid:` (one person each time, suggested from the people who answered), `position:` (anywhere, edge, middle), `seat:` and `note:`. `clear:True` starts over. Closes when the seat plan is final. |
 | `/lans` | Your upcoming LANs of this server's clan (in DMs: all your clans) with answer buttons. Only you see it. |
 | `/claim` | Take over the guest profile the orgas made for you. Lists the clan's guests with your name or nick; `/claim guest:<name>` picks one. See [Claiming a guest on Discord](members-guests.md#on-discord). |
 | `/guest guest:<name> member:<name>` | Orgas who manage members: say which Discord member a guest is. `member` suggests only people on the server who aren't in the clan on Seatbit yet. See [Linking a guest to a Discord member](members-guests.md#on-discord). |
 | `/seatbit here` | Link this channel to your clan. |
 | `/seatbit announce` | Post the clan's upcoming LANs in this channel. |
 | `/seatbit stop` | Unlink this channel. |
+
+The same rules apply as on the website: once you have a ticket, your answer is locked and only orgas can change it; sign-up closes at the *answer by* date; you only see and answer your own clan's events. The `event:` option suggests the matching events as you type.
 
 ## Per event
 

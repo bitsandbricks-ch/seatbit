@@ -1,0 +1,78 @@
+/**
+ * What members change about themselves for an event (nick, ticket, seat wishes). Shared by the
+ * server actions and the Discord commands, so both follow the same rules.
+ */
+import { and, eq } from "drizzle-orm";
+import { z } from "zod";
+import { db, schema } from "@/db";
+import { cleanName } from "./names";
+
+const { attendance, nickname } = schema;
+
+export type NickScope = { lanId: string | null; typeId: string | null };
+
+const nickInput = z.object({
+  nick: z.string().transform(cleanName).pipe(z.string().min(1).max(32)),
+  lanId: z.string().nullish().transform((v) => v || null),
+  typeId: z.string().nullish().transform((v) => v || null),
+});
+
+const sameScope = (a: NickScope, b: NickScope) => a.lanId === b.lanId && a.typeId === b.typeId;
+
+/** Sets the user's one nick for a scope (default, LAN type or single event). Empty removes it. Returns the stored nick. */
+export function saveNick(userId: string, raw: string, scopeIn: Partial<NickScope> = {}) {
+  const nickRaw = raw.trim();
+  const scope = nickInput.parse({ nick: nickRaw || "-", lanId: scopeIn.lanId, typeId: scopeIn.typeId });
+  if (scope.lanId && scope.typeId) throw new Error("Pick one scope");
+  const mine = db.select().from(nickname).where(eq(nickname.userId, userId)).all();
+  db.transaction((tx) => {
+    for (const n of mine) if (sameScope(n, scope)) tx.delete(nickname).where(eq(nickname.id, n.id)).run();
+    if (nickRaw) {
+      tx.insert(nickname)
+        .values({ userId, lanId: scope.lanId, typeId: scope.typeId, nick: scope.nick, isPrimary: true })
+        .run();
+    }
+  });
+  return nickRaw ? scope.nick : null;
+}
+
+const myAttendance = (lanId: string, userId: string) =>
+  db
+    .select()
+    .from(attendance)
+    .where(and(eq(attendance.lanId, lanId), eq(attendance.userId, userId)))
+    .get();
+
+/** "I bought my ticket" (or not). Once an orga confirmed it, only they can change it. */
+export function saveTicketBought(lanId: string, userId: string, bought: boolean) {
+  const a = myAttendance(lanId, userId);
+  if (!a) throw new Error("Say whether you're coming first");
+  if (a.paid) throw new Error("An orga already confirmed your ticket. Ask them if something changed.");
+  db.update(attendance).set({ ticketBought: bought }).where(eq(attendance.id, a.id)).run();
+}
+
+export const wishInput = z.object({
+  near: z.array(z.string()).max(10),
+  avoid: z.array(z.string()).max(10),
+  position: z.enum(["any", "edge", "middle"]),
+  seat: z.string().trim().max(12),
+  note: z.string().trim().max(300),
+});
+export type SeatWishes = z.output<typeof wishInput>;
+
+/** Saves a member's seat wishes. The caller checks the plan isn't final yet. */
+export function saveSeatWishes(lanId: string, userId: string, input: z.input<typeof wishInput>) {
+  const w = wishInput.parse(input);
+  const a = myAttendance(lanId, userId);
+  if (!a) throw new Error("Say you're coming first");
+  db.update(attendance)
+    .set({
+      wishNear: w.near.filter((x) => x !== userId),
+      wishAvoid: w.avoid.filter((x) => x !== userId && !w.near.includes(x)),
+      wishPosition: w.position,
+      wishSeat: w.seat.toUpperCase(),
+      wishNote: w.note,
+    })
+    .where(eq(attendance.id, a.id))
+    .run();
+}
