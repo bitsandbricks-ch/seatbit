@@ -81,6 +81,14 @@ const seat = (label: string) => async (page: Page) => {
 const SHOTS: Shot[] = [
   // Signed out
   { name: "phone-login", who: "anon", path: "/login" },
+  // A shared event link opened while signed out, and the link preview chat apps show for it.
+  { name: "phone-event-shared", who: "anon", path: LAKESIDE },
+  {
+    name: "desktop-event-link-preview",
+    who: "anon",
+    path: `${LAKESIDE}/opengraph-image`,
+    act: (page) => page.setViewportSize({ width: 1200, height: 630 }),
+  },
   { name: "desktop-login", who: "anon", path: "/login" },
 
   // A member (Anna) on her phone

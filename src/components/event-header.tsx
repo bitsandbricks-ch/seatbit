@@ -8,6 +8,8 @@ import { fmtDate, lanRange } from "@/lib/format";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { OpenSignupButton, PublishEvent, UndoCancelButton } from "./publish-event";
+import { ShareButton } from "./share-button";
+import { lanLink } from "@/lib/announce";
 
 type Clan = Parameters<typeof ClanAvatar>[0]["clan"] & { slug: string; name: string };
 
@@ -16,7 +18,7 @@ const SHARED_TABS = ["overview", "seats", "attendees"];
 
 /**
  * The event's header, the same on the event page and on its manage page. Leads get a View / Manage switch
- * next to the title, so editing is always one tap away.
+ * next to the title, so editing is always one tap away. Published events get a Share button for everyone.
  */
 export function EventHeader({
   lan: l,
@@ -34,6 +36,10 @@ export function EventHeader({
   actions?: ReactNode;
 }) {
   const keep = SHARED_TABS.includes(tab) && tab !== "overview" ? `?tab=${tab}` : "";
+  // Drafts only open for leads, so a shared link would just be a dead end for everyone else.
+  const share = l.publishedAt ? (
+    <ShareButton url={lanLink(l)} title={l.name} text={[l.name, lanRange(l), l.location].filter(Boolean).join(" · ")} />
+  ) : null;
   return (
     <>
     <PageHeader
@@ -61,9 +67,10 @@ export function EventHeader({
         </>
       }
       actions={
-        canManage || actions ? (
+        canManage || actions || share ? (
           <>
         {actions}
+        {share}
         {canManage && (
           <ViewManageSwitch mode={mode} viewHref={`/lans/${l.id}${keep}`} manageHref={`/lans/${l.id}/manage${keep}`} />
         )}

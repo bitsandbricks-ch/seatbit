@@ -1,5 +1,6 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { AttendanceButtons } from "@/components/attendance-buttons";
@@ -11,10 +12,11 @@ import { SeatMap } from "@/components/seat-map";
 import { Avatar } from "@/components/avatar";
 import { getAvatars, type AvatarData } from "@/lib/avatars";
 import { Card, Columns, Page, Pill, StatusBadge, Verified } from "@/components/ui";
-import { fmtDate, fmtTime, relative } from "@/lib/format";
+import { fmtDate, fmtTime, lanRange, relative } from "@/lib/format";
 import { ATTENDANCE_LOCKED_MSG, attendanceLocked, getDisplayNames, getLan, getNames, pickNick, seatView, signupClosed, waitlistPositions } from "@/lib/lans";
-import { canViewLan, isLanManager, requireUser } from "@/lib/session";
-import { getClan } from "@/lib/clans";
+import { canViewLan, getCurrentUser, isLanManager, isProfileComplete } from "@/lib/session";
+import { clanRole, getClan } from "@/lib/clans";
+import { EventInvite } from "@/components/event-invite";
 import { rolesWith } from "@/lib/clan-roles";
 import { EventHeader } from "@/components/event-header";
 import { buildChecklist, onTheDay } from "@/lib/checklist";
@@ -43,13 +45,50 @@ const ANSWER_TEXT: Record<string, string> = {
 
 const TABS = ["overview", "seats", "attendees", "travel", "gear", "games", "food"] as const;
 
+/** Link previews (WhatsApp, Discord, ...): name, date and place of published events; drafts stay generic. */
+export async function generateMetadata({ params }: PageProps<"/lans/[id]">): Promise<Metadata> {
+  const l = getLan((await params).id);
+  if (!l?.publishedAt) return {};
+  const clan = l.clanId ? getClan(l.clanId) : undefined;
+  const description = [l.cancelledAt ? "Cancelled" : null, lanRange(l), l.location, clan && `Event of ${clan.name}`]
+    .filter(Boolean)
+    .join(" · ");
+  return {
+    title: `${l.name} · Seatbit`,
+    description,
+    openGraph: { title: l.name, description, type: "website", siteName: "Seatbit", url: `/lans/${l.id}` },
+    twitter: { card: "summary_large_image", title: l.name, description },
+  };
+}
+
 export default async function LanPage({ params, searchParams }: PageProps<"/lans/[id]">) {
   const { id } = await params;
   const sp = await searchParams;
   const tab = TABS.find((t) => t === sp.tab) ?? "overview";
-  const me = await requireUser();
+  const here = `/lans/${id}${tab === "overview" ? "" : `?tab=${tab}`}`;
+  const viewer = await getCurrentUser();
+  if (viewer && !isProfileComplete(viewer)) redirect(`/welcome?next=${encodeURIComponent(here)}`);
   const l = getLan(id);
-  if (!l || !canViewLan(me, id)) notFound();
+  if (!l) notFound();
+  if (!viewer || !canViewLan(viewer, id)) {
+    // Shared links: people who can't open the event yet see what it is and how to get in, instead of a 404.
+    // No redirect for signed-out visitors either, so link previews keep this page's metadata.
+    const clan = l.publishedAt && l.clanId ? getClan(l.clanId) : undefined;
+    if (!clan) {
+      if (!viewer) redirect(`/login?next=${encodeURIComponent(here)}`);
+      notFound();
+    }
+    return (
+      <EventInvite
+        lan={l}
+        clan={clan}
+        signedIn={!!viewer}
+        pending={!!viewer && clanRole(viewer.id, clan.id) === "pending"}
+        here={here}
+      />
+    );
+  }
+  const me = viewer;
   const lanClan = l.clanId ? getClan(l.clanId) : undefined;
   const now = new Date();
 
