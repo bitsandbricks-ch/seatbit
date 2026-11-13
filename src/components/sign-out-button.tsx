@@ -3,10 +3,12 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { btnGhost } from "./ui";
+import { useT } from "@/i18n/client";
 
 export function SignOutButton({ className }: { className?: string }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const t = useT();
   return (
     <button
       disabled={busy}
@@ -18,7 +20,7 @@ export function SignOutButton({ className }: { className?: string }) {
         router.refresh();
       }}
     >
-      {busy ? "Signing out…" : "Sign out"}
+      {busy ? t("nav.signingOut") : t("nav.signOut")}
     </button>
   );
 }

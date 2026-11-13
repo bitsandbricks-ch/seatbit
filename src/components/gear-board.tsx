@@ -2,6 +2,8 @@
 import { useState, useTransition } from "react";
 import { addPackingItem, deletePackingItem, setPacked, setPackingItemPacked } from "@/app/travel-gear-actions";
 import { Card, Input, btnPrimary } from "./ui";
+import { useT } from "@/i18n/client";
+import type { MessageKey } from "@/i18n/translate";
 
 type Row = { key: string; label: string; packed: boolean; ownId?: string };
 
@@ -17,6 +19,7 @@ export function PackingList({
   packed: string[];
   own: { id: string; label: string; packed: boolean }[];
 }) {
+  const t = useT();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
@@ -30,19 +33,25 @@ export function PackingList({
         await fn();
         after?.();
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed");
+        setError(e instanceof Error ? e.message : t("eventUi.failed"));
       }
     });
 
+  // Standard items are translated; an id without a translation keeps its English label.
+  const itemLabel = (it: { id: string; label: string }) => {
+    const key = `packing.items.${it.id}` as MessageKey;
+    const s = t(key);
+    return s === key ? it.label : s;
+  };
   const rows: Row[] = [
-    ...items.map((it) => ({ key: it.id, label: it.label, packed: packed.includes(it.id) })),
+    ...items.map((it) => ({ key: it.id, label: itemLabel(it), packed: packed.includes(it.id) })),
     ...own.map((it) => ({ key: `own:${it.id}`, label: it.label, packed: it.packed, ownId: it.id })),
   ].map((r) => ({ ...r, packed: ticks[r.key] ?? r.packed }));
   const done = rows.filter((r) => r.packed).length;
 
   return (
-    <Card title="Your packing list" actions={<span className="text-sm text-muted">{done} / {rows.length}</span>}>
-      <p className="mb-3 text-sm text-muted">Only you see this. Add your own things and tick them off as you pack.</p>
+    <Card title={t("packing.title")} actions={<span className="text-sm text-muted">{done} / {rows.length}</span>}>
+      <p className="mb-3 text-sm text-muted">{t("packing.intro")}</p>
       <ul className="grid gap-1">
         {rows.map((r) => (
           <li key={r.key} className="flex items-center gap-1 rounded-md hover:bg-raised">
@@ -61,7 +70,7 @@ export function PackingList({
             </label>
             {r.ownId && (
               <button
-                aria-label={`Remove ${r.label}`}
+                aria-label={t("packing.remove", { item: r.label })}
                 disabled={pending}
                 onClick={() => run(() => deletePackingItem(r.ownId!))}
                 className="px-3 py-1.5 text-faint hover:text-danger"
@@ -82,13 +91,13 @@ export function PackingList({
         <Input
           required
           maxLength={40}
-          placeholder="Add an item, e.g. controller"
-          aria-label="New item"
+          placeholder={t("packing.placeholder")}
+          aria-label={t("packing.newItem")}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
         />
         <button className={btnPrimary} disabled={pending}>
-          Add
+          {t("packing.add")}
         </button>
       </form>
       {error && <p className="mt-2 text-sm text-danger">{error}</p>}

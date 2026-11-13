@@ -3,11 +3,13 @@ import { useState, useTransition } from "react";
 import { setMyAttendance } from "@/app/actions";
 import type { AttendanceStatus } from "@/db/schema";
 import { btn } from "./ui";
+import { useT } from "@/i18n/client";
+import type { MessageKey } from "@/i18n/translate";
 
-const options: { status: AttendanceStatus; label: string; active: string }[] = [
-  { status: "going", label: "I'm coming", active: "border-bit bg-bit text-on-bit hover:bg-bit-hover" },
-  { status: "maybe", label: "Unsure", active: "border-warn bg-warn text-on-bit" },
-  { status: "declined", label: "Not coming", active: "border-danger/50 bg-danger/15 text-danger" },
+const options: { status: AttendanceStatus; label: MessageKey; active: string }[] = [
+  { status: "going", label: "eventUi.imComing", active: "border-bit bg-bit text-on-bit hover:bg-bit-hover" },
+  { status: "maybe", label: "eventUi.unsure", active: "border-warn bg-warn text-on-bit" },
+  { status: "declined", label: "eventUi.notComing", active: "border-danger/50 bg-danger/15 text-danger" },
 ];
 
 export function AttendanceButtons({
@@ -19,6 +21,7 @@ export function AttendanceButtons({
   current: AttendanceStatus | null;
   disabled: boolean;
 }) {
+  const t = useT();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   return (
@@ -36,14 +39,14 @@ export function AttendanceButtons({
                   try {
                     await setMyAttendance(lanId, o.status);
                   } catch (e) {
-                    setError(e instanceof Error ? e.message : "Failed");
+                    setError(e instanceof Error ? e.message : t("eventUi.failed"));
                   }
                 })
               }
               aria-pressed={isActive}
               className={`${btn} min-h-11 whitespace-nowrap border px-1 ${isActive ? o.active : "border-line bg-raised text-fg hover:bg-line"} ${pending ? "opacity-70" : ""}`}
             >
-              {o.label}
+              {t(o.label)}
             </button>
           );
         })}

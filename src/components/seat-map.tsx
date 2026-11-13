@@ -13,6 +13,7 @@ import {
 import { rowLetter } from "@/lib/seat-labels";
 import { Card, Pill, Segmented, btnGhost, btnPrimary, btnSecondary, input } from "./ui";
 import { nameMatches } from "@/lib/names";
+import { useT } from "@/i18n/client";
 
 export type SeatView = {
   id: string;
@@ -63,7 +64,7 @@ export function SeatMap({
   meId,
   mode,
   assignable = [],
-  title = "Seat plan",
+  title,
   actions,
   children,
 }: {
@@ -82,6 +83,7 @@ export function SeatMap({
   children?: ReactNode;
 }) {
   const admin = mode === "admin";
+  const t = useT();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [zoom, setZoomState] = useState<Zoom>("compact");
@@ -142,7 +144,7 @@ export function SeatMap({
         const r = await fn();
         if (r && typeof r === "object" && "error" in r && typeof r.error === "string") setError(r.error);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Something went wrong");
+        setError(e instanceof Error ? e.message : t("seatMap.somethingWrong"));
       }
     });
 
@@ -224,11 +226,11 @@ export function SeatMap({
   }, [compact]);
 
   const hint = layout
-    ? "Tap a dashed cell to add that seat, a seat to remove it, or a row letter to fill or clear the row."
+    ? t("seatMap.hintLayout")
     : swapFrom
-      ? `Tap the seat to swap ${byId.get(swapFrom)?.label} with, or a free seat to move there.`
+      ? t("seatMap.hintSwap", { seat: byId.get(swapFrom)?.label })
       : placing
-        ? `Tap a seat for ${people.get(placing)?.name ?? "them"}.`
+        ? t("seatMap.hintPlace", { name: people.get(placing)?.name ?? t("seatMap.them") })
         : null;
 
   const rowLetterOf = (row: number) => seats.find((x) => x.row === row)?.label.match(/^[A-Za-z]+/)?.[0] ?? rowLetter(row);
@@ -242,7 +244,7 @@ export function SeatMap({
         type="button"
         onClick={() => run(() => toggleSeatRow(lanId, row))}
         className={`${wrapped ? "self-stretch border-r-2 border-line" : cell} w-5 shrink-0 rounded font-mono text-xs text-muted hover:bg-raised hover:text-fg`}
-        title={`Fill or clear row ${letter}`}
+        title={t("seatMap.fillRow", { row: letter })}
       >
         {letter}
       </button>
@@ -261,8 +263,8 @@ export function SeatMap({
           type="button"
           onClick={() => onCell(row, col)}
           className={`${cell} w-full rounded-bit border border-dashed border-line font-mono text-[10px] text-faint hover:border-muted/50 hover:text-muted`}
-          aria-label={`Add seat ${rowLetterOf(row)}${col + 1}`}
-          title={`Add ${rowLetterOf(row)}${col + 1}`}
+          aria-label={t("seatMap.addSeat", { seat: `${rowLetterOf(row)}${col + 1}` })}
+          title={t("seatMap.addShort", { seat: `${rowLetterOf(row)}${col + 1}` })}
         >
           {compact ? "+" : `${rowLetterOf(row)}${col + 1}`}
         </button>
@@ -301,8 +303,8 @@ export function SeatMap({
         onDragOver={canDrag ? (e) => (e.preventDefault(), setDragOver(s.id)) : undefined}
         onDragLeave={canDrag ? () => setDragOver(null) : undefined}
         onDrop={canDrag ? (e) => onDrop(e, s) : undefined}
-        title={`${s.label}${s.nick ? ` · ${s.name ?? s.nick}` : ""}${s.locked ? " · held" : ""}`}
-        aria-label={`Seat ${s.label}${s.nick ? `, ${s.name ?? s.nick}` : ", free"}${s.locked ? ", held" : ""}`}
+        title={`${s.label}${s.nick ? ` · ${s.name ?? s.nick}` : ""}${s.locked ? ` · ${t("seatMap.held")}` : ""}`}
+        aria-label={`${t("seatMap.seatAria", { seat: s.label })}, ${s.nick ? (s.name ?? s.nick) : t("seatMap.free")}${s.locked ? `, ${t("seatMap.held")}` : ""}`}
         aria-pressed={isSel}
         className={`relative flex ${cell} w-full min-w-0 flex-col items-center justify-center overflow-hidden rounded-bit border px-0.5 text-center transition hover:brightness-125 ${tone} ${ring} ${dim ? "opacity-25" : ""} ${canDrag && taken ? "cursor-grab active:cursor-grabbing" : ""}`}
       >
@@ -391,7 +393,7 @@ export function SeatMap({
     // Phones and tablets: the details open as a bottom sheet.
     <div className={`grid items-start gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_22rem] ${pending ? "cursor-progress" : ""}`}>
       <div className="min-w-0 space-y-4 sm:space-y-6">
-        <Card title={title} actions={actions}>
+        <Card title={title ?? t("seatMap.title")} actions={actions}>
           <div className="space-y-3">
             {/* Toolbar: search, zoom, lead layout mode */}
             <div className="flex flex-wrap items-center gap-2">
@@ -400,8 +402,8 @@ export function SeatMap({
                   type="search"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Find someone"
-                  aria-label="Find someone on the seat plan"
+                  placeholder={t("seatMap.find")}
+                  aria-label={t("seatMap.findAria")}
                   className={`${input} !min-h-9 pl-8`}
                 />
                 <svg viewBox="0 0 24 24" className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden>
@@ -410,12 +412,12 @@ export function SeatMap({
                 </svg>
               </div>
               <Segmented
-                label="Seat size"
+                label={t("seatMap.size")}
                 value={zoom}
                 onChange={setZoom}
                 options={[
-                  { id: "compact", label: "Compact" },
-                  { id: "large", label: "Large" },
+                  { id: "compact", label: t("seatMap.compact") },
+                  { id: "large", label: t("seatMap.large") },
                 ]}
               />
               {admin && (
@@ -430,7 +432,7 @@ export function SeatMap({
                   aria-pressed={layout}
                   className={`${layout ? btnSecondary + " !border-bit" : btnGhost} !min-h-9`}
                 >
-                  {layout ? "Done editing seats" : "Edit seats"}
+                  {layout ? t("seatMap.doneEditing") : t("seatMap.editSeats")}
                 </button>
               )}
             </div>
@@ -438,24 +440,20 @@ export function SeatMap({
             {mode === "pick" && (
               <p className="text-sm text-muted">
                 {mySeat
-                  ? `You're at ${mySeat.label}. Tap a free seat and "Move here" to change, or tap yours to give it up.`
-                  : "Tap a free seat, then \"Take this seat\". The leads check and finalize the plan afterwards."}
+                  ? t("seatMap.pickHas", { seat: mySeat.label })
+                  : t("seatMap.pickNone")}
               </p>
             )}
             {mode === "view" && (
               <p className="text-sm text-muted">
-                {mySeat ? (
-                  <>
-                    You&apos;re at <strong className="font-mono text-bit">{mySeat.label}</strong>. Tap a seat to see who sits there.
-                  </>
-                ) : (
-                  "The leads assign the group's seats after the deadline."
-                )}
+                {mySeat
+                  ? t.rich("seatMap.viewHas", { seat: <strong className="font-mono text-bit">{mySeat.label}</strong> })
+                  : t("seatMap.viewNone")}
               </p>
             )}
             {q && (
               <p className="text-xs text-muted" aria-live="polite">
-                {matchCount ? `${matchCount} match${matchCount > 1 ? "es" : ""} highlighted` : "Nobody found on the plan"}
+                {matchCount ? t("seatMap.matches", { count: matchCount }) : t("seatMap.noMatch")}
               </p>
             )}
             {hint && (
@@ -463,7 +461,7 @@ export function SeatMap({
                 {hint}
                 {(swapFrom || placing) && (
                   <button type="button" className="ml-auto text-sm text-muted underline hover:text-fg" onClick={() => (setSwapFrom(null), setPlacing(null))}>
-                    Cancel
+                    {t("common.cancel")}
                   </button>
                 )}
               </p>
@@ -473,7 +471,7 @@ export function SeatMap({
               {rowList.map((row) => {
                 const lines = linesFor(itemsFor(row));
                 return (
-                  <div key={row} role="group" aria-label={`Row ${rowLetterOf(row)}`} className="flex items-start gap-1">
+                  <div key={row} role="group" aria-label={t("seatMap.row", { row: rowLetterOf(row) })} className="flex items-start gap-1">
                     {rowLabel(row, lines.length > 1)}
                     <div className="min-w-0 flex-1" style={{ display: "grid", rowGap: dims.g }}>
                       {lines.map((line, i) => (
@@ -484,7 +482,7 @@ export function SeatMap({
                                 key={`g${it.from}`}
                                 className={`${cell} grid shrink-0 place-items-center`}
                                 style={{ width: dims.w / 2 }}
-                                title={`${rowLetterOf(row)}${it.from}${it.to > it.from ? `–${rowLetterOf(row)}${it.to}` : ""} aren't ours`}
+                                title={t("seatMap.notOurs", { seats: `${rowLetterOf(row)}${it.from}${it.to > it.from ? `–${rowLetterOf(row)}${it.to}` : ""}` })}
                                 aria-hidden
                               >
                                 <span className="h-3/5 border-l-2 border-dotted border-faint/60" />
@@ -504,14 +502,14 @@ export function SeatMap({
             </div>
 
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
-              <Legend cls="bg-raised border-line">Free</Legend>
-              <Legend cls="bg-bit border-bit">You</Legend>
-              <Legend cls="bg-seat-taken/20 border-seat-taken/40">Taken</Legend>
-              <Legend cls="bg-raised/60 border-line">Held</Legend>
+              <Legend cls="bg-raised border-line">{t("seatMap.legendFree")}</Legend>
+              <Legend cls="bg-bit border-bit">{t("seatMap.legendYou")}</Legend>
+              <Legend cls="bg-seat-taken/20 border-seat-taken/40">{t("seatMap.legendTaken")}</Legend>
+              <Legend cls="bg-raised/60 border-line">{t("seatMap.legendHeld")}</Legend>
               {anyGap && (
                 <span className="inline-flex items-center gap-1.5">
                   <span className="inline-block h-3 border-l-2 border-dotted border-faint/60" />
-                  Not our seats
+                  {t("seatMap.legendNotOurs")}
                 </span>
               )}
             </div>
@@ -520,7 +518,7 @@ export function SeatMap({
             {admin && !layout && unseated.length > 0 && (
               <div>
                 <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-muted">
-                  Not seated yet <span className="text-faint">{unseated.length}</span>
+                  {t("seatMap.notSeated")} <span className="text-faint">{unseated.length}</span>
                 </p>
                 <ul className="flex flex-wrap gap-1.5">
                   {unseated.map((p) => (
@@ -544,7 +542,7 @@ export function SeatMap({
                     </li>
                   ))}
                 </ul>
-                <p className="mt-1.5 hidden text-xs text-faint lg:block">Drag a name onto a seat, or a seated person onto another seat to swap.</p>
+                <p className="mt-1.5 hidden text-xs text-faint lg:block">{t("seatMap.dragHint")}</p>
               </div>
             )}
           </div>
@@ -557,25 +555,23 @@ export function SeatMap({
         <div className="rounded-card border border-line bg-surface p-4 sm:p-5">
           {layout ? (
             <p className="text-sm text-muted">
-              Editing seats. Each letter is one row and every number has a cell: tap a dashed cell to add that seat, a
-              seat to remove it, or a row letter to fill or clear the whole row. For new rows or many seats at once, use
-              the seat list below. Click <strong className="text-fg">Done editing seats</strong> when you&apos;re finished.
+              {t.rich("seatMap.editing", { done: <strong className="text-fg">{t("seatMap.doneEditing")}</strong> })}
             </p>
           ) : selected ? (
             details(() => setSwapFrom(selected.id))
           ) : (
             <div className="space-y-2 text-sm text-muted">
-              <p className="text-[11px] font-medium uppercase tracking-wide">Seat details</p>
+              <p className="text-[11px] font-medium uppercase tracking-wide">{t("seatMap.details")}</p>
               <p>
                 {admin
-                  ? "Tap a seat to see who sits there, assign someone, swap, hold or rename it."
+                  ? t("seatMap.detailsAdmin")
                   : mode === "pick"
-                    ? "Tap a free seat to take it."
-                    : "Tap a seat to see who sits there."}
+                    ? t("seatMap.detailsPick")
+                    : t("seatMap.detailsView")}
               </p>
               {mySeat && (
                 <p>
-                  Your seat: <strong className="font-mono text-bit">{mySeat.label}</strong>
+                  {t.rich("seatMap.yourSeat", { seat: <strong className="font-mono text-bit">{mySeat.label}</strong> })}
                 </p>
               )}
             </div>
@@ -630,24 +626,25 @@ function SeatDetails({
   run: (fn: () => Promise<unknown>) => void;
   lanId: string;
 }) {
+  const t = useT();
   const [pick, setPick] = useState("");
   const [label, setLabel] = useState(s.label);
   const [renaming, setRenaming] = useState(false);
   const mine = s.userId === meId;
-  const status = mine ? "You" : s.userId ? "Taken" : s.locked ? "Held" : "Free";
+  const status = mine ? t("seatMap.legendYou") : s.userId ? t("seatMap.legendTaken") : s.locked ? t("seatMap.legendHeld") : t("seatMap.legendFree");
   const tone = mine ? "emerald" : s.userId ? "zinc" : s.locked ? "amber" : "zinc";
 
   return (
     <div className="space-y-3">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <p className="text-[11px] font-medium uppercase tracking-wide text-muted">Seat</p>
+          <p className="text-[11px] font-medium uppercase tracking-wide text-muted">{t("seatMap.seat")}</p>
           <p className="font-mono text-2xl font-bold leading-tight">{s.label}</p>
         </div>
         <div className="flex items-center gap-1">
           <Pill tone={tone}>{status}</Pill>
-          {s.locked && s.userId && <Pill tone="amber">Held</Pill>}
-          <button type="button" onClick={onClose} className={`${btnGhost} !min-h-8 !px-2`} aria-label="Close">
+          {s.locked && s.userId && <Pill tone="amber">{t("seatMap.legendHeld")}</Pill>}
+          <button type="button" onClick={onClose} className={`${btnGhost} !min-h-8 !px-2`} aria-label={t("seatMap.close")}>
             ✕
           </button>
         </div>
@@ -658,55 +655,56 @@ function SeatDetails({
           <p className={`text-lg font-semibold leading-tight [overflow-wrap:anywhere] ${mine ? "text-bit" : ""}`}>{s.name ?? s.nick}</p>
           {person?.lanAccount && (
             <p className="mt-1 text-xs text-muted">
-              Event account:{" "}
-              {person.profileUrl ? (
-                <a href={person.profileUrl} target="_blank" rel="noreferrer" className="font-mono text-bit hover:underline">
-                  {person.lanAccount} ↗
-                </a>
-              ) : (
-                <span className="font-mono text-fg">{person.lanAccount}</span>
-              )}
+              {t.rich("seatMap.eventAccount", {
+                account: person.profileUrl ? (
+                  <a href={person.profileUrl} target="_blank" rel="noreferrer" className="font-mono text-bit hover:underline">
+                    {person.lanAccount} ↗
+                  </a>
+                ) : (
+                  <span className="font-mono text-fg">{person.lanAccount}</span>
+                ),
+              })}
             </p>
           )}
           {admin && person?.ticket && (
             <p className="mt-2">
               {person.ticket === "ok" ? (
-                <Pill tone="emerald">ticket ok</Pill>
+                <Pill tone="emerald">{t("seatMap.ticketOk")}</Pill>
               ) : person.ticket === "reported" ? (
-                <Pill tone="amber">ticket reported</Pill>
+                <Pill tone="amber">{t("seatMap.ticketReported")}</Pill>
               ) : (
-                <Pill tone="red">no ticket</Pill>
+                <Pill tone="red">{t("seatMap.noTicket")}</Pill>
               )}
             </p>
           )}
           {admin && person?.wishes && (person.wishes.ok.length > 0 || person.wishes.missed.length > 0) && (
             <div className="mt-2 flex flex-wrap gap-1">
-              {person.wishes.ok.map((t) => (
-                <Pill key={t} tone="emerald">
-                  ✓ {t}
+              {person.wishes.ok.map((w) => (
+                <Pill key={w} tone="emerald">
+                  ✓ {w}
                 </Pill>
               ))}
-              {person.wishes.missed.map((t) => (
-                <Pill key={t} tone="red">
-                  ✗ {t}
+              {person.wishes.missed.map((w) => (
+                <Pill key={w} tone="red">
+                  ✗ {w}
                 </Pill>
               ))}
             </div>
           )}
         </div>
       ) : (
-        <p className="text-sm text-muted">{s.locked ? "Held, e.g. for a guest. Members can't get it automatically." : "Nobody sits here yet."}</p>
+        <p className="text-sm text-muted">{s.locked ? t("seatMap.heldText") : t("seatMap.nobody")}</p>
       )}
 
       {picking && (mine || (!s.userId && !s.locked)) && (
         <div className="border-t border-line pt-3">
           {mine ? (
             <button type="button" disabled={pending} className={`${btnSecondary} w-full`} onClick={() => run(() => pickMySeat(lanId, null))}>
-              Give up my seat
+              {t("seatMap.giveUp")}
             </button>
           ) : (
             <button type="button" disabled={pending} className={`${btnPrimary} w-full`} onClick={() => run(() => pickMySeat(lanId, s.id))}>
-              {hasSeat ? "Move here" : "Take this seat"}
+              {hasSeat ? t("seatMap.moveHere") : t("seatMap.take")}
             </button>
           )}
         </div>
@@ -715,14 +713,14 @@ function SeatDetails({
       {admin && (
         <div className="space-y-2 border-t border-line pt-3">
           <div className="flex gap-2">
-            <select value={pick} onChange={(e) => setPick(e.target.value)} className={`${input} !min-h-10 min-w-0 flex-1`} aria-label="Person for this seat">
-              <option value="">{s.userId ? "Give seat to…" : "Assign someone…"}</option>
+            <select value={pick} onChange={(e) => setPick(e.target.value)} className={`${input} !min-h-10 min-w-0 flex-1`} aria-label={t("seatMap.personFor")}>
+              <option value="">{s.userId ? t("seatMap.giveTo") : t("seatMap.assignSomeone")}</option>
               {assignable
                 .filter((p) => p.id !== s.userId)
                 .map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.name}
-                    {seatOfUser.get(p.id) ? ` (now ${seatOfUser.get(p.id)!.label})` : ""}
+                    {seatOfUser.get(p.id) ? ` ${t("seatMap.now", { seat: seatOfUser.get(p.id)!.label })}` : ""}
                   </option>
                 ))}
             </select>
@@ -738,23 +736,23 @@ function SeatDetails({
                 setPick("");
               }}
             >
-              {seatOfUser.get(pick) && s.userId ? "Swap" : "Assign"}
+              {seatOfUser.get(pick) && s.userId ? t("seatMap.swap") : t("seatMap.assign")}
             </button>
           </div>
           <div className="flex flex-wrap gap-1.5">
             <button type="button" className={btnSecondary} onClick={onSwap} disabled={pending}>
-              {s.userId ? "Swap / move…" : "Move someone here…"}
+              {s.userId ? t("seatMap.swapMove") : t("seatMap.moveSomeone")}
             </button>
             {s.userId && (
               <button type="button" className={`${btnGhost} hover:!text-danger`} disabled={pending} onClick={() => run(() => adminAssignSeat(s.id, null))}>
-                Clear
+                {t("seatMap.clear")}
               </button>
             )}
             <button type="button" className={btnGhost} disabled={pending} onClick={() => run(() => toggleSeatLock(s.id))}>
-              {s.locked ? "Release hold" : "Hold"}
+              {s.locked ? t("seatMap.release") : t("seatMap.hold")}
             </button>
             <button type="button" className={btnGhost} onClick={() => setRenaming(!renaming)}>
-              Rename
+              {t("seatMap.rename")}
             </button>
           </div>
           {renaming && (
@@ -766,8 +764,8 @@ function SeatDetails({
                 setRenaming(false);
               }}
             >
-              <input value={label} onChange={(e) => setLabel(e.target.value)} maxLength={12} className={`${input} !min-h-10 font-mono`} aria-label="Seat label" autoFocus />
-              <button className={btnSecondary}>Save</button>
+              <input value={label} onChange={(e) => setLabel(e.target.value)} maxLength={12} className={`${input} !min-h-10 font-mono`} aria-label={t("seatMap.label")} autoFocus />
+              <button className={btnSecondary}>{t("common.save")}</button>
             </form>
           )}
         </div>

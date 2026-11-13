@@ -2,6 +2,7 @@
 import { useState, useTransition } from "react";
 import { answerSeatSwap, cancelSeatSwap, decideSeatSwap, requestSeatSwap } from "@/app/lan-extras-actions";
 import { Pill, btnGhost, btnPrimary, btnSecondary, input } from "./ui";
+import { useT } from "@/i18n/client";
 
 export type SwapView = {
   id: string;
@@ -16,6 +17,7 @@ export type SwapView = {
 };
 
 function useAction() {
+  const t = useT();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const run = (fn: () => Promise<unknown>) =>
@@ -24,10 +26,10 @@ function useAction() {
       try {
         await fn();
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed");
+        setError(e instanceof Error ? e.message : t("eventUi.failed"));
       }
     });
-  return { pending, error, run };
+  return { pending, error, run, t };
 }
 
 /** Member side: ask someone to swap, answer requests, see where yours stands. */
@@ -46,7 +48,7 @@ export function SeatSwapPanel({
   /** Open requests I'm part of. */
   swaps: SwapView[];
 }) {
-  const { pending, error, run } = useAction();
+  const { pending, error, run, t } = useAction();
   const [to, setTo] = useState("");
   const [note, setNote] = useState("");
   const outgoing = swaps.find((s) => s.fromUserId === meId);
@@ -56,20 +58,20 @@ export function SeatSwapPanel({
       {incoming.map((s) => (
         <div key={s.id} className="rounded-bit border border-bit/40 bg-bit-soft/40 p-3">
           <p>
-            <strong>{s.fromName}</strong> ({s.fromSeat}) wants your seat {s.toSeat}.
+            {t.rich("swaps.wants", { name: <strong>{s.fromName}</strong>, from: s.fromSeat, to: s.toSeat })}
             {s.note && <span className="block text-muted">&ldquo;{s.note}&rdquo;</span>}
           </p>
           {s.status === "pending" ? (
             <div className="mt-2 flex gap-2">
               <button disabled={pending} className={btnPrimary} onClick={() => run(() => answerSeatSwap(s.id, true))}>
-                Swap
+                {t("swaps.swap")}
               </button>
               <button disabled={pending} className={btnGhost} onClick={() => run(() => answerSeatSwap(s.id, false))}>
-                Decline
+                {t("swaps.decline")}
               </button>
             </div>
           ) : (
-            <p className="mt-1 text-muted">You agreed. Waiting for a lead to approve.</p>
+            <p className="mt-1 text-muted">{t("swaps.agreed")}</p>
           )}
         </div>
       ))}
@@ -77,15 +79,15 @@ export function SeatSwapPanel({
       {outgoing ? (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-bit bg-raised/60 p-3">
           <span>
-            You asked <strong>{outgoing.toName}</strong> to swap {mySeat} ⇄ {outgoing.toSeat}.{" "}
-            {outgoing.status === "pending" ? <Pill tone="amber">waiting for them</Pill> : <Pill tone="emerald">waiting for a lead</Pill>}
+            {t.rich("swaps.asked", { name: <strong>{outgoing.toName}</strong>, mine: mySeat, theirs: outgoing.toSeat })}{" "}
+            {outgoing.status === "pending" ? <Pill tone="amber">{t("swaps.waitingThem")}</Pill> : <Pill tone="emerald">{t("swaps.waitingLead")}</Pill>}
           </span>
           <button disabled={pending} className={btnGhost} onClick={() => run(() => cancelSeatSwap(outgoing.id))}>
-            Cancel
+            {t("common.cancel")}
           </button>
         </div>
       ) : people.length === 0 ? (
-        <p className="text-muted">Nobody else has a seat yet.</p>
+        <p className="text-muted">{t("swaps.nobody")}</p>
       ) : (
         <form
           className="space-y-2"
@@ -99,12 +101,11 @@ export function SeatSwapPanel({
           }}
         >
           <p className="text-muted">
-            You sit at <strong className="text-fg">{mySeat}</strong>. Ask someone to swap; once they agree, a lead
-            approves it.
+            {t.rich("swaps.intro", { seat: <strong className="text-fg">{mySeat}</strong> })}
           </p>
           <div className="flex flex-col gap-2 sm:flex-row">
-            <select value={to} onChange={(e) => setTo(e.target.value)} className={input} aria-label="Swap with">
-              <option value="">Swap with…</option>
+            <select value={to} onChange={(e) => setTo(e.target.value)} className={input} aria-label={t("swaps.with")}>
+              <option value="">{t("swaps.withPick")}</option>
               {people.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.seat} · {p.name}
@@ -115,11 +116,11 @@ export function SeatSwapPanel({
               value={note}
               onChange={(e) => setNote(e.target.value)}
               maxLength={200}
-              placeholder="Why? (optional)"
+              placeholder={t("swaps.why")}
               className={input}
             />
             <button disabled={pending || !to} className={btnSecondary}>
-              Ask
+              {t("swaps.ask")}
             </button>
           </div>
         </form>
@@ -131,7 +132,7 @@ export function SeatSwapPanel({
 
 /** Lead side: approve or reject swaps; pending ones are shown as waiting. */
 export function SeatSwapApprovals({ swaps }: { swaps: SwapView[] }) {
-  const { pending, error, run } = useAction();
+  const { pending, error, run, t } = useAction();
   return (
     <div className="space-y-2 text-sm">
       <ul className="space-y-2">
@@ -144,17 +145,17 @@ export function SeatSwapApprovals({ swaps }: { swaps: SwapView[] }) {
             {s.status === "accepted" ? (
               <span className="flex gap-2">
                 <button disabled={pending} className={btnPrimary} onClick={() => run(() => decideSeatSwap(s.id, true))}>
-                  Approve
+                  {t("swaps.approve")}
                 </button>
                 <button disabled={pending} className={btnGhost} onClick={() => run(() => decideSeatSwap(s.id, false))}>
-                  Reject
+                  {t("swaps.reject")}
                 </button>
               </span>
             ) : (
               <span className="flex items-center gap-2">
-                <Pill tone="amber">waiting for {s.toName}</Pill>
+                <Pill tone="amber">{t("swaps.waitingFor", { name: s.toName })}</Pill>
                 <button disabled={pending} className={btnGhost} onClick={() => run(() => decideSeatSwap(s.id, false))}>
-                  Reject
+                  {t("swaps.reject")}
                 </button>
               </span>
             )}

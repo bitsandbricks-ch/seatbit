@@ -1,4 +1,5 @@
 import type { Attendance, Lan } from "@/db/schema";
+import { makeT, type T } from "@/i18n/translate";
 
 export type StepState = "done" | "pending" | "todo";
 export type StepKey = "going" | "nick" | "ticket" | "wishes" | "pick" | "seat" | "games" | "checkin";
@@ -28,7 +29,10 @@ export function buildChecklist(input: {
   /** Games someone voted for, and how many of them I haven't marked installed. Left out: no games step. */
   games?: { voted: number; toInstall: number };
   now?: Date;
+  /** Language of the titles and hints; English when left out. */
+  t?: T;
 }): ChecklistStep[] {
+  const t = input.t ?? makeT("en");
   const { lan, attendance: a, hasNick, seatLabel, hasSeatPlan, freeSeats, waitlistPlace, games } = input;
   const now = input.now ?? new Date();
   const final = !!lan.seatsPublishedAt;
@@ -38,36 +42,36 @@ export function buildChecklist(input: {
 
   steps.push({
     key: "going",
-    title: "Say you're coming",
+    title: t("checklist.going.title"),
     state: going ? "done" : a?.status === "waitlist" ? "pending" : "todo",
     hint: going
-      ? "You're going."
+      ? t("checklist.going.done")
       : a?.status === "waitlist"
         ? waitlistPlace
-          ? `You're #${waitlistPlace} on the waitlist.`
-          : "You're on the waitlist."
+          ? t("checklist.going.waitlistAt", { place: waitlistPlace })
+          : t("checklist.going.waitlist")
         : lan.signupDeadline
-          ? "Answer before the deadline."
-          : "Let the leads know.",
+          ? t("checklist.going.deadline")
+          : t("checklist.going.todo"),
   });
 
   steps.push({
     key: "nick",
-    title: "Give your nickname",
+    title: t("checklist.nick.title"),
     state: hasNick ? "done" : "todo",
-    hint: hasNick ? "Nick is set." : "Add the nick you want on the seat plan.",
+    hint: hasNick ? t("checklist.nick.done") : t("checklist.nick.todo"),
   });
 
   // Every LAN the group goes to needs a ticket, so this step is always there.
   steps.push({
     key: "ticket",
-    title: "Buy your ticket",
+    title: t("checklist.ticket.title"),
     state: a?.paid ? "done" : a?.ticketBought ? "pending" : "todo",
     hint: a?.paid
-      ? "Confirmed by the leads."
+      ? t("checklist.ticket.done")
       : a?.ticketBought
-        ? "Waiting for a lead to confirm."
-        : "Buy it from the event, then tick it off here.",
+        ? t("checklist.ticket.pending")
+        : t("checklist.ticket.todo"),
   });
 
   if (hasSeatPlan && going) {
@@ -76,49 +80,49 @@ export function buildChecklist(input: {
     if (lan.seatPicking) {
       steps.push({
         key: "pick",
-        title: "Pick your seat",
+        title: t("checklist.pick.title"),
         state: seatLabel || final ? "done" : "todo",
         hint: seatLabel
           ? final
-            ? `You sit at ${seatLabel}.`
-            : `You took ${seatLabel}. You can still change it on the Seats tab.`
+            ? t("checklist.pick.final", { seat: seatLabel })
+            : t("checklist.pick.took", { seat: seatLabel })
           : final
-            ? "Self pick is closed. The leads place you."
+            ? t("checklist.pick.closed")
             : hasTicket
               ? freeSeats > 0
-                ? "Take a free seat on the Seats tab."
-                : "No free seats left. The leads will place you."
-              : "Tick that you have your ticket first, then take a free seat on the Seats tab.",
+                ? t("checklist.pick.take")
+                : t("checklist.pick.none")
+              : t("checklist.pick.ticketFirst"),
       });
     } else if (!final || hasWishes(a)) {
       const wished = hasWishes(a);
       steps.push({
         key: "wishes",
-        title: "Send seat wishes",
+        title: t("checklist.wishes.title"),
         optional: true,
         state: wished ? "done" : "todo",
         hint: final
-          ? "Sent. The plan is final now."
+          ? t("checklist.wishes.final")
           : wished
-            ? "Sent. You can change them until the leads finalize the plan."
-            : "Optional: who you'd like to sit near, on the Seats tab.",
+            ? t("checklist.wishes.sent")
+            : t("checklist.wishes.todo"),
       });
     }
 
     // Step 5: the leads always finalize the plan, also after self pick. They also book it on the event site.
     steps.push({
       key: "seat",
-      title: "Leads confirm your seat",
+      title: t("checklist.seat.title"),
       state: final && seatLabel ? "done" : lan.seatPicking && !final && !seatLabel ? "todo" : "pending",
       hint: final
         ? seatLabel
-          ? `Seat ${seatLabel}, final.${lan.externalPlanUrl ? (a.seatBooked ? " Booked on the event site." : " The leads book it on the event site.") : ""}`
-          : "The plan is final but you have no seat yet. A lead will get back to you."
+          ? `${t("checklist.seat.final", { seat: seatLabel })}${lan.externalPlanUrl ? ` ${a.seatBooked ? t("checklist.seat.booked") : t("checklist.seat.leadsBook")}` : ""}`
+          : t("checklist.seat.finalNone")
         : seatLabel
-          ? `The leads check ${seatLabel} and finalize the seat plan.`
+          ? t("checklist.seat.check", { seat: seatLabel })
           : lan.seatPicking
-            ? "Once you picked a seat, the leads check and finalize the plan."
-            : "The leads assign the seats and finalize the plan after the deadline.",
+            ? t("checklist.seat.afterPick")
+            : t("checklist.seat.assign"),
     });
   }
 
@@ -129,13 +133,13 @@ export function buildChecklist(input: {
   if (going && confirmed && games && games.voted > 0 && now < lan.endsAt) {
     steps.push({
       key: "games",
-      title: "Install the games",
+      title: t("checklist.games.title"),
       optional: true,
       state: games.toInstall === 0 ? "done" : "todo",
       hint:
         games.toInstall === 0
-          ? "All installed."
-          : `${games.toInstall} of ${games.voted} still to install. Tick them off on the Games tab.`,
+          ? t("checklist.games.done")
+          : t("checklist.games.todo", { left: games.toInstall, count: games.voted }),
     });
   }
 
@@ -143,9 +147,9 @@ export function buildChecklist(input: {
   if (going && confirmed && onTheDay(lan, now)) {
     steps.push({
       key: "checkin",
-      title: "Check in at the venue",
+      title: t("checklist.checkin.title"),
       state: a.arrivedAt ? "done" : "todo",
-      hint: a.arrivedAt ? "You're here." : "Tap \"I'm here\" when you arrive.",
+      hint: a.arrivedAt ? t("checklist.checkin.done") : t("checklist.checkin.todo"),
     });
   }
   return steps;

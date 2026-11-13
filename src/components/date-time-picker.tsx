@@ -1,6 +1,9 @@
 "use client";
 import { useEffect, useId, useRef, useState } from "react";
 import { btnGhost, btnPrimary } from "./ui";
+import { useT } from "@/i18n/client";
+import type { Locale } from "@/i18n/config";
+import { fmtDate } from "@/lib/format";
 
 /**
  * Date and time picker, always 24h (the browser's own datetime-local input
@@ -12,9 +15,12 @@ import { btnGhost, btnPrimary } from "./ui";
  * button opens a month view with quick times.
  */
 
-const WEEKDAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
-const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+// Monday first, as in Switzerland.
+const WEEKDAYS: Record<Locale, string[]> = {
+  en: ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
+  de: ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"],
+};
+const monthName = (m: number, loc: Locale) => new Date(2000, m, 1).toLocaleString(loc, { month: "long" });
 const pad = (n: number) => String(n).padStart(2, "0");
 
 type Parts = { y: number; m: number; d: number; hh: number; mm: number };
@@ -52,11 +58,10 @@ export function parseTyped(text: string, fallback: { hh: number; mm: number }, n
 const serialize = (p: Parts) => `${p.y}-${pad(p.m + 1)}-${pad(p.d)}T${pad(p.hh)}:${pad(p.mm)}`;
 
 /** "Sat 14.11.2026, 18:00" */
-export function formatPickerValue(v: string) {
+export function formatPickerValue(v: string, loc: Locale = "en") {
   const p = parse(v);
   if (!p) return "";
-  const wd = DAY_NAMES[new Date(p.y, p.m, p.d).getDay()];
-  return `${wd} ${pad(p.d)}.${pad(p.m + 1)}.${p.y}, ${pad(p.hh)}:${pad(p.mm)}`;
+  return fmtDate(new Date(p.y, p.m, p.d, p.hh, p.mm), loc);
 }
 
 /** "14.11.2026 18:00": the editable text form. */
@@ -74,7 +79,7 @@ export function DateTimePicker({
   onChange,
   required,
   defaultTime = "18:00",
-  placeholder = "Pick a date",
+  placeholder,
 }: {
   name: string;
   defaultValue?: string;
@@ -86,6 +91,9 @@ export function DateTimePicker({
   defaultTime?: string;
   placeholder?: string;
 }) {
+  const t = useT();
+  const loc = t.locale;
+  placeholder ??= t("picker.pick");
   const [own, setOwn] = useState(defaultValue);
   const value = controlled ?? own;
   const setValue = (v: string) => {
@@ -174,9 +182,9 @@ export function DateTimePicker({
           inputMode="text"
           autoComplete="off"
           aria-label={placeholder}
-          title="Type or paste e.g. 14.11.2026 18:00"
+          title={t("picker.typeHint")}
           placeholder={placeholder}
-          value={text ?? (value ? formatPickerValue(value) : "")}
+          value={text ?? (value ? formatPickerValue(value, loc) : "")}
           onFocus={(e) => {
             setText(editText(value));
             requestAnimationFrame(() => e.target.select());
@@ -214,7 +222,7 @@ export function DateTimePicker({
           aria-haspopup="dialog"
           aria-expanded={open}
           aria-controls={popId}
-          aria-label="Open calendar"
+          aria-label={t("picker.open")}
           className="grid h-10 w-10 shrink-0 place-items-center rounded-r-md text-muted hover:text-fg"
         >
           <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -222,28 +230,28 @@ export function DateTimePicker({
           </svg>
         </button>
       </div>
-      {bad && <span className="mt-1 block text-xs text-danger">Write it like 14.11.2026 18:00</span>}
+      {bad && <span className="mt-1 block text-xs text-danger">{t("picker.bad")}</span>}
 
       {open && (
         <div
           id={popId}
           role="dialog"
-          aria-label="Choose date and time"
+          aria-label={t("picker.choose")}
           className="absolute left-0 z-40 mt-2 w-[19rem] max-w-[calc(100vw-2rem)] rounded-card border border-line bg-surface p-3 shadow-2xl shadow-black/60"
         >
           <div className="mb-2 flex items-center justify-between">
-            <button type="button" onClick={() => shift(-1)} className={`${btnGhost} !min-h-9 !px-2.5`} aria-label="Previous month">
+            <button type="button" onClick={() => shift(-1)} className={`${btnGhost} !min-h-9 !px-2.5`} aria-label={t("picker.prev")}>
               ‹
             </button>
             <span className="text-sm font-semibold">
-              {MONTHS[view.m]} {view.y}
+              {monthName(view.m, loc)} {view.y}
             </span>
-            <button type="button" onClick={() => shift(1)} className={`${btnGhost} !min-h-9 !px-2.5`} aria-label="Next month">
+            <button type="button" onClick={() => shift(1)} className={`${btnGhost} !min-h-9 !px-2.5`} aria-label={t("picker.next")}>
               ›
             </button>
           </div>
           <div className="grid grid-cols-7 gap-1 text-center">
-            {WEEKDAYS.map((w) => (
+            {WEEKDAYS[loc].map((w) => (
               <span key={w} className="pb-1 text-[11px] font-medium uppercase text-muted">
                 {w}
               </span>
@@ -257,7 +265,7 @@ export function DateTimePicker({
                   type="button"
                   onClick={() => setPart({ y: view.y, m: view.m, d })}
                   aria-pressed={isSel(d)}
-                  aria-label={`${d} ${MONTHS[view.m]} ${view.y}`}
+                  aria-label={`${d} ${monthName(view.m, loc)} ${view.y}`}
                   className={`grid h-9 place-items-center rounded-bit font-mono text-sm transition ${
                     isSel(d)
                       ? "bg-bit font-semibold text-on-bit"
@@ -273,9 +281,9 @@ export function DateTimePicker({
           </div>
 
           <div className="mt-3 flex items-center gap-2 border-t border-line pt-3">
-            <span className="text-xs font-medium uppercase tracking-wide text-muted">Time</span>
+            <span className="text-xs font-medium uppercase tracking-wide text-muted">{t("picker.time")}</span>
             <select
-              aria-label="Hour"
+              aria-label={t("picker.hour")}
               value={current?.hh ?? dh}
               onChange={(e) => setPart({ hh: +e.target.value })}
               className={selectCls}
@@ -288,7 +296,7 @@ export function DateTimePicker({
             </select>
             <span className="font-mono text-muted">:</span>
             <select
-              aria-label="Minute"
+              aria-label={t("picker.minute")}
               value={current?.mm ?? dm}
               onChange={(e) => setPart({ mm: +e.target.value })}
               className={selectCls}
@@ -325,13 +333,13 @@ export function DateTimePicker({
                   setValue("");
                   setOpen(false);
                 }}>
-                Clear
+                {t("picker.clear")}
               </button>
             ) : (
               <span />
             )}
             <button type="button" className={`${btnPrimary} !min-h-9`} onClick={() => setOpen(false)}>
-              Done
+              {t("picker.done")}
             </button>
           </div>
         </div>

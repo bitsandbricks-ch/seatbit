@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useT } from "@/i18n/client";
 
 export type NavItem = { href: string; label: string; icon: keyof typeof icons };
 
@@ -28,8 +29,9 @@ function Icon({ name }: { name: NavItem["icon"] }) {
 /** Desktop: text links in the header, active one underlined in Bit Green like the page tabs. */
 export function TopNav({ items }: { items: NavItem[] }) {
   const path = usePathname();
+  const t = useT();
   return (
-    <nav aria-label="Main" className="hidden h-full items-stretch gap-1 sm:flex">
+    <nav aria-label={t("nav.main")} className="hidden h-full items-stretch gap-1 sm:flex">
       {items.map((i) => {
         const on = isActive(path, i.href);
         return (
@@ -52,9 +54,10 @@ export function TopNav({ items }: { items: NavItem[] }) {
 /** Phones: a tab bar fixed to the bottom, within thumb reach. */
 export function BottomNav({ items }: { items: NavItem[] }) {
   const path = usePathname();
+  const t = useT();
   return (
     <nav
-      aria-label="Main"
+      aria-label={t("nav.main")}
       className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-ink/95 pb-[env(safe-area-inset-bottom)] backdrop-blur sm:hidden"
     >
       <ul className="flex">
