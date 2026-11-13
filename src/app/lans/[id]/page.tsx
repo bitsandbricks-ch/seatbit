@@ -236,7 +236,9 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           .map((it) => ({ id: it.id, label: it.label, packed: it.packed }))
       : [];
 
-  const gameNames = tab === "games" ? Object.fromEntries(await getDisplayNames(id, [...new Set(games.flatMap((g) => g.voters))])) : {};
+  const gamePeople = tab === "games" ? [...new Set(games.flatMap((g) => [...g.voters, ...(g.addedBy ? [g.addedBy] : [])]))] : [];
+  const gameNames = Object.fromEntries(await getDisplayNames(id, gamePeople));
+  const gameAvatars = Object.fromEntries(getAvatars(gamePeople));
 
   // Food orders at the LAN: everyone coming can start one or add to one.
   const foodOrders = listFoodOrders(id);
@@ -450,6 +452,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
             canManage={isAdmin}
             canAdd={canTakePart || isAdmin}
             names={gameNames}
+            avatars={gameAvatars}
             reminderDays={GAMES_REMINDER_DAYS}
           />
         </div>

@@ -18,4 +18,6 @@ export const games: Messages["games"] = {
   linkPh: "Store-Link (optional)",
   link: "Store-Link",
   add: "Hinzufügen",
+  addedBy: "Hinzugefügt von {name}",
+  you: "dir",
 };
