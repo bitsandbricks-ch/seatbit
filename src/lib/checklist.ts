@@ -1,36 +1,54 @@
 import type { Attendance, Lan } from "@/db/schema";
 
 export type StepState = "done" | "pending" | "todo";
-export type ChecklistStep = { key: "going" | "nick" | "ticket" | "seat" | "book"; title: string; state: StepState; hint: string };
+export type StepKey = "going" | "nick" | "ticket" | "wishes" | "pick" | "seat" | "book" | "games" | "checkin";
+export type ChecklistStep = {
+  key: StepKey;
+  title: string;
+  state: StepState;
+  hint: string;
+  /** Nice to have: an open optional step doesn't count against "All set". */
+  optional?: boolean;
+};
+
+const hasWishes = (a: Attendance) =>
+  a.wishNear.length > 0 || a.wishAvoid.length > 0 || a.wishPosition !== "any" || !!a.wishSeat || !!a.wishNote;
 
 /** The per-LAN to-do list for an attendee. */
 export function buildChecklist(input: {
   lan: Lan;
   attendance: Attendance | undefined;
   hasNick: boolean;
+  /** My seat: the final one, or the one I picked myself while self pick is on. Null while orga assignments are private. */
   seatLabel: string | null;
   hasSeatPlan: boolean;
   freeSeats: number;
   /** Place on the waitlist (1 = next), when waitlisted. */
   waitlistPlace?: number;
+  /** Games someone voted for, and how many of them I haven't marked installed. Left out: no games step. */
+  games?: { voted: number; toInstall: number };
+  now?: Date;
 }): ChecklistStep[] {
-  const { lan, attendance: a, hasNick, seatLabel, hasSeatPlan, freeSeats, waitlistPlace } = input;
+  const { lan, attendance: a, hasNick, seatLabel, hasSeatPlan, freeSeats, waitlistPlace, games } = input;
+  const now = input.now ?? new Date();
+  const final = !!lan.seatsPublishedAt;
+  const going = a?.status === "going";
+  const hasTicket = !!a && (a.ticketBought || a.paid);
   const steps: ChecklistStep[] = [];
 
   steps.push({
     key: "going",
     title: "Say you're coming",
-    state: a?.status === "going" ? "done" : a?.status === "waitlist" ? "pending" : "todo",
-    hint:
-      a?.status === "going"
-        ? "You're going."
-        : a?.status === "waitlist"
-          ? waitlistPlace
-            ? `You're #${waitlistPlace} on the waitlist.`
-            : "You're on the waitlist."
-          : lan.signupDeadline
-            ? "Answer before the deadline."
-            : "Let the orgas know.",
+    state: going ? "done" : a?.status === "waitlist" ? "pending" : "todo",
+    hint: going
+      ? "You're going."
+      : a?.status === "waitlist"
+        ? waitlistPlace
+          ? `You're #${waitlistPlace} on the waitlist.`
+          : "You're on the waitlist."
+        : lan.signupDeadline
+          ? "Answer before the deadline."
+          : "Let the orgas know.",
   });
 
   steps.push({
@@ -40,42 +58,72 @@ export function buildChecklist(input: {
     hint: hasNick ? "Nick is set." : "Add the nick you want on the seat plan.",
   });
 
-  // Every LAN the group goes to needs a ticket, so this step is always there
-  // (it used to depend on a price or payment date being set).
-  {
-    steps.push({
-      key: "ticket",
-      title: "Buy your ticket",
-      state: a?.paid ? "done" : a?.ticketBought ? "pending" : "todo",
-      hint: a?.paid
-        ? "Confirmed by the orgas."
-        : a?.ticketBought
-          ? "Waiting for an orga to confirm."
-          : "Buy it from the event, then tick it off here.",
-    });
-  }
+  // Every LAN the group goes to needs a ticket, so this step is always there.
+  steps.push({
+    key: "ticket",
+    title: "Buy your ticket",
+    state: a?.paid ? "done" : a?.ticketBought ? "pending" : "todo",
+    hint: a?.paid
+      ? "Confirmed by the orgas."
+      : a?.ticketBought
+        ? "Waiting for an orga to confirm."
+        : "Buy it from the event, then tick it off here.",
+  });
 
-  if (hasSeatPlan && a?.status === "going") {
+  if (hasSeatPlan && going) {
+    // Step 4 depends on the event: members pick their own seat (self pick on), or optionally send
+    // wishes and the orgas place them. `seatPicking` stays set after finalizing, so the step stays put.
+    if (lan.seatPicking) {
+      steps.push({
+        key: "pick",
+        title: "Pick your seat",
+        state: seatLabel || final ? "done" : "todo",
+        hint: seatLabel
+          ? final
+            ? `You sit at ${seatLabel}.`
+            : `You took ${seatLabel}. You can still change it on the Seats tab.`
+          : final
+            ? "Self pick is closed. The orgas place you."
+            : hasTicket
+              ? freeSeats > 0
+                ? "Take a free seat on the Seats tab."
+                : "No free seats left. The orgas will place you."
+              : "Tick that you have your ticket first, then take a free seat on the Seats tab.",
+      });
+    } else if (!final || hasWishes(a)) {
+      const wished = hasWishes(a);
+      steps.push({
+        key: "wishes",
+        title: "Send seat wishes",
+        optional: true,
+        state: wished ? "done" : "todo",
+        hint: final
+          ? "Sent. The plan is final now."
+          : wished
+            ? "Sent. You can change them until the orgas finalize the plan."
+            : "Optional: who you'd like to sit near, on the Seats tab.",
+      });
+    }
+
+    // Step 5: the orgas always finalize the plan, also after self pick.
     steps.push({
       key: "seat",
-      title: "Get your seat",
-      // Only final once the orgas finalized the plan, also when you picked your seat yourself.
-      state: lan.seatsPublishedAt && seatLabel ? "done" : seatLabel ? "pending" : lan.seatPicking && !lan.seatsPublishedAt ? "todo" : "pending",
-      hint: lan.seatsPublishedAt
+      title: "Orgas confirm your seat",
+      state: final && seatLabel ? "done" : lan.seatPicking && !final && !seatLabel ? "todo" : "pending",
+      hint: final
         ? seatLabel
           ? `Seat ${seatLabel}, final.`
           : "The plan is final but you have no seat yet. An orga will get back to you."
         : seatLabel
-          ? `Seat ${seatLabel} for now. The orgas check and finalize the seat plan.`
+          ? `The orgas check ${seatLabel} and finalize the seat plan.`
           : lan.seatPicking
-            ? "Self pick is on: tick that you have your ticket, then take a free seat on the Seats tab."
-            : freeSeats === 0
-              ? "The orgas will finalize the seat plan soon."
-              : "Add seat wishes on the Seats tab. The orgas finalize the seat plan after the deadline.",
+            ? "Once you picked a seat, the orgas check and finalize the plan."
+            : "The orgas assign the seats and finalize the plan after the deadline.",
     });
   }
+
   // The event's own seat plan (e.g. lal.gg): members book the seat they got there themselves.
-  if (lan.externalPlanUrl && lan.seatsPublishedAt && a?.status === "going" && seatLabel) {
+  if (lan.externalPlanUrl && final && going && seatLabel) {
     steps.push({
       key: "book",
       title: `Book ${seatLabel} on the event site`,
@@ -83,9 +131,40 @@ export function buildChecklist(input: {
       hint: a.seatBooked ? "Booked." : "Reserve the same seat on the event's seat plan, then tick it off.",
     });
   }
+
+  // Games the group wants to play: install them before the LAN, the venue's internet is slow.
+  if (going && games && games.voted > 0 && now < lan.endsAt) {
+    steps.push({
+      key: "games",
+      title: "Install the games",
+      optional: true,
+      state: games.toInstall === 0 ? "done" : "todo",
+      hint:
+        games.toInstall === 0
+          ? "All installed."
+          : `${games.toInstall} of ${games.voted} still to install. Tick them off on the Games tab.`,
+    });
+  }
+
+  // On the day: tell the others you made it.
+  if (going && onTheDay(lan, now)) {
+    steps.push({
+      key: "checkin",
+      title: "Check in at the venue",
+      state: a.arrivedAt ? "done" : "todo",
+      hint: a.arrivedAt ? "You're here." : "Tap \"I'm here\" when you arrive.",
+    });
+  }
   return steps;
 }
 
+/** Check-in runs from 6 hours before the start until the end. */
+export function onTheDay(lan: Lan, now = new Date()) {
+  return !lan.cancelledAt && !lan.dateTbd && now.getTime() >= lan.startsAt.getTime() - 6 * 3600_000 && now < lan.endsAt;
+}
+
+/** Steps that count: all required ones, optional ones only once done. */
 export function progress(steps: ChecklistStep[]) {
-  return { done: steps.filter((s) => s.state === "done").length, total: steps.length };
+  const counted = steps.filter((s) => !s.optional || s.state === "done");
+  return { done: counted.filter((s) => s.state === "done").length, total: counted.length };
 }

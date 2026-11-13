@@ -1,5 +1,5 @@
 "use client";
-import type { ChecklistStep } from "@/lib/checklist";
+import { progress, type ChecklistStep } from "@/lib/checklist";
 import { TicketConfirm } from "./ticket-confirm";
 import { BookedToggle } from "./seat-booking";
 
@@ -22,12 +22,12 @@ export function LanChecklist({
   /** list: stacked (sidebar). strip: compact row above the event tabs, shown on every tab. */
   variant?: "list" | "strip";
 }) {
-  const done = steps.filter((s) => s.state === "done").length;
-  if (variant === "strip") return <ChecklistStrip lanId={lanId} steps={steps} done={done} ticketBought={ticketBought} canReportTicket={canReportTicket} planUrl={planUrl} seatBooked={seatBooked} />;
+  const { done, total } = progress(steps);
+  if (variant === "strip") return <ChecklistStrip lanId={lanId} steps={steps} done={done} total={total} ticketBought={ticketBought} canReportTicket={canReportTicket} planUrl={planUrl} seatBooked={seatBooked} />;
   return (
     <div className="space-y-4">
       <div className="h-1.5 overflow-hidden rounded-full bg-raised">
-        <div className="h-full bg-bit transition-all" style={{ width: `${(done / steps.length) * 100}%` }} />
+        <div className="h-full bg-bit transition-all" style={{ width: `${total ? (done / total) * 100 : 0}%` }} />
       </div>
       <ol className="space-y-3">
         {steps.map((s, i) => (
@@ -46,6 +46,7 @@ export function LanChecklist({
             <div className="min-w-0 flex-1">
               <p className={`text-sm font-medium ${s.state === "done" ? "text-muted" : "text-fg"}`}>
                 {s.title}
+                <OptionalTag s={s} />
               </p>
               {s.hint && <p className="text-xs text-muted">{s.hint}</p>}
               {s.key === "book" && planUrl && (
@@ -66,6 +67,10 @@ export function LanChecklist({
   );
 }
 
+function OptionalTag({ s }: { s: ChecklistStep }) {
+  return s.optional && s.state !== "done" ? <span className="ml-1.5 text-xs font-normal text-faint">optional</span> : null;
+}
+
 function StepIcon({ s, i }: { s: ChecklistStep; i: number }) {
   return (
     <span
@@ -82,6 +87,7 @@ function ChecklistStrip({
   lanId,
   steps,
   done,
+  total,
   ticketBought,
   canReportTicket,
   planUrl,
@@ -90,20 +96,22 @@ function ChecklistStrip({
   lanId: string;
   steps: ChecklistStep[];
   done: number;
+  total: number;
   ticketBought: boolean;
   canReportTicket: boolean;
   planUrl?: string;
   seatBooked: boolean;
 }) {
-  const all = done === steps.length;
+  // Open optional steps don't hold back "All set".
+  const all = done === total;
   return (
     <section aria-label="Your checklist" className="rounded-card border border-line bg-surface p-3 sm:p-4">
       <div className="mb-3 flex items-center gap-3">
         <h2 className="text-sm font-semibold text-fg">Your checklist</h2>
         <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-raised">
-          <div className="h-full bg-bit transition-all" style={{ width: `${(done / steps.length) * 100}%` }} />
+          <div className="h-full bg-bit transition-all" style={{ width: `${total ? (done / total) * 100 : 0}%` }} />
         </div>
-        <span className={`text-sm ${all ? "font-medium text-bit" : "text-muted"}`}>{all ? "All set" : `${done} / ${steps.length}`}</span>
+        <span className={`text-sm ${all ? "font-medium text-bit" : "text-muted"}`}>{all ? "All set" : `${done} / ${total}`}</span>
       </div>
       <ol className={`grid gap-x-4 gap-y-3 sm:grid-cols-2 ${steps.length >= 4 ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
         {steps.map((s, i) => (
@@ -111,7 +119,10 @@ function ChecklistStrip({
           <li key={s.key} className={`${s.state === "done" && !all ? "hidden sm:flex" : "flex"} gap-2.5`}>
             <StepIcon s={s} i={i} />
             <div className="min-w-0 flex-1">
-              <p className={`text-sm font-medium leading-6 ${s.state === "done" ? "text-muted" : "text-fg"}`}>{s.title}</p>
+              <p className={`text-sm font-medium leading-6 ${s.state === "done" ? "text-muted" : "text-fg"}`}>
+                {s.title}
+                <OptionalTag s={s} />
+              </p>
               {s.hint && <p className="text-xs text-muted">{s.hint}</p>}
               {s.key === "book" && planUrl && (
                 <div className="mt-2">

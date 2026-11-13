@@ -829,7 +829,9 @@ export async function setMySeatWishes(lanId: string, input: z.input<typeof wishI
 export async function publishSeats(lanId: string, notify: boolean): Promise<number> {
   const me = await requireLanManager(lanId);
   const l = mustGetLan(lanId);
-  db.update(lan).set({ seatsPublishedAt: new Date(), seatPicking: false }).where(eq(lan.id, lanId)).run();
+  // seatPicking stays set: it records that the event used self pick (the member checklist keeps that step).
+  // Picking itself is closed by seatsPublishedAt.
+  db.update(lan).set({ seatsPublishedAt: new Date() }).where(eq(lan.id, lanId)).run();
   let sent = 0;
   // Drafts tell nobody; members see the seats once the event is published.
   if (notify && l.publishedAt) {
@@ -872,7 +874,7 @@ export async function publishSeats(lanId: string, notify: boolean): Promise<numb
 /** Reopens a finalized plan (members can send wishes again; self pick stays off until an orga turns it on). */
 export async function unpublishSeats(lanId: string) {
   const me = await requireLanManager(lanId);
-  db.update(lan).set({ seatsPublishedAt: null }).where(eq(lan.id, lanId)).run();
+  db.update(lan).set({ seatsPublishedAt: null, seatPicking: false }).where(eq(lan.id, lanId)).run();
   auditLan(mustGetLan(lanId), me.id, "seats.reopen");
   lanPath(lanId);
 }

@@ -48,7 +48,7 @@ Members can do the everyday things straight from Discord, in the clan's server o
 | Command | What it does |
 | --- | --- |
 | `/coming`, `/unsure`, `/not-coming` | Answer for an event. During an interest check, this answers *Would you come?* instead. If several events are open, the bot asks which one with a button each, or pick one with `event:`. |
-| `/status` | Your next events with your answer, nick, ticket, seat, seat wishes and the next deadline, the same checklist as on the event page. `/status event:<name>` shows one event with buttons like **I have my ticket** and **I booked it**. |
+| `/status` | Your next events with your answer and the same checklist as on the event page (nick, ticket, seat pick or wishes, seat confirmed by the orgas, games), your seat wishes and the next deadline. `/status event:<name>` shows one event with buttons like **I have my ticket** and **I booked it**. |
 | `/ticket` | Tick off that you bought your ticket. `bought:False` takes it back until an orga confirmed it. |
 | `/nick nick:<nick>` | Your default nick. With `event:` it's your nick for that event's LAN type (or that one event, if it has no type). |
 | `/wish` | Shows your seat wishes. Change them with `near:` and `avoid:` (one person each time, suggested from the people who answered), `position:` (anywhere, edge, middle), `seat:` and `note:`. `clear:True` starts over. Closes when the seat plan is final. |

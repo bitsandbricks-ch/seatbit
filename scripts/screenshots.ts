@@ -88,6 +88,7 @@ const SHOTS: Shot[] = [
   { name: "phone-event", who: "anna", path: LAKESIDE, full: true },
   { name: "phone-seat-plan", who: "anna", path: `${LAKESIDE}?tab=seats`, act: seat("F10") },
   { name: "phone-seat-picking", who: "anna", path: `${MOUNTAIN}?tab=seats`, act: seat("A2") },
+  { name: "phone-checklist-picking", who: "anna", path: MOUNTAIN },
   { name: "phone-event-attendees", who: "anna", path: `${LAKESIDE}?tab=attendees`, full: true },
   { name: "phone-travel", who: "anna", path: `${LAKESIDE}?tab=travel`, full: true },
   { name: "phone-packing-list", who: "anna", path: `${LAKESIDE}?tab=gear`, full: true },

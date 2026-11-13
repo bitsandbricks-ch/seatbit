@@ -57,13 +57,30 @@ Every move is in the [audit log](audit-log.md).
 
 ## Checklist
 
+Your checklist sits above the tabs on every tab of the event, on the LANs list (*Checklist 3/5*) and in `/status` on Discord. Steps only show when they apply to you and the event.
+
+<div class="phones" markdown>
+<figure markdown>
+
+![Checklist with self pick](../screenshots/phone-checklist-picking.png){ .shot }
+
+<figcaption>Self pick: steps 4 and 5</figcaption>
+</figure>
+</div>
+
 | Step | Done when |
 | --- | --- |
-| 1. **Say you're coming** | You answered *Coming*. |
+| 1. **Say you're coming** | You answered *Coming*. On the waitlist it shows your place (*You're #2 on the waitlist*). |
 | 2. **Give your nickname** | You have a nick (default, LAN type or event). |
 | 3. **Buy your ticket** | You ticked *I bought my ticket* before the *buy ticket by* date; an orga then confirms it. |
-| 4. **Get your seat** | You have a seat. See [Seats](seats.md). |
-| 5. **Book your seat on the event site** | Only when the event has its own seat plan: after the group's plan is final, you booked the same seat there and ticked *I booked it*. |
+| 4. **Pick your seat** | Only when the orgas turned on [self pick](seats.md#seat-steps): you took a free seat. Needs your ticket first. |
+| 4. **Send seat wishes** (optional) | Instead of *Pick your seat* when self pick is off: you sent [seat wishes](seats.md#seat-steps). Hidden once the plan is final if you sent none. |
+| 5. **Orgas confirm your seat** | The orgas finalized the seat plan and you have a seat. Until then it waits on them (also after you picked your own seat). |
+| 6. **Book your seat on the event site** | Only when the event has its own seat plan: after the group's plan is final, you booked the same seat there and ticked *I booked it*. |
+| **Install the games** (optional) | Only when someone voted for [games](games.md): you marked every voted game as installed. |
+| **Check in at the venue** | Only on the day: you tapped *I'm here*. |
+
+Optional steps don't hold back *All set* and only count towards the progress once done.
 
 ## Nick and LAN ID
 

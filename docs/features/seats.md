@@ -21,7 +21,7 @@ The **seat plan** shows the group's seat block. Members send seat wishes or pick
 | 2. **Self pick** (optional) | Orgas turn it on; members with a ticket tap a free seat and **Take this seat**, **Move here** or **Give up my seat**. |
 | 3. **Final plan** | Orgas finalize. This closes wishes and self pick, shows everyone the plan and can tell everyone their seat. Later changes notify the people who moved. **Reopen** goes back. |
 
-Seats only count, and everyone sees the plan, once it is final.
+Seats only count, and everyone sees the plan, once it is final. The member [checklist](attendance.md#checklist) follows these steps: *Pick your seat* (or the optional *Send seat wishes*), then *Orgas confirm your seat*.
 
 <div class="phones" markdown>
 <figure markdown>

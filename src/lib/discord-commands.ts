@@ -30,6 +30,7 @@ import { ATTENDANCE_LOCKED_MSG, attendanceLocked, getDisplayNames, getLan, getNa
 import { appUrl } from "./mail";
 import { saveNick, saveSeatWishes, saveTicketBought } from "./member-updates";
 import { nameMatches } from "./names";
+import { listGames } from "./games";
 import { bookedButton } from "./seat-booking";
 
 const { attendance, lanInterest, lanType, nickname, seat } = schema;
@@ -353,7 +354,7 @@ async function statusCard(l: Lan, me: User) {
   const nicks = db.select().from(nickname).where(eq(nickname.userId, me.id)).all();
   const hasNick = nicks.some((n) => (n.lanId === null && n.typeId === null) || n.lanId === l.id || (!!l.typeId && n.typeId === l.typeId));
   // Orga assignments stay private until the plan is final; a self-picked seat shows while picking is on.
-  const showSeat = !!l.seatsPublishedAt || (l.seatPicking && !l.seatsPublishedAt);
+  const showSeat = !!l.seatsPublishedAt || l.seatPicking;
   const mySeat = showSeat ? (seats.find((s) => s.userId === me.id)?.label ?? null) : null;
   const nick = (await getNames(l.id, [me.id])).get(me.id)?.nick;
   const lines: string[] = [];
@@ -369,6 +370,10 @@ async function statusCard(l: Lan, me: User) {
       hasSeatPlan: seats.length > 0,
       freeSeats: seats.filter((s) => !s.userId && !s.locked).length,
       waitlistPlace: a?.status === "waitlist" ? waitlistPositions(l.id).get(me.id) : undefined,
+      games: (() => {
+        const voted = listGames(l.id, me.id).filter((g) => g.votes > 0);
+        return { voted: voted.length, toInstall: voted.filter((g) => !g.myInstalled).length };
+      })(),
     });
     if (!a) lines.push("⬜ **No answer yet**: `/coming`, `/unsure` or `/not-coming`");
     else if (a.status !== "going")
@@ -377,7 +382,7 @@ async function statusCard(l: Lan, me: User) {
     for (const s of a?.status === "declined" ? [] : steps) {
       if (s.key === "going" && a?.status !== "going") continue;
       const hint = s.key === "nick" && hasNick && nick ? `**${nick}**` : s.hint;
-      lines.push(`${STEP_ICON[s.state]} ${s.title}: ${hint}`);
+      lines.push(`${STEP_ICON[s.state]} ${s.title}${s.optional && s.state !== "done" ? " (optional)" : ""}: ${hint}`);
     }
     if (a && a.status !== "declined" && !l.seatsPublishedAt) {
       const wishes = await wishSummary(l, a);

@@ -17,7 +17,7 @@ import { canViewLan, isLanManager, requireUser } from "@/lib/session";
 import { getClan } from "@/lib/clans";
 import { rolesWith } from "@/lib/clan-roles";
 import { EventHeader } from "@/components/event-header";
-import { buildChecklist } from "@/lib/checklist";
+import { buildChecklist, onTheDay } from "@/lib/checklist";
 import { LanChecklist } from "@/components/lan-checklist";
 import { SeatWishes } from "@/components/seat-wishes";
 import { Tabs } from "@/components/tabs";
@@ -115,6 +115,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
   // Optional self-pick step: members choose their own seat until the orgas finalize the plan.
   const picking = l.seatPicking && !published;
   const mySeatLabel = published || picking ? (seats.find((s) => s.userId === me.id)?.label ?? null) : null;
+  const games = listGames(id, me.id);
+  const gamesToInstall = games.filter((g) => g.votes > 0 && !g.myInstalled).length;
   const steps = buildChecklist({
     lan: l,
     attendance: my,
@@ -125,6 +127,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
     hasSeatPlan: seats.length > 0,
     freeSeats: seats.filter((s) => !s.userId && !s.locked).length,
     waitlistPlace: myPlace,
+    games: { voted: games.filter((g) => g.votes > 0).length, toInstall: gamesToInstall },
+    now,
   });
   const full = l.capacity != null && going.length >= l.capacity;
   const myInterest =
@@ -140,8 +144,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
     .orderBy(desc(schema.lanNews.createdAt))
     .all();
   const newsNames = await getDisplayNames(id, [...new Set(news.flatMap((n) => (n.authorId ? [n.authorId] : [])))]);
-  // Check-in runs from 6 hours before the start until the end.
-  const onTheDay = !l.cancelledAt && !l.dateTbd && now.getTime() >= l.startsAt.getTime() - 6 * 3600_000 && now < l.endsAt;
+  const atTheVenue = onTheDay(l, now);
   const arrived = going.filter((r) => r.arrivedAt);
   const onTheWay = going.filter((r) => !r.arrivedAt);
 
@@ -185,9 +188,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           .map((it) => ({ id: it.id, label: it.label, packed: it.packed }))
       : [];
 
-  const games = listGames(id, me.id);
   const gameNames = tab === "games" ? Object.fromEntries(await getDisplayNames(id, [...new Set(games.flatMap((g) => g.voters))])) : {};
-  const gamesToInstall = games.filter((g) => g.votes > 0 && !g.myInstalled).length;
 
   // Food orders at the LAN: everyone coming can start one or add to one.
   const foodOrders = listFoodOrders(id);
@@ -322,7 +323,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
               Not coming any more? Answer &quot;Not coming&quot; so the next person gets the spot sooner.
             </p>
           )}
-          {onTheDay && my?.status === "going" && (
+          {atTheVenue && my?.status === "going" && (
             <div className="mt-3 space-y-2 border-t border-line pt-3">
               <CheckInButton lanId={l.id} arrived={!!my.arrivedAt} />
               <p className="text-xs text-muted">
