@@ -20,6 +20,9 @@ export async function register() {
   // Scheduled event publishing is checked every minute, whatever the reminder interval.
   const { publishDueDrafts } = await import("./lib/event-notices");
   const publishTick = () => void publishDueDrafts().catch((e) => console.error("[publish] failed", e));
+  // After an upgrade: register changed slash commands and tell the platform admins (once per version).
+  const { afterUpgrade } = await import("./lib/upgrade");
+  setTimeout(() => void afterUpgrade().catch((e) => console.error("[upgrade] failed", e)), 15_000);
   // First check shortly after start, then look every minute whether the interval has passed.
   setTimeout(() => {
     publishTick();

@@ -1872,6 +1872,11 @@ export const de: Messages = {
     member: "Antwortet für Events und sieht den Clan. Kann trotzdem Lead einzelner Events sein.",
   },
   notice: {
+    upgradeSubject: "Seatbit auf {version} aktualisiert",
+    upgradeText: "Hallo {name}\n\nSeatbit unter {url} läuft jetzt in Version {version} (vorher: {before}).\n\nWas sich geändert hat: {changes}\n\n{steps}\n\nDu bekommst das, weil du Plattform-Admin bist.",
+    upgradeCommandsRegistered: "Die Discord-Slash-Commands haben sich geändert und wurden automatisch registriert. Sonst ist nichts zu tun.",
+    upgradeCommandsFailed: "Die Discord-Slash-Commands haben sich geändert, aber das Registrieren ist fehlgeschlagen ({error}). Klicke unter Admin → Plattform-Einstellungen → Discord auf \"Bot prüfen & Slash-Commands registrieren\".",
+    upgradeNothingToDo: "Die Datenbank-Updates liefen beim Start. Sonst ist nichts zu tun.",
     openInSeatbit: "In Seatbit öffnen",
     dmFooter: "Seatbit · diese DMs schaltest du in deinem Profil aus",
     linkedFooter: "Seatbit · gesendet, weil dich ein Lead deines Clans verknüpft hat",
