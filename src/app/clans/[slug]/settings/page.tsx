@@ -245,7 +245,9 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
 
       {tab === "chat" && <ChatTab t={t} clanId={c.id} />}
 
-      {tab === "payments" && <PaymentsManageTab t={t} clan={c} />}
+      {tab === "payments" && (
+        <PaymentsManageTab t={t} clan={c} canSettings={perms.has("settings")} stripe={typeof sp.stripe === "string" ? sp.stripe : undefined} />
+      )}
 
       {tab === "log" && <LogTab t={t} clanId={c.id} slug={c.slug} sp={sp} />}
 

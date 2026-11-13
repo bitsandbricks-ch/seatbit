@@ -21,6 +21,7 @@ import {
   sendPaymentReminders,
 } from "@/lib/payments";
 import { foodCurrency } from "@/lib/food";
+import { disconnect, lineCheckoutUrl, onboardingUrl } from "@/lib/connect";
 import { requireClanPermission, requireUser } from "@/lib/session";
 import type { FormState } from "./actions";
 
@@ -286,4 +287,43 @@ export async function reportPaid(itemId: string, reported: boolean) {
   if (reported) audit({ actorId: me.id, action: "payment.report", clanId: ch.clanId, lanId: ch.lanId, targetUserId: me.id, data: { title: ch.title } });
   refresh(c.slug);
   if (ch.lanId) revalidatePath(`/lans/${ch.lanId}`);
+}
+
+// ---------- Online (Stripe Connect) ----------
+
+/** Sends a clan admin to Stripe to connect (or finish connecting) the clan's own account. */
+export async function connectStripe(clanId: string) {
+  const me = await requireClanPermission(clanId, "settings");
+  const c = await mustClan(clanId);
+  let url: string;
+  try {
+    url = await onboardingUrl(c, me.id);
+  } catch {
+    redirect(`/clans/${c.slug}/settings?tab=payments&stripe=error`);
+  }
+  redirect(url);
+}
+
+export async function disconnectStripe(clanId: string) {
+  const me = await requireClanPermission(clanId, "settings");
+  const c = await mustClan(clanId);
+  disconnect(c, me.id);
+  refresh(c.slug);
+}
+
+/** A member pays one of their own open lines with Stripe Checkout on the clan's account. */
+export async function payOnline(itemId: string) {
+  const me = await requireUser();
+  const it = db.select().from(chargeItem).where(eq(chargeItem.id, itemId)).get();
+  if (!it || it.userId !== me.id) throw await err("errors.chargeGone");
+  const ch = getCharge(it.chargeId)!;
+  const c = await mustClan(ch.clanId);
+  if (it.status === "paid" || it.status === "waived") redirect(`/clans/${c.slug}?tab=payments`);
+  let url: string;
+  try {
+    url = await lineCheckoutUrl(c, ch, it, { email: me.email, isGuest: me.isGuest });
+  } catch {
+    redirect(`/clans/${c.slug}?tab=payments&paid=error`);
+  }
+  redirect(url);
 }

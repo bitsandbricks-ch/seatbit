@@ -58,6 +58,10 @@ A value saved in the platform settings wins over the environment variable. Clear
 | One-off donations on/off | `DONATIONS_ENABLED` | `false` |
 | Suggested donation amounts | `DONATION_AMOUNTS` | `10, 20, 50` |
 | Donation currency | `DONATION_CURRENCY` | `CHF` |
+| **Online payments for clans** (see [Stripe](stripe.md#online-payments-for-clans)) | | |
+| Online payments for clans on/off (uses `STRIPE_SECRET_KEY`) | `CLAN_STRIPE` | `false` |
+| Connect webhook signing secret | `STRIPE_CONNECT_WEBHOOK_SECRET` | |
+| Platform fee in % of each clan payment | `CLAN_STRIPE_FEE_PERCENT` | `0` |
 
 Passwords, client secrets and tokens are encrypted (AES-256-GCM) before they are stored and never shown again; the page only shows whether one is set and its last four characters.
 

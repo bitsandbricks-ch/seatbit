@@ -7,6 +7,7 @@ import { requireAdmin } from "@/lib/session";
 import { OWNER_SETTING_GROUPS, platformCan } from "@/lib/platform-roles";
 import { billingEnabled, billingProblems, supporterClans } from "@/lib/billing";
 import { donationProblems, donationsEnabled } from "@/lib/donations";
+import { connectEnabled, connectProblems } from "@/lib/connect";
 import { fmtDay } from "@/lib/format";
 import { LOGIN_METHODS } from "@/lib/auth";
 import { type SettingGroup, canEncrypt, getSetting, resolveSetting, settingsForAdmin } from "@/lib/settings";
@@ -46,7 +47,7 @@ function Url({ label, value }: { label: string; value: string }) {
   );
 }
 
-const TABS = ["mail", "discord", "google", "general", "automation", "maintenance", "legal", "billing", "templates", "server"] as const;
+const TABS = ["mail", "discord", "google", "general", "automation", "maintenance", "legal", "billing", "connect", "templates", "server"] as const;
 type TabId = (typeof TABS)[number];
 
 export default async function SettingsPage({ searchParams }: PageProps<"/admin/settings">) {
@@ -224,6 +225,8 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
           <BillingInfo t={t} />,
         )}
 
+      {tab === "connect" && section("connect", <ConnectInfo t={t} />)}
+
       {tab === "templates" && <TemplatesTab loc={mailLang} t={t} />}
 
       {tab === "server" && (
@@ -305,6 +308,28 @@ function BillingInfo({ t }: { t: T }) {
           ))}
         </p>
       )}
+    </>
+  );
+}
+
+/** Connect webhook URL and its events, and what's still missing. */
+function ConnectInfo({ t }: { t: T }) {
+  const problems = connectProblems();
+  return (
+    <>
+      <Url label={t("adminSettings.connectWebhook")} value={`${appUrl}/api/payments/stripe/webhook`} />
+      <p className="text-xs text-muted">
+        {t.rich("adminSettings.connectEvents", {
+          events: (
+            <>
+              <code>checkout.session.completed</code>, <code>checkout.session.async_payment_succeeded</code>, <code>charge.refunded</code>,{" "}
+              <code>account.updated</code>, <code>account.application.deauthorized</code>
+            </>
+          ),
+        })}
+      </p>
+      {problems.length > 0 && <p className="text-xs text-warn">{t("adminSettings.missing", { list: problems.join(", ") })}</p>}
+      {!connectEnabled() && problems.length === 0 && <p className="text-xs text-muted">{t("adminSettings.connectOff")}</p>}
     </>
   );
 }

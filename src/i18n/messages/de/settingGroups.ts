@@ -10,5 +10,6 @@ export const settingGroups: Messages["settingGroups"] = {
   billing: { title: "Supporter-Zahlungen", help: "Optional. Clans können diese Instanz mit einer freiwilligen jährlichen oder monatlichen Zahlung unterstützen, und alle können einmalig spenden, über Stripe. Supporter und Spender bekommen ein Abzeichen und ein Dankeschön, nie zusätzliche Funktionen. Standardmässig aus." },
   ops: { title: "Plattform-Discord", help: "Optional. Kanäle auf deinem eigenen Discord-Server, in denen der Bot dem Plattform-Team sagt, was auf dieser Instanz passiert. Der Bot muss auf diesem Server sein." },
   maintenance: { title: "Wartungsbanner", help: "Ein Banner auf jeder Seite, z.B. vor einem Upgrade. Es verschwindet von selbst, wenn die Endzeit vorbei ist." },
+  connect: { title: "Online-Zahlungen für Clans", help: "Optional. Clans verbinden ihr eigenes Stripe-Konto und Mitglieder bezahlen, was sie dem Clan schulden, online (Karte, TWINT). Das Geld geht direkt an den Clan; diese Instanz ist die Stripe-Connect-Plattform. Nutzt den Stripe Secret Key der Supporter-Zahlungen. Standardmässig aus." },
   legal: { title: "Betreiber & Rechtliches", help: "Wer diese Seatbit-Instanz betreibt. Erscheint in den Nutzungsbedingungen und der Datenschutzerklärung. Füll das aus, bevor du Leute einlädst, oder verlink stattdessen deine eigenen Dokumente." },
 };

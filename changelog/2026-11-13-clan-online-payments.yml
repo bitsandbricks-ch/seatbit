@@ -1,0 +1,13 @@
+date: 2026-11-13
+type: new
+pr: 118
+en:
+  title: Pay your clan online
+  text: >-
+    A clan admin can connect the clan's own Stripe account, and members pay what they owe with TWINT
+    or card. The money goes straight to the clan and the line is ticked off by itself.
+de:
+  title: Online an den Clan bezahlen
+  text: >-
+    Ein Clan-Admin kann das eigene Stripe-Konto des Clans verbinden, dann bezahlen Mitglieder mit TWINT
+    oder Karte, was sie schulden. Das Geld geht direkt an den Clan und die Zeile wird selbst abgehakt.
