@@ -100,7 +100,7 @@ export class BillingError extends Error {}
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Obj = Record<string, any>;
 
-export async function stripe(method: "GET" | "POST" | "DELETE", path: string, params?: Params, timeoutMs = 10_000): Promise<Obj> {
+export async function stripe(method: "GET" | "POST" | "DELETE", path: string, params?: Params, timeoutMs = 10_000, account?: string): Promise<Obj> {
   const key = config().secretKey;
   if (!key) throw new BillingError("Stripe isn't set up");
   const body = params && method !== "GET" ? encode(params) : undefined;
@@ -110,6 +110,8 @@ export async function stripe(method: "GET" | "POST" | "DELETE", path: string, pa
     headers: {
       Authorization: `Bearer ${key}`,
       "Stripe-Version": STRIPE_VERSION,
+      // Connect: act on a clan's own account (direct charges).
+      ...(account ? { "Stripe-Account": account } : {}),
       ...(body ? { "Content-Type": "application/x-www-form-urlencoded" } : {}),
     },
     body,
@@ -125,6 +127,16 @@ export async function stripe(method: "GET" | "POST" | "DELETE", path: string, pa
   }
   return json;
 }
+
+/**
+ * The same REST client for clan payments (src/lib/connect.ts): one platform key, and with `account` the call
+ * runs on a clan's connected account.
+ */
+export function stripeApi(method: "GET" | "POST" | "DELETE", path: string, params?: Params, opts: { account?: string; timeoutMs?: number } = {}) {
+  return stripe(method, path, params, opts.timeoutMs ?? 10_000, opts.account);
+}
+
+export const stripeKeySet = () => !!config().secretKey;
 
 // ---------- Prices (for the button labels) ----------
 

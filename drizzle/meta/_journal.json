@@ -260,6 +260,13 @@
       "when": 1794584597262,
       "tag": "0037_clan_payments",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "6",
+      "when": 1794585076729,
+      "tag": "0038_clan_stripe",
+      "breakpoints": true
     }
   ]
 }
