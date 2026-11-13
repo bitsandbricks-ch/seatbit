@@ -19,7 +19,7 @@ import { clanRole, getClan } from "@/lib/clans";
 import { EventInvite } from "@/components/event-invite";
 import { rolesWith } from "@/lib/clan-roles";
 import { EventHeader } from "@/components/event-header";
-import { buildChecklist, onTheDay } from "@/lib/checklist";
+import { buildChecklist, onTheDay, progress } from "@/lib/checklist";
 import { LanChecklist } from "@/components/lan-checklist";
 import { SeatWishes } from "@/components/seat-wishes";
 import { Tabs } from "@/components/tabs";
@@ -330,13 +330,18 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
   // A locked answer can't be changed here, so it shrinks to a badge in the checklist and frees the space.
   // The full card stays for the waitlist place and the check-in on the day.
   const compactAnswer = showChecklist && locked && (my.status === "going" || my.status === "maybe") && !atTheVenue;
+  // A finished checklist folds to one line; the answer card next to it then keeps its own height.
+  const checklistDone = (() => {
+    const p = progress(steps);
+    return p.done === p.total;
+  })();
 
   return (
     <Page>
       <EventHeader lan={l} clan={lanClan} mode="view" canManage={isAdmin} tab={tab} />
 
       {/* Your answer and your checklist sit above the tabs, so they show on every tab. */}
-      <div className={`grid items-stretch gap-4 ${showChecklist && !compactAnswer ? "lg:grid-cols-[20rem_minmax(0,1fr)] 2xl:grid-cols-[22rem_minmax(0,1fr)]" : ""}`}>
+      <div className={`grid gap-4 ${checklistDone ? "items-start" : "items-stretch"} ${showChecklist && !compactAnswer ? "lg:grid-cols-[20rem_minmax(0,1fr)] 2xl:grid-cols-[22rem_minmax(0,1fr)]" : ""}`}>
         {compactAnswer ? null : l.interestCheck && !l.cancelledAt ? (
         <section aria-label={t("event.wouldYouCome")} className="rounded-card border border-line bg-surface p-3 sm:p-4">
           <h2 className="mb-1 text-sm font-semibold text-fg">{t("event.wouldYouCome")}</h2>
@@ -500,11 +505,11 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
       )}
 
       {tab === "overview" && (
-        // Your answer and checklist are above the tabs. Desktop: event on the left, dates in a sidebar on the right.
-        // Phones: the event first, dates last.
-        <div className="grid grid-cols-1 items-start gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_22rem]">
-          <div className="order-last min-w-0 space-y-4 sm:space-y-6 lg:order-none lg:col-start-2 lg:row-span-2 lg:row-start-1">
-            <Card title={t("event.dates")}>
+        // Your answer and checklist are above the tabs. Desktop: event on the left, details in a sidebar on the right.
+        // Phones: the event first, details last.
+        <Columns
+          aside={
+            <Card title={t("event.details")}>
               <dl className="space-y-3 text-sm">
                 <DateRow label={t("event.answerBy")} d={l.signupDeadline} now={now} t={t} />
                 <DateRow label={t("event.buyTicketBy")} d={l.paymentDueDate} now={now} t={t} />
@@ -529,97 +534,77 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
                   </div>
                 )}
               </dl>
-            </Card>
-          </div>
-
-          <div className="min-w-0 space-y-4 sm:space-y-6 lg:col-start-1 lg:row-start-1">
-            {news.length > 0 && (
-              <Card title={t("event.news")}>
-                <ul className="space-y-4">
-                  {news.slice(0, 5).map((n) => (
-                    <li key={n.id} className="text-sm">
-                      <p className="whitespace-pre-wrap text-fg/90">{n.text}</p>
-                      <p className="mt-1 flex items-center gap-3 text-xs text-faint">
-                        {(n.authorId && newsNames.get(n.authorId)) || t("event.lead")} · {fmtDate(n.createdAt, t.locale)}
-                        {isAdmin && <DeleteNewsButton id={n.id} />}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              </Card>
-            )}
-            {l.description && (
-              <Card>
-                <p className="whitespace-pre-wrap text-fg/90">{l.description}</p>
-              </Card>
-            )}
-
-            {/* At a glance: links into the Seats and Attendees tabs. */}
-            <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
-              <Link href={`/lans/${l.id}?tab=seats`} scroll={false} className="group rounded-card border border-line bg-surface p-4 transition hover:border-bit/50 sm:p-5">
-                <p className="flex items-center justify-between text-xs font-medium uppercase tracking-wide text-muted">
-                  {t("event.yourSeat")} <span className="text-bit transition group-hover:translate-x-0.5" aria-hidden>→</span>
-                </p>
-                <p className="mt-1 font-mono text-2xl font-bold text-fg">{seatOf.get(me.id) ?? mySeatLabel ?? "–"}</p>
-                <p className="mt-1 text-sm text-muted">
-                  {seats.length === 0
-                    ? t("event.seatsNotEntered")
-                    : published
-                      ? t("event.planFinalFree", { count: seats.filter((s) => !s.userId && !s.locked).length })
-                      : picking
-                        ? mySeatLabel
-                          ? t("event.pickNotFinal")
-                          : t("event.pickOn")
-                        : t("event.finalizeSoon")}
-                </p>
-              </Link>
-              <Link href={`/lans/${l.id}?tab=attendees`} scroll={false} className="group rounded-card border border-line bg-surface p-4 transition hover:border-bit/50 sm:p-5">
-                <p className="flex items-center justify-between text-xs font-medium uppercase tracking-wide text-muted">
-                  {t("event.whosComing")} <span className="text-bit transition group-hover:translate-x-0.5" aria-hidden>→</span>
-                </p>
-                <p className="mt-1 text-2xl font-bold text-fg">
-                  {going.length}
-                  {l.capacity ? <span className="text-base font-medium text-muted"> / {l.capacity}</span> : null}
-                </p>
-                <p className="mt-1 truncate text-sm text-muted">
-                  {going.length
-                    ? going.slice(0, 4).map((a) => names.get(a.userId)).join(", ") + (going.length > 4 ? ` +${going.length - 4}` : "")
-                    : t("event.nobodyYet")}
-                  {group("waitlist").length > 0 && ` · ${t("event.waiting", { count: group("waitlist").length })}`}
-                </p>
-              </Link>
-            </div>
-
-            <div className="grid items-start gap-4 sm:gap-6 md:grid-cols-2">
-              <Card title={orgaIds.length ? t("event.leads") : t("event.contact")}>
-                <p className="mb-3 text-sm text-muted">{t("event.askLeads")}</p>
-                <ul className="space-y-2">
-                  {orgas.map((o) => (
-                    <li key={o.id} className="flex items-center justify-between gap-2 text-sm">
-                      <span>
+              {orgas.length > 0 && (
+                <div className="mt-4 border-t border-line pt-4">
+                  <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">{orgaIds.length ? t("event.leads") : t("event.contact")}</h3>
+                  <ul className="space-y-2">
+                    {orgas.map((o) => (
+                      <li key={o.id} className="flex items-center justify-between gap-2 text-sm">
                         {lanClan ? (
-                          <Link href={`/clans/${lanClan.slug}/members/${o.id}`} className="font-medium text-fg hover:text-bit hover:underline">
+                          <Link href={`/clans/${lanClan.slug}/members/${o.id}`} className="min-w-0 truncate font-medium text-fg hover:text-bit hover:underline">
                             {orgaNames.get(o.id) ?? o.name}
                           </Link>
                         ) : (
-                          <span className="font-medium text-fg">{orgaNames.get(o.id) ?? o.name}</span>
+                          <span className="min-w-0 truncate font-medium text-fg">{orgaNames.get(o.id) ?? o.name}</span>
                         )}
-                      </span>
-                      <a href={`mailto:${o.email}?subject=${encodeURIComponent(l.name)}`} className="text-bit hover:underline">
-                        {t("event.email")}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </Card>
+                        <a href={`mailto:${o.email}?subject=${encodeURIComponent(l.name)}`} className="shrink-0 text-bit hover:underline">
+                          {t("event.email")}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </Card>
+          }
+        >
+          {l.description && (
+            <Card>
+              <p className="whitespace-pre-wrap text-fg/90">{l.description}</p>
+            </Card>
+          )}
+          {news.length > 0 && (
+            <Card title={t("event.news")}>
+              <ul className="space-y-4">
+                {news.slice(0, 5).map((n) => (
+                  <li key={n.id} className="text-sm">
+                    <p className="whitespace-pre-wrap text-fg/90">{n.text}</p>
+                    <p className="mt-1 flex items-center gap-3 text-xs text-faint">
+                      {(n.authorId && newsNames.get(n.authorId)) || t("event.lead")} · {fmtDate(n.createdAt, t.locale)}
+                      {isAdmin && <DeleteNewsButton id={n.id} />}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
 
-              <Card title={lanType ? t("event.nickAtType", { type: lanType.name }) : t("event.nickAtLan")}>
-                <p className="mb-3 text-sm text-muted">
-                  {t.rich("event.shownAs", { nick: <strong className="text-fg">{myNick}</strong> })}{" "}
+          {/* Nick and LAN ID: one line, the forms open on tap. */}
+          <details className="group rounded-card border border-line bg-surface">
+            <summary className="flex cursor-pointer list-none items-center gap-3 p-4 sm:px-5 [&::-webkit-details-marker]:hidden">
+              <span className="min-w-0 flex-1 text-sm">
+                <span className="text-muted">{t("event.shownAsShort")} </span>
+                <strong className="text-fg">{myNick}</strong>
+                {myLanId && (
+                  <span className="text-muted">
+                    {" · "}
+                    {lanType ? t("event.typeId", { type: lanType.name }) : t("event.lanIdTitle")} <span className="font-mono text-fg">{myLanId}</span>
+                  </span>
+                )}
+              </span>
+              <span className="shrink-0 text-sm text-bit group-open:hidden">{t("event.change")}</span>
+              <svg viewBox="0 0 16 16" width={14} height={14} aria-hidden className="shrink-0 text-muted transition group-open:rotate-180">
+                <path fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" d="M4 6l4 4 4-4" />
+              </svg>
+            </summary>
+            <div className="space-y-4 border-t border-line p-4 sm:p-5">
+              <div>
+                <h3 className="mb-1 text-sm font-medium text-fg">{lanType ? t("event.nickAtType", { type: lanType.name }) : t("event.nickAtLan")}</h3>
+                <p className="mb-2 text-sm text-muted">
                   {lanType ? t("event.nickForType", { type: lanType.name }) : t("event.nickForLan")}{" "}
                   {t.rich("event.defaultNick", {
                     profile: (
-                      <Link href="/profile" className="text-bit hover:underline">
+                      <Link href="/profile?tab=lans" className="text-bit hover:underline">
                         {t("event.profileLink")}
                       </Link>
                     ),
@@ -630,28 +615,28 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
                 ) : (
                   <NickManager nicks={myNicks} lanId={l.id} />
                 )}
-                <div className="mt-4 border-t border-line pt-4">
-                  <h3 className="mb-1 text-sm font-medium text-fg">{lanType ? t("event.typeId", { type: lanType.name }) : t("event.lanIdTitle")}</h3>
-                  <p className="mb-2 text-sm text-muted">
-                    {t("event.lanIdIntro")} {pattern ? t("event.lanIdLinked") : t("event.lanIdLeads")}
+              </div>
+              <div>
+                <h3 className="mb-1 text-sm font-medium text-fg">{lanType ? t("event.typeId", { type: lanType.name }) : t("event.lanIdTitle")}</h3>
+                <p className="mb-2 text-sm text-muted">
+                  {t("event.lanIdIntro")} {pattern ? t("event.lanIdLinked") : t("event.lanIdLeads")}
+                </p>
+                <LanIdForm value={myLanId} lanId={l.id} label={lanType ? t("profile.typeId", { type: lanType.name }) : t("profile.lanId")} />
+                {myProfile && (
+                  <p className="mt-1.5 truncate text-xs text-muted">
+                    {t.rich("profile.yourProfileLink", {
+                      url: (
+                        <a href={myProfile} target="_blank" rel="noreferrer" className="text-bit hover:underline">
+                          {myProfile}
+                        </a>
+                      ),
+                    })}
                   </p>
-                  <LanIdForm value={myLanId} lanId={l.id} label={lanType ? t("profile.typeId", { type: lanType.name }) : t("profile.lanId")} />
-                  {myProfile && (
-                    <p className="mt-1.5 truncate text-xs text-muted">
-                      {t.rich("profile.yourProfileLink", {
-                        url: (
-                          <a href={myProfile} target="_blank" rel="noreferrer" className="text-bit hover:underline">
-                            {myProfile}
-                          </a>
-                        ),
-                      })}
-                    </p>
-                  )}
-                </div>
-              </Card>
+                )}
+              </div>
             </div>
-          </div>
-        </div>
+          </details>
+        </Columns>
       )}
     </Page>
   );
