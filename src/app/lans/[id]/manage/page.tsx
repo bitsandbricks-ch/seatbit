@@ -392,6 +392,8 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
         hrefFor={(t) => `/lans/${l.id}/manage?tab=${t}`}
       />
 
+      {/* Full width, so all steps fit in one row on desktop. */}
+      {tab === "overview" && <LeadChecklist steps={leadSteps} />}
       {tab === "overview" && (
         // Same shape as the event page: the main things on the left, dates in a sidebar on the right.
         <div className="grid grid-cols-1 items-start gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_22rem]">
@@ -415,7 +417,6 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
             </Card>
           </div>
           <div className="min-w-0 space-y-4 sm:space-y-6 lg:col-start-1 lg:row-start-1">
-          <LeadChecklist steps={leadSteps} />
           {spotToFill && (
             <Notice tone="warn">
               {free === 1 ? "A spot is" : `${free} spots are`} free and {waitlist.length} on the waitlist. You move people up

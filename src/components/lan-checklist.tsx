@@ -114,7 +114,8 @@ function ChecklistStrip({
     </div>
   );
   const list = (
-    <ol className={`mt-3 grid gap-x-4 gap-y-3 sm:grid-cols-2 ${steps.length >= 4 ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
+    // Desktop: every step in one row (scrolls sideways if the screen is too narrow), never a second row.
+    <ol className="mt-3 grid gap-x-4 gap-y-3 sm:grid-cols-2 lg:grid-flow-col lg:grid-cols-none lg:auto-cols-[minmax(7rem,1fr)] lg:gap-x-3 lg:overflow-x-auto">
       {steps.map((s, i) => (
         // Phones: only the steps still open, so the strip stays short above the tabs.
         <li key={s.key} className={`${s.state === "done" && !all ? "hidden sm:flex" : "flex"} gap-2.5`}>
