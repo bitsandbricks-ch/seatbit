@@ -202,7 +202,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
     tab === "food"
       ? foodOrders.map((o) => ({
           ...o,
-          text: orderText(o, foodNames, currency),
+          text: orderText(o, foodNames, currency, t),
           canRun: o.createdBy === me.id || isAdmin,
           accepting: isAcceptingItems(o, now),
           closesTime: o.closesAt ? fmtTime(o.closesAt) : null,

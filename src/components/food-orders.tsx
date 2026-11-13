@@ -8,14 +8,15 @@ import {
   setFoodOrderStatus,
   setFoodPaid,
 } from "@/app/food-actions";
-import type { FoodOrderStatus } from "@/db/schema";
 import type { FoodOrderView } from "@/lib/food";
 import { DateTimePicker } from "./date-time-picker";
 import { Card, Pill, btnGhost, btnPrimary, btnSecondary, input, label } from "./ui";
+import { useT } from "@/i18n/client";
 
 const money = (cents: number) => (cents / 100).toFixed(2);
 
 function useRun() {
+  const t = useT();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const run = (fn: () => Promise<{ error?: string } | void>, after?: () => void) =>
@@ -26,10 +27,10 @@ function useRun() {
         if (r && r.error) setError(r.error);
         else after?.();
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed");
+        setError(e instanceof Error ? e.message : t("eventUi.failed"));
       }
     });
-  return { pending, error, run };
+  return { pending, error, run, t };
 }
 
 export type FoodOrderCardView = FoodOrderView & {
@@ -65,13 +66,11 @@ export function FoodOrders({
   /** Why the "DM everyone" box is off, e.g. for drafts. Null when it works. */
   announceHint: string | null;
 }) {
+  const t = useT();
   return (
     <div className="space-y-4 sm:space-y-6">
-      <p className="max-w-2xl text-sm text-muted">
-        Pizza run or a burger order at the LAN: whoever goes starts an order, everyone adds what they want, and they get
-        a list to read out plus who owes what.
-      </p>
-      {orders.length === 0 && !canOrder && <p className="text-sm text-muted">No food orders yet.</p>}
+      <p className="max-w-2xl text-sm text-muted">{t("food.intro")}</p>
+      {orders.length === 0 && !canOrder && <p className="text-sm text-muted">{t("food.none")}</p>}
       <div className="grid items-start gap-4 sm:gap-6 xl:grid-cols-2">
         {orders.map((o) => (
           <OrderCard key={o.id} order={o} names={names} meId={meId} canOrder={canOrder} currency={currency} />
@@ -83,12 +82,6 @@ export function FoodOrders({
     </div>
   );
 }
-
-const STATUS: Record<FoodOrderStatus, { text: string; tone: "emerald" | "amber" | "zinc" }> = {
-  open: { text: "Open", tone: "emerald" },
-  closed: { text: "Closed", tone: "amber" },
-  ordered: { text: "Ordered", tone: "zinc" },
-};
 
 function OrderCard({
   order: o,
@@ -103,12 +96,16 @@ function OrderCard({
   canOrder: boolean;
   currency: string;
 }) {
-  const { pending, error, run } = useRun();
+  const { pending, error, run, t } = useRun();
   const [copied, setCopied] = useState(false);
   // Deleting an order with items needs a second tap (no browser dialog).
   const [confirming, setConfirming] = useState(false);
   const form = useRef<HTMLFormElement>(null);
-  const status = o.status === "open" && !o.accepting ? { text: "Last call passed", tone: "amber" as const } : STATUS[o.status];
+  const tones = { open: "emerald", closed: "amber", ordered: "zinc" } as const;
+  const status =
+    o.status === "open" && !o.accepting
+      ? { text: t("food.lastCallPassed"), tone: "amber" as const }
+      : { text: t(`food.status.${o.status}`), tone: tones[o.status] };
   const runner = o.createdBy ? names[o.createdBy] : null;
   const mine = o.people.find((p) => p.userId === meId);
   const owed = o.totalCents != null ? o.totalCents - o.paidCents : null;
@@ -118,7 +115,7 @@ function OrderCard({
       title={o.title}
       actions={
         <span className="flex items-center gap-2">
-          {o.status === "open" && o.accepting && o.closesTime && <Pill tone="amber">Last call {o.closesTime}</Pill>}
+          {o.status === "open" && o.accepting && o.closesTime && <Pill tone="amber">{t("food.lastCallAt", { time: o.closesTime })}</Pill>}
           <Pill tone={status.tone}>{status.text}</Pill>
         </span>
       }
@@ -130,13 +127,13 @@ function OrderCard({
               {o.shop && <span className="text-fg">{o.shop}</span>}
               {o.menuUrl && (
                 <a href={o.menuUrl} target="_blank" rel="noreferrer" className={`${o.shop ? "ml-2 " : ""}text-bit hover:underline`}>
-                  Menu <span aria-hidden>↗</span>
+                  {t("food.menu")} <span aria-hidden>↗</span>
                 </a>
               )}
               {runner && (
                 <span className="block text-xs text-faint sm:inline sm:before:mx-2 sm:before:content-['·']">
-                  Run by {runner}
-                  {o.closesLabel && ` · last call ${o.closesLabel}`}
+                  {t("food.runBy", { name: runner })}
+                  {o.closesLabel && ` · ${t("food.lastCall", { date: o.closesLabel })}`}
                 </span>
               )}
             </p>
@@ -145,7 +142,7 @@ function OrderCard({
         )}
 
         {o.people.length === 0 ? (
-          <p className="text-muted">Nobody ordered yet.</p>
+          <p className="text-muted">{t("food.nobody")}</p>
         ) : (
           <ul className="divide-y divide-line rounded-bit border border-line">
             {[...o.people]
@@ -171,10 +168,10 @@ function OrderCard({
                             disabled={pending}
                             onChange={(e) => run(() => setFoodPaid(o.id, p.userId, e.target.checked))}
                           />
-                          Paid
+                          {t("food.paid")}
                         </label>
                       ) : (
-                        p.paid && <Pill tone="emerald">paid</Pill>
+                        p.paid && <Pill tone="emerald">{t("food.paidPill")}</Pill>
                       )}
                     </span>
                   </div>
@@ -187,7 +184,7 @@ function OrderCard({
                           {i.priceCents != null && (
                             <span className="ml-1 text-xs tabular-nums text-faint">
                               {money(i.priceCents)}
-                              {i.qty > 1 && " each"}
+                              {i.qty > 1 && ` ${t("food.each")}`}
                             </span>
                           )}
                         </span>
@@ -195,7 +192,7 @@ function OrderCard({
                           <button
                             type="button"
                             disabled={pending}
-                            aria-label={`Remove ${i.item}`}
+                            aria-label={t("food.remove", { item: i.item })}
                             className={`${btnGhost} !min-h-8 shrink-0 !px-2`}
                             onClick={() => run(() => removeFoodItem(i.id))}
                           >
@@ -216,18 +213,18 @@ function OrderCard({
             className="grid grid-cols-[4.5rem_minmax(0,1fr)_6.5rem] gap-2 sm:grid-cols-[4.5rem_minmax(0,2fr)_minmax(0,1.3fr)_6rem_auto]"
             action={(fd) => run(() => addFoodItem(o.id, fd), () => form.current?.reset())}
           >
-            <select name="qty" aria-label="How many" className={input} defaultValue="1">
+            <select name="qty" aria-label={t("food.howMany")} className={input} defaultValue="1">
               {Array.from({ length: 10 }, (_, k) => (
                 <option key={k + 1} value={k + 1}>
                   {k + 1}x
                 </option>
               ))}
             </select>
-            <input name="item" required maxLength={80} placeholder={mine ? "Something else?" : "e.g. Margherita"} aria-label="What" className={`${input} col-span-2 sm:col-span-1`} />
-            <input name="note" maxLength={80} placeholder="Note" aria-label="Note" className={`${input} col-span-2 sm:col-span-1`} />
-            <input name="price" inputMode="decimal" placeholder={`${currency} each`} aria-label={`Price each in ${currency}`} className={input} />
+            <input name="item" required maxLength={80} placeholder={mine ? t("food.somethingElse") : t("food.itemPh")} aria-label={t("food.what")} className={`${input} col-span-2 sm:col-span-1`} />
+            <input name="note" maxLength={80} placeholder={t("food.note")} aria-label={t("food.note")} className={`${input} col-span-2 sm:col-span-1`} />
+            <input name="price" inputMode="decimal" placeholder={t("food.priceEach", { currency })} aria-label={t("food.priceAria", { currency })} className={input} />
             <button disabled={pending} className={`${btnPrimary} col-span-3 sm:col-span-1`}>
-              Add
+              {t("food.add")}
             </button>
           </form>
         )}
@@ -236,7 +233,7 @@ function OrderCard({
           <div className="space-y-2 rounded-bit bg-raised/60 p-3">
             <div className="flex items-center justify-between gap-2">
               <h3 className="text-xs font-medium uppercase tracking-wide text-muted">
-                To order <span className="text-faint">{o.itemCount}</span>
+                {t("food.toOrder")} <span className="text-faint">{o.itemCount}</span>
               </h3>
               <button
                 type="button"
@@ -249,7 +246,7 @@ function OrderCard({
                   } catch {}
                 }}
               >
-                {copied ? "Copied" : "Copy order"}
+                {copied ? t("food.copied") : t("food.copy")}
               </button>
             </div>
             <ul className="columns-1 gap-4 sm:columns-2">
@@ -261,17 +258,17 @@ function OrderCard({
             </ul>
             {o.totalCents != null && (
               <p className="border-t border-line pt-2 text-muted">
-                Total{" "}
+                {t("food.total")}{" "}
                 <span className="font-semibold tabular-nums text-fg">
                   {currency} {money(o.totalCents)}
                 </span>
                 {owed != null && owed > 0 && o.paidCents > 0 && (
                   <span>
                     {" "}
-                    · {currency} {money(owed)} still open
+                    · {t("food.stillOpen", { amount: `${currency} ${money(owed)}` })}
                   </span>
                 )}
-                {owed === 0 && <span className="text-bit"> · all paid</span>}
+                {owed === 0 && <span className="text-bit"> · {t("food.allPaid")}</span>}
               </p>
             )}
           </div>
@@ -281,17 +278,17 @@ function OrderCard({
           <div className="flex flex-wrap gap-2 border-t border-line pt-3">
             {o.status === "open" && (
               <button disabled={pending} className={btnSecondary} onClick={() => run(() => setFoodOrderStatus(o.id, "closed"))}>
-                Close order
+                {t("food.close")}
               </button>
             )}
             {o.status !== "ordered" && (
               <button disabled={pending} className={btnSecondary} onClick={() => run(() => setFoodOrderStatus(o.id, "ordered"))}>
-                Mark as ordered
+                {t("food.markOrdered")}
               </button>
             )}
             {(o.status !== "open" || !o.accepting) && (
               <button disabled={pending} className={btnGhost} onClick={() => run(() => setFoodOrderStatus(o.id, "open"))}>
-                Reopen
+                {t("food.reopen")}
               </button>
             )}
             <button
@@ -305,7 +302,7 @@ function OrderCard({
                 }
               }}
             >
-              {confirming ? "Tap again to delete" : "Delete"}
+              {confirming ? t("food.tapAgain") : t("food.delete")}
             </button>
           </div>
         )}
@@ -316,19 +313,19 @@ function OrderCard({
 }
 
 function NewOrder({ lanId, first, announceHint }: { lanId: string; first: boolean; announceHint: string | null }) {
-  const { pending, error, run } = useRun();
+  const { pending, error, run, t } = useRun();
   const [open, setOpen] = useState(first);
   const [key, setKey] = useState(0);
   if (!open)
     return (
       <div>
         <button className={btnSecondary} onClick={() => setOpen(true)}>
-          + Start a food order
+          {t("food.start")}
         </button>
       </div>
     );
   return (
-    <Card title="Start a food order">
+    <Card title={t("food.startTitle")}>
       <form
         key={key}
         className="space-y-3"
@@ -344,55 +341,55 @@ function NewOrder({ lanId, first, announceHint }: { lanId: string; first: boolea
       >
         <div>
           <label className={label} htmlFor="food-title">
-            What
+            {t("food.what")}
           </label>
-          <input id="food-title" name="title" required maxLength={60} placeholder="Pizza Saturday evening" className={input} />
+          <input id="food-title" name="title" required maxLength={60} placeholder={t("food.titlePh")} className={input} />
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
             <label className={label} htmlFor="food-shop">
-              From
+              {t("food.from")}
             </label>
-            <input id="food-shop" name="shop" maxLength={60} placeholder="Pizzeria Roma" className={input} />
+            <input id="food-shop" name="shop" maxLength={60} placeholder={t("food.shopPh")} className={input} />
           </div>
           <div>
             <label className={label} htmlFor="food-menu">
-              Menu link
+              {t("food.menuLink")}
             </label>
             <input id="food-menu" name="menuUrl" type="url" placeholder="https://…" className={input} />
           </div>
         </div>
         <div>
-          <span className={label}>Last call (optional)</span>
-          <DateTimePicker name="closesAt" defaultTime="18:00" placeholder="No last call" />
+          <span className={label}>{t("food.lastCallOptional")}</span>
+          <DateTimePicker name="closesAt" defaultTime="18:00" placeholder={t("food.noLastCall")} />
         </div>
         <div>
           <label className={label} htmlFor="food-note">
-            Note
+            {t("food.note")}
           </label>
           <textarea
             id="food-note"
             name="note"
             rows={2}
             maxLength={300}
-            placeholder="Pay me cash or TWINT when it arrives."
+            placeholder={t("food.notePh")}
             className={input}
           />
         </div>
         <label className={`flex items-start gap-2 text-sm ${announceHint ? "text-faint" : "text-fg"}`}>
           <input type="checkbox" name="announce" defaultChecked={!announceHint} disabled={!!announceHint} className="mt-0.5 h-4 w-4 accent-bit" />
           <span>
-            Send everyone coming a Discord DM
-            <span className="block text-xs text-muted">{announceHint ?? "Only people who kept Seatbit DMs on get it. No email."}</span>
+            {t("food.dmAll")}
+            <span className="block text-xs text-muted">{announceHint ?? t("food.dmHint")}</span>
           </span>
         </label>
         <div className="flex flex-wrap gap-2">
           <button disabled={pending} className={btnPrimary}>
-            Start order
+            {t("food.startOrder")}
           </button>
           {!first && (
             <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
-              Cancel
+              {t("common.cancel")}
             </button>
           )}
         </div>
