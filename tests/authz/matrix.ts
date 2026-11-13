@@ -25,6 +25,8 @@ import * as account from "../../src/app/account-actions";
 import * as locale from "../../src/app/locale-actions";
 import * as settings from "../../src/app/admin/settings/actions";
 import * as backups from "../../src/app/admin/backups/actions";
+import * as emergency from "../../src/app/emergency-actions";
+import * as metrics from "../../src/app/api/metrics/route";
 import * as leadExport from "../../src/app/lans/[id]/manage/export/route";
 import * as profileExport from "../../src/app/profile/export/route";
 import * as backupDownload from "../../src/app/admin/backups/[name]/route";
@@ -45,6 +47,7 @@ export const MODULES = {
   "locale-actions": locale,
   "admin/settings/actions": settings,
   "admin/backups/actions": backups,
+  "emergency-actions": emergency,
 } as const;
 
 export type Spec = {
@@ -92,6 +95,7 @@ const get = (path: string, headers: Record<string, string> = {}) => new Request(
 
 /** Set as the cron secret in setup(). */
 export const CRON_SECRET = "test-cron-secret-0123456789";
+export const METRICS_TOKEN = "test-metrics-token-0123456789";
 
 const D = 86_400_000;
 const day = (n: number) => new Date(Date.now() + n * D).toISOString().slice(0, 16);
@@ -308,6 +312,8 @@ export const SPECS: Spec[] = [
   { name: "admin/settings/actions.postPlatformAnnouncement", allow: PLATFORM_SETTINGS, run: () => settings.postPlatformAnnouncement({ ok: true, message: "", at: 0 }, form({ title: "Hi", text: "News" })), effect: "none" },
   { name: "admin/settings/actions.saveMaintenance", allow: PLATFORM_SETTINGS, run: () => settings.saveMaintenance({ ok: true, message: "", at: 0 }, form({ message: "Down soon", startsAt: day(1) })) },
   { name: "admin/backups/actions.backupNow", allow: ["owner"], run: () => backups.backupNow(), effect: "none" },
+  { name: "admin/backups/actions.testNewestBackup", allow: ["owner"], run: () => backups.testNewestBackup(), effect: "none" },
+  { name: "emergency-actions.updateEmergencyInfo", allow: SIGNED_IN, run: () => emergency.updateEmergencyInfo({}, form({ contactName: "Mum", contactPhone: "+41 79 000 00 00", diet: "" })) },
   { name: "admin/backups/actions.removeBackup", allow: ["owner"], run: () => backups.removeBackup("seatbit-none.db"), effect: "none" },
 
   // ---------- Downloads (route handlers) ----------
@@ -317,5 +323,8 @@ export const SPECS: Spec[] = [
   // Cron isn't tied to a person: only the shared secret counts, whoever is signed in.
   { name: "route GET /api/cron/reminders (no secret)", allow: NOBODY, effect: "read", noPositive: "needs the secret", run: () => cron.GET(get("/api/cron/reminders")) },
   { name: "route GET /api/cron/reminders (wrong secret)", allow: NOBODY, effect: "read", noPositive: "needs the secret", run: () => cron.GET(get("/api/cron/reminders", { authorization: "Bearer wrong-secret-wrong-secret" })) },
+  { name: "route GET /api/metrics (no token)", allow: NOBODY, effect: "read", noPositive: "needs the token", run: async () => metrics.GET(get("/api/metrics")) },
+  { name: "route GET /api/metrics (wrong token)", allow: NOBODY, effect: "read", noPositive: "needs the token", run: async () => metrics.GET(get("/api/metrics", { authorization: "Bearer wrong-token-wrong-token-wrong" })) },
+  { name: "route GET /api/metrics (token)", allow: ALL_ACTORS, effect: "read", run: async () => metrics.GET(get("/api/metrics", { authorization: `Bearer ${METRICS_TOKEN}` })) },
   { name: "route GET /api/cron/reminders (secret)", allow: ALL_ACTORS, effect: "read", run: () => cron.GET(get("/api/cron/reminders", { authorization: `Bearer ${CRON_SECRET}` })) },
 ];

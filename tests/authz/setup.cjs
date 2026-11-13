@@ -16,7 +16,9 @@ process.on("exit", () => fs.rmSync(dir, { recursive: true, force: true }));
 process.env.DATABASE_PATH = path.join(dir, "authz.db");
 process.env.BACKUP_DIR = path.join(dir, "backups");
 process.env.ALLOW_EMAIL_LOGIN = "1";
-process.env.CRON_SECRET = "test-cron-secret-0123456789"; // tests/authz/matrix.ts uses the same
+// tests/authz/matrix.ts uses the same values.
+process.env.CRON_SECRET = "test-cron-secret-0123456789";
+process.env.METRICS_TOKEN = "test-metrics-token-0123456789";
 process.env.BETTER_AUTH_URL = "http://localhost:3000";
 process.env.BETTER_AUTH_SECRET = require("node:crypto").randomBytes(32).toString("base64");
 

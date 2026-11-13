@@ -44,12 +44,12 @@ RUN groupadd --system --gid 1001 seatbit \
 COPY --from=build --chown=seatbit:seatbit /app/.next/standalone ./
 COPY --from=build --chown=seatbit:seatbit /app/.next/static ./.next/static
 COPY --from=build --chown=seatbit:seatbit /app/public ./public
-# Migrations run on startup from ./drizzle; backup script for the CronJob;
+# Migrations run on startup from ./drizzle; backup and restore scripts;
 # admin CLI (kubectl exec deploy/seatbit -- node scripts/admin.mjs help).
 COPY --from=build --chown=seatbit:seatbit /app/drizzle ./drizzle
 # Changelog entries for the "What's new" page and the upgrade notice (read at runtime).
 COPY --from=build --chown=seatbit:seatbit /app/changelog ./changelog
-COPY --from=build --chown=seatbit:seatbit /app/scripts/backup.mjs /app/scripts/admin.mjs ./scripts/
+COPY --from=build --chown=seatbit:seatbit /app/scripts/backup.mjs /app/scripts/restore.mjs /app/scripts/admin.mjs ./scripts/
 USER seatbit
 VOLUME ["/data"]
 EXPOSE 3000

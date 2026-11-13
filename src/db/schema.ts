@@ -843,6 +843,26 @@ export const auditLog = sqliteTable(
 
 export type AuditEntry = typeof auditLog.$inferSelect;
 
+// ---------- Emergency info ----------
+
+/**
+ * A member's emergency contact and dietary needs / allergies (health data, so kept out of the
+ * user row). Only the leads of events the member is coming to see it, and every look is logged.
+ * Left out of exports, mails and Discord; deleted with the account.
+ */
+export const emergencyInfo = sqliteTable("emergency_info", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => user.id, { onDelete: "cascade" }),
+  contactName: text("contact_name").default("").notNull(),
+  contactPhone: text("contact_phone").default("").notNull(),
+  /** Free text: "vegetarian", "nut allergy, carries an EpiPen". */
+  diet: text("diet").default("").notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).default(now).notNull(),
+});
+
+export type EmergencyInfo = typeof emergencyInfo.$inferSelect;
+
 // ---------- Food orders ----------
 
 export const FOOD_ORDER_STATUSES = ["open", "closed", "ordered"] as const;

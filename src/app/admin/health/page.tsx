@@ -41,7 +41,7 @@ function uptime(ms: number, t: T) {
 }
 
 // Known background jobs get a name and how often they run; others (added later) show their id.
-const JOB_NAMES: Record<string, MessageKey> = { reminders: "health.job.reminders", publish: "health.job.publish", backup: "health.job.backup" };
+const JOB_NAMES: Record<string, MessageKey> = { reminders: "health.job.reminders", publish: "health.job.publish", backup: "health.job.backup", "restore-test": "health.job.restoreTest" };
 
 export default async function HealthPage() {
   await requirePlatform("view");

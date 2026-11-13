@@ -66,6 +66,14 @@ function PrivacyEn({ legal, payments, backupDays, online }: Props) {
         <li>Your language, if you picked one</li>
       </ul>
 
+      <h3>Emergency contact and dietary needs (optional)</h3>
+      <p>
+        If you fill them in on your profile: the name and phone number of an emergency contact, and your dietary needs
+        or allergies. Allergies can be health data. Only the leads of events you are coming to see them, until two days
+        after the event, and every time a lead opens them is logged. They are never sent by email or Discord and are
+        not in attendee exports. Clear the fields to remove them.
+      </p>
+
       <h3>Clans and LAN events</h3>
       <ul>
         <li>Which clans you belong to, and your role there (member, admin, waiting for approval)</li>
@@ -120,6 +128,7 @@ function PrivacyEn({ legal, payments, backupDays, online }: Props) {
         {payments && (
           <li><strong>To handle voluntary Supporter payments</strong> and keep the required bookkeeping records. Legal basis: our agreement with the payer and our legal obligations (Art. 6(1)(b) and (c) GDPR).</li>
         )}
+        <li><strong>To help in an emergency and with food at an event</strong> (emergency contact, dietary needs). Legal basis: your consent, which you give by filling in these optional fields and withdraw by clearing them (Art. 6(1)(a) and 9(2)(a) GDPR).</li>
         <li><strong>To meet legal obligations.</strong> Legal basis: Art. 6(1)(c) GDPR.</li>
       </ul>
       <p>
@@ -132,6 +141,7 @@ function PrivacyEn({ legal, payments, backupDays, online }: Props) {
       <ul>
         <li><strong>Members of your clans</strong> see your name, nickname, avatar and whether you are coming to that clan&apos;s events. Once the seat plan is final they see who sits where.</li>
         <li><strong>Clan admins and event leads</strong> also see ticket status, notes and seat wishes for their events, and can export the attendee list. Clan admins see their clan&apos;s audit log.</li>
+        <li><strong>The leads of an event you are coming to</strong> see your emergency contact and dietary needs, if you gave them, until two days after the event.</li>
         <li><strong>Clan admins and event managers</strong> see what each member owes the clan and who paid, if the clan uses clan payments.</li>
         <li><strong>People in a linked Discord channel</strong> see the bot&apos;s announcements, including the nicknames of who is coming, unsure or on the waitlist.</li>
         <li><strong>Platform admins</strong> of this Seatbit instance can see all data to run and support the Service.</li>
@@ -285,6 +295,14 @@ function PrivacyDe({ legal, payments, backupDays, online }: Props) {
         <li>Deine Sprache, falls du eine gewählt hast</li>
       </ul>
 
+      <h3>Notfallkontakt und Ernährung (freiwillig)</h3>
+      <p>
+        Falls du sie in deinem Profil ausfüllst: Name und Telefonnummer eines Notfallkontakts sowie deine Angaben zu
+        Ernährung oder Allergien. Allergien können Gesundheitsdaten sein. Nur die Leads von Events, an die du kommst,
+        sehen sie, bis zwei Tage nach dem Event, und jedes Öffnen durch einen Lead wird protokolliert. Sie gehen nie per
+        E-Mail oder Discord raus und sind in keinem Teilnehmer-Export. Leere die Felder, um sie zu entfernen.
+      </p>
+
       <h3>Clans und LAN-Events</h3>
       <ul>
         <li>Zu welchen Clans du gehörst und deine Rolle dort (Mitglied, Admin, wartet auf Freigabe)</li>
@@ -338,6 +356,7 @@ function PrivacyDe({ legal, payments, backupDays, online }: Props) {
         {payments && (
           <li><strong>Um freiwillige Supporter-Zahlungen abzuwickeln</strong> und die vorgeschriebenen Buchhaltungsbelege aufzubewahren. Rechtsgrundlage: unsere Vereinbarung mit der zahlenden Person und unsere gesetzlichen Pflichten (Art. 6 Abs. 1 lit. b und c DSGVO).</li>
         )}
+        <li><strong>Um im Notfall und beim Essen an einem Event zu helfen</strong> (Notfallkontakt, Ernährung). Rechtsgrundlage: deine Einwilligung, die du gibst, indem du diese freiwilligen Felder ausfüllst, und widerrufst, indem du sie leerst (Art. 6 Abs. 1 lit. a und Art. 9 Abs. 2 lit. a DSGVO).</li>
         <li><strong>Um gesetzliche Pflichten zu erfüllen.</strong> Rechtsgrundlage: Art. 6 Abs. 1 lit. c DSGVO.</li>
       </ul>
       <p>
@@ -350,6 +369,7 @@ function PrivacyDe({ legal, payments, backupDays, online }: Props) {
       <ul>
         <li><strong>Mitglieder deiner Clans</strong> sehen deinen Namen, Nickname, Avatar und ob du an die Events dieses Clans kommst. Sobald der Sitzplan fixiert ist, sehen sie, wer wo sitzt.</li>
         <li><strong>Clan-Admins und Event-Leads</strong> sehen zusätzlich Ticketstatus, Notizen und Platzwünsche ihrer Events und können die Teilnehmerliste exportieren. Clan-Admins sehen das Protokoll ihres Clans.</li>
+        <li><strong>Die Leads eines Events, an das du kommst,</strong> sehen deinen Notfallkontakt und deine Angaben zur Ernährung, falls du sie gemacht hast, bis zwei Tage nach dem Event.</li>
         <li><strong>Clan-Admins und Event-Manager</strong> sehen, was jedes Mitglied dem Clan schuldet und wer bezahlt hat, falls der Clan Clan-Zahlungen nutzt.</li>
         <li><strong>Leute in einem verknüpften Discord-Kanal</strong> sehen die Ankündigungen des Bots, inklusive der Nicknames derer, die kommen, unsicher sind oder auf der Warteliste stehen.</li>
         <li><strong>Plattform-Admins</strong> dieser Seatbit-Instanz können alle Daten sehen, um den Dienst zu betreiben und zu unterstützen.</li>

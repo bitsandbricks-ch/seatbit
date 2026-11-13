@@ -1,0 +1,32 @@
+export const emergency = {
+  tab: "Emergency",
+  title: "Emergency contact and dietary needs",
+  intro: "Optional. If something happens at a LAN, the leads know whom to call, and whoever plans the food knows what to keep in mind.",
+  contactName: "Emergency contact",
+  contactNamePh: "e.g. Anna Muster (sister)",
+  contactPhone: "Their phone number",
+  contactPhonePh: "+41 79 123 45 67",
+  diet: "Dietary needs and allergies",
+  dietPh: "e.g. vegetarian, nut allergy (carries an EpiPen)",
+  dietHint: "Anything the leads should know when food is ordered or something goes wrong.",
+  privacy:
+    "Only the leads of events you're coming to see this, from when you answer «coming» until two days after the event. Each look is logged in the clan's audit log. It never goes out by mail or Discord and isn't in exports. Clear the fields to remove it.",
+  manageTab: "Emergency",
+  manageTitle: "Emergency contacts",
+  leadNotice:
+    "Sensitive data, shared with you as a lead of this event. Use it only at the event or in an emergency, and don't copy it elsewhere. Opening this tab is logged.",
+  filledOf: "{filled} of {count} filled in",
+  nobodyComing: "Nobody is coming yet.",
+  seat: "Seat {seat}",
+  contactShort: "Contact:",
+  noContact: "No emergency contact given",
+  dietShort: "Diet:",
+  dietTitle: "Dietary needs",
+  noDiets: "Nobody coming noted any dietary needs.",
+  dietFoodHint: "Keep these in mind for food orders. Members add them on their profile.",
+  foodHint: {
+    one: "{count} person coming noted dietary needs or allergies.",
+    other: "{count} people coming noted dietary needs or allergies.",
+  },
+  foodHintLink: "See the list",
+};

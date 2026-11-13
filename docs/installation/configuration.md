@@ -40,6 +40,7 @@ A value saved in the platform settings wins over the environment variable. Clear
 | **Reminders** | | |
 | Reminder check interval (minutes, `0` = off) | `REMINDER_INTERVAL_MINUTES` | `60` |
 | Cron secret for `/api/cron/reminders` | `CRON_SECRET` | |
+| Metrics token for `/api/metrics` (unset = endpoint off, see [Metrics](operations.md#metrics)) | `METRICS_TOKEN` | |
 | **Maintenance** (see [Maintenance banner](../features/admin.md#maintenance-banner)) | | |
 | Banner message (start and end are set in the admin UI) | `MAINTENANCE_MESSAGE` | |
 | **Operator & legal** | | |
@@ -56,6 +57,7 @@ A value saved in the platform settings wins over the environment variable. Clear
 | Backup every (hours, `0` = off) | `BACKUP_INTERVAL_HOURS` | `24` |
 | Keep backups for (days, `0` = keep all; the privacy policy shows this number) | `BACKUP_KEEP_DAYS` | `14` |
 | Backup folder (absolute path) | `BACKUP_DIR` | `/backups` in the image, else `./backups` |
+| Test each backup by restoring it (see [Restore test](operations.md#restore-test)) | `BACKUP_VERIFY` | `true` |
 | One-off donations on/off | `DONATIONS_ENABLED` | `false` |
 | Suggested donation amounts | `DONATION_AMOUNTS` | `10, 20, 50` |
 | Donation currency | `DONATION_CURRENCY` | `CHF` |

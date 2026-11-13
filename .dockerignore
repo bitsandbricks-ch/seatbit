@@ -10,6 +10,7 @@ deploy
 .env*
 !.env.example
 e2e
+playwright.config.ts
 test-results
 playwright-report
 docs

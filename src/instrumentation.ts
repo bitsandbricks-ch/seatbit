@@ -5,7 +5,7 @@ import type { Instrumentation } from "next";
  * every N minutes, where N is the "Reminder check interval" platform setting
  * (env REMINDER_INTERVAL_MINUTES, default 60). 0 turns it off; use
  * /api/cron/reminders instead. Changes in the admin UI apply without a restart.
- * The same timer also publishes scheduled events and makes the scheduled database backups.
+ * The same timer also publishes scheduled events, makes the scheduled database backups and tests them.
  */
 export async function register() {
   if (process.env.NEXT_RUNTIME !== "nodejs") return;
@@ -47,8 +47,13 @@ export async function register() {
     15_000,
   );
   // Scheduled database backups (interval and folder from the platform settings).
+  // Each new backup then gets a restore test (also ones a cron job wrote).
   const { runScheduledBackup } = await import("./lib/backup");
-  const backupTick = () => void runScheduledBackup().catch((e) => console.error("[backup] failed", e));
+  const { runScheduledDrill } = await import("./lib/backup-drill");
+  const backupTick = () =>
+    void runScheduledBackup()
+      .then(() => runScheduledDrill())
+      .catch((e) => console.error("[backup] failed", e));
   // First check shortly after start, then look every minute whether the interval has passed.
   setTimeout(() => {
     publishTick();

@@ -6,7 +6,7 @@ All checks run on GitHub Actions. Every pull request must pass them before it is
 
 | Workflow | When | What |
 | --- | --- | --- |
-| **CI** (`ci.yml`) | Pull requests, merge queue, pushes to `main` | Existing screenshots unchanged, lint, `drizzle-kit check` (colliding migrations), untranslated text, typecheck, build, then render every page on demo data (smoke test). The screenshots are attached to the run. |
+| **CI** (`ci.yml`) | Pull requests, merge queue, pushes to `main` | Existing screenshots unchanged, lint, `drizzle-kit check` (colliding migrations), untranslated text, typecheck, unit tests, build, render every page on demo data (smoke test), then the [end-to-end tests](testing.md). The screenshots and, on failure, the Playwright report are attached to the run. |
 | **Docs** (`docs.yml`) | Pull requests, merge queue; `main` publishes | `mkdocs build --strict` (broken links and missing images fail), deploy to GitHub Pages. |
 | **Container image** (`image.yml`) | Pull requests and the merge queue build; `main` and `v*` tags push | Native amd64 and arm64 builds, merged into one multi-arch image on GHCR. |
 | **Security** (`security.yml`) | Pull requests, merge queue, `main`, and weekly on Monday | [Permission tests](permission-tests.md); Trivy scans of the dependencies, the Dockerfile and committed secrets, and of the built container image. Fixable high and critical findings fail the job; on `main` and the weekly run the findings also go to the repository's code scanning (if it is turned on). |

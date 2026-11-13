@@ -79,7 +79,7 @@ Every email goes out in the same layout (`renderMail` in `src/lib/mail-fill.ts`)
 
 ## Background work
 
-`src/instrumentation.ts` runs inside the server process: every minute it publishes scheduled drafts, and every *Reminder check interval* minutes it sends due reminders. Setting the interval to `0` turns that off; `/api/cron/reminders` (with `CRON_SECRET`) does the same from outside.
+`src/instrumentation.ts` runs inside the server process: every minute it publishes scheduled drafts, and every *Reminder check interval* minutes it sends due reminders. Setting the interval to `0` turns that off; `/api/cron/reminders` (with `CRON_SECRET`) does the same from outside. The same timer makes the scheduled backups (`src/lib/backup.ts`) and restore-tests the newest one (`src/lib/backup-drill.ts`). Wrap new background work in `runJob()` (`src/lib/jobs.ts`): it then shows on *Admin → Health* and in the `seatbit_job_*` metrics (`src/lib/metrics.ts`, served at `/api/metrics`).
 
 ## Rules
 

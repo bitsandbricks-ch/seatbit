@@ -7,7 +7,8 @@ AI coding agents (Claude Code, Codex, Copilot, ...) follow [AGENTS.md](https://g
 | Rule | |
 | --- | --- |
 | **Branch** | Own branch, one topic per pull request, never push to `main`. |
-| **Checks** | `lint`, `typecheck`, `build` (and `mkdocs build --strict` for docs, `test:authz` for new or changed server actions) pass before pushing. |
+| **Checks** | `lint`, `typecheck`, unit and end-to-end tests, `build` (and `mkdocs build --strict` for docs, `test:authz` for new or changed server actions) pass before pushing. |
+| **Tests** | A new or changed core flow gets an end-to-end test; a fixed bug in a helper gets a unit test. See [Tests](../development/testing.md). |
 | **Pull request** | Opened as a **draft** with the template filled in, linked issue, screenshots for UI changes. |
 | **CI** | Wait for `CI`, `Docs`, `Container image` and `Security`; fix failures, never skip or weaken a check. |
 | **Done** | Mark the pull request **ready for review** when the task is complete, the checklist is ticked and checks are green. |
