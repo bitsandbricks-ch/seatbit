@@ -43,7 +43,7 @@ export function InterestButtons({ lanId, current }: { lanId: string; current: In
   );
 }
 
-/** Orgas write news for everyone at the event. */
+/** Leads write news for everyone at the event. */
 export function NewsComposer({ lanId, published }: { lanId: string; published: boolean }) {
   const [pending, start] = useTransition();
   const [text, setText] = useState("");

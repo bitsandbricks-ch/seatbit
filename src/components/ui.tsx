@@ -83,7 +83,7 @@ export function Pill({ children, tone = "zinc" }: { children: ReactNode; tone?: 
 
 /**
  * Check mark after a name: this person has their own account (signed in with Discord),
- * not a guest an orga typed in.
+ * not a guest a lead typed in.
  */
 export function Verified({ size = 14 }: { size?: number }) {
   return (

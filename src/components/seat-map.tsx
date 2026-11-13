@@ -29,7 +29,7 @@ export type SeatView = {
   color?: string | null;
 };
 
-/** Extra info orgas see about a person in the details pane. */
+/** Extra info leads see about a person in the details pane. */
 export type SeatPerson = {
   id: string;
   /** Full name: Mike "Reyki" Keller. */
@@ -51,7 +51,7 @@ const ZOOM_KEY = "seatbit:seat-zoom";
  * on a phone without scrolling. Tapping a seat opens a details pane (side panel on wide screens, bottom sheet
  * on phones). "Large" shows whole nicks on every seat and is remembered per device.
  *
- * Orgas (mode "admin") edit right in the map: tap a seat to assign/move someone, swap two seats, clear or hold
+ * Leads (mode "admin") edit right in the map: tap a seat to assign/move someone, swap two seats, clear or hold
  * it, rename it; tap someone in "Not seated yet" and then a seat; or drag people around on desktop. "Edit seats"
  * switches to adding/removing seats (aisles).
  */
@@ -72,7 +72,7 @@ export function SeatMap({
   cols: number;
   seats: SeatView[];
   meId: string;
-  /** view: read only. pick: members choose their own free seat. admin: orga tools. */
+  /** view: read only. pick: members choose their own free seat. admin: lead tools. */
   mode: "view" | "pick" | "admin";
   assignable?: SeatPerson[];
   /** Card title and header extras (e.g. a "not final" pill). */
@@ -181,7 +181,7 @@ export function SeatMap({
     }
   }
 
-  // ---------- drag & drop (desktop, orgas) ----------
+  // ---------- drag & drop (desktop, leads) ----------
   const canDrag = admin && !layout;
   const onDragStartSeat = (e: DragEvent, s: SeatView) => {
     e.dataTransfer.setData("text/plain", `seat:${s.id}`);
@@ -393,7 +393,7 @@ export function SeatMap({
       <div className="min-w-0 space-y-4 sm:space-y-6">
         <Card title={title} actions={actions}>
           <div className="space-y-3">
-            {/* Toolbar: search, zoom, orga layout mode */}
+            {/* Toolbar: search, zoom, lead layout mode */}
             <div className="flex flex-wrap items-center gap-2">
               <div className="relative min-w-0 flex-1 basis-40">
                 <input
@@ -439,7 +439,7 @@ export function SeatMap({
               <p className="text-sm text-muted">
                 {mySeat
                   ? `You're at ${mySeat.label}. Tap a free seat and "Move here" to change, or tap yours to give it up.`
-                  : "Tap a free seat, then \"Take this seat\". The orgas check and finalize the plan afterwards."}
+                  : "Tap a free seat, then \"Take this seat\". The leads check and finalize the plan afterwards."}
               </p>
             )}
             {mode === "view" && (
@@ -449,7 +449,7 @@ export function SeatMap({
                     You&apos;re at <strong className="font-mono text-bit">{mySeat.label}</strong>. Tap a seat to see who sits there.
                   </>
                 ) : (
-                  "The orgas assign the group's seats after the deadline."
+                  "The leads assign the group's seats after the deadline."
                 )}
               </p>
             )}

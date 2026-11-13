@@ -13,7 +13,7 @@ import { getDefaultNames } from "@/lib/lans";
 import { requireUser } from "@/lib/session";
 
 /**
- * "Did the orgas add you already?": a member picks the guest that is them. Guests with
+ * "Did the leads add you already?": a member picks the guest that is them. Guests with
  * the same name or nick are suggested first; the clan decides whether an admin confirms.
  */
 export default async function ClaimGuestPage({ params }: PageProps<"/clans/[slug]/claim">) {
@@ -102,7 +102,7 @@ export default async function ClaimGuestPage({ params }: PageProps<"/clans/[slug
       <PageHeader
         back={{ href: `/clans/${c.slug}`, label: c.name }}
         title="Are you already on the list?"
-        subtitle="Orgas sometimes add people as guests before they sign up. If one of them is you, take it over to keep their events, seat and nicks."
+        subtitle="Leads sometimes add people as guests before they sign up. If one of them is you, take it over to keep their events, seat and nicks."
       />
       <Columns
         aside={
@@ -115,7 +115,7 @@ export default async function ClaimGuestPage({ params }: PageProps<"/clans/[slug
               </li>
               {c.guestClaims === "match" && <li>Picking any other guest asks an admin first.</li>}
               <li>You can ask for one guest at a time.</li>
-              <li>Got a personal link from your orgas? Opening it takes the guest over straight away.</li>
+              <li>Got a personal link from your leads? Opening it takes the guest over straight away.</li>
             </ul>
           </Card>
         }

@@ -31,7 +31,7 @@ Everyone in a clan has one **clan role**:
 
 ![Clan role on a member's profile](../screenshots/desktop-member-role.png){ .shot }
 
-**Orgas** are set per event, on top of the clan role. They edit that event, its attendance and seats, and can add co-orgas. Any member can be an orga of a single event. Whoever creates an event and all clan admins become its orgas; admins and event managers can always manage every event. When an event has no orgas of its own, its admins and event managers approve seat swaps and are listed as contacts.
+**Leads** are set per event, on top of the clan role. They edit that event, its attendance and seats, and can add co-leads. Any member can be a lead of a single event. Whoever creates an event and all clan admins become its leads; admins and event managers can always manage every event. When an event has no leads of its own, its admins and event managers approve seat swaps and are listed as contacts.
 
 ## Clan settings
 
@@ -59,7 +59,7 @@ Everyone in a clan has one **clan role**:
 
 **Can members claim guests?** An admin confirms each claim (default), same name or nick moves over right away, or only with the guest's own link. See [Members claiming a guest](members-guests.md#members-claiming-a-guest).
 
-**How are members shown?** Pick how people appear on event pages, the seat map, the clan page, in the Discord bot and where orgas manage the clan (event *Manage*, clan settings › *Members* and *Guests*, stats):
+**How are members shown?** Pick how people appear on event pages, the seat map, the clan page, in the Discord bot and where leads manage the clan (event *Manage*, clan settings › *Members* and *Guests*, stats):
 
 | Name display | Example |
 | --- | --- |
@@ -69,7 +69,7 @@ Everyone in a clan has one **clan role**:
 
 The nick is the one for that event or LAN type, as always. Someone without a nick of their own shows as *Mike K.* in the shorter modes. When the display leaves part of the name out, the attendee list in event *Manage*, the member and guest lists in clan settings and a member's profile (for admins, recruiters and the member themself) show the full name in small print below it, so ticket checks still work, and search finds people by their full name too. The audit log, exports, the guest claim list and the admin page always use the full name.
 
-**Verified check mark:** a green check mark after a name means the person has their own Seatbit account (they signed in with Discord). [Guests](members-guests.md#guests) an orga typed in don't have it until they take their guest over.
+**Verified check mark:** a green check mark after a name means the person has their own Seatbit account (they signed in with Discord). [Guests](members-guests.md#guests) a lead typed in don't have it until they take their guest over.
 
 ## LAN types
 
@@ -97,7 +97,7 @@ Many LAN sites have a public page per participant, e.g. `https://example.com/use
 - in *Manage → Attendees*, on the seat plan's details pane and in the CSV export,
 - on the member's clan profile and their own profile.
 
-An event can have its own link (event *Settings*); empty means the LAN type's. Without a profile link, LAN IDs stay visible to orgas, admins and the member only.
+An event can have its own link (event *Settings*); empty means the LAN type's. Without a profile link, LAN IDs stay visible to leads, admins and the member only.
 
 ## Stats
 

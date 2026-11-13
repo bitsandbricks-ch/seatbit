@@ -12,7 +12,7 @@ export default function ErrorPage({ error, reset }: { error: Error & { digest?: 
       <span className="mb-4 grid h-12 w-12 place-items-center rounded-full bg-danger/15 font-mono text-lg font-bold text-danger">!</span>
       <h1 className="text-xl font-bold">Something went wrong</h1>
       <p className="mt-2 text-sm text-muted">
-        That didn&apos;t work, but nothing you entered is lost. Try again, and if it keeps happening, tell an orga.
+        That didn&apos;t work, but nothing you entered is lost. Try again, and if it keeps happening, tell a lead.
       </p>
       {error.digest && <p className="mt-2 font-mono text-xs text-muted">Error {error.digest}</p>}
       <div className="mt-6 flex flex-wrap justify-center gap-2">

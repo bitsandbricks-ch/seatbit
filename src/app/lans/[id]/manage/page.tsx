@@ -38,7 +38,7 @@ const { attendance, seat, user, reminderLog } = schema;
 const hasWishes = (a: Attendance) =>
   (a.wishNear?.length ?? 0) > 0 || (a.wishAvoid?.length ?? 0) > 0 || a.wishPosition !== "any" || !!a.wishSeat || !!a.wishNote;
 
-// Same order as the event page (Overview, Seats, Attendees), then the orga-only tabs.
+// Same order as the event page (Overview, Seats, Attendees), then the lead-only tabs.
 const TABS = [
   ["overview", "Overview"],
   ["seats", "Seats"],
@@ -144,7 +144,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
     since: `since ${fmtDate(r.waitlistedAt ?? r.createdAt)}`,
     ticket: r.paid ? ("confirmed" as const) : r.ticketBought ? ("reported" as const) : null,
   }));
-  // Orgas pick by hand and a spot is free: say so on the overview.
+  // Leads pick by hand and a spot is free: say so on the overview.
   const spotToFill = !l.waitlistAuto && waitlist.length > 0 && !!free;
 
   const due = dueKinds(l);
@@ -423,7 +423,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
                   <li key={n.id} className="text-sm">
                     <p className="whitespace-pre-wrap text-fg/90">{n.text}</p>
                     <p className="mt-1 flex items-center gap-3 text-xs text-faint">
-                      {n.authorId ? (names.get(n.authorId) ?? "Orga") : "Orga"} · {fmtDate(n.createdAt)}
+                      {n.authorId ? (names.get(n.authorId) ?? "Lead") : "Lead"} · {fmtDate(n.createdAt)}
                       <DeleteNewsButton id={n.id} />
                     </p>
                   </li>
@@ -662,9 +662,9 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
             />
           </Card>
 
-          <Card title="Orgas">
+          <Card title="Leads">
             <p className="mb-3 text-sm text-muted">
-              Orgas manage this LAN and are shown to members as contacts. Global admins can always manage it too.
+              Leads manage this LAN and are shown to members as contacts. Global admins can always manage it too.
             </p>
             <OrgaManager
               lanId={l.id}
@@ -678,7 +678,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
 
           <Card title="Next year">
             <p className="mb-3 text-sm text-muted">
-              Copy this event as a new draft one year later: details, links, deadlines, seat block (empty) and orgas. The
+              Copy this event as a new draft one year later: details, links, deadlines, seat block (empty) and leads. The
               event&apos;s own seat plan link is left out, it changes every year.
             </p>
             <CopyNextYear lanId={l.id} />

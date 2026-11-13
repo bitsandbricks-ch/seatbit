@@ -7,7 +7,7 @@ import { notify } from "./notify";
 const { attendance, seat, user, reminderLog } = schema;
 
 /**
- * Members book the seat the orgas gave them on the event's own seat plan
+ * Members book the seat the leads gave them on the event's own seat plan
  * (e.g. lal.gg) themselves, then tick "I booked it". A new seat means booking
  * again, so seat changes clear the tick.
  */
@@ -43,7 +43,7 @@ export function unbookedSeated(l: Lan): { u: User; label: string }[] {
     .map((r) => ({ u: r.u, label: r.label }));
 }
 
-/** Reminds everyone with an unbooked seat (orga button). Returns how many got it. */
+/** Reminds everyone with an unbooked seat (lead button). Returns how many got it. */
 export async function remindToBook(l: Lan) {
   if (!l.publishedAt) return 0;
   let sent = 0;
@@ -51,7 +51,7 @@ export async function remindToBook(l: Lan) {
     const r = await notify(u, {
       kind: "reminder",
       subject: `${l.name}: book seat ${label}`,
-      text: `Hi ${u.name},\n\nyour seat at ${l.name} is ${label}. Please book it on the event's seat plan:\n${l.externalPlanUrl}\n\nThen tick "I booked it" in Seatbit, so the orgas know.\n\n${appUrl}/lans/${l.id}`,
+      text: `Hi ${u.name},\n\nyour seat at ${l.name} is ${label}. Please book it on the event's seat plan:\n${l.externalPlanUrl}\n\nThen tick "I booked it" in Seatbit, so the leads know.\n\n${appUrl}/lans/${l.id}`,
       url: `${appUrl}/lans/${l.id}`,
       buttons: [bookedButton(l.id), { type: 2, style: 5, label: "Event seat plan", url: l.externalPlanUrl }],
     }).catch(() => ({ email: false, dm: false }));

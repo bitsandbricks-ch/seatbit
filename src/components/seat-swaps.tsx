@@ -69,7 +69,7 @@ export function SeatSwapPanel({
               </button>
             </div>
           ) : (
-            <p className="mt-1 text-muted">You agreed. Waiting for an orga to approve.</p>
+            <p className="mt-1 text-muted">You agreed. Waiting for a lead to approve.</p>
           )}
         </div>
       ))}
@@ -78,7 +78,7 @@ export function SeatSwapPanel({
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-bit bg-raised/60 p-3">
           <span>
             You asked <strong>{outgoing.toName}</strong> to swap {mySeat} ⇄ {outgoing.toSeat}.{" "}
-            {outgoing.status === "pending" ? <Pill tone="amber">waiting for them</Pill> : <Pill tone="emerald">waiting for an orga</Pill>}
+            {outgoing.status === "pending" ? <Pill tone="amber">waiting for them</Pill> : <Pill tone="emerald">waiting for a lead</Pill>}
           </span>
           <button disabled={pending} className={btnGhost} onClick={() => run(() => cancelSeatSwap(outgoing.id))}>
             Cancel
@@ -99,7 +99,7 @@ export function SeatSwapPanel({
           }}
         >
           <p className="text-muted">
-            You sit at <strong className="text-fg">{mySeat}</strong>. Ask someone to swap; once they agree, an orga
+            You sit at <strong className="text-fg">{mySeat}</strong>. Ask someone to swap; once they agree, a lead
             approves it.
           </p>
           <div className="flex flex-col gap-2 sm:flex-row">
@@ -129,7 +129,7 @@ export function SeatSwapPanel({
   );
 }
 
-/** Orga side: approve or reject swaps; pending ones are shown as waiting. */
+/** Lead side: approve or reject swaps; pending ones are shown as waiting. */
 export function SeatSwapApprovals({ swaps }: { swaps: SwapView[] }) {
   const { pending, error, run } = useAction();
   return (

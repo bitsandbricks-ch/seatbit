@@ -128,7 +128,7 @@ export function answerInterest(l: Lan, me: User, answer: InterestAnswer): Handle
 export function answerEvent(l: Lan, me: User, status: AttendanceStatus, editReply: EditReply): Handled {
   if (!["going", "maybe", "declined"].includes(status)) return { response: reply("Unknown answer.") };
   if (l.interestCheck && !l.cancelledAt) return answerInterest(l, me, INTEREST_FOR[status]);
-  if (signupClosed(l)) return { response: reply(`Sign-up for **${l.name}** is closed. Ask an orga if something changed.`) };
+  if (signupClosed(l)) return { response: reply(`Sign-up for **${l.name}** is closed. Ask a lead if something changed.`) };
   if (attendanceLocked(myRow(l.id, me.id))) return { response: reply(ATTENDANCE_LOCKED_MSG, { components: [linkButton("Open in Seatbit", lanLink(l))] }) };
   const denied = notMember(me, l);
   if (denied) return { response: denied };
@@ -224,7 +224,7 @@ export function ticketFor(l: Lan, me: User, bought: boolean): Handled {
   return {
     response: reply(
       bought
-        ? `🎟️ Noted: you have your ticket for **${l.name}**. An orga will confirm it. Your answer is locked now; ask an orga if your plans change.`
+        ? `🎟️ Noted: you have your ticket for **${l.name}**. A lead will confirm it. Your answer is locked now; ask a lead if your plans change.`
         : `OK, no ticket for **${l.name}** yet.`,
       { components: [linkButton("Open in Seatbit", lanLink(l))] },
     ),
@@ -320,7 +320,7 @@ async function wishCommand(i: Interaction): Promise<Json> {
   if (!l) return open.length ? whichEvent(open) : reply("No event takes seat wishes from you right now. Say you're coming first with `/coming`.");
   const denied = notMember(me, l);
   if (denied) return denied;
-  if (l.seatsPublishedAt) return reply(`The seat plan for **${l.name}** is final. Ask an orga if you need to move.`);
+  if (l.seatsPublishedAt) return reply(`The seat plan for **${l.name}** is final. Ask a lead if you need to move.`);
   const a = myRow(l.id, me.id);
   if (!a || a.status === "declined") return reply(`Say you're coming to **${l.name}** first: \`/coming\`.`);
 
@@ -371,7 +371,7 @@ async function wishCommand(i: Interaction): Promise<Json> {
   }
   const saved = myRow(l.id, me.id)!;
   const now = await wishSummary(l, saved);
-  return reply(`👍 Seat wishes for **${l.name}** saved:\n${now || "none (anywhere is fine)"}\n\n-# The orgas see them when they plan the seats.`, {
+  return reply(`👍 Seat wishes for **${l.name}** saved:\n${now || "none (anywhere is fine)"}\n\n-# The leads see them when they plan the seats.`, {
     components: [{ type: 1, components: open_ }],
   });
 }
@@ -386,7 +386,7 @@ async function statusCard(l: Lan, me: User) {
   const seats = db.select().from(seat).where(eq(seat.lanId, l.id)).all();
   const nicks = db.select().from(nickname).where(eq(nickname.userId, me.id)).all();
   const hasNick = nicks.some((n) => (n.lanId === null && n.typeId === null) || n.lanId === l.id || (!!l.typeId && n.typeId === l.typeId));
-  // Orga assignments stay private until the plan is final; a self-picked seat shows while picking is on.
+  // Lead assignments stay private until the plan is final; a self-picked seat shows while picking is on.
   const showSeat = !!l.seatsPublishedAt || (l.seatPicking && !l.seatsPublishedAt);
   const mySeat = showSeat ? (seats.find((s) => s.userId === me.id)?.label ?? null) : null;
   const nick = (await getNames(l.id, [me.id])).get(me.id)?.nick;

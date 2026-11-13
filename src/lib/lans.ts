@@ -116,14 +116,14 @@ export function goingCount(lanId: string) {
 }
 
 /**
- * Once a member has bought their ticket (or an orga confirmed it), their answer
- * is locked: only orgas can change it. Stops people dropping out with a ticket
+ * Once a member has bought their ticket (or a lead confirmed it), their answer
+ * is locked: only leads can change it. Stops people dropping out with a ticket
  * the group already counted on.
  */
 export function attendanceLocked(a: { ticketBought: boolean; paid: boolean } | null | undefined) {
   return !!a && (a.ticketBought || a.paid);
 }
-export const ATTENDANCE_LOCKED_MSG = "You have a ticket, so your answer is locked. Ask an orga if your plans change.";
+export const ATTENDANCE_LOCKED_MSG = "You have a ticket, so your answer is locked. Ask a lead if your plans change.";
 
 export function signupClosed(l: Lan, now = new Date()) {
   return !!l.cancelledAt || l.interestCheck || (l.signupDeadline && l.signupDeadline < now) || l.endsAt < now;
@@ -192,7 +192,7 @@ export function freeSpots(l: Lan) {
   return l.capacity == null ? null : Math.max(0, l.capacity - goingCount(l.id));
 }
 
-/** Someone left "coming": move the waitlist up, or tell the orgas when they pick by hand. */
+/** Someone left "coming": move the waitlist up, or tell the leads when they pick by hand. */
 async function spotOpened(l: Lan) {
   if (l.waitlistAuto) return promoteFromWaitlist(l);
   const waiting = waitlistOf(l.id).length;
@@ -223,7 +223,7 @@ export async function promoteFromWaitlist(l: Lan) {
   }
 }
 
-/** Moves one person from the waitlist to coming and tells them. Orgas may do this over the limit. */
+/** Moves one person from the waitlist to coming and tells them. Leads may do this over the limit. */
 export async function moveUp(l: Lan, userId: string) {
   const res = db
     .update(attendance)
@@ -289,7 +289,7 @@ export function interestSwitch(l: Lan): InterestSwitch {
   return answered ? "off-locked" : "free";
 }
 
-/** Makes every admin of the clan an orga of the event (new events and next year's copies). */
+/** Makes every admin of the clan a lead of the event (new events and next year's copies). */
 export function addClanAdminsAsOrgas(lanId: string, clanId: string | null) {
   if (!clanId) return;
   const admins = db

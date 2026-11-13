@@ -1,6 +1,6 @@
 # Audit log
 
-A log of what orgas and admins changed in a clan and its events, so you can see who moved a seat or confirmed a ticket.
+A log of what leads and admins changed in a clan and its events, so you can see who moved a seat or confirmed a ticket.
 
 **Who:** clan admins, event managers and recruiters; platform admins for every clan · **Where:** clan *Manage → Audit log*; *Admin → Audit log*
 
@@ -9,8 +9,8 @@ A log of what orgas and admins changed in a clan and its events, so you can see 
 ## What's logged
 
 - Seats: moves, swaps, auto-assign, finalizing the plan
-- Answers changed by orgas, waitlist moves (moved up, reordered, auto or by hand), confirmed tickets
-- Orga and clan roles, join approvals, guest edits and guest claims
+- Answers changed by leads, waitlist moves (moved up, reordered, auto or by hand), confirmed tickets
+- Lead and clan roles, join approvals, guest edits and guest claims
 - Publishing, cancelling and editing events
 - Supporter status (when [supporter payments](supporters.md) are on)
 

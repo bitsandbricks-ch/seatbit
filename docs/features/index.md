@@ -5,7 +5,7 @@ Reference for everything Seatbit does. Each page says who uses the feature and w
 Seatbit has three kinds of users:
 
 - **Members** answer for events, pick seats, offer rides and order food.
-- **Orgas, clan admins, event managers and recruiters** run the clan and its events. See [roles](clans.md#roles).
+- **Leads, clan admins, event managers and recruiters** run the clan and its events. See [roles](clans.md#roles).
 - **Platform admins** run the instance. See [Platform admin](admin.md).
 
 ## Overview
@@ -15,15 +15,15 @@ Seatbit has three kinds of users:
 | [Accounts and profile](accounts.md) | Discord sign-in, names and nicks, notification settings, avatar, data export and account deletion. | Everyone |
 | [Clans and roles](clans.md) | Clans with join modes, roles, invite links, LAN types and stats. | Clan admins |
 | [Members and guests](members-guests.md) | Join requests, adding users, guests without an account, guest claims. | Admins, recruiters |
-| [Event lifecycle](events.md) | Create from a LAN type, drafts, publish or schedule, interest check, news, cancel, copy for next year. | Orgas |
-| [Attendance and tickets](attendance.md) | Coming / unsure / not coming, waitlist, checklist, tickets, attendee list and CSV export. | Members, orgas |
-| [Seats](seats.md) | The group's seat block, seat wishes, self pick, planner, final plan, booking on the event site, swaps. | Members, orgas |
-| [Reminders and who's missing](reminders.md) | Automatic reminders before deadlines, manual reminders and one-tap nudges. | Orgas |
+| [Event lifecycle](events.md) | Create from a LAN type, drafts, publish or schedule, interest check, news, cancel, copy for next year. | Leads |
+| [Attendance and tickets](attendance.md) | Coming / unsure / not coming, waitlist, checklist, tickets, attendee list and CSV export. | Members, leads |
+| [Seats](seats.md) | The group's seat block, seat wishes, self pick, planner, final plan, booking on the event site, swaps. | Members, leads |
+| [Reminders and who's missing](reminders.md) | Automatic reminders before deadlines, manual reminders and one-tap nudges. | Leads |
 | [Travel and packing list](travel-packing.md) | Rides, places to sleep, a private packing list. | Members |
 | [Games](games.md) | Suggest and vote for games, track installs. | Members |
 | [Food orders](food.md) | Group orders at the LAN with a merged order list and who paid. | Members |
-| [Discord and WhatsApp](discord.md) | Bot announcements with answer buttons, reminders, DMs, slash commands; WhatsApp texts. | Clan admins, orgas |
-| [Audit log](audit-log.md) | What orgas and admins changed. | Admins, event managers, recruiters |
+| [Discord and WhatsApp](discord.md) | Bot announcements with answer buttons, reminders, DMs, slash commands; WhatsApp texts. | Clan admins, leads |
+| [Audit log](audit-log.md) | What leads and admins changed. | Admins, event managers, recruiters |
 | [Supporter badge](supporters.md) | Optional voluntary payments for clans (off by default). | Clan admins |
 | [Platform admin](admin.md) | All clans, events and users, platform settings, mail templates. | Platform admins |
 

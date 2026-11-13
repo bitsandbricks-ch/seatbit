@@ -17,12 +17,12 @@ export function OrgaManager({
   return (
     <div className={`space-y-3 ${pending ? "opacity-70" : ""}`}>
       <ul className="flex flex-wrap gap-2">
-        {orgas.length === 0 && <li className="text-sm text-muted">No orgas yet.</li>}
+        {orgas.length === 0 && <li className="text-sm text-muted">No leads yet.</li>}
         {orgas.map((o) => (
           <li key={o.id} className="flex items-center gap-1 rounded-full bg-raised py-0.5 pl-3 pr-1 text-sm">
             {o.name}
             <button
-              aria-label={`Remove ${o.name} as orga`}
+              aria-label={`Remove ${o.name} as lead`}
               className={`${btnGhost} !rounded-full !px-2 !py-0 text-muted`}
               onClick={() => start(() => removeOrga(lanId, o.id))}
             >
@@ -34,7 +34,7 @@ export function OrgaManager({
       {candidates.length > 0 && (
         <div className="flex gap-2">
           <select value={pick} onChange={(e) => setPick(e.target.value)} className={`${input} !w-auto`}>
-            <option value="">Add an orga…</option>
+            <option value="">Add a lead…</option>
             {candidates.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}

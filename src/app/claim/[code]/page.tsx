@@ -15,7 +15,7 @@ export default async function ClaimPage({ params }: PageProps<"/claim/[code]">) 
     return (
       <div className={cardPage}>
         <h1 className={cardPageTitle}>Link no longer works</h1>
-        <p className="text-sm text-muted">It was used already or replaced. Ask your orga for a new one.</p>
+        <p className="text-sm text-muted">It was used already or replaced. Ask your lead for a new one.</p>
         <Link href="/" className="text-sm text-bit hover:underline">
           Go to Seatbit
         </Link>
@@ -32,7 +32,7 @@ export default async function ClaimPage({ params }: PageProps<"/claim/[code]">) 
     <div className={cardPage}>
       <h1 className="text-xl font-semibold">Hi {me.firstName}!</h1>
       <p className="text-sm text-muted">
-        {clan ? `The orgas of ${clan.name}` : "An orga"} added you as <span className="text-fg">{g.name}</span>
+        {clan ? `The leads of ${clan.name}` : "A lead"} added you as <span className="text-fg">{g.name}</span>
         {going > 0 ? ` and signed you up for ${going} event${going === 1 ? "" : "s"}` : ""}. Take it over to see your events,
         tickets and seat with your own account.
       </p>

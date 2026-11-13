@@ -30,7 +30,7 @@ export function buildChecklist(input: {
             : "You're on the waitlist."
           : lan.signupDeadline
             ? "Answer before the deadline."
-            : "Let the orgas know.",
+            : "Let the leads know.",
   });
 
   steps.push({
@@ -48,9 +48,9 @@ export function buildChecklist(input: {
       title: "Buy your ticket",
       state: a?.paid ? "done" : a?.ticketBought ? "pending" : "todo",
       hint: a?.paid
-        ? "Confirmed by the orgas."
+        ? "Confirmed by the leads."
         : a?.ticketBought
-          ? "Waiting for an orga to confirm."
+          ? "Waiting for a lead to confirm."
           : "Buy it from the event, then tick it off here.",
     });
   }
@@ -59,19 +59,19 @@ export function buildChecklist(input: {
     steps.push({
       key: "seat",
       title: "Get your seat",
-      // Only final once the orgas finalized the plan, also when you picked your seat yourself.
+      // Only final once the leads finalized the plan, also when you picked your seat yourself.
       state: lan.seatsPublishedAt && seatLabel ? "done" : seatLabel ? "pending" : lan.seatPicking && !lan.seatsPublishedAt ? "todo" : "pending",
       hint: lan.seatsPublishedAt
         ? seatLabel
           ? `Seat ${seatLabel}, final.`
-          : "The plan is final but you have no seat yet. An orga will get back to you."
+          : "The plan is final but you have no seat yet. A lead will get back to you."
         : seatLabel
-          ? `Seat ${seatLabel} for now. The orgas check and finalize the seat plan.`
+          ? `Seat ${seatLabel} for now. The leads check and finalize the seat plan.`
           : lan.seatPicking
             ? "Self pick is on: tick that you have your ticket, then take a free seat on the Seats tab."
             : freeSeats === 0
-              ? "The orgas will finalize the seat plan soon."
-              : "Add seat wishes on the Seats tab. The orgas finalize the seat plan after the deadline.",
+              ? "The leads will finalize the seat plan soon."
+              : "Add seat wishes on the Seats tab. The leads finalize the seat plan after the deadline.",
     });
   }
   // The event's own seat plan (e.g. lal.gg): members book the seat they got there themselves.

@@ -12,7 +12,7 @@ const { attendance, clanMember, user, seat, nickname, reminderLog, lanInterest, 
 
 /**
  * Steps members still owe for an event. "member" steps can be nudged (DM / mail);
- * "orga" steps are the orgas' own to-dos and only link to the right tab.
+ * "orga" steps are the leads' own to-dos and only link to the right tab.
  */
 export const MISSING_STEPS = {
   interest: { who: "member", title: "No answer to the interest check", short: "interest check" },
@@ -149,7 +149,7 @@ export function whoIsMissing(l: Lan): MissingGroup[] {
       if (!withNick.has(r.userId)) add("nick", r.userId);
       const label = seatOf.get(r.userId);
       if (seats.length > 0 && !label) {
-        // Self pick: members take a seat once they have a ticket. Otherwise the orgas assign.
+        // Self pick: members take a seat once they have a ticket. Otherwise the leads assign.
         if (l.seatPicking && !l.seatsPublishedAt && (r.ticketBought || r.paid)) add("seat", r.userId);
         else if (!l.seatPicking || l.seatsPublishedAt) add("assign", r.userId);
       }
@@ -159,7 +159,7 @@ export function whoIsMissing(l: Lan): MissingGroup[] {
   return (Object.keys(groups) as MissingStep[]).filter((s) => groups[s].length > 0).map((step) => ({ step, people: groups[step] }));
 }
 
-/** The nudge for one step. Short and friendly: it comes from an orga, not a robot deadline. */
+/** The nudge for one step. Short and friendly: it comes from a lead, not a robot deadline. */
 function nudgeMessage(step: NudgeStep, l: Lan, u: User, seatLabel?: string): Notice {
   const url = `${appUrl}/lans/${l.id}`;
   const by = (d: Date | null, what: string) => (d ? ` ${what} ${fmtDate(d)}.` : "");
@@ -174,7 +174,7 @@ function nudgeMessage(step: NudgeStep, l: Lan, u: User, seatLabel?: string): Not
       return {
         ...base,
         subject: `${l.name}: would you come?`,
-        text: `Hi ${u.name},\n\nthe orgas are checking who'd come to ${l.name}. It's not binding, it just helps them decide. Yes, maybe or no?\n\n${url}`,
+        text: `Hi ${u.name},\n\nthe leads are checking who'd come to ${l.name}. It's not binding, it just helps them decide. Yes, maybe or no?\n\n${url}`,
         buttons: [
           { type: 2, style: 3, label: "Yes", custom_id: `int:${l.id}:yes` },
           { type: 2, style: 2, label: "Maybe", custom_id: `int:${l.id}:maybe` },
@@ -185,14 +185,14 @@ function nudgeMessage(step: NudgeStep, l: Lan, u: User, seatLabel?: string): Not
       return {
         ...base,
         subject: `${l.name}: are you coming?`,
-        text: `Hi ${u.name},\n\nthe orgas are still waiting for your answer for ${l.name}. Coming, unsure or not coming?${by(l.signupDeadline, "Please answer by")}\n\n${url}`,
+        text: `Hi ${u.name},\n\nthe leads are still waiting for your answer for ${l.name}. Coming, unsure or not coming?${by(l.signupDeadline, "Please answer by")}\n\n${url}`,
         buttons: attButtons,
       };
     case "unsure":
       return {
         ...base,
         subject: `${l.name}: still unsure?`,
-        text: `Hi ${u.name},\n\nyou said you're unsure about ${l.name}. Do you know yet? The orgas need a yes or no to plan tickets and seats.${by(l.signupDeadline, "Please decide by")}\n\n${url}`,
+        text: `Hi ${u.name},\n\nyou said you're unsure about ${l.name}. Do you know yet? The leads need a yes or no to plan tickets and seats.${by(l.signupDeadline, "Please decide by")}\n\n${url}`,
         buttons: attButtons,
       };
     case "ticket":
@@ -213,13 +213,13 @@ function nudgeMessage(step: NudgeStep, l: Lan, u: User, seatLabel?: string): Not
         ...base,
         url: `${url}?tab=seats`,
         subject: `${l.name}: pick your seat`,
-        text: `Hi ${u.name},\n\nyou can pick your own seat for ${l.name} until the orgas finalize the plan. Take a free one on the Seats tab.\n\n${url}?tab=seats`,
+        text: `Hi ${u.name},\n\nyou can pick your own seat for ${l.name} until the leads finalize the plan. Take a free one on the Seats tab.\n\n${url}?tab=seats`,
       };
     case "book":
       return {
         ...base,
         subject: `${l.name}: book seat ${seatLabel ?? ""}`.trim(),
-        text: `Hi ${u.name},\n\nyour seat at ${l.name} is ${seatLabel}. Please book it on the event's seat plan:\n${l.externalPlanUrl}\n\nThen tick "I booked it" in Seatbit, so the orgas know.\n\n${url}`,
+        text: `Hi ${u.name},\n\nyour seat at ${l.name} is ${seatLabel}. Please book it on the event's seat plan:\n${l.externalPlanUrl}\n\nThen tick "I booked it" in Seatbit, so the leads know.\n\n${url}`,
         buttons: [bookedButton(l.id), { type: 2, style: 5, label: "Event seat plan", url: l.externalPlanUrl }],
       };
   }

@@ -113,12 +113,12 @@ const SHOTS: Shot[] = [
     },
   },
 
-  // Sara joined, but the orgas had added her as a guest already
+  // Sara joined, but the leads had added her as a guest already
   { name: "phone-clan-claim", who: "sara", path: `${CLAN}/claim`, full: true },
   // ... and pressed "That's me" after /claim on Discord before she had an account
   { name: "phone-discord-claim", who: "sara", path: `/claim/discord/${discordClaimTicket()}` },
 
-  // An orga (Alex) on the phone
+  // A lead (Alex) on the phone
   { name: "phone-manage", who: "alex", path: `${LAKESIDE}/manage`, full: true },
   { name: "phone-manage-missing", who: "alex", path: `${LAKESIDE}/manage?tab=missing` },
   { name: "phone-manage-seats", who: "alex", path: `${LAKESIDE}/manage?tab=seats`, act: seat("F12") },
@@ -132,7 +132,7 @@ const SHOTS: Shot[] = [
     },
   },
 
-  // Desktop, as Alex (platform admin, clan admin and orga)
+  // Desktop, as Alex (platform admin, clan admin and lead)
   { name: "desktop-lans", who: "alex", path: "/" },
   { name: "desktop-event", who: "alex", path: LAKESIDE },
   { name: "desktop-event-seats", who: "alex", path: `${LAKESIDE}?tab=seats`, act: seat("F9") },

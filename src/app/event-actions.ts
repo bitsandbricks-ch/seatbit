@@ -105,7 +105,7 @@ const YEAR = (d: Date | null) => {
 
 /**
  * Copies an event as a new draft one year later: details, links, deadlines, seat block (without
- * people) and orgas. The event's own seat plan link is left out, since it changes every year.
+ * people) and leads. The event's own seat plan link is left out, since it changes every year.
  */
 export async function copyForNextYear(lanId: string) {
   const me = await requireLanManager(lanId);
@@ -147,7 +147,7 @@ export async function copyForNextYear(lanId: string) {
       .run();
   }
   const orgas = new Set([me.id, ...db.select().from(lanOrga).where(eq(lanOrga.lanId, l.id)).all().map((o) => o.userId)]);
-  // Only orgas who are still in the clan.
+  // Only leads who are still in the clan.
   for (const uid of orgas) {
     if (uid === me.id || !l.clanId || isClanMember(uid, l.clanId)) db.insert(lanOrga).values({ lanId: row.id, userId: uid }).run();
   }
@@ -157,7 +157,7 @@ export async function copyForNextYear(lanId: string) {
   redirect(`/lans/${row.id}/manage?tab=settings&copied=1`);
 }
 
-// ---------------- Orga news ----------------
+// ---------------- Lead news ----------------
 
 export async function postNews(lanId: string, text: string): Promise<{ error?: string; sent?: number }> {
   const me = await requireLanManager(lanId);
@@ -200,11 +200,11 @@ export async function setMyInterests(clanId: string, typeIds: string[] | null) {
 
 // ---------------- Arrival check-in ----------------
 
-/** "I'm here" on the day. Orgas can tick anyone; members only themselves. */
+/** "I'm here" on the day. Leads can tick anyone; members only themselves. */
 export async function setArrived(lanId: string, userId: string | null, arrived: boolean) {
   const me = await requireUser();
   const target = userId ?? me.id;
-  if (target !== me.id && !isLanManager(me, lanId)) throw new Error("Only orgas can check in others");
+  if (target !== me.id && !isLanManager(me, lanId)) throw new Error("Only leads can check in others");
   const a = db.select().from(attendance).where(and(eq(attendance.lanId, lanId), eq(attendance.userId, target))).get();
   if (!a || a.status !== "going") throw new Error("Only people coming can check in.");
   db.update(attendance)

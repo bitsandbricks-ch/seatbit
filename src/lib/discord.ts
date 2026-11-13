@@ -126,7 +126,7 @@ async function interestMessage(l: Lan) {
         description: clip(l.description, 1500) || undefined,
         color: BRAND,
         fields,
-        footer: { text: "Interest check, not binding. Sign-up opens once the orgas decide." },
+        footer: { text: "Interest check, not binding. Sign-up opens once the leads decide." },
       },
     ],
     components: interestButtons(l),
@@ -163,7 +163,7 @@ export async function lanMessage(l: Lan) {
         author: c ? { name: clip(c.name, 256), url: `${appUrl}/clans/${c.slug}`, icon_url: icon ? `${appUrl}${icon}` : undefined } : undefined,
         title: clip(l.cancelledAt ? `❌ Cancelled: ${l.name}` : l.name, 256),
         url: lanLink(l),
-        description: clip(l.cancelledAt ? l.cancelReason || "The orgas cancelled this event." : l.description, 1500) || undefined,
+        description: clip(l.cancelledAt ? l.cancelReason || "The leads cancelled this event." : l.description, 1500) || undefined,
         color: l.cancelledAt ? 0xef4444 : BRAND,
         fields,
         footer: { text: l.cancelledAt ? "This event is cancelled" : closed ? "Sign-up is closed" : "Tap a button to set your status" },
@@ -260,7 +260,7 @@ async function reminderMessage(kind: ChatReminderKind, l: Lan) {
   };
 }
 
-/** Orga news as an embed, for the event's thread or channel. */
+/** Lead news as an embed, for the event's thread or channel. */
 function newsMessage(l: Lan, text: string, author: string) {
   return {
     embeds: [
@@ -376,7 +376,7 @@ async function postAnnouncement(l: Lan, home: typeof discordChannel.$inferSelect
 export async function announceLan(lanId: string, onlyChannelId?: string) {
   if (!discordEnabled()) return 0;
   const l = getLan(lanId);
-  // Drafts stay off Discord until an orga publishes them.
+  // Drafts stay off Discord until a lead publishes them.
   if (!l?.publishedAt) return 0;
   const msg = await lanMessage(l);
   const mode = discordModeOf(l);
@@ -457,7 +457,7 @@ async function postFollowUp(home: string, post: Post | undefined, msg: Json) {
 const postsByChannel = (lanId: string) =>
   new Map(db.select().from(discordMessage).where(eq(discordMessage.lanId, lanId)).all().map((p) => [p.channelId, p]));
 
-/** Posts a reminder to every channel now (orga "nudge" button). */
+/** Posts a reminder to every channel now (lead "nudge" button). */
 export async function postReminderNow(l: Lan, kind: ChatReminderKind) {
   if (!discordEnabled()) return 0;
   const msg = await reminderMessage(kind, l);
@@ -514,7 +514,7 @@ export async function postDueChannelReminders(kinds: ChatReminderKind[], l: Lan)
 }
 
 /**
- * Posts orga news in the event's own thread or channel. Events in the plain channel mode don't get it
+ * Posts lead news in the event's own thread or channel. Events in the plain channel mode don't get it
  * there (members already get it by DM), so the main channel stays quiet.
  */
 export async function postLanNews(l: Lan, text: string, author: string) {
@@ -564,7 +564,7 @@ export function handleInteraction(i: Interaction): Handled {
   if (i.type === 4 && (i.data?.name === "claim" || i.data?.name === "guest")) {
     const c = clanForGuild(i.guild_id);
     const q = String(i.data.options?.find((o) => o.focused)?.value ?? "");
-    // /claim: what's still free for the caller; /guest (orgas): guests nobody asked for, linked ones included so they can be re-linked.
+    // /claim: what's still free for the caller; /guest (leads): guests nobody asked for, linked ones included so they can be re-linked.
     const me = i.data.name === "claim" ? seatbitUserFor(discordUser) : undefined;
     const free = c
       ? i.data.name === "claim"
@@ -641,7 +641,7 @@ export function handleInteraction(i: Interaction): Handled {
     return claimCommand(i, i.data.custom_id.slice("claim:".length));
   }
 
-  // /guest member:<@…> guest:<…>: an orga says who a guest is
+  // /guest member:<@…> guest:<…>: a lead says who a guest is
   if (i.type === 2 && i.data?.name === "guest") return linkGuestCommand(i, editReply);
 
   // /lans: this server's clan, or (in DMs / unlinked servers) all of your clans
@@ -840,7 +840,7 @@ function clanDiscordIds(clanId: string) {
 
 /**
  * Suggestions for /guest member:<…>: people on the server who aren't in the clan on
- * Seatbit yet, found by what the orga typed, or by the picked guest's name before they type.
+ * Seatbit yet, found by what the lead typed, or by the picked guest's name before they type.
  */
 async function memberChoices(i: Interaction): Promise<Json> {
   const none = { type: 8, data: { choices: [] } };
@@ -873,7 +873,7 @@ async function memberChoices(i: Interaction): Promise<Json> {
 }
 
 /**
- * /guest member:<@…> guest:<…>: an orga ties a guest to a Discord member. If that member
+ * /guest member:<@…> guest:<…>: a lead ties a guest to a Discord member. If that member
  * already has Seatbit, the guest moves over now; otherwise their Discord sign-in takes it
  * over, and the bot DMs them the claim link.
  */
@@ -960,7 +960,7 @@ async function discordMemberName(guildId: string, userId: string) {
 }
 
 /**
- * DMs the Discord member an orga linked a guest to the guest's claim link (again), and
+ * DMs the Discord member a lead linked a guest to the guest's claim link (again), and
  * notes when it went out. Used by /guest and the "Send the DM again" button on the guest page.
  */
 export async function sendGuestDiscordDm(guestId: string): Promise<DmResult> {
@@ -971,9 +971,9 @@ export async function sendGuestDiscordDm(guestId: string): Promise<DmResult> {
   const dm = await dmDiscordUser(g.guestDiscordId, {
     kind: "guest_linked",
     subject: `Your spot in ${clanName} is waiting`,
-    text: `The orgas of ${clanName} added you to Seatbit as ${g.name}. Sign in with this Discord account to see your events, tickets and seat.`,
+    text: `The leads of ${clanName} added you to Seatbit as ${g.name}. Sign in with this Discord account to see your events, tickets and seat.`,
     url: `${appUrl}/claim/${g.claimCode}`,
-    footer: "Seatbit · sent because an orga of your clan linked you",
+    footer: "Seatbit · sent because a lead of your clan linked you",
   });
   if (dm.ok) db.update(user).set({ guestDiscordDmAt: new Date() }).where(eq(user.id, g.id)).run();
   return dm;

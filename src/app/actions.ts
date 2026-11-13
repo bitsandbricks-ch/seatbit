@@ -231,7 +231,7 @@ const lanInput = z.object({
 
 export type FormState = { error?: string; ok?: boolean; message?: string } | undefined;
 
-/** Event fields named in the audit log when an orga edits them. */
+/** Event fields named in the audit log when a lead edits them. */
 const LAN_FIELD_LABELS: Partial<Record<keyof typeof lan.$inferSelect, string>> = {
   name: "name",
   typeId: "LAN type",
@@ -434,7 +434,7 @@ export async function adminSetAttendance(lanId: string, userId: string, status: 
   lanPath(lanId);
 }
 
-/** Orga moves one person from the waitlist to coming (also over the limit) and tells them. */
+/** Lead moves one person from the waitlist to coming (also over the limit) and tells them. */
 export async function adminMoveUp(lanId: string, userId: string) {
   const me = await requireLanManager(lanId);
   const l = mustGetLan(lanId);
@@ -444,7 +444,7 @@ export async function adminMoveUp(lanId: string, userId: string) {
   lanPath(lanId);
 }
 
-/** Orga moves someone one place up (-1) or down (+1) on the waitlist. */
+/** Lead moves someone one place up (-1) or down (+1) on the waitlist. */
 export async function adminReorderWaitlist(lanId: string, userId: string, dir: -1 | 1) {
   const me = await requireLanManager(lanId);
   if (dir !== -1 && dir !== 1) throw new Error("Bad direction");
@@ -455,7 +455,7 @@ export async function adminReorderWaitlist(lanId: string, userId: string, dir: -
   lanPath(lanId);
 }
 
-/** Whether a free spot goes to the next in line by itself, or the orgas pick. Turning it on fills free spots now. */
+/** Whether a free spot goes to the next in line by itself, or the leads pick. Turning it on fills free spots now. */
 export async function setWaitlistAuto(lanId: string, on: boolean) {
   const me = await requireLanManager(lanId);
   const l = mustGetLan(lanId);
@@ -498,7 +498,7 @@ export async function adminSetNote(attendanceId: string, note: string) {
   lanPath(a.lanId);
 }
 
-/** Orgas fill in or fix someone's participant ID (e.g. for guests). Same scope as the member's own. */
+/** Leads fill in or fix someone's participant ID (e.g. for guests). Same scope as the member's own. */
 export async function adminSetLanId(lanId: string, userId: string, value: string) {
   const me = await requireLanManager(lanId);
   const l = mustGetLan(lanId);
@@ -703,7 +703,7 @@ export async function setSeatPicking(lanId: string, open: boolean) {
 /**
  * A member takes a free seat (or gives theirs up with seatId null) while seat
  * self pick is on and the plan isn't final. Held seats can't be picked.
- * Orgas can still move anyone afterwards.
+ * Leads can still move anyone afterwards.
  */
 export async function pickMySeat(lanId: string, seatId: string | null): Promise<{ error?: string }> {
   await requireUser(); // outside the try: a sign-in redirect must not be caught
@@ -719,7 +719,7 @@ export async function pickMySeat(lanId: string, seatId: string | null): Promise<
 async function pickMySeatOrThrow(lanId: string, seatId: string | null) {
   const me = await requireUser();
   const l = mustGetLan(lanId);
-  if (!l.seatPicking || l.seatsPublishedAt) throw new Error(l.seatsPublishedAt ? "The orgas finalized the seat plan. Ask them to move you." : "Seat picking is closed. Ask an orga.");
+  if (!l.seatPicking || l.seatsPublishedAt) throw new Error(l.seatsPublishedAt ? "The leads finalized the seat plan. Ask them to move you." : "Seat picking is closed. Ask a lead.");
   const a = db.select().from(attendance).where(and(eq(attendance.lanId, lanId), eq(attendance.userId, me.id))).get();
   if (a?.status !== "going") throw new Error("Say you're coming first.");
   if (seatId && !a.ticketBought && !a.paid) throw new Error("Confirm you have your ticket first.");
@@ -727,7 +727,7 @@ async function pickMySeatOrThrow(lanId: string, seatId: string | null) {
     if (seatId) {
       const s = tx.select().from(seat).where(and(eq(seat.id, seatId), eq(seat.lanId, lanId))).get();
       if (!s) throw new Error("That seat doesn't exist.");
-      if (s.locked) throw new Error(`${s.label} is held by the orgas.`);
+      if (s.locked) throw new Error(`${s.label} is held by the leads.`);
       if (s.userId && s.userId !== me.id) throw new Error(`${s.label} was just taken. Pick another one.`);
     }
     tx.update(seat).set({ userId: null }).where(and(eq(seat.lanId, lanId), eq(seat.userId, me.id))).run();
@@ -816,13 +816,13 @@ export async function adminAutoAssignSeats(lanId: string, mode: "fill" | "replan
 export async function setMySeatWishes(lanId: string, input: z.input<typeof wishInput>) {
   const me = await requireUser();
   const l = mustGetLan(lanId);
-  if (l.seatsPublishedAt) throw new Error("The seat plan is final. Ask an orga.");
+  if (l.seatsPublishedAt) throw new Error("The seat plan is final. Ask a lead.");
   saveSeatWishes(lanId, me.id, input);
   lanPath(lanId);
 }
 
 /**
- * The orgas' last step: finalizes the seat plan (stored as seatsPublishedAt).
+ * The leads' last step: finalizes the seat plan (stored as seatsPublishedAt).
  * Closes self pick and seat wishes, shows everyone the plan and optionally
  * tells everyone coming their seat. Also the last step when members picked their own seats.
  */
@@ -850,7 +850,7 @@ export async function publishSeats(lanId: string, notify: boolean): Promise<numb
             seat: mine?.label,
             seatInfo: mine
               ? [`You're sitting at ${mine.label}.`, bookingLine(l, mine.label)].filter(Boolean).join(" ")
-              : "You don't have a seat yet, an orga will get back to you.",
+              : "You don't have a seat yet, a lead will get back to you.",
           }),
           url: `${appUrl}/lans/${l.id}`,
           buttons:
@@ -869,7 +869,7 @@ export async function publishSeats(lanId: string, notify: boolean): Promise<numb
   return sent;
 }
 
-/** Reopens a finalized plan (members can send wishes again; self pick stays off until an orga turns it on). */
+/** Reopens a finalized plan (members can send wishes again; self pick stays off until a lead turns it on). */
 export async function unpublishSeats(lanId: string) {
   const me = await requireLanManager(lanId);
   db.update(lan).set({ seatsPublishedAt: null }).where(eq(lan.id, lanId)).run();
