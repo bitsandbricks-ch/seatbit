@@ -18,7 +18,7 @@ What Seatbit does to protect its users, and what you as the operator of an insta
 | **Spam guards** | Reports, new clans, test DMs and everything a lead sends by hand (news, reminders, nudges, guest invites, payment reminders) are rate limited per account. |
 | **Secrets** | Secrets saved in the admin settings (SMTP password, bot token, Stripe keys, ...) are encrypted (AES-256-GCM) and never sent to the browser. The audit log records which settings changed, not their values. |
 | **Privacy** | Clan leads only see and add people who already share a clan with them; everyone else joins by invite link, request, or an email invite. "Download my data" exports everything about a person; deleting an account removes personal data and keeps only anonymous counts. |
-| **Container** | The image runs as an unprivileged user (uid 1001) and works with a read-only root filesystem. Only the runtime dependencies end up in it. Each build is scanned for known vulnerabilities (Trivy), and Dependabot keeps dependencies and the base image current. |
+| **Container** | The image runs as an unprivileged user (uid 1001) and works with a read-only root filesystem. Only the runtime dependencies end up in it (not even npm). Each build is scanned for known vulnerabilities (Trivy), and Dependabot keeps dependencies and the base image current. |
 | **Tests** | An automated test tries every action as signed out, suspended, another clan's admin, pending, member, lead, each clan role and platform staff, on every change (see [Permission tests](../development/permission-tests.md)). |
 
 ## Your checklist

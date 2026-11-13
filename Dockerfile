@@ -33,9 +33,14 @@ ENV NODE_ENV=production \
     DATABASE_PATH=/data/seatbit.db \
     BACKUP_DIR=/backups \
     TZ=Europe/Zurich
+# The server and the admin/backup scripts only need node. npm, npx and corepack
+# ship with the base image but are never used at runtime, and their bundled
+# packages are what vulnerability scanners keep flagging, so drop them.
 RUN groupadd --system --gid 1001 seatbit \
   && useradd --system --uid 1001 --gid seatbit --home /app seatbit \
-  && mkdir -p /data /backups && chown seatbit:seatbit /data /backups
+  && mkdir -p /data /backups && chown seatbit:seatbit /data /backups \
+  && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+    /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
 COPY --from=build --chown=seatbit:seatbit /app/.next/standalone ./
 COPY --from=build --chown=seatbit:seatbit /app/.next/static ./.next/static
 COPY --from=build --chown=seatbit:seatbit /app/public ./public
