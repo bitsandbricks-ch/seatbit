@@ -16,7 +16,7 @@ import { getAvatars, type AvatarData } from "@/lib/avatars";
 import { Card, Columns, LockedAnswerBadge, Notice, Page, Pill, StatusBadge, Verified } from "@/components/ui";
 import { fmtDate, fmtTime, lanRange, relative } from "@/lib/format";
 import { attendanceLocked, getDisplayNames, getLan, getNames, pickNick, seatView, signupClosed, waitlistPositions } from "@/lib/lans";
-import { canViewLan, getCurrentUser, isLanManager, isProfileComplete } from "@/lib/session";
+import { canTakePart as mayTakePart, canViewLan, getCurrentUser, isLanManager, isProfileComplete } from "@/lib/session";
 import { clanRole, getClan } from "@/lib/clans";
 import { EventInvite } from "@/components/event-invite";
 import { rolesWith } from "@/lib/clan-roles";
@@ -100,6 +100,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
     );
   }
   const me = viewer;
+  // Platform staff outside the clan may look, but not answer or add anything.
+  const watching = !mayTakePart(me, id);
   const lanClan = l.clanId ? getClan(l.clanId) : undefined;
   const myPayments = lanClan && clanPaymentsOn(lanClan) ? memberLines(me.id, { lanId: l.id }) : [];
   const now = new Date();
@@ -203,7 +205,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
   // Travel: people who said they're not coming no longer count.
   const out = new Set(rows.filter((r) => r.status === "declined").map((r) => r.userId));
   const isIn = (uid: string) => rows.some((r) => r.userId === uid) && !out.has(uid);
-  const canTakePart = !!my && my.status !== "declined";
+  const canTakePart = !watching && !!my && my.status !== "declined";
   const travelViews: TravelPostView[] = posts
     .sort((a, b) => +a.createdAt - +b.createdAt)
     .map((p) => ({
@@ -395,7 +397,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
         <section aria-label={t("event.wouldYouCome")} className="rounded-card border border-line bg-surface p-3 sm:p-4">
           <h2 className="mb-1 text-sm font-semibold text-fg">{t("event.wouldYouCome")}</h2>
           <p className="mb-3 text-sm text-muted">{t("event.notBinding")}</p>
-          <InterestButtons lanId={l.id} current={myInterest} />
+          {watching ? <p className="text-sm text-muted">{t("event.staffView")}</p> : <InterestButtons lanId={l.id} current={myInterest} />}
         </section>
         ) : (
         <section aria-label={t("event.yourAttendance")} className="rounded-card border border-line bg-surface p-3 sm:p-4">
@@ -403,12 +405,12 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
             <h2 className="text-sm font-semibold text-fg">{t("event.yourAnswer")}</h2>
             <StatusBadge status={my?.status} seat={seatOf.get(me.id)} />
           </div>
-          {locked || closed ? (
+          {locked || closed || watching ? (
             // Locked (ticket bought) or sign-up closed: just show the answer, no buttons.
             <div>
               <p className="text-lg font-semibold text-fg">{t(`event.answer.${my?.status ?? "none"}`)}</p>
               <p className="mt-1 text-sm text-muted">
-                {l.cancelledAt ? t("event.cancelled") : locked ? t("event.locked") : t("event.signupClosed")}
+                {l.cancelledAt ? t("event.cancelled") : watching ? t("event.staffView") : locked ? t("event.locked") : t("event.signupClosed")}
               </p>
             </div>
           ) : (

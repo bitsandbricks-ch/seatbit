@@ -27,7 +27,7 @@ import { notify as notifyMember, notifyLanChanged, notifyLater, notifySeatChange
 import { appUrl } from "@/lib/mail";
 import { planSeats } from "@/lib/seating";
 import { eventMailVars, renderTemplate } from "@/lib/mail-templates";
-import { assertPlatform, canViewLan, requireClanPermission, requireLanManager, requireUser } from "@/lib/session";
+import { assertPlatform, canTakePart, canViewLan, requireClanPermission, requireLanManager, requireUser } from "@/lib/session";
 import { platformCan } from "@/lib/platform-roles";
 import { isClanMember } from "@/lib/clans";
 import { lanAccountScope, saveLanAccount } from "@/lib/lan-accounts";
@@ -56,7 +56,7 @@ const lanPath = (id: string) => {
 export async function setMyAttendance(lanId: string, status: AttendanceStatus) {
   const me = await requireUser();
   const l = mustGetLan(lanId);
-  if (!canViewLan(me, lanId)) throw await err("errors.joinFirst");
+  if (!canTakePart(me, lanId)) throw await err("errors.joinFirst");
   if (!ATTENDANCE_STATUSES.includes(status) || status === "waitlist") throw new Error("Bad status");
   if (signupClosed(l)) throw await err("errors.signupClosed");
   const mine = db.select().from(attendance).where(and(eq(attendance.lanId, lanId), eq(attendance.userId, me.id))).get();
@@ -68,10 +68,15 @@ export async function setMyAttendance(lanId: string, status: AttendanceStatus) {
 /** Sets the user's one nick for a scope (default, LAN type or single event). Empty removes it. */
 export async function setNick(formData: FormData) {
   const me = await requireUser();
-  saveNick(me.id, String(formData.get("nick") ?? ""), {
-    lanId: (formData.get("lanId") as string | null) ?? null,
-    typeId: (formData.get("typeId") as string | null) ?? null,
-  });
+  const lanId = (formData.get("lanId") as string | null) || null;
+  const typeId = (formData.get("typeId") as string | null) || null;
+  // Same scopes as setMyLanId: only events and LAN types the user can see.
+  if (lanId && !canViewLan(me, lanId)) throw new Error("Not found");
+  if (typeId) {
+    const t = db.select().from(lanType).where(eq(lanType.id, typeId)).get();
+    if (!t || (t.clanId && !isClanMember(me.id, t.clanId) && !platformCan(me, "view"))) throw new Error("Not found");
+  }
+  saveNick(me.id, String(formData.get("nick") ?? ""), { lanId, typeId });
   revalidatePath("/", "layout");
 }
 
@@ -560,6 +565,7 @@ export async function postDiscordReminder(lanId: string, kind: "signup" | "payme
 
 export async function setMyTicketBought(lanId: string, bought: boolean) {
   const me = await requireUser();
+  if (!canTakePart(me, lanId)) throw await err("errors.joinFirst");
   saveTicketBought(lanId, me.id, bought, await getT());
   refreshLanMessagesSoon(lanId);
   lanPath(lanId);
@@ -733,6 +739,7 @@ async function pickMySeatOrThrow(lanId: string, seatId: string | null) {
   const me = await requireUser();
   const t = await getT();
   const l = mustGetLan(lanId);
+  if (!canTakePart(me, lanId)) throw new Error(t("errors.joinFirst"));
   if (!l.seatPicking || l.seatsPublishedAt) throw new Error(t(l.seatsPublishedAt ? "errors.planFinalMove" : "errors.pickClosed"));
   const a = db.select().from(attendance).where(and(eq(attendance.lanId, lanId), eq(attendance.userId, me.id))).get();
   if (a?.status !== "going") throw new Error(t("errors.comingFirst"));
@@ -832,6 +839,7 @@ export async function adminAutoAssignSeats(lanId: string, mode: "fill" | "replan
 export async function setMySeatWishes(lanId: string, input: z.input<typeof wishInput>) {
   const me = await requireUser();
   const l = mustGetLan(lanId);
+  if (!canTakePart(me, lanId)) throw await err("errors.joinFirst");
   if (l.seatsPublishedAt) throw await err("errors.planFinalAsk");
   saveSeatWishes(lanId, me.id, input, await getT());
   lanPath(lanId);

@@ -1,11 +1,12 @@
 # Tests
 
-Seatbit has two kinds of automated tests. CI runs both on every pull request.
+Seatbit has three kinds of automated tests. CI runs all of them on every pull request.
 
 | Command | What | Where |
 | --- | --- | --- |
 | `npm test` | Unit tests for pure helpers (money, dates, names, seat planning). Fast, no server. | `src/**/*.test.ts` |
 | `npm run test:e2e` | End-to-end tests: a real browser against a production build on fresh demo data. | `e2e/` |
+| `npm run test:authz` | [Permission tests](permission-tests.md): every server action and download, tried as every kind of person. No server. | `tests/authz/` |
 
 ## Unit tests
 

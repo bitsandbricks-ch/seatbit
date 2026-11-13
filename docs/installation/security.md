@@ -7,7 +7,7 @@ What Seatbit does to protect its users, and what you as the operator of an insta
 | Area | What Seatbit does |
 | --- | --- |
 | **Sign-in** | Discord OAuth through Better Auth. Session cookies are `HttpOnly`, `SameSite=Lax` and `Secure` when `BETTER_AUTH_URL` is `https://`. Sign-in and sign-up are rate limited per visitor. |
-| **Permissions** | Every server action and download checks the signed-in account itself: platform roles (owner, admin, moderator, support), clan roles (admin, event manager, recruiter) and event leads. Suspended and deleted accounts count as signed out, on the website and in Discord. |
+| **Permissions** | Every server action and download checks the signed-in account itself: platform roles (owner, admin, moderator, support; moderators and support see every clan's events read-only), clan roles (admin, event manager, recruiter) and event leads. Suspended and deleted accounts count as signed out, on the website and in Discord. |
 | **Cross-site requests** | Next.js server actions only accept requests from the same origin; Better Auth checks the origin of its own endpoints. |
 | **Browser headers** | A Content Security Policy with a fresh nonce per page (only Seatbit's own scripts run), `frame-ancestors 'none'` and `X-Frame-Options: DENY` (no embedding), `X-Content-Type-Options: nosniff`, a strict referrer policy, `Cross-Origin-Opener-Policy`, a restrictive `Permissions-Policy` and HSTS. |
 | **User content** | React escapes everything people type; mails escape it too. Links people enter (event website, ticket shop, games, food menus, profile link patterns) must be `http(s)`. Mentions in Discord posts are switched off, so no one can ping `@everyone` through Seatbit. |
@@ -18,7 +18,8 @@ What Seatbit does to protect its users, and what you as the operator of an insta
 | **Spam guards** | Reports, new clans, test DMs and everything a lead sends by hand (news, reminders, nudges, guest invites, payment reminders) are rate limited per account. |
 | **Secrets** | Secrets saved in the admin settings (SMTP password, bot token, Stripe keys, ...) are encrypted (AES-256-GCM) and never sent to the browser. The audit log records which settings changed, not their values. |
 | **Privacy** | Clan leads only see and add people who already share a clan with them; everyone else joins by invite link, request, or an email invite. "Download my data" exports everything about a person; deleting an account removes personal data and keeps only anonymous counts. |
-| **Container** | The image runs as an unprivileged user (uid 1001) and works with a read-only root filesystem. Only the runtime dependencies end up in it. |
+| **Container** | The image runs as an unprivileged user (uid 1001) and works with a read-only root filesystem. Only the runtime dependencies end up in it (not even npm). Each build is scanned for known vulnerabilities (Trivy), and Dependabot keeps dependencies and the base image current. |
+| **Tests** | An automated test tries every action as signed out, suspended, another clan's admin, pending, member, lead, each clan role and platform staff, on every change (see [Permission tests](../development/permission-tests.md)). |
 
 ## Your checklist
 

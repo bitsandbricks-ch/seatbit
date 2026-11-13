@@ -359,7 +359,8 @@ async function main() {
     LEGAL_GOVERNING_LAW: "Swiss law",
     // Supporter payments on, with fake Stripe values. Prices can't be fetched, so buttons show their fallback labels.
     BILLING_ENABLED: "true",
-    STRIPE_SECRET_KEY: "sk_test_screenshots_only",
+    // Not shaped like a real key, so secret scanners (Trivy in the Security workflow) stay quiet.
+    STRIPE_SECRET_KEY: "screenshots-only-not-a-key",
     STRIPE_WEBHOOK_SECRET: "whsec_screenshots_only",
     STRIPE_PRICE_ANNUAL: "price_screenshotsAnnual",
     STRIPE_PRICE_MONTHLY: "price_screenshotsMonthly",

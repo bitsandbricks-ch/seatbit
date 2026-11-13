@@ -9,9 +9,12 @@ All checks run on GitHub Actions. Every pull request must pass them before it is
 | **CI** (`ci.yml`) | Pull requests, merge queue, pushes to `main` | Existing screenshots unchanged, lint, `drizzle-kit check` (colliding migrations), untranslated text, typecheck, unit tests, build, render every page on demo data (smoke test), then the [end-to-end tests](testing.md). The screenshots and, on failure, the Playwright report are attached to the run. |
 | **Docs** (`docs.yml`) | Pull requests, merge queue; `main` publishes | `mkdocs build --strict` (broken links and missing images fail), deploy to GitHub Pages. |
 | **Container image** (`image.yml`) | Pull requests and the merge queue build; `main` and `v*` tags push | Native amd64 and arm64 builds, merged into one multi-arch image on GHCR. |
+| **Security** (`security.yml`) | Pull requests, merge queue, `main`, and weekly on Monday | [Permission tests](permission-tests.md); Trivy scans of the dependencies, the Dockerfile and committed secrets, and of the built container image. Fixable high and critical findings fail the job; on `main` and the weekly run the findings also go to the repository's code scanning (if it is turned on). |
 | **Screenshots** (`screenshots.yml`) | Pushes to `main` that touch the UI | Regenerate `docs/screenshots/` and open or update an *Update screenshots* pull request. See [Screenshots](screenshots.md). |
 
-Dependabot opens weekly npm updates (minor and patch grouped) and monthly GitHub Actions and pip updates.
+Dependabot opens grouped pull requests: weekly npm updates (minor and patch together, security fixes together as soon as they are out), weekly updates of the Node.js base image in the `Dockerfile` (within the same major version), and monthly GitHub Actions and docs (pip) updates.
+
+When the Security workflow fails on `main` without a change of yours, a new vulnerability was published: merge the Dependabot pull request that fixes it, or bump the dependency yourself.
 
 ## Merging
 

@@ -34,6 +34,7 @@ export const event: Messages["event"] = {
   cancelled: "Das Event ist abgesagt.",
   locked: "Du hast ein Ticket, darum ist deine Antwort gesperrt. Frag einen Lead, wenn sich deine Pläne ändern.",
   signupClosed: "Die Anmeldung ist geschlossen.",
+  staffView: "Du siehst diesen Event als Plattform-Team. Antworten können nur Mitglieder des Clans.",
   waitlistPlace: "Die Gruppe ist voll. Du bist {place} auf der Warteliste.",
   waitlistAuto: "Wird ein Platz frei, rückt die erste Person automatisch nach und bekommt eine E-Mail und eine Discord-DM.",
   waitlistManual: "Wird ein Platz frei, wählen die Leads, wer nachrückt, und du bekommst eine E-Mail und eine Discord-DM.",

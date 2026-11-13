@@ -9,7 +9,7 @@ import { db, schema } from "@/db";
 import { TRAVEL_KINDS } from "@/db/schema";
 import { getLan } from "@/lib/lans";
 import { PACKING_ITEMS } from "@/lib/gear";
-import { canViewLan, isLanManager, requireUser } from "@/lib/session";
+import { canTakePart, isLanManager, requireUser } from "@/lib/session";
 
 const { attendance, travelPost, travelSpot, gearPacked, packingItem } = schema;
 
@@ -18,7 +18,7 @@ const refresh = (lanId: string) => revalidatePath(`/lans/${lanId}`);
 /** Signed-in clan member who answered coming, unsure or waitlist for this LAN. */
 async function requireAttendee(lanId: string) {
   const me = await requireUser();
-  if (!getLan(lanId) || !canViewLan(me, lanId)) throw new Error("LAN not found");
+  if (!getLan(lanId) || !canTakePart(me, lanId)) throw new Error("LAN not found");
   const a = db
     .select({ status: attendance.status })
     .from(attendance)
@@ -132,7 +132,7 @@ export async function takeAlong(requestId: string, offerId: string) {
 /** Tick or untick an item on the member's own packing list. */
 export async function setPacked(lanId: string, item: string, packed: boolean) {
   const me = await requireUser();
-  if (!canViewLan(me, lanId)) throw new Error("LAN not found");
+  if (!canTakePart(me, lanId)) throw new Error("LAN not found");
   if (!PACKING_ITEMS.some((p) => p.id === item)) throw new Error("Unknown item");
   if (packed) db.insert(gearPacked).values({ lanId, userId: me.id, item }).onConflictDoNothing().run();
   else
@@ -147,7 +147,7 @@ const itemLabel = z.string().trim().min(1, "Enter an item").max(40);
 /** Add an item of your own to your packing list. */
 export async function addPackingItem(lanId: string, label: string) {
   const me = await requireUser();
-  if (!canViewLan(me, lanId)) throw new Error("LAN not found");
+  if (!canTakePart(me, lanId)) throw new Error("LAN not found");
   db.insert(packingItem).values({ lanId, userId: me.id, label: itemLabel.parse(label) }).run();
   refresh(lanId);
 }

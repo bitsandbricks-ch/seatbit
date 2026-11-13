@@ -12,7 +12,7 @@ import { appUrl } from "@/lib/mail";
 import { notify, notifyLater, notifySeatChanged, sendDiscordDm } from "@/lib/notify";
 import { NUDGE_STEPS, nudge, type NudgeResult, type NudgeStep } from "@/lib/missing";
 import { clearSeatBooked, setSeatBooked } from "@/lib/seat-booking";
-import { canViewLan, isLanManager, requireLanManager, requireUser } from "@/lib/session";
+import { canTakePart, isLanManager, requireLanManager, requireUser } from "@/lib/session";
 import { auditLan } from "@/lib/audit";
 import { optionalHttpUrl } from "@/lib/safe-url";
 import { enforceLimit } from "@/lib/rate-limit";
@@ -61,7 +61,7 @@ function seatOf(lanId: string, userId: string) {
 export async function requestSeatSwap(lanId: string, toUserId: string, note = "") {
   const me = await requireUser();
   const l = mustGetLan(lanId);
-  if (!canViewLan(me, lanId)) throw new Error("Not found");
+  if (!canTakePart(me, lanId)) throw new Error("Not found");
   if (!l.seatsPublishedAt) throw await err("errors.swapsLater");
   if (toUserId === me.id) throw await err("errors.pickElse");
   const mine = seatOf(lanId, me.id);
@@ -200,15 +200,15 @@ const gameInput = z.object({
   url: optionalHttpUrl().default(""),
 });
 
-async function requireLanViewer(lanId: string) {
+async function requireParticipant(lanId: string) {
   const me = await requireUser();
-  if (!canViewLan(me, lanId)) throw await err("errors.joinFirst");
+  if (!canTakePart(me, lanId)) throw await err("errors.joinFirst");
   return me;
 }
 
 /** Suggests a game; the one who adds it votes for it. */
 export async function addGame(lanId: string, formData: FormData): Promise<{ error?: string }> {
-  const me = await requireLanViewer(lanId);
+  const me = await requireParticipant(lanId);
   mustGetLan(lanId);
   const parsed = gameInput.safeParse({
     name: formData.get("name") ?? "",
@@ -244,7 +244,7 @@ export async function deleteGame(gameId: string) {
 export async function setGameMark(gameId: string, field: "vote" | "installed", value: boolean) {
   const g = db.select().from(game).where(eq(game.id, gameId)).get();
   if (!g) throw new Error("Not found");
-  const me = await requireLanViewer(g.lanId);
+  const me = await requireParticipant(g.lanId);
   db.insert(gameVote)
     .values({ gameId, userId: me.id, [field]: value })
     .onConflictDoUpdate({ target: [gameVote.gameId, gameVote.userId], set: { [field]: value } })

@@ -25,10 +25,11 @@ Seatbit is a small open-source project. Bug reports, ideas, docs fixes and code 
     npm test                # unit tests
     npm run build
     npm run test:e2e        # end-to-end tests, after the build
+    npm run test:authz      # when you added or changed a server action (permission tests)
     mkdocs build --strict   # when you touched docs/ or mkdocs.yml
     ```
 4. **Open a draft pull request.** Fill in the template: what and why, linked issue, screenshots for UI changes (phone and desktop), the checklist.
-5. **Wait for CI.** `CI`, `Docs` and `Container image` must be green. Fix failures; never skip or weaken a check. See [CI](../development/ci.md).
+5. **Wait for CI.** `CI`, `Docs`, `Container image` and `Security` must be green. Fix failures; never skip or weaken a check. See [CI](../development/ci.md).
 6. **Mark it ready for review** when the work is done, the checklist is ticked and checks are green.
 7. **Keep it current.** Update the description when you push more commits (e.g. new env vars). Merge `main` into your branch when it conflicts; don't force-push a branch others work on.
 8. **Merge** is the maintainer's call.
