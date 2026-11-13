@@ -31,9 +31,9 @@ WhatsApp texts on *Manage › Discord & WhatsApp* follow your own language, sinc
 
 ## What is translated
 
-Everything members, leads and clan admins see: the event pages, *Manage*, clan pages and settings, stats, member profiles, the audit log, mails, Discord, WhatsApp texts and error messages.
+Everything: the event pages, *Manage*, clan pages and settings, stats, member profiles, the audit log, the platform admin and its settings, mails, Discord, WhatsApp texts, error messages, and the built-in Terms of Service and Privacy Policy.
 
-Still in English: *Admin › Platform settings* (the setup for whoever runs the instance) and the built-in Terms of Service and Privacy Policy.
+What people type stays as they wrote it: event names, descriptions, news, notes and the values operators enter in the settings (for example *Governing law*). The data export (*Download my data*) stays in English.
 
 <div class="phones" markdown>
 <figure markdown>

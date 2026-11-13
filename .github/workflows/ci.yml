@@ -26,6 +26,8 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - name: Lint
         run: npm run lint
+      - name: Untranslated text
+        run: npm run check:i18n
       - name: Typecheck
         run: npm run typecheck
       - name: Build

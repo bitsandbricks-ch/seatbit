@@ -18,6 +18,7 @@ Seatbit is a small open-source project. Bug reports, ideas, docs fixes and code 
 3. **Check locally.** These must pass before you push:
     ```sh
     npm run lint
+    npm run check:i18n      # UI text that skips t()
     npm run typecheck
     npm run build
     mkdocs build --strict   # when you touched docs/ or mkdocs.yml

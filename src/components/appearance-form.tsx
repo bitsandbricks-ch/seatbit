@@ -124,13 +124,13 @@ export function AppearanceForm({
         <legend className={label}>{t("profile.appearance.colour")}</legend>
         <div className="flex flex-wrap gap-2">
           {colors.map((c) => (
-            <label key={c.id} title={c.label} className="cursor-pointer">
+            <label key={c.id} title={t(`colors.${c.label.toLowerCase() as "coral"}`)} className="cursor-pointer">
               <input type="radio" name="color" value={c.id} checked={color === c.id} onChange={() => setColor(c.id)} className="peer sr-only" />
               <span
                 className="block h-9 w-9 rounded-full ring-offset-2 ring-offset-surface transition peer-checked:ring-2 peer-checked:ring-fg peer-focus-visible:ring-2 peer-focus-visible:ring-bit"
                 style={{ background: c.id }}
               />
-              <span className="sr-only">{c.label}</span>
+              <span className="sr-only">{t(`colors.${c.label.toLowerCase() as "coral"}`)}</span>
             </label>
           ))}
         </div>

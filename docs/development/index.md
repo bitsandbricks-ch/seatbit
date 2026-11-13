@@ -45,6 +45,7 @@ Without `SMTP_HOST`, emails are printed to the server log.
 | `npm run dev` | Dev server with hot reload. |
 | `npm run build`, `npm start` | Production build and server. |
 | `npm run lint` | ESLint. |
+| `npm run check:i18n` | Flags UI text (JSX text, labels, `confirm()`) that doesn't go through `t()`. |
 | `npm run typecheck` | Next.js route types + TypeScript. |
 | `npm run seed` | Demo data. |
 | `npm run screenshots` | Render every page on demo data. See [Screenshots](screenshots.md). |
@@ -53,4 +54,4 @@ Without `SMTP_HOST`, emails are printed to the server log.
 | `npm run discord:register` | Register the slash commands (also a button in the admin UI). |
 | `mkdocs serve` | Docs preview at <http://localhost:8000> (`pip install -r docs/requirements.txt`). |
 
-Before you push, `npm run lint`, `npm run typecheck` and `npm run build` must pass, plus `mkdocs build --strict` when you touched the docs.
+Before you push, `npm run lint`, `npm run check:i18n`, `npm run typecheck` and `npm run build` must pass, plus `mkdocs build --strict` when you touched the docs.

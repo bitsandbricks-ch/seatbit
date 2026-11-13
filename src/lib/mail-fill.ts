@@ -224,6 +224,9 @@ export function buildMail(
   return { subject, html, text, dm };
 }
 
+/** A facts-box label in the given language. */
+export const factLabel = (l: string, loc: Locale) => (loc === "en" ? l : (FACT_LABELS[loc]?.[l] ?? l));
+
 const FACT_LABELS: Partial<Record<Locale, Record<string, string>>> = {
   de: {
     Event: "Event",

@@ -4,23 +4,27 @@ import { useActionState, type ReactNode } from "react";
 import type { ActionResult } from "@/app/admin/settings/actions";
 import type { SettingView } from "@/lib/settings";
 import { btnPrimary, btnSecondary, input, label } from "./ui";
+import { useT } from "@/i18n/client";
+import { fmtDate } from "@/lib/format";
 
 type Action = (prev: ActionResult, form: FormData) => Promise<ActionResult>;
 
 function SourceBadge({ s }: { s: SettingView }) {
+  const t = useT();
   if (s.undecryptable)
-    return <span className="rounded bg-danger/15 px-1.5 py-0.5 text-[11px] text-danger">can&apos;t decrypt, re-enter</span>;
+    return <span className="rounded bg-danger/15 px-1.5 py-0.5 text-[11px] text-danger">{t("settingsUi.cantDecrypt")}</span>;
   const map = {
-    database: ["Saved here", "bg-bit-soft text-bit"],
-    env: [`From ${s.env}`, "bg-seat-taken/15 text-seat-taken"],
-    default: ["Default", "bg-raised text-muted"],
-    unset: ["Not set", "bg-raised text-faint"],
+    database: [t("settingsUi.saved"), "bg-bit-soft text-bit"],
+    env: [t("settingsUi.fromEnv", { env: s.env }), "bg-seat-taken/15 text-seat-taken"],
+    default: [t("settingsUi.default"), "bg-raised text-muted"],
+    unset: [t("adminSettings.notSet"), "bg-raised text-faint"],
   } as const;
   const [text, cls] = map[s.source];
   return <span className={`rounded px-1.5 py-0.5 text-[11px] ${cls}`}>{text}</span>;
 }
 
 function SettingField({ s }: { s: SettingView }) {
+  const t = useT();
   const fb = s.fallback;
   let control: ReactNode;
   if (s.kind === "secret") {
@@ -32,26 +36,27 @@ function SettingField({ s }: { s: SettingView }) {
           type="password"
           autoComplete="new-password"
           className={input}
-          placeholder={s.secretSet ? `•••••••• ${s.secretHint ?? ""} (leave empty to keep)` : "Not set"}
+          placeholder={s.secretSet ? `•••••••• ${s.secretHint ?? ""} (${t("settingsUi.keep")})` : t("adminSettings.notSet")}
         />
         {s.source === "database" && (
           <label className="mt-1 flex items-center gap-2 text-xs text-muted">
             <input type="checkbox" name={`clear:${s.key}`} className="accent-red-500" />
-            Remove saved value{s.env ? ` (fall back to ${s.env})` : ""}
+            {t("settingsUi.remove")}
+            {s.env ? ` (${t("settingsUi.fallBack", { env: s.env })})` : ""}
           </label>
         )}
       </>
     );
   } else if (s.kind === "bool" || s.kind === "select") {
     const opts = s.kind === "bool" ? [
-      { value: "true", label: "On" },
-      { value: "false", label: "Off" },
+      { value: "true", label: t("settingsUi.on") },
+      { value: "false", label: t("settingsUi.off") },
     ] : (s.options ?? []);
-    const fbLabel = opts.find((o) => o.value === fb)?.label ?? (s.kind === "bool" ? (fb === "true" ? "On" : "Off") : "none");
+    const fbLabel = opts.find((o) => o.value === fb)?.label ?? (s.kind === "bool" ? t(fb === "true" ? "settingsUi.on" : "settingsUi.off") : t("settingsUi.none"));
     control = (
       <select name={s.key} id={s.key} defaultValue={s.saved ?? ""} className={input}>
         <option value="">
-          {s.env ? `Use ${s.env} / default` : "Use default"} ({fbLabel})
+          {s.env ? t("settingsUi.useEnv", { env: s.env }) : t("settingsUi.useDefault")} ({fbLabel})
         </option>
         {opts.map((o) => (
           <option key={o.value} value={o.value}>
@@ -86,8 +91,10 @@ function SettingField({ s }: { s: SettingView }) {
       {s.help && <p className="mt-1 text-xs text-muted">{s.help}</p>}
       {s.updatedAt && (
         <p className="mt-1 text-[11px] text-faint">
-          Changed {new Date(s.updatedAt).toLocaleString("de-CH")}
-          {s.updatedBy ? ` by ${s.updatedBy}` : ""}
+          {t(s.updatedBy ? "settingsUi.changedBy" : "settingsUi.changed", {
+            date: fmtDate(new Date(s.updatedAt), t.locale),
+            by: s.updatedBy,
+          })}
         </p>
       )}
     </div>
@@ -105,6 +112,7 @@ export function Result({ state }: { state: ActionResult }) {
 
 /** One section of the platform settings, saved on its own. */
 export function SettingsSection({ fields, action }: { fields: SettingView[]; action: Action }) {
+  const t = useT();
   const [state, formAction, pending] = useActionState(action, undefined);
   return (
     // Re-mount after each save so inputs pick up the new saved values.
@@ -116,7 +124,7 @@ export function SettingsSection({ fields, action }: { fields: SettingView[]; act
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <button disabled={pending} className={btnPrimary}>
-          {pending ? "Saving…" : "Save"}
+          {pending ? t("common.saving") : t("common.save")}
         </button>
         <Result state={state} />
       </div>
@@ -126,11 +134,12 @@ export function SettingsSection({ fields, action }: { fields: SettingView[]; act
 
 /** A button that runs a server action (test mail, bot check) and shows its result. */
 export function ActionButton({ action, children }: { action: (prev: ActionResult) => Promise<ActionResult>; children: ReactNode }) {
+  const t = useT();
   const [state, formAction, pending] = useActionState(action, undefined);
   return (
     <form action={formAction} className="flex flex-wrap items-center gap-3">
       <button disabled={pending} className={btnSecondary}>
-        {pending ? "Working…" : children}
+        {pending ? t("settingsUi.working") : children}
       </button>
       <Result state={state} />
     </form>

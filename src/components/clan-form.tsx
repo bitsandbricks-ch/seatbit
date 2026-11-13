@@ -48,6 +48,7 @@ export function ClanForm({
           {NAME_DISPLAYS.map((d) => (
             <option key={d} value={d}>
               {t(`clanForm.nameDisplay.${d}`)}
+              {/* i18n-ignore: example names */}
               {d === "full" ? ' (Mike "Reyki" Keller)' : d === "nameNick" ? ' (Mike "Reyki")' : " (Reyki)"}
             </option>
           ))}

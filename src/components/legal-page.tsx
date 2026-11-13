@@ -1,17 +1,17 @@
 import type { ReactNode } from "react";
 import { LEGAL_LAST_UPDATED, getLegal } from "@/lib/legal";
 import { Notice, Page, PageHeader } from "./ui";
+import { getT } from "@/i18n/server";
+import { fmtDay } from "@/lib/format";
 
 /** Long-form text page for the Terms of Service and the Privacy Policy. Title like every page, text at a readable width. */
-export function LegalPage({ title, children }: { title: string; children: ReactNode }) {
+export async function LegalPage({ title, children }: { title: string; children: ReactNode }) {
+  const t = await getT();
   return (
     <Page>
-      <PageHeader title={title} subtitle={`Last updated: ${LEGAL_LAST_UPDATED}`} />
+      <PageHeader title={title} subtitle={t("legal.updated", { date: fmtDay(LEGAL_LAST_UPDATED) })} />
       {!getLegal().complete && (
-        <Notice tone="warn">
-          The operator of this Seatbit instance hasn&apos;t filled in their name and contact details yet. Admins can add
-          them under Admin → Platform settings → Operator &amp; legal.
-        </Notice>
+        <Notice tone="warn">{t("legal.incomplete")}</Notice>
       )}
     <article
       className="max-w-3xl space-y-4 text-sm leading-relaxed text-fg/90
@@ -28,14 +28,15 @@ export function LegalPage({ title, children }: { title: string; children: ReactN
 }
 
 /** The operator's name, address and email, as far as they are set. */
-export function Operator() {
+export async function Operator() {
+  const t = await getT();
   const legal = getLegal();
   if (!legal.operatorName && !legal.contactEmail && !legal.operatorAddress) {
-    return <p className="text-muted">The operator of this Seatbit instance (details not provided yet).</p>;
+    return <p className="text-muted">{t("legal.operatorUnknown")}</p>;
   }
   return (
     <p>
-      {legal.operatorName ?? "The operator of this Seatbit instance"}
+      {legal.operatorName ?? t("legal.operator")}
       {legal.operatorAddress && (
         <>
           <br />
@@ -53,11 +54,12 @@ export function Operator() {
 }
 
 /** The contact email as a link, or a hint where to reach the operator when none is set. */
-export function ContactEmail() {
+export async function ContactEmail() {
+  const t = await getT();
   const { contactEmail } = getLegal();
   return contactEmail ? (
     <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
   ) : (
-    <span>the operator of this instance (no contact email set yet)</span>
+    <span>{t("legal.noEmail")}</span>
   );
 }
