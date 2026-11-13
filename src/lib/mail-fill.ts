@@ -82,13 +82,25 @@ function factsBox(rows: FactRow[]) {
 </table>`;
 }
 
-function buttonHtml(url: string, label: string, t: T) {
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin: 8px 0 24px;">
+function buttonHtml(url: string, label: string, t: T, links: { label: string; url: string }[] = []) {
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin: 8px 0 ${links.length ? 12 : 24}px;">
   <tr><td class="sb-button" align="center" bgcolor="${C.bit}" style="border-radius: 10px; background: ${C.bit};">
     <a href="${esc(url)}" target="_blank" style="display: inline-block; padding: 13px 24px; font-family: ${FONT}; font-size: 15px; font-weight: 700; line-height: 20px; color: ${C.onBit}; text-decoration: none; border-radius: 10px;">${esc(label)}</a>
   </td></tr>
 </table>
+${linksHtml(links)}
 ${para(`${esc(t("mail.buttonFallback"))}<br /><a href="${esc(url)}" target="_blank" style="color: ${C.link}; word-break: break-all;">${esc(url)}</a>`, true)}`;
+}
+
+/** Secondary links as small outlined buttons in one row (no raw URL shown: the text part has it). */
+function linksHtml(links: { label: string; url: string }[]) {
+  if (!links.length) return "";
+  const cells = links
+    .map(
+      (l) => `<td style="padding: 0 8px 8px 0;"><a href="${esc(l.url)}" target="_blank" style="display: inline-block; padding: 9px 16px; font-family: ${FONT}; font-size: 14px; font-weight: 600; line-height: 18px; color: ${C.link}; text-decoration: none; border: 1px solid ${C.line}; border-radius: 10px;">${esc(l.label)}</a></td>`,
+    )
+    .join("");
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 16px;"><tr>${cells}</tr></table>`;
 }
 
 export interface MailContent {
@@ -97,6 +109,8 @@ export interface MailContent {
   body: string;
   facts: FactRow[];
   button?: { label: string; url: string };
+  /** More links next to the button (e.g. "All changes"), shown as small buttons. */
+  links?: { label: string; url: string }[];
   note?: string;
   /** Name in the header: the clan, or Seatbit. */
   header: string;
@@ -153,7 +167,7 @@ export function renderMail(m: MailContent): { html: string; text: string; dm: st
           <h1 class="sb-title" style="margin: 0 0 18px; font-family: ${FONT}; font-size: 22px; font-weight: 700; line-height: 28px; letter-spacing: -0.3px; color: ${C.fg};">${esc(m.greeting)}</h1>
           ${paragraphs.map((p) => para(linkify(p).replace(/\n/g, "<br />"))).join("\n")}
           ${factsBox(m.facts)}
-          ${m.button ? buttonHtml(m.button.url, m.button.label, t) : ""}
+          ${m.button ? buttonHtml(m.button.url, m.button.label, t, m.links) : linksHtml(m.links ?? [])}
           ${m.note ? para(linkify(m.note).replace(/\n/g, "<br />"), true) : ""}
         </td></tr>
         <tr><td class="sb-foot" align="center" style="padding: 22px 16px 0; font-family: ${FONT}; font-size: 12px; line-height: 18px; color: ${C.muted};">
@@ -174,6 +188,7 @@ export function renderMail(m: MailContent): { html: string; text: string; dm: st
     m.body,
     m.facts.map(([l, v]) => `${l}: ${v}`).join("\n"),
     m.button ? `${m.button.label}: ${m.button.url}` : "",
+    (m.links ?? []).map((l) => `${l.label}: ${l.url}`).join("\n"),
     m.note ?? "",
     `--\n${t("mail.textFooter", { settings: m.settingsUrl, privacy: m.privacyUrl, terms: m.termsUrl })}`,
   ]
@@ -185,6 +200,7 @@ export function renderMail(m: MailContent): { html: string; text: string; dm: st
     m.body,
     m.facts.map(([l, v]) => `**${l}:** ${v}`).join("\n"),
     m.button ? `[${m.button.label.replace(/[[\]]/g, "")}](${m.button.url})` : "",
+    (m.links ?? []).map((l) => `[${l.label.replace(/[[\]]/g, "")}](${l.url})`).join(" · "),
     m.note ? `-# ${m.note.replace(/\n+/g, " ")}` : "",
   ]
     .filter((s) => s.trim())

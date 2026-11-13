@@ -3,7 +3,6 @@ export const ops = {
   newClan: "New clan: {name}",
   createdBy: "Created by",
   previous: "Previous version",
-  seeChanges: "See what changed.",
   donation: "Donation: {amount}",
   refund: "Donation refunded: {amount}",
   from: "From",

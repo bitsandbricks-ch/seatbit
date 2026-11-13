@@ -1,0 +1,13 @@
+date: 2026-11-13
+type: improved
+audience: admins
+en:
+  title: Upgrade notice with buttons
+  text: >-
+    The upgrade mail and Discord message list what's new and link to it with buttons instead of
+    long links.
+de:
+  title: Update-Hinweis mit Knöpfen
+  text: >-
+    Die Update-Mail und die Discord-Nachricht zeigen, was neu ist, und verlinken es mit Knöpfen
+    statt langen Links.

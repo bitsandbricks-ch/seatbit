@@ -41,8 +41,12 @@ export type Notice = {
   subject: string;
   /** Plain-text body (the email). The DM uses it without the "Hi name," greeting. */
   text: string;
-  /** Link for the DM button, e.g. the LAN page. */
+  /** Link for the button (mail and DM), e.g. the LAN page. */
   url?: string;
+  /** Label of that button; default "Open in Seatbit". */
+  urlLabel?: string;
+  /** More links as buttons (mail and DM) instead of raw URLs in the text, e.g. "All changes". */
+  links?: { label: string; url: string }[];
   /** HTML version of the mail (from renderTemplate). */
   html?: string;
   /** Discord-markdown DM text (from renderTemplate). Without it the DM is made from `text`. */
@@ -134,19 +138,20 @@ export async function dmDiscordUser(discordId: string, n: Notice): Promise<DmRes
         {
           title: clip(n.subject, 256),
           url: n.url,
-          description: clip(n.dm ?? dmBody(n.text, n.url, t("notice.openInSeatbit")), 4000),
+          description: clip(n.dm ?? dmBody(n.text, n.url, n.urlLabel ?? t("notice.openInSeatbit")), 4000),
           color: 0x10b981,
           footer: { text: n.footer ?? t("notice.dmFooter") },
         },
       ],
       components:
-        n.url || n.buttons?.length
+        n.url || n.buttons?.length || n.links?.length
           ? [
               {
                 type: 1,
                 components: [
                   ...(n.buttons ?? []),
-                  ...(n.url ? [{ type: 2, style: 5, label: t("notice.openInSeatbit"), url: n.url }] : []),
+                  ...(n.url ? [{ type: 2, style: 5, label: clip(n.urlLabel ?? t("notice.openInSeatbit"), 80), url: n.url }] : []),
+                  ...(n.links ?? []).map((l) => ({ type: 2, style: 5, label: clip(l.label, 80), url: l.url })),
                 ].slice(0, 5),
               },
             ]
@@ -192,7 +197,10 @@ export async function notify(userOrId: User | string, nf: NoticeFor): Promise<No
       // Plain-text notices get the shared mail layout too.
       const m = n.html
         ? { subject: n.subject, text: n.text, html: n.html }
-        : renderNotice({ subject: n.subject, body: noticeBody(n.text, n.url), url: n.url, firstName: u.firstName || u.name }, n.locale ?? "en");
+        : renderNotice(
+            { subject: n.subject, body: noticeBody(n.text, n.url), url: n.url, urlLabel: n.urlLabel, links: n.links, firstName: u.firstName || u.name },
+            n.locale ?? "en",
+          );
       await deliverMail(u.email, m);
       email = true;
     } catch (e) {
