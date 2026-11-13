@@ -10,6 +10,7 @@ import { api, discordEnabled } from "./discord-api";
 import { getBoolSetting, getSetting } from "./settings";
 import { type ProblemKind, recordProblem } from "./jobs";
 import { changeLines } from "./changelog";
+import { clip } from "./format";
 import type { UpgradeEvent } from "./upgrade";
 import { makeT } from "../i18n/translate";
 import { instanceLocale } from "../i18n/user-locale";
@@ -46,8 +47,6 @@ export type OpsMessage = {
   url?: string;
   fields?: { name: string; value: string }[];
 };
-
-const clip = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
 
 function embed(m: OpsMessage, color: number) {
   return {

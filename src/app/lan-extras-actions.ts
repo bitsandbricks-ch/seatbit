@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db, schema } from "@/db";
 import type { Lan } from "@/db/schema";
-import { getDisplayNames, getLan } from "@/lib/lans";
+import { getDisplayNames, mustGetLan } from "@/lib/lans";
 import { appUrl } from "@/lib/mail";
 import { notify, notifyLater, notifySeatChanged, sendDiscordDm } from "@/lib/notify";
 import { NUDGE_STEPS, nudge, type NudgeResult, type NudgeStep } from "@/lib/missing";
@@ -18,12 +18,6 @@ import { optionalHttpUrl } from "@/lib/safe-url";
 import { enforceLimit } from "@/lib/rate-limit";
 
 const { seat, seatSwap, game, gameVote, lanOrga, clanMember, user } = schema;
-
-function mustGetLan(id: string) {
-  const l = getLan(id);
-  if (!l) throw new Error("LAN not found");
-  return l;
-}
 
 const lanPath = (id: string) => {
   revalidatePath(`/lans/${id}`);

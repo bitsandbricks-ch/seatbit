@@ -3,7 +3,6 @@ import { notFound, redirect } from "next/navigation";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { profileLink, profilePattern } from "@/lib/profile-link";
-import type { Attendance } from "@/db/schema";
 import { deleteLan } from "@/app/actions";
 import { AttendanceTable } from "@/components/attendance-table";
 import { LanForm } from "@/components/lan-form";
@@ -31,6 +30,7 @@ import { getLanAccounts } from "@/lib/lan-accounts";
 import { LeadBookingList } from "@/components/seat-booking";
 import { LeadChecklist } from "@/components/lead-checklist";
 import { buildLeadChecklist } from "@/lib/lead-checklist";
+import { hasWishes } from "@/lib/checklist";
 import { buildLeadTasks, contactsOf, lanTaskStates, tasksForLan } from "@/lib/lead-tasks";
 import { LeadTasks } from "@/components/lead-tasks";
 import { LeadTaskEditor } from "@/components/lead-task-editor";
@@ -44,9 +44,6 @@ import type { T } from "@/i18n/translate";
 import { httpHref } from "@/lib/safe-url";
 
 const { attendance, seat, user, reminderLog } = schema;
-
-const hasWishes = (a: Attendance) =>
-  (a.wishNear?.length ?? 0) > 0 || (a.wishAvoid?.length ?? 0) > 0 || a.wishPosition !== "any" || !!a.wishSeat || !!a.wishNote;
 
 // Same order as the event page (Overview, Seats, Attendees), then the lead-only tabs.
 const TABS = [

@@ -42,8 +42,3 @@ export function Avatar({ data, size = 28, ring = true }: { data: AvatarData | un
     </span>
   );
 }
-
-/** A small dot in the member's colour, for places too tight for an avatar. */
-export function ColorDot({ color, size = 8 }: { color: string; size?: number }) {
-  return <span aria-hidden className="inline-block shrink-0 rounded-full" style={{ width: size, height: size, background: color }} />;
-}

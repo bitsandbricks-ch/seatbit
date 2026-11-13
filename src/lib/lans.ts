@@ -260,6 +260,13 @@ export function getLan(id: string) {
   return db.select().from(lan).where(eq(lan.id, id)).get();
 }
 
+/** getLan for server actions: an unknown id is a bug or a stale page, not something to show nicely. */
+export function mustGetLan(id: string) {
+  const l = getLan(id);
+  if (!l) throw new Error("Event not found");
+  return l;
+}
+
 /** A seat as the seat map shows it: short nick for the cell, the name label for the details pane. */
 export function seatView<S extends { userId: string | null }>(
   s: S,

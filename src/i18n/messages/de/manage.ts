@@ -3,7 +3,6 @@ import type { Messages } from "../en";
 export const manage: Messages["manage"] = {
   tabs: { attendees: "Teilnehmende", missing: "Wer fehlt", chat: "Discord & WhatsApp", settings: "Einstellungen" },
   badge: {
-    toConfirm: "{count} zu bestätigen",
     swaps: { one: "{count} Tausch zu bestätigen", other: "{count} Tausche zu bestätigen" },
     unseated: "{count} ohne Platz",
   },

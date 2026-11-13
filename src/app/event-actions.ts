@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db, schema } from "@/db";
 import { INTEREST_ANSWERS, type InterestAnswer } from "@/db/schema";
-import { addClanAdminsAsOrgas, getDisplayNames, getLan } from "@/lib/lans";
+import { addClanAdminsAsOrgas, getDisplayNames, mustGetLan } from "@/lib/lans";
 import { cancelEvent, openSignup, publishEvent, sendNews, uncancelEvent } from "@/lib/event-notices";
 import { isClanMember } from "@/lib/clans";
 import { canViewLan, isLanManager, requireLanManager, requireUser } from "@/lib/session";
@@ -15,12 +15,6 @@ import { fmtDate } from "@/lib/format";
 import { overLimit } from "@/lib/rate-limit";
 
 const { lan, lanOrga, lanInterest, lanNews, clanMember, lanType, seat, attendance } = schema;
-
-function mustGetLan(id: string) {
-  const l = getLan(id);
-  if (!l) throw new Error("Event not found");
-  return l;
-}
 
 const lanPath = (id: string) => {
   revalidatePath(`/lans/${id}`);

@@ -402,24 +402,6 @@ export async function addGuestToLan(lanId: string, _: FormState, formData: FormD
   return { ok: true, message: addedMessage(invited) };
 }
 
-/** Sets (or changes) a guest's email and sends them the invite. */
-export async function setGuestEmail(clanId: string, userId: string, _: FormState, formData: FormData): Promise<FormState> {
-  const me = await requireClanPermission(clanId, "members");
-  requireGuestOf(clanId, userId);
-  const parsed = z.email().max(200).safeParse(String(formData.get("email") ?? "").trim());
-  if (!parsed.success) return { error: await tr("errors.badEmail") };
-  // Also when the address belongs to an account: the invite mail lets that person take the guest over
-  // themselves (or it happens at their next sign-in), instead of leads moving people around by email.
-  db.update(schema.user).set({ inviteEmail: normEmail(parsed.data) }).where(eq(schema.user.id, userId)).run();
-  audit({ actorId: me.id, action: "guest.email", clanId, targetUserId: userId });
-  const sent = await inviteGuest(userId, me).catch((e) => {
-    console.error("[mail] guest invite failed", e);
-    return false;
-  });
-  revalidatePath("/", "layout");
-  return sent ? { ok: true, message: await tr("errors.inviteSent") } : { error: await tr("errors.mailFailed") };
-}
-
 const guestEdit = z.object({
   firstName: guestName,
   lastName: guestName,

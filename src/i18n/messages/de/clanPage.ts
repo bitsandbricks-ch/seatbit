@@ -27,7 +27,6 @@ export const clanPage: Messages["clanPage"] = {
   guestMatchNick: "Die Leads haben {guest} als Gast eingetragen, mit dem gleichen Nick wie du. Bist du das?",
   check: "Prüfen",
   myClaim: "Du hast gefragt, ob du den Gast {guest} übernehmen darfst. Ein Admin bestätigt es.",
-  supporter: "{clan} unterstützt dieses Seatbit. Danke!",
   about: "Über uns",
   members: "Mitglieder",
   seeAll: "Alle {count} ansehen",

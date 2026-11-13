@@ -63,9 +63,3 @@ export const MANAGE_TAB_PERMS = {
   payments: "payments",
   log: "log",
 } as const satisfies Record<string, ClanPermission>;
-
-/** "an admin", "an event manager", "a recruiter": for sentences. */
-export function roleWithArticle(role: string) {
-  const l = roleLabel(role).toLowerCase();
-  return `${/^[aeiou]/.test(l) ? "an" : "a"} ${l}`;
-}

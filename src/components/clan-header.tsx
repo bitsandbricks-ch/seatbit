@@ -17,7 +17,6 @@ import { ViewManageSwitch } from "./view-manage-switch";
 
 export const CLAN_VIEW_TABS = ["overview", "events", "members", "payments", "stats"] as const;
 export const CLAN_MANAGE_TABS = ["general", "members", "guests", "types", "invites", "chat", "payments", "log"] as const;
-export type ClanViewTab = (typeof CLAN_VIEW_TABS)[number];
 export type ClanManageTab = (typeof CLAN_MANAGE_TABS)[number];
 
 

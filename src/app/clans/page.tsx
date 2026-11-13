@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { asc } from "drizzle-orm";
+import { asc, count as countRows, eq, ne } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { joinClan } from "@/app/clan-actions";
 import { ClanAvatar } from "@/components/clan-avatar";
@@ -15,9 +15,20 @@ export default async function ClansPage() {
   const me = await requireUser();
   const t = await getT();
   const clans = db.select().from(schema.clan).orderBy(asc(schema.clan.name)).all();
-  const memberships = db.select().from(schema.clanMember).all();
-  const mine = new Map(memberships.filter((m) => m.userId === me.id).map((m) => [m.clanId, m.role]));
-  const count = (id: string) => memberships.filter((m) => m.clanId === id && m.role !== "pending").length;
+  const { clanMember } = schema;
+  const mine = new Map(
+    db.select({ clanId: clanMember.clanId, role: clanMember.role }).from(clanMember).where(eq(clanMember.userId, me.id)).all().map((m) => [m.clanId, m.role]),
+  );
+  const sizes = new Map(
+    db
+      .select({ clanId: clanMember.clanId, n: countRows() })
+      .from(clanMember)
+      .where(ne(clanMember.role, "pending"))
+      .groupBy(clanMember.clanId)
+      .all()
+      .map((r) => [r.clanId, r.n]),
+  );
+  const count = (id: string) => sizes.get(id) ?? 0;
 
   const myClans = clans.filter((c) => mine.get(c.id) && mine.get(c.id) !== "pending");
   const others = clans.filter((c) => !myClans.includes(c));

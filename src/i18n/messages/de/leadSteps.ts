@@ -16,7 +16,6 @@ export const leadSteps: Messages["leadSteps"] = {
   tickets: "Alle haben ein Ticket",
   nobody: "Noch kommt niemand.",
   allConfirmed: "Alle {count} haben eins.",
-  toConfirm: "{count} zu bestätigen",
   notBought: "{count} noch nicht gekauft",
   assign: "Allen einen Platz geben",
   assignPicking: "Mitglieder wählen, du füllst die Lücken",

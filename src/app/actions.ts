@@ -8,7 +8,7 @@ import { db, schema } from "@/db";
 import { ATTENDANCE_STATUSES, type AttendanceStatus } from "@/db/schema";
 import { DISCORD_MODES } from "@/lib/discord-modes";
 import {
-  getLan,
+  mustGetLan,
   moveUp,
   promoteFromWaitlist,
   reorderWaitlist,
@@ -44,12 +44,6 @@ import type { T } from "@/i18n/translate";
 import { enforceLimit, overLimit } from "@/lib/rate-limit";
 
 const { attendance, seat, lan, user, lanOrga, lanType } = schema;
-
-function mustGetLan(id: string) {
-  const l = getLan(id);
-  if (!l) throw new Error("LAN not found");
-  return l;
-}
 
 const lanPath = (id: string) => {
   revalidatePath(`/lans/${id}`);

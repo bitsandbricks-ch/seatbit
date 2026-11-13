@@ -1,4 +1,4 @@
-import { fmtDate } from "./format";
+import { clip, fmtDate } from "./format";
 import { and, eq, inArray, ne } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Lan, User } from "@/db/schema";
@@ -85,7 +85,6 @@ function discordIdOf(userId: string) {
     .get()?.id;
 }
 
-const clip = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
 
 /**
  * DM text from a plain mail text: drops the greeting, the mail footer and the

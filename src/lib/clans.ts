@@ -145,13 +145,21 @@ export async function saveUpload(prefix: string, file: File) {
 export const saveAvatar = (clanId: string, file: File) => saveUpload(`clan-${clanId}`, file);
 
 /** Headers for serving an uploaded picture: never sniffed or run as a page, even if it slipped through. */
-export const uploadHeaders = (file: string) => ({
+const uploadHeaders = (file: string) => ({
   "content-type": AVATAR_MIME[path.extname(file).slice(1)] ?? "application/octet-stream",
   "x-content-type-options": "nosniff",
   "content-security-policy": "default-src 'none'; sandbox",
   // The URL carries the file name, so a new upload gets a new URL.
   "cache-control": "public, max-age=31536000, immutable",
 });
+
+/** Response for an uploaded picture by its stored file name; 404 for anything that isn't a plain file name in the uploads folder. */
+export function serveUpload(name: string | null | undefined) {
+  if (!name || name.includes("/") || name.includes("\\") || name.includes("..")) return new Response("Not found", { status: 404 });
+  const file = path.join(uploadsDir, name);
+  if (!fs.existsSync(file)) return new Response("Not found", { status: 404 });
+  return new Response(fs.readFileSync(file), { headers: uploadHeaders(file) });
+}
 
 export function avatarUrl(c: { id: string; avatar: string | null }) {
   return c.avatar ? `/clan-avatar/${c.id}?v=${encodeURIComponent(c.avatar)}` : null;

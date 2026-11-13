@@ -65,7 +65,7 @@ const orderInput = z.object({
 export async function createFoodOrder(lanId: string, formData: FormData): Promise<{ error?: string }> {
   const me = await requireUser();
   const l = getLan(lanId);
-  if (!l) return { error: "LAN not found" };
+  if (!l) return { error: await tr("errors.eventGone") };
   if (!canOrder(me, lanId)) return { error: await tr("errors.foodStart") };
   if (l.cancelledAt) return { error: await tr("errors.cancelled") };
   const parsed = orderInput.safeParse({

@@ -3,7 +3,7 @@ import { and, desc, eq, gt, isNull, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Clan } from "@/db/schema";
 import { audit } from "./audit";
-import { BillingError, annualPrice, billingEnabled, config, extendSupport, stripe } from "./billing";
+import { BillingError, type Obj, annualPrice, billingEnabled, config, extendSupport, idOf, stripe } from "./billing";
 import { appUrl } from "./mail";
 import { emitPlatformEvent } from "./platform-events";
 import { getBoolSetting, getSetting } from "./settings";
@@ -104,9 +104,6 @@ export async function donationCheckoutUrl(opts: {
   return session.url;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Obj = Record<string, any>;
-const idOf = (x: unknown): string | undefined => (typeof x === "string" ? x : (x as Obj | null)?.id);
 
 /**
  * Stores a paid donation Checkout once (from the webhook or the thank-you page, whichever comes

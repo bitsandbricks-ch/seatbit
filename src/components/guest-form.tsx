@@ -43,39 +43,6 @@ export function GuestForm({
   );
 }
 
-/** Sets a guest's email and sends the invite (again). */
-export function GuestEmailForm({
-  action,
-  email,
-}: {
-  action: (s: FormState, f: FormData) => Promise<FormState>;
-  email: string | null;
-}) {
-  const t = useT();
-  const [state, formAction, pending] = useActionState(action, undefined);
-  return (
-    <form action={formAction} className="space-y-1">
-      <div className="flex flex-wrap gap-2">
-        <Input
-          name="email"
-          type="email"
-          required
-          maxLength={200}
-          defaultValue={email ?? ""}
-          placeholder={t("guestForm.theirEmail")}
-          aria-label={t("guestForm.guestEmail")}
-          className="min-w-0 flex-1"
-        />
-        <button disabled={pending} className={`${btnSecondary} text-xs`}>
-          {pending ? t("eventUi.sending") : t(email ? "guestForm.sendAgain" : "guestForm.send")}
-        </button>
-      </div>
-      {state?.error && <p className="text-xs text-danger">{state.error}</p>}
-      {state?.ok && state.message && <p className="text-xs text-bit">{state.message}</p>}
-    </form>
-  );
-}
-
 export type GuestEditTypeRow = { id: string; name: string; nick: string; lanId: string };
 
 /**

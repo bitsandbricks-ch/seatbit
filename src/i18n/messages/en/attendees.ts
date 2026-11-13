@@ -25,7 +25,6 @@ export const attendees = {
   bookedOnSite: "booked on site",
   notBookedOnSite: "not booked on site",
   ticketOk: "Ticket ok",
-  reported: "reported",
   lanIdOf: "LAN ID of {name}",
   nobody: "Nobody here.",
   addMember: "Add a member…",
