@@ -2,6 +2,7 @@
 import { useState, useTransition } from "react";
 import { postDiscordReminder, postLanToDiscord } from "@/app/actions";
 import { btnSecondary } from "./ui";
+import { useT } from "@/i18n/client";
 
 type Kind = "signup" | "payment" | "event";
 
@@ -19,6 +20,7 @@ export function DiscordButtons({
   /** Drafts stay off Discord until they're published. */
   draft?: boolean;
 }) {
+  const t = useT();
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<string | null>(null);
   return (
@@ -30,11 +32,11 @@ export function DiscordButtons({
           onClick={() =>
             start(async () => {
               const n = await postLanToDiscord(lanId);
-              setMsg(n ? `Posted to ${n} channel(s).` : "Already posted everywhere, the attendee list was refreshed.");
+              setMsg(n ? t("chat.posted", { count: n }) : t("chat.refreshed"));
             })
           }
         >
-          {posted < channels ? "Post announcement" : "Refresh announcement"}
+          {posted < channels ? t("chat.post") : t("chat.refresh")}
         </button>
         {kinds.map((k) => (
           <button
@@ -42,41 +44,42 @@ export function DiscordButtons({
             className={btnSecondary}
             disabled={draft || pending || !channels}
             onClick={() => {
-              if (!confirm(`Post the "${k.label}" reminder to ${channels} Discord channel(s) now? It pings the members it applies to.`)) return;
+              if (!confirm(t("chat.confirmReminder", { label: k.label, count: channels }))) return;
               start(async () => {
                 const n = await postDiscordReminder(lanId, k.kind);
-                setMsg(`Posted "${k.label}" to ${n} channel(s).`);
+                setMsg(t("chat.postedReminder", { label: k.label, count: n }));
               });
             }}
           >
-            Post: {k.label}
+            {t("chat.postKind", { label: k.label })}
           </button>
         ))}
       </div>
-      {draft && <p className="text-sm text-muted">The announcement goes out when you publish the event.</p>}
+      {draft && <p className="text-sm text-muted">{t("chat.draft")}</p>}
       {msg && <p className="text-sm text-bit">{msg}</p>}
     </div>
   );
 }
 
 export function WhatsAppTexts({ texts }: { texts: { kind: string; label: string; text: string }[] }) {
+  const t = useT();
   const [active, setActive] = useState(texts[0]?.kind);
   const [copied, setCopied] = useState(false);
-  const current = texts.find((t) => t.kind === active) ?? texts[0];
+  const current = texts.find((x) => x.kind === active) ?? texts[0];
   if (!current) return null;
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap gap-1">
-        {texts.map((t) => (
+        {texts.map((x) => (
           <button
-            key={t.kind}
+            key={x.kind}
             onClick={() => {
-              setActive(t.kind);
+              setActive(x.kind);
               setCopied(false);
             }}
-            className={`rounded-md px-2 py-1 text-xs ${t.kind === current.kind ? "bg-line text-fg" : "text-muted hover:bg-raised"}`}
+            className={`rounded-md px-2 py-1 text-xs ${x.kind === current.kind ? "bg-line text-fg" : "text-muted hover:bg-raised"}`}
           >
-            {t.label}
+            {x.label}
           </button>
         ))}
       </div>
@@ -94,7 +97,7 @@ export function WhatsAppTexts({ texts }: { texts: { kind: string; label: string;
             setCopied(true);
           }}
         >
-          {copied ? "Copied ✓" : "Copy text"}
+          {copied ? `${t("chat.copied")} ✓` : t("chat.copy")}
         </button>
         <a
           className={btnSecondary}
@@ -102,7 +105,7 @@ export function WhatsAppTexts({ texts }: { texts: { kind: string; label: string;
           target="_blank"
           rel="noreferrer"
         >
-          Share via WhatsApp
+          {t("chat.share")}
         </a>
       </div>
     </div>

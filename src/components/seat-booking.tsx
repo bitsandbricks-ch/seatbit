@@ -1,6 +1,7 @@
 "use client";
 import { useState, useTransition } from "react";
 import { adminSetSeatBooked } from "@/app/lan-extras-actions";
+import { useT } from "@/i18n/client";
 
 export type BookingRow = { userId: string; name: string; seat: string; lanAccount?: string; booked: boolean };
 
@@ -16,6 +17,7 @@ export function LeadBookingList({ lanId, rows }: { lanId: string; rows: BookingR
 }
 
 function BookingItem({ lanId, row }: { lanId: string; row: BookingRow }) {
+  const t = useT();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   return (
@@ -33,7 +35,7 @@ function BookingItem({ lanId, row }: { lanId: string; row: BookingRow }) {
               try {
                 await adminSetSeatBooked(lanId, row.userId, v);
               } catch (err) {
-                setError(err instanceof Error ? err.message : "Failed");
+                setError(err instanceof Error ? err.message : t("eventUi.failed"));
               }
             });
           }}

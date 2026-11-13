@@ -2,6 +2,7 @@
 import { useState, useTransition } from "react";
 import { publishSeats, setSeatPicking, unpublishSeats } from "@/app/actions";
 import { Pill, btnGhost, btnPrimary, btnSecondary } from "./ui";
+import { useT } from "@/i18n/client";
 
 type StepState = "done" | "active" | "off" | "todo";
 
@@ -28,6 +29,7 @@ export function SeatFlow({
   /** People coming who sent at least one seat wish. */
   wishes: number;
 }) {
+  const t = useT();
   const [pending, start] = useTransition();
   const [notify, setNotify] = useState(true);
   const [msg, setMsg] = useState<string | null>(null);
@@ -35,27 +37,17 @@ export function SeatFlow({
 
   const steps: { title: string; state: StepState; body: React.ReactNode }[] = [
     {
-      title: "Seat wishes",
+      title: t("cmd.seatWishes"),
       state: final ? "done" : "active",
-      body: final ? (
-        "Closed when you finalized."
-      ) : (
-        <>
-          Members tell you who they want to sit near and where. {wishes} of {going} coming sent wishes so far.
-        </>
-      ),
+      body: final ? t("seatFlow.closed") : t("seatFlow.wishesHint", { wishes, count: going }),
     },
     {
-      title: "Members pick their own seat",
+      title: t("seatFlow.pick"),
       state: final ? (picking ? "done" : "off") : picking ? "active" : "off",
       body: (
         <div className="space-y-2">
           <p>
-            {final
-              ? "Closed when you finalized."
-              : picking
-                ? "On: members who are coming and ticked \"I have my ticket\" can take a free seat on the event page. Held seats stay out of reach and you can still move anyone."
-                : "Optional. Turn it on to let members take a free seat themselves. You still check and finalize the plan afterwards."}
+            {final ? t("seatFlow.closed") : picking ? t("seatFlow.pickOn") : t("seatFlow.pickOff")}
           </p>
           {!final && (
             <button
@@ -63,34 +55,31 @@ export function SeatFlow({
               className={picking ? btnSecondary : btnPrimary}
               onClick={() => start(() => setSeatPicking(lanId, !picking))}
             >
-              {picking ? "Turn self pick off" : "Turn on self pick"}
+              {picking ? t("seatFlow.turnOff") : t("seatFlow.turnOn")}
             </button>
           )}
         </div>
       ),
     },
     {
-      title: "Leads finalize the plan",
+      title: t("seatFlow.finalize"),
       state: final ? "done" : "todo",
       body: final ? (
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-bit">
-            Finalized {finalizedAt}. Members see the plan and changes you make now tell the people who moved.
-          </p>
+          <p className="text-bit">{t("seatFlow.finalized", { date: finalizedAt ?? "" })}</p>
           <button
             disabled={pending}
             className={btnGhost}
             onClick={() => start(() => unpublishSeats(lanId).then(() => setMsg(null)))}
           >
-            Reopen
+            {t("seatFlow.reopen")}
           </button>
         </div>
       ) : (
         <div className="space-y-3">
           <p>
-            Check the seats{picking ? " people picked" : ""}, move anyone you need to, then finalize. This closes {picking ? "self pick and seat wishes" : "seat wishes"} and shows
-            everyone the plan.
-            {unseated > 0 && <span className="text-warn"> {unseated} people coming still have no seat.</span>}
+            {t(picking ? "seatFlow.checkPicked" : "seatFlow.check")}
+            {unseated > 0 && <span className="text-warn"> {t("seatFlow.unseated", { count: unseated })}</span>}
           </p>
           <label className="flex items-center gap-2">
             <input
@@ -99,7 +88,7 @@ export function SeatFlow({
               onChange={(e) => setNotify(e.target.checked)}
               className="h-4 w-4 accent-bit"
             />
-            Tell everyone coming their seat
+            {t("seatFlow.tellEveryone")}
           </label>
           <button
             disabled={pending}
@@ -107,11 +96,11 @@ export function SeatFlow({
             onClick={() =>
               start(async () => {
                 const n = await publishSeats(lanId, notify);
-                setMsg(notify ? `Finalized, ${n} member(s) told.` : "Finalized.");
+                setMsg(notify ? t("seatFlow.finalizedTold", { count: n }) : t("seatFlow.finalizedShort"));
               })
             }
           >
-            Finalize seat plan
+            {t("seatFlow.finalizeButton")}
           </button>
         </div>
       ),
@@ -138,8 +127,8 @@ export function SeatFlow({
             <div className="min-w-0 flex-1">
               <p className="mb-1 flex flex-wrap items-center gap-2 font-medium text-fg">
                 {s.title}
-                {i === 1 && !final && <Pill tone={s.state === "active" ? "emerald" : "zinc"}>{picking ? "on" : "optional · off"}</Pill>}
-                {i === 2 && final && <Pill tone="emerald">final</Pill>}
+                {i === 1 && !final && <Pill tone={s.state === "active" ? "emerald" : "zinc"}>{picking ? t("seatFlow.on") : t("seatFlow.optionalOff")}</Pill>}
+                {i === 2 && final && <Pill tone="emerald">{t("manage.final")}</Pill>}
               </p>
               <div className="text-muted">{s.body}</div>
             </div>

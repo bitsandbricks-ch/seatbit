@@ -2,6 +2,7 @@
 import { useState, useTransition } from "react";
 import { adminAutoAssignSeats, setSeatsFromList } from "@/app/actions";
 import { btnPrimary, btnSecondary, input } from "./ui";
+import { useT } from "@/i18n/client";
 
 /** Lead tools: enter the seats the event gave the group, and auto-fill them. */
 export function SeatSetup({
@@ -15,6 +16,7 @@ export function SeatSetup({
   unseated: number;
   free: number;
 }) {
+  const t = useT();
   const [pending, start] = useTransition();
   const [spec, setSpec] = useState(current);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -22,14 +24,14 @@ export function SeatSetup({
     <div className="space-y-4">
       <div className="space-y-2">
         <label className="block text-sm text-fg/90" htmlFor="seat-spec">
-          Seats the event gave us
+          {t("seatSetup.label")}
         </label>
         <div className="flex flex-wrap gap-2">
           <input
             id="seat-spec"
             value={spec}
             onChange={(e) => setSpec(e.target.value)}
-            placeholder="e.g. F1-F20  or  F1-F10, G1-G10"
+            placeholder={t("seatSetup.placeholder")}
             className={`${input} min-w-0 flex-1 font-mono`}
           />
           <button
@@ -38,15 +40,15 @@ export function SeatSetup({
             onClick={() =>
               start(async () => {
                 const r = await setSeatsFromList(lanId, spec);
-                setMsg(r.error ? { ok: false, text: r.error } : { ok: true, text: `Saved ${r.count} seats.` });
+                setMsg(r.error ? { ok: false, text: r.error } : { ok: true, text: t("seatSetup.saved", { count: r.count ?? 0 }) });
               })
             }
           >
-            Save seats
+            {t("seatSetup.save")}
           </button>
         </div>
         <p className="text-xs text-muted">
-          Each letter becomes a row. Existing assignments are kept for seats that stay in the list.
+          {t("seatSetup.hint")}
         </p>
       </div>
       <div className="space-y-2">
@@ -57,29 +59,28 @@ export function SeatSetup({
             onClick={() =>
               start(async () => {
                 const n = await adminAutoAssignSeats(lanId, "fill");
-                setMsg({ ok: true, text: `Assigned ${n} seat(s).` });
+                setMsg({ ok: true, text: t("seatSetup.assigned", { count: n }) });
               })
             }
           >
-            Fill free seats
+            {t("seatSetup.fill")}
           </button>
           <button
             disabled={pending}
             className={btnSecondary}
             onClick={() => {
-              if (!confirm("Re-plan all seats that aren't held? Current assignments will change.")) return;
+              if (!confirm(t("seatSetup.replanConfirm"))) return;
               start(async () => {
                 const n = await adminAutoAssignSeats(lanId, "replan");
-                setMsg({ ok: true, text: `Planned ${n} seat(s) from scratch.` });
+                setMsg({ ok: true, text: t("seatSetup.planned", { count: n }) });
               });
             }}
           >
-            Re-plan everyone
+            {t("seatSetup.replan")}
           </button>
         </div>
         <p className="text-xs text-muted">
-          {unseated} coming without a seat · {free} free seats. The planner follows seat wishes (near, not next to,
-          edge/middle, preferred seat) and seats people with a ticket first.
+          {t("seatSetup.status", { unseated, free })}
         </p>
       </div>
       {msg && <p className={`text-sm ${msg.ok ? "text-bit" : "text-danger"}`}>{msg.text}</p>}

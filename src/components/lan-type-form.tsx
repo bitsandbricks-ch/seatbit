@@ -1,7 +1,8 @@
 "use client";
 import { useActionState } from "react";
 import { saveLanType, type FormState } from "@/app/actions";
-import { DISCORD_MODES, DISCORD_MODE_LABELS, type DiscordMode } from "@/lib/discord-modes";
+import { DISCORD_MODES, type DiscordMode } from "@/lib/discord-modes";
+import { useT } from "@/i18n/client";
 import { PROFILE_URL_HINT } from "@/lib/profile-link";
 import { Field, Input, btnPrimary, input } from "./ui";
 
@@ -24,67 +25,68 @@ export type LanTypeValues = {
 };
 
 export function LanTypeForm({ values }: { values: LanTypeValues }) {
+  const t = useT();
   const [state, action, pending] = useActionState<FormState, FormData>(saveLanType, undefined);
   return (
     <form action={action} className="space-y-5">
       {values.id && <input type="hidden" name="id" value={values.id} />}
       {values.clanId && <input type="hidden" name="clanId" value={values.clanId} />}
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Name">
-          <Input name="name" defaultValue={values.name} required placeholder="e.g. Lock & Load" />
+        <Field label={t("attendees.col.name")}>
+          <Input name="name" defaultValue={values.name} required placeholder={t("typeForm.namePlaceholder")} />
         </Field>
-        <Field label="Usual location">
+        <Field label={t("typeForm.location")}>
           <Input name="location" defaultValue={values.location} />
         </Field>
-        <Field label="Event website">
+        <Field label={t("lanForm.website")}>
           <Input type="url" name="websiteUrl" defaultValue={values.websiteUrl} placeholder="https://" />
         </Field>
-        <Field label="Ticket shop">
+        <Field label={t("bot.ticketShop")}>
           <Input type="url" name="ticketUrl" defaultValue={values.ticketUrl} placeholder="https://" />
         </Field>
         <Field
-          label="Member profile link"
-          hint="Optional. A member's profile on the event's site, with {id} where their LAN ID goes. Seatbit links each attendee's profile."
+          label={t("lanForm.profile")}
+          hint={t("typeForm.profileHint", { id: "{id}" })}
         >
           <Input name="profileUrl" defaultValue={values.profileUrl} placeholder={PROFILE_URL_HINT} className="font-mono" />
         </Field>
-        <Field label="Usual ticket price">
+        <Field label={t("typeForm.price")}>
           <Input name="price" defaultValue={values.price} />
         </Field>
-        <Field label="Usual group spots">
+        <Field label={t("typeForm.spots")}>
           <Input type="number" min={1} name="capacity" defaultValue={values.capacity} />
         </Field>
-        <Field label="Usual seats" hint="e.g. F1-F20. Copied into each new event of this type.">
+        <Field label={t("typeForm.seats")} hint={t("typeForm.seatsHint")}>
           <Input name="seatSpec" defaultValue={values.seatSpec} className="font-mono" />
         </Field>
-        <Field label="Usual length (hours)" hint="Fills in the end when you set the start, e.g. Fri 18:00 to Sun 16:00 = 46.">
+        <Field label={t("typeForm.length")} hint={t("typeForm.lengthHint")}>
           <Input type="number" min={1} max={336} name="durationHours" defaultValue={values.durationHours} />
         </Field>
-        <Field label="Answer by (days before)" hint="Fills in the answer deadline from the start. Empty = no deadline.">
+        <Field label={t("typeForm.answerDays")} hint={t("typeForm.answerDaysHint")}>
           <Input type="number" min={0} max={365} name="answerDaysBefore" defaultValue={values.answerDaysBefore} />
         </Field>
-        <Field label="Remind days before deadline">
+        <Field label={t("lanForm.remindDays")}>
           <Input type="number" min={0} max={60} name="reminderDays" defaultValue={values.reminderDays} />
         </Field>
         <Field
           label="Discord"
-          hint="Where the bot posts these events, their reminders and news. A thread or channel keeps the linked channel tidy."
+          hint={t("typeForm.discordHint")}
         >
           <select name="discordMode" defaultValue={values.discordMode} className={input}>
             {DISCORD_MODES.map((m) => (
               <option key={m} value={m}>
-                {DISCORD_MODE_LABELS[m]}
+                {t(`typeForm.mode.${m}`)}
               </option>
             ))}
           </select>
         </Field>
       </div>
-      <Field label="Description">
+      <Field label={t("lanForm.description")}>
         <textarea name="description" defaultValue={values.description} rows={3} className={input} />
       </Field>
       {state?.error && <p className="text-sm text-danger">{state.error}</p>}
       <button disabled={pending} className={btnPrimary}>
-        {values.id ? "Save type" : "Add type"}
+        {values.id ? t("typeForm.save") : t("typeForm.add")}
       </button>
     </form>
   );

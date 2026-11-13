@@ -6,6 +6,7 @@ import type { AvatarData } from "@/lib/avatars";
 import { relative } from "@/lib/format";
 import { Avatar } from "./avatar";
 import { Card, Notice, Pill, btnPrimary, btnSecondary } from "./ui";
+import { useT } from "@/i18n/client";
 
 export type MissingPersonView = {
   userId: string;
@@ -43,23 +44,20 @@ export function WhoIsMissing({
   blocked: string | null;
   cooldownMs: number;
 }) {
+  const t = useT();
   const members = groups.filter((g) => g.who === "member");
   const orga = groups.filter((g) => g.who === "orga");
   if (groups.length === 0)
     return (
       <Card>
-        <p className="text-sm text-muted">Nobody is missing anything. Everyone answered, has a ticket and a seat.</p>
+        <p className="text-sm text-muted">{t("missing.none")}</p>
       </Card>
     );
   return (
     <div className="space-y-4 sm:space-y-6">
-      <p className="max-w-2xl text-sm text-muted">
-        Who still owes the group something, step by step. A nudge goes out as a Discord DM (if they kept DMs on) and as a
-        mail (if they kept email reminders on). Each person gets at most one nudge per step every{" "}
-        {Math.round(cooldownMs / 3_600_000)} hours.
-      </p>
+      <p className="max-w-2xl text-sm text-muted">{t("missing.intro", { hours: Math.round(cooldownMs / 3_600_000) })}</p>
       {blocked && <Notice tone="warn">{blocked}</Notice>}
-      <nav aria-label="Steps" className="flex flex-wrap gap-2">
+      <nav aria-label={t("missing.steps")} className="flex flex-wrap gap-2">
         {groups.map((g) => (
           <a
             key={g.step}
@@ -85,7 +83,7 @@ export function WhoIsMissing({
                 {g.title} <span className="text-sm font-normal text-faint">{g.people.length}</span>
               </span>
             }
-            actions={<Pill tone="amber">lead to-do</Pill>}
+            actions={<Pill tone="amber">{t("missing.leadTodo")}</Pill>}
           >
             <p className="mb-3 text-sm text-muted">{g.hint}</p>
             <PeopleList people={g.people} profileBase={profileBase} />
@@ -102,6 +100,7 @@ export function WhoIsMissing({
 }
 
 function PeopleList({ people, profileBase, action }: { people: MissingPersonView[]; profileBase: string | null; action?: (p: MissingPersonView) => React.ReactNode }) {
+  const t = useT();
   return (
     <ul className="divide-y divide-line rounded-bit border border-line">
       {people.map((p) => (
@@ -118,8 +117,16 @@ function PeopleList({ people, profileBase, action }: { people: MissingPersonView
               )}
               {action && (
                 <span className="block text-xs text-faint">
-                  {p.discord && p.email ? "DM + mail" : p.discord ? "Discord DM" : p.email ? "Mail only" : <span className="text-warn">Can&apos;t reach</span>}
-                  {p.nudgedAt && <> · nudged {relative(new Date(p.nudgedAt))}</>}
+                  {p.discord && p.email ? (
+                    t("missing.dmMail")
+                  ) : p.discord ? (
+                    t("missing.dm")
+                  ) : p.email ? (
+                    t("missing.mailOnly")
+                  ) : (
+                    <span className="text-warn">{t("missing.cantReach")}</span>
+                  )}
+                  {p.nudgedAt && <> · {t("missing.nudgedAgo", { when: relative(new Date(p.nudgedAt), new Date(), t.locale) })}</>}
                 </span>
               )}
             </span>
@@ -147,6 +154,7 @@ function MemberGroup({
   blocked: boolean;
   cooldownMs: number;
 }) {
+  const t = useT();
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
   // Evaluated once per render; the server re-renders after every nudge.
@@ -159,12 +167,12 @@ function MemberGroup({
       setMsg(null);
       try {
         const r = await nudgeMissing(lanId, g.step, userIds);
-        const parts = [`Nudged ${r.sent}`];
-        if (r.skipped) parts.push(`${r.skipped} nudged recently`);
-        if (r.unreachable) parts.push(`${r.unreachable} can't be reached`);
+        const parts = [t("missing.nudged", { count: r.sent })];
+        if (r.skipped) parts.push(t("missing.skipped", { count: r.skipped }));
+        if (r.unreachable) parts.push(t("missing.unreachable", { count: r.unreachable }));
         setMsg({ tone: r.sent ? "ok" : "err", text: parts.join(" · ") });
       } catch (e) {
-        setMsg({ tone: "err", text: e instanceof Error ? e.message : "Failed" });
+        setMsg({ tone: "err", text: e instanceof Error ? e.message : t("eventUi.failed") });
       }
     });
   return (
@@ -176,7 +184,7 @@ function MemberGroup({
       }
       actions={
         <button disabled={pending || blocked || ready.length === 0} className={btnPrimary} onClick={() => send()}>
-          {ready.length ? `Nudge all ${ready.length}` : "All nudged"}
+          {ready.length ? t("missing.nudgeAll", { count: ready.length }) : t("missing.allNudged")}
         </button>
       }
     >
@@ -186,15 +194,15 @@ function MemberGroup({
         profileBase={profileBase}
         action={(p) =>
           cooling(p) ? (
-            <span className="text-xs text-faint">Nudged</span>
+            <span className="text-xs text-faint">{t("missing.nudgedShort")}</span>
           ) : (
             <button
               disabled={pending || blocked || !reachable(p)}
               className={`${btnSecondary} !min-h-8 !px-2.5 text-xs`}
               onClick={() => send([p.userId])}
-              aria-label={`Nudge ${p.name}`}
+              aria-label={t("missing.nudgeName", { name: p.name })}
             >
-              Nudge
+              {t("missing.nudge")}
             </button>
           )
         }
