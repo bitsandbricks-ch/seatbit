@@ -31,7 +31,6 @@ export type ChangelogEntry = {
   de: ChangeText;
 };
 
-export const CHANGELOG_DIR = path.join(process.cwd(), "changelog");
 const FILE = /^(\d{4}-\d{2}-\d{2})-[a-z0-9]+(?:-[a-z0-9]+)*\.yml$/;
 
 /** Checks one parsed file; returns the problems (empty when fine). */
@@ -84,16 +83,17 @@ function toEntry(file: string, r: Record<string, unknown>): ChangelogEntry {
 }
 
 /** Every file in the folder with its parsed content (or parse error), sorted by name. */
-export function readChangelogFiles(dir = CHANGELOG_DIR) {
+// Paths spelled out in each call: a path in a variable makes the build trace the whole project.
+export function readChangelogFiles() {
   let files: string[] = [];
   try {
-    files = readdirSync(dir).filter((f) => f.endsWith(".yml")).sort();
+    files = readdirSync(path.join(process.cwd(), "changelog")).filter((f) => f.endsWith(".yml")).sort();
   } catch {
     return [];
   }
   return files.map((file) => {
     try {
-      return { file, raw: parse(readFileSync(path.join(dir, file), "utf8")) as unknown };
+      return { file, raw: parse(readFileSync(path.join(process.cwd(), "changelog", file), "utf8")) as unknown };
     } catch (e) {
       return { file, raw: undefined, error: e instanceof Error ? e.message : String(e) };
     }

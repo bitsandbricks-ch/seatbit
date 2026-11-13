@@ -1,8 +1,8 @@
 # Changelog entries
 
-Seatbit keeps user-facing release notes in English and German. They show in the app under **What's new** (`/changelog`, linked in the footer), in the [docs changelog](../changelog/index.md), in the platform admins' upgrade notice and in the public announcements Discord channel when a new version runs.
+Seatbit keeps user-facing release notes in English and German. They show in the app under **What's new** (`/changelog`, linked in the footer), in the [docs changelog](../changelog/index.md), and in the upgrade notice to the platform admins (mail, Discord DM and the ops channel) when a new version runs. It is not posted to the public announcements channel or to clan channels.
 
-**Every pull request that changes something people notice adds an entry**: a new feature, a visible improvement, a bug fix people ran into. Internal changes (refactoring, CI, dependency bumps, docs only) don't.
+Seatbit has no version numbers yet: every change that reaches `main` is a release. So **every pull request that changes something people notice adds an entry**: a new feature, a visible improvement, a bug fix. Internal changes (refactoring, CI, dependency bumps, docs only, screenshots) don't.
 
 ## One file per entry
 
@@ -32,13 +32,15 @@ de:
 | Field | |
 | --- | --- |
 | `type` | **new** for a feature, **improved** for a change to an existing one, **fixed** for a bug fix. |
-| `audience` | **admins** for things only the people running the instance notice (settings, backups, upgrades, the admin pages). The app shows those to the platform team only, and the announcements channel leaves them out. |
+| `audience` | **admins** for things only the people running the instance notice (settings, backups, upgrades, the admin pages). The app shows those to the platform team only. |
 | `en`, `de` | Both are required. `title` is one line (under 120 characters); `text` is optional, one or two sentences of plain text. |
 
 ## Writing
 
 - Write for the people who use Seatbit, not for developers: what they can do now, not how it was built. No PR titles, no file names.
 - Short: a title that reads on its own, and a sentence or two if it needs explaining.
+- The changelog is public. Leave out what the public doesn't need: internal details, how something was built, which setting or file changed.
+- **Keep bug fixes vague**: *Fixed a problem with reminder mails*, *Fixed a display issue on the seat plan*. Never describe how a bug could be triggered or abused; for security fixes write only *Security improvements* (German *Verbesserungen an der Sicherheit*).
 - Use the app's words: *lead* (German *Lead*, never "orga"), *Coming / Unsure / Not coming*, *Manage*.
 - German: Swiss spelling (*ss*, never *ß*), *du*, quotes «…».
 - One entry per change people notice. A big pull request can add two files; a follow-up fix to an unreleased entry edits that entry instead of adding one.
@@ -58,6 +60,5 @@ It checks the YAML, the fields, both languages and the Swiss spelling. CI runs i
 | App, **What's new** | All entries in the person's language; *admins* entries for the platform team only. |
 | Docs, [Changelog](../changelog/index.md) | All entries, English and German pages. |
 | Upgrade notice (mail and DM to platform admins, ops channel) | The entries that came with the new version. |
-| Announcements channel | The new entries for *everyone*, in the instance's language, with a link to *What's new*. Nothing is posted for a version without such entries. |
 
 An instance remembers which entries it announced, so each entry is announced once, on the first start of the version that brought it.
