@@ -1,0 +1,17 @@
+export const settingsUi = {
+  cantDecrypt: "can't decrypt, re-enter",
+  saved: "Saved here",
+  fromEnv: "From {env}",
+  default: "Default",
+  keep: "leave empty to keep",
+  remove: "Remove saved value",
+  fallBack: "fall back to {env}",
+  on: "On",
+  off: "Off",
+  none: "none",
+  useEnv: "Use {env} / default",
+  useDefault: "Use default",
+  changed: "Changed {date}",
+  changedBy: "Changed {date} by {by}",
+  working: "Working…",
+};

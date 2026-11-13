@@ -57,7 +57,7 @@ docs/              this site (MkDocs)
 
 The UI is in English and German, without locale prefixes in the URL. `src/i18n/server.ts` picks the language per request: the user's saved `locale`, then the `seatbit-locale` cookie, then `Accept-Language`, then the *Default language* setting.
 
-- Texts are in `src/i18n/messages/en.ts` and `de.ts`. `de.ts` is typed as the English messages, so a missing or extra key fails the type check.
+- Texts are in `src/i18n/messages/en/` and `de/`, one file per namespace (`en/seatMap.ts` holds every `seatMap.*` key). Each German file is typed as its English namespace, so a missing or extra key fails the type check. One file per namespace keeps parallel features from editing the same file. A new namespace needs a file in both folders plus one import and one entry in each `index.ts` (sorted).
 - Server components: `const t = await getT()`. Client components: `const t = useT()` (the root layout provides the language). Both give `t("event.coming")`, `t("home.seatsFree", { count })` and `t.rich(...)` for placeholders that are React nodes.
 - `{name}` is a placeholder; a message written as `{ one, other }` picks by `count`.
 - Dates: pass `t.locale` to the formatters in `src/lib/format.ts` (weekday names change, the format doesn't).

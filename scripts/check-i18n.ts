@@ -97,7 +97,7 @@ for (const file of walk(ROOT)) {
 
 for (const h of hits) console.log(`${h.file}:${h.line}  ${h.text}`);
 if (hits.length) {
-  console.error(`\n${hits.length} untranslated text(s). Use t() with keys in src/i18n/messages/en.ts and de.ts, or mark a deliberate exception with // i18n-ignore.`);
+  console.error(`\n${hits.length} untranslated text(s). Use t() with keys in src/i18n/messages/en/ and de/, or mark a deliberate exception with // i18n-ignore.`);
   process.exit(1);
 }
 console.log("No untranslated text found.");

@@ -56,4 +56,4 @@ What people type stays as they wrote it: event names, descriptions, news, notes 
 
 ## For developers
 
-Texts live in `src/i18n/messages/en.ts` and `de.ts`; TypeScript checks that both have the same keys. Server components use `await getT()` from `src/i18n/server.ts`, client components `useT()` from `src/i18n/client.tsx`. See [Architecture](../development/architecture.md#languages).
+Texts live in `src/i18n/messages/en/` and `de/`, one file per namespace; TypeScript checks that both have the same keys. Server components use `await getT()` from `src/i18n/server.ts`, client components `useT()` from `src/i18n/client.tsx`. See [Architecture](../development/architecture.md#languages).

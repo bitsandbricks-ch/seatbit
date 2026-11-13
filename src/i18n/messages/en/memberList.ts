@@ -1,0 +1,15 @@
+export const memberList = {
+  searchN: "Search {count} members",
+  search: "Search members",
+  searchAdmin: "Search name, nick or email",
+  noMatchQ: "Nobody matches “{q}”.",
+  noMatch: "Nobody matches.",
+  error: "Something went wrong",
+  filter: { all: "all", admin: "admins", organizer: "event managers", recruiter: "recruiters", member: "members" },
+  removeGuestQ: "Remove the guest {name}?",
+  remove: "Remove",
+  needsAdmin: "The clan needs at least one admin. Make someone else admin first.",
+  roleOf: "Role of {name}",
+  giveUpAdmin: "Give up your own admin rights? You can't undo this yourself.",
+  removeQ: "Remove {name} from the clan?",
+};

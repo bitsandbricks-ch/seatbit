@@ -1,0 +1,27 @@
+export const clanForm = {
+  name: "Clan name",
+  namePlaceholder: "e.g. The Dark Lizards",
+  nameError: "Give the clan a name (at least 2 characters).",
+  description: "Description",
+  join: "Who can join?",
+  joinApproval: "Anyone can ask, an admin approves",
+  joinOpen: "Anyone can join directly",
+  joinInvite: "Only with an invite link",
+  claims: "Can members claim guests?",
+  claimsHint:
+    "When someone joins, Seatbit shows them guests with the same name or nick. A guest whose invite email matches their verified Discord email always moves over by itself.",
+  claimsApproval: "Yes, an admin confirms each claim",
+  claimsMatch: "Yes, same name or nick moves over right away",
+  claimsOff: "No, only with the guest's own link",
+  names: "How are members shown?",
+  namesHint:
+    'Applies to event pages, the clan page, the Discord bot and the lead views. Leads still see the full name in small print where they manage events and members. Without a nick of their own, people show as "Mike K.".',
+  nameDisplay: { full: 'Name "Nick" Surname', nameNick: 'Name "Nick"', nick: "Nick only" },
+  language: "Language of Discord posts",
+  languageHint: "The bot's posts in the clan's channels. Each member still gets the app, mails and DMs in their own language.",
+  languageDefault: "Instance default",
+  avatar: "Avatar",
+  avatarHint: "PNG, JPG, WebP or GIF, up to 2 MB.",
+  removeAvatar: "Remove current avatar",
+  create: "Create clan",
+};

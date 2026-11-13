@@ -14,7 +14,7 @@ To keep the queue useful, each person can file five reports a day and one open r
 
 ## The report queue
 
-*Admin → Reports* lists open reports first, with the reason, the message, who reported it and when. The button on the admin page shows how many are open.
+*Admin → Reports* lists open reports first, with the reason, the message, who reported it and when. The *Reports* tab shows how many are open.
 
 ![Report queue](../screenshots/desktop-admin-reports.png){ .shot }
 

@@ -30,18 +30,8 @@ export default async function ReportsPage({ searchParams }: PageProps<"/admin/re
   return (
     <Page>
       <PageHeader
-        eyebrow={
-          <Link href="/admin" className="hover:text-fg">
-            {t("adminLog.platformAdmin")}
-          </Link>
-        }
         title={t("moderation.reports")}
         subtitle={t("moderation.subtitle")}
-        actions={
-          <Link href="/admin" className={btnSecondary}>
-            {t("adminLog.back")}
-          </Link>
-        }
       />
       <Tabs
         label={t("moderation.reports")}

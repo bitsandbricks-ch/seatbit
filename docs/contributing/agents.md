@@ -12,7 +12,8 @@ AI coding agents (Claude Code, Codex, Copilot, ...) follow [AGENTS.md](https://g
 | **CI** | Wait for `CI`, `Docs` and `Container image`; fix failures, never skip or weaken a check. |
 | **Done** | Mark the pull request **ready for review** when the task is complete, the checklist is ticked and checks are green. |
 | **Merging** | Never merge your own pull request; never force-push a branch someone else works on. |
-| **Conflicts** | Merge `main` and resolve conflicts (including [migration numbers](../development/database.md#merge-conflicts-in-migrations)) when `main` moves. |
+| **Conflicts** | Merge `main` into the open pull request as soon as `main` moves, without being asked, and resolve conflicts right away ([migrations](../development/database.md#merge-conflicts-in-migrations): `npm run db:rebase`). |
+| **Screenshots** | Don't commit changed screenshots; the bot pull request on `main` updates them. New shots are fine. See [Screenshots](../development/screenshots.md#screenshots-in-pull-requests). |
 | **Description** | Keep it current with each push. |
 | **Docs** | User-facing or setup changes update `docs/` in the same pull request. |
 

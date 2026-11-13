@@ -1,0 +1,21 @@
+export const templateEditor = {
+  subject: "Subject",
+  text: "Text",
+  textHint: "Shown under “Hi {greeting},”. A blank line starts a new paragraph.",
+  button: "Button",
+  buttonHint: "Leave empty for no button.",
+  note: "Small print",
+  noteHint: "Grey line at the end. Leave empty for none.",
+  placeholders: "Placeholders, tap to insert into the {field}. A line is left out when all its placeholders are empty.",
+  field: {
+    subject: "subject",
+    body: "text",
+    button: "button",
+    note: "small print",
+  },
+  facts: "Facts box (filled in automatically): {list}.",
+  preview: "Preview",
+  previewOf: "Preview of {id}",
+  test: "Send me a test",
+  reset: "Reset to default",
+};
