@@ -9,7 +9,9 @@ import { ATTENDANCE_STATUSES, type AttendanceStatus } from "@/db/schema";
 import { DISCORD_MODES } from "@/lib/discord-modes";
 import {
   getLan,
+  moveUp,
   promoteFromWaitlist,
+  reorderWaitlist,
   setAttendance,
   signupClosed,
   ATTENDANCE_LOCKED_MSG,
@@ -442,10 +444,46 @@ export async function adminSetAttendance(lanId: string, userId: string, status: 
   if (cid && !isClanMember(userId, cid)) throw new Error("Not a member of this clan");
   if (!ATTENDANCE_STATUSES.includes(status)) throw new Error("Bad status");
   const before = db.select().from(attendance).where(and(eq(attendance.lanId, lanId), eq(attendance.userId, userId))).get();
+  const l = mustGetLan(lanId);
+  // Moving someone up from the waitlist tells them, like an automatic move would.
+  if (before?.status === "waitlist" && status === "going") await moveUp(l, userId);
   // Admins can override capacity.
-  await setAttendance(mustGetLan(lanId), userId, status, { force: true });
+  else await setAttendance(l, userId, status, { force: true });
   if (before?.status !== status)
-    auditLan(mustGetLan(lanId), me.id, "attendance.set", { targetUserId: userId, data: { from: before?.status ?? null, to: status } });
+    auditLan(l, me.id, "attendance.set", { targetUserId: userId, data: { from: before?.status ?? null, to: status } });
+  lanPath(lanId);
+}
+
+/** Orga moves one person from the waitlist to coming (also over the limit) and tells them. */
+export async function adminMoveUp(lanId: string, userId: string) {
+  const me = await requireLanManager(lanId);
+  const l = mustGetLan(lanId);
+  await moveUp(l, userId);
+  auditLan(l, me.id, "waitlist.move_up", { targetUserId: userId });
+  refreshLanMessagesSoon(lanId);
+  lanPath(lanId);
+}
+
+/** Orga moves someone one place up (-1) or down (+1) on the waitlist. */
+export async function adminReorderWaitlist(lanId: string, userId: string, dir: -1 | 1) {
+  const me = await requireLanManager(lanId);
+  if (dir !== -1 && dir !== 1) throw new Error("Bad direction");
+  if (reorderWaitlist(lanId, userId, dir)) {
+    auditLan(mustGetLan(lanId), me.id, "waitlist.reorder", { targetUserId: userId, data: { dir: dir < 0 ? "up" : "down" } });
+    refreshLanMessagesSoon(lanId);
+  }
+  lanPath(lanId);
+}
+
+/** Whether a free spot goes to the next in line by itself, or the orgas pick. Turning it on fills free spots now. */
+export async function setWaitlistAuto(lanId: string, on: boolean) {
+  const me = await requireLanManager(lanId);
+  const l = mustGetLan(lanId);
+  if (l.waitlistAuto === on) return;
+  db.update(lan).set({ waitlistAuto: on }).where(eq(lan.id, lanId)).run();
+  auditLan(l, me.id, "waitlist.auto", { data: { on } });
+  if (on) await promoteFromWaitlist(mustGetLan(lanId));
+  refreshLanMessagesSoon(lanId);
   lanPath(lanId);
 }
 

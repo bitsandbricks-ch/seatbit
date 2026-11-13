@@ -432,11 +432,28 @@ export async function seedDemo({ force = false, discord = false } = {}) {
       lea: { status: "going", ticket: true, seat: "B3" },
       nina: { status: "going", ticket: false },
       rafael: { status: "going", ticket: true, seat: "A1" },
+      // The hut is full (12 spots): late answers queue up on the waitlist, in this order.
+      david: { status: "going", ticket: true },
+      finn: { status: "going", ticket: true },
+      gina: { status: "going", ticket: false },
+      marco: { status: "going", ticket: true },
+      yannick: { status: "going", ticket: false },
+      jonas: { status: "waitlist" },
+      sara: { status: "waitlist" },
+      paula: { status: "waitlist" },
     };
+    const mmLine = ["jonas", "sara", "paula"];
     const mmOwner = new Map<string, string>();
     for (const [key, a] of Object.entries(mmAtt)) {
+      const place = mmLine.indexOf(key);
       tx.insert(s.attendance)
-        .values({ lanId: events.mountain, userId: ids[key], status: a.status, ticketBought: !!a.ticket })
+        .values({
+          lanId: events.mountain,
+          userId: ids[key],
+          status: a.status,
+          ticketBought: !!a.ticket,
+          waitlistedAt: place >= 0 ? at(-3 + place, 20, 15) : null,
+        })
         .run();
       if (a.seat) mmOwner.set(a.seat, ids[key]);
     }

@@ -131,7 +131,7 @@ export function signupClosed(l: Lan, now = new Date()) {
 
 /**
  * Sets a user's attendance. "going" turns into "waitlist" when the LAN is
- * full. Leaving "going" frees the seat and promotes the next waitlisted user.
+ * full. Leaving "going" frees the seat and lets the waitlist move up.
  * Returns the status that was actually stored.
  */
 export async function setAttendance(
@@ -148,13 +148,16 @@ export async function setAttendance(
 
   let status = requested;
   if (status === "going" && existing?.status !== "going" && !opts.force) {
-    if (l.capacity != null && goingCount(l.id) >= l.capacity) status = "waitlist";
+    // Nobody jumps the line: with people waiting, a new "coming" queues up behind them.
+    if (l.capacity != null && (goingCount(l.id) >= l.capacity || waitlistOf(l.id).length > 0)) status = "waitlist";
   }
+  // Joining the waitlist puts you at the end; staying on it keeps your place.
+  const waitlistedAt = status === "waitlist" ? (existing?.status === "waitlist" ? existing.waitlistedAt : new Date()) : null;
 
   if (existing) {
-    db.update(attendance).set({ status }).where(eq(attendance.id, existing.id)).run();
+    db.update(attendance).set({ status, waitlistedAt }).where(eq(attendance.id, existing.id)).run();
   } else {
-    db.insert(attendance).values({ lanId: l.id, userId, status }).run();
+    db.insert(attendance).values({ lanId: l.id, userId, status, waitlistedAt }).run();
   }
 
   if (existing?.status === "going" && status !== "going") {
@@ -162,36 +165,95 @@ export async function setAttendance(
       .set({ userId: null })
       .where(and(eq(seat.lanId, l.id), eq(seat.userId, userId)))
       .run();
-    await promoteFromWaitlist(l);
+    await spotOpened(l);
   }
   // Keep the attendee list on Discord announcements current.
   void import("./discord").then((d) => d.refreshLanMessagesSoon(l.id)).catch(() => {});
   return status;
 }
 
-/** Moves waitlisted users to "going" while there is room, oldest first. */
-export async function promoteFromWaitlist(l: Lan) {
-  if (l.capacity == null) return;
-  let free = l.capacity - goingCount(l.id);
-  if (free <= 0) return;
-  const waiting = db
-    .select({ a: attendance, u: user })
+/** Waitlisted rows of a LAN, first in line first. */
+export function waitlistOf(lanId: string) {
+  return db
+    .select()
     .from(attendance)
-    .innerJoin(user, eq(user.id, attendance.userId))
-    .where(and(eq(attendance.lanId, l.id), eq(attendance.status, "waitlist")))
-    .orderBy(asc(attendance.createdAt))
+    .where(and(eq(attendance.lanId, lanId), eq(attendance.status, "waitlist")))
+    .orderBy(asc(attendance.waitlistedAt), asc(attendance.createdAt))
     .all();
-  for (const { a, u } of waiting) {
-    if (free <= 0) break;
-    db.update(attendance).set({ status: "going" }).where(eq(attendance.id, a.id)).run();
-    free--;
-    if (!l.publishedAt) continue; // drafts tell nobody
-    await notify(u, {
-      kind: "waitlistPromoted",
-      ...renderTemplate("waitlistPromoted", eventMailVars(l, u)),
-      url: `${appUrl}/lans/${l.id}`,
+}
+
+/** userId -> place on the waitlist (1 = next to move up). */
+export function waitlistPositions(lanId: string) {
+  return new Map(waitlistOf(lanId).map((a, i) => [a.userId, i + 1]));
+}
+
+/** Free spots in the group's block; null when the event has no limit. */
+export function freeSpots(l: Lan) {
+  return l.capacity == null ? null : Math.max(0, l.capacity - goingCount(l.id));
+}
+
+/** Someone left "coming": move the waitlist up, or tell the orgas when they pick by hand. */
+async function spotOpened(l: Lan) {
+  if (l.waitlistAuto) return promoteFromWaitlist(l);
+  const waiting = waitlistOf(l.id).length;
+  const free = freeSpots(l);
+  if (!l.publishedAt || !waiting || !free) return;
+  const orgas = db.select({ userId: schema.lanOrga.userId }).from(schema.lanOrga).where(eq(schema.lanOrga.lanId, l.id)).all();
+  for (const o of orgas) {
+    await notify(o.userId, {
+      kind: "waitlist_spot",
+      subject: `A spot opened at ${l.name}`,
+      text: `${free === 1 ? "A spot is" : `${free} spots are`} free at ${l.name} and ${waiting} ${waiting === 1 ? "person is" : "people are"} on the waitlist. You move people up by hand for this event: pick who gets the spot.\n\n${appUrl}/lans/${l.id}/manage?tab=attendees`,
+      url: `${appUrl}/lans/${l.id}/manage?tab=attendees`,
     }).catch((e) => console.error("[notify] failed", e));
   }
+}
+
+/**
+ * Moves people from the waitlist to "going" while there is room, first in line first.
+ * Only when the event moves people up by itself (waitlistAuto).
+ */
+export async function promoteFromWaitlist(l: Lan) {
+  if (l.capacity == null || !l.waitlistAuto) return;
+  let free = l.capacity - goingCount(l.id);
+  for (const a of waitlistOf(l.id)) {
+    if (free <= 0) break;
+    await moveUp(l, a.userId);
+    free--;
+  }
+}
+
+/** Moves one person from the waitlist to coming and tells them. Orgas may do this over the limit. */
+export async function moveUp(l: Lan, userId: string) {
+  const res = db
+    .update(attendance)
+    .set({ status: "going", waitlistedAt: null })
+    .where(and(eq(attendance.lanId, l.id), eq(attendance.userId, userId), eq(attendance.status, "waitlist")))
+    .run();
+  if (!res.changes || !l.publishedAt) return; // drafts tell nobody
+  const u = db.select().from(user).where(eq(user.id, userId)).get();
+  if (!u) return;
+  await notify(u, {
+    kind: "waitlistPromoted",
+    ...renderTemplate("waitlistPromoted", eventMailVars(l, u)),
+    url: `${appUrl}/lans/${l.id}`,
+  }).catch((e) => console.error("[notify] failed", e));
+}
+
+/** Swaps a waitlisted person with the one before (-1) or after (+1) them. */
+export function reorderWaitlist(lanId: string, userId: string, dir: -1 | 1) {
+  const line = waitlistOf(lanId);
+  const i = line.findIndex((a) => a.userId === userId);
+  const j = i + dir;
+  if (i < 0 || j < 0 || j >= line.length) return false;
+  // Renumber the whole line so equal or missing timestamps can't stall a swap.
+  const order = line.map((a) => a.id);
+  [order[i], order[j]] = [order[j], order[i]];
+  const base = Math.min(...line.map((a) => (a.waitlistedAt ?? a.createdAt).getTime()));
+  db.transaction((tx) => {
+    order.forEach((id, k) => tx.update(attendance).set({ waitlistedAt: new Date(base + k) }).where(eq(attendance.id, id)).run());
+  });
+  return true;
 }
 
 export function getLan(id: string) {

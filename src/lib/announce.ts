@@ -60,7 +60,11 @@ export async function lanSummary(l: Lan): Promise<LanSummary> {
     booked: seatedRows.filter((r) => r.seatBooked).length,
     going: withName("going").sort((a, b) => a.name.localeCompare(b.name)),
     maybe: withName("maybe").sort((a, b) => a.name.localeCompare(b.name)),
-    waitlist: withName("waitlist"),
+    // In line order, so the post shows who's next.
+    waitlist: rows
+      .filter((r) => r.status === "waitlist")
+      .sort((a, b) => +(a.waitlistedAt ?? a.createdAt) - +(b.waitlistedAt ?? b.createdAt) || +a.createdAt - +b.createdAt)
+      .map((r) => ({ userId: r.userId, name: names.get(r.userId) ?? "?" })),
     undecided: members.filter((m) => {
       const a = byUser.get(m.id);
       return !a || a.status === "maybe";
