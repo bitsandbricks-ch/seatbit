@@ -24,7 +24,7 @@ A value saved in the platform settings wins over the environment variable. Clear
 | Admin emails (become platform owner on sign-up) | `ADMIN_EMAILS` | |
 | Trusted proxies: IP ranges (CIDR) of your reverse proxy, so the login rate limit sees the visitor's address ([more](security.md#reverse-proxy)) | `TRUSTED_PROXIES` | private ranges (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, loopback, `fc00::/7`) |
 | Default language (`en` or `de`): for browsers that want neither, mails to people without a choice and clans without their own Discord language | `DEFAULT_LOCALE` | `en` |
-| Currency for food orders (also the default for new clan charges) | `FOOD_CURRENCY` | `CHF` |
+| Currency for food orders and shared costs (also the default for new clan charges) | `FOOD_CURRENCY` | `CHF` |
 | Clan payments: clans can track dues, ticket money and who paid ([more](../features/payments.md)) | `CLAN_PAYMENTS` | `true` |
 | **Email** | | |
 | SMTP host, port, encryption | `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURITY` | –, `587`, `starttls` |

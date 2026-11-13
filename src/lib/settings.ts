@@ -39,7 +39,7 @@ export interface SettingDef {
 }
 
 export const SETTING_GROUPS = {
-  general: { title: "General", help: "Who can sign up, who is a global admin, and the currency for food orders." },
+  general: { title: "General", help: "Who can sign up, who is a global admin, and the currency for food orders and shared costs." },
   mail: {
     title: "Email (SMTP relay)",
     help: "Used for reminders and password resets. Without a host, mails are only printed to the server log.",
@@ -300,12 +300,12 @@ export const SETTINGS: SettingDef[] = [
   {
     key: "food.currency",
     group: "general",
-    label: "Currency for food orders",
+    label: "Currency for food orders and shared costs",
     kind: "text",
     env: "FOOD_CURRENCY",
     default: "CHF",
     placeholder: "CHF",
-    help: "Shown next to prices on the Food tab, e.g. CHF or EUR.",
+    help: "Shown next to prices on the Food and Costs tabs, e.g. CHF or EUR.",
     validate: (v) => (/^[^\s]{1,5}$/.test(v) ? null : "1 to 5 characters, e.g. CHF, EUR or €"),
   },
 

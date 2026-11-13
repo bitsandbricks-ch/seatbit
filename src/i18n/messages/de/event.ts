@@ -19,6 +19,8 @@ export const event: Messages["event"] = {
     gear: "Packliste",
     games: "Games",
     food: "Essen",
+    costs: "Kosten",
+    owe: "{amount} offen",
     pickYours: "wähl deinen",
     seatPicked: "{seat} gewählt",
     looking: { one: "{count} sucht", other: "{count} suchen" },
