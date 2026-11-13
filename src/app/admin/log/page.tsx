@@ -1,8 +1,7 @@
-import Link from "next/link";
 import { asc } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { AuditLog, auditQuery, parseAuditFilter } from "@/components/audit-log";
-import { Card, Page, PageHeader, btnSecondary } from "@/components/ui";
+import { Card, Page, PageHeader } from "@/components/ui";
 import { auditEntries } from "@/lib/audit";
 import { requirePlatform } from "@/lib/session";
 import { getT } from "@/i18n/server";
@@ -21,18 +20,8 @@ export default async function AdminLogPage({ searchParams }: PageProps<"/admin/l
   return (
     <Page>
       <PageHeader
-        eyebrow={
-          <Link href="/admin" className="hover:text-fg">
-            {t("adminLog.platformAdmin")}
-          </Link>
-        }
         title={t("clanHeader.log")}
         subtitle={t("adminLog.subtitle")}
-        actions={
-          <Link href="/admin" className={btnSecondary}>
-            {t("adminLog.back")}
-          </Link>
-        }
       />
       <Card>
         <AuditLog

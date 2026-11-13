@@ -1,0 +1,41 @@
+import type { Messages } from "../en";
+
+export const lanForm: Messages["lanForm"] = {
+  moved: { end: "Ende", answerBy: "Antworten bis", ticketBy: "Ticket bis", text: "{what} mit dem Beginn verschoben." },
+  interest: "Mit einer Interessensabfrage starten",
+  interestHint:
+    "Mitglieder sagen zuerst nur, ob sie kommen würden, vor Anmeldung, Tickets und Plätzen. Das Datum kann offen bleiben. Du öffnest die Anmeldung, wenn ihr entschieden habt.",
+  interestOn: "Dieses Event ist in der Interessensabfrage. Beende sie mit «Anmeldung öffnen» oben auf der Seite.",
+  interestLocked: "Die Anmeldung ist offen und Mitglieder haben geantwortet, darum geht es nicht zurück zur Interessensabfrage.",
+  tbd: "Datum noch nicht fix",
+  tbdHint: "Setz es, bevor du die Anmeldung öffnest.",
+  type: "LAN-Typ",
+  typeHint: "Die Nicks der Mitglieder für diesen Typ gelten für jedes Event davon.",
+  typeNone: "Keiner (einmalig)",
+  name: "Event-Name",
+  namePlaceholder: "z. B. Winter-LAN 2026",
+  location: "Ort",
+  website: "Event-Website",
+  plan: "Sitzplan des Events",
+  planHint:
+    "Wo die Leads die Plätze der Gruppe auf der Seite des Events buchen (z. B. der lal.gg-Sitzplan). Der Link ändert jedes Jahr, also setz ihn pro Event.",
+  profile: "Link zum Mitgliederprofil",
+  profileHint: "Das Profil eines Mitglieds auf der Event-Seite, mit {id} dort, wo die LAN-ID hinkommt. Leer nimmt den Link des LAN-Typs.",
+  rough: "Ungefähres Datum",
+  roughHint: "Optional, wird statt des Datums gezeigt, z. B. «Frühling 2027» oder «meist im März».",
+  roughPlaceholder: "z. B. Frühling 2027",
+  startsHint: "Tippe oder füg ein, z. B. 14.11.2026 18:00, oder öffne den Kalender. Die anderen Daten folgen.",
+  ends: "Ende",
+  answerHint:
+    "Bis wann Mitglieder sagen müssen, ob sie kommen, z. B. bevor du die Plätze der Gruppe buchst. Unentschlossene bekommen eine Erinnerung.",
+  ticketHint: "Teilnehmende ohne Ticket bekommen vorher eine Erinnerung.",
+  price: "Ticketpreis",
+  pricePlaceholder: "z. B. 25 CHF",
+  spots: "Plätze der Gruppe",
+  spotsHint: "Wie viele Plätze/Tickets die Gruppe hat. Leer = unbegrenzt. Weitere Anmeldungen kommen auf die Warteliste.",
+  remindDays: "Erinnern Tage vor der Frist",
+  description: "Beschreibung",
+  saveChanges: "Änderungen speichern",
+  saveDraft: "Als Entwurf speichern",
+  noDeadline: "Keine Frist",
+};

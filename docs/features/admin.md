@@ -22,17 +22,20 @@ The first account is always owner, as is anyone in the **Admin emails** setting.
 
 ## Admin page
 
-| Section | |
+Every admin page has the same tab bar at the top, so you can switch between sections from anywhere. It only shows the tabs your platform role may open; *Reports* shows how many are open.
+
+| Tab | |
 | --- | --- |
-| **Clans, events, users** | Everything on the instance. Give platform roles and suspend users or clans from the lists. Deleted accounts only show as a count. |
+| **Overview** | Everything on the instance. Give platform roles and suspend users or clans from the lists. Deleted accounts only show as a count. |
 | **Reports** | Abuse reports from members. See [Reports and suspensions](moderation.md). |
 | **Usage** | Accounts, active people, clans and events over time. All platform staff. See [Usage](#usage). |
 | **Backups** | Database backups: schedule, back up now, download. Owners only. See [Backups](../installation/operations.md#backups). |
 | **Health** | Version, database, mail, Discord and background jobs at a glance. All platform staff. See [Health](#health). |
 | **Audit log** | Every clan's log plus platform changes. See [Audit log](audit-log.md#platform-audit-log). |
-| **Platform settings** | Instance configuration, see below. Owners and admins only. |
+| **Donations** | Donations received, when donations are on. Owners only. See [Donations](donations.md). |
+| **Settings** | Platform settings: instance configuration, see below. Owners and admins only. |
 
-A moderator sees the same page without the settings, and support without any buttons:
+A moderator sees the same tabs without the settings, and support without any buttons:
 
 ![Admin page of a moderator](../screenshots/desktop-admin-moderator.png){ .shot }
 

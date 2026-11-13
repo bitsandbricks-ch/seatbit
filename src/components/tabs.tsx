@@ -24,14 +24,17 @@ export function Tabs({
   active,
   hrefFor,
   label = "Sections",
+  sticky = true,
 }: {
   tabs: Tab[];
   active: string;
   hrefFor: (id: string) => string;
   label?: string;
+  /** Off for a second bar above a page's own sticky tabs (platform admin). */
+  sticky?: boolean;
 }) {
   return (
-    <div className="sticky top-14 z-20 -mx-4 border-b border-line bg-ink/95 backdrop-blur sm:-mx-6">
+    <div className={`${sticky ? "sticky top-14 z-20 bg-ink/95 backdrop-blur" : ""} -mx-4 border-b border-line sm:-mx-6`}>
       <nav aria-label={label} className="scroll-fade-x overflow-x-auto px-4 sm:px-6">
         <ul className="flex min-w-max gap-6 pr-8">
           {tabs.map((t) => {

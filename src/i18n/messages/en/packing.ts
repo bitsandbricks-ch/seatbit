@@ -1,0 +1,22 @@
+export const packing = {
+  title: "Your packing list",
+  intro: "Only you see this. Add your own things and tick them off as you pack.",
+  remove: "Remove {item}",
+  placeholder: "Add an item, e.g. controller",
+  newItem: "New item",
+  add: "Add",
+  items: {
+    pc: "PC or laptop",
+    screen: "Screen",
+    power: "Power cables",
+    keyboard: "Keyboard",
+    mouse: "Mouse and mouse pad",
+    headset: "Headset",
+    lancable: "LAN cable",
+    powerstrip: "Power strip",
+    ticket: "Ticket and ID",
+    sleep: "Sleeping bag and mat",
+    toiletries: "Toiletries",
+    snacks: "Snacks and drinks",
+  },
+};

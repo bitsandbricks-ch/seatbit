@@ -1,0 +1,25 @@
+export const missingSteps = {
+  title: {
+    interest: "No answer to the interest check",
+    answer: "No answer yet",
+    unsure: "Still unsure",
+    ticket: "No ticket yet",
+    nick: "No nickname",
+    seat: "Hasn't picked a seat",
+    confirm: "Ticket to confirm",
+    assign: "No seat assigned",
+    book: "Seat not booked on the event site",
+  },
+  hint: {
+    interest: "Haven't said if they'd come. The nudge asks yes, maybe or no (with buttons in the DM).",
+    answer: "Clan members who haven't answered at all. The nudge asks coming, unsure or not coming.",
+    unsure: "Said unsure. The nudge asks if they know yet.",
+    ticket: "Coming, but haven't ticked that they have a ticket. The nudge links the ticket shop and the deadline.",
+    nick: "Coming without a nickname for the seat plan.",
+    seat: "Self pick is on and they have a ticket, but no seat yet.",
+    book: "Have a final seat, but no lead ticked it as booked on the event's seat plan yet.",
+    confirm: "Said they bought a ticket. Check it and confirm it.",
+    assign: "Coming, but without a seat in the group's block.",
+  },
+  fix: { confirm: "Confirm on the Attendees tab", assign: "Assign on the Seats tab", book: "Book on the Seats tab" },
+};
