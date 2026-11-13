@@ -49,3 +49,8 @@ next-env.d.ts
 
 # Python (MkDocs hooks)
 __pycache__/
+
+# end-to-end tests (Playwright)
+/test-results/
+/playwright-report/
+/blob-report/

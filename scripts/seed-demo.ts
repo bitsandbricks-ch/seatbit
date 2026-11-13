@@ -617,6 +617,19 @@ export async function seedDemo({ force = false, discord = false } = {}) {
       .values({ lanId: events.lakeside, fromUserId: ids.lea, toUserId: ids.ben, amountCents: 1600, createdBy: ids.ben, createdAt: at(-1, 9) })
       .run();
 
+    // Emergency info (made-up contacts): most of the Lakeside crowd filled it in, a few with dietary needs.
+    const emergency: [string, string, string, string][] = [
+      ["alex", "Petra Brunner (mother)", "+41 79 000 00 01", ""],
+      ["anna", "Lukas Frei (brother)", "+41 79 000 00 02", "Vegetarian"],
+      ["ben", "Sandra Huber", "+41 79 000 00 03", ""],
+      ["chiara", "Marco Rossi (father)", "+41 79 000 00 04", "Nut allergy, carries an EpiPen"],
+      ["lea", "Tom Fischer", "+41 79 000 00 05", "Lactose intolerant"],
+      ["marco", "", "", "No pork"],
+      ["nina", "Eva Wolf (partner)", "+41 79 000 00 06", ""],
+    ];
+    for (const [key, contactName, contactPhone, diet] of emergency)
+      tx.insert(s.emergencyInfo).values({ userId: ids[key], contactName, contactPhone, diet }).run();
+
     // Clan payments: yearly dues, the ticket money for the Lakeside LAN, and last year's server (settled).
     tx.insert(s.charge)
       .values([

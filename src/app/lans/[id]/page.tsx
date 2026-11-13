@@ -13,7 +13,7 @@ import { getLanAccounts } from "@/lib/lan-accounts";
 import { SeatMap } from "@/components/seat-map";
 import { Avatar } from "@/components/avatar";
 import { getAvatars, type AvatarData } from "@/lib/avatars";
-import { Card, Columns, LockedAnswerBadge, Page, Pill, StatusBadge, Verified } from "@/components/ui";
+import { Card, Columns, LockedAnswerBadge, Notice, Page, Pill, StatusBadge, Verified } from "@/components/ui";
 import { fmtDate, fmtTime, lanRange, relative } from "@/lib/format";
 import { attendanceLocked, getDisplayNames, getLan, getNames, pickNick, seatView, signupClosed, waitlistPositions } from "@/lib/lans";
 import { canViewLan, getCurrentUser, isLanManager, isProfileComplete } from "@/lib/session";
@@ -38,6 +38,7 @@ import { costPeople, eventCosts } from "@/lib/costs";
 import { fmtAmount } from "@/lib/money";
 import { EventPaymentsCard } from "@/components/clan-payments";
 import { clanPaymentsOn, memberLines } from "@/lib/payments";
+import { canSeeEmergency, dietCount } from "@/lib/emergency";
 import { foodCurrency, isAcceptingItems, listFoodOrders, orderText } from "@/lib/food";
 import { getT } from "@/i18n/server";
 import type { T } from "@/i18n/translate";
@@ -239,7 +240,9 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           .map((it) => ({ id: it.id, label: it.label, packed: it.packed }))
       : [];
 
-  const gameNames = tab === "games" ? Object.fromEntries(await getDisplayNames(id, [...new Set(games.flatMap((g) => g.voters))])) : {};
+  const gamePeople = tab === "games" ? [...new Set(games.flatMap((g) => [...g.voters, ...(g.addedBy ? [g.addedBy] : [])]))] : [];
+  const gameNames = Object.fromEntries(await getDisplayNames(id, gamePeople));
+  const gameAvatars = Object.fromEntries(getAvatars(gamePeople));
 
   // Food orders at the LAN: everyone coming can start one or add to one.
   const foodOrders = listFoodOrders(id);
@@ -254,6 +257,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
         )
       : {};
   const currency = foodCurrency();
+  // Leads only: how many coming noted dietary needs; the details stay on the lead page.
+  const foodDiets = tab === "food" && canSeeEmergency(me, l) ? dietCount(id) : 0;
   const foodViews: FoodOrderCardView[] =
     tab === "food"
       ? foodOrders.map((o) => ({
@@ -487,11 +492,20 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
             canManage={isAdmin}
             canAdd={canTakePart || isAdmin}
             names={gameNames}
+            avatars={gameAvatars}
             reminderDays={GAMES_REMINDER_DAYS}
           />
         </div>
       )}
 
+      {tab === "food" && foodDiets > 0 && (
+        <Notice>
+          {t("emergency.foodHint", { count: foodDiets })}{" "}
+          <Link href={`/lans/${l.id}/manage?tab=emergency`} className="font-medium underline">
+            {t("emergency.foodHintLink")}
+          </Link>
+        </Notice>
+      )}
       {tab === "food" && (
         <FoodOrders
           lanId={l.id}

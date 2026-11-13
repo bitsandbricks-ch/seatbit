@@ -16,4 +16,6 @@ export const games = {
   linkPh: "Store link (optional)",
   link: "Store link",
   add: "Add",
+  addedBy: "Added by {name}",
+  you: "you",
 };

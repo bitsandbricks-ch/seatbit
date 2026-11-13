@@ -115,6 +115,7 @@ nav:
           - Games: features/games.md
           - Food orders: features/food.md
           - Shared costs: features/shared-costs.md
+          - Emergency contact and diet: features/emergency.md
       - Integrations:
           - Discord and WhatsApp: features/discord.md
       - Administration:
@@ -136,12 +137,13 @@ nav:
           - Operator, privacy and terms: installation/legal.md
           - Stripe (payments): installation/stripe.md
       - Operate:
-          - Backups, upgrades and admin CLI: installation/operations.md
+          - Backups, upgrades, metrics and admin CLI: installation/operations.md
           - Security hardening: installation/security.md
   - Development:
       - development/index.md
       - Architecture: development/architecture.md
       - Database and migrations: development/database.md
+      - Tests: development/testing.md
       - Screenshots: development/screenshots.md
       - CI and releases: development/ci.md
   - Contributing:

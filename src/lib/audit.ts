@@ -84,7 +84,7 @@ export function changedFields<T extends Record<string, unknown>>(before: T, afte
 
 export const AUDIT_GROUPS = {
   events: { prefixes: ["event.", "lead.", "news."] },
-  attendance: { prefixes: ["attendance.", "waitlist.", "ticket.", "lanid.", "arrived.", "seatbooked."] },
+  attendance: { prefixes: ["attendance.", "waitlist.", "ticket.", "lanid.", "arrived.", "seatbooked.", "emergency."] },
   seats: { prefixes: ["seat.", "seats.", "swap."] },
   members: { prefixes: ["member.", "invite.", "clan.", "platform.", "account.", "user.", "report."] },
   guests: { prefixes: ["guest."] },
@@ -374,6 +374,8 @@ export function describeAudit(
         return t("audit.chargePaid", { ...v, how });
       }
       return t(d.status === "waived" ? "audit.chargeWaived" : "audit.chargeReopen", v);
+    case "emergency.view":
+      return t("audit.emergencyView", v);
     case "backup.create":
       return t("audit.backupCreate", v);
     case "backup.download":

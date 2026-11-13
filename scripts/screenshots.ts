@@ -188,6 +188,7 @@ const SHOTS: Shot[] = [
   { name: "phone-clan-payments", who: "anna", path: `${CLAN}?tab=payments`, full: true },
   { name: "phone-profile", who: "anna", path: "/profile", full: true },
   { name: "phone-profile-lans", who: "anna", path: "/profile?tab=lans", full: true },
+  { name: "phone-profile-emergency", who: "anna", path: "/profile?tab=emergency" },
   { name: "phone-profile-notifications", who: "anna", path: "/profile?tab=notifications", full: true },
   // German: same pages with a Swiss German browser.
   { name: "phone-event-de", who: "anna", path: LAKESIDE, full: true, lang: "de" },
@@ -220,6 +221,7 @@ const SHOTS: Shot[] = [
   // A lead (Alex) on the phone
   { name: "phone-manage", who: "alex", path: `${LAKESIDE}/manage`, full: true },
   { name: "phone-manage-missing", who: "alex", path: `${LAKESIDE}/manage?tab=missing` },
+  { name: "phone-manage-emergency", who: "alex", path: `${LAKESIDE}/manage?tab=emergency`, full: true },
   { name: "phone-manage-seats", who: "alex", path: `${LAKESIDE}/manage?tab=seats`, act: seat("F12") },
   {
     name: "phone-date-picker",
@@ -252,6 +254,7 @@ const SHOTS: Shot[] = [
   { name: "desktop-manage-attendees", who: "alex", path: `${LAKESIDE}/manage?tab=attendees` },
   { name: "desktop-manage-waitlist", who: "alex", path: `${MOUNTAIN}/manage?tab=attendees` },
   { name: "desktop-manage-missing", who: "alex", path: `${LAKESIDE}/manage?tab=missing`, full: true },
+  { name: "desktop-manage-emergency", who: "alex", path: `${LAKESIDE}/manage?tab=emergency` },
   { name: "desktop-manage-seats", who: "alex", path: `${LAKESIDE}/manage?tab=seats`, act: seat("F12") },
   { name: "desktop-manage-chat", who: "alex", path: `${LAKESIDE}/manage?tab=chat` },
   { name: "desktop-manage-settings", who: "alex", path: `${LAKESIDE}/manage?tab=settings`, full: true },
@@ -507,6 +510,7 @@ function createSessions(dbFile: string, who: string[]) {
 function demoBackups(dbFile: string, dir: string) {
   fs.mkdirSync(dir, { recursive: true });
   const p2 = (n: number) => String(n).padStart(2, "0");
+  let newest: { name: string; at: Date } | undefined;
   for (let i = 0; i < 7; i++) {
     const d = new Date(Date.parse(NOW) - i * 86400_000);
     d.setUTCHours(2, 30, 0, 0);
@@ -514,7 +518,16 @@ function demoBackups(dbFile: string, dir: string) {
     const file = path.join(dir, name);
     fs.copyFileSync(dbFile, file);
     fs.utimesSync(file, d, d);
+    newest ??= { name, at: d };
   }
+  // A passed restore test of the newest one (as src/lib/backup-drill.ts stores it), so the scheduler
+  // doesn't run one while the shots are taken and the card shows fixed values.
+  const sqlite = new Database(dbFile);
+  const rows = (sqlite.prepare("SELECT count(*) AS n FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '__drizzle%'").get() as { n: number }).n;
+  const at = new Date(newest!.at.getTime() + 60_000).toISOString();
+  const result = { name: newest!.name, at, backupAt: newest!.at.toISOString(), ok: true, ms: 84, migrated: 0, tables: rows, rows: 812, liveRows: 812 };
+  sqlite.prepare("INSERT OR REPLACE INTO app_setting (key, value, encrypted, updated_at) VALUES ('state.backup.drill', ?, 0, ?)").run(JSON.stringify(result), Date.now());
+  sqlite.close();
 }
 
 function run(cmd: string, args: string[], env: NodeJS.ProcessEnv, quiet = false) {

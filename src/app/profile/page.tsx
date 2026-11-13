@@ -27,6 +27,8 @@ import { profileLink } from "@/lib/profile-link";
 import { getT } from "@/i18n/server";
 import type { T } from "@/i18n/translate";
 import { LanguageSelect } from "@/components/language-switch";
+import { EmergencyForm } from "@/components/emergency-form";
+import { getEmergencyInfo } from "@/lib/emergency";
 
 const DM_RESULTS = ["ok", "dms_off", "guest", "bot_not_set_up", "no_discord", "cant_dm", "error"] as const;
 
@@ -62,6 +64,7 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
     { id: "look", label: t("profile.tabs.look") },
     ...(types.length > 0 ? [{ id: "lans", label: t("profile.tabs.lans") }] : []),
     { id: "socials", label: t("profile.tabs.socials") },
+    { id: "emergency", label: t("emergency.tab") },
     { id: "notifications", label: t("profile.tabs.notifications") },
     { id: "data", label: t("profile.tabs.data") },
   ];
@@ -154,6 +157,16 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
           <p className="mb-4 text-sm text-muted">{t("profile.socialsIntro")}</p>
           <SocialsForm values={me.socials ?? {}} />
         </Card>
+      )}
+
+      {tab === "emergency" && (
+        <Columns>
+          <Card title={t("emergency.title")}>
+            <p className="mb-4 text-sm text-muted">{t("emergency.intro")}</p>
+            <EmergencyForm values={getEmergencyInfo(me.id)} />
+            <p className="mt-4 border-t border-line pt-3 text-xs text-faint">{t("emergency.privacy")}</p>
+          </Card>
+        </Columns>
       )}
 
       {tab === "notifications" && (

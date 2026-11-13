@@ -22,7 +22,9 @@ Seatbit is a small open-source project. Bug reports, ideas, docs fixes and code 
     npm run check:mail      # mail sent outside the template helpers
     npm run check:changelog # changelog entries
     npm run typecheck
+    npm test                # unit tests
     npm run build
+    npm run test:e2e        # end-to-end tests, after the build
     mkdocs build --strict   # when you touched docs/ or mkdocs.yml
     ```
 4. **Open a draft pull request.** Fill in the template: what and why, linked issue, screenshots for UI changes (phone and desktop), the checklist.

@@ -15,7 +15,9 @@ A self-hostable web app that helps a clan coordinate going to LAN parties run by
    - `npm run check:mail` (mail sent outside the template helpers)
    - `npm run check:changelog` (changelog entries)
    - `npm run typecheck`
+   - `npm test` (unit tests)
    - `npm run build`
+   - `npm run test:e2e` (end-to-end tests, after the build; `npx playwright install chromium` once)
    - `mkdocs build --strict` when you touched `docs/` or `mkdocs.yml` (`pip install -r docs/requirements.txt`)
 3. **Pull request:** open it as a **draft**. Fill in the template (`.github/pull_request_template.md`): what and why, screenshots for UI changes, the checklist. Link the issue.
 4. **CI:** wait for the checks (`CI`, `Docs`, `Container image`). Fix failures yourself; never skip, disable or weaken a check or test to get green.
@@ -39,6 +41,7 @@ A self-hostable web app that helps a clan coordinate going to LAN parties run by
 - **People** are shown via `personLabel` (`src/lib/names.ts`): Name "Nick" Surname by default, or the clan's name display on member-facing pages (`getNames(...).label`, `getDisplayNames`). Clan lead views follow it too and show the full name small below (`full`); logs, exports, mails and the admin page keep the full name. Real accounts (not guests) get `<Verified />`.
 - **No secrets** in code, commits, screenshots, logs or docs. Use example values (`example.com`, `1234567890123456789`).
 - Write short comments that explain why, not what.
+- **Tests:** a new or changed core flow (answering, tickets, seats, payments, permissions) gets an end-to-end test in `e2e/` with its own data (`createEvent`, `as("anna")` from `e2e/fixtures.ts`); a bug fixed in a pure helper gets a unit test next to it (`*.test.ts`). Never skip or loosen a test to get green. See `docs/development/testing.md`.
 
 ## Docs and screenshots
 

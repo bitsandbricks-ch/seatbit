@@ -144,6 +144,7 @@ export async function deleteAccount(userId: string) {
     tx.delete(schema.reminderLog).where(eq(schema.reminderLog.userId, userId)).run();
     tx.delete(schema.userActivity).where(eq(schema.userActivity.userId, userId)).run();
     tx.delete(schema.guestClaim).where(eq(schema.guestClaim.userId, userId)).run();
+    tx.delete(schema.emergencyInfo).where(eq(schema.emergencyInfo.userId, userId)).run();
     tx.update(schema.foodItem).set({ note: "" }).where(eq(schema.foodItem.userId, userId)).run();
     tx.update(schema.lanTask).set({ assigneeId: null }).where(eq(schema.lanTask.assigneeId, userId)).run();
     tx.update(schema.clanInvite).set({ createdBy: null }).where(eq(schema.clanInvite.createdBy, userId)).run();
@@ -298,6 +299,10 @@ export function exportUserData(userId: string) {
       createdAt: me.createdAt,
       updatedAt: me.updatedAt,
     },
+    emergencyInfo: (() => {
+      const e = db.select().from(schema.emergencyInfo).where(eq(schema.emergencyInfo.userId, me.id)).get();
+      return e ? { contactName: e.contactName, contactPhone: e.contactPhone, dietaryNeeds: e.diet, updatedAt: e.updatedAt } : null;
+    })(),
     reportsFiled: db
       .select()
       .from(schema.report)
