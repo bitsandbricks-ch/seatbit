@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useState } from "react";
-import { btnSecondary } from "./ui";
 
 const TEXT = {
   share: "Share",
@@ -38,10 +37,19 @@ export function ShareButton({ url, title, text }: { url: string; title: string; 
 
   return (
     <>
-      <button type="button" onClick={share} className={btnSecondary} aria-label={TEXT.shareLabel} title={TEXT.shareLabel}>
-        <ShareIcon />
-        <span>{TEXT.share}</span>
-      </button>
+      {/* Same frame and height as the View / Manage switch next to it. */}
+      <div className="inline-flex rounded-lg border border-line bg-raised p-1">
+        <button
+          type="button"
+          onClick={share}
+          aria-label={TEXT.shareLabel}
+          title={TEXT.shareLabel}
+          className="inline-flex min-h-10 items-center gap-1.5 rounded-md px-3.5 text-sm font-medium text-muted transition hover:bg-surface hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bit"
+        >
+          <ShareIcon />
+          <span>{TEXT.share}</span>
+        </button>
+      </div>
       <div
         role="status"
         aria-live="polite"
