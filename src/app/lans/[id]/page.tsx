@@ -10,7 +10,7 @@ import { getLanAccounts } from "@/lib/lan-accounts";
 import { SeatMap } from "@/components/seat-map";
 import { Avatar } from "@/components/avatar";
 import { getAvatars, type AvatarData } from "@/lib/avatars";
-import { Card, Columns, Page, Pill, StatusBadge, Verified } from "@/components/ui";
+import { Card, Columns, LockedAnswerBadge, Page, Pill, StatusBadge, Verified } from "@/components/ui";
 import { fmtDate, fmtTime, relative } from "@/lib/format";
 import { ATTENDANCE_LOCKED_MSG, attendanceLocked, getDisplayNames, getLan, getNames, pickNick, seatView, signupClosed, waitlistPositions } from "@/lib/lans";
 import { canViewLan, isLanManager, requireUser } from "@/lib/session";
@@ -285,13 +285,18 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
     </Card>
   );
 
+  const showChecklist = !!my && my.status !== "declined" && !l.cancelledAt && !l.interestCheck;
+  // A locked answer can't be changed here, so it shrinks to a badge in the checklist and frees the space.
+  // The full card stays for the waitlist place and the check-in on the day.
+  const compactAnswer = showChecklist && locked && (my.status === "going" || my.status === "maybe") && !atTheVenue;
+
   return (
     <Page>
       <EventHeader lan={l} clan={lanClan} mode="view" canManage={isAdmin} tab={tab} />
 
       {/* Your answer and your checklist sit above the tabs, so they show on every tab. */}
-      <div className={`grid items-stretch gap-4 ${my && my.status !== "declined" && !l.cancelledAt && !l.interestCheck ? "lg:grid-cols-[20rem_minmax(0,1fr)] 2xl:grid-cols-[22rem_minmax(0,1fr)]" : ""}`}>
-        {l.interestCheck && !l.cancelledAt ? (
+      <div className={`grid items-stretch gap-4 ${showChecklist && !compactAnswer ? "lg:grid-cols-[20rem_minmax(0,1fr)] 2xl:grid-cols-[22rem_minmax(0,1fr)]" : ""}`}>
+        {compactAnswer ? null : l.interestCheck && !l.cancelledAt ? (
         <section aria-label="Would you come?" className="rounded-card border border-line bg-surface p-3 sm:p-4">
           <h2 className="mb-1 text-sm font-semibold text-fg">Would you come?</h2>
           <p className="mb-3 text-sm text-muted">Not binding: it helps the leads decide. You can sign up properly later.</p>
@@ -336,9 +341,10 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           )}
         </section>
         )}
-        {my && my.status !== "declined" && !l.cancelledAt && !l.interestCheck && (
+        {showChecklist && (
           <LanChecklist
             variant="strip"
+            answer={compactAnswer && <LockedAnswerBadge status={my.status} note={ATTENDANCE_LOCKED_MSG} />}
             lanId={l.id}
             steps={steps}
             ticketBought={my.ticketBought}

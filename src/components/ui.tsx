@@ -74,6 +74,29 @@ export function StatusBadge({
   );
 }
 
+/**
+ * A locked answer (the member has a ticket) as a small badge instead of the big answer card.
+ * Tapping it shows who can still change it; <details> keeps it working without client JS.
+ */
+export function LockedAnswerBadge({ status, note }: { status: AttendanceStatus; note: string }) {
+  const label = { going: "Coming", maybe: "Unsure", waitlist: "Waitlist", declined: "Not coming" }[status];
+  return (
+    <details className="relative shrink-0">
+      <summary
+        className={`inline-flex cursor-pointer list-none items-center gap-1 whitespace-nowrap rounded-full border px-2 py-0.5 text-xs font-medium [&::-webkit-details-marker]:hidden ${statusStyles[status]}`}
+        title={note}
+      >
+        <svg viewBox="0 0 16 16" width={12} height={12} aria-hidden className="shrink-0">
+          <path fill="currentColor" d="M4.5 7V5a3.5 3.5 0 0 1 7 0v2h.5A1 1 0 0 1 13 8v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1zm1.5 0h4V5a2 2 0 0 0-4 0z" />
+        </svg>
+        {label}
+        <span className="sr-only">, locked</span>
+      </summary>
+      <p className="absolute left-0 top-full z-20 mt-1.5 w-64 rounded-md border border-line bg-raised p-2.5 text-xs text-fg shadow-lg">{note}</p>
+    </details>
+  );
+}
+
 export function Pill({ children, tone = "zinc" }: { children: ReactNode; tone?: "zinc" | "red" | "emerald" | "amber" }) {
   const tones = {
     zinc: "bg-raised text-fg/90",

@@ -1,5 +1,6 @@
 "use client";
 import { progress, type ChecklistStep } from "@/lib/checklist";
+import type { ReactNode } from "react";
 import { TicketConfirm } from "./ticket-confirm";
 
 export function LanChecklist({
@@ -8,6 +9,7 @@ export function LanChecklist({
   ticketBought,
   canReportTicket,
   variant = "list",
+  answer,
 }: {
   lanId: string;
   steps: ChecklistStep[];
@@ -15,9 +17,11 @@ export function LanChecklist({
   canReportTicket: boolean;
   /** list: stacked (sidebar). strip: compact row above the event tabs, shown on every tab. */
   variant?: "list" | "strip";
+  /** strip only: a compact answer badge next to the title, used once the answer is locked. */
+  answer?: ReactNode;
 }) {
   const { done, total } = progress(steps);
-  if (variant === "strip") return <ChecklistStrip lanId={lanId} steps={steps} done={done} total={total} ticketBought={ticketBought} canReportTicket={canReportTicket} />;
+  if (variant === "strip") return <ChecklistStrip lanId={lanId} steps={steps} done={done} total={total} ticketBought={ticketBought} canReportTicket={canReportTicket} answer={answer} />;
   return (
     <div className="space-y-4">
       <div className="h-1.5 overflow-hidden rounded-full bg-raised">
@@ -79,9 +83,11 @@ function ChecklistStrip({
   total,
   ticketBought,
   canReportTicket,
+  answer,
 }: {
   lanId: string;
   steps: ChecklistStep[];
+  answer?: ReactNode;
   done: number;
   total: number;
   ticketBought: boolean;
@@ -93,6 +99,7 @@ function ChecklistStrip({
     <section aria-label="Your checklist" className="rounded-card border border-line bg-surface p-3 sm:p-4">
       <div className="mb-3 flex items-center gap-3">
         <h2 className="text-sm font-semibold text-fg">Your checklist</h2>
+        {answer}
         <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-raised">
           <div className="h-full bg-bit transition-all" style={{ width: `${total ? (done / total) * 100 : 0}%` }} />
         </div>
