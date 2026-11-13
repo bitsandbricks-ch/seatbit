@@ -8,10 +8,13 @@ import { SignOutButton } from "./sign-out-button";
 import { Avatar } from "./avatar";
 import { avatarData } from "@/lib/avatars";
 import { getT } from "@/i18n/server";
+import { getTheme } from "@/lib/theme-server";
+import { DisplayMenu } from "./display-menu";
 
 export async function Header() {
   const me = await getCurrentUser();
   const t = await getT();
+  const theme = await getTheme();
   const nick = me
     ? db
         .select({ nick: schema.nickname.nick })
@@ -34,10 +37,13 @@ export async function Header() {
         <div className="mx-auto flex h-14 max-w-7xl items-center gap-6 px-4 sm:px-6">
           <Link href="/" className="flex shrink-0 items-center" aria-label={t("nav.home")}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/seatbit-logo.svg" alt="Seatbit" className="h-7 w-auto" />
+            <img src="/brand/seatbit-logo.svg" alt="Seatbit" className="h-7 w-auto light:hidden" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brand/seatbit-logo-light.svg" alt="Seatbit" className="hidden h-7 w-auto light:block" />
           </Link>
           {me && <TopNav items={items} />}
           <div className="ml-auto flex items-center gap-2">
+            <DisplayMenu theme={theme} />
             {me ? (
               <>
                 <Link
@@ -60,7 +66,7 @@ export async function Header() {
                   </Link>
                 )}
                 <Link
-                  className="rounded-md bg-bit px-3 py-1.5 text-sm font-medium text-ink hover:bg-bit-hover"
+                  className="rounded-md bg-bit px-3 py-1.5 text-sm font-medium text-on-bit hover:bg-bit-hover"
                   href={LOGIN_METHODS.email ? "/register" : "/login"}
                 >
                   {LOGIN_METHODS.email ? t("nav.register") : t("nav.signIn")}

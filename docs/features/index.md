@@ -15,6 +15,8 @@ Seatbit has three kinds of users:
 | [Accounts and profile](accounts.md) | Discord sign-in, names and nicks, notification settings, avatar, data export and account deletion. | Everyone |
 | [Clans and roles](clans.md) | Clans with join modes, roles, invite links, LAN types and stats. | Clan admins |
 | [Members and guests](members-guests.md) | Join requests, adding users, guests without an account, guest claims. | Admins, recruiters |
+| [Languages](languages.md) | English and German, per person, for the app, mails and Discord. | Everyone |
+| [Light and dark theme](theme.md) | Light, dark or follow the device, from the top bar. | Everyone |
 | [Event lifecycle](events.md) | Create from a LAN type, drafts, publish or schedule, interest check, news, cancel, copy for next year. | Leads |
 | [Attendance and tickets](attendance.md) | Coming / unsure / not coming, waitlist, checklist, tickets, attendee list and CSV export. | Members, leads |
 | [Seats](seats.md) | The group's seat block, seat wishes, self pick, planner, final plan, booking on the event site, swaps. | Members, leads |

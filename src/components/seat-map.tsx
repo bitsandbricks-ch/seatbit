@@ -282,7 +282,7 @@ export function SeatMap({
       : taken
         ? "bg-seat-taken/20 text-seat-taken border-seat-taken/40"
         : s.locked
-          ? "bg-raised/60 text-faint border-line [background-image:repeating-linear-gradient(45deg,transparent,transparent_3px,rgba(255,255,255,.05)_3px,rgba(255,255,255,.05)_6px)]"
+          ? "bg-raised/60 text-faint border-line [background-image:repeating-linear-gradient(45deg,transparent,transparent_3px,color-mix(in_oklab,var(--color-fg)_6%,transparent)_3px,color-mix(in_oklab,var(--color-fg)_6%,transparent)_6px)]"
           : "bg-raised text-muted border-line";
     const ring = isSel
       ? "ring-2 ring-fg ring-offset-2 ring-offset-surface"
@@ -582,7 +582,7 @@ export function SeatMap({
       {/* Phones and tablets: bottom sheet. */}
       {selected && !layout && (
         <div className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-40 sm:bottom-4 sm:left-auto sm:right-4 sm:w-80 lg:hidden">
-          <div className="max-h-[70dvh] overflow-y-auto rounded-t-card border border-line bg-surface p-4 pt-2 shadow-2xl shadow-black/70 sm:rounded-card sm:pt-4">
+          <div className="max-h-[70dvh] overflow-y-auto rounded-t-card border border-line bg-surface p-4 pt-2 shadow-2xl shadow-black/70 light:shadow-black/15 sm:rounded-card sm:pt-4">
             <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-line sm:hidden" aria-hidden />
             {details(() => {
               setSwapFrom(selected.id);

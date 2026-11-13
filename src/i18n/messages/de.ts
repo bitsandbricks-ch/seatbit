@@ -43,6 +43,14 @@ export const de: Messages = {
     hint: "Die Sprache der App. Automatisch folgt deinem Browser.",
     switchTo: "Sprache wechseln",
   },
+  display: {
+    menu: "Sprache und Design",
+    theme: "Design",
+    system: "System",
+    light: "Hell",
+    dark: "Dunkel",
+    themeHint: "System folgt deinem Gerät. Gespeichert in diesem Browser.",
+  },
   status: {
     going: "Dabei",
     maybe: "Unsicher",
