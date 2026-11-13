@@ -1,4 +1,6 @@
+"use client";
 import { setMyLanId } from "@/app/actions";
+import { useT } from "@/i18n/client";
 import { LAN_ID_MAX } from "@/lib/lan-accounts";
 import { btnSecondary, input } from "./ui";
 
@@ -10,13 +12,14 @@ export function LanIdForm({
   value,
   lanId,
   typeId,
-  label = "LAN ID",
+  label,
 }: {
   value: string | null;
   lanId?: string;
   typeId?: string;
   label?: string;
 }) {
+  const t = useT();
   return (
     <form action={setMyLanId} className="flex gap-2">
       {lanId && <input type="hidden" name="lanId" value={lanId} />}
@@ -26,12 +29,12 @@ export function LanIdForm({
         name="lanAccount"
         defaultValue={value ?? ""}
         maxLength={LAN_ID_MAX}
-        placeholder="User ID or ticket number (optional)"
+        placeholder={t("profile.lanIdPlaceholder")}
         className={`${input} font-mono`}
-        aria-label={label}
+        aria-label={label ?? t("profile.lanId")}
         autoComplete="off"
       />
-      <button className={btnSecondary}>Save</button>
+      <button className={btnSecondary}>{t("common.save")}</button>
     </form>
   );
 }

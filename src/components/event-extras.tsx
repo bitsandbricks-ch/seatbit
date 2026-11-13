@@ -3,6 +3,7 @@ import { useState, useTransition } from "react";
 import type { InterestAnswer } from "@/db/schema";
 import { cancelLan, copyForNextYear, deleteNews, postNews, setArrived, setMyInterest, setMyInterests } from "@/app/event-actions";
 import { btn, btnDanger, btnGhost, btnPrimary, btnSecondary, input } from "./ui";
+import { useT } from "@/i18n/client";
 
 const INTEREST: { a: InterestAnswer; label: string; active: string }[] = [
   { a: "yes", label: "I'd come", active: "border-bit bg-bit text-on-bit hover:bg-bit-hover" },
@@ -163,6 +164,7 @@ export function InterestsForm({
   types: { id: string; name: string }[];
   current: string[] | null;
 }) {
+  const t = useT();
   const [pending, start] = useTransition();
   const [all, setAll] = useState(current === null);
   const [picked, setPicked] = useState<string[]>(current ?? []);
@@ -186,7 +188,7 @@ export function InterestsForm({
           }}
           className="h-4 w-4 accent-bit"
         />
-        All events
+        {t("profile.interestsAll")}
       </label>
       <label className="flex cursor-pointer items-center gap-2">
         <input
@@ -198,7 +200,7 @@ export function InterestsForm({
           }}
           className="h-4 w-4 accent-bit"
         />
-        Only these kinds
+        {t("profile.interestsSome")}
       </label>
       {!all && (
         <div className="ml-6 flex flex-wrap gap-2">
@@ -225,7 +227,7 @@ export function InterestsForm({
         </div>
       )}
       <p className="text-xs text-muted">
-        {pending ? "Saving…" : saved ? "Saved." : "One-off events without a kind always reach you. You still see every event of the clan."}
+        {pending ? t("common.saving") : saved ? t("common.saved") : t("profile.interestsHint")}
       </p>
     </div>
   );

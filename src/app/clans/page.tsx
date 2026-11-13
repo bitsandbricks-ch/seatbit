@@ -9,9 +9,11 @@ import { requireUser } from "@/lib/session";
 import { CLAN_MANAGE_TABS } from "@/components/clan-header";
 import { RolePill } from "@/components/role-pill";
 import { MANAGE_TAB_PERMS, roleCan } from "@/lib/clan-roles";
+import { getT } from "@/i18n/server";
 
 export default async function ClansPage() {
   const me = await requireUser();
+  const t = await getT();
   const clans = db.select().from(schema.clan).orderBy(asc(schema.clan.name)).all();
   const memberships = db.select().from(schema.clanMember).all();
   const mine = new Map(memberships.filter((m) => m.userId === me.id).map((m) => [m.clanId, m.role]));
@@ -22,22 +24,22 @@ export default async function ClansPage() {
 
   return (
     <Page>
-      <PageHeader title="Clans" subtitle="Your clan sees its events together. Join one with an invite link from your lead, or start your own." />
+      <PageHeader title={t("clans.title")} subtitle={t("clans.subtitle")} />
       <Columns
         aside={
-          <Card title="Start a clan">
-            <p className="mb-4 text-sm text-muted">You become its admin and can invite your friends.</p>
+          <Card title={t("clans.start")}>
+            <p className="mb-4 text-sm text-muted">{t("clans.startText")}</p>
             <ClanForm />
           </Card>
         }
       >
       {myClans.length === 0 && others.length === 0 && (
-        <EmptyState icon="users" title="No clans yet">
-          Start one, or ask your lead for an invite link.
+        <EmptyState icon="users" title={t("clans.emptyTitle")}>
+          {t("clans.emptyText")}
         </EmptyState>
       )}
       {myClans.length > 0 && (
-        <Card title="Your clans">
+        <Card title={t("clans.yours")}>
           <ul className="space-y-2">
             {myClans.map((c) => (
               <li key={c.id} className="-mx-2 flex items-center gap-2">
@@ -45,13 +47,13 @@ export default async function ClansPage() {
                   <ClanAvatar clan={c} />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-medium">{c.name}</span>
-                    <span className="text-xs text-muted">{count(c.id)} members</span>
+                    <span className="text-xs text-muted">{t("common.members", { count: count(c.id) })}</span>
                   </span>
                   <RolePill role={mine.get(c.id)} />
                 </Link>
                 {CLAN_MANAGE_TABS.some((t) => roleCan(mine.get(c.id), MANAGE_TAB_PERMS[t])) && (
                   <Link href={`/clans/${c.slug}/settings`} className={`${btnSecondary} shrink-0 !text-bit`}>
-                    Manage
+                    {t("common.manage")}
                   </Link>
                 )}
               </li>
@@ -61,7 +63,7 @@ export default async function ClansPage() {
       )}
 
       {others.length > 0 && (
-        <Card title="Other clans">
+        <Card title={t("clans.others")}>
           <ul className="space-y-2">
             {others.map((c) => {
               const pending = mine.get(c.id) === "pending";
@@ -70,16 +72,16 @@ export default async function ClansPage() {
                   <ClanAvatar clan={c} />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-medium">{c.name}</span>
-                    <span className="text-xs text-muted">{count(c.id)} members</span>
+                    <span className="text-xs text-muted">{t("common.members", { count: count(c.id) })}</span>
                   </span>
                   {pending ? (
-                    <Pill tone="amber">Request sent</Pill>
+                    <Pill tone="amber">{t("clans.requestSent")}</Pill>
                   ) : c.joinPolicy === "invite" ? (
-                    <Pill>Invite only</Pill>
+                    <Pill>{t("clans.inviteOnly")}</Pill>
                   ) : (
                     <form action={joinClan.bind(null, c.id)}>
                       <button className={c.joinPolicy === "open" ? btnPrimary : btnSecondary}>
-                        {c.joinPolicy === "open" ? "Join" : "Ask to join"}
+                        {c.joinPolicy === "open" ? t("clans.join") : t("clans.askToJoin")}
                       </button>
                     </form>
                   )}

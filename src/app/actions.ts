@@ -38,6 +38,7 @@ import { PROFILE_COLORS, PROFILE_ICONS, deleteUserAvatarFile, saveUserAvatar } f
 import { audit, auditLan, changedFields } from "@/lib/audit";
 import { cleanName } from "@/lib/names";
 import { saveNick, saveSeatWishes, saveTicketBought, type wishInput } from "@/lib/member-updates";
+import { getLocale } from "@/i18n/server";
 
 const { attendance, seat, lan, user, lanOrga, lanType } = schema;
 
@@ -173,6 +174,9 @@ export async function sendTestDm() {
 /** First-login form: saves the names and nickname, then continues to the app. */
 export async function completeProfile(formData: FormData) {
   await updateProfile(formData);
+  // Keep the language they signed up in, so mails and DMs match it too.
+  const me = await requireUser({ allowIncomplete: true });
+  if (!me.locale) db.update(user).set({ locale: await getLocale() }).where(eq(user.id, me.id)).run();
   const next = String(formData.get("next") ?? "/");
   redirect(next.startsWith("/") && !next.startsWith("//") ? next : "/");
 }

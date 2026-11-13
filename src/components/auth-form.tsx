@@ -6,6 +6,7 @@ import { setNick } from "@/app/actions";
 import { LegalNotice } from "@/components/legal-notice";
 import { authClient } from "@/lib/auth-client";
 import { btnPrimary, btnSecondary, Field, Input } from "./ui";
+import { useT } from "@/i18n/client";
 
 export function AuthForm({
   mode,
@@ -20,6 +21,7 @@ export function AuthForm({
   providers: { discord: boolean; google: boolean; email: boolean };
 }) {
   const router = useRouter();
+  const t = useT();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -44,7 +46,7 @@ export function AuthForm({
           });
     if (res.error) {
       setBusy(false);
-      return setError(res.error.message ?? "Something went wrong");
+      return setError(res.error.message ?? t("auth.somethingWrong"));
     }
     if (mode === "register" && String(f.get("nick") ?? "").trim()) {
       const n = new FormData();
@@ -75,7 +77,7 @@ export function AuthForm({
       <div className="flex flex-col items-center text-center">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/brand/seatbit-mark.svg" alt="" className="h-12 w-12" />
-        <p className="mt-3 text-balance text-sm text-muted">Who&apos;s coming, who&apos;s paid, who sits where.</p>
+        <p className="mt-3 text-balance text-sm text-muted">{t("auth.tagline")}</p>
       </div>
       {notice && (
         <p role="status" className="w-full max-w-sm rounded-card border border-bit/30 bg-bit/10 p-3 text-sm text-fg">
@@ -85,13 +87,10 @@ export function AuthForm({
       <div className="w-full max-w-sm space-y-6 rounded-card border border-line bg-surface p-5 sm:p-6">
         <div className="space-y-1">
           <h1 className="text-xl font-semibold tracking-tight">
-            {mode === "login" ? "Sign in" : "Create an account"}
+            {mode === "login" ? t("auth.signIn") : t("auth.createAnAccount")}
           </h1>
           {!providers.email && (
-            <p className="text-sm text-muted">
-              Seatbit uses your Discord account. New here? The same button
-              creates your account.
-            </p>
+            <p className="text-sm text-muted">{t("auth.discordOnly")}</p>
           )}
         </div>
 
@@ -106,7 +105,7 @@ export function AuthForm({
                 <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden>
                   <path d="M20.3 4.4A19.8 19.8 0 0 0 15.4 3l-.6 1.3a18.4 18.4 0 0 0-5.6 0L8.6 3a19.7 19.7 0 0 0-4.9 1.5C.6 9.1-.3 13.6.1 18a19.9 19.9 0 0 0 6 3l1.3-2a12.9 12.9 0 0 1-2-1l.5-.4a14.2 14.2 0 0 0 12.2 0l.5.4a12.9 12.9 0 0 1-2 1l1.3 2a19.8 19.8 0 0 0 6-3c.5-5.1-.8-9.5-3.6-13.6ZM8.3 15.3c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4Zm7.4 0c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4Z" />
                 </svg>
-                {socialBusy === "discord" ? "Opening Discord…" : "Continue with Discord"}
+                {socialBusy === "discord" ? t("auth.openingDiscord") : t("auth.continueDiscord")}
               </button>
             )}
             {providers.google && (
@@ -115,7 +114,7 @@ export function AuthForm({
                 disabled={!!socialBusy}
                 className={`${btnSecondary} w-full`}
               >
-                Continue with Google
+                {t("auth.continueGoogle")}
               </button>
             )}
           </div>
@@ -123,9 +122,7 @@ export function AuthForm({
 
         {!anySocial && !providers.email && (
           <p className="rounded-md border border-warn/40 bg-warn/10 p-3 text-sm text-warn">
-            Discord login isn&apos;t set up yet. Set DISCORD_CLIENT_ID and
-            DISCORD_CLIENT_SECRET on the server, or add them under Admin,
-            Settings, Discord.
+            {t("auth.notSetUp")}
           </p>
         )}
 
@@ -133,7 +130,7 @@ export function AuthForm({
           <>
             {anySocial && (
               <div className="flex items-center gap-3 text-xs text-muted">
-                <div className="h-px flex-1 bg-line" /> or{" "}
+                <div className="h-px flex-1 bg-line" /> {t("auth.or")}{" "}
                 <div className="h-px flex-1 bg-line" />
               </div>
             )}
@@ -141,7 +138,7 @@ export function AuthForm({
               {mode === "register" && (
                 <>
                   <div className="grid grid-cols-2 gap-3">
-                    <Field label="First name">
+                    <Field label={t("auth.firstName")}>
                       <Input
                         name="firstName"
                         required
@@ -149,7 +146,7 @@ export function AuthForm({
                         autoComplete="given-name"
                       />
                     </Field>
-                    <Field label="Surname">
+                    <Field label={t("auth.surname")}>
                       <Input
                         name="lastName"
                         required
@@ -159,8 +156,8 @@ export function AuthForm({
                     </Field>
                   </div>
                   <Field
-                    label="Nickname"
-                    hint="Your gamer tag. You can set a different one per LAN type later."
+                    label={t("auth.nickname")}
+                    hint={t("auth.nickHint")}
                   >
                     <Input
                       name="nick"
@@ -171,7 +168,7 @@ export function AuthForm({
                   </Field>
                 </>
               )}
-              <Field label="Email">
+              <Field label={t("auth.email")}>
                 <Input
                   name="email"
                   type="email"
@@ -179,7 +176,7 @@ export function AuthForm({
                   autoComplete="email"
                 />
               </Field>
-              <Field label="Password">
+              <Field label={t("auth.password")}>
                 <Input
                   name="password"
                   type="password"
@@ -192,7 +189,7 @@ export function AuthForm({
               </Field>
               {error && <p className="text-sm text-danger">{error}</p>}
               <button disabled={busy} className={`${btnPrimary} w-full`}>
-                {mode === "login" ? "Sign in" : "Create account"}
+                {mode === "login" ? t("auth.signIn") : t("auth.createAccount")}
               </button>
             </form>
 
@@ -207,10 +204,10 @@ export function AuthForm({
                     }
                     className="hover:text-fg"
                   >
-                    Create account
+                    {t("auth.createAccount")}
                   </Link>
                   <Link href="/forgot-password" className="hover:text-fg">
-                    Forgot password?
+                    {t("auth.forgot")}
                   </Link>
                 </>
               ) : (
@@ -222,7 +219,7 @@ export function AuthForm({
                   }
                   className="hover:text-fg"
                 >
-                  Already have an account? Sign in
+                  {t("auth.haveAccount")}
                 </Link>
               )}
             </div>

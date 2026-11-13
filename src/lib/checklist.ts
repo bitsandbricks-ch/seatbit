@@ -1,4 +1,5 @@
 import type { Attendance, Lan } from "@/db/schema";
+import { makeT, type T } from "@/i18n/translate";
 
 export type StepState = "done" | "pending" | "todo";
 export type ChecklistStep = { key: "going" | "nick" | "ticket" | "seat" | "book"; title: string; state: StepState; hint: string };
@@ -13,31 +14,34 @@ export function buildChecklist(input: {
   freeSeats: number;
   /** Place on the waitlist (1 = next), when waitlisted. */
   waitlistPlace?: number;
+  /** Language of the titles and hints; English when left out. */
+  t?: T;
 }): ChecklistStep[] {
   const { lan, attendance: a, hasNick, seatLabel, hasSeatPlan, freeSeats, waitlistPlace } = input;
+  const t = input.t ?? makeT("en");
   const steps: ChecklistStep[] = [];
 
   steps.push({
     key: "going",
-    title: "Say you're coming",
+    title: t("checklist.going.title"),
     state: a?.status === "going" ? "done" : a?.status === "waitlist" ? "pending" : "todo",
     hint:
       a?.status === "going"
-        ? "You're going."
+        ? t("checklist.going.done")
         : a?.status === "waitlist"
           ? waitlistPlace
-            ? `You're #${waitlistPlace} on the waitlist.`
-            : "You're on the waitlist."
+            ? t("checklist.going.waitlistAt", { place: waitlistPlace })
+            : t("checklist.going.waitlist")
           : lan.signupDeadline
-            ? "Answer before the deadline."
-            : "Let the leads know.",
+            ? t("checklist.going.deadline")
+            : t("checklist.going.todo"),
   });
 
   steps.push({
     key: "nick",
-    title: "Give your nickname",
+    title: t("checklist.nick.title"),
     state: hasNick ? "done" : "todo",
-    hint: hasNick ? "Nick is set." : "Add the nick you want on the seat plan.",
+    hint: hasNick ? t("checklist.nick.done") : t("checklist.nick.todo"),
   });
 
   // Every LAN the group goes to needs a ticket, so this step is always there
@@ -45,42 +49,42 @@ export function buildChecklist(input: {
   {
     steps.push({
       key: "ticket",
-      title: "Buy your ticket",
+      title: t("checklist.ticket.title"),
       state: a?.paid ? "done" : a?.ticketBought ? "pending" : "todo",
       hint: a?.paid
-        ? "Confirmed by the leads."
+        ? t("checklist.ticket.done")
         : a?.ticketBought
-          ? "Waiting for a lead to confirm."
-          : "Buy it from the event, then tick it off here.",
+          ? t("checklist.ticket.pending")
+          : t("checklist.ticket.todo"),
     });
   }
 
   if (hasSeatPlan && a?.status === "going") {
     steps.push({
       key: "seat",
-      title: "Get your seat",
+      title: t("checklist.seat.title"),
       // Only final once the leads finalized the plan, also when you picked your seat yourself.
       state: lan.seatsPublishedAt && seatLabel ? "done" : seatLabel ? "pending" : lan.seatPicking && !lan.seatsPublishedAt ? "todo" : "pending",
       hint: lan.seatsPublishedAt
         ? seatLabel
-          ? `Seat ${seatLabel}, final.`
-          : "The plan is final but you have no seat yet. A lead will get back to you."
+          ? t("checklist.seat.final", { seat: seatLabel })
+          : t("checklist.seat.finalNone")
         : seatLabel
-          ? `Seat ${seatLabel} for now. The leads check and finalize the seat plan.`
+          ? t("checklist.seat.forNow", { seat: seatLabel })
           : lan.seatPicking
-            ? "Self pick is on: tick that you have your ticket, then take a free seat on the Seats tab."
+            ? t("checklist.seat.selfPick")
             : freeSeats === 0
-              ? "The leads will finalize the seat plan soon."
-              : "Add seat wishes on the Seats tab. The leads finalize the seat plan after the deadline.",
+              ? t("checklist.seat.soon")
+              : t("checklist.seat.wishes"),
     });
   }
   // The event's own seat plan (e.g. lal.gg): members book the seat they got there themselves.
   if (lan.externalPlanUrl && lan.seatsPublishedAt && a?.status === "going" && seatLabel) {
     steps.push({
       key: "book",
-      title: `Book ${seatLabel} on the event site`,
+      title: t("checklist.book.title", { seat: seatLabel }),
       state: a.seatBooked ? "done" : "todo",
-      hint: a.seatBooked ? "Booked." : "Reserve the same seat on the event's seat plan, then tick it off.",
+      hint: a.seatBooked ? t("checklist.book.done") : t("checklist.book.todo"),
     });
   }
   return steps;

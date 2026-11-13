@@ -9,11 +9,14 @@ import { buildChecklist, progress } from "@/lib/checklist";
 import { myClans } from "@/lib/clans";
 import { roleCan } from "@/lib/clan-roles";
 import { ClanAvatar } from "@/components/clan-avatar";
+import { getT } from "@/i18n/server";
+import type { T } from "@/i18n/translate";
 
 const { lan, attendance, seat, nickname } = schema;
 
 export default async function Home() {
   const me = await requireUser();
+  const t = await getT();
   const now = new Date();
   const clans = myClans(me.id);
   if (clans.length === 0) return <NoClan />;
@@ -66,11 +69,11 @@ export default async function Home() {
   return (
     <Page>
       <PageHeader
-        title="Upcoming LANs"
+        title={t("home.title")}
         actions={
           adminClans.length > 0 && (
             <Link href={`/clans/${adminClans[0].clan.slug}/lans/new`} className={btnPrimary}>
-              <span aria-hidden>+</span> New event
+              <span aria-hidden>+</span> {t("home.newEvent")}
             </Link>
           )
         }
@@ -78,18 +81,18 @@ export default async function Home() {
 
       {upcoming.length === 0 && (
         <EmptyState
-          title="No LANs on the list yet"
+          title={t("home.emptyTitle")}
           action={
             adminClans.length > 0 ? (
               <Link href={`/clans/${adminClans[0].clan.slug}/lans/new`} className={btnPrimary}>
-                Add the next LAN
+                {t("home.emptyAdd")}
               </Link>
             ) : undefined
           }
         >
           {adminClans.length > 0
-            ? "Add the next LAN your clan is going to, and everyone can say if they're coming."
-            : "When a lead adds the next LAN your clan is going to, it shows up here."}
+            ? t("home.emptyLeadText")
+            : t("home.emptyMemberText")}
         </EmptyState>
       )}
 
@@ -101,6 +104,7 @@ export default async function Home() {
             my={mine.get(l.id)}
             going={going(l.id)}
             now={now}
+            t={t}
             info={info(l)}
             clan={clans.length > 1 && l.clanId ? clanById.get(l.clanId) : undefined}
           />
@@ -109,13 +113,13 @@ export default async function Home() {
 
       {past.length > 0 && (
         <div>
-          <h2 className="mb-3 text-xs font-medium uppercase tracking-wide text-muted">Past LANs</h2>
+          <h2 className="mb-3 text-xs font-medium uppercase tracking-wide text-muted">{t("home.past")}</h2>
           <ul className="divide-y divide-line overflow-hidden rounded-card border border-line bg-surface/50">
             {past.map((l) => (
               <li key={l.id}>
                 <Link href={`/lans/${l.id}`} className="flex min-h-12 items-center justify-between gap-3 px-4 py-3 transition hover:bg-raised/60">
                   <span className="truncate">{l.name}</span>
-                  <span className="shrink-0 text-sm text-muted">{lanDay(l)}</span>
+                  <span className="shrink-0 text-sm text-muted">{lanDay(l, t.locale)}</span>
                 </Link>
               </li>
             ))}
@@ -133,7 +137,9 @@ function LanCard({
   now,
   info,
   clan,
+  t,
 }: {
+  t: T;
   clan?: { id: string; name: string; avatar: string | null };
   info: { mySeat: string | null; freeSeats: number; hasSeats: boolean; progress: { done: number; total: number } };
   l: Lan;
@@ -160,31 +166,28 @@ function LanCard({
           )}
           <h3 className="text-lg font-semibold tracking-tight">{l.name}</h3>
           <p className="text-sm text-muted">
-            {lanWeekday(l)}
-            {!l.dateTbd && <span className="text-faint"> · {relative(l.startsAt, now)}</span>}
+            {lanWeekday(l, t.locale)}
+            {!l.dateTbd && <span className="text-faint"> · {relative(l.startsAt, now, t.locale)}</span>}
           </p>
           {l.location && <p className="truncate text-sm text-muted">{l.location}</p>}
         </div>
         <StatusBadge status={my?.status} seat={info.mySeat} />
       </div>
       <div className="mt-4 flex flex-wrap gap-2 text-xs">
-        {!l.publishedAt && <Pill tone="amber">Draft, only leads see it</Pill>}
-        {l.cancelledAt && <Pill tone="red">Cancelled</Pill>}
-        {l.interestCheck && !l.cancelledAt && <Pill tone="emerald">Interest check: would you come?</Pill>}
-        <Pill>
-          {going}
-          {l.capacity ? ` / ${l.capacity}` : ""} going
-        </Pill>
+        {!l.publishedAt && <Pill tone="amber">{t("home.draft")}</Pill>}
+        {l.cancelledAt && <Pill tone="red">{t("home.cancelled")}</Pill>}
+        {l.interestCheck && !l.cancelledAt && <Pill tone="emerald">{t("home.interest")}</Pill>}
+        <Pill>{l.capacity ? t("home.goingOf", { going, capacity: l.capacity }) : t("home.going", { going })}</Pill>
         {needsAnswer && deadlineSoon && (
-          <Pill tone="amber">Answer by {fmtDay(l.signupDeadline!)} ({relative(l.signupDeadline!, now)})</Pill>
+          <Pill tone="amber">{t("home.answerBy", { date: fmtDay(l.signupDeadline!), relative: relative(l.signupDeadline!, now, t.locale) })}</Pill>
         )}
-        {unpaid && <Pill tone="red">Ticket due {fmtDay(l.paymentDueDate!)}</Pill>}
+        {unpaid && <Pill tone="red">{t("home.ticketDue", { date: fmtDay(l.paymentDueDate!) })}</Pill>}
         {info.hasSeats && !l.cancelledAt && (
-          <Pill tone={info.freeSeats ? "zinc" : "red"}>{info.freeSeats ? `${info.freeSeats} seats free` : "No seats left"}</Pill>
+          <Pill tone={info.freeSeats ? "zinc" : "red"}>{info.freeSeats ? t("home.seatsFree", { count: info.freeSeats }) : t("home.noSeats")}</Pill>
         )}
         {my && my.status !== "declined" && !l.cancelledAt && (
           <Pill tone={info.progress.done === info.progress.total ? "emerald" : "amber"}>
-            Checklist {info.progress.done}/{info.progress.total}
+            {t("home.checklist", info.progress)}
           </Pill>
         )}
       </div>
@@ -193,16 +196,15 @@ function LanCard({
 }
 
 async function NoClan() {
+  const t = await getT();
   return (
     <div className="mx-auto flex max-w-md flex-col items-center space-y-4 py-10 text-center">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/brand/seatbit-mark.svg" alt="" className="h-12 w-12" />
-      <h1 className="text-2xl font-bold tracking-tight">Welcome to Seatbit</h1>
-      <p className="text-muted">
-        Seatbit organises your clan&apos;s trips to LAN parties. Join your clan, or start one, to see its events.
-      </p>
+      <h1 className="text-2xl font-bold tracking-tight">{t("home.welcomeTitle")}</h1>
+      <p className="text-muted">{t("home.welcomeText")}</p>
       <Link href="/clans" className={btnPrimary}>
-        Find or start a clan
+        {t("home.findClan")}
       </Link>
     </div>
   );

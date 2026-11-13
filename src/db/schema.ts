@@ -31,6 +31,8 @@ export const user = sqliteTable("user", {
   emailReminders: integer("email_reminders", { mode: "boolean" }).default(true).notNull(),
   /** Discord DMs from the bot about changes (needs a linked Discord account). */
   discordDms: integer("discord_dms", { mode: "boolean" }).default(true).notNull(),
+  /** "en" | "de" chosen on the profile; null = follow the browser (and the instance default for mails). */
+  locale: text("locale"),
   // Guests: members a lead added who have no login yet. They belong to one clan
   // and are taken over by a real account through their claim link.
   isGuest: integer("is_guest", { mode: "boolean" }).default(false).notNull(),
@@ -154,6 +156,8 @@ export const clan = sqliteTable("clan", {
   guestClaims: text("guest_claims").$type<GuestClaimMode>().default("approval").notNull(),
   /** How members are shown to each other (see NAME_DISPLAYS in lib/names.ts). */
   nameDisplay: text("name_display").$type<NameDisplay>().default("full").notNull(),
+  /** Language of the bot's posts in the clan's Discord channels; null = the instance default. */
+  locale: text("locale"),
   // Voluntary Supporter payments (hosted instances with billing on, see src/lib/billing.ts).
   // supporterUntil is the end of the last paid period; the badge shows while it's in the future.
   supporterUntil: integer("supporter_until", { mode: "timestamp_ms" }),

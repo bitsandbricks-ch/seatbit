@@ -7,9 +7,11 @@ import { BottomNav, TopNav, type NavItem } from "./nav";
 import { SignOutButton } from "./sign-out-button";
 import { Avatar } from "./avatar";
 import { avatarData } from "@/lib/avatars";
+import { getT } from "@/i18n/server";
 
 export async function Header() {
   const me = await getCurrentUser();
+  const t = await getT();
   const nick = me
     ? db
         .select({ nick: schema.nickname.nick })
@@ -20,9 +22,9 @@ export async function Header() {
   const display = nick || me?.firstName || me?.name || "";
   const items: NavItem[] = me
     ? [
-        { href: "/", label: "LANs", icon: "calendar" },
-        { href: "/clans", label: "Clans", icon: "users" },
-        ...(me.role === "admin" ? [{ href: "/admin", label: "Admin", icon: "shield" } as NavItem] : []),
+        { href: "/", label: t("nav.lans"), icon: "calendar" },
+        { href: "/clans", label: t("nav.clans"), icon: "users" },
+        ...(me.role === "admin" ? [{ href: "/admin", label: t("nav.admin"), icon: "shield" } as NavItem] : []),
       ]
     : [];
 
@@ -30,7 +32,7 @@ export async function Header() {
     <>
       <header className="sticky top-0 z-30 border-b border-line bg-ink/85 backdrop-blur supports-[backdrop-filter]:bg-ink/70">
         <div className="mx-auto flex h-14 max-w-7xl items-center gap-6 px-4 sm:px-6">
-          <Link href="/" className="flex shrink-0 items-center" aria-label="Seatbit home">
+          <Link href="/" className="flex shrink-0 items-center" aria-label={t("nav.home")}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/brand/seatbit-logo.svg" alt="Seatbit" className="h-7 w-auto" />
           </Link>
@@ -41,7 +43,7 @@ export async function Header() {
                 <Link
                   href="/profile"
                   className="flex min-w-0 items-center gap-2 rounded-full border border-line bg-surface py-1 pl-1 pr-3 text-sm text-fg transition hover:border-bit/60"
-                  aria-label="Your profile"
+                  aria-label={t("nav.yourProfile")}
                 >
                   <Avatar data={avatarData(me)} size={28} ring={false} />
                   <span className="max-w-[7rem] truncate">{display}</span>
@@ -54,21 +56,21 @@ export async function Header() {
               <>
                 {LOGIN_METHODS.email && (
                   <Link className="rounded-md px-3 py-1.5 text-sm text-muted hover:text-fg" href="/login">
-                    Sign in
+                    {t("nav.signIn")}
                   </Link>
                 )}
                 <Link
                   className="rounded-md bg-bit px-3 py-1.5 text-sm font-medium text-ink hover:bg-bit-hover"
                   href={LOGIN_METHODS.email ? "/register" : "/login"}
                 >
-                  {LOGIN_METHODS.email ? "Register" : "Sign in"}
+                  {LOGIN_METHODS.email ? t("nav.register") : t("nav.signIn")}
                 </Link>
               </>
             )}
           </div>
         </div>
       </header>
-      {me && <BottomNav items={[...items, { href: "/profile", label: "Profile", icon: "user" }]} />}
+      {me && <BottomNav items={[...items, { href: "/profile", label: t("nav.profile"), icon: "user" }]} />}
     </>
   );
 }

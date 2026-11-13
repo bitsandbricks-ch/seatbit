@@ -121,7 +121,7 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
           <Card>
             <ClanForm
               key={c.avatar ?? "none"}
-              clan={{ id: c.id, name: c.name, description: c.description, joinPolicy: c.joinPolicy, guestClaims: c.guestClaims, nameDisplay: c.nameDisplay, hasAvatar: !!c.avatar }}
+              clan={{ id: c.id, name: c.name, description: c.description, joinPolicy: c.joinPolicy, guestClaims: c.guestClaims, nameDisplay: c.nameDisplay, locale: c.locale, hasAvatar: !!c.avatar }}
             />
           </Card>
         </Columns>
