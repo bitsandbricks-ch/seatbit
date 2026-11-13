@@ -132,11 +132,14 @@ export async function runDueReminders(now = new Date()) {
   const { publishDueDrafts } = await import("./event-notices");
   await publishDueDrafts(now).catch((e) => console.error("[publish] scheduled publish failed", e));
   // Drafts, cancelled events and interest checks get no reminders.
+  // Suspended clans go quiet too.
+  const { isClanSuspended } = await import("./clans");
   const lans = db
     .select()
     .from(lan)
     .where(and(gt(lan.endsAt, now), isNotNull(lan.publishedAt), isNull(lan.cancelledAt), eq(lan.interestCheck, false)))
-    .all();
+    .all()
+    .filter((l) => !isClanSuspended(l.clanId));
   const result: { lan: string; kind: string; sent: number }[] = [];
   // Clan payments due soon: not tied to an event.
   const { runPaymentReminders } = await import("./payments");

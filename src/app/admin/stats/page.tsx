@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Card, Page, PageHeader, Segmented, StatTile, halves } from "@/components/ui";
 import { UsageChart, type UsagePoint } from "@/components/usage-chart";
 import { fmtDay } from "@/lib/format";
-import { requireAdmin } from "@/lib/session";
+import { requirePlatform } from "@/lib/session";
 import { USAGE_RANGES, type UsageBucket, type UsageRange, usageStats } from "@/lib/usage";
 import { getT } from "@/i18n/server";
 
@@ -14,7 +14,7 @@ export async function generateMetadata() {
 
 /** Platform admins: how much this instance is used (accounts, active people, clans, events) over time. */
 export default async function UsageStatsPage({ searchParams }: PageProps<"/admin/stats">) {
-  await requireAdmin();
+  await requirePlatform("view");
   const t = await getT();
   const { range: raw } = await searchParams;
   const range: UsageRange = USAGE_RANGES.includes(raw as UsageRange) ? (raw as UsageRange) : "months";

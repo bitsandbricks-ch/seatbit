@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ReportButton } from "@/components/report-button";
 import { notFound } from "next/navigation";
 import { and, asc, desc, eq, gt, inArray, lte } from "drizzle-orm";
 import { db, schema } from "@/db";
@@ -384,6 +385,7 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
           )}
         </Card>
       )}
+      {!perms.has("settings") && <ReportButton clanId={c.id} />}
     </Page>
   );
 }

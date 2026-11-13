@@ -5,6 +5,9 @@ import type { AuditEntry } from "@/db/schema";
 import { fmtDay, fmtMoney } from "./format";
 import { getDefaultNames } from "./lans";
 import { isMemberRole, type MemberRole } from "./clan-roles";
+import { STAFF_ROLES, type StaffRole } from "./platform-roles";
+
+const isStaffRole = (r: unknown): r is StaffRole => (STAFF_ROLES as readonly unknown[]).includes(r);
 import { makeT, type T } from "../i18n/translate";
 
 const { auditLog } = schema;
@@ -83,7 +86,7 @@ export const AUDIT_GROUPS = {
   events: { prefixes: ["event.", "lead.", "news."] },
   attendance: { prefixes: ["attendance.", "waitlist.", "ticket.", "lanid.", "arrived.", "seatbooked."] },
   seats: { prefixes: ["seat.", "seats.", "swap."] },
-  members: { prefixes: ["member.", "invite.", "clan.", "platform.", "account."] },
+  members: { prefixes: ["member.", "invite.", "clan.", "platform.", "account.", "user.", "report."] },
   guests: { prefixes: ["guest."] },
   settings: { prefixes: ["type.", "discord.", "settings.", "mail_template.", "backup."] },
   payments: { prefixes: ["payment."] },
@@ -304,7 +307,25 @@ export function describeAudit(
     case "discord.unlink":
       return t("audit.discordChannelUnlink", v);
     case "platform.role":
-      return t(d.to === "admin" ? "audit.platformAdmin" : "audit.platformAdminRemove", v);
+      // Older entries (before platform roles) only knew admin/member.
+      if (!d.from) return t(d.to === "admin" ? "audit.platformAdmin" : "audit.platformAdminRemove", v);
+      return t("audit.platformRole", { who, role: isStaffRole(d.to) ? t(`platformRoles.name.${d.to}`) : t("platformRoles.name.member") });
+    case "user.suspend":
+      return t("audit.userSuspend", v);
+    case "user.unsuspend":
+      return t("audit.userUnsuspend", v);
+    case "clan.suspend":
+      return t("audit.clanSuspend");
+    case "clan.unsuspend":
+      return t("audit.clanUnsuspend");
+    case "report.file":
+      return t(d.kind === "event" ? "audit.reportEvent" : "audit.reportClan");
+    case "report.resolved":
+      return t("audit.reportResolved");
+    case "report.dismissed":
+      return t("audit.reportDismissed");
+    case "report.reopen":
+      return t("audit.reportReopen");
     case "settings.save":
       return t("audit.settings", { keys: list(d.keys) });
     case "settings.maintenance":

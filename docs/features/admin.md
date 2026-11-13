@@ -1,23 +1,40 @@
 # Platform admin
 
-Platform admins run the instance: they see all clans, events and users and change the platform settings.
+Platform staff run the instance: they see all clans, events and users, change the platform settings and handle abuse reports. What each person may do depends on their platform role.
 
-**Who:** platform admins · **Where:** *Admin*
-
-The first account is always admin. Add more with the **Admin emails** setting, in the user list, or with the [admin CLI](../installation/operations.md#admin-cli).
+**Who:** platform owners, admins, moderators and support · **Where:** *Admin*
 
 ![Admin](../screenshots/desktop-admin.png){ .shot }
+
+## Platform roles
+
+| Role | Can |
+| --- | --- |
+| **Owner** | Everything, including the *Supporters* (billing) and *Operator & legal* settings and giving the owner role. |
+| **Admin** | Platform settings and mail templates, manage every clan and event like their admins, give and take the moderator and support roles, reports and suspensions. |
+| **Moderator** | The [report queue](moderation.md), suspending and restoring users and clans. No settings. |
+| **Support** | Read-only: the admin page, every clan and event, the audit log. To help people, without changing anything. |
+
+The first account is always owner, as is anyone in the **Admin emails** setting. Give roles in the user list on the admin page or with the [admin CLI](../installation/operations.md#admin-cli). Nobody changes their own role, and admins can't touch owners or other admins, so there is always an owner. The last owner can't delete their account.
+
+!!! note "Upgrading"
+    Instances from before platform roles had one admin flag. The upgrade turns every existing admin into an owner, so nobody loses rights.
 
 ## Admin page
 
 | Section | |
 | --- | --- |
-| **Clans, events, users** | Everything on the instance. Make someone admin or take it away in the user list. Deleted accounts only show as a count. |
-| **Usage** | Accounts, active people, clans and events over time. See [Usage](#usage). |
-| **Backups** | Database backups: schedule, back up now, download. See [Backups](../installation/operations.md#backups). |
-| **Health** | Version, database, mail, Discord and background jobs at a glance. See [Health](#health). |
+| **Clans, events, users** | Everything on the instance. Give platform roles and suspend users or clans from the lists. Deleted accounts only show as a count. |
+| **Reports** | Abuse reports from members. See [Reports and suspensions](moderation.md). |
+| **Usage** | Accounts, active people, clans and events over time. All platform staff. See [Usage](#usage). |
+| **Backups** | Database backups: schedule, back up now, download. Owners only. See [Backups](../installation/operations.md#backups). |
+| **Health** | Version, database, mail, Discord and background jobs at a glance. All platform staff. See [Health](#health). |
 | **Audit log** | Every clan's log plus platform changes. See [Audit log](audit-log.md#platform-audit-log). |
-| **Platform settings** | Instance configuration, see below. |
+| **Platform settings** | Instance configuration, see below. Owners and admins only. |
+
+A moderator sees the same page without the settings, and support without any buttons:
+
+![Admin page of a moderator](../screenshots/desktop-admin-moderator.png){ .shot }
 
 ## Platform settings
 
@@ -28,8 +45,8 @@ The first account is always admin. Add more with the **Admin emails** setting, i
 | **Sign-up & admins** | Allow new accounts, admin emails. | [Configuration](../installation/configuration.md) |
 | **Reminders** | Check interval, cron secret. | [Configuration](../installation/configuration.md#reminders-without-a-long-running-process) |
 | **Maintenance** | Banner on every page for planned or ongoing downtime. | [Maintenance banner](#maintenance-banner) |
-| **Operator & legal** | Operator details, own terms and privacy URLs, source URL. | [Operator, privacy and terms](../installation/legal.md) |
-| **Supporters** | Stripe keys and prices, donations and their suggested amounts. | [Stripe](../installation/stripe.md), [Donations](donations.md) |
+| **Operator & legal** | Operator details, own terms and privacy URLs, source URL. Owners only. | [Operator, privacy and terms](../installation/legal.md) |
+| **Supporters** | Stripe keys and prices, donations and their suggested amounts. Owners only. | [Stripe](../installation/stripe.md), [Donations](donations.md) |
 | **Mail templates** | The wording of every email. | [Email](../installation/email.md#mail-templates) |
 | **Server** | Startup values (read-only). | [Configuration](../installation/configuration.md#startup-environment-only) |
 
@@ -54,7 +71,7 @@ To count active people, Seatbit notes the **days** someone used it (just the dat
 *Admin → Backups* lists the database backups Seatbit makes by itself, with **Back up now**, download and delete, and the backup settings. Setup, where to store them and how to restore: [Backups](../installation/operations.md#backups).
 ## Health
 
-*Admin → Health* shows how the server is doing. Mail and Discord are checked live each time the page loads (with a 5 second limit), the rest comes from the running server:
+*Admin → Health* shows how the server is doing. All platform staff see it, support included. Mail and Discord are checked live each time the page loads (with a 5 second limit), the rest comes from the running server:
 
 - **Version:** the commit the image was built from (linked to the source), Node.js, when the server started, timezone, memory.
 - **Database:** file, size (and how much of it is still in the WAL), SQLite version, a quick integrity check and row counts.

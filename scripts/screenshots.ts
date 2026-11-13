@@ -46,7 +46,7 @@ const CLAN = "/clans/pixel-pirates";
 const RETRO = "/lans/demo-lan-retro";
 const DRAFT = "/lans/demo-lan-lakeside-next";
 
-type Who = "anon" | "alex" | "anna" | "sara";
+type Who = "anon" | "alex" | "anna" | "sara" | "oliver";
 type Device = "phone" | "desktop";
 type Shot = {
   name: string;
@@ -163,6 +163,17 @@ const SHOTS: Shot[] = [
   { name: "phone-interest", who: "anna", path: RETRO, full: true },
   { name: "phone-waitlist", who: "sara", path: `${MOUNTAIN}?tab=attendees`, full: true },
   { name: "phone-clans", who: "anna", path: "/clans" },
+  {
+    name: "phone-report-clan",
+    who: "anna",
+    path: "/clans/cheap-keys-club",
+    full: true,
+    act: async (page) => {
+      await page.getByRole("button", { name: "Report this clan" }).click();
+      await page.getByLabel("Spam or advertising").check();
+      await page.waitForTimeout(200);
+    },
+  },
   { name: "phone-clan", who: "anna", path: CLAN, full: true },
   { name: "phone-clan-payments", who: "anna", path: `${CLAN}?tab=payments`, full: true },
   { name: "phone-profile", who: "anna", path: "/profile", full: true },
@@ -263,6 +274,9 @@ const SHOTS: Shot[] = [
   { name: "desktop-donate", who: "alex", path: "/donate" },
   { name: "phone-donate", who: "anna", path: "/donate", full: true },
   { name: "desktop-admin-donations", who: "alex", path: "/admin/donations" },
+  // Platform moderator (Oliver): the report queue and the admin page without settings.
+  { name: "desktop-admin-reports", who: "oliver", path: "/admin/reports" },
+  { name: "desktop-admin-moderator", who: "oliver", path: "/admin", full: true },
   { name: "desktop-privacy", who: "alex", path: "/privacy" },
   {
     name: "desktop-admin-ops",
@@ -338,7 +352,7 @@ async function main() {
   };
 
   run("npx", ["tsx", "scripts/seed-demo.ts", "--discord"], env, true);
-  const sessions = createSessions(dbFile, ["alex", "anna", "sara"]);
+  const sessions = createSessions(dbFile, ["alex", "anna", "sara", "oliver"]);
   demoBackups(dbFile, path.join(dir, "backups"));
 
   // Own process group, so stopping it also stops the Next.js worker processes.

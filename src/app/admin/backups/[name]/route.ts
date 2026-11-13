@@ -3,14 +3,16 @@ import { Readable } from "node:stream";
 import { audit } from "@/lib/audit";
 import { backupPath } from "@/lib/backup";
 import { getCurrentUser } from "@/lib/session";
+import { platformCan } from "@/lib/platform-roles";
 
 export const dynamic = "force-dynamic";
 
-/** Download of one backup file. Platform admins only; every download is in the audit log (it holds everyone's data). */
+/** Download of one backup file. Platform owners only; every download is in the audit log (it holds everyone's data). */
 export async function GET(_: Request, { params }: RouteContext<"/admin/backups/[name]">) {
   const { name } = await params;
   const me = await getCurrentUser();
-  if (!me || me.role !== "admin") return new Response("Not found", { status: 404 });
+  // Backups hold everyone's data: owners only.
+  if (!me || !platformCan(me, "owner")) return new Response("Not found", { status: 404 });
   const file = backupPath(name);
   if (!file) return new Response("Not found", { status: 404 });
   const size = fs.statSync(file).size;

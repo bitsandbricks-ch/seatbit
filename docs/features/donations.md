@@ -19,8 +19,8 @@ On instances where the operator turned on donations, anyone who is signed in can
 ![Donate on a phone](../screenshots/phone-donate.png){ .shot width="320" }
 </figure>
 
-## For platform admins
+## For platform owners
 
-*Admin → Donations* (`/admin/donations`) lists every donation with the donor, the clan, the amount and whether the badge is shown, and totals per currency (all time and this year). A refund in the Stripe Dashboard marks the donation **Refunded**: it no longer counts and the badge goes. Donations also show in the audit log.
+Only [owners](admin.md#platform-roles) see it: *Admin → Donations* (`/admin/donations`) lists every donation with the donor, the clan, the amount and whether the badge is shown, and totals per currency (all time and this year). A refund in the Stripe Dashboard marks the donation **Refunded**: it no longer counts and the badge goes. Donations also show in the audit log.
 
 ![Donations in the admin area](../screenshots/desktop-admin-donations.png){ .shot }

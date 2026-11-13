@@ -27,7 +27,11 @@ export const user = sqliteTable("user", {
   email: text("email").notNull().unique(),
   emailVerified: integer("email_verified", { mode: "boolean" }).default(false).notNull(),
   image: text("image"),
-  role: text("role").default("member").notNull(), // "admin" | "member"
+  /** Platform role (see src/lib/platform-roles.ts): "owner" | "admin" | "moderator" | "support" | "member". */
+  role: text("role").default("member").notNull(),
+  /** Suspended by platform staff: signed out everywhere until restored. */
+  suspendedAt: integer("suspended_at", { mode: "timestamp_ms" }),
+  suspendedReason: text("suspended_reason"),
   emailReminders: integer("email_reminders", { mode: "boolean" }).default(true).notNull(),
   /** Discord DMs from the bot about changes (needs a linked Discord account). */
   discordDms: integer("discord_dms", { mode: "boolean" }).default(true).notNull(),
@@ -168,6 +172,9 @@ export const clan = sqliteTable("clan", {
   paymentsEnabled: integer("payments_enabled", { mode: "boolean" }).default(false).notNull(),
   /** How members pay the clan outside Seatbit: IBAN, TWINT number, "cash to Mike". Shown with open charges. */
   paymentInfo: text("payment_info").default("").notNull(),
+  /** Suspended by platform staff: hidden from members, no joining, the bot stays quiet. */
+  suspendedAt: integer("suspended_at", { mode: "timestamp_ms" }),
+  suspendedReason: text("suspended_reason"),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
 });
 
@@ -946,3 +953,35 @@ export type ChargeItem = typeof chargeItem.$inferSelect;
 
 export type FoodOrder = typeof foodOrder.$inferSelect;
 export type FoodItem = typeof foodItem.$inferSelect;
+
+// ---------- Abuse reports ----------
+
+// Reasons and states live in src/lib/report-reasons.ts.
+import type { ReportReason, ReportStatus } from "../lib/report-reasons";
+export { REPORT_REASONS, REPORT_STATUSES, type ReportReason, type ReportStatus } from "../lib/report-reasons";
+
+/** A member's report about a clan or an event, for the platform moderators' queue. */
+export const report = sqliteTable(
+  "report",
+  {
+    id: id(),
+    /** The reported clan (also set for an event report, so a clan's reports stay together). */
+    clanId: text("clan_id").references(() => clan.id, { onDelete: "set null" }),
+    /** Set when an event was reported. */
+    lanId: text("lan_id").references(() => lan.id, { onDelete: "set null" }),
+    /** Name at the time of the report, so the queue still makes sense after a deletion. */
+    subject: text("subject").default("").notNull(),
+    reporterId: text("reporter_id").references(() => user.id, { onDelete: "set null" }),
+    reason: text("reason").$type<ReportReason>().notNull(),
+    message: text("message").default("").notNull(),
+    status: text("status").$type<ReportStatus>().default("open").notNull(),
+    handledBy: text("handled_by").references(() => user.id, { onDelete: "set null" }),
+    handledAt: integer("handled_at", { mode: "timestamp_ms" }),
+    /** Moderator's note on the outcome; only staff see it. */
+    note: text("note").default("").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  (t) => [index("report_status_idx").on(t.status, t.createdAt), index("report_clan_idx").on(t.clanId)],
+);
+
+export type Report = typeof report.$inferSelect;
