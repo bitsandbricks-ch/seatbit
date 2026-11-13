@@ -7,9 +7,9 @@ AI coding agents (Claude Code, Codex, Copilot, ...) follow [AGENTS.md](https://g
 | Rule | |
 | --- | --- |
 | **Branch** | Own branch, one topic per pull request, never push to `main`. |
-| **Checks** | `lint`, `typecheck`, `build` (and `mkdocs build --strict` for docs) pass before pushing. |
+| **Checks** | `lint`, `typecheck`, `build` (and `mkdocs build --strict` for docs, `test:authz` for new or changed server actions) pass before pushing. |
 | **Pull request** | Opened as a **draft** with the template filled in, linked issue, screenshots for UI changes. |
-| **CI** | Wait for `CI`, `Docs` and `Container image`; fix failures, never skip or weaken a check. |
+| **CI** | Wait for `CI`, `Docs`, `Container image` and `Security`; fix failures, never skip or weaken a check. |
 | **Done** | Mark the pull request **ready for review** when the task is complete, the checklist is ticked and checks are green. |
 | **Merging** | Never merge your own pull request; never force-push a branch someone else works on. |
 | **Conflicts** | Merge `main` into the open pull request as soon as `main` moves, without being asked, and resolve conflicts right away ([migrations](../development/database.md#merge-conflicts-in-migrations): `npm run db:rebase`). |

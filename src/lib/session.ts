@@ -103,6 +103,22 @@ export function canViewLan(u: { id: string; role: string }, lanId: string) {
   return (l.clanId && isClanMember(u.id, l.clanId)) || isLanManager(u, lanId);
 }
 
+/**
+ * May take part in a LAN: answer, add games, offer rides, order food. Clan members
+ * (published events) and the LAN's managers. Unlike canViewLan, platform staff who
+ * may only look (support, moderators) can't: their access is read-only.
+ */
+export function canTakePart(u: { id: string; role: string }, lanId: string) {
+  const l = db
+    .select({ clanId: schema.lan.clanId, publishedAt: schema.lan.publishedAt })
+    .from(schema.lan)
+    .where(eq(schema.lan.id, lanId))
+    .get();
+  if (!l) return false;
+  if (isLanManager(u, lanId)) return true;
+  return !!l.publishedAt && !!l.clanId && !isClanSuspended(l.clanId) && isClanMember(u.id, l.clanId);
+}
+
 /** Leaves out drafts the user can't manage (for event lists). */
 export function visibleLans<T extends { id: string; publishedAt: Date | null }>(u: { id: string; role: string }, lans: T[]) {
   return lans.filter((l) => l.publishedAt || isLanManager(u, l.id));

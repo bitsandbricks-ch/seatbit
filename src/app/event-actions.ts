@@ -9,7 +9,7 @@ import { INTEREST_ANSWERS, type InterestAnswer } from "@/db/schema";
 import { addClanAdminsAsOrgas, getDisplayNames, mustGetLan } from "@/lib/lans";
 import { cancelEvent, openSignup, publishEvent, sendNews, uncancelEvent } from "@/lib/event-notices";
 import { isClanMember } from "@/lib/clans";
-import { canViewLan, isLanManager, requireLanManager, requireUser } from "@/lib/session";
+import { canTakePart, isLanManager, requireLanManager, requireUser } from "@/lib/session";
 import { auditLan } from "@/lib/audit";
 import { fmtDate } from "@/lib/format";
 import { overLimit } from "@/lib/rate-limit";
@@ -47,7 +47,7 @@ export async function schedulePublish(lanId: string, at: string | null): Promise
 export async function setMyInterest(lanId: string, answer: InterestAnswer) {
   const me = await requireUser();
   const l = mustGetLan(lanId);
-  if (!canViewLan(me, lanId)) throw await err("errors.joinFirst");
+  if (!canTakePart(me, lanId)) throw await err("errors.joinFirst");
   if (!l.interestCheck || l.cancelledAt) throw await err("errors.interestOver");
   if (!INTEREST_ANSWERS.includes(answer)) throw new Error("Bad answer");
   db.insert(lanInterest)
@@ -221,7 +221,7 @@ export async function setMyInterests(clanId: string, typeIds: string[] | null) {
 export async function setArrived(lanId: string, userId: string | null, arrived: boolean) {
   const me = await requireUser();
   const target = userId ?? me.id;
-  if (target !== me.id && !isLanManager(me, lanId)) throw await err("errors.leadsCheckIn");
+  if (target !== me.id ? !isLanManager(me, lanId) : !canTakePart(me, lanId)) throw await err("errors.leadsCheckIn");
   const a = db.select().from(attendance).where(and(eq(attendance.lanId, lanId), eq(attendance.userId, target))).get();
   if (!a || a.status !== "going") throw await err("errors.comingCheckIn");
   db.update(attendance)

@@ -12,7 +12,7 @@ import { getDisplayNames, getLan } from "@/lib/lans";
 import { appUrl } from "@/lib/mail";
 import { notify, notifyLater } from "@/lib/notify";
 import { optionalHttpUrl } from "@/lib/safe-url";
-import { canViewLan, isLanManager, requireUser } from "@/lib/session";
+import { canTakePart, isLanManager, requireUser } from "@/lib/session";
 import { overLimit } from "@/lib/rate-limit";
 
 const { foodOrder, foodItem, attendance, user } = schema;
@@ -33,7 +33,7 @@ function myAttendance(lanId: string, userId: string) {
 /** Everyone who isn't "not coming" may order food; leads always. */
 function canOrder(me: User, lanId: string) {
   if (isLanManager(me, lanId)) return true;
-  if (!canViewLan(me, lanId)) return false;
+  if (!canTakePart(me, lanId)) return false;
   const a = myAttendance(lanId, me.id);
   return !!a && a.status !== "declined";
 }

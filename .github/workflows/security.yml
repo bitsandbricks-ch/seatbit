@@ -1,0 +1,118 @@
+name: Security
+
+on:
+  pull_request:
+  merge_group:
+  push:
+    branches: [main]
+  # New vulnerabilities show up without any change on our side.
+  schedule:
+    - cron: "17 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Fixable high and critical findings fail the job; the rest is noise for a small app.
+  TRIVY_SEVERITY: HIGH,CRITICAL
+  TRIVY_IGNORE_UNFIXED: "true"
+
+jobs:
+  authz:
+    name: Permission tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      # Every server action, tried as signed out, suspended, another clan's admin,
+      # pending, member, lead, clan roles and platform staff (tests/authz/).
+      - run: npm run test:authz
+
+  deps:
+    name: Scan dependencies and config
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v7
+      # package-lock.json, docs/requirements.txt, the Dockerfile and committed secrets.
+      - name: Trivy (repository)
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,misconfig
+          exit-code: "1"
+      - name: Trivy report for code scanning
+        if: always() && github.event_name != 'pull_request' && github.event_name != 'merge_group'
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,misconfig
+          format: sarif
+          output: trivy-repo.sarif
+          exit-code: "0"
+      - name: Upload to code scanning
+        if: always() && hashFiles('trivy-repo.sarif') != ''
+        # Needs code scanning on the repository; without it the scan above still fails on findings.
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-repo.sarif
+          category: trivy-repo
+
+  image:
+    name: Scan container image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      # Same Dockerfile as the Container image workflow; its amd64 layer cache makes this quick.
+      - name: Build image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64
+          load: true
+          tags: seatbit:scan
+          cache-from: |
+            type=registry,ref=ghcr.io/${{ github.repository }}:buildcache-amd64
+            type=gha,scope=image-amd64
+      - name: Trivy (image)
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        with:
+          scan-type: image
+          image-ref: seatbit:scan
+          scanners: vuln,secret
+          exit-code: "1"
+      - name: Trivy report for code scanning
+        if: always() && github.event_name != 'pull_request' && github.event_name != 'merge_group'
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        with:
+          scan-type: image
+          image-ref: seatbit:scan
+          scanners: vuln,secret
+          format: sarif
+          output: trivy-image.sarif
+          exit-code: "0"
+      - name: Upload to code scanning
+        if: always() && hashFiles('trivy-image.sarif') != ''
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-image.sarif
+          category: trivy-image

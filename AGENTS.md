@@ -16,9 +16,10 @@ A self-hostable web app that helps a clan coordinate going to LAN parties run by
    - `npm run check:changelog` (changelog entries)
    - `npm run typecheck`
    - `npm run build`
+   - `npm run test:authz` when you added or changed a server action or a download route (permission matrix)
    - `mkdocs build --strict` when you touched `docs/` or `mkdocs.yml` (`pip install -r docs/requirements.txt`)
 3. **Pull request:** open it as a **draft**. Fill in the template (`.github/pull_request_template.md`): what and why, screenshots for UI changes, the checklist. Link the issue.
-4. **CI:** wait for the checks (`CI`, `Docs`, `Container image`). Fix failures yourself; never skip, disable or weaken a check or test to get green.
+4. **CI:** wait for the checks (`CI`, `Docs`, `Container image`, `Security`). Fix failures yourself; never skip, disable or weaken a check or test to get green.
 5. **When you are done, mark the pull request ready for review.** Done means: the task is complete, the checklist is ticked, and all checks are green. Leave it as a draft only while work is still open or you are blocked, and say why in the description.
 6. **Keep it mergeable:** whenever `main` moves while your pull request is open, merge `main` into your branch right away, without being asked, resolve conflicts and push. Don't let a pull request sit stale; an old conflict is harder to resolve than a fresh one.
 7. **Never merge** your own pull request, and never force-push to a branch someone else is working on. Merging is the maintainer's call.
@@ -29,6 +30,7 @@ A self-hostable web app that helps a clan coordinate going to LAN parties run by
 - **Next.js:** this is a recent Next.js with breaking changes (see the block below). Read `node_modules/next/dist/docs/` before using an API you aren't sure about.
 - **Server code** that touches the database must not be imported by client components (`"use client"`). `better-sqlite3` breaks the client bundle.
 - **Database:** change `src/db/schema.ts`, run `npm run db:generate -- --name <what>`. Migrations are named by timestamp (`drizzle/20261113153000_what.sql`). When `main` brought another migration (conflict in `drizzle/meta/_journal.json`, or CI's `drizzle-kit check` fails): merge `main`, resolve the other conflicts, then run `npm run db:rebase`; it regenerates your migration on top of main's. Add back any hand-written SQL it lists. Never renumber or edit `drizzle/` by hand.
+- **Permissions:** every server action checks who calls it (`requireUser`, `requireClanPermission`, `requireLanManager`, `assertPlatform`). Taking part in an event (answering, games, rides, food) uses `canTakePart`; `canViewLan` also lets read-only platform staff in. A new exported server action needs a row in `tests/authz/matrix.ts` saying who may call it; see `docs/development/permission-tests.md`.
 - **Settings:** instance-wide options go into `SETTINGS` in `src/lib/settings.ts` (admin UI with env var fallback), not into new hard-coded constants or env-only variables. Only startup values (`BETTER_AUTH_URL`, `BETTER_AUTH_SECRET`, `DATABASE_PATH`, `TZ`) stay env-only.
 - **Shared lists:** where features register themselves in a list, add one line to its registry instead of editing a page: platform admin tabs in `src/app/admin/sections.ts`, settings in `SETTINGS`. Prefer a new file per feature over growing a shared one (server actions, translations, components), so parallel pull requests don't edit the same lines.
 - **Self-hosting:** never hard-code anything about one particular instance (operator name, address, domain, Discord server, clan). Use settings with neutral defaults. Keep the "Powered by bitsandbricks.ch" and "Source" footer links.

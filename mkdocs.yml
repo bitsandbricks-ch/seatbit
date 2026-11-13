@@ -143,6 +143,7 @@ nav:
       - Database and migrations: development/database.md
       - Screenshots: development/screenshots.md
       - CI and releases: development/ci.md
+      - Permission tests: development/permission-tests.md
   - Contributing:
       - contributing/index.md
       - Code guidelines: contributing/guidelines.md

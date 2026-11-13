@@ -17,7 +17,8 @@
     "discord:register": "tsx --env-file-if-exists=.env scripts/discord-register.ts",
     "seed": "tsx --env-file-if-exists=.env scripts/seed-demo.ts",
     "screenshots": "tsx scripts/screenshots.ts",
-    "typecheck": "next typegen && tsc --noEmit"
+    "typecheck": "next typegen && tsc --noEmit",
+    "test:authz": "node --require ./tests/authz/setup.cjs --import tsx --test tests/authz/authz.test.ts"
   },
   "dependencies": {
     "better-auth": "^1.7.20",

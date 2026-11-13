@@ -30,6 +30,7 @@ export const event = {
   cancelled: "The event is cancelled.",
   locked: "You have a ticket, so your answer is locked. Ask a lead if your plans change.",
   signupClosed: "Sign-up is closed.",
+  staffView: "You see this event as platform staff. Only the clan's members can answer.",
   waitlistPlace: "The group is full. You're {place} on the waitlist.",
   waitlistAuto: "When a spot opens, the first in line moves up by itself and gets an email and a Discord DM.",
   waitlistManual: "When a spot opens, the leads pick who moves up and you get an email and a Discord DM.",
