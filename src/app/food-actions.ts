@@ -90,16 +90,16 @@ export async function createFoodOrder(lanId: string, formData: FormData): Promis
     const url = `${appUrl}/lans/${lanId}?tab=food`;
     notifyLater(async () => {
       for (const { u } of going)
-        await notify(u, {
+        await notify(u, (t) => ({
           kind: "food_order",
-          subject: `${o.title}: add your order`,
-          text: `${names.get(me.id)} is collecting a food order at ${l.name}: ${o.title}${o.shop ? ` from ${o.shop}` : ""}.${
-            o.closesAt ? ` Last call ${fmtTime(o.closesAt)}.` : ""
-          }${o.note ? `\n\n${o.note}` : ""}\n\nAdd what you want in Seatbit.`,
+          subject: t("notice.foodOrder", { title: o.title }),
+          text: `${t(o.shop ? "notice.foodOrderFromText" : "notice.foodOrderText", { name: names.get(me.id) ?? "", lan: l.name, title: o.title, shop: o.shop ?? "" })}${
+            o.closesAt ? ` ${t("notice.lastCall", { time: fmtTime(o.closesAt) })}` : ""
+          }${o.note ? `\n\n${o.note}` : ""}\n\n${t("notice.foodOrderHow")}`,
           url,
           // Food runs are small and happen at the LAN: a DM, never a mail.
           dmOnly: true,
-        });
+        }));
     });
   }
   foodPath(lanId);

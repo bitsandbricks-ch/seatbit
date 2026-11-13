@@ -6,6 +6,9 @@ import { fmtWhen } from "./announce";
 import type { Json } from "./discord-api";
 import { getClan } from "./clans";
 import { appUrl } from "./mail";
+import { makeT, type T } from "../i18n/translate";
+import { isLocale, matchAcceptLanguage } from "../i18n/config";
+import { clanLocale } from "../i18n/user-locale";
 
 const { account, discordChannel, lan, user } = schema;
 
@@ -22,6 +25,8 @@ export type Interaction = {
   channel?: { name?: string };
   member?: { user: DiscordUser; nick?: string | null };
   user?: DiscordUser;
+  /** The caller's Discord client language, e.g. "de" or "en-US". */
+  locale?: string;
   data?: {
     name?: string;
     custom_id?: string;
@@ -53,10 +58,20 @@ export function seatbitUserFor(discordUserId: string) {
   return userId ? db.select().from(user).where(eq(user.id, userId)).get() : undefined;
 }
 
-export const notLinked = () =>
-  reply("I don't know who you are in Seatbit yet. Sign in with Discord, or link Discord on your profile, then try again.", {
-    components: [linkButton("Link Discord", `${appUrl}/profile`)],
+export const notLinked = (t: T) =>
+  reply(t("bot.notLinked"), {
+    components: [linkButton(t("bot.linkDiscord"), `${appUrl}/profile`)],
   });
+
+/**
+ * The language for replies to one person: their Seatbit language, else their Discord
+ * client's, else the clan's of this server.
+ */
+export function interactionT(i: Interaction): T {
+  const me = seatbitUserFor(i.member?.user.id ?? i.user?.id ?? "");
+  if (isLocale(me?.locale)) return makeT(me.locale);
+  return makeT(matchAcceptLanguage(i.locale) ?? clanLocale(clanForGuild(i.guild_id)));
+}
 
 /** The clan a Discord server is linked to (all its channels share one clan). */
 export function clanForGuild(guildId: string | undefined): Clan | undefined {
@@ -88,13 +103,13 @@ export const upcomingLans = (clanIds: string[]) =>
     : [];
 
 /** "⏰ Next: Buy ticket by Sat 14.11.2026, 18:00", or "" when nothing is due anymore. */
-export function nextDeadline(l: Lan, now = new Date()) {
+export function nextDeadline(l: Lan, now = new Date(), t: T = makeT("en")) {
   const next = (
     [
-      ["Answer by", l.signupDeadline],
-      ["Buy ticket by", l.paymentDueDate],
-      ["Starts", l.startsAt],
+      ["bot.nextAnswer", l.signupDeadline],
+      ["bot.nextTicket", l.paymentDueDate],
+      ["bot.nextStart", l.startsAt],
     ] as const
   ).find(([, d]) => d && d > now);
-  return next ? `⏰ Next: ${next[0]} ${fmtWhen(next[1]!)}` : "";
+  return next ? `⏰ ${t(next[0], { date: fmtWhen(next[1]!, t.locale) })}` : "";
 }

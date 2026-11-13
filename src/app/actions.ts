@@ -161,13 +161,13 @@ export async function updateAppearance(_: AppearanceState, formData: FormData): 
 /** Sends the member a test DM and shows on the profile whether it arrived, or why not. */
 export async function sendTestDm() {
   const me = await requireUser();
-  const r = await trySendDiscordDm(me, {
+  const r = await trySendDiscordDm(me, (t) => ({
     kind: "test",
-    subject: "Seatbit test DM",
-    text: "This is a test from your Seatbit profile. Changes to your events, seats and reminders will show up here.",
+    subject: t("notice.testDm"),
+    text: t("notice.testDmText"),
     url: `${appUrl}/profile`,
     dmOnly: true,
-  });
+  }));
   redirect(`/profile?dm=${r.ok ? "ok" : r.problem}#dms`);
 }
 

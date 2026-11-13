@@ -81,13 +81,13 @@ export async function requestSeatSwap(lanId: string, toUserId: string, note = ""
   db.insert(seatSwap).values({ lanId, fromUserId: me.id, toUserId, note: note.trim().slice(0, 200) }).run();
   const names = await getDisplayNames(lanId, [me.id]);
   notifyLater(() =>
-    notify(toUserId, {
+    notify(toUserId, (t) => ({
       kind: "seat_swap",
-      subject: `${names.get(me.id)} wants to swap seats at ${l.name}`,
-      text: `${names.get(me.id)} (seat ${mine.label}) asks to swap with your seat ${theirs.label} at ${l.name}.${note.trim() ? `\n\n"${note.trim().slice(0, 200)}"` : ""}\n\nAccept or decline on the event page. A lead approves the swap afterwards.`,
+      subject: t("notice.swapAsk", { name: names.get(me.id) ?? "", lan: l.name }),
+      text: `${t("notice.swapAskText", { name: names.get(me.id) ?? "", mine: mine.label, theirs: theirs.label, lan: l.name })}${note.trim() ? `\n\n«${note.trim().slice(0, 200)}»` : ""}\n\n${t("notice.swapAskHow")}`,
       url: lanUrl(l),
       dmOnly: true,
-    }),
+    })),
   );
   lanPath(lanId);
 }
@@ -105,23 +105,21 @@ export async function answerSeatSwap(swapId: string, accept: boolean) {
   const names = await getDisplayNames(l.id, [s.fromUserId, s.toUserId]);
   const [a, b] = [names.get(s.fromUserId), names.get(s.toUserId)];
   notifyLater(async () => {
-    await notify(s.fromUserId, {
+    await notify(s.fromUserId, (t) => ({
       kind: "seat_swap",
-      subject: accept ? `${b} agreed to swap seats` : `${b} declined your seat swap`,
-      text: accept
-        ? `${b} agreed to swap seats with you at ${l.name}. A lead still has to approve it.`
-        : `${b} doesn't want to swap seats at ${l.name}.`,
+      subject: t(accept ? "notice.swapAgreed" : "notice.swapDeclined", { name: b ?? "" }),
+      text: t(accept ? "notice.swapAgreedText" : "notice.swapDeclinedText", { name: b ?? "", lan: l.name }),
       url: lanUrl(l),
       dmOnly: true,
-    });
+    }));
     if (accept)
       for (const o of orgasOf(l))
-        await sendDiscordDm(o, {
+        await sendDiscordDm(o, (t) => ({
           kind: "seat_swap",
-          subject: `Seat swap to approve: ${a} ⇄ ${b}`,
-          text: `${a} and ${b} want to swap seats at ${l.name}. Approve or reject it on the Seats tab.`,
+          subject: t("notice.swapApprove", { a: a ?? "", b: b ?? "" }),
+          text: t("notice.swapApproveText", { a: a ?? "", b: b ?? "", lan: l.name }),
           url: `${appUrl}/lans/${l.id}/manage?tab=seats`,
-        });
+        }));
   });
   lanPath(l.id);
 }
@@ -149,13 +147,13 @@ export async function decideSeatSwap(swapId: string, approve: boolean) {
     logDecision();
     notifyLater(async () => {
       for (const uid of [s.fromUserId, s.toUserId])
-        await notify(uid, {
+        await notify(uid, (t) => ({
           kind: "seat_swap",
-          subject: `Seat swap at ${l.name} not approved`,
-          text: `The leads didn't approve the seat swap at ${l.name}. Your seat stays the same. Ask them if you want to know why.`,
+          subject: t("notice.swapRejected", { lan: l.name }),
+          text: t("notice.swapRejectedText", { lan: l.name }),
           url: lanUrl(l),
           dmOnly: true,
-        });
+        }));
     });
     lanPath(l.id);
     return;

@@ -9,7 +9,7 @@ import { z } from "zod";
 import { db, schema } from "@/db";
 import { GUEST_CLAIM_MODES } from "@/db/schema";
 import { clanCan, clanRole, getClan, saveAvatar, uniqueSlug } from "@/lib/clans";
-import { MEMBER_ROLES, ROLE_INFO, isMemberRole, roleWithArticle, type MemberRole } from "@/lib/clan-roles";
+import { MEMBER_ROLES, isMemberRole, type MemberRole } from "@/lib/clan-roles";
 import { guestEmail } from "@/lib/guests";
 import { LAN_ID_MAX } from "@/lib/lan-accounts";
 import {
@@ -121,12 +121,12 @@ export async function joinClan(clanId: string) {
   db.insert(clanMember).values({ clanId, userId: me.id, role }).onConflictDoNothing().run();
   if (role === "pending") {
     notifyLater(() =>
-      notifyClanAdmins(clanId, {
+      notifyClanAdmins(clanId, (t) => ({
         kind: "clan_request",
-        subject: `${me.name} wants to join ${c.name}`,
-        text: `${me.name} asked to join ${c.name}. Approve or decline it in the clan's member list.`,
+        subject: t("notice.joinRequest", { name: me.name, clan: c.name }),
+        text: t("notice.joinRequestText", { name: me.name, clan: c.name }),
         url: `${appUrl}/clans/${c.slug}/settings?tab=members`,
-      }),
+      })),
     );
   }
   revalidatePath("/", "layout");
@@ -204,23 +204,23 @@ export async function setClanMemberRole(clanId: string, userId: string, role: Me
     notifyLater(async () => {
       // They may not be on the clan's Discord yet, so this also goes by mail, with the invite.
       const invites = (await missingServers(userId, clanId)).map((sv) => sv.inviteUrl).filter(Boolean);
-      await notify(userId, {
+      await notify(userId, (t) => ({
         kind: "clan_approved",
-        subject: `You're in: ${c.name}`,
-        text: `Your request to join ${c.name} was approved. Their LANs now show up in Seatbit.${
-          invites.length ? `\n\nJoin the clan's Discord: ${invites.join(" ")}` : ""
+        subject: t("notice.approved", { clan: c.name }),
+        text: `${t("notice.approvedText", { clan: c.name })}${
+          invites.length ? `\n\n${t("notice.joinDiscord", { links: invites.join(" ") })}` : ""
         }\n\n${appUrl}/clans/${c.slug}`,
         url: `${appUrl}/clans/${c.slug}`,
-      });
+      }));
     });
   } else if (c && role !== "member") {
     notifyLater(() =>
-      notify(userId, {
+      notify(userId, (t) => ({
         kind: "clan_role",
-        subject: `${c.name}: you're now ${roleWithArticle(role)}`,
-        text: `${ROLE_INFO[role].description}\n\n${appUrl}/clans/${c.slug}`,
+        subject: t("notice.roleNow", { clan: c.name, role: t(`roleA.${role}`) }),
+        text: `${t(`roleInfo.${role}`)}\n\n${appUrl}/clans/${c.slug}`,
         url: `${appUrl}/clans/${c.slug}`,
-      }),
+      })),
     );
   }
 }
@@ -654,14 +654,14 @@ export async function decideGuestClaim(claimId: string, approve: boolean) {
   if (approve) mergeGuestInto(g, r.userId);
   else db.update(schema.guestClaim).set({ status: "declined" }).where(eq(schema.guestClaim.id, claimId)).run();
   notifyLater(() =>
-    notify(r.userId, {
+    notify(r.userId, (t) => ({
       kind: approve ? "guest_claim_approved" : "guest_claim_declined",
-      subject: approve ? `You took over ${g.name} in ${c.name}` : `Not taken over: ${g.name}`,
-      text: approve
-        ? `An admin of ${c.name} confirmed you're ${g.name}. Their events, seats and nicks are yours now.\n\n${appUrl}/clans/${c.slug}`
-        : `An admin of ${c.name} didn't confirm you're ${g.name}. If that's a mistake, talk to them.\n\n${appUrl}/clans/${c.slug}`,
+      subject: approve
+        ? t("notice.tookOver", { guest: g.name, clan: c.name })
+        : t("notice.notTakenOver", { guest: g.name }),
+      text: `${t(approve ? "notice.claimApprovedText" : "notice.claimDeclinedText", { guest: g.name, clan: c.name })}\n\n${appUrl}/clans/${c.slug}`,
       url: `${appUrl}/clans/${c.slug}`,
-    }),
+    })),
   );
   revalidatePath("/", "layout");
 }

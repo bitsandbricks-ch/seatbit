@@ -5,6 +5,9 @@ import type { Lan, User } from "@/db/schema";
 import { api, discordEnabled } from "./discord-api";
 import { appUrl, sendMail } from "./mail";
 import { rolesWith } from "./clan-roles";
+import type { Locale } from "../i18n/config";
+import { makeT, type T } from "../i18n/translate";
+import { localeOf } from "../i18n/user-locale";
 
 const { account, attendance, user, clanMember } = schema;
 
@@ -48,7 +51,18 @@ export type Notice = {
   footer?: string;
   /** Extra DM buttons next to "Open in Seatbit" (Discord button components, e.g. "I have my ticket"). */
   buttons?: Record<string, unknown>[];
+  /** Language of the DM's own labels (footer, "Open in Seatbit"). */
+  locale?: Locale;
 };
+
+/** A notice, or one written per recipient in their language. */
+export type NoticeFor = Notice | ((t: T) => Notice);
+
+/** The notice in the member's language. */
+export function noticeFor(u: { locale?: string | null } | null | undefined, n: NoticeFor): Notice {
+  const t = makeT(localeOf(u));
+  return { locale: t.locale, ...(typeof n === "function" ? n(t) : n) };
+}
 
 export type NotifyResult = { email: boolean; dm: boolean };
 
@@ -71,12 +85,12 @@ const clip = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1)}…`
  * DM text from a plain mail text: drops the greeting, the mail footer and the
  * bare link, then adds the link back as a visible "Open in Seatbit" link.
  */
-export function dmBody(text: string, url?: string) {
-  let t = text.replace(/^Hi [^\n]*,\s*\n+/, "").replace(/\n*--\n[\s\S]*$/, "");
+export function dmBody(text: string, url?: string, open = "Open in Seatbit") {
+  let t = text.replace(/^(Hi|Hallo)\b[^\n]*,\s*\n+/, "").replace(/\n*--\n[\s\S]*$/, "");
   if (url) t = t.split(url).join("").replace(/\n*(Details|Your seat and details|Pick your seat|Link):?\s*$/i, "");
   t = t.trim();
   t = t.charAt(0).toUpperCase() + t.slice(1);
-  return url ? `${t}\n\n[Open in Seatbit](${url})` : t;
+  return url ? `${t}\n\n[${open}](${url})` : t;
 }
 
 /** Why a DM couldn't be sent, so the profile test button and the logs can say it plainly. */
@@ -85,7 +99,11 @@ export type DmProblem = "dms_off" | "guest" | "bot_not_set_up" | "no_discord" | 
 export type DmResult = { ok: true } | { ok: false; problem: DmProblem; detail?: string };
 
 /** Sends a DM and says why when it can't. */
-export async function trySendDiscordDm(u: Pick<User, "id" | "discordDms" | "isGuest">, n: Notice): Promise<DmResult> {
+export async function trySendDiscordDm(
+  u: Pick<User, "id" | "discordDms" | "isGuest"> & { locale?: string | null },
+  nf: NoticeFor,
+): Promise<DmResult> {
+  const n = noticeFor(u, nf);
   if (!u.discordDms) return { ok: false, problem: "dms_off" };
   if (u.isGuest) return { ok: false, problem: "guest" };
   if (!discordEnabled()) return { ok: false, problem: "bot_not_set_up" };
@@ -97,6 +115,7 @@ export async function trySendDiscordDm(u: Pick<User, "id" | "discordDms" | "isGu
 /** DMs a Discord user by id, Seatbit account or not (e.g. someone a lead linked a guest to). */
 export async function dmDiscordUser(discordId: string, n: Notice): Promise<DmResult> {
   if (!discordEnabled()) return { ok: false, problem: "bot_not_set_up" };
+  const t = makeT(n.locale ?? "en");
   try {
     let channelId = dmChannels.get(discordId);
     if (!channelId) {
@@ -108,9 +127,9 @@ export async function dmDiscordUser(discordId: string, n: Notice): Promise<DmRes
         {
           title: clip(n.subject, 256),
           url: n.url,
-          description: clip(n.dm ?? dmBody(n.text, n.url), 4000),
+          description: clip(n.dm ?? dmBody(n.text, n.url, t("notice.openInSeatbit")), 4000),
           color: 0x10b981,
-          footer: { text: n.footer ?? "Seatbit · turn these DMs off on your profile" },
+          footer: { text: n.footer ?? t("notice.dmFooter") },
         },
       ],
       components:
@@ -120,7 +139,7 @@ export async function dmDiscordUser(discordId: string, n: Notice): Promise<DmRes
                 type: 1,
                 components: [
                   ...(n.buttons ?? []),
-                  ...(n.url ? [{ type: 2, style: 5, label: "Open in Seatbit", url: n.url }] : []),
+                  ...(n.url ? [{ type: 2, style: 5, label: t("notice.openInSeatbit"), url: n.url }] : []),
                 ].slice(0, 5),
               },
             ]
@@ -145,7 +164,8 @@ export async function dmDiscordUser(discordId: string, n: Notice): Promise<DmRes
  * (no linked Discord, DMs off, bot not set up, or Discord refuses because
  * they share no server with the bot or blocked DMs).
  */
-export async function sendDiscordDm(u: Pick<User, "id" | "discordDms" | "isGuest">, n: Notice) {
+export async function sendDiscordDm(u: Pick<User, "id" | "discordDms" | "isGuest"> & { locale?: string | null }, nf: NoticeFor) {
+  const n = noticeFor(u, nf);
   const r = await trySendDiscordDm(u, n);
   if (!r.ok && r.problem === "bot_not_set_up") console.warn(`[discord] no DM (${n.kind}): bot token or application ID not set`);
   return r.ok;
@@ -154,9 +174,10 @@ export async function sendDiscordDm(u: Pick<User, "id" | "discordDms" | "isGuest
 // ---------- Fan-out ----------
 
 /** Sends a notice to one member by email and/or Discord DM, depending on their settings. */
-export async function notify(userOrId: User | string, n: Notice): Promise<NotifyResult> {
+export async function notify(userOrId: User | string, nf: NoticeFor): Promise<NotifyResult> {
   const u = typeof userOrId === "string" ? db.select().from(user).where(eq(user.id, userOrId)).get() : userOrId;
   if (!u) return { email: false, dm: false };
+  const n = noticeFor(u, nf);
   const wantsMail = !n.dmOnly && (n.kind !== "reminder" || u.emailReminders);
   let email = false;
   if (wantsMail) {
@@ -185,34 +206,32 @@ const fmt = fmtDate;
 /** Tells a member their seat changed (only once the seat plan is final). */
 export async function notifySeatChanged(l: Lan, userId: string, label: string | null) {
   if (!l.seatsPublishedAt || !l.publishedAt) return;
-  await notify(userId, {
+  await notify(userId, (t) => ({
     kind: "seat_changed",
-    subject: label ? `Your seat at ${l.name} is now ${label}` : `You no longer have a seat at ${l.name}`,
-    text: label
-      ? `Your seat at ${l.name} changed. You're now sitting at ${label}.`
-      : `A lead took you off your seat at ${l.name}. They'll get back to you.`,
+    subject: label ? t("notice.seatNow", { lan: l.name, seat: label }) : t("notice.seatGone", { lan: l.name }),
+    text: label ? t("notice.seatNowText", { lan: l.name, seat: label }) : t("notice.seatGoneText", { lan: l.name }),
     url: `${lanUrl(l)}?tab=seats`,
     dmOnly: true,
-  });
+  }));
 }
 
 const DETAIL_FIELDS = [
-  ["startsAt", "Start"],
-  ["endsAt", "End"],
-  ["location", "Location"],
-  ["signupDeadline", "Answer by"],
-  ["paymentDueDate", "Ticket by"],
-  ["price", "Price"],
-  ["ticketUrl", "Ticket link"],
+  ["startsAt", "notice.field.start"],
+  ["endsAt", "notice.field.end"],
+  ["location", "notice.field.location"],
+  ["signupDeadline", "notice.field.answerBy"],
+  ["paymentDueDate", "notice.field.ticketBy"],
+  ["price", "notice.field.price"],
+  ["ticketUrl", "notice.field.ticketUrl"],
 ] as const;
 
-/** Lines like "Start: 3 Jan → 4 Jan" for the details that changed. */
-export function lanChanges(before: Lan, after: Lan) {
-  const show = (v: unknown) => (v instanceof Date ? fmt(v) : v ? String(v) : "—");
+/** Lines like "Start: Sat 03.01.2027, 18:00 → Sun 04.01.2027, 18:00" for the details that changed. */
+export function lanChanges(before: Lan, after: Lan, t: T = makeT("en")) {
+  const show = (v: unknown) => (v instanceof Date ? fmt(v, t.locale) : v ? String(v) : "—");
   const same = (a: unknown, b: unknown) =>
     a instanceof Date || b instanceof Date ? (a as Date | null)?.getTime() === (b as Date | null)?.getTime() : (a ?? "") === (b ?? "");
   return DETAIL_FIELDS.filter(([k]) => !same(before[k], after[k])).map(
-    ([k, label]) => `${label}: ${show(before[k])} → ${show(after[k])}`,
+    ([k, label]) => `${t(label)}: ${show(before[k])} → ${show(after[k])}`,
   );
 }
 
@@ -227,18 +246,18 @@ export async function notifyLanChanged(before: Lan, after: Lan) {
     .where(and(eq(attendance.lanId, after.id), inArray(attendance.status, ["going", "maybe", "waitlist"])))
     .all();
   for (const { u } of rows) {
-    await notify(u, {
+    await notify(u, (t) => ({
       kind: "lan_changed",
-      subject: `${after.name}: details changed`,
-      text: `Hi ${u.name},\n\nthe leads changed ${after.name}:\n\n${changes.join("\n")}\n\n${lanUrl(after)}`,
+      subject: t("notice.lanChanged", { lan: after.name }),
+      text: `${t("mail.hi", { name: u.firstName || u.name })}\n\n${t("notice.lanChangedText", { lan: after.name })}\n\n${lanChanges(before, after, t).join("\n")}\n\n${lanUrl(after)}`,
       url: lanUrl(after),
-    });
+    }));
   }
   return rows.length;
 }
 
 /** Tells whoever handles a clan's members (admins and recruiters) about a join request or a claimed guest profile (DM only). */
-export async function notifyClanAdmins(clanId: string, n: Omit<Notice, "dmOnly">) {
+export async function notifyClanAdmins(clanId: string, n: Omit<Notice, "dmOnly"> | ((t: T) => Omit<Notice, "dmOnly">)) {
   const admins = db
     .select({ u: user })
     .from(clanMember)

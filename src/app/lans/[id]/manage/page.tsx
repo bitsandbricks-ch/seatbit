@@ -643,7 +643,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
             <div className="space-y-2">
               <h3 className="font-semibold text-fg">WhatsApp</h3>
               <p className="text-muted">Ready-made messages for the community. Copy one and paste it into the group.</p>
-              <WhatsAppTexts texts={await whatsappTexts(l)} />
+              <WhatsAppTexts texts={await whatsappTexts(l, t)} />
             </div>
           </div>
         </Card>

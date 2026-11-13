@@ -201,12 +201,12 @@ async function spotOpened(l: Lan) {
   if (!l.publishedAt || !waiting || !free) return;
   const orgas = db.select({ userId: schema.lanOrga.userId }).from(schema.lanOrga).where(eq(schema.lanOrga.lanId, l.id)).all();
   for (const o of orgas) {
-    await notify(o.userId, {
+    await notify(o.userId, (t) => ({
       kind: "waitlist_spot",
-      subject: `A spot opened at ${l.name}`,
-      text: `${free === 1 ? "A spot is" : `${free} spots are`} free at ${l.name} and ${waiting} ${waiting === 1 ? "person is" : "people are"} on the waitlist. You move people up by hand for this event: pick who gets the spot.\n\n${appUrl}/lans/${l.id}/manage?tab=attendees`,
+      subject: t("notice.spotOpened", { lan: l.name }),
+      text: `${t("notice.spotsFree", { count: free, lan: l.name })} ${t("notice.waiting", { count: waiting })} ${t("notice.pickByHand")}\n\n${appUrl}/lans/${l.id}/manage?tab=attendees`,
       url: `${appUrl}/lans/${l.id}/manage?tab=attendees`,
-    }).catch((e) => console.error("[notify] failed", e));
+    })).catch((e) => console.error("[notify] failed", e));
   }
 }
 
