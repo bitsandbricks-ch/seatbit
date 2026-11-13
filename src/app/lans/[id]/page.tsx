@@ -534,10 +534,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
                   <div className="flex justify-between">
                     <dt className="text-muted">{t("event.yourTicket")}</dt>
                     <dd>
-                      {my.paid ? (
-                        <Pill tone="emerald">{t("event.ticketConfirmed")}</Pill>
-                      ) : my.ticketBought ? (
-                        <Pill tone="amber">{t("event.ticketReported")}</Pill>
+                      {my.paid || my.ticketBought ? (
+                        <Pill tone="emerald">{t("event.ticketOk")}</Pill>
                       ) : (
                         <Pill tone="red">{t("event.ticketOpen")}</Pill>
                       )}
@@ -731,7 +729,7 @@ function AttendeeList({
           </a>
         )}
         {seatOf.get(a.userId) && <Pill>{seatOf.get(a.userId)}</Pill>}
-        {showPaid && (a.paid ? <Pill tone="emerald">{t("event.ticketOk")}</Pill> : a.ticketBought ? <Pill tone="amber">{t("event.reported")}</Pill> : <Pill tone="red">{t("event.noTicket")}</Pill>)}
+        {showPaid && (a.paid || a.ticketBought ? <Pill tone="emerald">{t("event.ticketOk")}</Pill> : <Pill tone="red">{t("event.noTicket")}</Pill>)}
       </span>
     </li>
   );

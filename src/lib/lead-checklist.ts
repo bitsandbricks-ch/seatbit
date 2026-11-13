@@ -8,9 +8,8 @@ export type LeadStep = { key: string; title: string; state: StepState; hint: str
 export function buildLeadChecklist(input: {
   lan: Lan;
   going: number;
-  /** Tickets reported by members, waiting for a lead to confirm. */
-  ticketsToConfirm: number;
-  ticketsConfirmed: number;
+  /** Coming and said they have a ticket (or a lead ticked it). */
+  withTicket: number;
   seats: number;
   seated: number;
   /** Seated people whose seat a lead ticked as booked on the event site. */
@@ -21,7 +20,7 @@ export function buildLeadChecklist(input: {
   t?: T;
 }): LeadStep[] {
   const t = input.t ?? makeT("en");
-  const { lan: l, going, ticketsToConfirm, ticketsConfirmed, seats, seated, booked, spotsToFill, swapsToApprove } = input;
+  const { lan: l, going, withTicket, seats, seated, booked, spotsToFill, swapsToApprove } = input;
   const base = `/lans/${l.id}/manage`;
   const final = !!l.seatsPublishedAt;
   const steps: LeadStep[] = [];
@@ -60,22 +59,18 @@ export function buildLeadChecklist(input: {
     });
   }
 
-  const openTickets = going - ticketsConfirmed - ticketsToConfirm;
+  // Trust based: a member's "I have my ticket" counts, the leads only wait for the rest.
+  const openTickets = going - withTicket;
   steps.push({
     key: "tickets",
     title: t("leadSteps.tickets"),
-    state: going > 0 && ticketsConfirmed === going ? "done" : ticketsToConfirm > 0 ? "todo" : "pending",
+    state: going > 0 && openTickets === 0 ? "done" : "pending",
     hint:
       going === 0
         ? t("leadSteps.nobody")
-        : ticketsConfirmed === going
+        : openTickets === 0
           ? t("leadSteps.allConfirmed", { count: going })
-          : [
-              ticketsToConfirm > 0 && t("leadSteps.toConfirm", { count: ticketsToConfirm }),
-              openTickets > 0 && t("leadSteps.notBought", { count: openTickets }),
-            ]
-              .filter(Boolean)
-              .join(", ") + ".",
+          : t("leadSteps.notBought", { count: openTickets }) + ".",
     href: `${base}?tab=attendees`,
   });
 

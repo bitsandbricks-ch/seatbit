@@ -2,7 +2,7 @@
 
 Members answer whether they come, work through their checklist and report their ticket; leads see everyone in one list.
 
-**Who:** members answer; leads confirm tickets and can change any answer · **Where:** the event page (top card); *Manage → Attendees*
+**Who:** members answer and tick off their ticket; leads can change any answer · **Where:** the event page (top card); *Manage → Attendees*
 
 <div class="phones" markdown>
 <figure markdown>
@@ -43,7 +43,7 @@ When someone stops coming (or a lead raises the spots), what happens depends on 
 
 Turning *Next in line moves up* back on fills the free spots right away.
 
-People on the waitlist get no ticket reminders or nudges, and their checklist says to wait with buying one until they move up: without a spot in the group's block a ticket may be wasted money. If they already bought one, they can still tick it off and the leads can confirm it.
+People on the waitlist get no ticket reminders or nudges, and their checklist says to wait with buying one until they move up: without a spot in the group's block a ticket may be wasted money. If they already bought one, they can still tick it off.
 
 While people are waiting, a new *Coming* answer always queues up behind them, even when a spot is free, so nobody jumps the line.
 
@@ -74,7 +74,7 @@ Your checklist sits above the tabs on every tab of the event, on the LANs list (
 | --- | --- |
 | 1. **Say you're coming** | You answered *Coming*. On the waitlist it shows your place (*You're #2 on the waitlist*). |
 | 2. **Give your nickname** | You have a nick (default, LAN type or event). |
-| 3. **Buy your ticket** | You ticked *I bought my ticket* before the *buy ticket by* date; a lead then confirms it. |
+| 3. **Buy your ticket** | You ticked *I have my ticket* before the *buy ticket by* date. That's enough: the leads trust it and don't confirm it. |
 | 4. **Pick your seat** | Only when the leads turned on [self pick](seats.md#seat-steps): you took a free seat (the step then reads *Seat F8 picked*). Needs your ticket first. While self pick is on, the Seats tab shows *pick yours* in yellow until you have a seat, then your seat in green. |
 | 4. **Send seat wishes** (optional) | Instead of *Pick your seat* when self pick is off: you sent [seat wishes](seats.md#seat-steps). Hidden once the plan is final if you sent none. |
 | 5. **Leads confirm your seat** | The leads finalized the seat plan and you have a seat. Until then it waits on them (also after you picked your own seat). With an event seat plan, the hint says whether the leads already [booked it there](seats.md#book-on-the-event-site). |
@@ -91,8 +91,9 @@ At the bottom of the Overview tab, one line shows the nick and LAN ID you have a
 
 ## Tickets
 
-1. The member ticks **I bought my ticket**.
-2. A lead confirms it with **Ticket ok** on the Attendees tab.
+Tickets are trust based: when a member ticks **I have my ticket** (on the event page or with `/ticket` on Discord), it counts. Leads don't confirm it.
+
+A lead can tick **Ticket ok** on the Attendees tab for someone, e.g. a guest without a login. That counts the same and keeps the member from unticking it.
 
 Reminders go to people coming without a ticket before the *buy ticket by* date. See [Reminders](reminders.md).
 
