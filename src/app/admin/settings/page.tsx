@@ -12,6 +12,7 @@ import { LOGIN_METHODS } from "@/lib/auth";
 import { type SettingGroup, canEncrypt, getSetting, resolveSetting, settingsForAdmin } from "@/lib/settings";
 import { localized } from "@/lib/settings-i18n";
 import { MAIL_TEMPLATES, defaultParts, getTemplate, savedTemplates } from "@/lib/mail-templates";
+import { FIXED_MAIL_IDS, fixedMailInfo, previewFixedMail } from "@/lib/system-mail";
 import { LOCALES, LOCALE_NAMES, isLocale, type Locale } from "@/i18n/config";
 import type { FactRow } from "@/lib/mail-fill";
 import { MailTemplateEditor } from "@/components/mail-template-editor";
@@ -26,6 +27,7 @@ import {
   saveMaintenance,
   saveSettings,
   sendTemplateTest,
+  sendSystemMailTest,
   sendTestMail,
   setupDiscordBot,
   testOpsChannels,
@@ -361,6 +363,30 @@ function TemplatesTab({ loc, t: tr }: { loc: Locale; t: T }) {
               reset={resetMailTemplate.bind(null, t.id, loc)}
               test={sendTemplateTest.bind(null, t.id, loc)}
             />
+          </Card>
+        );
+      })}
+      <h2 className="pt-4 text-lg font-semibold">{tr("systemMail.adminTitle")}</h2>
+      <p className="max-w-2xl text-sm text-muted">{tr("systemMail.adminHint")}</p>
+      {FIXED_MAIL_IDS.map((id) => {
+        const info = fixedMailInfo(id, tr);
+        const m = previewFixedMail(id, loc);
+        return (
+          <Card key={`${id}-${loc}`} title={info.title}>
+            <div className="space-y-4">
+              <p className="text-sm text-muted">{info.when}</p>
+              <div className="min-w-0">
+                <p className="mb-1 text-[11px] uppercase tracking-wide text-faint">{tr("templateEditor.preview")}</p>
+                <p className="mb-2 truncate text-sm font-medium">{m.subject}</p>
+                <iframe
+                  title={tr("templateEditor.previewOf", { id })}
+                  srcDoc={m.html}
+                  sandbox=""
+                  className="h-[480px] w-full rounded-md border border-line bg-white"
+                />
+              </div>
+              <ActionButton action={sendSystemMailTest.bind(null, id, loc)}>{tr("templateEditor.test")}</ActionButton>
+            </div>
           </Card>
         );
       })}

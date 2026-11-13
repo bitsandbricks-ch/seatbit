@@ -56,8 +56,6 @@ export const adminSettings = {
     other: "Saved {count} changes.",
   },
   nothing: "Nothing changed.",
-  testSubject: "Seatbit test mail",
-  testBody: "Hi {name},\n\nthis is a test mail from the Seatbit platform settings. If you can read it, email works.",
   testSent: "Test mail sent to {email}.",
   smtpFailed: "SMTP failed: {error}",
   botFirst: "Set the application ID and bot token first.",

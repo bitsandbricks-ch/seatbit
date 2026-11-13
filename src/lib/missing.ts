@@ -250,7 +250,7 @@ export async function nudge(l: Lan, step: NudgeStep, userIds?: string[]): Promis
       continue;
     }
     const r = await notify(u, nudgeMessage(step, l, u)).catch(() => ({ email: false, dm: false }));
-    // sendMail quietly skips guests; only count a channel the person can actually get.
+    // Mail quietly skips guests; only count a channel the person can actually get.
     if (!(r.dm || (r.email && p.reach.email))) {
       result.unreachable++;
       continue;

@@ -1,0 +1,15 @@
+date: 2026-11-13
+type: improved
+pr: [116]
+en:
+  title: "Every email in the Seatbit layout"
+  text: >-
+    All emails now look the same and come in your language: join requests, role changes, seat
+    swaps, event changes and password resets use the Seatbit mail layout with a button to the
+    right page, just like reminders and invites.
+de:
+  title: "Jede E-Mail im Seatbit-Layout"
+  text: >-
+    Alle E-Mails sehen jetzt gleich aus und kommen in deiner Sprache: Beitrittsanfragen,
+    Rollenwechsel, Platztausch, Event-Änderungen und Passwort-Resets nutzen das Seatbit-Mail-Layout
+    mit einem Knopf zur richtigen Seite, genau wie Erinnerungen und Einladungen.

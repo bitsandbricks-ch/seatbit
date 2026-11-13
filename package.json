@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "eslint",
     "check:i18n": "tsx scripts/check-i18n.ts",
+    "check:mail": "tsx scripts/check-mail.ts",
     "check:changelog": "tsx scripts/check-changelog.ts",
     "db:generate": "drizzle-kit generate",
     "db:rebase": "node scripts/db-rebase.mjs",

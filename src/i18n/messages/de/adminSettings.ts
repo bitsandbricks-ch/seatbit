@@ -58,8 +58,6 @@ export const adminSettings: Messages["adminSettings"] = {
     other: "{count} Änderungen gespeichert.",
   },
   nothing: "Nichts geändert.",
-  testSubject: "Seatbit-Testmail",
-  testBody: "Hallo {name}\n\ndas ist eine Testmail aus den Seatbit-Plattform-Einstellungen. Wenn du sie lesen kannst, funktioniert E-Mail.",
   testSent: "Testmail an {email} gesendet.",
   smtpFailed: "SMTP fehlgeschlagen: {error}",
   botFirst: "Setz zuerst Application-ID und Bot-Token.",

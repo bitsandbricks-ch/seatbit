@@ -89,6 +89,7 @@ import { status } from "./status";
 import { support } from "./support";
 import { suspended } from "./suspended";
 import { swaps } from "./swaps";
+import { systemMail } from "./systemMail";
 import { templateEditor } from "./templateEditor";
 import { travel } from "./travel";
 import { typeForm } from "./typeForm";
@@ -188,6 +189,7 @@ export const de: Messages = {
   support,
   suspended,
   swaps,
+  systemMail,
   templateEditor,
   travel,
   typeForm,

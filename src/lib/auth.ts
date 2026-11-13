@@ -5,7 +5,8 @@ import { nextCookies } from "better-auth/next-js";
 import { count, isNull } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { claimGuestsByDiscord, claimGuestsByEmail } from "./guest-claim";
-import { sendMail } from "./mail";
+import { sendSystemMail } from "./system-mail";
+import { localeOf } from "../i18n/user-locale";
 import { getBoolSetting, getSetting, settingsFingerprint } from "./settings";
 
 /** Settings that change how the auth instance is built; it is rebuilt when any of them change. */
@@ -66,11 +67,8 @@ function build() {
       minPasswordLength: 8,
       disableSignUp: !open,
       sendResetPassword: async ({ user, url }) => {
-        await sendMail(
-          user.email,
-          "Reset your password",
-          `Hi ${user.name},\n\nreset your password here:\n${url}\n\nIf you didn't ask for this, ignore this mail.`,
-        );
+        const u = user as typeof user & { firstName?: string; locale?: string | null };
+        await sendSystemMail(user.email, "passwordReset", { firstName: u.firstName || user.name, link: url }, localeOf(u));
       },
     },
     socialProviders: {
