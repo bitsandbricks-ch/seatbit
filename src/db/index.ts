@@ -6,7 +6,7 @@ import path from "node:path";
 import * as schema from "./schema";
 import { normalizeSeatLayout } from "../lib/seat-layout";
 
-const dbFile = process.env.DATABASE_PATH ?? path.join(process.cwd(), "data", "lan.db");
+export const dbFile = process.env.DATABASE_PATH ?? path.join(process.cwd(), "data", "lan.db");
 
 function create() {
   fs.mkdirSync(path.dirname(dbFile), { recursive: true });

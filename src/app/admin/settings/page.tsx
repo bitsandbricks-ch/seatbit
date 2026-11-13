@@ -8,14 +8,26 @@ import { billingEnabled, billingProblems, supporterClans } from "@/lib/billing";
 import { donationProblems, donationsEnabled } from "@/lib/donations";
 import { fmtDay } from "@/lib/format";
 import { LOGIN_METHODS } from "@/lib/auth";
-import { type SettingGroup, type SettingView, canEncrypt, settingsForAdmin } from "@/lib/settings";
+import { type SettingGroup, type SettingView, canEncrypt, getSetting, resolveSetting, settingsForAdmin } from "@/lib/settings";
 import { MAIL_TEMPLATES, defaultParts, getTemplate, savedTemplates } from "@/lib/mail-templates";
 import { LOCALES, LOCALE_NAMES, isLocale, type Locale } from "@/i18n/config";
 import type { FactRow } from "@/lib/mail-fill";
 import { MailTemplateEditor } from "@/components/mail-template-editor";
 import { getT } from "@/i18n/server";
 import type { MessageKey, T } from "@/i18n/translate";
-import { resetMailTemplate, saveMailTemplate, saveSettings, sendTemplateTest, sendTestMail, setupDiscordBot } from "./actions";
+import { AnnounceForm, MaintenanceForm } from "@/components/platform-forms";
+import { currentMaintenance } from "@/lib/maintenance";
+import {
+  postPlatformAnnouncement,
+  resetMailTemplate,
+  saveMailTemplate,
+  saveMaintenance,
+  saveSettings,
+  sendTemplateTest,
+  sendTestMail,
+  setupDiscordBot,
+  testOpsChannels,
+} from "./actions";
 
 export async function generateMetadata() {
   return { title: `${(await getT())("clanSettings.platformSettings")} · Seatbit` };
@@ -30,7 +42,7 @@ function Url({ label, value }: { label: string; value: string }) {
   );
 }
 
-const TABS = ["mail", "discord", "google", "general", "automation", "legal", "billing", "templates", "server"] as const;
+const TABS = ["mail", "discord", "google", "general", "automation", "maintenance", "legal", "billing", "templates", "server"] as const;
 type TabId = (typeof TABS)[number];
 
 /** A setting's label, help and choices in the admin's language (settings.ts keeps the English source). */
@@ -158,6 +170,38 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
             </div>
           </>,
         )}
+      {tab === "discord" &&
+        section(
+          "ops",
+          <>
+            <p className="text-xs text-muted">{t("adminSettings.opsHint")}</p>
+            <ActionButton action={testOpsChannels}>{t("adminSettings.opsTest")}</ActionButton>
+          </>,
+        )}
+      {tab === "discord" && (
+        <Card title={t("adminSettings.announceCard")}>
+          <p className="-mt-2 mb-4 text-sm text-muted">{t("adminSettings.announceHint")}</p>
+          {getSetting("ops.announceChannelId") ? (
+            <AnnounceForm action={postPlatformAnnouncement} />
+          ) : (
+            <p className="text-sm text-faint">{t("adminSettings.announceNoChannel")}</p>
+          )}
+        </Card>
+      )}
+
+      {tab === "maintenance" && (
+        <Card title={t("settingGroups.maintenance.title")}>
+          <p className="-mt-2 mb-4 text-sm text-muted">{t("settingGroups.maintenance.help")}</p>
+          <MaintenanceStatus t={t} />
+          <MaintenanceForm
+            action={saveMaintenance}
+            message={resolveSetting("maintenance.message").value ?? ""}
+            startsAt={getSetting("maintenance.startsAt") ?? ""}
+            endsAt={getSetting("maintenance.endsAt") ?? ""}
+            canAnnounce={!!getSetting("ops.announceChannelId")}
+          />
+        </Card>
+      )}
 
       {tab === "google" &&
         section("google", <Url label={t("adminSettings.googleRedirect")} value={`${appUrl}/api/auth/callback/google`} />)}
@@ -215,6 +259,18 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
         </Card>
       )}
     </Page>
+  );
+}
+
+/** Whether the banner shows right now, and where its message comes from. */
+function MaintenanceStatus({ t }: { t: T }) {
+  const m = currentMaintenance();
+  const fromEnv = resolveSetting("maintenance.message").source === "env";
+  return (
+    <div className="mb-4 space-y-1 rounded-md border border-line bg-ink/50 p-3 text-xs text-muted">
+      <p>{t(m ? (m.state === "now" ? "adminSettings.maintenanceShowingNow" : "adminSettings.maintenanceShowingPlanned") : "adminSettings.maintenanceOff")}</p>
+      {fromEnv && <p className="text-warn">{t("adminSettings.maintenanceFromEnv", { env: "MAINTENANCE_MESSAGE" })}</p>}
+    </div>
   );
 }
 
