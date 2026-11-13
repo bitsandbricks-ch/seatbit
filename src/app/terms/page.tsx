@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { ContactEmail, LegalPage, Operator } from "@/components/legal-page";
 import { getLegal, type Legal } from "@/lib/legal";
 import { billingEnabled } from "@/lib/billing";
+import { donationsEnabled } from "@/lib/donations";
 import { getSetting } from "@/lib/settings";
 import { getLocale, getT } from "@/i18n/server";
 // i18n-ignore-file: the terms are written once per language, below.
@@ -20,17 +21,19 @@ export default async function TermsPage() {
   const legal = getLegal();
   // Operators can use their own document instead of the built-in one.
   if (legal.termsUrl) redirect(legal.termsUrl);
-  // The payments section only exists where the operator turned on Supporter payments.
-  const payments = billingEnabled();
+  // The payments section only exists where the operator turned on Supporter payments or donations.
+  const subs = billingEnabled();
+  const donations = donationsEnabled();
+  const payments = subs || donations;
   const n = (k: number) => k + (payments && k >= 8 ? 1 : 0);
   const refund = getSetting("billing.refundPolicy")?.trim();
-  const props = { legal, payments, n, refund };
+  const props = { legal, payments, subs, donations, n, refund };
   return (await getLocale()) === "de" ? <TermsDe {...props} /> : <TermsEn {...props} />;
 }
 
-type Props = { legal: Legal; payments: boolean; n: (k: number) => number; refund?: string };
+type Props = { legal: Legal; payments: boolean; subs: boolean; donations: boolean; n: (k: number) => number; refund?: string };
 
-function TermsEn({ legal, payments, n, refund }: Props) {
+function TermsEn({ legal, payments, subs, donations, n, refund }: Props) {
   return (
     <LegalPage title="Terms of Service">
       <p>
@@ -103,27 +106,38 @@ function TermsEn({ legal, payments, n, refund }: Props) {
 
       {payments && (
         <>
-          <h2 id="payments">8. Supporter payments</h2>
+          <h2 id="payments">8. {subs ? (donations ? "Supporter payments and donations" : "Supporter payments") : "Donations"}</h2>
           <ul>
+            {subs && (
+              <li>
+                Clan admins can choose to support this Seatbit instance on behalf of their clan with a recurring payment
+                (yearly or monthly). This is voluntary: the payment goes to the operator named in section 1.
+              </li>
+            )}
+            {donations && (
+              <li>
+                Signed-in users can make a voluntary one-off donation, for themselves or on behalf of a clan they manage.
+                It goes to the operator named in section 1 and does not renew.
+                {subs && " A donation for a clan of at least the yearly Supporter price makes the clan a Supporter for one year."}
+              </li>
+            )}
             <li>
-              Clan admins can choose to support this Seatbit instance on behalf of their clan with a recurring payment
-              (yearly or monthly). This is voluntary: the payment goes to the operator named in section 1.
-            </li>
-            <li>
-              Supporters get a Supporter badge on their clan and our thanks. There are no extra features, limits or
-              priority support; not paying never restricts a clan.
+              {subs ? "Supporters" : "Donors"} get a badge and our thanks. There are no extra features, limits or
+              priority support; not paying never restricts anyone.
             </li>
             <li>
               Payments are processed by Stripe. The price and the payment methods (for example card or TWINT) are shown
               before you pay. Stripe&apos;s own terms apply to the payment itself.
             </li>
-            <li>
-              The payment renews automatically at the end of each period until it is cancelled. Any clan admin can cancel
-              at any time in the clan settings (&quot;Manage or cancel&quot;); there are no further charges, and the badge
-              stays until the end of the period already paid. Deleting the clan cancels the payment right away.
-            </li>
+            {subs && (
+              <li>
+                The Supporter payment renews automatically at the end of each period until it is cancelled. Any clan admin
+                can cancel at any time in the clan settings (&quot;Manage or cancel&quot;); there are no further charges, and the
+                badge stays until the end of the period already paid. Deleting the clan cancels the payment right away.
+              </li>
+            )}
             <li>Refunds: {refund || "write to us and we will find a fair solution."}</li>
-            <li>If we shut the Service down, we cancel all payments and refund the unused part of the current period.</li>
+            {subs && <li>If we shut the Service down, we cancel all payments and refund the unused part of the current period.</li>}
           </ul>
         </>
       )}
@@ -156,7 +170,7 @@ function TermsEn({ legal, payments, n, refund }: Props) {
   );
 }
 
-function TermsDe({ legal, payments, n, refund }: Props) {
+function TermsDe({ legal, payments, subs, donations, n, refund }: Props) {
   return (
     <LegalPage title="Nutzungsbedingungen">
       <p>
@@ -232,29 +246,40 @@ function TermsDe({ legal, payments, n, refund }: Props) {
 
       {payments && (
         <>
-          <h2 id="payments">8. Supporter-Zahlungen</h2>
+          <h2 id="payments">8. {subs ? (donations ? "Supporter-Zahlungen und Spenden" : "Supporter-Zahlungen") : "Spenden"}</h2>
           <ul>
+            {subs && (
+              <li>
+                Clan-Admins können diese Seatbit-Instanz im Namen ihres Clans mit einer wiederkehrenden Zahlung (jährlich
+                oder monatlich) unterstützen. Das ist freiwillig: Die Zahlung geht an den in Abschnitt 1 genannten
+                Betreiber.
+              </li>
+            )}
+            {donations && (
+              <li>
+                Angemeldete Personen können freiwillig einmalig spenden, für sich oder im Namen eines Clans, den sie
+                verwalten. Die Spende geht an den in Abschnitt 1 genannten Betreiber und verlängert sich nicht.
+                {subs && " Eine Spende für einen Clan ab dem jährlichen Supporter-Preis macht den Clan für ein Jahr zum Supporter."}
+              </li>
+            )}
             <li>
-              Clan-Admins können diese Seatbit-Instanz im Namen ihres Clans mit einer wiederkehrenden Zahlung (jährlich
-              oder monatlich) unterstützen. Das ist freiwillig: Die Zahlung geht an den in Abschnitt 1 genannten
-              Betreiber.
-            </li>
-            <li>
-              Supporter bekommen ein Supporter-Abzeichen beim Clan und unseren Dank. Es gibt keine zusätzlichen
+              {subs ? "Supporter" : "Spender"} bekommen ein Abzeichen und unseren Dank. Es gibt keine zusätzlichen
               Funktionen, Limiten oder bevorzugten Support; wer nicht zahlt, wird nie eingeschränkt.
             </li>
             <li>
               Zahlungen wickelt Stripe ab. Preis und Zahlungsarten (zum Beispiel Karte oder TWINT) werden vor dem
               Bezahlen angezeigt. Für die Zahlung selbst gelten die Bedingungen von Stripe.
             </li>
-            <li>
-              Die Zahlung verlängert sich am Ende jeder Periode automatisch, bis sie gekündigt wird. Alle Clan-Admins
-              können jederzeit in den Clan-Einstellungen kündigen («Verwalten oder kündigen»); es fallen keine weiteren
-              Kosten an, und das Abzeichen bleibt bis zum Ende der bereits bezahlten Periode. Wird der Clan gelöscht,
-              endet die Zahlung sofort.
-            </li>
+            {subs && (
+              <li>
+                Die Supporter-Zahlung verlängert sich am Ende jeder Periode automatisch, bis sie gekündigt wird. Alle
+                Clan-Admins können jederzeit in den Clan-Einstellungen kündigen («Verwalten oder kündigen»); es fallen keine
+                weiteren Kosten an, und das Abzeichen bleibt bis zum Ende der bereits bezahlten Periode. Wird der Clan
+                gelöscht, endet die Zahlung sofort.
+              </li>
+            )}
             <li>Rückerstattung: {refund || "schreib uns, und wir finden eine faire Lösung."}</li>
-            <li>Stellen wir den Dienst ein, kündigen wir alle Zahlungen und erstatten den ungenutzten Teil der laufenden Periode.</li>
+            {subs && <li>Stellen wir den Dienst ein, kündigen wir alle Zahlungen und erstatten den ungenutzten Teil der laufenden Periode.</li>}
           </ul>
         </>
       )}

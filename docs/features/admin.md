@@ -25,7 +25,7 @@ The first account is always admin. Add more with the **Admin emails** setting, i
 | **Sign-up & admins** | Allow new accounts, admin emails. | [Configuration](../installation/configuration.md) |
 | **Reminders** | Check interval, cron secret. | [Configuration](../installation/configuration.md#reminders-without-a-long-running-process) |
 | **Operator & legal** | Operator details, own terms and privacy URLs, source URL. | [Operator, privacy and terms](../installation/legal.md) |
-| **Supporters** | Stripe keys and prices. | [Stripe](../installation/stripe.md) |
+| **Supporters** | Stripe keys and prices, donations and their suggested amounts. | [Stripe](../installation/stripe.md), [Donations](donations.md) |
 | **Mail templates** | The wording of every email. | [Email](../installation/email.md#mail-templates) |
 | **Server** | Startup values (read-only). | [Configuration](../installation/configuration.md#startup-environment-only) |
 

@@ -174,6 +174,31 @@ export const billingEvent = sqliteTable("billing_event", {
   at: integer("at", { mode: "timestamp_ms" }).default(now).notNull(),
 });
 
+/**
+ * One-off donations to the instance (see src/lib/donations.ts). Only paid ones are stored:
+ * an abandoned Checkout leaves nothing behind.
+ */
+export const donation = sqliteTable(
+  "donation",
+  {
+    id: id(),
+    stripeSessionId: text("stripe_session_id").notNull().unique(),
+    paymentIntentId: text("payment_intent_id"),
+    /** Who paid. Kept when the account is deleted only as long as the user row exists. */
+    userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+    /** Set when the donor gave on behalf of a clan they manage. */
+    clanId: text("clan_id").references(() => clan.id, { onDelete: "set null" }),
+    /** In the currency's smallest unit (Rappen, cents). */
+    amount: integer("amount").notNull(),
+    currency: text("currency").notNull(),
+    /** The donor agreed to show a Donor badge. */
+    showBadge: integer("show_badge", { mode: "boolean" }).default(true).notNull(),
+    refundedAt: integer("refunded_at", { mode: "timestamp_ms" }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  (t) => [index("donation_user_idx").on(t.userId), index("donation_clan_idx").on(t.clanId)],
+);
+
 // Roles and their permissions live in src/lib/clan-roles.ts.
 export { CLAN_ROLES, type ClanRole } from "../lib/clan-roles";
 
@@ -697,6 +722,7 @@ export type User = typeof user.$inferSelect;
 export type Lan = typeof lan.$inferSelect;
 export type LanType = typeof lanType.$inferSelect;
 export type Clan = typeof clan.$inferSelect;
+export type Donation = typeof donation.$inferSelect;
 export type Attendance = typeof attendance.$inferSelect;
 export type Nickname = typeof nickname.$inferSelect;
 export type LanAccount = typeof lanAccount.$inferSelect;
