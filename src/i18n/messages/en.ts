@@ -1868,6 +1868,11 @@ export const en = {
     member: "Answers for events and sees the clan. Can still be a lead of single events.",
   },
   notice: {
+    upgradeSubject: "Seatbit updated to {version}",
+    upgradeText: "Hi {name},\n\nSeatbit at {url} now runs version {version} (before: {before}).\n\nWhat changed: {changes}\n\n{steps}\n\nYou get this because you're a platform admin.",
+    upgradeCommandsRegistered: "The Discord slash commands changed and were registered automatically. Nothing else to do.",
+    upgradeCommandsFailed: "The Discord slash commands changed, but registering them failed ({error}). Click \"Check bot & register slash commands\" under Admin → Platform settings → Discord.",
+    upgradeNothingToDo: "Database updates ran on startup. Nothing else to do.",
     openInSeatbit: "Open in Seatbit",
     dmFooter: "Seatbit · turn these DMs off on your profile",
     linkedFooter: "Seatbit · sent because a lead of your clan linked you",
