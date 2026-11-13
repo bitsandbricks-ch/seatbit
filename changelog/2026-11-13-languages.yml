@@ -1,0 +1,13 @@
+date: 2026-11-13
+type: new
+pr: [95, 102]
+en:
+  title: "Seatbit in German"
+  text: >-
+    Pick English or German in the top bar or on your profile. Mails and Discord messages follow your
+    language.
+de:
+  title: "Seatbit auf Deutsch"
+  text: >-
+    Wähle Englisch oder Deutsch oben in der Leiste oder im Profil. Mails und Discord-Nachrichten
+    folgen deiner Sprache.

@@ -2,7 +2,7 @@ import type { Messages } from "../en";
 
 export const notice: Messages["notice"] = {
   upgradeSubject: "Seatbit auf {version} aktualisiert",
-  upgradeText: "Hallo {name}\n\nSeatbit unter {url} läuft jetzt in Version {version} (vorher: {before}).\n\nWas sich geändert hat: {changes}\n\n{steps}\n\nDu bekommst das, weil du Plattform-Admin bist.",
+  upgradeText: "Hallo {name}\n\nSeatbit unter {url} läuft jetzt in Version {version} (vorher: {before}).\n\n{changes}\n\n{steps}\n\nDu bekommst das, weil du Plattform-Admin bist.",
   upgradeCommandsRegistered: "Die Discord-Slash-Commands haben sich geändert und wurden automatisch registriert. Sonst ist nichts zu tun.",
   upgradeCommandsFailed: "Die Discord-Slash-Commands haben sich geändert, aber das Registrieren ist fehlgeschlagen ({error}). Klicke unter Admin → Plattform-Einstellungen → Discord auf \"Bot prüfen & Slash-Commands registrieren\".",
   upgradeNothingToDo: "Die Datenbank-Updates liefen beim Start. Sonst ist nichts zu tun.",

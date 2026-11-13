@@ -79,7 +79,8 @@ There is one database, so run a single instance and stop the old container befor
 After the start, Seatbit takes care of the rest:
 
 - **Discord slash commands** are registered again when the update changed them (needs the bot token and application ID). If that fails, the notice below says so; then click **Check bot & register slash commands** under *Admin → Platform settings → Discord*.
-- **Platform owners and admins get a notice** by mail and Discord DM, once per new version: the new version, a link to what changed in the source repository (the *Source code URL* setting) and whether anything is left to do. The very first start and builds without git information send nothing.
+- **Platform owners and admins get a notice** by mail and Discord DM, once per new version: the new version, the [changelog](../changelog/index.md) entries it brought, a link to every change in the source repository (the *Source code URL* setting) and whether anything is left to do. The very first start and builds without git information send nothing.
+- **The announcements channel** (if set) gets the new changelog entries meant for everyone, with a link to *What's new*. Each entry is announced once; a version without such entries posts nothing there. The first version with a changelog announces nothing, so the history isn't posted as news.
 
 ## Logs and health
 

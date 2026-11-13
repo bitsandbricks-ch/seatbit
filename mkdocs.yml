@@ -9,6 +9,11 @@ copyright: Seatbit is free software under the GNU AGPL-3.0 · Powered by <a href
 docs_dir: docs
 exclude_docs: |
   requirements.txt
+  hooks/
+
+# Renders changelog/*.yml into the changelog pages.
+hooks:
+  - docs/hooks/changelog.py
 
 theme:
   name: material
@@ -98,6 +103,7 @@ nav:
           - Members and guests: features/members-guests.md
           - Languages: features/languages.md
           - Light and dark theme: features/theme.md
+          - What's new: features/whats-new.md
       - Events:
           - Event lifecycle: features/events.md
           - Lead to-dos and contacts: features/lead-todos.md
@@ -139,4 +145,8 @@ nav:
       - contributing/index.md
       - Code guidelines: contributing/guidelines.md
       - Writing docs: contributing/docs.md
+      - Changelog entries: contributing/changelog.md
       - AI coding agents: contributing/agents.md
+  - Changelog:
+      - changelog/index.md
+      - Deutsch: changelog/de.md

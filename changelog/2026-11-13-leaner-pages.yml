@@ -1,0 +1,13 @@
+date: 2026-11-13
+type: improved
+pr: [97, 98]
+en:
+  title: "Leaner event, profile and clan pages"
+  text: >-
+    The profile is split into tabs, a locked answer is a small badge, and overviews are more
+    compact.
+de:
+  title: "Schlankere Event-, Profil- und Clanseiten"
+  text: >-
+    Das Profil ist in Tabs aufgeteilt, eine fixe Antwort ist ein kleines Abzeichen, und Übersichten
+    sind kompakter.

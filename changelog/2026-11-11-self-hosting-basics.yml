@@ -1,0 +1,14 @@
+date: 2026-11-11
+type: new
+audience: admins
+pr: [4, 5, 9, 21, 23]
+en:
+  title: "Platform settings, admin CLI and container image"
+  text: >-
+    Set up mail, Discord and sign-ups in the admin settings, manage accounts from the command line,
+    and run Seatbit from the container image on GHCR.
+de:
+  title: "Plattform-Einstellungen, Admin-CLI und Container-Image"
+  text: >-
+    Mail, Discord und Registrierung richtest du in den Admin-Einstellungen ein, Konten verwaltest du
+    auf der Kommandozeile, und Seatbit läuft aus dem Container-Image auf GHCR.

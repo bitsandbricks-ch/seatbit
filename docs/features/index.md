@@ -17,6 +17,7 @@ Seatbit has three kinds of users:
 | [Members and guests](members-guests.md) | Join requests, adding users, guests without an account, guest claims. | Admins, recruiters |
 | [Languages](languages.md) | English and German, per person, for the app, mails and Discord. | Everyone |
 | [Light and dark theme](theme.md) | Light, dark or follow the device, from the top bar. | Everyone |
+| [What's new](whats-new.md) | What changed in Seatbit, in your language. | Everyone |
 | [Event lifecycle](events.md) | Create from a LAN type, drafts, publish or schedule, interest check, news, cancel, copy for next year. | Leads |
 | [Lead to-dos and contacts](lead-todos.md) | The leads' own to-dos per clan, LAN type or event (with due dates and steps they wait for), and the LAN organizers' contacts. | Leads |
 | [Attendance and tickets](attendance.md) | Coming / unsure / not coming, waitlist, checklist, tickets, attendee list and CSV export. | Members, leads |
