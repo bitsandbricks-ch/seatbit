@@ -128,6 +128,7 @@ export const audit = {
   maintenanceClear: "removed the maintenance banner",
   announce: "posted “{title}” to the announcements channel",
   templateReset: "reset the mail template “{template}” to the default",
+  emergencyView: "looked at the emergency contacts{at}",
   accountDelete: "deleted their account",
   backupCreate: "made the database backup {file}",
   backupDownload: "downloaded the database backup {file}",

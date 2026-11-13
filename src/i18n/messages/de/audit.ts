@@ -130,6 +130,7 @@ export const audit: Messages["audit"] = {
   maintenanceClear: "hat das Wartungsbanner entfernt",
   announce: "hat «{title}» im Ankündigungskanal gepostet",
   templateReset: "hat die Mail-Vorlage «{template}» auf den Standard zurückgesetzt",
+  emergencyView: "hat die Notfallkontakte angesehen{at}",
   accountDelete: "hat das eigene Konto gelöscht",
   backupCreate: "hat das Datenbank-Backup {file} erstellt",
   backupDownload: "hat das Datenbank-Backup {file} heruntergeladen",

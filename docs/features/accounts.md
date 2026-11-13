@@ -40,6 +40,7 @@ Your profile has one tab per topic. Each tab saves on its own.
 | **Avatar** | Discord picture, uploaded picture, emoji or initials. The colour is the ring around your avatar and your seat on the plan. |
 | **LAN nicks & IDs** | Per LAN type of your clans: a nick for every event of that type (e.g. your name on the event's own site) and your user ID or ticket number there. Only leads see the ID, unless the LAN type has a [profile link](clans.md#profile-links). |
 | **Socials** | Discord, Steam, Battle.net, Epic Games, Riot ID, EA app, Ubisoft Connect, Xbox, PlayStation, FACEIT, Twitch and YouTube. Fill in what you like; members of your clans see them on your profile, with links where the service has profile pages. |
+| **Emergency** | An emergency contact and your dietary needs or allergies, for the leads of events you come to. See [Emergency contact and diet](emergency.md). |
 | **Notifications** | Switch **email reminders** or **Discord DMs** off (DMs need a linked Discord account) and send yourself a test DM. **Events I hear about**: per clan, all new events or only certain LAN types. One-off events always count. |
 | **Your data** | Download or delete your data, see [below](#your-data). |
 
@@ -51,8 +52,8 @@ Your profile has one tab per topic. Each tab saves on its own.
 
 On the **Your data** tab:
 
-- **Download my data** gives you a JSON file with everything Seatbit stores about you: profile, socials, sign-in methods, nicks, LAN IDs, clans, every event answer with seat and seat wishes, rides, packing lists, games, swap requests and the audit log entries about you.
-- **Delete my account** (type `DELETE` to confirm) signs you out and deletes your name, email, picture, Discord link, socials, nicks, LAN IDs, clan memberships, lead roles, rides and packing lists, plus answers and seats for upcoming events (the waitlist moves up). Past events keep an anonymous *Deleted member* with only the answer, so history and stats still add up.
+- **Download my data** gives you a JSON file with everything Seatbit stores about you: profile, socials, emergency contact and dietary needs, sign-in methods, nicks, LAN IDs, clans, every event answer with seat and seat wishes, rides, packing lists, games, swap requests and the audit log entries about you.
+- **Delete my account** (type `DELETE` to confirm) signs you out and deletes your name, email, picture, Discord link, socials, emergency contact and dietary needs, nicks, LAN IDs, clan memberships, lead roles, rides and packing lists, plus answers and seats for upcoming events (the waitlist moves up). Past events keep an anonymous *Deleted member* with only the answer, so history and stats still add up.
 
 ![Delete my account](../screenshots/phone-profile-delete.png){ .shot width="300" }
 

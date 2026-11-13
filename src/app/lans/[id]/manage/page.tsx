@@ -42,6 +42,8 @@ import { CancelEvent, CopyNextYear, DeleteNewsButton, NewsComposer } from "@/com
 import { getT } from "@/i18n/server";
 import type { T } from "@/i18n/translate";
 import { httpHref } from "@/lib/safe-url";
+import { canSeeEmergency, emergencyForLan, logEmergencyView } from "@/lib/emergency";
+import { EmergencyList } from "@/components/emergency-list";
 
 const { attendance, seat, user, reminderLog } = schema;
 
@@ -51,6 +53,7 @@ const TABS = [
   ["seats", "event.tabs.seats"],
   ["attendees", "manage.tabs.attendees"],
   ["missing", "manage.tabs.missing"],
+  ["emergency", "emergency.manageTab"],
   ["chat", "manage.tabs.chat"],
   ["settings", "manage.tabs.settings"],
 ] as const;
@@ -59,12 +62,15 @@ type Tab = (typeof TABS)[number][0];
 export default async function ManageLanPage({ params, searchParams }: PageProps<"/lans/[id]/manage">) {
   const { id } = await params;
   const sp = await searchParams;
-  const tab: Tab = TABS.some(([x]) => x === sp.tab) ? (sp.tab as Tab) : "overview";
   const me = await requireUser({ next: `/lans/${id}/manage` });
   const t = await getT();
   const l = getLan(id);
   if (!l) notFound();
   if (!isLanManager(me, id)) redirect(`/lans/${id}`);
+  // Health data: only the event's own leads, not every manager (see canSeeEmergency).
+  const showEmergency = canSeeEmergency(me, l);
+  const tabs = TABS.filter(([x]) => x !== "emergency" || showEmergency);
+  const tab: Tab = tabs.some(([x]) => x === sp.tab) ? (sp.tab as Tab) : "overview";
   const orgaIds = db.select().from(schema.lanOrga).where(eq(schema.lanOrga.lanId, id)).all().map((o) => o.userId);
 
   const rows = db.select().from(attendance).where(eq(attendance.lanId, id)).all();
@@ -142,6 +148,27 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
       };
     })
     .sort((a, b) => statusOrder[a.status] - statusOrder[b.status] || a.name.localeCompare(b.name));
+
+  // Read (and logged) only when the tab is open.
+  const emergency = tab === "emergency" ? emergencyForLan(id) : null;
+  if (emergency) logEmergencyView(l, me.id, emergency.size);
+  const emergencyRows = emergency
+    ? going
+        .map((r) => {
+          const e = emergency.get(r.userId);
+          return {
+            userId: r.userId,
+            name: names.get(r.userId) ?? userById.get(r.userId)?.name ?? "?",
+            full: people.get(r.userId)?.full ?? userById.get(r.userId)?.name ?? "?",
+            avatar: avatars.get(r.userId),
+            seat: seatOf.get(r.userId) ?? null,
+            contactName: e?.contactName ?? "",
+            contactPhone: e?.contactPhone ?? "",
+            diet: e?.diet ?? "",
+          };
+        })
+        .sort((a, b) => a.name.localeCompare(b.name))
+    : [];
 
   const free = freeSpots(l);
   const waitlist = waitlistOf(id).map((r) => ({
@@ -400,7 +427,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
       />
 
       <Tabs
-        tabs={TABS.map(([id, label]) => ({
+        tabs={tabs.map(([id, label]) => ({
           id,
           label: t(label),
           badge:
@@ -630,6 +657,10 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
           }
           cooldownMs={NUDGE_COOLDOWN_MS}
         />
+      )}
+
+      {tab === "emergency" && (
+        <EmergencyList rows={emergencyRows} t={t} profileBase={lanClan ? `/clans/${lanClan.slug}/members/` : null} />
       )}
 
       {tab === "seats" && (

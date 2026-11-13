@@ -26,6 +26,7 @@ Seatbit has three kinds of users:
 | [Travel and packing list](travel-packing.md) | Rides, places to sleep, a private packing list. | Members |
 | [Games](games.md) | Suggest and vote for games, track installs. | Members |
 | [Food orders](food.md) | Group orders at the LAN with a merged order list and who paid. | Members |
+| [Emergency contact and diet](emergency.md) | Members leave an emergency contact and dietary needs; only the event's leads see them. | Members, leads |
 | [Discord and WhatsApp](discord.md) | Bot announcements with answer buttons, reminders, DMs, slash commands; WhatsApp texts. | Clan admins, leads |
 | [Clan payments](payments.md) | Dues, ticket money and shared costs: who owes what, who paid, reminders. | Clan admins, event managers |
 | [Audit log](audit-log.md) | What leads and admins changed. | Admins, event managers, recruiters |
