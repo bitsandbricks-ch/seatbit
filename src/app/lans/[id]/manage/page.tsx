@@ -55,7 +55,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
   const { id } = await params;
   const sp = await searchParams;
   const tab: Tab = TABS.some(([t]) => t === sp.tab) ? (sp.tab as Tab) : "overview";
-  const me = await requireUser();
+  const me = await requireUser({ next: `/lans/${id}/manage` });
   const l = getLan(id);
   if (!l) notFound();
   if (!isLanManager(me, id)) redirect(`/lans/${id}`);
