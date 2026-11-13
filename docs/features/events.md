@@ -83,6 +83,8 @@ Leads see **View / Manage** next to the event title. *Manage* has the tabs:
 
 The top of *Manage → Overview* lists what the leads still have to do for the event. Open steps link to the tab where you do them; on phones only the open steps show.
 
+![Lead checklist on a phone](../screenshots/phone-lead-checklist.png){ .shot width="300" }
+
 | Step | Done when |
 | --- | --- |
 | **Publish the event** | The event is published (waits while a scheduled publish is set). |

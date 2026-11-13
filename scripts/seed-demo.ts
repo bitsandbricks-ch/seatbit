@@ -248,7 +248,7 @@ export async function seedDemo({ force = false, discord = false } = {}) {
           clanId,
           typeId: lakeside,
           name: `Lakeside LAN ${start.getFullYear()}`,
-          description: "Our big one. Doors open Friday 18:00. Please book the seat the leads gave you on the event's seat plan.",
+          description: "Our big one. Doors open Friday 18:00. We book everyone's seat on the event's seat plan.",
           location: "Sports hall, Lakeside",
           websiteUrl: "https://example.com/lakeside-lan",
           ticketUrl: "https://example.com/lakeside-lan/tickets",
@@ -359,7 +359,7 @@ export async function seedDemo({ force = false, discord = false } = {}) {
     // Lead news on the Lakeside LAN.
     tx.insert(s.lanNews)
       .values([
-        { lanId: events.lakeside, authorId: ids.alex, text: "Seat plan is final! Please book your seat on the event site this week.", createdAt: at(-1, 21, 5) },
+        { lanId: events.lakeside, authorId: ids.alex, text: "Seat plan is final! We are booking the seats on the event site this week.", createdAt: at(-1, 21, 5) },
         { lanId: events.lakeside, authorId: ids.ben, text: "Pizza order on Saturday at 19:00, bring cash.", createdAt: at(-6, 18) },
       ])
       .run();
