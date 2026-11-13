@@ -9,7 +9,8 @@ import { joinClan } from "@/app/clan-actions";
 import { isSupporter } from "@/lib/billing";
 import { clanPaymentsOn, memberLines, owedSummary, paymentsAvailable, reportedCount } from "@/lib/payments";
 import { ClanAvatar } from "./clan-avatar";
-import { SupporterBadge } from "./support-card";
+import { DonorBadge, SupporterBadge } from "./support-card";
+import { isDonorClan } from "@/lib/donations";
 import { Tabs, type Tab } from "./tabs";
 import { PageHeader, Pill, btnPrimary } from "./ui";
 import { ViewManageSwitch } from "./view-manage-switch";
@@ -176,10 +177,16 @@ export async function ClanHeader({
             {isMemberRole(role) && role !== "member" && (
               <span className="text-faint"> · {t("clanHeader.youAre", { role: t(`roleA.${role}`) })}</span>
             )}
-            {isSupporter(c) && (
+            {isSupporter(c) ? (
               <span className="ml-2 align-middle">
                 <SupporterBadge title={t("support.badge")} />
               </span>
+            ) : (
+              isDonorClan(c.id) && (
+                <span className="ml-2 align-middle">
+                  <DonorBadge label={t("donate.badgeLabel")} title={t("donate.badgeClan")} />
+                </span>
+              )
             )}
           </>
         }

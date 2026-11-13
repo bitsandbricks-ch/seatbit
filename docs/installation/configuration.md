@@ -34,9 +34,14 @@ A value saved in the platform settings wins over the environment variable. Clear
 | **Discord** | | |
 | Application (client) ID, client secret | `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET` | |
 | Bot token, public key | `DISCORD_BOT_TOKEN`, `DISCORD_PUBLIC_KEY` | |
+| Platform ops channel ID (see [Platform Discord](../features/admin.md#platform-discord)) | `OPS_DISCORD_CHANNEL` | |
+| Post upgrades, errors, new clans, supporter payments, abuse reports there | `OPS_DISCORD_UPGRADES`, `OPS_DISCORD_ERRORS`, `OPS_DISCORD_CLANS`, `OPS_DISCORD_PAYMENTS`, `OPS_DISCORD_REPORTS` | `true` each |
+| Public announcements channel ID | `ANNOUNCE_DISCORD_CHANNEL` | |
 | **Reminders** | | |
 | Reminder check interval (minutes, `0` = off) | `REMINDER_INTERVAL_MINUTES` | `60` |
 | Cron secret for `/api/cron/reminders` | `CRON_SECRET` | |
+| **Maintenance** (see [Maintenance banner](../features/admin.md#maintenance-banner)) | | |
+| Banner message (start and end are set in the admin UI) | `MAINTENANCE_MESSAGE` | |
 | **Operator & legal** | | |
 | Operator name, postal address, contact email | `LEGAL_OPERATOR_NAME`, `LEGAL_OPERATOR_ADDRESS`, `LEGAL_CONTACT_EMAIL` | |
 | Hosting location, governing law | `LEGAL_HOSTING_LOCATION`, `LEGAL_GOVERNING_LAW` | |
@@ -47,6 +52,9 @@ A value saved in the platform settings wins over the environment variable. Clear
 | Stripe secret key, webhook signing secret | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | |
 | Annual and monthly price ID | `STRIPE_PRICE_ANNUAL`, `STRIPE_PRICE_MONTHLY` | |
 | Refund policy (sentence in the terms) | `BILLING_REFUND_POLICY` | full refund within 14 days |
+| One-off donations on/off | `DONATIONS_ENABLED` | `false` |
+| Suggested donation amounts | `DONATION_AMOUNTS` | `10, 20, 50` |
+| Donation currency | `DONATION_CURRENCY` | `CHF` |
 
 Passwords, client secrets and tokens are encrypted (AES-256-GCM) before they are stored and never shown again; the page only shows whether one is set and its last four characters.
 

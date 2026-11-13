@@ -28,6 +28,7 @@ Seatbit has three kinds of users:
 | [Clan payments](payments.md) | Dues, ticket money and shared costs: who owes what, who paid, reminders. | Clan admins, event managers |
 | [Audit log](audit-log.md) | What leads and admins changed. | Admins, event managers, recruiters |
 | [Supporter badge](supporters.md) | Optional voluntary payments for clans (off by default). | Clan admins |
+| [Donations](donations.md) | Optional one-off donations to the instance, with a Donor badge (off by default). | Everyone |
 | [Platform admin](admin.md) | All clans, events and users, platform settings, mail templates. | Platform admins |
 
 ## Conventions in the app

@@ -78,3 +78,9 @@ export const lanDay = (l: When, loc: Locale = "en") => (l.dateTbd ? l.dateHint |
 export const lanWeekday = (l: When, loc: Locale = "en") => (l.dateTbd ? tbd(l, loc) : fmtWeekday(l.startsAt, loc));
 /** "Sat 14.11.2026, 18:00", or the open-date text. */
 export const lanStart = (l: When, loc: Locale = "en") => (l.dateTbd ? tbd(l, loc) : fmtDate(l.startsAt, loc));
+
+/** "CHF 20" or "CHF 12.50", from the smallest unit. */
+export function fmtMoney(amount: number, currency: string) {
+  const v = amount % 100 === 0 ? String(amount / 100) : (amount / 100).toFixed(2);
+  return `${currency.toUpperCase()} ${v}`;
+}

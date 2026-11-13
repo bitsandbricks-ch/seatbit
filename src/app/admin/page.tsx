@@ -7,6 +7,7 @@ import { ClanAvatar } from "@/components/clan-avatar";
 import { lanDay } from "@/lib/format";
 import { requireAdmin } from "@/lib/session";
 import { getLegal } from "@/lib/legal";
+import { donationsEnabled } from "@/lib/donations";
 import { getDefaultNames } from "@/lib/lans";
 import { getT } from "@/i18n/server";
 
@@ -35,9 +36,17 @@ export default async function AdminPage() {
         subtitle={t("admin.subtitle")}
         actions={
           <>
+            <Link href="/admin/health" className={btnSecondary}>
+              {t("health.title")}
+            </Link>
             <Link href="/admin/log" className={btnSecondary}>
               {t("clanHeader.log")}
             </Link>
+            {donationsEnabled() && (
+              <Link href="/admin/donations" className={btnSecondary}>
+                {t("adminDonations.title")}
+              </Link>
+            )}
             <Link href="/admin/settings" className={btnSecondary}>
               {t("clanSettings.platformSettings")}
             </Link>

@@ -229,8 +229,15 @@
     {
       "idx": 32,
       "version": "6",
-      "when": 1794582497304,
-      "tag": "0033_clan_payments",
+      "when": 1794582439447,
+      "tag": "0033_donations",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "6",
+      "when": 1794583744730,
+      "tag": "0034_clan_payments",
       "breakpoints": true
     }
   ]

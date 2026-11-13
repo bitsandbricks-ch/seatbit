@@ -113,6 +113,7 @@ nav:
           - Clan payments: features/payments.md
           - Audit log: features/audit-log.md
           - Supporter badge: features/supporters.md
+          - Donations: features/donations.md
           - Platform admin: features/admin.md
   - Installation:
       - installation/index.md
@@ -124,7 +125,7 @@ nav:
           - Discord app and bot: installation/discord.md
           - Email: installation/email.md
           - Operator, privacy and terms: installation/legal.md
-          - Stripe (supporter payments): installation/stripe.md
+          - Stripe (supporters and donations): installation/stripe.md
       - Operate:
           - Backups, upgrades and admin CLI: installation/operations.md
   - Development:

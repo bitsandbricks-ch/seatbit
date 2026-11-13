@@ -13,4 +13,5 @@ On instances where the operator turned on supporter payments, a clan can support
 - Paying opens Stripe Checkout with the payment methods the operator turned on (card, TWINT, Apple Pay, Google Pay).
 - A Supporter clan shows a **Supporter** badge next to its name, and members see a short thank-you on the clan overview.
 - Admins see until when it's paid and **Manage or cancel**, which opens the Stripe customer portal (payment method, receipts, cancel).
+- Where the operator also turned on [donations](donations.md), a one-off gift for the clan of at least the yearly price makes it a Supporter for a year, without a subscription.
 - A cancelled subscription keeps the badge until the end of the paid period. Deleting a clan cancels its subscription right away.
