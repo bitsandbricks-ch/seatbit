@@ -141,6 +141,7 @@ nav:
       - development/index.md
       - Architecture: development/architecture.md
       - Database and migrations: development/database.md
+      - Tests: development/testing.md
       - Screenshots: development/screenshots.md
       - CI and releases: development/ci.md
   - Contributing:
