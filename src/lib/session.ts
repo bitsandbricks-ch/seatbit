@@ -8,6 +8,7 @@ import { clanCan, isClanMember, isClanSuspended } from "./clans";
 import { isStaff, platformCan, type PlatformPermission } from "./platform-roles";
 import type { ClanPermission } from "./clan-roles";
 import { db, schema } from "@/db";
+import { touchActivity } from "./usage";
 
 /** The account behind the session cookie, also when it's suspended. */
 const getSessionAccount = cache(async () => {
@@ -16,7 +17,9 @@ const getSessionAccount = cache(async () => {
   // Read fresh from DB so role changes apply immediately.
   const u = await db.query.user.findFirst({ where: eq(schema.user.id, s.user.id) });
   // A deleted account is signed out everywhere, even if a session cookie is still around.
-  return u && !u.deletedAt ? u : null;
+  if (!u || u.deletedAt) return null;
+  touchActivity(u.id);
+  return u;
 });
 
 export const getCurrentUser = cache(async () => {

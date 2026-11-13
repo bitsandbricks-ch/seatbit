@@ -88,7 +88,7 @@ export const AUDIT_GROUPS = {
   seats: { prefixes: ["seat.", "seats.", "swap."] },
   members: { prefixes: ["member.", "invite.", "clan.", "platform.", "account.", "user.", "report."] },
   guests: { prefixes: ["guest."] },
-  settings: { prefixes: ["type.", "discord.", "settings.", "mail_template."] },
+  settings: { prefixes: ["type.", "discord.", "settings.", "mail_template.", "backup."] },
 } as const;
 export type AuditGroup = keyof typeof AUDIT_GROUPS;
 
@@ -339,6 +339,12 @@ export function describeAudit(
       return t("audit.templateReset", v);
     case "account.delete":
       return t("audit.accountDelete");
+    case "backup.create":
+      return t("audit.backupCreate", v);
+    case "backup.download":
+      return t("audit.backupDownload", v);
+    case "backup.delete":
+      return t("audit.backupDelete", v);
     default:
       return e.action;
   }

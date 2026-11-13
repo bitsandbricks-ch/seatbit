@@ -79,6 +79,19 @@ export const lanWeekday = (l: When, loc: Locale = "en") => (l.dateTbd ? tbd(l, l
 /** "Sat 14.11.2026, 18:00", or the open-date text. */
 export const lanStart = (l: When, loc: Locale = "en") => (l.dateTbd ? tbd(l, loc) : fmtDate(l.startsAt, loc));
 
+/** "512 KB", "1.4 MB", "2.1 GB" (binary units, one decimal from MB up). */
+export function fmtBytes(n: number) {
+  if (n < 1024) return `${n} B`;
+  const units = ["KB", "MB", "GB", "TB"];
+  let v = n / 1024;
+  let i = 0;
+  while (v >= 1024 && i < units.length - 1) {
+    v /= 1024;
+    i++;
+  }
+  return `${i === 0 ? Math.round(v) : v.toFixed(1)} ${units[i]}`;
+}
+
 /** "CHF 20" or "CHF 12.50", from the smallest unit. */
 export function fmtMoney(amount: number, currency: string) {
   const v = amount % 100 === 0 ? String(amount / 100) : (amount / 100).toFixed(2);

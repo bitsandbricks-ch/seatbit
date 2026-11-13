@@ -23,8 +23,8 @@ export const PLATFORM_ROLE_PERMS: Record<StaffRole, readonly PlatformPermission[
   support: ["view"],
 };
 
-/** Settings groups only owners may see and change. */
-export const OWNER_SETTING_GROUPS: readonly string[] = ["billing", "legal"];
+/** Settings groups only owners may see and change (backups hold everyone's data). */
+export const OWNER_SETTING_GROUPS: readonly string[] = ["billing", "legal", "backup"];
 
 export function isPlatformRole(r: string | null | undefined): r is PlatformRole {
   return !!r && (PLATFORM_ROLES as readonly string[]).includes(r);

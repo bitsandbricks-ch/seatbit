@@ -10,6 +10,7 @@ import { STAFF_ROLES, assignableRoles, canSetRole, isStaff, outranks, platformCa
 import { openReportCount } from "@/lib/reports";
 import type { T } from "@/i18n/translate";
 import { getLegal } from "@/lib/legal";
+import { backupStatus } from "@/lib/backup";
 import { donationsEnabled } from "@/lib/donations";
 import { getDefaultNames } from "@/lib/lans";
 import { getT } from "@/i18n/server";
@@ -54,6 +55,14 @@ export default async function AdminPage() {
                 {openReports > 0 && <Pill tone="red">{openReports}</Pill>}
               </Link>
             )}
+            <Link href="/admin/stats" className={btnSecondary}>
+              {t("admin.usage")}
+            </Link>
+            {can.owner && (
+              <Link href="/admin/backups" className={btnSecondary}>
+                {t("admin.backups")}
+              </Link>
+            )}
             <Link href="/admin/health" className={btnSecondary}>
               {t("health.title")}
             </Link>
@@ -78,6 +87,17 @@ export default async function AdminPage() {
           {t(`platformRoles.info.${me.role as (typeof STAFF_ROLES)[number]}`)}
         </p>
       </PageHeader>
+      {can.owner && backupStatus().lastError && (
+        <Notice tone="danger">
+          {t.rich("admin.backupFailed", {
+            link: (
+              <Link href="/admin/backups" className="underline">
+                {t("admin.backups")}
+              </Link>
+            ),
+          })}
+        </Notice>
+      )}
       {can.settings && !getLegal().complete && (
         <Notice tone="warn">
           {t.rich("admin.legalMissing", {
