@@ -9,7 +9,8 @@ import { makeT, type MessageKey, type T } from "../i18n/translate";
 import { appUrl, deliverMail } from "./mail";
 import { type FactRow, layoutLinks, renderMail } from "./mail-fill";
 
-type Built = { subject: string; body: string; facts?: FactRow[]; button?: { label: string; url: string }; note?: string };
+type Link = { label: string; url: string };
+type Built = { subject: string; body: string; facts?: FactRow[]; button?: Link; links?: Link[]; note?: string };
 type Vars = Record<string, string>;
 
 /** Each fixed mail: its example values and how to fill it in. */
@@ -48,6 +49,7 @@ function layout(b: Built, firstName: string | undefined, t: T) {
     body: b.body,
     facts: (b.facts ?? []).filter(([, v]) => v.trim()),
     button: b.button,
+    links: b.links,
     note: b.note,
     header: "Seatbit",
     ...layoutLinks(appUrl),
@@ -94,13 +96,17 @@ export const fixedMailInfo = (id: FixedMailId, t: T) => ({
  * body, its link as the "Open in Seatbit" button. Notices written as plain text
  * (clan requests, upgrades, seat swaps, …) go out this way.
  */
-export function renderNotice(n: { subject: string; body: string; url?: string; firstName?: string }, loc: Locale) {
+export function renderNotice(
+  n: { subject: string; body: string; url?: string; urlLabel?: string; links?: Link[]; firstName?: string },
+  loc: Locale,
+) {
   const t = makeT(loc);
   return layout(
     {
       subject: n.subject,
       body: n.body,
-      button: n.url ? { label: t("notice.openInSeatbit"), url: n.url } : undefined,
+      button: n.url ? { label: n.urlLabel ?? t("notice.openInSeatbit"), url: n.url } : undefined,
+      links: n.links,
     },
     n.firstName,
     t,

@@ -5,7 +5,6 @@ export const ops: Messages["ops"] = {
   newClan: "Neuer Clan: {name}",
   createdBy: "Erstellt von",
   previous: "Vorherige Version",
-  seeChanges: "Hier siehst du, was sich geändert hat.",
   donation: "Spende: {amount}",
   refund: "Spende zurückerstattet: {amount}",
   from: "Von",

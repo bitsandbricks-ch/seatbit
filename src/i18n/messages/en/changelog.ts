@@ -6,5 +6,7 @@ export const changelog = {
   forAdmins: "Platform admins",
   empty: "Nothing here yet.",
   noticeChanges: "What's new:",
-  noticeAllChanges: "All changes in the code: {changes}",
+  allChanges: "All changes in the code",
+  noticeNoEntries: "No new entries in the changelog.",
+  platformSettings: "Platform settings",
 };

@@ -73,7 +73,7 @@ Every email goes out in the same layout (`renderMail` in `src/lib/mail-fill.ts`)
 
 - `sendTemplate()` (`mail-templates.ts`): the templates admins can edit (reminders, invites, event news, ...).
 - `sendSystemMail()` (`system-mail.ts`): fixed system mails whose text lives in the `systemMail` messages (SMTP test mail, password reset). Add a new one to `SYSTEM_MAILS` with an English and a German text.
-- `notify()` (`notify.ts`): notifications by email and Discord DM. A notice with a rendered template uses it; a plain-text notice (join requests, upgrades, seat swaps, ...) is wrapped by `renderNotice()`: its text as the body, its link as the button.
+- `notify()` (`notify.ts`): notifications by email and Discord DM. A notice with a rendered template uses it; a plain-text notice (join requests, upgrades, seat swaps, ...) is wrapped by `renderNotice()`: its text as the body, its link as the button (`urlLabel` names it). Put further links in `links` (mail: small buttons, DM: link buttons) instead of raw URLs in the text.
 
 `deliverMail()` in `mail.ts` is the only code that talks to SMTP and takes only a rendered mail (HTML and text). `npm run check:mail` (also in CI) fails when anything else imports nodemailer or calls `deliverMail()`.
 

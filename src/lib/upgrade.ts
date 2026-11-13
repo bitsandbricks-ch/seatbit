@@ -117,12 +117,16 @@ export async function announceUpgrade(commands: CommandSync) {
           url: appUrl,
           version: short(now),
           before: short(before),
-          changes: changes.length
-            ? `${t("changelog.noticeChanges")}\n${changeLines(changes, t.locale)}\n\n${t("changelog.noticeAllChanges", { changes: link })}`
-            : `${t("ops.seeChanges")} ${link}`,
+          changes: changes.length ? `${t("changelog.noticeChanges")}\n${changeLines(changes, t.locale)}` : t("changelog.noticeNoEntries"),
           steps,
         }),
-        url: `${appUrl}/admin/settings`,
+        // Buttons instead of raw links in the text.
+        url: `${appUrl}/changelog`,
+        urlLabel: t("changelog.title"),
+        links: [
+          { label: t("changelog.allChanges"), url: link },
+          ...(commands.status === "failed" ? [{ label: t("changelog.platformSettings"), url: `${appUrl}/admin/settings?tab=discord` }] : []),
+        ],
       };
     }).catch((e) => {
       console.error("[upgrade] notice failed", e);

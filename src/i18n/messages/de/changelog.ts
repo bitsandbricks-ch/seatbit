@@ -8,5 +8,7 @@ export const changelog: Messages["changelog"] = {
   forAdmins: "Plattform-Admins",
   empty: "Noch nichts hier.",
   noticeChanges: "Was ist neu:",
-  noticeAllChanges: "Alle Änderungen im Code: {changes}",
+  allChanges: "Alle Änderungen im Code",
+  noticeNoEntries: "Keine neuen Einträge im Changelog.",
+  platformSettings: "Plattform-Einstellungen",
 };
