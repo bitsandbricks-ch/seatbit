@@ -873,6 +873,7 @@ export const en = {
     undoCancel: "Undo cancel",
   },
   seatFlow: {
+    removeTakenQ: "{seat} is taken by {name}. Remove the seat anyway?",
     closed: "Closed when you finalized.",
     wishesHint: "Members tell you who they want to sit near and where. {wishes} of {count} coming sent wishes so far.",
     pick: "Members pick their own seat",

@@ -874,6 +874,7 @@ export const de: Messages = {
     undoCancel: "Absage rückgängig",
   },
   seatFlow: {
+    removeTakenQ: "{seat} ist von {name} belegt. Platz trotzdem entfernen?",
     closed: "Geschlossen, als du festgelegt hast.",
     wishesHint: "Mitglieder sagen dir, neben wem und wo sie sitzen wollen. {wishes} von {count}, die kommen, haben bisher Wünsche geschickt.",
     pick: "Mitglieder wählen ihren Platz selbst",

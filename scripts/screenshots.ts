@@ -147,6 +147,8 @@ const SHOTS: Shot[] = [
   { name: "desktop-games", who: "alex", path: `${LAKESIDE}?tab=games` },
   { name: "desktop-food", who: "alex", path: `${LAKESIDE}?tab=food`, full: true },
   { name: "desktop-manage", who: "alex", path: `${LAKESIDE}/manage` },
+  { name: "desktop-manage-de", who: "alex", path: `${LAKESIDE}/manage`, lang: "de" },
+  { name: "desktop-clan-stats-de", who: "alex", path: `${CLAN}/stats`, lang: "de" },
   { name: "phone-lead-checklist", who: "alex", path: `${MOUNTAIN}/manage` },
   { name: "desktop-manage-attendees", who: "alex", path: `${LAKESIDE}/manage?tab=attendees` },
   { name: "desktop-manage-waitlist", who: "alex", path: `${MOUNTAIN}/manage?tab=attendees` },

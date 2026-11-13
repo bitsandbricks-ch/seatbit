@@ -12,6 +12,8 @@ Use a sender address on a domain you control (`MAIL_FROM`, e.g. `Seatbit <lan@ex
 
 Under **Mail templates**, change the wording of every email Seatbit sends. They share one layout: the clan in the header, "Hi name,", your text, a box with the event facts, a button and a footer with links to the privacy policy and terms. Placeholders like `{firstName}` are filled in per person. **Reset** brings back the built-in text, and you can send yourself a test.
 
+Each template has an English and a German text; the switch above the templates picks which one you edit. Every mail goes out in its recipient's [language](../features/languages.md#mails).
+
 ![Mail templates](../screenshots/desktop-admin-templates.png){ .shot }
 
 Members turn reminder emails off on their profile.
