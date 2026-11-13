@@ -49,7 +49,7 @@ export const SETTING_GROUPS = {
     help: "One Discord application is used for both the login button and the bot.",
   },
   google: { title: "Google login", help: "OAuth client for the \"Sign in with Google\" button." },
-  automation: { title: "Reminders & cron", help: "How due reminders are triggered." },
+  automation: { title: "Reminders, cron & metrics", help: "How due reminders are triggered, and the Prometheus metrics endpoint." },
   backup: {
     title: "Backups",
     help: "Seatbit copies its database to the backup folder while it runs. Mount that folder on its own volume and copy the files off the server too.",
@@ -531,6 +531,14 @@ export const SETTINGS: SettingDef[] = [
     env: "CRON_SECRET",
     help: "Bearer token for GET /api/cron/reminders. Leave unset to disable the endpoint.",
   },
+  {
+    key: "metrics.token",
+    group: "automation",
+    label: "Metrics token",
+    kind: "secret",
+    env: "METRICS_TOKEN",
+    help: "Bearer token for GET /api/metrics (Prometheus). Leave unset to disable the endpoint.",
+  },
 
   // Backups
   {
@@ -562,6 +570,15 @@ export const SETTINGS: SettingDef[] = [
     placeholder: "/backups",
     help: "Folder on the server. Empty: the BACKUP_DIR env var (the container image sets /backups), or ./backups next to the app.",
     validate: (v) => (v.startsWith("/") || /^[A-Za-z]:[\\/]/.test(v) ? null : "Use an absolute path, e.g. /backups"),
+  },
+  {
+    key: "backup.verify",
+    group: "backup",
+    label: "Test each backup by restoring it",
+    kind: "bool",
+    env: "BACKUP_VERIFY",
+    default: "true",
+    help: "After each new backup, the server restores a copy of it in its temp folder, runs the migrations on it and compares it with the live database. Needs free space for one database copy in /tmp.",
   },
 ];
 

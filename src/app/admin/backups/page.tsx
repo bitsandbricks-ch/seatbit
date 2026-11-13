@@ -11,13 +11,14 @@ import {
   listBackups,
   nextBackupAt,
 } from "@/lib/backup";
+import { drillEnabled, lastDrill } from "@/lib/backup-drill";
 import { fmtBytes, fmtDate, relative } from "@/lib/format";
 import { requirePlatform } from "@/lib/session";
 import { settingsForAdmin } from "@/lib/settings";
 import { localized } from "@/lib/settings-i18n";
 import { getT } from "@/i18n/server";
 import { saveSettings } from "../settings/actions";
-import { backupNow } from "./actions";
+import { backupNow, testNewestBackup } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -39,6 +40,8 @@ export default async function BackupsPage() {
   const keep = backupKeepDays();
   const total = files.reduce((n, f) => n + f.size, 0);
   const newest = files[0];
+  const drill = lastDrill();
+  const drillOn = drillEnabled();
   // Overdue: scheduled backups are on, but the newest is more than twice the interval old.
   const overdue = hours > 0 && (!newest || now.getTime() - newest.at.getTime() > 2 * hours * 3600_000);
   const fields = settingsForAdmin()
@@ -56,6 +59,9 @@ export default async function BackupsPage() {
       )}
       {!status.lastError && overdue && files.length > 0 && <Notice tone="warn">{t("backups.overdue")}</Notice>}
       {hours <= 0 && <Notice tone="info">{t("backups.scheduleOff")}</Notice>}
+      {drill && !drill.ok && (
+        <Notice tone="danger">{t("backups.drill.failed", { name: drill.name, when: fmtDate(new Date(drill.at), t.locale), error: drill.error ?? "" })}</Notice>
+      )}
 
       <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
         <StatTile
@@ -109,6 +115,21 @@ export default async function BackupsPage() {
         )}
       </Card>
 
+      <Card title={t("backups.drill.title")} actions={newest ? <ActionButton action={testNewestBackup}>{t("backups.drill.run")}</ActionButton> : undefined}>
+        <p className="-mt-2 mb-3 text-sm text-muted">{t(drillOn ? "backups.drill.help" : "backups.drill.off")}</p>
+        {drill ? (
+          <p className={`text-sm ${drill.ok ? "" : "text-danger"}`}>
+            {drill.ok
+              ? t("backups.drill.passed", { name: drill.name, when: fmtDate(new Date(drill.at), t.locale), tables: drill.tables ?? 0, rows: drill.rows ?? 0, live: drill.liveRows ?? 0 })
+              : t("backups.drill.failedShort", { name: drill.name, when: fmtDate(new Date(drill.at), t.locale) })}
+            {drill.ok && !!drill.migrated && ` ${t("backups.drill.migrated", { count: drill.migrated })}`}
+          </p>
+        ) : (
+          <p className="text-sm text-muted">{t("backups.drill.never")}</p>
+        )}
+        {drill?.ok && newest && newest.name !== drill.name && <p className="mt-1 text-xs text-faint">{t("backups.drill.notNewest")}</p>}
+      </Card>
+
       <Card title={t("settingGroups.backup.title")}>
         <p className="-mt-2 mb-4 text-sm text-muted">{t("settingGroups.backup.help")}</p>
         <SettingsSection fields={fields} action={saveSettings.bind(null, "backup")} />
@@ -121,6 +142,11 @@ export default async function BackupsPage() {
           <li>{t("backups.restore3")}</li>
           <li>{t("backups.restore4")}</li>
         </ol>
+        <p className="mt-3 text-sm text-muted">{t("backups.restoreScript")}</p>
+        <pre className="mt-2 overflow-x-auto rounded-bit bg-raised p-3 text-xs">
+          {/* i18n-ignore: command */}
+          node scripts/restore.mjs restore latest --yes
+        </pre>
         <p className="mt-3 text-xs text-faint">{t("backups.restoreDocs")}</p>
       </Card>
     </Page>

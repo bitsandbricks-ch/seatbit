@@ -1,0 +1,15 @@
+date: 2026-11-13
+type: new
+audience: admins
+en:
+  title: "Restore tests for backups and Prometheus metrics"
+  text: >-
+    Every new backup is restored as a test and the result shows under Admin → Backups. A restore
+    script in the image tests a backup and puts it back in place. A token-protected /api/metrics
+    endpoint gives Prometheus the numbers on users, events, background jobs and backups.
+de:
+  title: "Test-Wiederherstellung für Backups und Prometheus-Metriken"
+  text: >-
+    Jedes neue Backup wird testweise wiederhergestellt, das Ergebnis steht unter Admin → Backups.
+    Ein Restore-Skript im Image prüft ein Backup und spielt es zurück. Ein mit Token geschützter
+    Endpunkt /api/metrics liefert Prometheus Zahlen zu Benutzern, Events, Hintergrund-Jobs und Backups.

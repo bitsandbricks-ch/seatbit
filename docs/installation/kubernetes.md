@@ -106,10 +106,12 @@ apiVersion: v1
 kind: Service
 metadata:
   name: seatbit
+  labels: { app: seatbit }
 spec:
   selector: { app: seatbit }
   ports:
-    - port: 80
+    - name: http
+      port: 80
       targetPort: 3000
 ```
 
@@ -123,7 +125,13 @@ The deployment above runs with `readOnlyRootFilesystem: true`: only `/data`, `/b
 
 Seatbit backs itself up to `/backups` once a day (see [Backups](operations.md#backups)). Give it its own volume, as in the deployment above, e.g. a second PVC `seatbit-backups` on a different storage class or node than the data, and copy it off the cluster with your usual volume backup tool (Velero, Longhorn backups, ...).
 
+Each new backup is restored as a test in `/tmp` (see [Restore test](operations.md#restore-test)), so the `tmp` emptyDir needs room for one copy of the database. To restore, see [Restore](operations.md#restore).
+
 If you'd rather run backups from a CronJob, set *Backup every* to `0` and run `node scripts/backup.mjs` with the same image, mounting the data and backup volumes. With a `ReadWriteOnce` volume, the job must run on the same node as the Seatbit pod (pod affinity), or use `kubectl exec deploy/seatbit -- node scripts/backup.mjs` instead.
+
+## Metrics
+
+Set a metrics token and scrape `/api/metrics` with a `ServiceMonitor`; the example and alert rules are in [Metrics](operations.md#metrics).
 
 ## Admin CLI
 
