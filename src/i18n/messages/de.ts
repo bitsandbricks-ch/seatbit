@@ -260,6 +260,7 @@ export const de: Messages = {
       games: "Games",
       food: "Essen",
       pickYours: "wähl deinen",
+      seatPicked: "{seat} gewählt",
       looking: { one: "{count} sucht", other: "{count} suchen" },
       toInstall: "{count} installieren",
       open: "{count} offen",
@@ -284,6 +285,7 @@ export const de: Messages = {
     ourSeats: "Unsere Plätze",
     eventSeatPlan: "Sitzplan des Events",
     pickYourSeat: "Wähl deinen Platz",
+    seatPicked: "Platz {seat} gewählt",
     final: "Definitiv",
     notFinal: "Noch nicht definitiv",
     noSeatsYet: "Die Leads haben die Plätze der Gruppe noch nicht erfasst.",
@@ -2204,6 +2206,7 @@ export const de: Messages = {
     },
     pick: {
       title: "Wähl deinen Platz",
+      picked: "Platz {seat} gewählt",
       final: "Du sitzt auf {seat}.",
       took: "Du hast {seat} genommen. Im Tab Plätze kannst du noch wechseln.",
       closed: "Selbst wählen ist geschlossen. Die Leads teilen dich ein.",

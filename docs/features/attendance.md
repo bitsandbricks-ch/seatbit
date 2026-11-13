@@ -75,7 +75,7 @@ Your checklist sits above the tabs on every tab of the event, on the LANs list (
 | 1. **Say you're coming** | You answered *Coming*. On the waitlist it shows your place (*You're #2 on the waitlist*). |
 | 2. **Give your nickname** | You have a nick (default, LAN type or event). |
 | 3. **Buy your ticket** | You ticked *I bought my ticket* before the *buy ticket by* date; a lead then confirms it. |
-| 4. **Pick your seat** | Only when the leads turned on [self pick](seats.md#seat-steps): you took a free seat. Needs your ticket first. |
+| 4. **Pick your seat** | Only when the leads turned on [self pick](seats.md#seat-steps): you took a free seat (the step then reads *Seat F8 picked*). Needs your ticket first. While self pick is on, the Seats tab shows *pick yours* in yellow until you have a seat, then your seat in green. |
 | 4. **Send seat wishes** (optional) | Instead of *Pick your seat* when self pick is off: you sent [seat wishes](seats.md#seat-steps). Hidden once the plan is final if you sent none. |
 | 5. **Leads confirm your seat** | The leads finalized the seat plan and you have a seat. Until then it waits on them (also after you picked your own seat). With an event seat plan, the hint says whether the leads already [booked it there](seats.md#book-on-the-event-site). |
 | **Install the games** (optional) | After step 5, when someone voted for [games](games.md): you marked every voted game as installed. |

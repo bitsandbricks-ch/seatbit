@@ -82,7 +82,8 @@ export function buildChecklist(input: {
     if (lan.seatPicking) {
       steps.push({
         key: "pick",
-        title: t("checklist.pick.title"),
+        // Picked: say so in the title too, so it doesn't read like a to-do.
+        title: seatLabel ? t("checklist.pick.picked", { seat: seatLabel }) : t("checklist.pick.title"),
         state: seatLabel || final ? "done" : "todo",
         hint: seatLabel
           ? final

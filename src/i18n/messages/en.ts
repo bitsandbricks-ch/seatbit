@@ -260,6 +260,7 @@ export const en = {
       games: "Games",
       food: "Food",
       pickYours: "pick yours",
+      seatPicked: "{seat} picked",
       looking: { one: "{count} looking", other: "{count} looking" },
       toInstall: "{count} to install",
       open: "{count} open",
@@ -284,6 +285,7 @@ export const en = {
     ourSeats: "Our seats",
     eventSeatPlan: "Event seat plan",
     pickYourSeat: "Pick your seat",
+    seatPicked: "Seat {seat} picked",
     final: "Final",
     notFinal: "Not final yet",
     noSeatsYet: "The leads haven't entered the group's seats yet.",
@@ -2190,6 +2192,7 @@ export const en = {
     },
     pick: {
       title: "Pick your seat",
+      picked: "Seat {seat} picked",
       final: "You sit at {seat}.",
       took: "You took {seat}. You can still change it on the Seats tab.",
       closed: "Self pick is closed. The leads place you.",
