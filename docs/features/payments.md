@@ -2,6 +2,8 @@
 
 Collect money from your own members: yearly dues, the ticket money for an event, a shared cost. Seatbit keeps the list of who owes what and who paid; the money goes to the clan directly (cash, bank transfer, TWINT, or online to the clan's own Stripe account).
 
+When members paid something for each other (one paid the fuel, the others pay them back), use [shared costs](shared-costs.md) on the event instead.
+
 **Who:** clan admins and event managers run it, members see what they owe · **Where:** clan *Manage → Payments*, and the *Payments* tab on the clan page
 
 !!! note "Off until a clan turns it on"

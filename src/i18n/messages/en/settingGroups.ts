@@ -1,5 +1,5 @@
 export const settingGroups = {
-  general: { title: "General", help: "Who can sign up, who is a global admin, and the currency for food orders." },
+  general: { title: "General", help: "Who can sign up, who is a global admin, and the currency for food orders and shared costs." },
   mail: { title: "Email (SMTP relay)", help: "Used for reminders and password resets. Without a host, mails are only printed to the server log." },
   discord: { title: "Discord", help: "One Discord application is used for both the login button and the bot." },
   google: { title: "Google login", help: "OAuth client for the \"Sign in with Google\" button." },

@@ -1068,3 +1068,68 @@ export const report = sqliteTable(
 );
 
 export type Report = typeof report.$inferSelect;
+
+// ---------- Shared costs ----------
+
+/**
+ * Something one person paid for the group at an event (group tickets, fuel, snacks), split
+ * between some of the people there. Unlike clan payments, the money goes between members.
+ */
+export const costExpense = sqliteTable(
+  "cost_expense",
+  {
+    id: id(),
+    lanId: text("lan_id")
+      .notNull()
+      .references(() => lan.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    amountCents: integer("amount_cents").notNull(),
+    paidBy: text("paid_by")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    note: text("note").default("").notNull(),
+    createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  (t) => [index("cost_expense_lan_idx").on(t.lanId)],
+);
+
+/** One person's part of an expense. The parts of an expense add up to its amount. */
+export const costShare = sqliteTable(
+  "cost_share",
+  {
+    expenseId: text("expense_id")
+      .notNull()
+      .references(() => costExpense.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    amountCents: integer("amount_cents").notNull(),
+  },
+  (t) => [uniqueIndex("cost_share_uq").on(t.expenseId, t.userId), index("cost_share_user_idx").on(t.userId)],
+);
+
+/** Money paid back between two people at an event ("Anna paid Mike CHF 20"). */
+export const costSettlement = sqliteTable(
+  "cost_settlement",
+  {
+    id: id(),
+    lanId: text("lan_id")
+      .notNull()
+      .references(() => lan.id, { onDelete: "cascade" }),
+    fromUserId: text("from_user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    toUserId: text("to_user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    amountCents: integer("amount_cents").notNull(),
+    /** Who ticked it off: either of the two, or a lead. */
+    createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  (t) => [index("cost_settlement_lan_idx").on(t.lanId)],
+);
+
+export type CostExpense = typeof costExpense.$inferSelect;
+export type CostSettlement = typeof costSettlement.$inferSelect;

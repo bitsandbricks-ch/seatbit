@@ -1,7 +1,7 @@
 import type { Messages } from "../en";
 
 export const settingGroups: Messages["settingGroups"] = {
-  general: { title: "Allgemein", help: "Wer sich registrieren kann, wer globaler Admin ist, und die Währung für Essensbestellungen." },
+  general: { title: "Allgemein", help: "Wer sich registrieren kann, wer globaler Admin ist, und die Währung für Essensbestellungen und geteilte Kosten." },
   mail: { title: "E-Mail (SMTP-Relay)", help: "Für Erinnerungen und Passwort-Resets. Ohne Host werden Mails nur ins Server-Log geschrieben." },
   discord: { title: "Discord", help: "Eine Discord-Application dient für den Login-Button und den Bot." },
   google: { title: "Google-Login", help: "OAuth-Client für den Button «Mit Google anmelden»." },

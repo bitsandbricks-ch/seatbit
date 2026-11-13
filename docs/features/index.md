@@ -4,7 +4,7 @@ Reference for everything Seatbit does. Each page says who uses the feature and w
 
 Seatbit has three kinds of users:
 
-- **Members** answer for events, pick seats, offer rides and order food.
+- **Members** answer for events, pick seats, offer rides and order food and split costs.
 - **Leads, clan admins, event managers and recruiters** run the clan and its events. See [roles](clans.md#roles).
 - **Platform staff** (owners, admins, moderators, support) run the instance. See [Platform admin](admin.md).
 
@@ -26,6 +26,7 @@ Seatbit has three kinds of users:
 | [Travel and packing list](travel-packing.md) | Rides, places to sleep, a private packing list. | Members |
 | [Games](games.md) | Suggest and vote for games, track installs. | Members |
 | [Food orders](food.md) | Group orders at the LAN with a merged order list and who paid. | Members |
+| [Shared costs](shared-costs.md) | Who paid what for the group, everyone's balance and who pays whom. | Members |
 | [Discord and WhatsApp](discord.md) | Bot announcements with answer buttons, reminders, DMs, slash commands; WhatsApp texts. | Clan admins, leads |
 | [Clan payments](payments.md) | Dues, ticket money and shared costs: who owes what, who paid, reminders. | Clan admins, event managers |
 | [Audit log](audit-log.md) | What leads and admins changed. | Admins, event managers, recruiters |
