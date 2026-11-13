@@ -6,7 +6,9 @@ import { db, schema } from "@/db";
 import type { Lan } from "@/db/schema";
 import { leaveClan } from "@/app/clan-actions";
 import { Avatar } from "@/components/avatar";
-import { ClanHeader, CLAN_VIEW_TABS } from "@/components/clan-header";
+import { ClanHeader, CLAN_VIEW_TABS, showsPaymentsTab } from "@/components/clan-header";
+import { MyPayments } from "@/components/clan-payments";
+import { memberLines, owedSummary, paymentsAvailable } from "@/lib/payments";
 import { ClanMemberGrid } from "@/components/clan-member-list";
 import { Card, Columns, EmptyState, Notice, Page, Pill, StatusBadge, btnGhost, btnPrimary, btnSecondary } from "@/components/ui";
 import { lanDay, lanRange } from "@/lib/format";
@@ -34,7 +36,8 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
   const canEvents = perms.has("events");
   const canMembers = perms.has("members");
   const seesEvents = isMember || canEvents;
-  const tabs: string[] = CLAN_VIEW_TABS.filter((x) => x !== "stats" && (x !== "events" || seesEvents));
+  const hasPayments = showsPaymentsTab(c, me.id, perms);
+  const tabs: string[] = CLAN_VIEW_TABS.filter((x) => x !== "stats" && (x !== "events" || seesEvents) && (x !== "payments" || hasPayments));
   const tab = tabs.includes(sp.tab as string) ? (sp.tab as string) : "overview";
 
   const memberRows = db
@@ -119,6 +122,9 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
         .all().length
     : 0;
 
+  const myLines = hasPayments && (tab === "overview" || tab === "payments") ? memberLines(me.id, { clanId: c.id }) : [];
+  const owed = owedSummary(myLines);
+
   // Members who aren't on the clan's Discord server(s) yet get an invite.
   const discordInvites = isMember && tab === "overview" ? await missingServers(me.id, c.id) : [];
 
@@ -134,9 +140,10 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
       { tab: "types", label: t("clanPage.links.types"), sub: t("clanPage.links.typesSub") },
       { tab: "invites", label: t("clanPage.links.invites"), sub: t("clanPage.links.invitesSub") },
       { tab: "chat", label: t("manage.tabs.chat"), sub: t("clanPage.links.chatSub") },
+      { tab: "payments", label: t("payments.title"), sub: t("clanPage.links.paymentsSub") },
     ] as const
   )
-    .filter((l) => perms.has(MANAGE_TAB_PERMS[l.tab]))
+    .filter((l) => perms.has(MANAGE_TAB_PERMS[l.tab]) && (l.tab !== "payments" || paymentsAvailable()))
     .map((l) => ({ ...l, href: l.tab === "general" ? `/clans/${c.slug}/settings` : `/clans/${c.slug}/settings?tab=${l.tab}` }));
 
   const leave = role && (
@@ -147,7 +154,7 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
 
   return (
     <Page>
-      <ClanHeader clan={c} role={role} perms={perms} mode="view" tab={tab} />
+      <ClanHeader clan={c} meId={me.id} role={role} perms={perms} mode="view" tab={tab} />
 
       {canMembers && pending + openClaims > 0 && (
         <Notice tone="warn">
@@ -162,6 +169,17 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
             </span>
             <Link href={`/clans/${c.slug}/settings?tab=members`} className="font-semibold underline underline-offset-2">
               {t("clanPage.review")}
+            </Link>
+          </span>
+        </Notice>
+      )}
+
+      {tab === "overview" && owed.count > 0 && (
+        <Notice tone="warn">
+          <span className="flex flex-wrap items-center justify-between gap-2">
+            <span>{t("payments.youOwe", { amount: owed.text, count: owed.count })}</span>
+            <Link href={`/clans/${c.slug}?tab=payments`} className="font-semibold underline underline-offset-2">
+              {t("payments.seePayments")}
             </Link>
           </span>
         </Notice>
@@ -337,6 +355,8 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
           </Card>
         </Columns>
       )}
+
+      {tab === "payments" && <MyPayments t={t} clan={c} lines={myLines} />}
 
       {tab === "members" && (
         <Card

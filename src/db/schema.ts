@@ -170,6 +170,10 @@ export const clan = sqliteTable("clan", {
   supporterPlan: text("supporter_plan").$type<"year" | "month">(),
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
+  /** Clan payments (dues, ticket money, shared costs) are on for this clan. See src/lib/payments.ts. */
+  paymentsEnabled: integer("payments_enabled", { mode: "boolean" }).default(false).notNull(),
+  /** How members pay the clan outside Seatbit: IBAN, TWINT number, "cash to Mike". Shown with open charges. */
+  paymentInfo: text("payment_info").default("").notNull(),
   /** Suspended by platform staff: hidden from members, no joining, the bot stays quiet. */
   suspendedAt: integer("suspended_at", { mode: "timestamp_ms" }),
   suspendedReason: text("suspended_reason"),
@@ -885,6 +889,71 @@ export const foodItem = sqliteTable(
   },
   (t) => [index("food_item_order_idx").on(t.orderId)],
 );
+
+// ---------- Clan payments ----------
+
+export const CHARGE_KINDS = ["dues", "event", "other"] as const;
+export type ChargeKind = (typeof CHARGE_KINDS)[number];
+
+/**
+ * Money a clan collects from its members: yearly dues, ticket money for an event, a shared cost.
+ * One row per thing; what each person owes is a charge_item.
+ */
+export const charge = sqliteTable(
+  "charge",
+  {
+    id: id(),
+    clanId: text("clan_id")
+      .notNull()
+      .references(() => clan.id, { onDelete: "cascade" }),
+    /** The event it's for, if any. Deleting the event keeps the charge (money may still be owed). */
+    lanId: text("lan_id").references(() => lan.id, { onDelete: "set null" }),
+    kind: text("kind").$type<ChargeKind>().default("other").notNull(),
+    title: text("title").notNull(),
+    note: text("note").default("").notNull(),
+    currency: text("currency").default("CHF").notNull(),
+    dueAt: integer("due_at", { mode: "timestamp_ms" }),
+    createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  (t) => [index("charge_clan_idx").on(t.clanId), index("charge_lan_idx").on(t.lanId)],
+);
+
+/**
+ * "open": owes it. "reported": the member says they paid, a lead hasn't checked yet.
+ * "paid": a lead (or Stripe) confirmed it. "waived": doesn't have to pay after all.
+ */
+export const CHARGE_ITEM_STATUSES = ["open", "reported", "paid", "waived"] as const;
+export type ChargeItemStatus = (typeof CHARGE_ITEM_STATUSES)[number];
+export const PAID_VIA = ["cash", "bank", "twint", "stripe", "other"] as const;
+export type PaidVia = (typeof PAID_VIA)[number];
+
+/** What one person owes for a charge, and whether it's paid. */
+export const chargeItem = sqliteTable(
+  "charge_item",
+  {
+    id: id(),
+    chargeId: text("charge_id")
+      .notNull()
+      .references(() => charge.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    amountCents: integer("amount_cents").notNull(),
+    status: text("status").$type<ChargeItemStatus>().default("open").notNull(),
+    paidVia: text("paid_via").$type<PaidVia>(),
+    paidAt: integer("paid_at", { mode: "timestamp_ms" }),
+    /** Who marked it paid or waived (null for Stripe or the member's own report). */
+    markedBy: text("marked_by").references(() => user.id, { onDelete: "set null" }),
+    /** Last reminder about it, by hand or before the due date. */
+    remindedAt: integer("reminded_at", { mode: "timestamp_ms" }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  (t) => [uniqueIndex("charge_item_uq").on(t.chargeId, t.userId), index("charge_item_user_idx").on(t.userId)],
+);
+
+export type Charge = typeof charge.$inferSelect;
+export type ChargeItem = typeof chargeItem.$inferSelect;
 
 export type FoodOrder = typeof foodOrder.$inferSelect;
 export type FoodItem = typeof foodItem.$inferSelect;

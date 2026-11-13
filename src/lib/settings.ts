@@ -285,6 +285,16 @@ export const SETTINGS: SettingDef[] = [
     validate: (v) => (/^[^\s]{1,5}$/.test(v) ? null : "1 to 5 characters, e.g. CHF, EUR or €"),
   },
 
+  {
+    key: "payments.enabled",
+    group: "general",
+    label: "Clan payments",
+    kind: "bool",
+    env: "CLAN_PAYMENTS",
+    default: "true",
+    help: "Lets clans track money they collect from their members (dues, ticket money, shared costs) and who paid. Each clan still turns it on in its own settings. No money goes through Seatbit.",
+  },
+
   // Supporter payments (Stripe). Off unless an operator turns it on.
   {
     key: "billing.enabled",

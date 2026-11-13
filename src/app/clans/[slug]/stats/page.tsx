@@ -44,7 +44,7 @@ export default async function ClanStatsPage({ params }: PageProps<"/clans/[slug]
 
   return (
     <Page>
-      <ClanHeader clan={c} role={clanRole(me.id, c.id)} perms={perms} mode="view" tab="stats" />
+      <ClanHeader clan={c} meId={me.id} role={clanRole(me.id, c.id)} perms={perms} mode="view" tab="stats" />
 
       <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
         <StatTile

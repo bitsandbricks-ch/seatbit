@@ -63,6 +63,15 @@ export function mergeGuestInto(g: User, meId: string) {
       const mine = tx.select().from(lanOrga).where(and(eq(lanOrga.lanId, o.lanId), eq(lanOrga.userId, meId))).get();
       if (!mine) tx.update(lanOrga).set({ userId: meId }).where(and(eq(lanOrga.lanId, o.lanId), eq(lanOrga.userId, g.id))).run();
     }
+    // What the guest owes the clan (or paid). Where both are on the same charge, the account's line stays.
+    for (const it of tx.select().from(schema.chargeItem).where(eq(schema.chargeItem.userId, g.id)).all()) {
+      const mine = tx
+        .select()
+        .from(schema.chargeItem)
+        .where(and(eq(schema.chargeItem.chargeId, it.chargeId), eq(schema.chargeItem.userId, meId)))
+        .get();
+      if (!mine) tx.update(schema.chargeItem).set({ userId: meId }).where(eq(schema.chargeItem.id, it.id)).run();
+    }
     // Rides and sleeping spots noted for the guest.
     tx.update(schema.travelPost).set({ userId: meId }).where(eq(schema.travelPost.userId, g.id)).run();
     for (const sp of tx.select().from(schema.travelSpot).where(eq(schema.travelSpot.userId, g.id)).all()) {
