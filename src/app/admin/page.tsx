@@ -12,6 +12,7 @@ import { getLegal } from "@/lib/legal";
 import { backupStatus } from "@/lib/backup";
 import { getDefaultNames } from "@/lib/lans";
 import { getT } from "@/i18n/server";
+import { ActionForm } from "@/components/action-form";
 
 export default async function AdminPage() {
   const me = await requirePlatform("view");
@@ -109,9 +110,9 @@ export default async function AdminPage() {
                   )}
                   {can.suspend &&
                     (c.suspendedAt ? (
-                      <form action={unsuspendClanAction.bind(null, c.id)}>
+                      <ActionForm action={unsuspendClanAction.bind(null, c.id)}>
                         <button className={btnGhost}>{t("moderation.restore")}</button>
-                      </form>
+                      </ActionForm>
                     ) : (
                       <SuspendForm t={t} action={suspendClanAction.bind(null, c.id)} label={t("moderation.suspendClan", { name: c.name })} />
                     ))}
@@ -183,7 +184,7 @@ export default async function AdminPage() {
                 {login && u.id !== me.id && (
                   <span className="flex shrink-0 flex-wrap items-center justify-end gap-1">
                     {canSetRole(me, u) && (
-                      <form action={setPlatformRole.bind(null, u.id)} className="flex items-center gap-1">
+                      <ActionForm action={setPlatformRole.bind(null, u.id)} auto="toggles" className="flex items-center gap-1">
                         <select
                           name="role"
                           defaultValue={u.role}
@@ -196,15 +197,14 @@ export default async function AdminPage() {
                             </option>
                           ))}
                         </select>
-                        <button className={btnGhost}>{t("common.save")}</button>
-                      </form>
+                      </ActionForm>
                     )}
                     {can.suspend &&
                       outranks(me, u) &&
                       (u.suspendedAt ? (
-                        <form action={unsuspendUserAction.bind(null, u.id)}>
+                        <ActionForm action={unsuspendUserAction.bind(null, u.id)}>
                           <button className={btnGhost}>{t("moderation.restore")}</button>
-                        </form>
+                        </ActionForm>
                       ) : (
                         <SuspendForm t={t} action={suspendUserAction.bind(null, u.id)} label={t("moderation.suspendUser", { name })} />
                       ))}
@@ -235,11 +235,11 @@ function SuspendForm({ t, action, label }: { t: T; action: (form: FormData) => P
   return (
     <details className="group">
       <summary className={`${btnGhost} cursor-pointer list-none !text-danger`}>{t("moderation.suspend")}</summary>
-      <form action={action} className="mt-2 w-64 max-w-full space-y-2 rounded-card border border-line bg-surface p-3 text-left text-sm">
+      <ActionForm action={action} className="mt-2 w-64 max-w-full space-y-2 rounded-card border border-line bg-surface p-3 text-left text-sm">
         <p className="font-medium">{label}</p>
         <input name="reason" className={input} placeholder={t("moderation.reasonPlaceholder")} maxLength={500} />
         <button className={btnDanger}>{t("moderation.suspend")}</button>
-      </form>
+      </ActionForm>
     </details>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
-import { useActionState, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
+import { useToastAction } from "./action-form";
 import type { FormState } from "@/app/actions";
 import { Field, Input, btnPrimary, btnSecondary } from "./ui";
 import { useT } from "@/i18n/client";
@@ -13,7 +14,7 @@ export function GuestForm({
   submitLabel?: string;
 }) {
   const t = useT();
-  const [state, formAction, pending] = useActionState(action, undefined);
+  const [state, formAction, pending] = useToastAction(action, undefined);
   const ref = useRef<HTMLFormElement>(null);
   useEffect(() => {
     if (state?.ok) ref.current?.reset();
@@ -34,8 +35,6 @@ export function GuestForm({
       <Field label={t("guestForm.emailOptional")} hint={t("guestForm.emailHint")}>
         <Input name="email" type="email" maxLength={200} autoComplete="off" />
       </Field>
-      {state?.error && <p className="text-sm text-danger">{state.error}</p>}
-      {state?.ok && state.message && <p className="text-sm text-bit">{state.message}</p>}
       <button disabled={pending} className={btnSecondary}>
         {pending ? t("guestForm.adding") : (submitLabel ?? t("clanSettings.addGuestSubmit"))}
       </button>
@@ -59,7 +58,7 @@ export function GuestEditForm({
   types: GuestEditTypeRow[];
 }) {
   const t = useT();
-  const [state, formAction, pending] = useActionState(action, undefined);
+  const [, formAction, pending] = useToastAction(action, undefined);
   return (
     <form action={formAction} className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
@@ -94,8 +93,6 @@ export function GuestEditForm({
       <Field label={t("member.email")} hint={t("guestForm.emailEditHint")}>
         <Input name="email" type="email" maxLength={200} autoComplete="off" defaultValue={guest.email} />
       </Field>
-      {state?.error && <p className="text-sm text-danger">{state.error}</p>}
-      {state?.ok && state.message && <p className="text-sm text-bit">{state.message}</p>}
       <button disabled={pending} className={btnPrimary}>
         {pending ? t("common.saving") : t("guestForm.save")}
       </button>

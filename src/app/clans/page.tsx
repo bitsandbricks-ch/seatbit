@@ -10,6 +10,7 @@ import { CLAN_MANAGE_TABS } from "@/components/clan-header";
 import { RolePill } from "@/components/role-pill";
 import { MANAGE_TAB_PERMS, roleCan } from "@/lib/clan-roles";
 import { getT } from "@/i18n/server";
+import { ActionForm } from "@/components/action-form";
 
 export default async function ClansPage() {
   const me = await requireUser();
@@ -90,11 +91,11 @@ export default async function ClansPage() {
                   ) : c.joinPolicy === "invite" ? (
                     <Pill>{t("clans.inviteOnly")}</Pill>
                   ) : (
-                    <form action={joinClan.bind(null, c.id)}>
+                    <ActionForm action={joinClan.bind(null, c.id)} done={false}>
                       <button className={c.joinPolicy === "open" ? btnPrimary : btnSecondary}>
                         {c.joinPolicy === "open" ? t("clans.join") : t("clans.askToJoin")}
                       </button>
-                    </form>
+                    </ActionForm>
                   )}
                 </li>
               );

@@ -1,11 +1,12 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { useToastAction } from "./action-form";
 import type { ActionResult } from "@/app/admin/settings/actions";
 import { type FactRow, type TemplateParts, buildMail, factLabel, previewVars } from "@/lib/mail-fill";
 import { useT } from "@/i18n/client";
 import type { Locale } from "@/i18n/config";
-import { ActionButton, Result } from "./settings-section";
+import { ActionButton } from "./settings-section";
 import { btnPrimary, input, label } from "./ui";
 
 type Tpl = {
@@ -41,7 +42,7 @@ export function MailTemplateEditor({
   test: (prev: ActionResult) => Promise<ActionResult>;
 }) {
   const tr = useT();
-  const [state, formAction, pending] = useActionState(save, undefined);
+  const [, formAction, pending] = useToastAction(save, undefined);
   const [parts, setParts] = useState(t.current);
   // Pick up the saved text after a save or reset.
   const [saved, setSaved] = useState(t.current);
@@ -140,7 +141,6 @@ export function MailTemplateEditor({
             <button disabled={pending} className={btnPrimary}>
               {pending ? tr("common.saving") : tr("common.save")}
             </button>
-            <Result state={state} />
           </div>
         </form>
 

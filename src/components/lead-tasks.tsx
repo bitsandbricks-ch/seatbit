@@ -6,6 +6,7 @@ import { getT } from "@/i18n/server";
 import { ContactDetails } from "./lead-contacts";
 import { TaskAssignee } from "./lead-task-assign";
 import { Card, Pill } from "./ui";
+import { ActionForm } from "@/components/action-form";
 
 /** The event's own lead to-dos (from the clan, the LAN type and the event), ticked off by hand. */
 export async function LeadTasks({
@@ -42,7 +43,7 @@ export async function LeadTasks({
         <ul className="divide-y divide-line">
           {sorted.map((x) => (
             <li key={x.id} className={`flex gap-3 py-3 ${x.state === "locked" ? "opacity-70" : ""}`}>
-              <form action={toggleLanTask.bind(null, lanId, x.id)}>
+              <ActionForm action={toggleLanTask.bind(null, lanId, x.id)}>
                 <button
                   aria-label={t(x.state === "done" ? "leadTasks.untick" : "leadTasks.tick")}
                   title={t(x.state === "done" ? "leadTasks.untick" : "leadTasks.tick")}
@@ -52,7 +53,7 @@ export async function LeadTasks({
                 >
                   {x.state === "done" ? "✓" : x.state === "locked" ? "🔒" : ""}
                 </button>
-              </form>
+              </ActionForm>
               <div className="min-w-0 flex-1 space-y-1">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                   <p className={`text-sm font-medium ${x.state === "done" ? "text-muted line-through" : "text-fg"}`}>{x.title}</p>

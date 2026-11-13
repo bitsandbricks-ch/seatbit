@@ -42,6 +42,7 @@ import { CancelEvent, CopyNextYear, DeleteNewsButton, NewsComposer } from "@/com
 import { getT } from "@/i18n/server";
 import type { T } from "@/i18n/translate";
 import { httpHref } from "@/lib/safe-url";
+import { ActionForm } from "@/components/action-form";
 import { canSeeEmergency, emergencyForLan, logEmergencyView } from "@/lib/emergency";
 import { EmergencyList } from "@/components/emergency-list";
 
@@ -820,9 +821,9 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
 
           {platformCan(me, "clans") && (
             <Card title={t("manage.dangerZone")}>
-              <form action={deleteLan.bind(null, l.id)}>
+              <ActionForm action={deleteLan.bind(null, l.id)} done="deleted">
                 <button className={btnDanger}>{t("manage.deleteLan")}</button>
-              </form>
+              </ActionForm>
             </Card>
           )}
         </div>

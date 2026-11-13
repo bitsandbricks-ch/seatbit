@@ -1,11 +1,13 @@
 "use client";
-import { useActionState, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { useToastAction } from "./action-form";
 import { deleteLeadTask, saveLeadTask } from "@/app/lead-task-actions";
 import type { FormState } from "@/app/actions";
 import { LEAD_STEP_DEPS } from "@/lib/lead-checklist";
 import { useT } from "@/i18n/client";
 import type { T } from "@/i18n/translate";
 import { Field, Input, btnGhost, btnPrimary, btnSecondary, input, label } from "./ui";
+import { ActionForm } from "@/components/action-form";
 
 export type EditableTask = {
   id: string;
@@ -77,9 +79,9 @@ export function LeadTaskEditor({ scope, tasks, depTasks, contacts }: Props) {
                   <button type="button" className={btnGhost} onClick={() => setEditing(x.id)}>
                     {t("leadTasks.form.edit")}
                   </button>
-                  <form action={deleteLeadTask.bind(null, x.id)}>
+                  <ActionForm action={deleteLeadTask.bind(null, x.id)} done="deleted">
                     <button className={`${btnGhost} text-danger`}>{t("leadTasks.form.delete")}</button>
-                  </form>
+                  </ActionForm>
                 </span>
               </li>
             ),
@@ -104,7 +106,7 @@ function TaskForm({
   onDone,
 }: Omit<Props, "tasks"> & { task?: EditableTask; onDone: () => void }) {
   const t = useT();
-  const [state, action, pending] = useActionState<FormState, FormData>(saveLeadTask, undefined);
+  const [state, action, pending] = useToastAction<FormState>(saveLeadTask, undefined);
   useEffect(() => {
     if (state?.ok) onDone();
     // Only react to a new result, not to a new onDone function.
@@ -158,7 +160,6 @@ function TaskForm({
           </Field>
         )}
       </div>
-      {state?.error && <p className="text-sm text-danger">{state.error}</p>}
       <div className="flex gap-2">
         <button disabled={pending} className={btnPrimary}>
           {task ? t("leadTasks.form.save") : t("leadTasks.form.add")}

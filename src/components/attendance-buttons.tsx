@@ -1,9 +1,10 @@
 "use client";
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 import { setMyAttendance } from "@/app/actions";
 import type { AttendanceStatus } from "@/db/schema";
 import { btn } from "./ui";
 import { useT } from "@/i18n/client";
+import { useRunAction } from "./action-form";
 import type { MessageKey } from "@/i18n/translate";
 
 const options: { status: AttendanceStatus; label: MessageKey; active: string }[] = [
@@ -23,7 +24,7 @@ export function AttendanceButtons({
 }) {
   const t = useT();
   const [pending, start] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const run = useRunAction();
   return (
     <div className="space-y-2">
       <div className="grid grid-cols-3 gap-2" aria-busy={pending}>
@@ -35,12 +36,7 @@ export function AttendanceButtons({
               disabled={disabled || pending}
               onClick={() =>
                 start(async () => {
-                  setError(null);
-                  try {
-                    await setMyAttendance(lanId, o.status);
-                  } catch (e) {
-                    setError(e instanceof Error ? e.message : t("eventUi.failed"));
-                  }
+                  await run(() => setMyAttendance(lanId, o.status));
                 })
               }
               aria-pressed={isActive}
@@ -51,7 +47,6 @@ export function AttendanceButtons({
           );
         })}
       </div>
-      {error && <p className="text-sm text-danger">{error}</p>}
     </div>
   );
 }

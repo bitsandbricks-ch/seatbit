@@ -73,3 +73,11 @@ select {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Toasts (src/components/toast.tsx) slide up a little; only with motion allowed. */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+}

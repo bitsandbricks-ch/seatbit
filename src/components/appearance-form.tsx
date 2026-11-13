@@ -1,9 +1,10 @@
 "use client";
-import { useActionState, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { autoSave, useToastAction } from "./action-form";
 import { updateAppearance, type AppearanceState } from "@/app/actions";
 import type { AvatarData } from "@/lib/avatars";
 import { Avatar } from "./avatar";
-import { btnPrimary, label } from "./ui";
+import { label } from "./ui";
 import { useT } from "@/i18n/client";
 
 type Style = "picture" | "icon" | "initials";
@@ -28,7 +29,7 @@ export function AppearanceForm({
   name: string;
 }) {
   const t = useT();
-  const [state, action, pending] = useActionState<AppearanceState, FormData>(updateAppearance, {});
+  const [, action, pending] = useToastAction<AppearanceState>(updateAppearance, {});
   const [style, setStyle] = useState<Style>(initial.style);
   const [color, setColor] = useState(initial.color);
   const [icon, setIcon] = useState(initial.icon);
@@ -44,7 +45,7 @@ export function AppearanceForm({
     }`;
 
   return (
-    <form action={action} className="space-y-5">
+    <form action={action} {...autoSave("toggles")} aria-busy={pending} className="space-y-5">
       <div className="flex items-center gap-4">
         <Avatar data={data} size={64} />
         <div className="min-w-0 text-sm">
@@ -137,13 +138,6 @@ export function AppearanceForm({
         <p className="mt-1.5 text-xs text-muted">{t("profile.appearance.colourHint")}</p>
       </fieldset>
 
-      <div className="flex items-center gap-3">
-        <button className={btnPrimary} disabled={pending}>
-          {pending ? t("common.saving") : t("common.save")}
-        </button>
-        {state.error && <p className="text-sm text-danger">{state.error}</p>}
-        {state.ok && !pending && <p className="text-sm text-bit">{t("common.saved")}</p>}
-      </div>
     </form>
   );
 }

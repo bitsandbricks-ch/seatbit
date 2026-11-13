@@ -14,6 +14,7 @@ import { rowLetter } from "@/lib/seat-labels";
 import { Card, Pill, Segmented, btnGhost, btnPrimary, btnSecondary, input } from "./ui";
 import { nameMatches } from "@/lib/names";
 import { useT } from "@/i18n/client";
+import { useRunAction } from "./action-form";
 
 export type SeatView = {
   id: string;
@@ -85,7 +86,7 @@ export function SeatMap({
   const admin = mode === "admin";
   const t = useT();
   const [pending, start] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const runAction = useRunAction();
   const [zoom, setZoomState] = useState<Zoom>("compact");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [swapFrom, setSwapFrom] = useState<string | null>(null);
@@ -139,13 +140,7 @@ export function SeatMap({
 
   const run = (fn: () => Promise<unknown>) =>
     start(async () => {
-      setError(null);
-      try {
-        const r = await fn();
-        if (r && typeof r === "object" && "error" in r && typeof r.error === "string") setError(r.error);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : t("seatMap.somethingWrong"));
-      }
+      await runAction(fn);
     });
 
   /** Puts a person on a seat, or swaps when moving between two seats. */
@@ -513,7 +508,6 @@ export function SeatMap({
                 </span>
               )}
             </div>
-            {error && <p className="text-sm text-danger">{error}</p>}
 
             {admin && !layout && unseated.length > 0 && (
               <div>

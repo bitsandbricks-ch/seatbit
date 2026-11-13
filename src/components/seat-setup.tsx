@@ -3,6 +3,7 @@ import { useState, useTransition } from "react";
 import { adminAutoAssignSeats, setSeatsFromList } from "@/app/actions";
 import { btnPrimary, btnSecondary, input } from "./ui";
 import { useT } from "@/i18n/client";
+import { useRunAction } from "./action-form";
 
 /** Lead tools: enter the seats the event gave the group, and auto-fill them. */
 export function SeatSetup({
@@ -19,7 +20,7 @@ export function SeatSetup({
   const t = useT();
   const [pending, start] = useTransition();
   const [spec, setSpec] = useState(current);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const run = useRunAction();
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -39,8 +40,7 @@ export function SeatSetup({
             className={btnPrimary}
             onClick={() =>
               start(async () => {
-                const r = await setSeatsFromList(lanId, spec);
-                setMsg(r.error ? { ok: false, text: r.error } : { ok: true, text: t("seatSetup.saved", { count: r.count ?? 0 }) });
+                await run(() => setSeatsFromList(lanId, spec), (r) => t("seatSetup.saved", { count: r.count ?? 0 }));
               })
             }
           >
@@ -58,8 +58,7 @@ export function SeatSetup({
             className={btnSecondary}
             onClick={() =>
               start(async () => {
-                const n = await adminAutoAssignSeats(lanId, "fill");
-                setMsg({ ok: true, text: t("seatSetup.assigned", { count: n }) });
+                await run(() => adminAutoAssignSeats(lanId, "fill"), (n) => t("seatSetup.assigned", { count: n }));
               })
             }
           >
@@ -71,8 +70,7 @@ export function SeatSetup({
             onClick={() => {
               if (!confirm(t("seatSetup.replanConfirm"))) return;
               start(async () => {
-                const n = await adminAutoAssignSeats(lanId, "replan");
-                setMsg({ ok: true, text: t("seatSetup.planned", { count: n }) });
+                await run(() => adminAutoAssignSeats(lanId, "replan"), (n) => t("seatSetup.planned", { count: n }));
               });
             }}
           >
@@ -83,7 +81,6 @@ export function SeatSetup({
           {t("seatSetup.status", { unseated, free })}
         </p>
       </div>
-      {msg && <p className={`text-sm ${msg.ok ? "text-bit" : "text-danger"}`}>{msg.text}</p>}
     </div>
   );
 }

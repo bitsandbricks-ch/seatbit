@@ -19,7 +19,6 @@ export const leadTasks = {
   typeHeading: "Lead to-dos",
   typeHint: "Every event of this type gets these, after the to-dos for all LAN types.",
   useClanTasks: "Also use the to-dos for all LAN types",
-  useClanTasksSave: "Save",
   none: "No to-dos yet.",
   dueBefore: { one: "{count} day before the start", other: "{count} days before the start" },
   dueAfter: { one: "{count} day after the start", other: "{count} days after the start" },

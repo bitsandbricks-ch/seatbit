@@ -5,6 +5,7 @@ import { btnPrimary, btnSecondary, cardPage, cardPageTitle } from "@/components/
 import { discordTicketState } from "@/lib/guest-claim";
 import { getCurrentUser, isProfileComplete } from "@/lib/session";
 import { getT } from "@/i18n/server";
+import { ActionForm } from "@/components/action-form";
 
 /**
  * Where the bot's /claim sends people who had no Seatbit account yet: sign in with
@@ -55,9 +56,9 @@ export default async function DiscordClaimPage({ params }: PageProps<"/claim/dis
       <p className="text-sm text-muted">
         {t.rich("discordClaim.said", { name: <span className="text-fg">{guest.name}</span>, clan: st.clan.name })}
       </p>
-      <form action={claimGuestFromDiscord.bind(null, token)}>
+      <ActionForm action={claimGuestFromDiscord.bind(null, token)} done={false}>
         <button className={`${btnPrimary} w-full`}>{t("claimGuest.meTake")}</button>
-      </form>
+      </ActionForm>
     </div>
   );
 }

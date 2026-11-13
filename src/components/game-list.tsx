@@ -1,9 +1,10 @@
 "use client";
-import { useRef, useState, useTransition } from "react";
+import { useRef, useTransition } from "react";
 import { addGame, deleteGame, setGameMark } from "@/app/lan-extras-actions";
 import type { GameView } from "@/lib/games";
 import { btnGhost, btnPrimary, input } from "./ui";
 import { useT } from "@/i18n/client";
+import { useRunAction } from "./action-form";
 import { httpHref } from "@/lib/safe-url";
 import type { AvatarData } from "@/lib/avatars";
 import { Avatar } from "./avatar";
@@ -31,16 +32,11 @@ export function GameList({
 }) {
   const t = useT();
   const [pending, start] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const act = useRunAction();
   const form = useRef<HTMLFormElement>(null);
   const run = (fn: () => Promise<unknown>) =>
     start(async () => {
-      setError(null);
-      try {
-        await fn();
-      } catch (e) {
-        setError(e instanceof Error ? e.message : t("eventUi.failed"));
-      }
+      await act(fn);
     });
   const toInstall = games.filter((g) => g.votes > 0 && !g.myInstalled);
   const gb = toInstall.reduce((n, g) => n + (g.sizeGb ?? 0), 0);
@@ -127,10 +123,8 @@ export function GameList({
           ref={form}
           className="grid gap-2 sm:grid-cols-[minmax(0,2fr)_6rem_minmax(0,2fr)_auto]"
           action={(fd) =>
-            run(async () => {
-              const r = await addGame(lanId, fd);
-              if (r.error) setError(r.error);
-              else form.current?.reset();
+            start(async () => {
+              if (await act(() => addGame(lanId, fd))) form.current?.reset();
             })
           }
         >
@@ -142,7 +136,6 @@ export function GameList({
           </button>
         </form>
       )}
-      {error && <p className="text-sm text-danger">{error}</p>}
     </div>
   );
 }

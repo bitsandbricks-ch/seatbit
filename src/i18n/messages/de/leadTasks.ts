@@ -21,7 +21,6 @@ export const leadTasks: Messages["leadTasks"] = {
   typeHeading: "Lead-To-dos",
   typeHint: "Jedes Event dieses Typs bekommt diese, nach den To-dos für alle LAN-Typen.",
   useClanTasks: "Auch die To-dos für alle LAN-Typen verwenden",
-  useClanTasksSave: "Speichern",
   none: "Noch keine To-dos.",
   dueBefore: { one: "{count} Tag vor dem Start", other: "{count} Tage vor dem Start" },
   dueAfter: { one: "{count} Tag nach dem Start", other: "{count} Tage nach dem Start" },

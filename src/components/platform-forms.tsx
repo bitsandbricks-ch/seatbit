@@ -1,9 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { useToastAction } from "./action-form";
 import type { ActionResult } from "@/app/admin/settings/actions";
 import { DateTimePicker } from "./date-time-picker";
-import { Result } from "./settings-section";
 import { btnPrimary, btnSecondary, input, label } from "./ui";
 import { useT } from "@/i18n/client";
 
@@ -24,7 +23,7 @@ export function MaintenanceForm({
   canAnnounce: boolean;
 }) {
   const t = useT();
-  const [state, formAction, pending] = useActionState(action, undefined);
+  const [state, formAction, pending] = useToastAction(action, undefined);
   return (
     <form key={state?.at ?? 0} action={formAction} className="space-y-4">
       <div>
@@ -69,7 +68,6 @@ export function MaintenanceForm({
             {t("adminSettings.maintenanceRemove")}
           </button>
         )}
-        <Result state={state} />
       </div>
     </form>
   );
@@ -78,7 +76,7 @@ export function MaintenanceForm({
 /** A post the admin writes for the public announcements channel. */
 export function AnnounceForm({ action }: { action: Action }) {
   const t = useT();
-  const [state, formAction, pending] = useActionState(action, undefined);
+  const [state, formAction, pending] = useToastAction(action, undefined);
   return (
     <form key={state?.ok ? state.at : 0} action={formAction} className="space-y-3">
       <div>
@@ -97,7 +95,6 @@ export function AnnounceForm({ action }: { action: Action }) {
         <button disabled={pending} className={btnSecondary}>
           {pending ? t("settingsUi.working") : t("adminSettings.announcePost")}
         </button>
-        <Result state={state} />
       </div>
     </form>
   );

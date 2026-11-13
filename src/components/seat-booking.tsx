@@ -1,7 +1,7 @@
 "use client";
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 import { adminSetSeatBooked } from "@/app/lan-extras-actions";
-import { useT } from "@/i18n/client";
+import { useRunAction } from "./action-form";
 
 export type BookingRow = { userId: string; name: string; seat: string; lanAccount?: string; booked: boolean };
 
@@ -17,9 +17,8 @@ export function LeadBookingList({ lanId, rows }: { lanId: string; rows: BookingR
 }
 
 function BookingItem({ lanId, row }: { lanId: string; row: BookingRow }) {
-  const t = useT();
   const [pending, start] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const act = useRunAction();
   return (
     <li className="py-2">
       <label className="flex min-h-11 items-center gap-3 text-sm">
@@ -31,12 +30,7 @@ function BookingItem({ lanId, row }: { lanId: string; row: BookingRow }) {
           onChange={(e) => {
             const v = e.target.checked;
             start(async () => {
-              setError(null);
-              try {
-                await adminSetSeatBooked(lanId, row.userId, v);
-              } catch (err) {
-                setError(err instanceof Error ? err.message : t("eventUi.failed"));
-              }
+              await act(() => adminSetSeatBooked(lanId, row.userId, v));
             });
           }}
           className="h-5 w-5 shrink-0 accent-bit"
@@ -45,7 +39,6 @@ function BookingItem({ lanId, row }: { lanId: string; row: BookingRow }) {
         <span className="min-w-0 flex-1 truncate text-fg">{row.name}</span>
         {row.lanAccount && <span className="shrink-0 font-mono text-xs text-muted">ID {row.lanAccount}</span>}
       </label>
-      {error && <p className="text-sm text-danger">{error}</p>}
     </li>
   );
 }

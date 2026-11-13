@@ -1,9 +1,10 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 import { deleteGuest, removeClanMember, setClanMemberRole } from "@/app/clan-actions";
 import { MEMBER_ROLES, type MemberRole } from "@/lib/clan-roles";
 import { useT } from "@/i18n/client";
+import { useRunAction } from "./action-form";
 import { btnGhost } from "./ui";
 
 /** Role and membership controls on a member's profile: admins change roles, recruiters remove plain members. */
@@ -32,17 +33,12 @@ export function MemberAdminActions({
   const t = useT();
   const router = useRouter();
   const [pending, start] = useTransition();
-  const [error, setError] = useState("");
+  const act = useRunAction();
   const run = (fn: () => Promise<unknown>, then?: () => void) =>
     start(async () => {
-      setError("");
-      try {
-        await fn();
-        then?.();
-        router.refresh();
-      } catch (e) {
-        setError(e instanceof Error ? e.message : t("memberList.error"));
-      }
+      if (!(await act(fn))) return;
+      then?.();
+      router.refresh();
     });
 
   if (isGuest) {
@@ -60,7 +56,6 @@ export function MemberAdminActions({
         >
           {t("clanSettings.removeGuest")}
         </button>
-        {error && <p className="text-sm text-danger">{error}</p>}
       </div>
     );
   }
@@ -115,7 +110,6 @@ export function MemberAdminActions({
           {t(isSelf ? "memberActions.lastAdminSelf" : "memberActions.lastAdmin", { name })}
         </p>
       )}
-      {error && <p className="text-sm text-danger">{error}</p>}
     </div>
   );
 }

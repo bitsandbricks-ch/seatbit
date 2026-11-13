@@ -5,6 +5,8 @@ import { openSignupNow, schedulePublish, uncancelLan } from "@/app/event-actions
 import { DateTimePicker } from "./date-time-picker";
 import { btnGhost, btnPrimary, btnSecondary } from "./ui";
 import { useT } from "@/i18n/client";
+import { useRunAction } from "./action-form";
+import { toast } from "./toast";
 
 /** Publish a draft now (with a one-step confirm) or at a set time. */
 export function PublishEvent({
@@ -22,19 +24,10 @@ export function PublishEvent({
   const t = useT();
   const [pending, start] = useTransition();
   const [mode, setMode] = useState<"idle" | "confirm" | "schedule">("idle");
-  const [error, setError] = useState<string | null>(null);
+  const runAction = useRunAction();
   const run = (task: () => Promise<{ error?: string } | void>) =>
     start(async () => {
-      try {
-        const r = await task();
-        if (r && r.error) setError(r.error);
-        else {
-          setError(null);
-          setMode("idle");
-        }
-      } catch (e) {
-        setError(e instanceof Error ? e.message : t("publish.failed"));
-      }
+      if (await runAction(task)) setMode("idle");
     });
   const what = [
     t("publish.what.members"),
@@ -54,7 +47,6 @@ export function PublishEvent({
         <button disabled={pending} className={btnGhost} onClick={() => setMode("idle")}>
           {t("common.cancel")}
         </button>
-        {error && <span className="w-full text-sm text-danger">{error}</span>}
       </div>
     );
   }
@@ -65,7 +57,7 @@ export function PublishEvent({
         onSubmit={(e) => {
           e.preventDefault();
           const at = String(new FormData(e.currentTarget).get("publishAt") ?? "");
-          if (!at) return setError(t("publish.pickTime"));
+          if (!at) return toast.error(t("publish.pickTime"));
           run(() => schedulePublish(lanId, at));
         }}
       >
@@ -78,7 +70,6 @@ export function PublishEvent({
         <button type="button" disabled={pending} className={btnGhost} onClick={() => setMode("idle")}>
           {t("common.cancel")}
         </button>
-        {error && <span className="w-full text-sm text-danger">{error}</span>}
       </form>
     );
   }
@@ -96,7 +87,6 @@ export function PublishEvent({
           {t("publish.scheduleOpen")}
         </button>
       )}
-      {error && <span className="w-full text-sm text-danger">{error}</span>}
     </div>
   );
 }
@@ -106,7 +96,7 @@ export function OpenSignupButton({ lanId, dateTbd }: { lanId: string; dateTbd: b
   const t = useT();
   const [pending, start] = useTransition();
   const [confirm, setConfirm] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
+  const run = useRunAction();
   if (dateTbd) {
     return <span className="text-sm text-muted">{t("publish.setDateFirst")}</span>;
   }
@@ -125,8 +115,7 @@ export function OpenSignupButton({ lanId, dateTbd }: { lanId: string; dateTbd: b
         className={btnPrimary}
         onClick={() =>
           start(async () => {
-            const r = await openSignupNow(lanId);
-            if (r.error) setMsg(r.error);
+            await run(() => openSignupNow(lanId));
           })
         }
       >
@@ -135,7 +124,6 @@ export function OpenSignupButton({ lanId, dateTbd }: { lanId: string; dateTbd: b
       <button disabled={pending} className={btnGhost} onClick={() => setConfirm(false)}>
         {t("common.cancel")}
       </button>
-      {msg && <span className="w-full text-sm text-danger">{msg}</span>}
     </div>
   );
 }
@@ -143,8 +131,9 @@ export function OpenSignupButton({ lanId, dateTbd }: { lanId: string; dateTbd: b
 export function UndoCancelButton({ lanId }: { lanId: string }) {
   const t = useT();
   const [pending, start] = useTransition();
+  const run = useRunAction();
   return (
-    <button disabled={pending} className={btnSecondary} onClick={() => start(() => uncancelLan(lanId))}>
+    <button disabled={pending} className={btnSecondary} onClick={() => start(async () => void (await run(() => uncancelLan(lanId))))}>
       {t("publish.undoCancel")}
     </button>
   );

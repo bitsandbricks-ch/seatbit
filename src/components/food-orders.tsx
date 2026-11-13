@@ -12,6 +12,7 @@ import type { FoodOrderView } from "@/lib/food";
 import { DateTimePicker } from "./date-time-picker";
 import { Card, Pill, btnGhost, btnPrimary, btnSecondary, input, label } from "./ui";
 import { useT } from "@/i18n/client";
+import { useRunAction } from "./action-form";
 import { httpHref } from "@/lib/safe-url";
 
 const money = (cents: number) => (cents / 100).toFixed(2);
@@ -19,19 +20,12 @@ const money = (cents: number) => (cents / 100).toFixed(2);
 function useRun() {
   const t = useT();
   const [pending, start] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const act = useRunAction();
   const run = (fn: () => Promise<{ error?: string } | void>, after?: () => void) =>
     start(async () => {
-      setError(null);
-      try {
-        const r = await fn();
-        if (r && r.error) setError(r.error);
-        else after?.();
-      } catch (e) {
-        setError(e instanceof Error ? e.message : t("eventUi.failed"));
-      }
+      if (await act(fn)) after?.();
     });
-  return { pending, error, run, t };
+  return { pending, run, t };
 }
 
 export type FoodOrderCardView = FoodOrderView & {
@@ -97,7 +91,7 @@ function OrderCard({
   canOrder: boolean;
   currency: string;
 }) {
-  const { pending, error, run, t } = useRun();
+  const { pending, run, t } = useRun();
   const [copied, setCopied] = useState(false);
   // Deleting an order with items needs a second tap (no browser dialog).
   const [confirming, setConfirming] = useState(false);
@@ -307,14 +301,13 @@ function OrderCard({
             </button>
           </div>
         )}
-        {error && <p className="text-danger">{error}</p>}
       </div>
     </Card>
   );
 }
 
 function NewOrder({ lanId, first, announceHint }: { lanId: string; first: boolean; announceHint: string | null }) {
-  const { pending, error, run, t } = useRun();
+  const { pending, run, t } = useRun();
   const [open, setOpen] = useState(first);
   const [key, setKey] = useState(0);
   if (!open)
@@ -394,7 +387,6 @@ function NewOrder({ lanId, first, announceHint }: { lanId: string; first: boolea
             </button>
           )}
         </div>
-        {error && <p className="text-sm text-danger">{error}</p>}
       </form>
     </Card>
   );

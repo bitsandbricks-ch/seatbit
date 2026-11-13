@@ -3,6 +3,7 @@ import { useMemo, useState, useTransition } from "react";
 import { btnSecondary, input } from "./ui";
 import { nameMatches } from "@/lib/names";
 import { useT } from "@/i18n/client";
+import { useRunAction } from "./action-form";
 
 export function AddMemberForm({
   clanId,
@@ -16,6 +17,7 @@ export function AddMemberForm({
   const t = useT();
   const [q, setQ] = useState("");
   const [pending, start] = useTransition();
+  const act = useRunAction();
   const hits = useMemo(
     () =>
       q.trim().length < 2
@@ -43,7 +45,7 @@ export function AddMemberForm({
               <button
                 disabled={pending}
                 className={`${btnSecondary} !py-1 text-xs`}
-                onClick={() => start(() => action(clanId, u.id))}
+                onClick={() => start(async () => void (await act(() => action(clanId, u.id))))}
               >
                 {t("addMember.add")}
               </button>

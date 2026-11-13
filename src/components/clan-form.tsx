@@ -1,5 +1,5 @@
 "use client";
-import { useActionState } from "react";
+import { useToastAction } from "./action-form";
 import { createClan, updateClan } from "@/app/clan-actions";
 import type { FormState } from "@/app/actions";
 import { Field, Input, btnPrimary, input } from "./ui";
@@ -13,7 +13,7 @@ export function ClanForm({
   clan?: { id: string; name: string; description: string; joinPolicy: string; guestClaims: string; nameDisplay: string; locale: string | null; hasAvatar: boolean };
 }) {
   const t = useT();
-  const [state, action, pending] = useActionState<FormState, FormData>(clan ? updateClan : createClan, undefined);
+  const [, action, pending] = useToastAction<FormState>(clan ? updateClan : createClan, undefined);
   return (
     <form action={action} className="space-y-4">
       {clan && <input type="hidden" name="clanId" value={clan.id} />}
@@ -74,7 +74,6 @@ export function ClanForm({
           )}
         </Field>
       )}
-      {state?.error && <p className="text-sm text-danger">{state.error}</p>}
       <button disabled={pending} className={btnPrimary}>
         {clan ? t("common.save") : t("clanForm.create")}
       </button>

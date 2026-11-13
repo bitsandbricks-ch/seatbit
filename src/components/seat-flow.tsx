@@ -3,6 +3,7 @@ import { useState, useTransition } from "react";
 import { publishSeats, setSeatPicking, unpublishSeats } from "@/app/actions";
 import { Pill, btnGhost, btnPrimary, btnSecondary } from "./ui";
 import { useT } from "@/i18n/client";
+import { useRunAction } from "./action-form";
 
 type StepState = "done" | "active" | "off" | "todo";
 
@@ -31,8 +32,8 @@ export function SeatFlow({
 }) {
   const t = useT();
   const [pending, start] = useTransition();
+  const act = useRunAction();
   const [notify, setNotify] = useState(true);
-  const [msg, setMsg] = useState<string | null>(null);
   const final = !!finalizedAt;
 
   const steps: { title: string; state: StepState; body: React.ReactNode }[] = [
@@ -53,7 +54,7 @@ export function SeatFlow({
             <button
               disabled={pending}
               className={picking ? btnSecondary : btnPrimary}
-              onClick={() => start(() => setSeatPicking(lanId, !picking))}
+              onClick={() => start(async () => void (await act(() => setSeatPicking(lanId, !picking))))}
             >
               {picking ? t("seatFlow.turnOff") : t("seatFlow.turnOn")}
             </button>
@@ -70,7 +71,7 @@ export function SeatFlow({
           <button
             disabled={pending}
             className={btnGhost}
-            onClick={() => start(() => unpublishSeats(lanId).then(() => setMsg(null)))}
+            onClick={() => start(async () => void (await act(() => unpublishSeats(lanId))))}
           >
             {t("seatFlow.reopen")}
           </button>
@@ -95,8 +96,7 @@ export function SeatFlow({
             className={btnPrimary}
             onClick={() =>
               start(async () => {
-                const n = await publishSeats(lanId, notify);
-                setMsg(notify ? t("seatFlow.finalizedTold", { count: n }) : t("seatFlow.finalizedShort"));
+                await act(() => publishSeats(lanId, notify), (n) => (notify ? t("seatFlow.finalizedTold", { count: n }) : t("seatFlow.finalizedShort")));
               })
             }
           >
@@ -135,7 +135,6 @@ export function SeatFlow({
           </li>
         ))}
       </ol>
-      {msg && <p className="mt-3 text-bit">{msg}</p>}
     </div>
   );
 }

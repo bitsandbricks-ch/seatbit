@@ -9,6 +9,7 @@ import { fmtAmount } from "@/lib/money";
 import { PAYMENT_REMINDER_DAYS, chargeablePeople, chargeDetail } from "@/lib/payments";
 import { requireUser } from "@/lib/session";
 import { getT } from "@/i18n/server";
+import { ActionForm } from "@/components/action-form";
 
 export default async function ChargePage({ params }: PageProps<"/clans/[slug]/payments/[id]">) {
   const { slug, id } = await params;
@@ -67,11 +68,11 @@ export default async function ChargePage({ params }: PageProps<"/clans/[slug]/pa
               <p className="mb-3 text-sm text-muted">
                 {ch.dueAt ? t("payments.remindAuto", { days: PAYMENT_REMINDER_DAYS }) : t("payments.remindNoDue")} {t("payments.remindHint")}
               </p>
-              <form action={remindCharge.bind(null, ch.id)}>
+              <ActionForm action={remindCharge.bind(null, ch.id)}>
                 <button disabled={!open} className={btnSecondary}>
                   {t("payments.remindNow", { count: open })}
                 </button>
-              </form>
+              </ActionForm>
             </Card>
             <Card title={t("payments.addPeople")}>
               <AddPeopleForm chargeId={ch.id} people={people} amount={typical} />
@@ -81,9 +82,9 @@ export default async function ChargePage({ params }: PageProps<"/clans/[slug]/pa
             </Card>
             <Card title={t("manage.dangerZone")}>
               <p className="mb-3 text-sm text-muted">{t("payments.deleteHint")}</p>
-              <form action={deleteCharge.bind(null, ch.id)}>
+              <ActionForm action={deleteCharge.bind(null, ch.id)} done="deleted">
                 <button className={btnDanger}>{t("payments.delete")}</button>
-              </form>
+              </ActionForm>
             </Card>
           </>
         }

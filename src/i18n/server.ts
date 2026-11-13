@@ -5,6 +5,7 @@ import { instanceLocale } from "./user-locale";
 import { getCurrentUser } from "@/lib/session";
 import { LOCALE_COOKIE, isLocale, matchAcceptLanguage, type Locale } from "./config";
 import { makeT, type MessageKey, type Vars } from "./translate";
+import { MESSAGE_DIGEST } from "@/lib/action-error";
 
 /** This request's language: the profile choice, then the cookie, then the browser, then the instance default. */
 export const getLocale = cache(async (): Promise<Locale> => {
@@ -27,7 +28,11 @@ export async function tr(key: MessageKey, vars?: Vars) {
   return (await getT())(key, vars);
 }
 
-/** An Error in this request's language, for `throw await err(...)` in a server action. */
+/**
+ * An Error in this request's language, for `throw await err(...)` in a server action.
+ * The text also goes into the digest, so the toast can show it in production too.
+ */
 export async function err(key: MessageKey, vars?: Vars) {
-  return new Error(await tr(key, vars));
+  const message = await tr(key, vars);
+  return Object.assign(new Error(message), { digest: MESSAGE_DIGEST + message });
 }

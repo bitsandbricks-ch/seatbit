@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, type ReactNode } from "react";
+import { type ReactNode } from "react";
+import { useToastAction } from "./action-form";
 import type { ActionResult } from "@/app/admin/settings/actions";
 import type { SettingView } from "@/lib/settings";
 import { btnPrimary, btnSecondary, input, label } from "./ui";
@@ -101,19 +102,10 @@ function SettingField({ s }: { s: SettingView }) {
   );
 }
 
-export function Result({ state }: { state: ActionResult }) {
-  if (!state) return null;
-  return (
-    <p aria-live="polite" className={`text-sm ${state.ok ? "text-bit" : "text-danger"}`}>
-      {state.message}
-    </p>
-  );
-}
-
 /** One section of the platform settings, saved on its own. */
 export function SettingsSection({ fields, action }: { fields: SettingView[]; action: Action }) {
   const t = useT();
-  const [state, formAction, pending] = useActionState(action, undefined);
+  const [state, formAction, pending] = useToastAction(action, undefined);
   return (
     // Re-mount after each save so inputs pick up the new saved values.
     <form key={state?.at ?? 0} action={formAction} className="space-y-4">
@@ -126,7 +118,6 @@ export function SettingsSection({ fields, action }: { fields: SettingView[]; act
         <button disabled={pending} className={btnPrimary}>
           {pending ? t("common.saving") : t("common.save")}
         </button>
-        <Result state={state} />
       </div>
     </form>
   );
@@ -135,13 +126,12 @@ export function SettingsSection({ fields, action }: { fields: SettingView[]; act
 /** A button that runs a server action (test mail, bot check) and shows its result. */
 export function ActionButton({ action, children }: { action: (prev: ActionResult) => Promise<ActionResult>; children: ReactNode }) {
   const t = useT();
-  const [state, formAction, pending] = useActionState(action, undefined);
+  const [, formAction, pending] = useToastAction(action, undefined);
   return (
     <form action={formAction} className="flex flex-wrap items-center gap-3">
       <button disabled={pending} className={btnSecondary}>
         {pending ? t("settingsUi.working") : children}
       </button>
-      <Result state={state} />
     </form>
   );
 }

@@ -3,7 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { deleteLanType } from "@/app/actions";
 import Link from "next/link";
-import { Card, Columns, Page, PageHeader, btnDanger, btnSecondary } from "@/components/ui";
+import { Card, Columns, Page, PageHeader, btnDanger } from "@/components/ui";
 import { LanTypeForm } from "@/components/lan-type-form";
 import { clanCan, getClanBySlug } from "@/lib/clans";
 import { requireUser } from "@/lib/session";
@@ -12,6 +12,7 @@ import { contactsOf, ensureDefaultTasks, tasksAt } from "@/lib/lead-tasks";
 import { LeadTaskEditor } from "@/components/lead-task-editor";
 import { LeadContactEditor } from "@/components/lead-contact-editor";
 import { setClanLeadTasks } from "@/app/lead-task-actions";
+import { ActionForm } from "@/components/action-form";
 
 export default async function EditLanTypePage({ params }: PageProps<"/clans/[slug]/types/[id]">) {
   const { slug, id } = await params;
@@ -37,9 +38,9 @@ export default async function EditLanTypePage({ params }: PageProps<"/clans/[slu
         aside={
           <Card title={t("typePage.delete")}>
             <p className="mb-3 text-sm text-muted">{t("typePage.deleteHint")}</p>
-            <form action={deleteLanType.bind(null, ty.id)}>
+            <ActionForm action={deleteLanType.bind(null, ty.id)} done="deleted">
               <button className={btnDanger}>{t("typePage.deleteName", { name: ty.name })}</button>
-            </form>
+            </ActionForm>
           </Card>
         }
       >
@@ -52,16 +53,15 @@ export default async function EditLanTypePage({ params }: PageProps<"/clans/[slu
       </Card>
       <Card id="lead-tasks" title={t("leadTasks.typeHeading")}>
         <p className="mb-3 text-sm text-muted">{t("leadTasks.typeHint")}</p>
-        <form action={setClanLeadTasks.bind(null, ty.id)} className="mb-4 flex flex-wrap items-center gap-3 text-sm">
+        <ActionForm action={setClanLeadTasks.bind(null, ty.id)} auto="toggles" className="mb-4 flex flex-wrap items-center gap-3 text-sm">
           <label className="flex items-center gap-2">
             <input type="checkbox" name="on" defaultChecked={ty.clanLeadTasks} className="accent-bit" />
             {t("leadTasks.useClanTasks")}
           </label>
-          <button className={btnSecondary}>{t("leadTasks.useClanTasksSave")}</button>
           <Link href={`/clans/${c.slug}/settings?tab=types#lead-tasks`} className="text-bit hover:underline">
             {t("leadTasks.editClan")}
           </Link>
-        </form>
+        </ActionForm>
         <LeadTaskEditor
           scope={{ typeId: ty.id }}
           tasks={own.map(({ id, title, note, after, dueDays, contactId }) => ({ id, title, note, after, dueDays, contactId }))}

@@ -2,7 +2,8 @@
 import { setNick } from "@/app/actions";
 import { useT } from "@/i18n/client";
 import type { Nickname } from "@/db/schema";
-import { btnSecondary, input } from "./ui";
+import { input } from "./ui";
+import { ActionForm } from "@/components/action-form";
 
 /** One nick per scope: default (no ids), a LAN type, or a single event. Empty clears it. */
 export function NickManager({
@@ -19,7 +20,7 @@ export function NickManager({
   const t = useT();
   const current = nicks.find((n) => n.lanId === lanId && n.typeId === typeId)?.nick ?? "";
   return (
-    <form action={setNick} className="flex gap-2">
+    <ActionForm action={setNick} auto="all" className="flex gap-2">
       {lanId && <input type="hidden" name="lanId" value={lanId} />}
       {typeId && <input type="hidden" name="typeId" value={typeId} />}
       <input
@@ -31,7 +32,6 @@ export function NickManager({
         className={input}
         aria-label={t("auth.nickname")}
       />
-      <button className={btnSecondary}>{t("common.save")}</button>
-    </form>
+    </ActionForm>
   );
 }

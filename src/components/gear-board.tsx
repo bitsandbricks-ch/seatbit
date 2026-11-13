@@ -3,6 +3,7 @@ import { useState, useTransition } from "react";
 import { addPackingItem, deletePackingItem, setPacked, setPackingItemPacked } from "@/app/travel-gear-actions";
 import { Card, Input, btnPrimary } from "./ui";
 import { useT } from "@/i18n/client";
+import { useRunAction } from "./action-form";
 import type { MessageKey } from "@/i18n/translate";
 
 type Row = { key: string; label: string; packed: boolean; ownId?: string };
@@ -21,20 +22,15 @@ export function PackingList({
 }) {
   const t = useT();
   const [pending, start] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const act = useRunAction();
   const [draft, setDraft] = useState("");
   // Optimistic ticks, so the checkbox doesn't wait for the server.
   const [ticks, setTicks] = useState<Record<string, boolean>>({});
 
   const run = (fn: () => Promise<unknown>, after?: () => void) =>
     start(async () => {
-      setError(null);
-      try {
-        await fn();
-        after?.();
-      } catch (e) {
-        setError(e instanceof Error ? e.message : t("eventUi.failed"));
-      }
+      if (!(await act(fn))) return;
+      after?.();
     });
 
   // Standard items are translated; an id without a translation keeps its English label.
@@ -100,7 +96,6 @@ export function PackingList({
           {t("packing.add")}
         </button>
       </form>
-      {error && <p className="mt-2 text-sm text-danger">{error}</p>}
     </Card>
   );
 }

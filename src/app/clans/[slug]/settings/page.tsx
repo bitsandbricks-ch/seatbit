@@ -48,6 +48,7 @@ import { ensureDefaultTasks, tasksAt } from "@/lib/lead-tasks";
 import { LeadTaskEditor } from "@/components/lead-task-editor";
 import { getT } from "@/i18n/server";
 import type { T } from "@/i18n/translate";
+import { ActionForm } from "@/components/action-form";
 
 
 export default async function ClanSettingsPage({ params, searchParams }: PageProps<"/clans/[slug]/settings">) {
@@ -121,9 +122,9 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
                   {t("clanSettings.deleteHint")}
                   {c.stripeSubscriptionId && ` ${t("clanSettings.deleteSub")}`}
                 </p>
-                <form action={deleteClan.bind(null, c.id)}>
+                <ActionForm action={deleteClan.bind(null, c.id)} done="deleted">
                   <button className={btnDanger}>{t("clanSettings.delete")}</button>
-                </form>
+                </ActionForm>
               </Card>
             </>
           }
@@ -167,12 +168,12 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
                       <span className="block truncate text-xs text-muted">{[...fullHint(u), u.email].join(" · ")}</span>
                     </span>
                     <span className="flex gap-2">
-                      <form action={setClanMemberRole.bind(null, c.id, u.id, "member")}>
+                      <ActionForm action={setClanMemberRole.bind(null, c.id, u.id, "member")}>
                         <button className={btnPrimary}>{t("clanSettings.approve")}</button>
-                      </form>
-                      <form action={removeClanMember.bind(null, c.id, u.id)}>
+                      </ActionForm>
+                      <ActionForm action={removeClanMember.bind(null, c.id, u.id)} done="removed">
                         <button className={btnGhost}>{t("clanSettings.decline")}</button>
-                      </form>
+                      </ActionForm>
                     </span>
                   </li>
                 ))}
@@ -210,12 +211,12 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
                         </span>
                       </span>
                       <span className="flex gap-2">
-                        <form action={decideGuestClaim.bind(null, r.id, true)}>
+                        <ActionForm action={decideGuestClaim.bind(null, r.id, true)}>
                           <button className={btnPrimary}>{t("clanSettings.approve")}</button>
-                        </form>
-                        <form action={decideGuestClaim.bind(null, r.id, false)}>
+                        </ActionForm>
+                        <ActionForm action={decideGuestClaim.bind(null, r.id, false)}>
                           <button className={btnGhost}>{t("clanSettings.decline")}</button>
-                        </form>
+                        </ActionForm>
                       </span>
                     </li>
                   );
@@ -274,15 +275,15 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
                 .map((i) => (
                   <li key={i.code} className="flex items-center gap-2">
                     <input readOnly value={`${appUrl}/join/${i.code}`} className="min-w-0 flex-1 rounded-md border border-line bg-raised px-3 py-1.5 font-mono text-xs" />
-                    <form action={deleteInvite.bind(null, i.code)}>
+                    <ActionForm action={deleteInvite.bind(null, i.code)} done="deleted">
                       <button className={`${btnGhost} text-xs text-danger`}>{t("eventUi.delete")}</button>
-                    </form>
+                    </ActionForm>
                   </li>
                 ))}
             </ul>
-            <form action={createInvite.bind(null, c.id)}>
+            <ActionForm action={createInvite.bind(null, c.id)}>
               <button className={btnSecondary}>{t("clanSettings.createInvite")}</button>
-            </form>
+            </ActionForm>
           </Card>
         </Columns>
       )}
@@ -350,9 +351,9 @@ async function ChatTab({ t, clanId }: { t: T; clanId: string }) {
                     >
                       #{ch.channelName || ch.channelId}
                     </a>
-                    <form action={unlinkDiscordChannel.bind(null, ch.channelId)}>
+                    <ActionForm action={unlinkDiscordChannel.bind(null, ch.channelId)} done="removed">
                       <button className={`${btnGhost} text-xs text-danger`}>{t("clanSettings.unlink")}</button>
-                    </form>
+                    </ActionForm>
                   </li>
                 ))}
               </ul>
@@ -362,7 +363,7 @@ async function ChatTab({ t, clanId }: { t: T; clanId: string }) {
                 <h3 className="font-semibold">{t("clanSettings.memberInvite")}</h3>
                 <p className="text-muted">{t("clanSettings.memberInviteHint")}</p>
                 {servers.map((sv) => (
-                  <form
+                  <ActionForm
                     key={sv.guildId}
                     action={setClanDiscordInvite.bind(null, clanId, sv.guildId)}
                     className="flex flex-wrap items-center gap-2"
@@ -375,7 +376,7 @@ async function ChatTab({ t, clanId }: { t: T; clanId: string }) {
                       className="min-w-0 flex-1 rounded-md border border-line bg-raised px-3 py-1.5 font-mono text-xs"
                     />
                     <button className={btnSecondary}>{t("common.save")}</button>
-                  </form>
+                  </ActionForm>
                 ))}
               </div>
             )}
@@ -524,9 +525,9 @@ function GuestsTab({
                           <p className="text-xs text-muted">{t("clanSettings.claimLink")}</p>
                           <span className="flex flex-wrap items-center gap-1">
                             <CopyField value={`${appUrl}/claim/${u.claimCode}`} />
-                            <form action={renewGuestLink.bind(null, clanId, u.id)}>
+                            <ActionForm action={renewGuestLink.bind(null, clanId, u.id)}>
                               <button className={`${btnGhost} text-xs`}>{t("clanSettings.newLink")}</button>
-                            </form>
+                            </ActionForm>
                           </span>
                         </div>
                         <div className="space-y-1.5 border-t border-line pt-4">
@@ -542,9 +543,9 @@ function GuestsTab({
                           <Link href={`/clans/${slug}/members/${u.id}`} className="text-sm text-bit hover:underline">
                             {t("clanSettings.profileEvents")}
                           </Link>
-                          <form action={deleteGuest.bind(null, clanId, u.id)}>
+                          <ActionForm action={deleteGuest.bind(null, clanId, u.id)} done="deleted">
                             <button className={`${btnGhost} text-xs !text-danger`}>{t("clanSettings.removeGuest")}</button>
-                          </form>
+                          </ActionForm>
                         </div>
                       </div>
                     </details>

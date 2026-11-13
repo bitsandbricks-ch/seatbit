@@ -5,23 +5,17 @@ import type { CostExpenseView, CostSettlementView, Transfer } from "@/lib/costs-
 import { fmtAmount } from "@/lib/money";
 import { Card, Pill, btnGhost, btnPrimary, btnSecondary, input, label } from "./ui";
 import { useT } from "@/i18n/client";
+import { useRunAction } from "./action-form";
 
 function useRun() {
   const t = useT();
   const [pending, start] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const act = useRunAction();
   const run = (fn: () => Promise<{ error?: string } | void>, after?: () => void) =>
     start(async () => {
-      setError(null);
-      try {
-        const r = await fn();
-        if (r && r.error) setError(r.error);
-        else after?.();
-      } catch (e) {
-        setError(e instanceof Error ? e.message : t("eventUi.failed"));
-      }
+      if (await act(fn)) after?.();
     });
-  return { pending, error, run, t };
+  return { pending, run, t };
 }
 
 export type CostPerson = { id: string; name: string; going: boolean };
@@ -107,7 +101,7 @@ function AddExpense(p: Props) {
 type Fmt = { money: (c: number) => string; name: (id: string) => string };
 
 function SettleUp({ meId, lanId, transfers, balances, isLead, money, name, expenses }: Props & Fmt) {
-  const { pending, error, run, t } = useRun();
+  const { pending, run, t } = useRun();
   const mine = balances[meId] ?? 0;
   const visible = isLead ? transfers : transfers.filter((x) => x.from === meId || x.to === meId);
   const others = transfers.length - visible.length;
@@ -146,7 +140,6 @@ function SettleUp({ meId, lanId, transfers, balances, isLead, money, name, expen
             {others > 0 && <p className="text-xs text-faint">{t("costs.otherTransfers", { count: others })}</p>}
           </>
         )}
-        {error && <p className="text-sm text-danger">{error}</p>}
       </div>
     </Card>
   );
@@ -182,7 +175,7 @@ function Balances({ balances, people, meId, money, name, expenses }: Props & Fmt
 }
 
 function PaidBack({ settlements, meId, isLead, money, name, dates }: Props & Fmt) {
-  const { pending, error, run, t } = useRun();
+  const { pending, run, t } = useRun();
   if (!settlements.length) return null;
   return (
     <Card title={t("costs.paidBack")}>
@@ -207,13 +200,12 @@ function PaidBack({ settlements, meId, isLead, money, name, dates }: Props & Fmt
           </li>
         ))}
       </ul>
-      {error && <p className="mt-2 text-sm text-danger">{error}</p>}
     </Card>
   );
 }
 
 function ExpenseRow({ e, meId, isLead, money, name, dates, ...p }: Props & Fmt & { e: CostExpenseView }) {
-  const { pending, error, run, t } = useRun();
+  const { pending, run, t } = useRun();
   const [editing, setEditing] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const myShare = e.shares.find((s) => s.userId === meId);
@@ -274,7 +266,6 @@ function ExpenseRow({ e, meId, isLead, money, name, dates, ...p }: Props & Fmt &
               </button>
             </div>
           )}
-          {error && <p className="text-danger">{error}</p>}
         </div>
       </details>
     </li>
@@ -289,7 +280,7 @@ function ExpenseForm({
   edit,
   onDone,
 }: Props & { edit?: CostExpenseView; onDone?: () => void }) {
-  const { pending, error, run, t } = useRun();
+  const { pending, run, t } = useRun();
   const going = people.filter((x) => x.going).map((x) => x.id);
   const start = edit ? edit.shares.map((s) => s.userId) : going;
   const [picked, setPicked] = useState<Set<string>>(new Set(start));
@@ -379,7 +370,6 @@ function ExpenseForm({
         <span className={label}>{t("costs.note")}</span>
         <input name="note" maxLength={300} defaultValue={edit?.note} placeholder={t("costs.notePh")} className={input} />
       </label>
-      {error && <p className="text-sm text-danger">{error}</p>}
       <div className="flex flex-wrap gap-2">
         <button disabled={pending || picked.size === 0} className={btnPrimary}>
           {edit ? t("costs.save") : t("costs.add")}

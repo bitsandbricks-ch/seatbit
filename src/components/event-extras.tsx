@@ -4,6 +4,7 @@ import type { InterestAnswer } from "@/db/schema";
 import { cancelLan, copyForNextYear, deleteNews, postNews, setArrived, setMyInterest, setMyInterests } from "@/app/event-actions";
 import { btn, btnDanger, btnGhost, btnPrimary, btnSecondary, input } from "./ui";
 import { useT } from "@/i18n/client";
+import { useRunAction } from "./action-form";
 import type { MessageKey } from "@/i18n/translate";
 
 const INTEREST: { a: InterestAnswer; label: MessageKey; active: string }[] = [
@@ -16,7 +17,7 @@ const INTEREST: { a: InterestAnswer; label: MessageKey; active: string }[] = [
 export function InterestButtons({ lanId, current }: { lanId: string; current: InterestAnswer | null }) {
   const t = useT();
   const [pending, start] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const act = useRunAction();
   return (
     <div className="space-y-2">
       <div className="grid grid-cols-3 gap-2" aria-busy={pending}>
@@ -26,14 +27,7 @@ export function InterestButtons({ lanId, current }: { lanId: string; current: In
             disabled={pending}
             aria-pressed={current === o.a}
             onClick={() =>
-              start(async () => {
-                setError(null);
-                try {
-                  await setMyInterest(lanId, o.a);
-                } catch (e) {
-                  setError(e instanceof Error ? e.message : t("eventUi.failed"));
-                }
-              })
+              start(async () => void (await act(() => setMyInterest(lanId, o.a))))
             }
             className={`${btn} border px-2 ${current === o.a ? o.active : "border-line bg-raised text-fg hover:border-muted/40"}`}
           >
@@ -41,7 +35,6 @@ export function InterestButtons({ lanId, current }: { lanId: string; current: In
           </button>
         ))}
       </div>
-      {error && <p className="text-sm text-danger">{error}</p>}
     </div>
   );
 }
@@ -50,20 +43,19 @@ export function InterestButtons({ lanId, current }: { lanId: string; current: In
 export function NewsComposer({ lanId, published }: { lanId: string; published: boolean }) {
   const t = useT();
   const [pending, start] = useTransition();
+  const act = useRunAction();
   const [text, setText] = useState("");
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   return (
     <form
       className="space-y-2"
       onSubmit={(e) => {
         e.preventDefault();
         start(async () => {
-          const r = await postNews(lanId, text);
-          if (r.error) setMsg({ ok: false, text: r.error });
-          else {
-            setText("");
-            setMsg({ ok: true, text: published ? t("eventUi.newsPosted", { count: r.sent ?? 0 }) : t("eventUi.newsDraft") });
-          }
+          const ok = await act(
+            () => postNews(lanId, text),
+            (r) => (published ? t("eventUi.newsPosted", { count: r.sent ?? 0 }) : t("eventUi.newsDraft")),
+          );
+          if (ok) setText("");
         });
       }}
     >
@@ -81,7 +73,6 @@ export function NewsComposer({ lanId, published }: { lanId: string; published: b
         </button>
         <span className="text-xs text-muted">{t("eventUi.newsHint")}</span>
       </div>
-      {msg && <p className={`text-sm ${msg.ok ? "text-bit" : "text-danger"}`}>{msg.text}</p>}
     </form>
   );
 }
@@ -89,8 +80,9 @@ export function NewsComposer({ lanId, published }: { lanId: string; published: b
 export function DeleteNewsButton({ id }: { id: string }) {
   const t = useT();
   const [pending, start] = useTransition();
+  const act = useRunAction();
   return (
-    <button disabled={pending} className="text-xs text-faint hover:text-danger" onClick={() => start(() => deleteNews(id))}>
+    <button disabled={pending} className="text-xs text-faint hover:text-danger" onClick={() => start(async () => void (await act(() => deleteNews(id))))}>
       {t("eventUi.delete")}
     </button>
   );
@@ -100,11 +92,12 @@ export function DeleteNewsButton({ id }: { id: string }) {
 export function CheckInButton({ lanId, arrived }: { lanId: string; arrived: boolean }) {
   const t = useT();
   const [pending, start] = useTransition();
+  const act = useRunAction();
   return (
     <button
       disabled={pending}
       className={arrived ? btnSecondary : btnPrimary}
-      onClick={() => start(() => setArrived(lanId, null, !arrived))}
+      onClick={() => start(async () => void (await act(() => setArrived(lanId, null, !arrived))))}
     >
       {arrived ? t("eventUi.checkedIn") : t("eventUi.imHere")}
     </button>
@@ -115,6 +108,7 @@ export function CheckInButton({ lanId, arrived }: { lanId: string; arrived: bool
 export function CancelEvent({ lanId, published }: { lanId: string; published: boolean }) {
   const t = useT();
   const [pending, start] = useTransition();
+  const act = useRunAction();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
   if (!open) {
@@ -140,7 +134,7 @@ export function CancelEvent({ lanId, published }: { lanId: string; published: bo
           : t("eventUi.cancelDraft")}
       </p>
       <div className="flex gap-2">
-        <button disabled={pending} className={btnDanger} onClick={() => start(async () => void (await cancelLan(lanId, reason)))}>
+        <button disabled={pending} className={btnDanger} onClick={() => start(async () => void (await act(() => cancelLan(lanId, reason))))}>
           {pending ? t("eventUi.cancelling") : t("eventUi.cancelEvent")}
         </button>
         <button disabled={pending} className={btnGhost} onClick={() => setOpen(false)}>
@@ -154,8 +148,9 @@ export function CancelEvent({ lanId, published }: { lanId: string; published: bo
 export function CopyNextYear({ lanId }: { lanId: string }) {
   const t = useT();
   const [pending, start] = useTransition();
+  const act = useRunAction();
   return (
-    <button disabled={pending} className={btnSecondary} onClick={() => start(() => copyForNextYear(lanId))}>
+    <button disabled={pending} className={btnSecondary} onClick={() => start(async () => void (await act(() => copyForNextYear(lanId))))}>
       {pending ? t("eventUi.copying") : t("eventUi.copyNextYear")}
     </button>
   );
@@ -173,15 +168,11 @@ export function InterestsForm({
 }) {
   const t = useT();
   const [pending, start] = useTransition();
+  const act = useRunAction();
   const [all, setAll] = useState(current === null);
   const [picked, setPicked] = useState<string[]>(current ?? []);
-  const [saved, setSaved] = useState(false);
   const save = (nextAll: boolean, nextPicked: string[]) => {
-    setSaved(false);
-    start(async () => {
-      await setMyInterests(clanId, nextAll ? null : nextPicked);
-      setSaved(true);
-    });
+    start(async () => void (await act(() => setMyInterests(clanId, nextAll ? null : nextPicked))));
   };
   return (
     <div className="space-y-2 text-sm">
@@ -234,7 +225,7 @@ export function InterestsForm({
         </div>
       )}
       <p className="text-xs text-muted">
-        {pending ? t("common.saving") : saved ? t("common.saved") : t("profile.interestsHint")}
+        {pending ? t("common.saving") : t("profile.interestsHint")}
       </p>
     </div>
   );

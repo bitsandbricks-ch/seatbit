@@ -1,5 +1,5 @@
 "use client";
-import { useActionState } from "react";
+import { useToastAction } from "./action-form";
 import { updateEmergencyInfo, type EmergencyState } from "@/app/emergency-actions";
 import { Field, Input, btnPrimary, input } from "./ui";
 import { useT } from "@/i18n/client";
@@ -10,7 +10,7 @@ const MAX = { name: 80, phone: 40, diet: 300 };
 /** Profile › Emergency: contact person and dietary needs, for the leads of events you come to. */
 export function EmergencyForm({ values }: { values: { contactName: string; contactPhone: string; diet: string } }) {
   const t = useT();
-  const [state, action, pending] = useActionState<EmergencyState, FormData>(updateEmergencyInfo, {});
+  const [, action, pending] = useToastAction<EmergencyState>(updateEmergencyInfo, {});
   return (
     <form action={action} className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-2">
@@ -28,7 +28,6 @@ export function EmergencyForm({ values }: { values: { contactName: string; conta
         <button disabled={pending} className={btnPrimary}>
           {t("common.save")}
         </button>
-        {state.ok && !pending && <p className="text-sm text-bit">{t("common.saved")}</p>}
       </div>
     </form>
   );

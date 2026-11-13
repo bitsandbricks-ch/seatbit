@@ -5,6 +5,7 @@ import { ClanAvatar } from "./clan-avatar";
 import { Notice, btnPrimary, btnSecondary, cardPage, cardPageTitle } from "./ui";
 import { lanRange } from "@/lib/format";
 import { getT } from "@/i18n/server";
+import { ActionForm } from "@/components/action-form";
 
 type Clan = { id: string; name: string; slug: string; avatar: string | null; joinPolicy: "open" | "approval" | "invite" };
 
@@ -61,9 +62,9 @@ export async function EventInvite({
           <p className="text-center text-sm text-muted">
             {t(clan.joinPolicy === "open" ? "share.joinOpenText" : "share.joinApprovalText", { clan: clan.name })}
           </p>
-          <form action={joinClan.bind(null, clan.id, here)} className="grid">
+          <ActionForm action={joinClan.bind(null, clan.id, here)} className="grid" done={false}>
             <button className={btnPrimary}>{t(clan.joinPolicy === "open" ? "share.join" : "share.askToJoin")}</button>
-          </form>
+          </ActionForm>
         </div>
       )}
     </div>

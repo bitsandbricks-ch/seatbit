@@ -8,6 +8,7 @@ import { Avatar } from "./avatar";
 import type { AvatarData } from "@/lib/avatars";
 import { MEMBER_ROLES, type MemberRole } from "@/lib/clan-roles";
 import { useT } from "@/i18n/client";
+import { useRunAction } from "./action-form";
 import { RolePill } from "./role-pill";
 
 const PAGE_SIZE = 20;
@@ -107,19 +108,14 @@ export function ClanMemberAdmin({
   const [q, setQ] = useState("");
   const [role, setRole] = useState<RoleFilter>("all");
   const [pending, start] = useTransition();
-  const [error, setError] = useState("");
+  const act = useRunAction();
   const test = roleFilters.find((f) => f.id === role)!.test;
   const shown = members.filter((m) => test(m) && (!q || matches(`${m.name} ${m.full} ${m.nick} ${m.sub}`, q)));
   const pager = usePager(shown, PAGE_SIZE);
   const lastAdmin = members.filter((m) => m.role === "admin").length <= 1;
   const run = (fn: () => Promise<unknown>) =>
     start(async () => {
-      setError("");
-      try {
-        await fn();
-      } catch (e) {
-        setError(e instanceof Error ? e.message : t("memberList.error"));
-      }
+      await act(fn);
     });
 
   return (
@@ -152,7 +148,6 @@ export function ClanMemberAdmin({
         type="search"
         aria-label={t("memberList.search")}
       />
-      {error && <p className="text-sm text-danger">{error}</p>}
       <ul className="divide-y divide-line">
         {pager.items.map((m) => (
           <li key={m.id} className="flex flex-wrap items-center justify-between gap-2 py-2">

@@ -7,6 +7,7 @@ import { fmtDay } from "@/lib/format";
 import { getLegal } from "@/lib/legal";
 import { Card, Notice, btnPrimary, btnSecondary } from "./ui";
 import { getT } from "@/i18n/server";
+import { ActionForm } from "@/components/action-form";
 
 /**
  * "Support Seatbit" in the clan settings, for clan admins. Only there when the operator turned
@@ -47,11 +48,11 @@ export async function SupportCard({ clan: c, status }: { clan: Clan; status?: st
             </p>
             <div className="flex flex-wrap gap-2">
               {plans.map((p) => (
-                <form key={p} action={startSupport.bind(null, c.id, p)}>
+                <ActionForm key={p} action={startSupport.bind(null, c.id, p)} done={false}>
                   <button className={p === "year" ? btnPrimary : btnSecondary}>
                     {labels[p] ? `${labels[p]} / ${t(p === "year" ? "support.year" : "support.month")}` : t(p === "year" ? "support.yearly" : "support.monthly")}
                   </button>
-                </form>
+                </ActionForm>
               ))}
             </div>
             <p className="text-xs text-faint">
@@ -79,9 +80,9 @@ export async function SupportCard({ clan: c, status }: { clan: Clan; status?: st
         )}
 
         {c.stripeCustomerId && (
-          <form action={manageSupport.bind(null, c.id)}>
+          <ActionForm action={manageSupport.bind(null, c.id)} done={false}>
             <button className={btnSecondary}>{t(supporter ? "support.manage" : "support.past")}</button>
-          </form>
+          </ActionForm>
         )}
       </div>
     </Card>
