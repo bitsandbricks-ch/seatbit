@@ -86,7 +86,6 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
   return (
     <Page>
       <PageHeader
-        back={{ href: "/admin", label: "Admin" }}
         title={t("clanSettings.platformSettings")}
         subtitle={t("adminSettings.subtitle")}
       />

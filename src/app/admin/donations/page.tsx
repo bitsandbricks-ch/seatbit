@@ -20,11 +20,6 @@ export default async function AdminDonationsPage({ searchParams }: PageProps<"/a
   return (
     <Page>
       <PageHeader
-        eyebrow={
-          <Link href="/admin" className="hover:text-fg">
-            {t("adminLog.platformAdmin")}
-          </Link>
-        }
         title={t("adminDonations.title")}
         subtitle={t("adminDonations.subtitle")}
         actions={

@@ -4,6 +4,7 @@ name: Docs
 # missing images fail) and publishes it to GitHub Pages from main.
 on:
   pull_request:
+  merge_group:
   push:
     branches: [main]
   workflow_dispatch:

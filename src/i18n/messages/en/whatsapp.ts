@@ -1,0 +1,20 @@
+export const whatsapp = {
+  spotsTaken: "({going}/{capacity} spots taken)",
+  going: "({count} going)",
+  nobody: "nobody yet",
+  whoIsIn: "Who's in so far",
+  goingSoFar: "Going so far",
+  sayIfComing: "Say if you're coming: {link}",
+  announcement: "Announcement",
+  answerReminder: "Answer reminder",
+  answerText: {
+    one: "please say if you're coming by {date}. {count} of us hasn't answered yet.",
+    other: "please say if you're coming by {date}. {count} of us haven't answered yet.",
+  },
+  ticketReminder: "Ticket reminder",
+  ticketText: "buy your ticket by {date} and tick it off in Seatbit. {count} still open.",
+  startsSoon: "Starts soon",
+  starts: "starts {date}.",
+  startsAt: "starts {date} at {location}.",
+  details: "Details and your seat: {link}",
+};

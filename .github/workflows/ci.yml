@@ -2,6 +2,7 @@ name: CI
 
 on:
   pull_request:
+  merge_group:
   push:
     branches: [main]
   workflow_dispatch:
@@ -19,6 +20,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          # The merge commit and its parent (the base), for the screenshot check.
+          fetch-depth: 2
+      # docs/screenshots/ is regenerated on main by the Screenshots workflow. Feature
+      # branches that re-render it all clash on the same binary files, so a PR may add
+      # new shots but not change existing ones (the bot's own branch is exempt).
+      - name: Existing screenshots unchanged
+        if: github.event_name == 'pull_request' && github.head_ref != 'bot/screenshots'
+        run: |
+          changed=$(git diff --name-only --diff-filter=M HEAD^1 HEAD -- docs/screenshots)
+          if [ -n "$changed" ]; then
+            echo "::error::This PR changes generated screenshots. Drop those changes (git checkout origin/main -- docs/screenshots), the Screenshots workflow updates them after the merge:"
+            echo "$changed"
+            exit 1
+          fi
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -26,6 +42,9 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - name: Lint
         run: npm run lint
+      # Catches two branches whose migrations point at the same parent (npm run db:rebase fixes it).
+      - name: Migrations consistent
+        run: npx drizzle-kit check
       - name: Untranslated text
         run: npm run check:i18n
       - name: Mail goes through templates

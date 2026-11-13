@@ -1,0 +1,18 @@
+export const swaps = {
+  wants: "{name} ({from}) wants your seat {to}.",
+  swap: "Swap",
+  decline: "Decline",
+  agreed: "You agreed. Waiting for a lead to approve.",
+  asked: "You asked {name} to swap {mine} ⇄ {theirs}.",
+  waitingThem: "waiting for them",
+  waitingLead: "waiting for a lead",
+  nobody: "Nobody else has a seat yet.",
+  intro: "You sit at {seat}. Ask someone to swap; once they agree, a lead approves it.",
+  with: "Swap with",
+  withPick: "Swap with…",
+  why: "Why? (optional)",
+  ask: "Ask",
+  approve: "Approve",
+  reject: "Reject",
+  waitingFor: "waiting for {name}",
+};

@@ -60,4 +60,4 @@ Several phone shots side by side:
 </div>
 ```
 
-If you add a page or a tab to the app, add a shot to `scripts/screenshots.ts` and use it here.
+If you add a page or a tab to the app, add a shot to `scripts/screenshots.ts` and use it here. Commit the new shot, but not re-rendered existing ones: those are updated by the bot pull request after the merge (see [Screenshots in pull requests](../development/screenshots.md#screenshots-in-pull-requests)).

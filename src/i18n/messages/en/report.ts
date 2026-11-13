@@ -1,0 +1,21 @@
+export const report = {
+  open: { clan: "Report this clan", event: "Report this event" },
+  title: { clan: "Report this clan", event: "Report this event" },
+  intro: "Your report goes to the people who run this Seatbit, not to the clan. They won't tell the clan who reported it.",
+  reason: "Reason",
+  reasons: {
+    spam: "Spam or advertising",
+    harassment: "Harassment or hate",
+    illegal: "Illegal content",
+    impersonation: "Pretends to be someone else",
+    other: "Something else",
+  },
+  message: "What's wrong? (optional, needed for “Something else”)",
+  send: "Send report",
+  thanks: "Thanks, your report was sent to the moderators.",
+  pickReason: "Pick a reason.",
+  needMessage: "Tell us briefly what's wrong.",
+  notFound: "That clan or event doesn't exist any more.",
+  limit: "You sent a lot of reports today. Please try again tomorrow.",
+  duplicate: "You already reported this. The moderators will look at it.",
+};

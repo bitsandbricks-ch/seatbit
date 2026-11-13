@@ -1,0 +1,25 @@
+import type { Messages } from "../en";
+
+export const support: Messages["support"] = {
+  oneOff: "Lieber einmalig? {link}.",
+  oneOffLink: "Einmalig spenden",
+  title: "Seatbit unterstützen",
+  thanks: "Danke! Das Supporter-Abzeichen erscheint, sobald Stripe die Zahlung bestätigt, meist innert einer Minute.",
+  error: "Stripe war nicht erreichbar. Bitte versuch es gleich nochmals.",
+  isSupporter: "{clan} ist Supporter",
+  thankYou: "Danke, dass ihr helft, Seatbit am Laufen zu halten.",
+  renewsMonthly: "Bezahlt bis {date}, danach verlängert es sich monatlich, bis du kündigst.",
+  renewsYearly: "Bezahlt bis {date}, danach verlängert es sich jährlich, bis du kündigst.",
+  noRenew: "Bezahlt bis {date}. Es verlängert sich nicht.",
+  pitch: "Seatbit ist gratis, mit allen Funktionen, für jeden Clan. Wenn es eurer Gruppe hilft, könnt ihr die Leute, die dieses Seatbit betreiben, mit einer freiwilligen Zahlung unterstützen. Euer Clan bekommt ein Supporter-Abzeichen und unseren Dank; sonst ändert sich nichts.",
+  pitchOperator: "Seatbit ist gratis, mit allen Funktionen, für jeden Clan. Wenn es eurer Gruppe hilft, könnt ihr den Betrieb dieses Seatbits durch {operator} mit einer freiwilligen Zahlung unterstützen. Euer Clan bekommt ein Supporter-Abzeichen und unseren Dank; sonst ändert sich nichts.",
+  year: "Jahr",
+  month: "Monat",
+  yearly: "Jährlich unterstützen",
+  monthly: "Monatlich unterstützen",
+  stripe: "Bezahlt über Stripe. Jederzeit kündbar, siehe {terms}.",
+  terms: "Nutzungsbedingungen",
+  manage: "Verwalten oder kündigen",
+  past: "Bisherige Zahlungen",
+  badge: "Dieser Clan unterstützt Seatbit",
+};

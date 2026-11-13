@@ -1,0 +1,21 @@
+import type { Messages } from "../en";
+
+export const games: Messages["games"] = {
+  intro: "Stimm ab, was du spielen willst. Installiert die Top-Games zu Hause, damit niemand 80 GB übers LAN-Netz lädt.",
+  reminder: "Alle, die kommen, bekommen {days} Tage vor der LAN eine Erinnerung.",
+  stillNeed: { one: "Dir fehlt noch {count} Game.", other: "Dir fehlen noch {count} Games." },
+  stillNeedGb: { one: "Dir fehlt noch {count} Game, etwa {gb} GB.", other: "Dir fehlen noch {count} Games, etwa {gb} GB." },
+  empty: "Noch keine Games. Füg unten das erste hinzu.",
+  votes: { one: "{count} Stimme", other: "{count} Stimmen" },
+  installedCount: "{count} installiert",
+  voted: "▲ Abgestimmt",
+  vote: "▲ Abstimmen",
+  installed: "Installiert",
+  remove: "{name} entfernen",
+  namePh: "Game, z. B. Counter-Strike 2",
+  game: "Game",
+  size: "Grösse in GB",
+  linkPh: "Store-Link (optional)",
+  link: "Store-Link",
+  add: "Hinzufügen",
+};

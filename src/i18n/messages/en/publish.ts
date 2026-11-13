@@ -1,0 +1,23 @@
+export const publish = {
+  failed: "That didn't work",
+  what: {
+    members: "Members see it right away",
+    discord: "the Discord channel gets the post",
+    interest: "interested members are asked if they'd come",
+    newEvent: "interested members get a «new event» message",
+  },
+  and: "and",
+  publishing: "Publishing…",
+  yes: "Yes, publish",
+  pickTime: "Pick a date and time.",
+  goLiveOn: "Go live on…",
+  schedule: "Schedule",
+  now: "Publish now",
+  unschedule: "Don't schedule",
+  scheduleOpen: "Schedule…",
+  setDateFirst: "Set the date in Settings to open sign-up.",
+  openSignupConfirm: "Everyone interested (except those who said no) gets a «sign up now» message.",
+  opening: "Opening…",
+  yesOpen: "Yes, open sign-up",
+  undoCancel: "Undo cancel",
+};
