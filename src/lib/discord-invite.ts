@@ -1,6 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { api, discordEnabled } from "./discord-api";
+import { makeT, type T } from "../i18n/translate";
 
 const { discordChannel, account } = schema;
 
@@ -99,9 +100,9 @@ export async function missingServers(userId: string, clanId: string): Promise<Cl
 }
 
 /** Admin sets (or clears, with "") the invite link for one of the clan's servers. */
-export function setServerInvite(clanId: string, guildId: string, raw: string) {
+export function setServerInvite(clanId: string, guildId: string, raw: string, t: T = makeT("en")) {
   const url = raw.trim() ? normalizeInvite(raw) : "";
-  if (url === null) return { error: "Paste a Discord invite link like https://discord.gg/abc123." };
+  if (url === null) return { error: t("errors.discordInvite") };
   db.update(discordChannel)
     .set({ inviteUrl: url })
     .where(and(eq(discordChannel.clanId, clanId), eq(discordChannel.guildId, guildId)))

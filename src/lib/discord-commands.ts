@@ -216,7 +216,7 @@ export function ticketFor(l: Lan, me: User, bought: boolean, t: T): Handled {
   if (bought && a?.status !== "going" && a?.status !== "waitlist")
     return { response: reply(t("cmd.comingFirst", { lan: `**${l.name}**` })) };
   try {
-    saveTicketBought(l.id, me.id, bought);
+    saveTicketBought(l.id, me.id, bought, t);
   } catch (e) {
     return { response: reply((e as Error).message) };
   }

@@ -1,4 +1,6 @@
 "use server";
+import { err, getT } from "@/i18n/server";
+import type { T } from "@/i18n/translate";
 
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -22,7 +24,7 @@ async function requireAttendee(lanId: string) {
     .from(attendance)
     .where(and(eq(attendance.lanId, lanId), eq(attendance.userId, me.id)))
     .get();
-  if (!a || a.status === "declined") throw new Error("Sign up for the LAN first");
+  if (!a || a.status === "declined") throw await err("errors.signUpFirst");
   return me;
 }
 
@@ -56,7 +58,7 @@ export async function saveTravelPost(lanId: string, input: TravelInput, postId?:
     const p = mustGetPost(postId);
     if (p.userId !== me.id || p.lanId !== lanId) throw new Error("Not your post");
     if (p.mode === "offer" && v.places < takenPlaces(postId))
-      throw new Error("More people have joined than that. Remove someone first.");
+      throw await err("errors.placesTooFew");
     db.update(travelPost)
       .set({ town: v.town, places: v.places, whenText: v.whenText, note: v.note })
       .where(eq(travelPost.id, postId))
@@ -77,12 +79,12 @@ export async function deleteTravelPost(postId: string) {
 }
 
 /** Adds `userId` to an offer, and drops their open request of the same kind (it's solved). */
-function addSpot(p: typeof travelPost.$inferSelect, userId: string) {
-  if (p.mode !== "offer") throw new Error("You can only join offers");
-  if (p.userId === userId) throw new Error("That's your own offer");
+function addSpot(p: typeof travelPost.$inferSelect, userId: string, t: T) {
+  if (p.mode !== "offer") throw new Error(t("errors.joinOffers"));
+  if (p.userId === userId) throw new Error(t("errors.ownOffer"));
   db.transaction((tx) => {
     const taken = tx.select({ id: travelSpot.id }).from(travelSpot).where(eq(travelSpot.postId, p.id)).all().length;
-    if (taken >= p.places) throw new Error("No free places left");
+    if (taken >= p.places) throw new Error(t("errors.noPlaces"));
     tx.insert(travelSpot).values({ postId: p.id, userId }).onConflictDoNothing().run();
     tx.delete(travelPost)
       .where(
@@ -100,7 +102,7 @@ function addSpot(p: typeof travelPost.$inferSelect, userId: string) {
 export async function joinTravelOffer(postId: string) {
   const p = mustGetPost(postId);
   const me = await requireAttendee(p.lanId);
-  addSpot(p, me.id);
+  addSpot(p, me.id, await getT());
   refresh(p.lanId);
 }
 
@@ -120,8 +122,8 @@ export async function takeAlong(requestId: string, offerId: string) {
   const me = await requireAttendee(req.lanId);
   const offer = mustGetPost(offerId);
   if (req.mode !== "request" || offer.userId !== me.id || offer.lanId !== req.lanId || offer.kind !== req.kind)
-    throw new Error("Pick one of your own offers");
-  addSpot(offer, req.userId);
+    throw await err("errors.pickOwnOffer");
+  addSpot(offer, req.userId, await getT());
   refresh(req.lanId);
 }
 

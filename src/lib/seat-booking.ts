@@ -1,5 +1,6 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { db, schema } from "@/db";
+import { makeT, type T } from "../i18n/translate";
 
 const { attendance, seat } = schema;
 
@@ -17,11 +18,11 @@ export function clearSeatBooked(lanId: string, userIds: (string | null | undefin
 }
 
 /** Marks a member's seat as booked on the event site (leads). Only for someone coming who has a seat. */
-export function setSeatBooked(lanId: string, userId: string, booked: boolean) {
+export function setSeatBooked(lanId: string, userId: string, booked: boolean, t: T = makeT("en")) {
   const a = db.select().from(attendance).where(and(eq(attendance.lanId, lanId), eq(attendance.userId, userId))).get();
-  if (!a || a.status !== "going") throw new Error("They're not coming to this LAN.");
+  if (!a || a.status !== "going") throw new Error(t("errors.notComing"));
   const s = db.select().from(seat).where(and(eq(seat.lanId, lanId), eq(seat.userId, userId))).get();
-  if (booked && !s) throw new Error("They don't have a seat yet.");
+  if (booked && !s) throw new Error(t("errors.theyNoSeatYet"));
   db.update(attendance).set({ seatBooked: booked }).where(eq(attendance.id, a.id)).run();
   return s?.label ?? null;
 }

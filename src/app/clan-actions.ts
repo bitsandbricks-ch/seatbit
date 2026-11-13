@@ -2,7 +2,7 @@
 
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { LOCALES } from "@/i18n/config";
-import { getT } from "@/i18n/server";
+import { err, getT, tr } from "@/i18n/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -116,7 +116,7 @@ export async function joinClan(clanId: string) {
   const me = await requireUser();
   const c = getClan(clanId);
   if (!c) throw new Error("Clan not found");
-  if (c.joinPolicy === "invite" && me.role !== "admin") throw new Error("This clan is invite-only");
+  if (c.joinPolicy === "invite" && me.role !== "admin") throw await err("errors.inviteOnly");
   const role = c.joinPolicy === "open" || me.role === "admin" ? "member" : "pending";
   db.insert(clanMember).values({ clanId, userId: me.id, role }).onConflictDoNothing().run();
   if (role === "pending") {
@@ -143,7 +143,7 @@ export async function joinWithInvite(code: string) {
   const me = await requireUser();
   const inv = db.select().from(clanInvite).where(eq(clanInvite.code, code)).get();
   const c = inv && getClan(inv.clanId);
-  if (!c) throw new Error("This invite link is no longer valid");
+  if (!c) throw await err("errors.inviteInvalid");
   db.insert(clanMember)
     .values({ clanId: c.id, userId: me.id, role: "member" })
     .onConflictDoUpdate({
@@ -166,7 +166,7 @@ function adminCount(clanId: string) {
 export async function leaveClan(clanId: string) {
   const me = await requireUser();
   if (clanRole(me.id, clanId) === "admin" && adminCount(clanId) <= 1) {
-    throw new Error("You're the last admin. Make someone else admin first.");
+    throw await err("errors.lastAdmin");
   }
   db.delete(clanMember)
     .where(and(eq(clanMember.clanId, clanId), eq(clanMember.userId, me.id)))
@@ -186,9 +186,9 @@ export async function setClanMemberRole(clanId: string, userId: string, role: Me
   const approving = from === "pending" && role === "member";
   const me = await requireClanPermission(clanId, approving ? "members" : "roles");
   if (from === role) return;
-  if (from === "admin" && adminCount(clanId) <= 1) throw new Error("A clan needs at least one admin.");
+  if (from === "admin" && adminCount(clanId) <= 1) throw await err("errors.oneAdmin");
   if (role !== "member" && db.select({ g: schema.user.isGuest }).from(schema.user).where(eq(schema.user.id, userId)).get()?.g) {
-    throw new Error("Guests get a role once they have claimed their account.");
+    throw await err("errors.guestRole");
   }
   db.update(clanMember)
     .set({ role })
@@ -230,7 +230,7 @@ export async function removeClanMember(clanId: string, userId: string) {
   const role = clanRole(userId, clanId);
   const me = await requireClanPermission(clanId, role === "member" || role === "pending" || !role ? "members" : "roles");
   if (role === "admin" && adminCount(clanId) <= 1) {
-    throw new Error("A clan needs at least one admin.");
+    throw await err("errors.oneAdmin");
   }
   if (role) audit({ actorId: me.id, action: "member.remove", clanId, targetUserId: userId, data: { pending: role === "pending" || undefined } });
   db.delete(clanMember)
@@ -376,7 +376,7 @@ export async function addGuest(clanId: string, _: FormState, formData: FormData)
 export async function addGuestToLan(lanId: string, _: FormState, formData: FormData): Promise<FormState> {
   const me = await requireLanManager(lanId);
   const l = db.select({ clanId: schema.lan.clanId }).from(schema.lan).where(eq(schema.lan.id, lanId)).get();
-  if (!l?.clanId) return { error: "This event has no clan." };
+  if (!l?.clanId) return { error: await tr("errors.noClan") };
   const r = createGuest(l.clanId, formData);
   if ("error" in r) return r;
   audit({ actorId: me.id, action: "guest.add", clanId: l.clanId, lanId, targetUserId: r.id, data: { existing: !!r.existing || undefined } });
@@ -392,14 +392,14 @@ export async function setGuestEmail(clanId: string, userId: string, _: FormState
   const me = await requireClanPermission(clanId, "members");
   const g = requireGuestOf(clanId, userId);
   const parsed = z.email().max(200).safeParse(String(formData.get("email") ?? "").trim());
-  if (!parsed.success) return { error: "That email address doesn't look right." };
+  if (!parsed.success) return { error: await tr("errors.badEmail") };
   const acc = accountByEmail(parsed.data);
   if (acc) {
     // They're on Seatbit already: hand everything over right away.
     audit({ actorId: me.id, action: "guest.merged", clanId, targetUserId: acc.id, data: { guest: g.name } });
     mergeGuestInto(g, acc.id);
     revalidatePath("/", "layout");
-    return { ok: true, message: `${acc.name} already has an account with that email. Everything moved over to it.` };
+    return { ok: true, message: await tr("errors.merged", { name: acc.name }) };
   }
   db.update(schema.user).set({ inviteEmail: normEmail(parsed.data) }).where(eq(schema.user.id, userId)).run();
   audit({ actorId: me.id, action: "guest.email", clanId, targetUserId: userId });
@@ -408,7 +408,7 @@ export async function setGuestEmail(clanId: string, userId: string, _: FormState
     return false;
   });
   revalidatePath("/", "layout");
-  return sent ? { ok: true, message: "Invite sent." } : { error: "Saved, but the mail couldn't be sent. Check the email settings." };
+  return sent ? { ok: true, message: await tr("errors.inviteSent") } : { error: await tr("errors.mailFailed") };
 }
 
 const guestEdit = z.object({
@@ -433,9 +433,9 @@ export async function updateGuest(clanId: string, userId: string, _: FormState, 
   });
   if (!parsed.success) {
     const bad = new Set(parsed.error.issues.map((i) => i.path[0]));
-    if (bad.has("email")) return { error: "That email address doesn't look right." };
-    if (bad.has("nick")) return { error: "Nicks can be up to 32 characters." };
-    return { error: "A guest needs a first name and a surname." };
+    if (bad.has("email")) return { error: await tr("errors.badEmail") };
+    if (bad.has("nick")) return { error: await tr("errors.nickLength") };
+    return { error: await tr("errors.guestName") };
   }
   const { firstName, lastName, nick, email } = parsed.data;
   const types = db.select({ id: schema.lanType.id }).from(schema.lanType).where(eq(schema.lanType.clanId, clanId)).all();
@@ -486,7 +486,7 @@ export async function updateGuest(clanId: string, userId: string, _: FormState, 
         audit({ actorId: me.id, action: "guest.merged", clanId, targetUserId: acc.id, data: { guest: `${firstName} ${lastName}` } });
         mergeGuestInto({ ...g, firstName, lastName, name: `${firstName} ${lastName}` }, acc.id);
         revalidatePath("/", "layout");
-        return { ok: true, message: `${acc.name} already has an account with that email. Everything moved over to it.` };
+        return { ok: true, message: await tr("errors.merged", { name: acc.name }) };
       }
       db.update(schema.user).set({ inviteEmail: newEmail }).where(eq(schema.user.id, userId)).run();
       const sent = await sendGuestInvite(userId, inviterName(me)).catch((e) => {
@@ -519,12 +519,12 @@ export async function deleteGuest(clanId: string, userId: string) {
 export async function resendGuestDiscordDm(clanId: string, userId: string): Promise<ActionResult> {
   const me = await requireClanPermission(clanId, "members");
   const g = requireGuestOf(clanId, userId);
-  if (!g.guestDiscordId) return { ok: false, message: "Not linked to a Discord member.", at: Date.now() };
+  if (!g.guestDiscordId) return { ok: false, message: await tr("guestDiscord.notLinked"), at: Date.now() };
   const r = await sendGuestDiscordDm(g.id);
   audit({ actorId: me.id, action: "guest.discord_dm", clanId, targetUserId: g.id, data: { guest: g.name, ok: r.ok } });
   revalidatePath("/clans", "layout");
   return r.ok
-    ? { ok: true, message: "Sent. They got the claim link as a Discord DM.", at: Date.now() }
+    ? { ok: true, message: await tr("errors.dmSent"), at: Date.now() }
     : {
         ok: false,
         message:
@@ -544,7 +544,7 @@ export async function unlinkGuestDiscord(clanId: string, userId: string): Promis
   db.update(schema.user).set(UNLINKED).where(eq(schema.user.id, g.id)).run();
   audit({ actorId: me.id, action: "guest.discord_unlink", clanId, targetUserId: g.id, data: { guest: g.name } });
   revalidatePath("/clans", "layout");
-  return { ok: true, message: "Unlinked.", at: Date.now() };
+  return { ok: true, message: await tr("errors.unlinked"), at: Date.now() };
 }
 
 export async function renewGuestLink(clanId: string, userId: string) {
@@ -584,7 +584,7 @@ export async function claimGuestFromDiscord(token: string) {
 /** Clan admins set the Discord invite link shown to members who aren't on the server. */
 export async function setClanDiscordInvite(clanId: string, guildId: string, formData: FormData) {
   await requireClanPermission(clanId, "settings");
-  const r = setServerInvite(clanId, guildId, String(formData.get("inviteUrl") ?? ""));
+  const r = setServerInvite(clanId, guildId, String(formData.get("inviteUrl") ?? ""), await getT());
   if (r.error) throw new Error(r.error);
   revalidatePath("/clans", "layout");
 }
@@ -597,8 +597,8 @@ async function requireClaimingMember(clanId: string) {
   const c = getClan(clanId);
   if (!c) throw new Error("Clan not found");
   const role = clanRole(me.id, clanId);
-  if (me.isGuest || !isMemberRole(role)) throw new Error("Join the clan first");
-  if (c.guestClaims === "off") throw new Error("In this clan, guests are taken over through their own link. Ask an admin.");
+  if (me.isGuest || !isMemberRole(role)) throw await err("errors.joinFirst");
+  if (c.guestClaims === "off") throw await err("errors.claimOff");
   return { me, c };
 }
 
@@ -609,7 +609,7 @@ async function requireClaimingMember(clanId: string) {
 export async function claimGuestAsMember(clanId: string, guestId: string) {
   const { me, c } = await requireClaimingMember(clanId);
   const s = guestSuggestions(clanId, me.id).find((x) => x.guest.id === guestId);
-  if (!s) throw new Error("That guest was taken over already");
+  if (!s) throw await err("errors.claimedAlready");
   const r = claimOrRequestGuest(c, s, me);
   revalidatePath("/", "layout");
   redirect(r === "claimed" ? `/clans/${c.slug}?claimed=1` : `/clans/${c.slug}/claim`);

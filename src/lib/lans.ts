@@ -124,7 +124,6 @@ export function goingCount(lanId: string) {
 export function attendanceLocked(a: { ticketBought: boolean; paid: boolean } | null | undefined) {
   return !!a && (a.ticketBought || a.paid);
 }
-export const ATTENDANCE_LOCKED_MSG = "You have a ticket, so your answer is locked. Ask a lead if your plans change.";
 
 export function signupClosed(l: Lan, now = new Date()) {
   return !!l.cancelledAt || l.interestCheck || (l.signupDeadline && l.signupDeadline < now) || l.endsAt < now;

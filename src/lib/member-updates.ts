@@ -6,6 +6,7 @@ import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db, schema } from "@/db";
 import { cleanName } from "./names";
+import { makeT, type T } from "../i18n/translate";
 
 const { attendance, nickname } = schema;
 
@@ -44,10 +45,10 @@ const myAttendance = (lanId: string, userId: string) =>
     .get();
 
 /** "I bought my ticket" (or not). Once a lead confirmed it, only they can change it. */
-export function saveTicketBought(lanId: string, userId: string, bought: boolean) {
+export function saveTicketBought(lanId: string, userId: string, bought: boolean, t: T = makeT("en")) {
   const a = myAttendance(lanId, userId);
-  if (!a) throw new Error("Say whether you're coming first");
-  if (a.paid) throw new Error("A lead already confirmed your ticket. Ask them if something changed.");
+  if (!a) throw new Error(t("errors.answerFirst"));
+  if (a.paid) throw new Error(t("errors.ticketConfirmed"));
   db.update(attendance).set({ ticketBought: bought }).where(eq(attendance.id, a.id)).run();
 }
 
@@ -61,10 +62,10 @@ export const wishInput = z.object({
 export type SeatWishes = z.output<typeof wishInput>;
 
 /** Saves a member's seat wishes. The caller checks the plan isn't final yet. */
-export function saveSeatWishes(lanId: string, userId: string, input: z.input<typeof wishInput>) {
+export function saveSeatWishes(lanId: string, userId: string, input: z.input<typeof wishInput>, t: T = makeT("en")) {
   const w = wishInput.parse(input);
   const a = myAttendance(lanId, userId);
-  if (!a) throw new Error("Say you're coming first");
+  if (!a) throw new Error(t("errors.comingFirst"));
   db.update(attendance)
     .set({
       wishNear: w.near.filter((x) => x !== userId),
