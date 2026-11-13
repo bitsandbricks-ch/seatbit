@@ -232,6 +232,13 @@
       "when": 1794582439447,
       "tag": "0033_donations",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "6",
+      "when": 1794583573239,
+      "tag": "0034_usage_activity",
+      "breakpoints": true
     }
   ]
 }

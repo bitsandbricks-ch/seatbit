@@ -141,6 +141,7 @@ export async function deleteAccount(userId: string) {
     tx.delete(schema.gearPacked).where(eq(schema.gearPacked.userId, userId)).run();
     tx.delete(schema.packingItem).where(eq(schema.packingItem.userId, userId)).run();
     tx.delete(schema.reminderLog).where(eq(schema.reminderLog.userId, userId)).run();
+    tx.delete(schema.userActivity).where(eq(schema.userActivity.userId, userId)).run();
     tx.update(schema.clanInvite).set({ createdBy: null }).where(eq(schema.clanInvite.createdBy, userId)).run();
     tx.update(schema.game).set({ addedBy: null }).where(eq(schema.game.addedBy, userId)).run();
     tx.update(schema.lanNews).set({ authorId: null }).where(eq(schema.lanNews.authorId, userId)).run();
