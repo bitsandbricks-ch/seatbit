@@ -9,7 +9,7 @@ Seatbit reminds people before deadlines by itself. Leads can also remind by hand
 | Reminder | When | To |
 | --- | --- | --- |
 | **Answer** | A few days before *answer by* (set per event) | Members who haven't answered |
-| **Ticket** | A few days before *buy ticket by* | Members coming without a ticket |
+| **Ticket** | A few days before *buy ticket by* | Members coming without a ticket (not people on the waitlist) |
 | **Install your games** | Two days before the LAN | Everyone coming |
 | **Starts tomorrow** | The day before the LAN | Everyone coming |
 

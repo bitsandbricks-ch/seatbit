@@ -156,7 +156,7 @@ function LanCard({
 }) {
   const needsAnswer = (!my || my.status === "maybe") && !l.interestCheck && !l.cancelledAt;
   const deadlineSoon = l.signupDeadline && l.signupDeadline > now;
-  const unpaid = my && (my.status === "going" || my.status === "waitlist") && !my.paid && !my.ticketBought && l.paymentDueDate;
+  const unpaid = my && my.status === "going" && !my.paid && !my.ticketBought && l.paymentDueDate;
   return (
     <Link
       href={l.publishedAt ? `/lans/${l.id}` : `/lans/${l.id}/manage`}

@@ -657,6 +657,7 @@ export const en = {
       done: "Confirmed by the leads.",
       pending: "Waiting for a lead to confirm.",
       todo: "Buy it from the event, then tick it off here.",
+      waitlist: "Wait until you move up from the waitlist before buying one.",
     },
     pick: {
       title: "Pick your seat",

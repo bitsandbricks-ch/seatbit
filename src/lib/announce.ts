@@ -17,7 +17,7 @@ export type LanSummary = {
   waitlist: { userId: string; name: string }[];
   /** Members who haven't answered or said maybe. */
   undecided: User[];
-  /** Attendees (going or waitlist) without a ticket. */
+  /** Attendees coming without a ticket (not the waitlist: they have no spot yet). */
   noTicket: User[];
   /** Going without a ticket (neither reported nor confirmed). */
   goingNoTicket: number;
@@ -71,7 +71,7 @@ export async function lanSummary(l: Lan): Promise<LanSummary> {
     }),
     noTicket: members.filter((m) => {
       const a = byUser.get(m.id);
-      return a && (a.status === "going" || a.status === "waitlist") && !a.paid && !a.ticketBought;
+      return a && a.status === "going" && !a.paid && !a.ticketBought;
     }),
   };
 }

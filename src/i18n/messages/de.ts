@@ -657,6 +657,7 @@ export const de: Messages = {
       done: "Von den Leads bestätigt.",
       pending: "Wartet auf Bestätigung durch einen Lead.",
       todo: "Kauf es beim Event und hak es dann hier ab.",
+      waitlist: "Warte mit dem Kauf, bis du von der Warteliste nachrückst.",
     },
     pick: {
       title: "Wähl deinen Platz",

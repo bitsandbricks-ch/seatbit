@@ -519,7 +519,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
                     <dd>{l.price}</dd>
                   </div>
                 )}
-                {my && (my.status === "going" || my.status === "waitlist") && l.paymentDueDate && (
+                {my && (my.status === "going" || (my.status === "waitlist" && (my.paid || my.ticketBought))) && l.paymentDueDate && (
                   <div className="flex justify-between">
                     <dt className="text-muted">{t("event.yourTicket")}</dt>
                     <dd>
