@@ -309,13 +309,21 @@ export function SeatMap({
           <span aria-hidden className="absolute inset-x-1 bottom-0.5 h-[3px] rounded-full" style={{ background: s.color }} />
         )}
         {compact ? (
-          <span className={`w-full truncate font-mono text-xs leading-none ${taken ? "font-semibold" : ""}`}>{short}</span>
+          <>
+            {/* Taken seats show the nick, so the number moves into a corner badge to keep the order readable. */}
+            {taken && <SeatNo label={s.label} className="absolute left-0.5 top-0.5 max-w-[calc(100%-4px)]" />}
+            <span className={`w-full truncate font-mono text-xs leading-none ${taken ? "mt-2.5 font-semibold" : ""}`}>{short}</span>
+          </>
         ) : (
           <>
-            <span className="font-mono text-[11px] leading-none opacity-75">
-              {s.label}
-              {s.locked ? " 🔒" : ""}
-            </span>
+            {taken ? (
+              <SeatNo label={s.label} />
+            ) : (
+              <span className="font-mono text-[11px] leading-none opacity-75">
+                {s.label}
+                {s.locked ? " 🔒" : ""}
+              </span>
+            )}
             {s.nick && (
               <span className="mt-0.5 line-clamp-2 w-full text-xs font-semibold leading-tight [overflow-wrap:anywhere]">{s.nick}</span>
             )}
@@ -777,6 +785,15 @@ function Legend({ cls, children }: { cls: string; children: React.ReactNode }) {
     <span className="inline-flex items-center gap-1.5">
       <span className={`inline-block h-3 w-3 rounded-sm border ${cls}`} />
       {children}
+    </span>
+  );
+}
+
+/** Small seat number badge on taken seats; readable on the green "mine" fill and the taken tint. */
+function SeatNo({ label, className = "" }: { label: string; className?: string }) {
+  return (
+    <span className={`truncate rounded-sm bg-surface/80 px-0.5 font-mono text-[9px] font-medium leading-tight text-muted sm:text-[10px] ${className}`}>
+      {label}
     </span>
   );
 }
