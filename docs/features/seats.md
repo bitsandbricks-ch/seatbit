@@ -56,7 +56,7 @@ On the event's *Seats* tab, each member keeps a list of wishes. Every wish is a 
 | **A row** | You sit in that row. |
 | **At the edge** / **In the middle** | Your seat is (or isn't) at the end of a row. You can have one of the two. |
 
-The order is the priority: the top wish counts most, each one below a bit over half as much as the one above. Drag a wish by its handle (works with touch) or use the arrows to move it; every change saves right away. A wish that contradicts an older one (near and away from the same person, edge and middle) takes the older one's place. Change how close or how far on the wish itself. Up to 20 wishes, plus a free-text note for the leads.
+The order is the priority: the top wish counts most, each one below half as much as the one above, so a wish outweighs all the wishes below it together. Everyone's wishes add up to the same total, so a member with ten wishes doesn't count more than one with three. Drag a wish by its handle (works with touch) or use the arrows to move it; every change saves right away. A wish that contradicts an older one (near and away from the same person, edge and middle) takes the older one's place. Change how close or how far on the wish itself. Up to 20 wishes, plus a free-text note for the leads.
 
 ## Plan the seats
 
@@ -78,13 +78,15 @@ Tap a seat:
 
 People coming without a seat are listed under **Not seated yet**: tap one, then a seat. On desktop, drag names onto seats and seated people onto other seats to swap.
 
-**Fill free seats** seats everyone without a seat; **Re-plan everyone** starts over. The planner follows seat wishes in each member's order, so when two wishes can't both be met the higher one wins, and it seats people with a ticket first.
+**Fill free seats** seats everyone without a seat; **Re-plan everyone** starts over. The planner follows seat wishes in each member's order, so when two wishes can't both be met the higher one wins, and it seats people with a ticket first. It first seats people one by one, then keeps moving and swapping them while that makes the people involved happier overall, so a wish like "near Reykime" is still met when Reykime was seated earlier. Held seats never move, and **Fill free seats** leaves people who already have a seat where they are.
 
 **Re-plan automatically when wishes change** (under *Our seats*) re-plans every seat that isn't held whenever someone changes their wishes, on the website or with `/wish`, and once right away when you turn it on. It pauses while self pick is on and once the plan is final, so it never moves a member's own pick or a final seat.
 
 Seat pages update by themselves when the plan or someone's wishes change, so leads and members don't need to reload (see [Live updates](events.md#live-updates)).
 
-The **Seat wishes** card scores the current plan: for each member the share of their wishes that are met, weighted by their order (a met top wish counts more), and the average over everyone. Members with the lowest score come first, one row each with their seat, their wishes in order (✓ met, ✗ missed, · can't be checked yet because they or the other person have no seat), their note and their score. The seat details panel shows the same for one person.
+The **Seat wishes** card scores the current plan: for each member the share of their wishes that are met, weighted by their order (a met top wish counts more), and the average over everyone. **Needs a look** (the default) lists only members whose wishes aren't all met or can't be checked yet; **Everyone** lists all members with wishes. Each member is one line, lowest score first: their seat, how many wishes are met, their score and the wishes the plan misses. Tap a member for all their wishes in order (✓ met, ✗ missed, · can't be checked yet because they or the other person have no seat) and their note. The seat details panel shows the same for one person.
+
+The **Plan history** card lists every change to the seats, newest first: re-plans (by a lead, or automatic after a wish change), moves, swaps, held seats and the final plan. For each re-plan it shows who moved from which seat to which, or that nobody moved.
 
 ## Book on the event site
 

@@ -107,10 +107,10 @@ export const rulePeople = (rules: SeatRule[]) =>
   rules.flatMap((r) => (r.kind === "near" || r.kind === "avoid" ? [r.userId] : []));
 
 /**
- * Weight of the rule at `rank` (0 = top). Each step down counts a bit over half as
- * much, so a higher rule always beats the one right below it.
+ * Weight of the rule at `rank` (0 = top). Each step down counts half, so a wish
+ * outweighs all the wishes below it together.
  */
-export const rankWeight = (rank: number) => 0.6 ** rank;
+export const rankWeight = (rank: number) => 0.5 ** rank;
 
 /** Whether two seats `d` apart in the same row (Infinity: other rows) are close enough. */
 export const withinRange = (d: number, within: NearRange = DEFAULT_NEAR_RANGE) =>

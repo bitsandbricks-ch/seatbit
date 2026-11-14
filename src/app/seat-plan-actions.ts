@@ -16,7 +16,8 @@ export async function setSeatAutoPlan(lanId: string, on: boolean) {
   const l = db.select().from(lan).where(eq(lan.id, lanId)).get()!;
   auditLan(l, me.id, "seat.autoPlan", { data: { on } });
   // Turning it on plans right away, so the plan matches the wishes from the start.
-  if (on) autoPlanAfterWishes(lanId, me.id);
+  // Turning it on re-plans right away: logged as a lead's re-plan, not as a wish change.
+  if (on) autoPlanAfterWishes(lanId, me.id, "replan");
   lanChanged(lanId);
   revalidatePath(`/lans/${lanId}`, "layout");
 }

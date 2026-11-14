@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { checkWishes, overallScore, planSeats, wishScore, type PlanPerson, type PlanSeat } from "./seating";
+import { checkWishes, overallScore, planSeats, wishScore, wishWeights, type PlanPerson, type PlanSeat } from "./seating";
 import type { SeatRule } from "./seat-rules";
 
 const row = (n: number, taken: Record<number, string> = {}, held: number[] = [], r = 0): PlanSeat[] =>
@@ -90,13 +90,13 @@ test("checkWishes lists wishes in rank order and scores them by rank", () => {
       [2, false],
     ],
   );
-  // The top wish counts 1, the second 0.6: 1 / 1.6.
-  assert.equal(a.score, 1 / 1.6);
+  // The top wish counts 1, the second 0.5: 1 / 1.5.
+  assert.equal(a.score, 1 / 1.5);
   // d has no seat: c's wish can't be checked yet.
   const c = checks.find((x) => x.userId === "c")!;
   assert.equal(c.items[0].ok, null);
   assert.equal(c.score, null);
-  assert.equal(overallScore(checks), 1 / 1.6);
+  assert.equal(overallScore(checks), 1 / 1.5);
 });
 
 test("wishScore: met top wish beats met lower wish", () => {
@@ -131,4 +131,34 @@ test("avoid ranges: not within 3 seats keeps the distance", () => {
   const everyone = [person("x"), person("a", [{ kind: "avoid", userId: "x", within: 3 }])];
   const plan = planSeats(seats, [everyone[1]], everyone);
   assert.ok(col(plan, "a") > 4);
+});
+
+test("a later near wish is met even when the friends were seated first", () => {
+  // One row of 20, like a real event. Reykime and Atzera want each other and the first seat;
+  // Pascal wants Rosi first, then Reykime and Atzera. A chain of friends gets in the way.
+  const seats = row(20, {}, [], 5);
+  const chain = Array.from({ length: 10 }, (_, i) => person(`m${i}`, [near(`m${(i + 1) % 10}`)], { priority: 2 }));
+  const everyone = [
+    person("reykime", [{ kind: "near", userId: "atzera", within: 1 }, { kind: "seat", seat: "F1" }], { priority: 2 }),
+    person("atzera", [{ kind: "near", userId: "reykime", within: 1 }], { priority: 2 }),
+    ...chain,
+    person("rosi", [near("pascal")]),
+    person("pascal", [near("rosi"), near("reykime"), near("atzera"), avoid("m0"), avoid("m1"), avoid("m2"), avoid("m3"), avoid("m4")]),
+  ];
+  const plan = planSeats(seats, everyone, everyone);
+  const d = (a: string, b: string) => Math.abs(col(plan, a) - col(plan, b));
+  assert.equal(d("reykime", "atzera"), 1);
+  assert.ok(d("pascal", "rosi") <= 2, "next to Rosi");
+  assert.ok(d("pascal", "reykime") <= 2 || d("pascal", "atzera") <= 2, "near Reykime or Atzera");
+});
+
+test("wish weights: every list adds up to 1, each wish counts half the one above", () => {
+  const sum = (w: number[]) => w.reduce((n, x) => n + x, 0);
+  const three = wishWeights([{ kind: "edge" }, near("a"), near("b")]);
+  const ten = wishWeights(Array.from({ length: 10 }, (_, i) => near(`p${i}`)));
+  assert.ok(Math.abs(sum(three) - 1) < 1e-9);
+  assert.ok(Math.abs(sum(ten) - 1) < 1e-9);
+  assert.ok(Math.abs(three[1] / three[0] - 0.5) < 1e-9);
+  // Someone's top wish counts about the same, however long their list is.
+  assert.ok(ten[0] > 0.49 && three[0] > 0.57);
 });

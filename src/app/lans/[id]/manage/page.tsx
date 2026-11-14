@@ -27,6 +27,8 @@ import { clanCan, getClan } from "@/lib/clans";
 import { SeatFlow } from "@/components/seat-flow";
 import { checkWishes, overallScore } from "@/lib/seating";
 import { WishOverview, type WishRow } from "@/components/wish-overview";
+import { PlanHistory } from "@/components/plan-history";
+import { auditEntries } from "@/lib/audit";
 import { LiveRefresh } from "@/components/live-refresh";
 import { getLanAccounts } from "@/lib/lan-accounts";
 import { LeadBookingList } from "@/components/seat-booking";
@@ -391,7 +393,14 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               )}
             </Card>
           )}
-          {seats.length > 0 && <WishOverview rows={wishRows} overall={overallScore(wishChecks)} t={t} />}
+          {seats.length > 0 && <WishOverview
+              rows={wishRows}
+              overall={overallScore(wishChecks)}
+              filter={sp.wishes === "all" ? "all" : "look"}
+              href={(f) => `/lans/${l.id}/manage?tab=seats${f === "all" ? "&wishes=all" : ""}#wishes`}
+              t={t}
+            />}
+          {seats.length > 0 && <PlanHistory rows={tab === "seats" ? auditEntries({ lanId: l.id, group: "seats" }).rows : []} names={names} t={t} />}
           </div>
   );
 

@@ -76,6 +76,7 @@ import { pager } from "./pager";
 import { pages } from "./pages";
 import { payments } from "./payments";
 import { picker } from "./picker";
+import { planHistory } from "./planHistory";
 import { platformRoles } from "./platformRoles";
 import { profile } from "./profile";
 import { publish } from "./publish";
@@ -182,6 +183,7 @@ export const en = {
   pages,
   payments,
   picker,
+  planHistory,
   platformRoles,
   profile,
   publish,

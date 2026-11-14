@@ -1,0 +1,17 @@
+date: 2026-11-14
+type: improved
+en:
+  title: "Better seat planning and a plan history"
+  text: >-
+    The seat planner now looks for a better overall plan instead of seating people one after another, so
+    wishes about people seated earlier are met more often. Each member's wishes count the same in total,
+    however many they have, and a top wish counts more. Leads see a plan history with who moved where on
+    every re-plan, and the wish overview shows only the members who need a look by default.
+de:
+  title: "Bessere Sitzplanung und ein Verlauf"
+  text: >-
+    Die Sitzplanung sucht jetzt einen besseren Gesamtplan, statt die Leute nacheinander zu platzieren. So
+    werden Wünsche zu früher platzierten Leuten öfter erfüllt. Die Wünsche jedes Mitglieds zählen gesamt
+    gleich viel, egal wie viele es sind, und ein oberer Wunsch zählt mehr. Leads sehen einen Verlauf, wer
+    bei jeder Neuplanung wohin gewechselt hat, und die Wunsch-Übersicht zeigt standardmässig nur die
+    Mitglieder, die man anschauen sollte.
