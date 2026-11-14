@@ -1,0 +1,12 @@
+date: 2026-11-14
+type: improved
+en:
+  title: "Seat numbers on taken seats"
+  text: >-
+    Taken seats in the seat plan now keep a small badge with their seat number, so the order of a row
+    stays clear even when everyone is seated.
+de:
+  title: "Platznummern auf besetzten Plätzen"
+  text: >-
+    Besetzte Plätze im Sitzplan zeigen jetzt ein kleines Badge mit ihrer Platznummer, so bleibt die
+    Reihenfolge einer Reihe klar, auch wenn alle sitzen.

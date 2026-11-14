@@ -9,7 +9,7 @@ The **seat plan** shows the group's seat block. Members send seat wishes or pick
 ## The plan
 
 - Each letter is a row; each seat sits at its number. A dotted gap means those numbers aren't the group's.
-- Seats show the seat label or the first letters of the nick. **Large** shows whole nicks (remembered on the device).
+- Free seats show their label, taken seats the first letters of the nick with the seat number in a small badge, so the order stays clear. **Large** shows whole nicks (remembered on the device).
 - Tap a seat for details: a panel on the right on desktop, a sheet at the bottom on phones.
 - **Find someone** highlights a person.
 
