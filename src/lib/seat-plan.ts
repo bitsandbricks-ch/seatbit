@@ -2,7 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { auditLan } from "./audit";
 import { clearSeatBooked } from "./seat-booking";
-import { planSeats } from "./seating";
+import { encodeMove, planSeats } from "./seating";
 
 const { attendance, lan, seat } = schema;
 
@@ -44,18 +44,23 @@ export function planAndAssign(lanId: string, mode: "fill" | "replan") {
   );
   const moved = everyone.map((p) => p.userId).filter((u) => was.get(u) !== now.get(u));
   clearSeatBooked(lanId, moved);
-  return { plan, seats: before, everyone };
+  const label = new Map(before.map((s) => [s.id, s.label]));
+  const moves = moved.map((u) => encodeMove({ u, from: label.get(was.get(u) ?? "") ?? null, to: label.get(now.get(u) ?? "") ?? null }));
+  return { plan, seats: before, everyone, moves };
 }
+
+/** At most this many moves per log entry, so a re-plan of a huge event stays a small row. */
+export const MAX_LOGGED_MOVES = 80;
 
 /**
  * Re-plans the seats after someone changed their wishes, when the leads turned that on.
  * Only while the plan isn't final and members don't pick their own seats, so it never
  * moves a final seat or someone's own pick.
  */
-export function autoPlanAfterWishes(lanId: string, actorId: string) {
+export function autoPlanAfterWishes(lanId: string, actorId: string, mode: "auto" | "replan" = "auto") {
   const l = db.select().from(lan).where(eq(lan.id, lanId)).get();
   if (!l || !l.seatAutoPlan || l.seatsPublishedAt || l.seatPicking) return false;
-  const { plan } = planAndAssign(lanId, "replan");
-  auditLan(l, actorId, "seat.auto", { data: { mode: "auto", count: plan.size } });
+  const { plan, moves } = planAndAssign(lanId, "replan");
+  auditLan(l, actorId, "seat.auto", { data: { mode, count: plan.size, moves: moves.slice(0, MAX_LOGGED_MOVES) } });
   return true;
 }

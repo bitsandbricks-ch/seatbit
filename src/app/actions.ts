@@ -26,7 +26,7 @@ import { sendReminderNow } from "@/lib/reminders";
 import { publishEvent } from "@/lib/event-notices";
 import { notify as notifyMember, notifyLanChanged, notifyLater, notifySeatChanged, trySendDiscordDm } from "@/lib/notify";
 import { appUrl } from "@/lib/mail";
-import { autoPlanAfterWishes, planAndAssign } from "@/lib/seat-plan";
+import { MAX_LOGGED_MOVES, autoPlanAfterWishes, planAndAssign } from "@/lib/seat-plan";
 import { eventMailVars, renderTemplate } from "@/lib/mail-templates";
 import { assertPlatform, canTakePart, canViewLan, requireClanPermission, requireLanManager, requireUser } from "@/lib/session";
 import { platformCan } from "@/lib/platform-roles";
@@ -794,11 +794,11 @@ export async function adminSetSeatFor(lanId: string, userId: string, seatId: str
  */
 export async function adminAutoAssignSeats(lanId: string, mode: "fill" | "replan" = "fill"): Promise<number> {
   const me = await requireLanManager(lanId);
-  const { plan, seats } = planAndAssign(lanId, mode);
+  const { plan, seats, moves } = planAndAssign(lanId, mode);
   lanPath(lanId);
   // After the plan is out, tell people whose seat changed.
   const l = mustGetLan(lanId);
-  auditLan(l, me.id, "seat.auto", { data: { mode, count: plan.size } });
+  auditLan(l, me.id, "seat.auto", { data: { mode, count: plan.size, moves: moves.slice(0, MAX_LOGGED_MOVES) } });
   if (l.seatsPublishedAt) {
     const label = new Map(seats.map((s) => [s.id, s.label]));
     notifyLater(async () => {

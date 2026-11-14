@@ -65,7 +65,7 @@ test.describe("seats", () => {
         { who: "chiara", seat: "A4" },
       ],
     });
-    // Anna's top wish (near Ben) is met, her second (seat A4) is not: 1 / 1.6 = 63%.
+    // Anna's top wish (near Ben) is met, her second (seat A4) is not: 1 / 1.5 = 67%.
     db()
       .update(attendance)
       .set({ wishRules: [{ kind: "near", userId: userId("ben") }, { kind: "seat", seat: "A4" }] })
@@ -74,7 +74,10 @@ test.describe("seats", () => {
     const alex = await as("alex");
     await alex.goto(`/lans/${id}/manage?tab=seats`);
     const card = alex.locator("#wishes");
-    await expect(card.getByText("63% met")).toBeVisible();
+    await expect(card.getByText("67% met")).toBeVisible();
+    // Anna needs a look: her row shows the missed wish; tapping it opens the full ranked list.
+    await expect(card.locator("summary").getByText("seat A4")).toBeVisible();
+    await card.locator("summary", { hasText: "Anna" }).click();
     const wishes = card.getByRole("list", { name: /^Wishes of Anna/ });
     await expect(wishes.getByRole("listitem").first()).toContainText("near Ben");
     await expect(wishes.getByRole("listitem").nth(1)).toContainText("seat A4");
@@ -104,8 +107,14 @@ test.describe("seats", () => {
       Number(db().select().from(seat).where(and(eq(seat.lanId, id), eq(seat.userId, userId(who)))).get()?.label.slice(1));
     await expect.poll(() => Math.abs(colOf("anna") - colOf("ben"))).toBe(1);
 
-    // The lead's open page picks the change up by itself.
-    await expect(alex.locator("#wishes").getByText("right next to Ben")).toBeVisible({ timeout: 20_000 });
+    // The lead's open page picks the change up by itself, and the plan history says who moved.
+    const history = alex.locator("#plan-history");
+    await expect(history.getByText(/so the seats were re-planned/)).toBeVisible({ timeout: 20_000 });
+    await expect(history.getByText(/moved:.*Anna.*→/).first()).toBeVisible();
+    // Anna's wish is met now, so she's under "Everyone", not "Needs a look".
+    await alex.locator("#wishes").getByRole("link", { name: /Everyone/ }).click();
+    await alex.locator("#wishes summary", { hasText: "Anna" }).click();
+    await expect(alex.locator("#wishes").getByText("right next to Ben")).toBeVisible();
   });
 
   test("self pick: a member with a ticket takes a seat, the lead finalizes, the member sees the final plan", async ({ as }) => {

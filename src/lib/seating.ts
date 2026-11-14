@@ -4,10 +4,11 @@ import { RANGE_KEY, rangeOf, rankWeight, withinRange, type SeatRule } from "./se
 /**
  * Seat planning with member wishes. Pure functions, no DB access.
  *
- * Each person's wishes are ranked rules; a rule counts less the further down it is
- * (rankWeight), so the top wish wins when two can't both be met.
- * "Near" means the same row and at most two seats apart (next to, or one seat
- * between). "Next to" for avoid means directly adjacent.
+ * Each person's wishes are ranked rules; each rule counts half as much as the one
+ * above it (rankWeight), so the top wish wins when two can't both be met. A person's
+ * wishes add up to the same total however many they have, so a long list doesn't
+ * outweigh a short one. The planner seats people one by one, then keeps moving and
+ * swapping them while that makes the people involved happier overall.
  */
 
 export type PlanSeat = { id: string; row: number; col: number; label: string; userId: string | null; locked: boolean };
@@ -26,11 +27,24 @@ function edgeSet(seats: PlanSeat[]) {
   return new Set(seats.filter((s) => !pos.has(`${s.row}:${s.col - 1}`) || !pos.has(`${s.row}:${s.col + 1}`)).map((s) => s.id));
 }
 
+/** A person's wish weights by rank, adding up to 1: ten wishes count as much in total as three. */
+export function wishWeights(rules: SeatRule[]): number[] {
+  const raw = rules.map((_, i) => rankWeight(i));
+  const sum = raw.reduce((n, x) => n + x, 0);
+  return raw.map((w) => w / sum);
+}
+const weightCache = new WeakMap<PlanPerson, number[]>();
+const weightsOf = (p: PlanPerson) => {
+  let w = weightCache.get(p);
+  if (!w) weightCache.set(p, (w = wishWeights(p.rules)));
+  return w;
+};
+
 /** a's rule of `kind` about b with its weight, or undefined. */
 function ruleAbout(a: PlanPerson | undefined, kind: "near" | "avoid", bId: string) {
   if (!a) return undefined;
   const i = a.rules.findIndex((r) => r.kind === kind && r.userId === bId);
-  return i === -1 ? undefined : { rule: a.rules[i], w: rankWeight(i) };
+  return i === -1 ? undefined : { rule: a.rules[i], w: weightsOf(a)[i] };
 }
 
 /** Points for sitting `d` apart under a near rule: closer is better, nothing outside its range. */
@@ -106,7 +120,7 @@ export function planSeats(seats: PlanSeat[], people: PlanPerson[], everyone: Pla
         score -= avoidWeight(p, uid, other, d) * 12;
       }
       p.rules.forEach((r, i) => {
-        const w = rankWeight(i);
+        const w = weightsOf(p)[i];
         if (r.kind === "seat" && s.label.toUpperCase() === r.seat) score += 12 * w;
         if (r.kind === "row" && seatRow(s) === r.row) score += 8 * w;
         if (r.kind === "edge") score += (edges.has(s.id) ? 6 : -2) * w;
@@ -128,7 +142,105 @@ export function planSeats(seats: PlanSeat[], people: PlanPerson[], everyone: Pla
     placedUsers.add(p.userId);
     result.set(p.userId, best.id);
   }
+  improve(seats, occupant, new Set(result.keys()), byUser, edges);
+  for (const [seatId, userId] of occupant) if (result.has(userId)) result.set(userId, seatId);
   return result;
+}
+
+/**
+ * How well one rule is met from `mine` (0..1), or null when it can't be told (the other
+ * person has no seat). Near wishes that miss get a little credit for being close, so the
+ * improvement pass can tell "almost" from "far away".
+ */
+function ruleMet(r: SeatRule, mine: PlanSeat, seatOf: Map<string, PlanSeat>, edges: Set<string>): number | null {
+  switch (r.kind) {
+    case "near":
+    case "avoid": {
+      const o = seatOf.get(r.userId);
+      if (!o) return null;
+      const d = dist(mine, o);
+      const range = rangeOf(r);
+      if (r.kind === "avoid") return withinRange(d, range) ? 0 : 1;
+      if (withinRange(d, range)) return 1 - 0.02 * Math.min(d - 1, 10);
+      return Number.isFinite(d) && range !== "row" ? (0.3 * range) / d : 0;
+    }
+    case "seat":
+      return mine.label.toUpperCase() === r.seat ? 1 : 0;
+    case "row":
+      return seatRow(mine) === r.row ? 1 : 0;
+    case "edge":
+      return edges.has(mine.id) ? 1 : 0;
+    case "middle":
+      return edges.has(mine.id) ? 0 : 1;
+  }
+}
+
+/** One person's weighted satisfaction with where everyone sits (0..1). */
+function happiness(p: PlanPerson, seatOf: Map<string, PlanSeat>, edges: Set<string>) {
+  const mine = seatOf.get(p.userId);
+  if (!mine || !p.rules.length) return 0;
+  const w = weightsOf(p);
+  return p.rules.reduce((n, r, i) => n + w[i] * (ruleMet(r, mine, seatOf, edges) ?? 0), 0);
+}
+
+/**
+ * Local search after the greedy pass: tries moving each person placed in this run to every
+ * other seat (free, or swapping with someone else placed in this run) and keeps the change
+ * when the people it touches are happier together. Held seats and seats that were already
+ * taken stay as they are. Stops when a full round finds nothing better.
+ */
+function improve(
+  seats: PlanSeat[],
+  occupant: Map<string, string>,
+  movable: Set<string>,
+  byUser: Map<string, PlanPerson>,
+  edges: Set<string>,
+) {
+  const seatById = new Map(seats.map((s) => [s.id, s]));
+  const seatOf = new Map([...occupant].map(([sid, uid]) => [uid, seatById.get(sid)!]));
+  // Whose happiness depends on where someone sits: themselves and everyone with a wish about them.
+  const watchers = new Map<string, string[]>();
+  for (const p of byUser.values())
+    for (const r of p.rules) if (r.kind === "near" || r.kind === "avoid") watchers.set(r.userId, [...(watchers.get(r.userId) ?? []), p.userId]);
+  const total = (uids: (string | undefined)[]) => {
+    const all = new Set<string>();
+    for (const u of uids) if (u) for (const x of [u, ...(watchers.get(u) ?? [])]) all.add(x);
+    let n = 0;
+    for (const u of all) {
+      const p = byUser.get(u);
+      if (p) n += happiness(p, seatOf, edges);
+    }
+    return n;
+  };
+  const place = (uid: string | undefined, s: PlanSeat) => {
+    if (!uid) return occupant.delete(s.id);
+    occupant.set(s.id, uid);
+    seatOf.set(uid, s);
+  };
+  const open = seats.filter((s) => !s.locked);
+  const order = [...movable].sort();
+  for (let round = 0; round < 50; round++) {
+    let better = false;
+    for (const uid of order) {
+      for (const s of open) {
+        const from = seatOf.get(uid)!;
+        if (s.id === from.id) continue;
+        const other = occupant.get(s.id);
+        if (other && !movable.has(other)) continue;
+        const before = total([uid, other]);
+        place(uid, s);
+        if (other) place(other, from);
+        else occupant.delete(from.id);
+        if (total([uid, other]) > before + 1e-9) {
+          better = true;
+          continue;
+        }
+        place(uid, from);
+        place(other, s);
+      }
+    }
+    if (!better) break;
+  }
 }
 
 /** `ok` is null while it can't be checked yet (you or the other person has no seat). */
@@ -188,3 +300,15 @@ export function checkWishes(seats: PlanSeat[], everyone: PlanPerson[], nameOf: (
   }
   return out;
 }
+
+/** Who a re-plan moved, by seat label (null: had or got no seat). Kept in the audit log for the plan history. */
+export type PlanMove = { u: string; from: string | null; to: string | null };
+/** Audit data holds flat strings only: "userId\tfrom\tto". */
+export const encodeMove = (m: PlanMove) => [m.u, m.from ?? "", m.to ?? ""].join("\t");
+export const decodeMoves = (v: unknown): PlanMove[] =>
+  Array.isArray(v)
+    ? v.flatMap((x) => {
+        const [u, from, to] = typeof x === "string" ? x.split("\t") : [];
+        return u ? [{ u, from: from || null, to: to || null }] : [];
+      })
+    : [];

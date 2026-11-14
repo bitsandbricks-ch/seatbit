@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import type { AuditEntry } from "@/db/schema";
 import { AUDIT_GROUPS, AUDIT_PAGE_SIZE, type AuditGroup, auditNames, describeAudit } from "@/lib/audit";
@@ -55,15 +56,11 @@ export function AuditLog({
   /** Shows the clan on each entry (platform log). */
   clanNames?: Map<string, string>;
 }) {
-  const name = auditNames(rows, t("audit.someone"));
-  const loc = t.locale;
-  const avatars = getAvatars(rows.map((r) => r.actorId).filter((x): x is string => !!x));
   const chip = (on: boolean) =>
     `inline-flex min-h-8 items-center whitespace-nowrap rounded-full border px-3 text-sm transition ${
       on ? "border-bit bg-bit/10 text-fg" : "border-line text-muted hover:text-fg"
     }`;
   const base = { ...filter, page: undefined };
-  const now = new Date();
 
   return (
     <div className="space-y-4">
@@ -121,34 +118,7 @@ export function AuditLog({
           {t("auditLog.emptyHint")}
         </EmptyState>
       ) : (
-        <ol className="-my-1 divide-y divide-line">
-          {rows.map((r) => (
-            <li key={r.id} className="flex gap-3 py-2.5">
-              <span className="mt-0.5 shrink-0">
-                {r.actorId ? (
-                  <Avatar data={avatars.get(r.actorId)} size={28} ring={false} />
-                ) : (
-                  <span className="grid h-7 w-7 place-items-center rounded-full bg-raised text-xs text-muted" aria-hidden>
-                    ⏱
-                  </span>
-                )}
-              </span>
-              <span className="min-w-0 flex-1 text-sm">
-                <span className="block">
-                  <span className="font-medium text-fg">{r.actorId ? name(r.actorId, t("auditLog.deletedMember")) : "Seatbit"}</span>{" "}
-                  <span className="text-fg/90">{describeAudit(r, name, t)}</span>
-                </span>
-                <span className="block text-xs text-muted">
-                  <time dateTime={r.at.toISOString()} title={fmtDate(r.at, loc)}>
-                    {fmtDate(r.at, loc)}
-                  </time>
-                  <span className="text-faint"> · {relative(r.at, now, loc)}</span>
-                  {clanNames && <span className="text-faint"> · {r.clanId ? clanNames.get(r.clanId) ?? t("auditLog.deletedClan") : t("auditLog.platform")}</span>}
-                </span>
-              </span>
-            </li>
-          ))}
-        </ol>
+        <AuditEntryList rows={rows} t={t} clanNames={clanNames} />
       )}
 
       {pages > 1 && (
@@ -182,4 +152,56 @@ export function auditQuery(f: AuditFilter, extra: Record<string, string> = {}) {
   if (f.clan) q.set("clan", f.clan);
   if (f.page) q.set("page", String(f.page + 1));
   return q.toString();
+}
+
+/**
+ * The entries themselves: avatar, who, what, when. Shared by the audit logs and the
+ * plan history on the seats tab; `detail` adds a line under an entry.
+ */
+export function AuditEntryList({
+  rows,
+  t,
+  clanNames,
+  detail,
+}: {
+  rows: AuditEntry[];
+  t: T;
+  clanNames?: Map<string, string>;
+  detail?: (r: AuditEntry, name: ReturnType<typeof auditNames>) => ReactNode;
+}) {
+  const name = auditNames(rows, t("audit.someone"));
+  const loc = t.locale;
+  const avatars = getAvatars(rows.map((r) => r.actorId).filter((x): x is string => !!x));
+  const now = new Date();
+  return (
+    <ol className="-my-1 divide-y divide-line">
+      {rows.map((r) => (
+        <li key={r.id} className="flex gap-3 py-2.5">
+          <span className="mt-0.5 shrink-0">
+            {r.actorId ? (
+              <Avatar data={avatars.get(r.actorId)} size={28} ring={false} />
+            ) : (
+              <span className="grid h-7 w-7 place-items-center rounded-full bg-raised text-xs text-muted" aria-hidden>
+                ⏱
+              </span>
+            )}
+          </span>
+          <span className="min-w-0 flex-1 text-sm">
+            <span className="block">
+              <span className="font-medium text-fg">{r.actorId ? name(r.actorId, t("auditLog.deletedMember")) : "Seatbit"}</span>{" "}
+              <span className="text-fg/90">{describeAudit(r, name, t)}</span>
+            </span>
+            <span className="block text-xs text-muted">
+              <time dateTime={r.at.toISOString()} title={fmtDate(r.at, loc)}>
+                {fmtDate(r.at, loc)}
+              </time>
+              <span className="text-faint"> · {relative(r.at, now, loc)}</span>
+              {clanNames && <span className="text-faint"> · {r.clanId ? clanNames.get(r.clanId) ?? t("auditLog.deletedClan") : t("auditLog.platform")}</span>}
+            </span>
+            {detail?.(r, name)}
+          </span>
+        </li>
+      ))}
+    </ol>
+  );
 }
