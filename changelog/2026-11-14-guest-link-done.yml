@@ -1,0 +1,14 @@
+date: 2026-11-14
+type: fixed
+en:
+  title: "Guest links no longer say they were used already"
+  text: >-
+    When signing in through a guest's link already took the guest over (invited by email or linked
+    via Discord), the link said it no longer works. It now confirms that your account took the guest
+    over and takes you to the clan.
+de:
+  title: "Gast-Links melden nicht mehr, sie seien schon verwendet"
+  text: >-
+    Wenn die Anmeldung über den Link eines Gasts den Gast schon übernommen hatte (per E-Mail
+    eingeladen oder über Discord verknüpft), meldete der Link, er funktioniere nicht mehr. Jetzt
+    bestätigt er, dass dein Konto den Gast übernommen hat, und führt dich zum Clan.

@@ -2,8 +2,9 @@ import Link from "next/link";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { claimGuest } from "@/app/clan-actions";
-import { btnPrimary, cardPage, cardPageTitle } from "@/components/ui";
+import { btnPrimary, btnSecondary, cardPage, cardPageTitle } from "@/components/ui";
 import { getClan } from "@/lib/clans";
+import { claimCodeWasUsed, takenGuestFor } from "@/lib/guest-claim";
 import { getCurrentUser, isProfileComplete } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { getT } from "@/i18n/server";
@@ -15,6 +16,29 @@ export default async function ClaimPage({ params }: PageProps<"/claim/[code]">) 
   const t = await getT();
   const g = db.select().from(schema.user).where(eq(schema.user.claimCode, code)).get();
   if (!g?.isGuest) {
+    // Signing in through the link can take the guest over on its own (verified email or a
+    // Discord account a lead linked), so the page the login sends back to must say "done".
+    if (claimCodeWasUsed(code)) {
+      const me = await getCurrentUser();
+      if (!me) redirect(`/login?next=${encodeURIComponent(`/claim/${code}`)}`);
+      const taken = takenGuestFor(me.id, { code });
+      const clan = taken?.clanId ? getClan(taken.clanId) : null;
+      if (taken)
+        return (
+          <div className={cardPage}>
+            <h1 className={cardPageTitle}>{t("claimLink.done")}</h1>
+            <p className="text-sm text-muted">
+              {t.rich(clan ? "claimLink.doneTextClan" : "claimLink.doneText", {
+                name: <span className="text-fg">{taken.guestName}</span>,
+                clan: clan?.name ?? "",
+              })}
+            </p>
+            <Link href={clan ? `/clans/${clan.slug}` : "/"} className={`${btnSecondary} w-full`}>
+              {clan ? t("discordClaim.open", { clan: clan.name }) : t("claimLink.goTo")}
+            </Link>
+          </div>
+        );
+    }
     return (
       <div className={cardPage}>
         <h1 className={cardPageTitle}>{t("claimLink.gone")}</h1>

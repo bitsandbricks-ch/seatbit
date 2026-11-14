@@ -144,6 +144,7 @@ export async function deleteAccount(userId: string) {
     tx.delete(schema.reminderLog).where(eq(schema.reminderLog.userId, userId)).run();
     tx.delete(schema.userActivity).where(eq(schema.userActivity.userId, userId)).run();
     tx.delete(schema.guestClaim).where(eq(schema.guestClaim.userId, userId)).run();
+    tx.delete(schema.takenGuest).where(eq(schema.takenGuest.userId, userId)).run();
     tx.delete(schema.emergencyInfo).where(eq(schema.emergencyInfo.userId, userId)).run();
     tx.update(schema.foodItem).set({ note: "" }).where(eq(schema.foodItem.userId, userId)).run();
     tx.update(schema.lanTask).set({ assigneeId: null }).where(eq(schema.lanTask.assigneeId, userId)).run();

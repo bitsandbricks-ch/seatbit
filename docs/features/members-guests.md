@@ -33,7 +33,7 @@ To hand a guest over to its owner:
 | Way | |
 | --- | --- |
 | **Email invite** | Enter their email and click **Send invite**. When they sign in with a Discord account with the same verified email, everything moves to their account automatically. This also works when the address already has a Seatbit account: they get the invite and take the guest over with their next sign-in. |
-| **Claim link** | Copy the guest's link and send it yourself (WhatsApp, Discord, ...). Whoever opens it and signs in takes the guest over. **New link** invalidates the old one. |
+| **Claim link** | Copy the guest's link and send it yourself (WhatsApp, Discord, ...). Whoever opens it, signs in and clicks **That's me, take it over** takes the guest over; just opening it (or a chat app's link preview) changes nothing. If the sign-in already took the guest over (verified email or linked Discord), the link says so instead of asking. **New link** invalidates the old one. |
 | **That's me** | The member claims the guest themselves, on the website or with `/claim` on Discord. See below. |
 | **`/guest` on Discord** | Say which Discord member the guest is. See [On Discord](#on-discord). |
 

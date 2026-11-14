@@ -269,6 +269,26 @@ export const guestClaim = sqliteTable(
   (t) => [uniqueIndex("guest_claim_guest_user").on(t.guestId, t.userId), index("guest_claim_clan_idx").on(t.clanId, t.status)],
 );
 
+/**
+ * A guest that a real account took over. The guest row is gone by then; this lets the
+ * claim link (or the bot's ticket) say "done" to that account instead of "link no longer
+ * works" when the takeover already happened at sign-in (verified email or linked Discord).
+ */
+export const takenGuest = sqliteTable(
+  "taken_guest",
+  {
+    guestId: text("guest_id").primaryKey(),
+    claimCode: text("claim_code").unique(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    guestName: text("guest_name").default("").notNull(),
+    clanId: text("clan_id").references(() => clan.id, { onDelete: "set null" }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  (t) => [index("taken_guest_user_idx").on(t.userId)],
+);
+
 /** Invite links: anyone with the code can join the clan as a member. */
 export const clanInvite = sqliteTable("clan_invite", {
   code: text("code").primaryKey(),
