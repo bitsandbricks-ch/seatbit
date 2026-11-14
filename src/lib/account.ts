@@ -333,7 +333,7 @@ export function exportUserData(userId: string) {
       arrivedAt: a.arrivedAt,
       seatWishes: {
         // Most important first.
-        rules: (a.wishRules ?? []).map((r) => (r.kind === "near" || r.kind === "avoid" ? { kind: r.kind, person: nameOf(r.userId) } : r)),
+        rules: (a.wishRules ?? []).map((r) => (r.kind === "near" || r.kind === "avoid" ? { ...r, userId: undefined, person: nameOf(r.userId) } : r)),
         note: a.wishNote,
       },
       orga: orgaOf.has(l.id),

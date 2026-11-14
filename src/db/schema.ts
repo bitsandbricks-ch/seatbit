@@ -342,6 +342,8 @@ export const lan = sqliteTable("lan", {
   // Optional self-pick step: while on and the plan isn't final, members who are coming choose their own free seat.
   // Stays on after finalizing (the event used self pick); reopening the plan turns it off.
   seatPicking: integer("seat_picking", { mode: "boolean" }).default(false).notNull(),
+  /** Re-plan the seats whenever someone changes their seat wishes (until the plan is final; not during self pick). */
+  seatAutoPlan: integer("seat_auto_plan", { mode: "boolean" }).default(false).notNull(),
   /**
    * The event's own seat plan (e.g. lal.gg's DotLAN "Sitzplan" page), where each
    * member books the seat the leads gave them. Per event: the plan id changes every year.

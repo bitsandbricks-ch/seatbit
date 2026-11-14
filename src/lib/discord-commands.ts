@@ -31,7 +31,8 @@ import {
 import { attendanceLocked, getDisplayNames, getLan, getNames, setAttendance, signupClosed, waitlistPositions } from "./lans";
 import { appUrl } from "./mail";
 import { saveNick, saveSeatWishes, saveTicketBought } from "./member-updates";
-import { MAX_SEAT_RULES, addRule, rulePeople, type SeatRule } from "./seat-rules";
+import { autoPlanAfterWishes } from "./seat-plan";
+import { MAX_SEAT_RULES, RANGE_KEY, addRule, rangeOf, rulePeople, type SeatRule } from "./seat-rules";
 import { nameMatches } from "./names";
 import { listGames } from "./games";
 import { type Notice, sendDiscordDm } from "./notify";
@@ -310,9 +311,9 @@ async function wishSummary(l: Lan, a: Attendance, t: T) {
   const line = (r: SeatRule) => {
     switch (r.kind) {
       case "near":
-        return `🤝 ${t("cmd.near")}: ${names.get(r.userId) ?? "?"}`;
+        return `🤝 ${t(`wishCheck.near.${RANGE_KEY[rangeOf(r)]}`, { name: names.get(r.userId) ?? "?" })}`;
       case "avoid":
-        return `🙅 ${t("cmd.notNextTo")}: ${names.get(r.userId) ?? "?"}`;
+        return `🙅 ${t(`wishCheck.avoid.${RANGE_KEY[rangeOf(r)]}`, { name: names.get(r.userId) ?? "?" })}`;
       case "seat":
         return `💺 ${t("cmd.seat", { seat: r.seat })}`;
       case "row":
@@ -385,6 +386,7 @@ async function wishCommand(i: Interaction): Promise<Json> {
   if (w.rules.length > MAX_SEAT_RULES) return reply(t("cmd.tooMany"));
   try {
     saveSeatWishes(l.id, me.id, w);
+    autoPlanAfterWishes(l.id, me.id);
   } catch {
     return reply(t("cmd.wishTooLong"));
   }

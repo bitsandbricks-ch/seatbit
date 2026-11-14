@@ -11,6 +11,11 @@ export const seatSetup: Messages["seatSetup"] = {
   replanConfirm: "Alle nicht gehaltenen Plätze neu planen? Die aktuellen Zuteilungen ändern sich.",
   planned: { one: "{count} Platz neu geplant.", other: "{count} Plätze neu geplant." },
   replan: "Alle neu planen",
+  auto: "Automatisch neu planen, wenn sich Wünsche ändern",
+  autoHint: "Jede Änderung an Platzwünschen plant alle nicht reservierten Plätze neu. Offene Sitzplan-Seiten aktualisieren sich selbst.",
+  autoPaused: { final: "Pausiert: Der Plan ist final.", picking: "Pausiert, solange Mitglieder ihren Platz selbst wählen." },
+  autoOnSaved: "Automatische Neuplanung ist an. Plätze neu geplant.",
+  autoOffSaved: "Automatische Neuplanung ist aus.",
   status:
-    "{unseated} kommen ohne Platz · {free} freie Plätze. Die Planung folgt den Platzwünschen (neben, nicht neben, Rand/Mitte, Wunschplatz) und setzt Leute mit Ticket zuerst.",
+    "{unseated} kommen ohne Platz · {free} freie Plätze. Die Planung folgt den Platzwünschen jedes Mitglieds in dessen Reihenfolge und setzt Leute mit Ticket zuerst.",
 };

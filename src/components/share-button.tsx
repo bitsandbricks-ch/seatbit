@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useT } from "@/i18n/client";
+import { headerAction, headerActionFrame } from "./ui";
 
 /**
  * Shares a link: the phone's share sheet (WhatsApp, Discord, ...) on touch devices,
@@ -33,13 +34,13 @@ export function ShareButton({ url, title, text }: { url: string; title: string; 
   return (
     <>
       {/* Same frame and height as the View / Manage switch next to it. */}
-      <div className="inline-flex rounded-lg border border-line bg-raised p-1">
+      <div className={headerActionFrame}>
         <button
           type="button"
           onClick={share}
           aria-label={t("share.shareLabel")}
           title={t("share.shareLabel")}
-          className="inline-flex min-h-10 items-center gap-1.5 rounded-md px-3.5 text-sm font-medium text-muted transition hover:bg-surface hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bit"
+          className={headerAction}
         >
           <ShareIcon />
           <span>{t("share.share")}</span>

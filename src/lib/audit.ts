@@ -227,7 +227,9 @@ export function describeAudit(
     case "seat.swap":
       return t(d.otherUserId ? "audit.seatSwap" : "audit.seatSwapMove", v);
     case "seat.auto":
-      return t(d.mode === "replan" ? "audit.replan" : "audit.autoAssign", v);
+      return t(d.mode === "replan" ? "audit.replan" : d.mode === "auto" ? "audit.autoReplan" : "audit.autoAssign", v);
+    case "seat.autoPlan":
+      return t(d.on ? "audit.autoPlanOn" : "audit.autoPlanOff", v);
     case "seat.layout":
       return t(d.spec ? "audit.layoutTo" : "audit.layout", v);
     case "seat.lock":

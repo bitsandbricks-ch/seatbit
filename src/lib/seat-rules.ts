@@ -7,9 +7,20 @@ import { z } from "zod";
 export const SEAT_RULE_KINDS = ["near", "avoid", "seat", "row", "edge", "middle"] as const;
 export type SeatRuleKind = (typeof SEAT_RULE_KINDS)[number];
 
+/** How close "near" means: seats apart at most, or anywhere in the same row. */
+export const NEAR_RANGES = [1, 2, 3, "row"] as const;
+export type NearRange = (typeof NEAR_RANGES)[number];
+/** Older wishes have no range: they meant "at most two seats apart". */
+export const DEFAULT_NEAR_RANGE: NearRange = 2;
+/** Older "not next to" wishes meant directly beside. */
+export const DEFAULT_AVOID_RANGE: NearRange = 1;
+/** The range a near or avoid rule means, with the defaults for older wishes. */
+export const rangeOf = (r: { kind: "near" | "avoid"; within?: NearRange }): NearRange =>
+  r.within ?? (r.kind === "near" ? DEFAULT_NEAR_RANGE : DEFAULT_AVOID_RANGE);
+
 export type SeatRule =
-  | { kind: "near"; userId: string }
-  | { kind: "avoid"; userId: string }
+  | { kind: "near"; userId: string; within?: NearRange }
+  | { kind: "avoid"; userId: string; within?: NearRange }
   | { kind: "seat"; seat: string }
   | { kind: "row"; row: string }
   | { kind: "edge" }
@@ -18,8 +29,16 @@ export type SeatRule =
 export const MAX_SEAT_RULES = 20;
 
 export const seatRuleSchema = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("near"), userId: z.string().min(1).max(64) }),
-  z.object({ kind: z.literal("avoid"), userId: z.string().min(1).max(64) }),
+  z.object({
+    kind: z.literal("near"),
+    userId: z.string().min(1).max(64),
+    within: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal("row")]).optional(),
+  }),
+  z.object({
+    kind: z.literal("avoid"),
+    userId: z.string().min(1).max(64),
+    within: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal("row")]).optional(),
+  }),
   z.object({ kind: z.literal("seat"), seat: z.string().trim().min(1).max(12) }),
   z.object({ kind: z.literal("row"), row: z.string().trim().min(1).max(4) }),
   z.object({ kind: z.literal("edge") }),
@@ -92,3 +111,10 @@ export const rulePeople = (rules: SeatRule[]) =>
  * much, so a higher rule always beats the one right below it.
  */
 export const rankWeight = (rank: number) => 0.6 ** rank;
+
+/** Whether two seats `d` apart in the same row (Infinity: other rows) are close enough. */
+export const withinRange = (d: number, within: NearRange = DEFAULT_NEAR_RANGE) =>
+  within === "row" ? Number.isFinite(d) : d <= within;
+
+/** Message key part for each range (message keys can't be numbers). */
+export const RANGE_KEY = { 1: "next", 2: "two", 3: "three", row: "row" } as const satisfies Record<NearRange, string>;
