@@ -14,8 +14,10 @@ Someone paid for the group tickets, the fuel for the van or the snacks? Log it o
 | **What for** | e.g. "Fuel for the van". |
 | **Amount** | In the platform currency. |
 | **Paid by** | You by default; anyone at the event. |
-| **Split evenly between** | Everyone coming is ticked by default. Untick people, or tick someone who isn't coming (a deposit before they dropped out). |
+| **Split evenly between** | A dropdown with everyone at the event; everyone coming is picked by default. Open it to search by name and tick or untick people, also someone who isn't coming (a deposit before they dropped out). **Everyone coming** and **Nobody** at the top reset the list. |
 | **Note** | Optional, e.g. where the receipt is. |
+
+![Picking who shares an expense](../screenshots/phone-costs-split.png){ .shot }
 
 The amount is split in whole cents; leftover cents go to the first people, so the parts always add up. **Details** on an expense shows everyone's share. Who logged it, who paid it, or a lead can edit or delete it.
 

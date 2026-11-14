@@ -61,6 +61,7 @@ import { memberList } from "./memberList";
 import { missing } from "./missing";
 import { missingSteps } from "./missingSteps";
 import { moderation } from "./moderation";
+import { multiSelect } from "./multiSelect";
 import { nav } from "./nav";
 import { newEvent } from "./newEvent";
 import { notice } from "./notice";
@@ -166,6 +167,7 @@ export const de: Messages = {
   missing,
   missingSteps,
   moderation,
+  multiSelect,
   nav,
   newEvent,
   notice,
