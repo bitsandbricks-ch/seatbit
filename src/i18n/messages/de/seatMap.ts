@@ -48,6 +48,7 @@ export const seatMap: Messages["seatMap"] = {
   ticketOk: "Ticket ok",
   ticketReported: "Ticket gemeldet",
   noTicket: "kein Ticket",
+  wishesMet: "Platzwünsche: {pct} erfüllt",
   heldText: "Reserviert, z. B. für einen Gast. Mitglieder bekommen ihn nicht automatisch.",
   nobody: "Hier sitzt noch niemand.",
   giveUp: "Meinen Platz freigeben",

@@ -1,0 +1,16 @@
+export const wishOverview = {
+  title: "Seat wishes",
+  hint: "How well the current seat plan meets everyone's wishes. Each member ranks their wishes, so a top wish counts more than one further down. Lowest scores first.",
+  met: "{pct} met",
+  overall: "Wishes met overall",
+  allMet: { one: "{count} of {total} member has every wish met", other: "{count} of {total} members have every wish met" },
+  open: { one: "{count} wish can't be checked yet (no seat)", other: "{count} wishes can't be checked yet (no seat)" },
+  none: "Nobody has sent seat wishes yet.",
+  seat: "Seat {seat}",
+  noSeat: "No seat yet",
+  notYet: "Not checked yet",
+  ranked: "Wishes of {name}, most important first",
+  srMet: "met:",
+  srMissed: "missed:",
+  srOpen: "not checked yet:",
+};

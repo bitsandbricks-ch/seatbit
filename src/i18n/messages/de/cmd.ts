@@ -46,6 +46,7 @@ export const cmd: Messages["cmd"] = {
   near: "Neben",
   notNextTo: "Nicht neben",
   seat: "Platz {seat}",
+  row: "Reihe {row}",
   noWishEvent: "Gerade nimmt kein Event Platzwünsche von dir an. Sag zuerst mit `/coming`, dass du kommst.",
   planFinal: "Der Sitzplan für {lan} steht. Frag einen Lead, wenn du wechseln musst.",
   yourWishes: "Deine Platzwünsche für {lan}:",
@@ -53,7 +54,7 @@ export const cmd: Messages["cmd"] = {
   noWishes: "Noch keine Platzwünsche für {lan}. Füg welche hinzu mit `/wish near:`, `avoid:`, `position:`, `seat:` oder `note:`.",
   unknownPerson:
     "Ich weiss nicht, wen du meinst. Wähl die Person aus den Vorschlägen, während du tippst; nur wer für dieses Event geantwortet hat, steht drin.",
-  tooMany: "Das sind mehr als 10 Personen. Starte mit `/wish clear:True` neu.",
+  tooMany: "Das sind mehr als 20 Wünsche. Starte mit `/wish clear:True` neu.",
   wishTooLong: "Das hat nicht geklappt: Ein Platz hat höchstens 12 Zeichen, eine Notiz höchstens 300.",
   wishesSaved: "Platzwünsche für {lan} gespeichert:",
   noneAnywhere: "keine (egal wo)",

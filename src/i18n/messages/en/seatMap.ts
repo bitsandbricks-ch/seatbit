@@ -46,6 +46,7 @@ export const seatMap = {
   ticketOk: "ticket ok",
   ticketReported: "ticket reported",
   noTicket: "no ticket",
+  wishesMet: "Seat wishes: {pct} met",
   heldText: "Held, e.g. for a guest. Members can't get it automatically.",
   nobody: "Nobody sits here yet.",
   giveUp: "Give up my seat",

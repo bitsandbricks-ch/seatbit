@@ -446,8 +446,15 @@ export async function seedDemo({ force = false, discord = false } = {}) {
           ticketBought: !!a.ticket,
           paid: !!a.paid,
           seatBooked: !!a.booked,
-          wishNear: key === "anna" ? [ids.chiara, ids.alex] : key === "chiara" ? [ids.anna] : [],
-          wishPosition: key === "david" ? "edge" : "any",
+          // Ranked seat wishes, most important first.
+          wishRules:
+            key === "anna"
+              ? [{ kind: "near", userId: ids.chiara }, { kind: "row", row: "F" }, { kind: "near", userId: ids.alex }, { kind: "edge" }]
+              : key === "chiara"
+                ? [{ kind: "near", userId: ids.anna }]
+                : key === "david"
+                  ? [{ kind: "edge" }, { kind: "avoid", userId: ids.anna }]
+                  : [],
           wishNote: key === "anna" ? "Next to Pixel please, we share a power strip." : "",
           note: key === "paula" ? "Ticket comes with my next salary." : "",
         })

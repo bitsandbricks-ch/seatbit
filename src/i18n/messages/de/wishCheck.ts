@@ -5,5 +5,6 @@ export const wishCheck: Messages["wishCheck"] = {
   notNextTo: "nicht neben {name}",
   edge: "am Rand",
   middle: "in der Mitte",
+  row: "Reihe {row}",
   seat: "Platz {seat}",
 };

@@ -54,7 +54,7 @@ export const event: Messages["event"] = {
   noSeatsYet: "Die Leads haben die Plätze der Gruppe noch nicht erfasst.",
   groupSeats: "Die Gruppe hat {count} Plätze ({range}). Die Leads verteilen sie nach der Frist und machen den Sitzplan dann hier definitiv.",
   seatWishes: "Platzwünsche",
-  seatWishesIntro: "Sag den Leads, wo du gerne sitzen möchtest. Sie planen die Plätze nach der Frist.",
+  seatWishesIntro: "Sag den Leads, wo du gerne sitzen möchtest, den wichtigsten Wunsch zuerst. Sie planen die Plätze nach der Frist.",
   swapSeats: "Plätze tauschen",
   attendeesTitle: "Teilnehmer ({count})",
   attendeesTitleOf: "Teilnehmer ({count} / {capacity})",

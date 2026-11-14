@@ -11,6 +11,7 @@ import {
   toggleSeatRow,
 } from "@/app/actions";
 import { rowLetter } from "@/lib/seat-labels";
+import type { WishItem } from "@/lib/seating";
 import { Card, Pill, Segmented, btnGhost, btnPrimary, btnSecondary, input } from "./ui";
 import { nameMatches } from "@/lib/names";
 import { useT } from "@/i18n/client";
@@ -40,7 +41,8 @@ export type SeatPerson = {
   /** Their profile on the event's site. */
   profileUrl?: string;
   ticket?: "ok" | "reported" | "open";
-  wishes?: { ok: string[]; missed: string[] };
+  /** Seat wishes in ranked order, with the weighted share met. */
+  wishes?: { items: WishItem[]; score: number | null };
 };
 
 type Zoom = "compact" | "large";
@@ -671,18 +673,20 @@ function SeatDetails({
               )}
             </p>
           )}
-          {admin && person?.wishes && (person.wishes.ok.length > 0 || person.wishes.missed.length > 0) && (
-            <div className="mt-2 flex flex-wrap gap-1">
-              {person.wishes.ok.map((w) => (
-                <Pill key={w} tone="emerald">
-                  ✓ {w}
-                </Pill>
-              ))}
-              {person.wishes.missed.map((w) => (
-                <Pill key={w} tone="red">
-                  ✗ {w}
-                </Pill>
-              ))}
+          {admin && person?.wishes && person.wishes.items.length > 0 && (
+            <div className="mt-2">
+              {person.wishes.score !== null && (
+                <p className="mb-1 text-xs text-muted">{t("seatMap.wishesMet", { pct: `${Math.round(person.wishes.score * 100)}%` })}</p>
+              )}
+              <ol className="flex flex-wrap gap-1">
+                {person.wishes.items.map((w) => (
+                  <li key={w.rank}>
+                    <Pill tone={w.ok === null ? "zinc" : w.ok ? "emerald" : "red"}>
+                      {w.rank}. {w.ok === null ? "·" : w.ok ? "✓" : "✗"} {w.text}
+                    </Pill>
+                  </li>
+                ))}
+              </ol>
             </div>
           )}
         </div>

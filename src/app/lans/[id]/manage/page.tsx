@@ -25,7 +25,8 @@ import { whatsappTexts } from "@/lib/announce";
 import { discordEnabled, inviteUrl } from "@/lib/discord-api";
 import { clanCan, getClan } from "@/lib/clans";
 import { SeatFlow } from "@/components/seat-flow";
-import { checkWishes } from "@/lib/seating";
+import { checkWishes, overallScore } from "@/lib/seating";
+import { WishOverview, type WishRow } from "@/components/wish-overview";
 import { getLanAccounts } from "@/lib/lan-accounts";
 import { LeadBookingList } from "@/components/seat-booking";
 import { LeadChecklist } from "@/components/lead-checklist";
@@ -186,15 +187,25 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
   const due = dueKinds(l);
   const planPeople = going.map((r) => ({
     userId: r.userId,
-    near: r.wishNear ?? [],
-    avoid: r.wishAvoid ?? [],
-    position: r.wishPosition,
-    seat: r.wishSeat,
+    rules: r.wishRules ?? [],
     priority: 0,
     order: 0,
   }));
   const wishChecks = checkWishes(seats, planPeople, (uid) => names.get(uid) ?? "?", t);
-  const wishNotes = going.filter((r) => r.wishNote);
+  const wishRows: WishRow[] = going
+    .filter((r) => (r.wishRules ?? []).length > 0 || r.wishNote)
+    .map((r) => {
+      const c = wishChecks.find((w) => w.userId === r.userId);
+      return {
+        userId: r.userId,
+        name: names.get(r.userId) ?? "?",
+        full: people.get(r.userId)?.full,
+        seat: seatOf.get(r.userId) ?? null,
+        items: c?.items ?? [],
+        score: c?.score ?? null,
+        note: r.wishNote,
+      };
+    });
   const now = new Date();
   // Trust based: the member's own "I have my ticket" counts.
   const withTicket = going.filter((r) => r.ticketBought || r.paid).length;
@@ -375,40 +386,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               )}
             </Card>
           )}
-          {wishChecks.length > 0 && (
-            <Card title={t("cmd.seatWishes")}>
-              <ul className="space-y-2 text-sm">
-                {wishChecks.map((w) => (
-                  <li key={w.userId} className="flex flex-wrap gap-1.5">
-                    <span className="mr-1 font-medium">{names.get(w.userId)}</span>
-                    {w.ok.map((x) => (
-                      <Pill key={x} tone="emerald">
-                        ✓ {x}
-                      </Pill>
-                    ))}
-                    {w.missed.map((x) => (
-                      <Pill key={x} tone="red">
-                        ✗ {x}
-                      </Pill>
-                    ))}
-                  </li>
-                ))}
-              </ul>
-              {wishNotes.length > 0 && (
-                <div className="mt-4 border-t border-line pt-3">
-                  <p className="mb-2 text-xs uppercase tracking-wide text-faint">{t("manage.notes")}</p>
-                  <ul className="space-y-1 text-sm">
-                    {wishNotes.map((r) => (
-                      <li key={r.id}>
-                        <span className="font-medium">{names.get(r.userId)}:</span>{" "}
-                        <span className="text-fg/90">{r.wishNote}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </Card>
-          )}
+          {seats.length > 0 && <WishOverview rows={wishRows} overall={overallScore(wishChecks)} t={t} />}
           </div>
   );
 
@@ -685,7 +663,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
                       lanAccount: lanIds.get(r.userId) || undefined,
                       profileUrl: profileLink(profilePat, lanIds.get(r.userId)) ?? undefined,
                       ticket: r.paid || r.ticketBought ? ("ok" as const) : ("open" as const),
-                      wishes: w ? { ok: w.ok, missed: w.missed } : undefined,
+                      wishes: w ? { items: w.items, score: w.score } : undefined,
                     };
                   })
                   .sort((a, b) => a.name.localeCompare(b.name))}

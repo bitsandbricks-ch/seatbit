@@ -13,3 +13,8 @@ export function seatLabel(row: number, col: number) {
   return `${rowLetter(row)}${col + 1}`;
 }
 
+
+/** The row a seat is in, as people see it: the letters its label starts with ("F" for F7). */
+export function seatRow(seat: { label: string; row: number }): string {
+  return (seat.label.match(/^[A-Za-z]+/)?.[0] ?? rowLetter(seat.row)).toUpperCase();
+}

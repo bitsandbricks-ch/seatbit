@@ -8,6 +8,7 @@ import { cancelSupport } from "./billing";
 import { GUEST_EMAIL_DOMAIN } from "./guests";
 import { getDefaultNames, setAttendance } from "./lans";
 import { appUrl } from "./mail";
+import { rulePeople } from "./seat-rules";
 
 const { user, clan, clanMember, attendance, seat, lan } = schema;
 
@@ -118,15 +119,14 @@ export async function deleteAccount(userId: string) {
       tx.delete(attendance).where(inArray(attendance.id, upcoming.map((u) => u.a.id))).run();
     // Past events keep the answer, but not the personal bits.
     tx.update(attendance)
-      .set({ note: "", wishNear: [], wishAvoid: [], wishPosition: "any", wishSeat: "", wishNote: "" })
+      .set({ note: "", wishRules: [], wishNote: "" })
       .where(eq(attendance.userId, userId))
       .run();
     tx.update(seat).set({ userId: null }).where(eq(seat.userId, userId)).run();
     // Others' seat wishes that name this person.
-    for (const col of ["wish_near", "wish_avoid"] as const)
-      tx.run(
-        sql`UPDATE attendance SET ${sql.raw(col)} = (SELECT json_group_array(value) FROM json_each(${sql.raw(col)}) WHERE value != ${userId}) WHERE ${sql.raw(col)} LIKE ${`%"${userId}"%`}`,
-      );
+    tx.run(
+      sql`UPDATE attendance SET wish_rules = (SELECT json_group_array(json(value) ORDER BY key) FROM json_each(wish_rules) WHERE json_extract(value, '$.userId') IS NOT ${userId}) WHERE wish_rules LIKE ${`%"${userId}"%`}`,
+    );
     tx.delete(schema.session).where(eq(schema.session.userId, userId)).run();
     tx.delete(schema.account).where(eq(schema.account.userId, userId)).run();
     tx.delete(schema.verification).where(eq(schema.verification.identifier, me.email)).run();
@@ -269,7 +269,7 @@ export function exportUserData(userId: string) {
 
   // Names of the other people that show up in the data (seat wishes, swaps, log).
   const otherIds = [
-    ...atts.flatMap(({ a }) => [...(a.wishNear ?? []), ...(a.wishAvoid ?? [])]),
+    ...atts.flatMap(({ a }) => rulePeople(a.wishRules ?? [])),
     ...swaps.flatMap((s) => [s.fromUserId, s.toUserId]),
     ...costShares.map(({ e }) => e.paidBy),
     ...costSettlements.flatMap((s) => [s.fromUserId, s.toUserId]),
@@ -332,10 +332,8 @@ export function exportUserData(userId: string) {
       seatBookedOnEventSite: a.seatBooked,
       arrivedAt: a.arrivedAt,
       seatWishes: {
-        sitNear: (a.wishNear ?? []).map(nameOf),
-        notNextTo: (a.wishAvoid ?? []).map(nameOf),
-        position: a.wishPosition,
-        seat: a.wishSeat,
+        // Most important first.
+        rules: (a.wishRules ?? []).map((r) => (r.kind === "near" || r.kind === "avoid" ? { kind: r.kind, person: nameOf(r.userId) } : r)),
         note: a.wishNote,
       },
       orga: orgaOf.has(l.id),

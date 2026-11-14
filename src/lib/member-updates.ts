@@ -7,6 +7,7 @@ import { z } from "zod";
 import { db, schema } from "@/db";
 import { cleanName } from "./names";
 import { makeT, type T } from "../i18n/translate";
+import { normalizeRules, seatRulesSchema } from "./seat-rules";
 
 const { attendance, nickname } = schema;
 
@@ -53,10 +54,7 @@ export function saveTicketBought(lanId: string, userId: string, bought: boolean,
 }
 
 export const wishInput = z.object({
-  near: z.array(z.string()).max(10),
-  avoid: z.array(z.string()).max(10),
-  position: z.enum(["any", "edge", "middle"]),
-  seat: z.string().trim().max(12),
+  rules: seatRulesSchema,
   note: z.string().trim().max(300),
 });
 export type SeatWishes = z.output<typeof wishInput>;
@@ -67,13 +65,7 @@ export function saveSeatWishes(lanId: string, userId: string, input: z.input<typ
   const a = myAttendance(lanId, userId);
   if (!a) throw new Error(t("errors.comingFirst"));
   db.update(attendance)
-    .set({
-      wishNear: w.near.filter((x) => x !== userId),
-      wishAvoid: w.avoid.filter((x) => x !== userId && !w.near.includes(x)),
-      wishPosition: w.position,
-      wishSeat: w.seat.toUpperCase(),
-      wishNote: w.note,
-    })
+    .set({ wishRules: normalizeRules(w.rules, userId), wishNote: w.note })
     .where(eq(attendance.id, a.id))
     .run();
 }
