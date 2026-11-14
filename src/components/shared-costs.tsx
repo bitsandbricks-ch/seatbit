@@ -6,6 +6,8 @@ import { fmtAmount } from "@/lib/money";
 import { Card, Pill, btnGhost, btnPrimary, btnSecondary, input, label } from "./ui";
 import { useT } from "@/i18n/client";
 import { useRunAction } from "./action-form";
+import { MultiSelect } from "./multi-select";
+import type { AvatarData } from "@/lib/avatars";
 
 function useRun() {
   const t = useT();
@@ -18,7 +20,7 @@ function useRun() {
   return { pending, run, t };
 }
 
-export type CostPerson = { id: string; name: string; going: boolean };
+export type CostPerson = { id: string; name: string; going: boolean; avatar?: AvatarData };
 
 type Props = {
   lanId: string;
@@ -286,14 +288,7 @@ function ExpenseForm({
   const [picked, setPicked] = useState<Set<string>>(new Set(start));
   const [key, setKey] = useState(0);
   // People on an expense who have since left the list still show, so editing doesn't drop them.
-  const list = [...people, ...start.filter((id) => !people.some((x) => x.id === id)).map((id) => ({ id, name: "?", going: false }))];
-  const toggle = (id: string) =>
-    setPicked((s) => {
-      const n = new Set(s);
-      if (n.has(id)) n.delete(id);
-      else n.add(id);
-      return n;
-    });
+  const list = [...people, ...start.filter((id) => !people.some((x) => x.id === id)).map((id): CostPerson => ({ id, name: "?", going: false }))];
   return (
     <form
       key={key}
@@ -338,34 +333,20 @@ function ExpenseForm({
           ))}
         </select>
       </label>
-      <fieldset aria-label={t("costs.splitLabel")}>
-        <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
-          <span className={`${label} !mb-0`}>
-            {t("costs.splitLabel")} <span className="text-faint">{picked.size}</span>
-          </span>
-          <span className="flex gap-1">
-            <button type="button" className={`${btnGhost} !min-h-8 !px-2 text-xs`} onClick={() => setPicked(new Set(going))}>
-              {t("costs.everyoneComing")}
-            </button>
-            <button type="button" className={`${btnGhost} !min-h-8 !px-2 text-xs`} onClick={() => setPicked(new Set())}>
-              {t("costs.nobody")}
-            </button>
-          </span>
-        </div>
-        <div className="flex flex-wrap gap-1.5">
-          {list.map((x) => (
-            <label
-              key={x.id}
-              className={`flex min-h-9 cursor-pointer items-center gap-1.5 rounded-md border px-2.5 text-sm ${
-                picked.has(x.id) ? "border-bit bg-bit-soft text-fg" : "border-line text-muted"
-              }`}
-            >
-              <input type="checkbox" name="people" value={x.id} checked={picked.has(x.id)} onChange={() => toggle(x.id)} className="h-4 w-4 accent-bit" />
-              {x.id === meId ? t("costs.you") : x.name}
-            </label>
-          ))}
-        </div>
-      </fieldset>
+      <div>
+        <span className={label}>{t("costs.splitLabel")}</span>
+        <MultiSelect
+          name="people"
+          label={t("costs.splitLabel")}
+          value={picked}
+          onChange={setPicked}
+          options={list.map((x) => ({ id: x.id, label: x.id === meId ? t("costs.you") : x.name, avatar: x.avatar }))}
+          presets={[
+            { label: t("costs.everyoneComing"), ids: going },
+            { label: t("costs.nobody"), ids: [] },
+          ]}
+        />
+      </div>
       <label className="block">
         <span className={label}>{t("costs.note")}</span>
         <input name="note" maxLength={300} defaultValue={edit?.note} placeholder={t("costs.notePh")} className={input} />

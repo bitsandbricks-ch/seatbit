@@ -10,9 +10,16 @@ test("shared costs: a member logs an expense, another pays them back, the balanc
   await anna.goto(`/lans/${lanId}?tab=costs`);
   await anna.locator('input[name="title"]').fill("Snacks");
   await anna.locator('input[name="amount"]').fill("30");
+  // Pick who shares it in the dropdown: clear it, then search for Ben.
+  await anna.getByRole("button", { name: "Split evenly between" }).click();
+  const list = anna.getByRole("listbox", { name: "Split evenly between" });
   await anna.getByRole("button", { name: "Nobody" }).click();
-  await anna.getByRole("checkbox", { name: "You", exact: true }).check();
-  await anna.getByRole("checkbox", { name: /Ben/ }).check();
+  await list.getByRole("option", { name: "You", exact: true }).click();
+  await anna.getByRole("searchbox", { name: "Search" }).fill("ben");
+  await expect(list.getByRole("option", { name: "You", exact: true })).toHaveCount(0);
+  await list.getByRole("option", { name: /Ben/ }).click();
+  await expect(list.getByRole("option", { name: /Ben/ })).toHaveAttribute("aria-selected", "true");
+  await anna.getByRole("button", { name: "Done" }).click();
   await anna.getByRole("button", { name: "Add expense", exact: true }).click();
   await expect(anna.getByText("You get CHF 15.00 back in total.")).toBeVisible();
   expect(db().select().from(costExpense).where(eq(costExpense.lanId, lanId)).get()).toMatchObject({ amountCents: 3000, paidBy: userId("anna") });

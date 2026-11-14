@@ -291,10 +291,11 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
         )
       : {};
   const goingIds = new Set(going.map((r) => r.userId));
+  const costAvatars = tab === "costs" ? getAvatars([...costIds, me.id]) : new Map<string, AvatarData>();
   const costPeopleList: CostPerson[] =
     tab === "costs"
       ? [...new Set([...costIds, ...(isAdmin ? [me.id] : [])])]
-          .map((uid) => ({ id: uid, name: costNames[uid] ?? "?", going: goingIds.has(uid) }))
+          .map((uid) => ({ id: uid, name: costNames[uid] ?? "?", going: goingIds.has(uid), avatar: costAvatars.get(uid) }))
           .sort((a, b) => Number(b.id === me.id) - Number(a.id === me.id) || Number(b.going) - Number(a.going) || a.name.localeCompare(b.name))
       : [];
   const costDates: Record<string, string> =
