@@ -28,6 +28,7 @@ import * as backups from "../../src/app/admin/backups/actions";
 import * as emergency from "../../src/app/emergency-actions";
 import * as costs from "../../src/app/cost-actions";
 import * as seatPlan from "../../src/app/seat-plan-actions";
+import * as seatWish from "../../src/app/seat-wish-actions";
 import * as metrics from "../../src/app/api/metrics/route";
 import * as leadExport from "../../src/app/lans/[id]/manage/export/route";
 import * as profileExport from "../../src/app/profile/export/route";
@@ -53,6 +54,7 @@ export const MODULES = {
   "emergency-actions": emergency,
   "cost-actions": costs,
   "seat-plan-actions": seatPlan,
+  "seat-wish-actions": seatWish,
 } as const;
 
 export type Spec = {
@@ -93,6 +95,7 @@ const VIEWERS: Actor[] = ["support", "moderator"];
 const LAKESIDE_ATTENDEES: Actor[] = MEMBERS;
 
 /** Reads one column of a LAN, for calls that flip a switch. */
+const lanNumber = (lanId: string, col: string) => (db.$client.prepare(`SELECT ${col} AS v FROM lan WHERE id = ?`).get(lanId) as { v: number }).v;
 const lanFlag = (lanId: string, col: string) => !!(db.$client.prepare(`SELECT ${col} AS v FROM lan WHERE id = ?`).get(lanId) as { v: number }).v;
 
 const params = <T>(p: T) => ({ params: Promise.resolve(p) });
@@ -168,6 +171,16 @@ export const SPECS: Spec[] = [
   { name: "actions.adminSetSeatFor", allow: LAN_MANAGERS, run: () => actions.adminSetSeatFor(fx.lan, ACTORS.member, fx.freeSeat) },
   { name: "actions.adminAutoAssignSeats", allow: LAN_MANAGERS, run: () => actions.adminAutoAssignSeats(fx.lan, "replan") },
   { name: "seat-plan-actions.setSeatAutoPlan", allow: LAN_MANAGERS, run: () => seatPlan.setSeatAutoPlan(fx.lan, !lanFlag(fx.lan, "seat_auto_plan")) },
+  {
+    name: "seat-plan-actions.setSeatNearRange",
+    allow: EVENT_MANAGERS,
+    run: () => seatPlan.setSeatNearRange(fx.pickLan, lanNumber(fx.pickLan, "seat_near_range") === 3 ? 5 : 3),
+  },
+  {
+    name: "seat-wish-actions.setMemberSeatWishes",
+    allow: EVENT_MANAGERS,
+    run: () => seatWish.setMemberSeatWishes(fx.pickLan, ACTORS.member, { rules: [{ kind: "middle" }, { kind: "avoid", userId: ACTORS.lead }], note: `lead ${Date.now()}` }),
+  },
   { name: "actions.publishSeats", allow: EVENT_MANAGERS, run: () => actions.publishSeats(fx.pickLan, false) },
   { name: "actions.unpublishSeats", allow: LAN_MANAGERS, run: () => actions.unpublishSeats(fx.lan) },
   { name: "actions.saveLanType (new)", allow: EVENT_MANAGERS, run: () => actions.saveLanType(undefined, form({ clanId: fx.clan, name: "New type", reminderDays: "3", durationHours: "48" })) },

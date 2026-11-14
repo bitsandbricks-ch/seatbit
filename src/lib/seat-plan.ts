@@ -3,6 +3,7 @@ import { db, schema } from "@/db";
 import { auditLan } from "./audit";
 import { clearSeatBooked } from "./seat-booking";
 import { encodeMove, planSeats } from "./seating";
+import { normalizeRules } from "./seat-rules";
 
 const { attendance, lan, seat } = schema;
 
@@ -15,7 +16,7 @@ export function planPeople(lanId: string) {
     .all()
     .map((a) => ({
       userId: a.userId,
-      rules: a.wishRules ?? [],
+      rules: normalizeRules(a.wishRules ?? [], a.userId),
       priority: a.paid ? 2 : a.ticketBought ? 1 : 0,
       order: a.createdAt.getTime(),
     }));
@@ -29,11 +30,12 @@ export function planPeople(lanId: string) {
 export function planAndAssign(lanId: string, mode: "fill" | "replan") {
   const before = db.select().from(seat).where(eq(seat.lanId, lanId)).all();
   const everyone = planPeople(lanId);
+  const nearRange = db.select({ r: lan.seatNearRange }).from(lan).where(eq(lan.id, lanId)).get()?.r;
   const plan = db.transaction((tx) => {
     if (mode === "replan") tx.update(seat).set({ userId: null }).where(and(eq(seat.lanId, lanId), eq(seat.locked, false))).run();
     const seats = tx.select().from(seat).where(eq(seat.lanId, lanId)).all();
     const seated = new Set(seats.map((s) => s.userId).filter(Boolean));
-    const p = planSeats(seats, everyone.filter((x) => !seated.has(x.userId)), everyone);
+    const p = planSeats(seats, everyone.filter((x) => !seated.has(x.userId)), everyone, { nearRange });
     for (const [userId, seatId] of p) tx.update(seat).set({ userId }).where(eq(seat.id, seatId)).run();
     return p;
   });

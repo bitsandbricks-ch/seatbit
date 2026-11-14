@@ -449,7 +449,7 @@ export async function seedDemo({ force = false, discord = false } = {}) {
           // Ranked seat wishes, most important first.
           wishRules:
             key === "anna"
-              ? [{ kind: "near", userId: ids.chiara }, { kind: "row", row: "F" }, { kind: "near", userId: ids.alex }, { kind: "edge" }]
+              ? [{ kind: "next", userId: ids.chiara }, { kind: "row", row: "F" }, { kind: "near", userId: ids.alex }, { kind: "edge" }, { kind: "avoid", userId: ids.david }]
               : key === "chiara"
                 ? [{ kind: "near", userId: ids.anna }]
                 : key === "david"

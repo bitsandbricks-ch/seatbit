@@ -24,6 +24,7 @@ export type NoticeKind =
   | "waitlist_spot"
   | "seats_published"
   | "seat_changed"
+  | "seat_wishes_changed"
   | "lan_changed"
   | "clan_request"
   | "clan_approved"

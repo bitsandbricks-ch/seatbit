@@ -49,6 +49,8 @@ export const audit: Messages["audit"] = {
   seatSwap: "hat {who} ({a}) und {other} ({b}) getauscht{at}",
   seatSwapMove: "hat {who} von {a} nach {b} verschoben{at}",
   autoReplan: "hat die Platzwünsche geändert, darum wurden die Plätze neu geplant{at} ({count} platziert)",
+  wishesChanged: "hat die Platzwünsche von {who} geändert{at}",
+  nearRange: "hat «nahe» auf innerhalb von {range} Plätzen gesetzt{at}",
   autoPlanOn: "hat die automatische Neuplanung bei geänderten Wünschen eingeschaltet{at}",
   autoPlanOff: "hat die automatische Neuplanung bei geänderten Wünschen ausgeschaltet{at}",
   replan: "hat alle Plätze neu geplant{at} ({count} platziert)",

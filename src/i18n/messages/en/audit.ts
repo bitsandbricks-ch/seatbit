@@ -47,6 +47,8 @@ export const audit = {
   seatSwap: "swapped {who} ({a}) and {other} ({b}){at}",
   seatSwapMove: "moved {who} from {a} to {b}{at}",
   autoReplan: "changed their seat wishes, so the seats were re-planned{at} ({count} seated)",
+  wishesChanged: "changed the seat wishes of {who}{at}",
+  nearRange: "set “near” to within {range} seats{at}",
   autoPlanOn: "turned on automatic re-planning when wishes change{at}",
   autoPlanOff: "turned off automatic re-planning when wishes change{at}",
   replan: "re-planned all seats{at} ({count} seated)",

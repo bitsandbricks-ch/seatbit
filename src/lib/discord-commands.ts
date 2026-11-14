@@ -32,7 +32,8 @@ import { attendanceLocked, getDisplayNames, getLan, getNames, setAttendance, sig
 import { appUrl } from "./mail";
 import { saveNick, saveSeatWishes, saveTicketBought } from "./member-updates";
 import { autoPlanAfterWishes } from "./seat-plan";
-import { MAX_SEAT_RULES, RANGE_KEY, addRule, rangeOf, rulePeople, type SeatRule } from "./seat-rules";
+import { MAX_NEAR, addRule, normalizeRules, rulePeople, rulesProblem, type SeatRule } from "./seat-rules";
+import { wishLines } from "./wish-text";
 import { nameMatches } from "./names";
 import { listGames } from "./games";
 import { type Notice, sendDiscordDm } from "./notify";
@@ -289,7 +290,7 @@ function nickCommand(i: Interaction): Handled {
 
 // ---------- Seat wishes ----------
 
-const POSITIONS = { any: "cmd.pos.any", edge: "cmd.pos.edge", middle: "cmd.pos.middle" } as const;
+type Position = "any" | "edge" | "middle";
 
 /** People at the event someone can wish to sit near or away from. */
 async function wishPeople(l: Lan, meId: string) {
@@ -306,25 +307,9 @@ const wishEvents = (events: Lan[], meId: string) =>
   });
 
 async function wishSummary(l: Lan, a: Attendance, t: T) {
-  const rules = a.wishRules ?? [];
+  const rules = normalizeRules(a.wishRules ?? [], a.userId);
   const names = await getDisplayNames(l.id, rulePeople(rules));
-  const line = (r: SeatRule) => {
-    switch (r.kind) {
-      case "near":
-        return `🤝 ${t(`wishCheck.near.${RANGE_KEY[rangeOf(r)]}`, { name: names.get(r.userId) ?? "?" })}`;
-      case "avoid":
-        return `🙅 ${t(`wishCheck.avoid.${RANGE_KEY[rangeOf(r)]}`, { name: names.get(r.userId) ?? "?" })}`;
-      case "seat":
-        return `💺 ${t("cmd.seat", { seat: r.seat })}`;
-      case "row":
-        return `💺 ${t("cmd.row", { row: r.row })}`;
-      case "edge":
-      case "middle":
-        return `📍 ${t(POSITIONS[r.kind])}`;
-    }
-  };
-  // Numbered, because the order is the priority.
-  const lines = rules.map((r, i) => `${i + 1}. ${line(r)}`);
+  const lines = wishLines(rules, t, (id) => names.get(id) ?? "?", l.seatNearRange);
   if (a.wishNote) lines.push(`📝 ${clip(a.wishNote, 300)}`);
   return lines.join("\n");
 }
@@ -343,13 +328,14 @@ async function wishCommand(i: Interaction): Promise<Json> {
   const a = myRow(l.id, me.id);
   if (!a || a.status === "declined") return reply(t("cmd.comingFirst", { lan: `**${l.name}**` }));
 
+  const next = opt(i, "next");
   const near = opt(i, "near");
   const avoid = opt(i, "avoid");
-  const position = opt(i, "position") as keyof typeof POSITIONS | undefined;
+  const position = opt(i, "position") as Position | undefined;
   const seatWish = opt(i, "seat");
   const note = opt(i, "note");
   const clear = boolOpt(i, "clear") ?? false;
-  const changes = [near, avoid, position, seatWish, note].some((v) => v !== undefined) || clear;
+  const changes = [next, near, avoid, position, seatWish, note].some((v) => v !== undefined) || clear;
   const open_ = [openButton(l, t)];
   if (!changes) {
     const now = await wishSummary(l, a, t);
@@ -362,20 +348,23 @@ async function wishCommand(i: Interaction): Promise<Json> {
   }
 
   // Someone picked from the suggestions (a user id) or typed a name that matches one person.
-  const people = near || avoid ? await wishPeople(l, me.id) : [];
+  const people = next || near || avoid ? await wishPeople(l, me.id) : [];
   const person = (v: string) => {
     const byId = people.find((p) => p.id === v);
     if (byId) return byId;
     const byName = people.filter((p) => nameMatches(p.name, v));
     return byName.length === 1 ? byName[0] : undefined;
   };
+  const nextP = next ? person(next) : undefined;
   const nearP = near ? person(near) : undefined;
   const avoidP = avoid ? person(avoid) : undefined;
-  if ((near && !nearP) || (avoid && !avoidP))
+  if ((next && !nextP) || (near && !nearP) || (avoid && !avoidP))
     return reply(t("cmd.unknownPerson"));
 
-  let w: { rules: SeatRule[]; note: string } = clear ? { rules: [], note: "" } : { rules: a.wishRules ?? [], note: a.wishNote };
+  let w: { rules: SeatRule[]; note: string } = clear ? { rules: [], note: "" } : { rules: normalizeRules(a.wishRules ?? [], me.id), note: a.wishNote };
   // New wishes go to the end of the list; one that contradicts an older wish takes its place.
+  // A new "right next to" replaces the old one: there is only one.
+  if (nextP) w = { ...w, rules: addRule(w.rules.map((r) => (r.kind === "next" ? { kind: "near", userId: r.userId } : r)), { kind: "next", userId: nextP.id }) };
   if (nearP) w = { ...w, rules: addRule(w.rules, { kind: "near", userId: nearP.id }) };
   if (avoidP) w = { ...w, rules: addRule(w.rules, { kind: "avoid", userId: avoidP.id }) };
   if (position === "any") w = { ...w, rules: w.rules.filter((r) => r.kind !== "edge" && r.kind !== "middle") };
@@ -383,7 +372,9 @@ async function wishCommand(i: Interaction): Promise<Json> {
   if (seatWish !== undefined)
     w = { ...w, rules: seatWish.trim() ? addRule(w.rules, { kind: "seat", seat: seatWish.trim().toUpperCase() }) : w.rules.filter((r) => r.kind !== "seat") };
   if (note !== undefined) w = { ...w, note };
-  if (w.rules.length > MAX_SEAT_RULES) return reply(t("cmd.tooMany"));
+  const problem = rulesProblem(w.rules);
+  if (problem === "tooManyNear") return reply(t("wishes.errors.tooManyNear", { max: MAX_NEAR }));
+  if (problem) return reply(t("cmd.tooMany"));
   try {
     saveSeatWishes(l.id, me.id, w);
     autoPlanAfterWishes(l.id, me.id);
@@ -539,7 +530,7 @@ export function memberAutocomplete(i: Interaction): Json | Promise<Json> | undef
     return choices(list.filter((l) => !q || nameMatches(l.name, q)).map((l) => ({ name: clip(`${l.name} · ${when(l, t)}`, 100), value: l.id })));
   }
 
-  if (name === "wish" && me && (focused?.name === "near" || focused?.name === "avoid")) {
+  if (name === "wish" && me && (focused?.name === "next" || focused?.name === "near" || focused?.name === "avoid")) {
     const picked = pickedEvent(i, events);
     const open = wishEvents(events, me.id);
     const l = picked && picked !== "unknown" ? picked : open.length === 1 ? open[0] : undefined;

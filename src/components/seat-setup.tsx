@@ -1,7 +1,8 @@
 "use client";
 import { useState, useTransition } from "react";
 import { adminAutoAssignSeats, setSeatsFromList } from "@/app/actions";
-import { setSeatAutoPlan } from "@/app/seat-plan-actions";
+import { setSeatAutoPlan, setSeatNearRange } from "@/app/seat-plan-actions";
+import { MAX_NEAR_RANGE, MIN_NEAR_RANGE } from "@/lib/seat-rules";
 import { btnPrimary, btnSecondary, input } from "./ui";
 import { useT } from "@/i18n/client";
 import { useRunAction } from "./action-form";
@@ -14,6 +15,7 @@ export function SeatSetup({
   free,
   autoPlan,
   autoPlanBlocked,
+  nearRange,
 }: {
   lanId: string;
   current: string;
@@ -23,11 +25,31 @@ export function SeatSetup({
   autoPlan: boolean;
   /** Why auto re-planning can't run right now (final plan, self pick), or null. */
   autoPlanBlocked: string | null;
+  /** Seats apart that count as "near" for seat wishes. */
+  nearRange: number;
 }) {
   const t = useT();
   const [pending, start] = useTransition();
   const [spec, setSpec] = useState(current);
   const [auto, setAuto] = useState(autoPlan);
+  const [range, setRange] = useState(String(nearRange));
+  const [savedRange, setSavedRange] = useState(nearRange);
+  const saveRange = () => {
+    const n = Number(range);
+    if (!range.trim() || !Number.isFinite(n) || n === savedRange) return setRange(String(savedRange));
+    start(async () => {
+      const ok = await run(
+        async () => {
+          const r = await setSeatNearRange(lanId, n);
+          setRange(String(r));
+          setSavedRange(r);
+          return r;
+        },
+        (r) => t("wishLead.nearRangeSaved", { range: r }),
+      );
+      if (!ok) setRange(String(savedRange));
+    });
+  };
   const run = useRunAction();
   return (
     <div className="space-y-4">
@@ -108,6 +130,30 @@ export function SeatSetup({
             <span className="block text-xs text-muted">{autoPlanBlocked ?? t("seatSetup.autoHint")}</span>
           </span>
         </label>
+        <form
+          className="space-y-1"
+          onSubmit={(e) => {
+            e.preventDefault();
+            saveRange();
+          }}
+        >
+          <label className="flex flex-wrap items-center gap-2 text-sm text-fg/90">
+            {t("wishLead.nearRange")}
+            <input
+              type="number"
+              inputMode="numeric"
+              min={MIN_NEAR_RANGE}
+              max={MAX_NEAR_RANGE}
+              value={range}
+              disabled={pending}
+              onChange={(e) => setRange(e.target.value)}
+              onBlur={saveRange}
+              className={`${input} w-20 tabular-nums`}
+            />
+            {t("wishLead.nearRangeUnit")}
+          </label>
+          <p className="text-xs text-muted">{t("wishLead.nearRangeHint")}</p>
+        </form>
       </div>
     </div>
   );

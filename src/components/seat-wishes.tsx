@@ -1,23 +1,24 @@
 "use client";
 import { useRef, useState, useTransition, type PointerEvent as ReactPointerEvent } from "react";
 import { setMySeatWishes } from "@/app/actions";
+import { setMemberSeatWishes } from "@/app/seat-wish-actions";
 import { btnPrimary, input } from "./ui";
 import { useT } from "@/i18n/client";
 import { useRunAction } from "./action-form";
-import { DEFAULT_AVOID_RANGE, DEFAULT_NEAR_RANGE, MAX_SEAT_RULES, NEAR_RANGES, RANGE_KEY, addRule, moveRule, rangeOf, type NearRange, type SeatRule } from "@/lib/seat-rules";
+import { MAX_NEAR, MAX_WISHES, addRule, isRanked, moveRule, type SeatRule } from "@/lib/seat-rules";
+import { wishIcon, wishText } from "@/lib/wish-text";
 
 type Wishes = { rules: SeatRule[]; note: string };
-type AddKind = "near" | "avoid" | "seat" | "row";
+type AddKind = "next" | "near" | "seat" | "row";
 
-const parseRange = (v: string): NearRange => (v === "row" ? "row" : (Number(v) as 1 | 2 | 3));
-
-const ICON: Record<SeatRule["kind"], string> = { near: "🤝", avoid: "🙅", seat: "💺", row: "↔", edge: "📍", middle: "📍" };
 // Gap between list items (space-y-2), used to shift neighbours while dragging.
 const GAP = 8;
 
 /**
- * A member's seat wishes as a ranked rule list: the top rule matters most. Rules move by
- * drag (handle, works with touch) or the up/down buttons; every change saves right away.
+ * Seat wishes: ranked wishes (the top one matters most, one "right next to" at most) and an unranked
+ * "not right next to" list. Ranked wishes move by drag (handle, works with touch) or the
+ * up/down buttons; every change saves right away. With `member`, a lead edits that member's
+ * wishes (the member gets a DM).
  */
 export function SeatWishes({
   lanId,
@@ -26,9 +27,11 @@ export function SeatWishes({
   seatLabels,
   rows,
   initial,
+  nearRange,
+  member,
 }: {
   lanId: string;
-  /** People the member can pick for near / not next to. */
+  /** People who can be picked for near / next to / not next to. */
   people: { id: string; name: string }[];
   /** Names for everyone the rules mention (also people no longer coming). */
   names: Record<string, string>;
@@ -36,6 +39,10 @@ export function SeatWishes({
   /** Row letters of the seat plan. */
   rows: string[];
   initial: Wishes;
+  /** Seats apart that count as "near" at this event. */
+  nearRange: number;
+  /** A lead edits this member's wishes instead of their own. */
+  member?: { id: string; name: string };
 }) {
   const t = useT();
   const [rules, setRules] = useState<SeatRule[]>(initial.rules);
@@ -43,41 +50,36 @@ export function SeatWishes({
   const savedNote = useRef(initial.note);
   const [adding, setAdding] = useState<AddKind | null>(null);
   const [pick, setPick] = useState("");
-  const [range, setRange] = useState<NearRange>(DEFAULT_NEAR_RANGE);
+  const [avoidPick, setAvoidPick] = useState("");
   const [pending, start] = useTransition();
   const run = useRunAction();
+
+  const ranked = rules.filter(isRanked);
+  const avoids = rules.filter((r): r is Extract<SeatRule, { kind: "avoid" }> => r.kind === "avoid");
 
   const save = (next: SeatRule[], nextNote = note) => {
     const before = rules;
     const noteBefore = savedNote.current;
-    setRules(next);
+    // Ranked wishes first, then "not right next to": the order the server keeps too.
+    const ordered = [...next.filter(isRanked), ...next.filter((r) => !isRanked(r))];
+    setRules(ordered);
     // Set before the request so a blur right after Enter doesn't save twice.
     savedNote.current = nextNote;
     start(async () => {
-      const ok = await run(() => setMySeatWishes(lanId, { rules: next, note: nextNote }), t("wishes.saved"));
+      const w = { rules: ordered, note: nextNote };
+      const ok = member
+        ? await run(() => setMemberSeatWishes(lanId, member.id, w), t("wishLead.saved", { name: member.name }))
+        : await run(() => setMySeatWishes(lanId, w), t("wishes.saved"));
       if (!ok) {
         setRules(before);
         savedNote.current = noteBefore;
       }
     });
   };
+  const saveRanked = (nextRanked: SeatRule[]) => save([...nextRanked, ...avoids]);
 
-  const text = (r: SeatRule) => {
-    switch (r.kind) {
-      case "near":
-        return t(`wishes.rule.near.${RANGE_KEY[rangeOf(r)]}`, { name: names[r.userId] ?? "?" });
-      case "avoid":
-        return t(`wishes.rule.avoid.${RANGE_KEY[rangeOf(r)]}`, { name: names[r.userId] ?? "?" });
-      case "seat":
-        return t("wishes.rule.seat", { seat: r.seat });
-      case "row":
-        return t("wishes.rule.row", { row: r.row });
-      case "edge":
-        return t("wishes.rule.edge");
-      case "middle":
-        return t("wishes.rule.middle");
-    }
-  };
+  const nameOf = (id: string) => names[id] ?? people.find((p) => p.id === id)?.name ?? "?";
+  const text = (r: SeatRule) => wishText(r, t, nameOf, nearRange);
 
   // --- Drag to reorder (pointer events, so it works with touch too) ---
   const listRef = useRef<HTMLOListElement>(null);
@@ -105,7 +107,7 @@ export function SeatWishes({
     setDrag({ ...drag, at, dy });
   };
   const onHandleUp = () => {
-    if (drag && drag.at !== drag.from) save(moveRule(rules, drag.from, drag.at));
+    if (drag && drag.at !== drag.from) saveRanked(moveRule(ranked, drag.from, drag.at));
     dragStart.current = null;
     setDrag(null);
   };
@@ -118,18 +120,23 @@ export function SeatWishes({
     return 0;
   };
 
+  const hasNext = ranked.some((r) => r.kind === "next");
+  const nearFull = ranked.filter((r) => r.kind === "near").length >= MAX_NEAR;
+  const blocked = (k: string) => (k === "next" && hasNext ? t("wishes.nextTaken") : k === "near" && nearFull ? t("wishes.nearFull", { max: MAX_NEAR }) : undefined);
   const addKinds: [AddKind | "edge" | "middle", string][] = [
+    ["next", t("wishes.add.next")],
     ["near", t("wishes.add.near")],
-    ["avoid", t("wishes.add.avoid")],
     ["seat", t("wishes.add.seat")],
     ["row", t("wishes.add.row")],
     ["edge", t("wishes.add.edge")],
     ["middle", t("wishes.add.middle")],
   ];
-  const full = rules.length >= MAX_SEAT_RULES;
+  const full = ranked.length >= MAX_WISHES;
+  const personOptions = (taken: (r: SeatRule) => boolean) =>
+    people.filter((p) => !rules.some((r) => "userId" in r && r.userId === p.id && taken(r))).map((p) => ({ value: p.id, label: p.name }));
   const options =
-    adding === "near" || adding === "avoid"
-      ? people.map((p) => ({ value: p.id, label: p.name }))
+    adding === "near" || adding === "next"
+      ? personOptions((r) => r.kind === adding)
       : adding === "seat"
         ? seatLabels.map((l) => ({ value: l, label: l }))
         : adding === "row"
@@ -142,31 +149,32 @@ export function SeatWishes({
         ? { kind: "seat", seat: pick }
         : adding === "row"
           ? { kind: "row", row: pick }
-          : adding === "near"
-            ? { kind: "near", userId: pick, within: range }
-            : { kind: "avoid", userId: pick, within: range };
+          : { kind: adding, userId: pick };
+    // A wish about someone on the "not right next to" list takes them off it.
     save(addRule(rules, rule));
     setAdding(null);
     setPick("");
   };
-
-  const rangeOptions = (kind: "near" | "avoid") =>
-    NEAR_RANGES.map((r) => (
-      <option key={r} value={String(r)}>
-        {t(`wishes.${kind === "near" ? "range" : "avoidRange"}.${RANGE_KEY[r]}`)}
-      </option>
-    ));
+  const addAvoid = () => {
+    if (!avoidPick) return;
+    save(addRule(rules, { kind: "avoid", userId: avoidPick }));
+    setAvoidPick("");
+  };
 
   const iconBtn =
     "inline-flex size-9 items-center justify-center rounded-md text-muted transition hover:bg-line hover:text-fg disabled:pointer-events-none disabled:opacity-30";
 
   return (
     <div className="space-y-4 text-sm">
-      {rules.length === 0 ? (
+      {ranked.length === 0 ? (
         <p className="rounded-md bg-raised/60 px-3 py-2.5 text-muted">{t("wishes.empty")}</p>
       ) : (
-        <ol ref={listRef} className="space-y-2" aria-label={t("wishes.listLabel")}>
-          {rules.map((r, i) => {
+        <ol
+          ref={listRef}
+          className="space-y-2"
+          aria-label={member ? t("wishLead.editing", { name: member.name }) : t("wishes.listLabel")}
+        >
+          {ranked.map((r, i) => {
             const label = text(r);
             const dragging = drag?.from === i;
             return (
@@ -197,57 +205,36 @@ export function SeatWishes({
                 >
                   {i + 1}
                 </span>
-                {r.kind === "near" || r.kind === "avoid" ? (
-                  // Who on top, how close below it: [Right next to ▾].
-                  <span className="ml-1 min-w-0 flex-1 leading-tight">
-                    <span className="block [overflow-wrap:anywhere]">
-                      <span aria-hidden className="mr-1.5">
-                        {ICON[r.kind]}
-                      </span>
-                      {names[r.userId] ?? "?"}
-                    </span>
-                    <select
-                      value={String(rangeOf(r))}
-                      disabled={pending}
-                      onChange={(e) => save(rules.map((x, j) => (j === i ? { ...r, within: parseRange(e.target.value) } : x)))}
-                      aria-label={t(r.kind === "near" ? "wishes.range.change" : "wishes.avoidRange.change", { rule: label })}
-                      className="mt-1 block w-full max-w-[15rem] rounded-md border border-line bg-surface py-0.5 pl-1.5 text-base text-fg sm:text-sm"
-                    >
-                      {rangeOptions(r.kind)}
-                    </select>
+                <span className="ml-1 min-w-0 flex-1 leading-tight [overflow-wrap:anywhere]">
+                  <span aria-hidden className="mr-1.5">
+                    {wishIcon(r)}
                   </span>
-                ) : (
-                  <span className="ml-1 min-w-0 flex-1 leading-tight [overflow-wrap:anywhere]">
-                    <span aria-hidden className="mr-1.5">
-                      {ICON[r.kind]}
-                    </span>
-                    {label}
-                  </span>
-                )}
+                  {label}
+                </span>
                 <span className="flex flex-col sm:flex-row">
-                <button
-                  type="button"
-                  disabled={pending || i === 0}
-                  onClick={() => save(moveRule(rules, i, i - 1))}
-                  aria-label={t("wishes.up", { rule: label })}
-                  className={iconBtn}
-                >
-                  <span aria-hidden>↑</span>
-                </button>
-                <button
-                  type="button"
-                  disabled={pending || i === rules.length - 1}
-                  onClick={() => save(moveRule(rules, i, i + 1))}
-                  aria-label={t("wishes.down", { rule: label })}
-                  className={iconBtn}
-                >
-                  <span aria-hidden>↓</span>
-                </button>
+                  <button
+                    type="button"
+                    disabled={pending || i === 0}
+                    onClick={() => saveRanked(moveRule(ranked, i, i - 1))}
+                    aria-label={t("wishes.up", { rule: label })}
+                    className={iconBtn}
+                  >
+                    <span aria-hidden>↑</span>
+                  </button>
+                  <button
+                    type="button"
+                    disabled={pending || i === ranked.length - 1}
+                    onClick={() => saveRanked(moveRule(ranked, i, i + 1))}
+                    aria-label={t("wishes.down", { rule: label })}
+                    className={iconBtn}
+                  >
+                    <span aria-hidden>↓</span>
+                  </button>
                 </span>
                 <button
                   type="button"
                   disabled={pending}
-                  onClick={() => save(rules.filter((_, j) => j !== i))}
+                  onClick={() => saveRanked(ranked.filter((_, j) => j !== i))}
                   aria-label={t("wishes.remove", { rule: label })}
                   className={`${iconBtn} hover:text-danger`}
                 >
@@ -259,23 +246,24 @@ export function SeatWishes({
         </ol>
       )}
 
-      {rules.length > 1 && <p className="text-xs text-muted">{t("wishes.orderHint")}</p>}
+      {ranked.length > 1 && <p className="text-xs text-muted">{t("wishes.orderHint")}</p>}
 
       <fieldset disabled={full || pending}>
-        <legend className="mb-2 text-fg/90">{full ? t("wishes.full", { max: MAX_SEAT_RULES }) : t("wishes.addTitle")}</legend>
+        <legend className="mb-2 text-fg/90">{full ? t("wishes.full", { max: MAX_WISHES }) : t("wishes.addTitle")}</legend>
         <div className="flex flex-wrap gap-1.5">
           {addKinds.map(([k, label]) => (
             <button
               key={k}
               type="button"
               aria-pressed={adding === k}
+              disabled={!!blocked(k)}
+              title={blocked(k)}
               onClick={() => {
                 if (k === "edge" || k === "middle") {
                   setAdding(null);
                   save(addRule(rules, { kind: k }));
                 } else {
                   setAdding(adding === k ? null : k);
-                  setRange(k === "avoid" ? DEFAULT_AVOID_RANGE : DEFAULT_NEAR_RANGE);
                   setPick("");
                 }
               }}
@@ -287,6 +275,9 @@ export function SeatWishes({
             </button>
           ))}
         </div>
+        {!full && (hasNext || nearFull) && (
+          <p className="mt-2 text-xs text-muted">{[blocked("next"), blocked("near")].filter(Boolean).join(" ")}</p>
+        )}
         {adding && (
           <div className="mt-3 flex flex-wrap gap-2">
             <select
@@ -302,21 +293,57 @@ export function SeatWishes({
                 </option>
               ))}
             </select>
-            {(adding === "near" || adding === "avoid") && (
-              <select
-                value={String(range)}
-                onChange={(e) => setRange(parseRange(e.target.value))}
-                aria-label={t(adding === "near" ? "wishes.range.label" : "wishes.avoidRange.label")}
-                className={`${input} min-w-0 flex-1 sm:w-auto sm:flex-none`}
-              >
-                {rangeOptions(adding)}
-              </select>
-            )}
             <button type="button" disabled={!pick} onClick={addPicked} className={`${btnPrimary} shrink-0`}>
               {t("wishes.addButton")}
             </button>
           </div>
         )}
+      </fieldset>
+
+      <fieldset disabled={pending} className="space-y-2 border-t border-line pt-4">
+        <legend className="sr-only">{t("wishes.avoid.title")}</legend>
+        <p aria-hidden className="text-fg/90">
+          <span className="mr-1.5">🙅</span>
+          {t("wishes.avoid.title")}
+        </p>
+        <p className="text-xs text-muted">{t("wishes.avoid.hint")}</p>
+        {avoids.length > 0 ? (
+          <ul className="flex flex-wrap gap-1.5" aria-label={t("wishes.avoid.title")}>
+            {avoids.map((r) => (
+              <li key={r.userId} className="inline-flex items-center gap-1 rounded-full bg-line/60 py-0.5 pl-3 pr-1 text-xs text-fg/90">
+                <span className="[overflow-wrap:anywhere]">{nameOf(r.userId)}</span>
+                <button
+                  type="button"
+                  onClick={() => save(rules.filter((x) => x !== r))}
+                  aria-label={t("wishes.remove", { rule: text(r) })}
+                  className="inline-flex size-7 items-center justify-center rounded-full text-muted hover:bg-line hover:text-danger"
+                >
+                  <span aria-hidden>✕</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-xs text-faint">{t("wishes.avoid.none")}</p>
+        )}
+        <div className="flex flex-wrap gap-2">
+          <select
+            value={avoidPick}
+            onChange={(e) => setAvoidPick(e.target.value)}
+            aria-label={t("wishes.pick.avoid")}
+            className={`${input} min-w-0 basis-full sm:basis-0 sm:flex-1`}
+          >
+            <option value="">{t("wishes.pick.avoid")}</option>
+            {personOptions((r) => r.kind === "avoid").map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+          <button type="button" disabled={!avoidPick} onClick={addAvoid} className={`${btnPrimary} shrink-0`}>
+            {t("wishes.addButton")}
+          </button>
+        </div>
       </fieldset>
 
       <form

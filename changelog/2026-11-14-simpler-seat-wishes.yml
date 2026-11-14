@@ -1,0 +1,19 @@
+date: 2026-11-14
+type: improved
+en:
+  title: "Simpler seat wishes, and leads can change them"
+  text: >-
+    Seat wishes are simpler: "Right next to" one person, "Near" up to four people (within 4 seats, leads
+    can change the distance per event), and "Not right next to" as many people as you like. The other
+    distance options are gone; older wishes were turned into the closest new one. "Right next to" and
+    "Not right next to" now weigh more when the seats are planned. Leads can change a member's wishes
+    on Manage → Seats, and the member gets a Discord DM about it.
+de:
+  title: "Einfachere Platzwünsche, und Leads können sie ändern"
+  text: >-
+    Platzwünsche sind einfacher: «Direkt neben» einer Person, «Nahe bei» bis zu vier Personen (max. 4
+    Plätze, Leads können den Abstand pro Event ändern) und «Nicht direkt neben» so vielen Personen, wie
+    du willst. Die anderen Abstände sind weg; ältere Wünsche wurden in den nächstliegenden neuen
+    umgewandelt. «Direkt neben» und «Nicht direkt neben» zählen bei der Planung jetzt stärker. Leads
+    können die Wünsche eines Mitglieds unter Verwalten → Plätze ändern, und das Mitglied bekommt dazu
+    eine Discord-DM.

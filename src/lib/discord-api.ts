@@ -91,6 +91,7 @@ export const commands = [
     type: 1,
     options: [
       eventOption(),
+      { type: 3, name: "next", description: "Add the one person you want right next to you", required: false, autocomplete: true },
       { type: 3, name: "near", description: "Add someone you want to sit near", required: false, autocomplete: true },
       { type: 3, name: "avoid", description: "Add someone you don't want to sit next to", required: false, autocomplete: true },
       {
@@ -171,8 +172,9 @@ const DE: Record<string, string> = {
   "Your nick": "Dein Nick",
   "Use it at this event's LAN type only (default: everywhere)": "Nur für den LAN-Typ dieses Events (sonst: überall)",
   "See or change your seat wishes": "Platzwünsche ansehen oder ändern",
-  "Add someone you want to sit near": "Jemand, neben dem du sitzen willst",
-  "Add someone you don't want to sit next to": "Jemand, neben dem du nicht sitzen willst",
+  "Add the one person you want right next to you": "Die eine Person, die direkt neben dir sitzen soll",
+  "Add someone you want to sit near": "Jemand, in dessen Nähe du sitzen willst",
+  "Add someone you don't want to sit next to": "Jemand, der nicht direkt neben dir sitzen soll",
   "Where in the row": "Wo in der Reihe",
   Anywhere: "Egal wo",
   "At the edge": "Am Rand",

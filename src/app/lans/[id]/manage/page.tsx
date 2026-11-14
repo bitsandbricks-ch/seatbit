@@ -27,6 +27,9 @@ import { clanCan, getClan } from "@/lib/clans";
 import { SeatFlow } from "@/components/seat-flow";
 import { checkWishes, overallScore } from "@/lib/seating";
 import { WishOverview, type WishRow } from "@/components/wish-overview";
+import { WishLeadEditor } from "@/components/wish-lead-editor";
+import { normalizeRules, rulePeople } from "@/lib/seat-rules";
+import { seatRow } from "@/lib/seat-labels";
 import { PlanHistory } from "@/components/plan-history";
 import { auditEntries } from "@/lib/audit";
 import { LiveRefresh } from "@/components/live-refresh";
@@ -190,11 +193,32 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
   const due = dueKinds(l);
   const planPeople = going.map((r) => ({
     userId: r.userId,
-    rules: r.wishRules ?? [],
+    rules: normalizeRules(r.wishRules ?? [], r.userId),
     priority: 0,
     order: 0,
   }));
-  const wishChecks = checkWishes(seats, planPeople, (uid) => names.get(uid) ?? "?", t);
+  const wishChecks = checkWishes(seats, planPeople, (uid) => names.get(uid) ?? "?", t, { nearRange: l.seatNearRange });
+  // Manage → Seats: a lead changing one member's wishes (?editWishes=userId).
+  const byName = (a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name);
+  const wishMembers = going.map((r) => ({ id: r.userId, name: names.get(r.userId) ?? "?" })).sort(byName);
+  const wishPeople = rows
+    .filter((r) => r.status === "going" || r.status === "maybe" || r.status === "waitlist")
+    .map((r) => ({ id: r.userId, name: names.get(r.userId) ?? "?" }))
+    .sort(byName);
+  const editRow = typeof sp.editWishes === "string" && !l.seatsPublishedAt ? going.find((r) => r.userId === sp.editWishes) : undefined;
+  const editRules = editRow ? normalizeRules(editRow.wishRules ?? [], editRow.userId) : [];
+  const editMissing = rulePeople(editRules).filter((uid) => !names.has(uid));
+  const editNames = editMissing.length ? await getNames(id, editMissing) : null;
+  const wishEditing = editRow
+    ? {
+        id: editRow.userId,
+        name: names.get(editRow.userId) ?? "?",
+        rules: editRules,
+        note: editRow.wishNote,
+        names: Object.fromEntries(rulePeople(editRules).map((uid) => [uid, names.get(uid) ?? editNames?.get(uid)?.label ?? "?"])),
+      }
+    : null;
+  const orderedSeats = [...seats].sort((a, b) => a.row - b.row || a.col - b.col);
   const wishRows: WishRow[] = going
     .filter((r) => (r.wishRules ?? []).length > 0 || r.wishNote)
     .map((r) => {
@@ -312,6 +336,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               unseated={going.length - seated}
               free={freeSeats}
               autoPlan={l.seatAutoPlan}
+              nearRange={l.seatNearRange}
               autoPlanBlocked={
                 l.seatsPublishedAt ? t("seatSetup.autoPaused.final") : l.seatPicking ? t("seatSetup.autoPaused.picking") : null
               }
@@ -393,8 +418,22 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               )}
             </Card>
           )}
+          {seats.length > 0 && !l.seatsPublishedAt && (
+            <WishLeadEditor
+              lanId={l.id}
+              members={wishMembers}
+              people={wishPeople}
+              editing={wishEditing}
+              seatLabels={orderedSeats.map((s) => s.label)}
+              rows={[...new Set(orderedSeats.map(seatRow))]}
+              nearRange={l.seatNearRange}
+              closeHref={`/lans/${l.id}/manage?tab=seats${sp.wishes === "all" ? "&wishes=all" : ""}#wishes`}
+              t={t}
+            />
+          )}
           {seats.length > 0 && <WishOverview
               rows={wishRows}
+              editHref={l.seatsPublishedAt ? undefined : (uid) => `/lans/${l.id}/manage?tab=seats&editWishes=${encodeURIComponent(uid)}${sp.wishes === "all" ? "&wishes=all" : ""}#edit-wishes`}
               overall={overallScore(wishChecks)}
               filter={sp.wishes === "all" ? "all" : "look"}
               href={(f) => `/lans/${l.id}/manage?tab=seats${f === "all" ? "&wishes=all" : ""}#wishes`}
