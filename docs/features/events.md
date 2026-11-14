@@ -50,6 +50,7 @@ Publishing shows the event to the clan, posts the [Discord announcement](discord
 For when you're not sure yet if, or when, the group goes. Turn it on when creating the event, or later under *Settings* while it's a draft or nobody has answered.
 
 - Members answer *I'd come*, *Maybe* or *Not this time*. Nothing is binding.
+- Everyone sees who answered what: the Overview lists the members under *Interested*, *Maybe* and *Not interested*, with the clan's name display and avatars. The *Attendees* tab is called *Interest* until sign-up opens and shows the same list; tap the counts in the banner to get there.
 - The date can stay open with a rough hint like "Spring 2027".
 - **Open sign-up** (after setting the date) tells everyone who was interested (except those who said no) and starts normal answers, tickets and seats.
 
@@ -61,6 +62,8 @@ For when you're not sure yet if, or when, the group goes. Turn it on when creati
 <figcaption>Member view</figcaption>
 </figure>
 </div>
+
+![Who answered the interest check](../screenshots/desktop-interest.png){ .shot }
 
 ![Interest check, lead view](../screenshots/desktop-interest-manage.png){ .shot }
 

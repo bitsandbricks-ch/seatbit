@@ -32,6 +32,7 @@ import { GameList } from "@/components/game-list";
 import { GAMES_REMINDER_DAYS, listGames } from "@/lib/games";
 import { SeatSwapPanel, type SwapView } from "@/components/seat-swaps";
 import { CheckInButton, DeleteNewsButton, InterestButtons } from "@/components/event-extras";
+import { InterestList } from "@/components/interest-list";
 import { FoodOrders, type FoodOrderCardView } from "@/components/food-orders";
 import { SharedCosts, type CostPerson } from "@/components/shared-costs";
 import { costPeople, eventCosts } from "@/lib/costs";
@@ -185,12 +186,10 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
     t,
   });
   const full = l.capacity != null && going.length >= l.capacity;
-  const myInterest =
-    db
-      .select()
-      .from(schema.lanInterest)
-      .where(and(eq(schema.lanInterest.lanId, id), eq(schema.lanInterest.userId, me.id)))
-      .get()?.answer ?? null;
+  const interests = l.interestCheck ? db.select().from(schema.lanInterest).where(eq(schema.lanInterest.lanId, id)).all() : [];
+  const myInterest = interests.find((i) => i.userId === me.id)?.answer ?? null;
+  // During the interest check nobody has signed up yet, so the attendees tab shows who answered instead.
+  const interestPhase = l.interestCheck && !l.cancelledAt;
   const news = db
     .select()
     .from(schema.lanNews)
@@ -457,7 +456,9 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
             badge: picking && seats.length > 0 ? (mySeatLabel ? t("event.tabs.seatPicked", { seat: mySeatLabel }) : t("event.tabs.pickYours")) : undefined,
             badgeTone: mySeatLabel ? "ok" : "warn",
           },
-          { id: "attendees", label: t("event.tabs.attendees"), count: going.length },
+          interestPhase
+            ? { id: "attendees", label: t("interestList.tab"), count: interests.filter((i) => i.answer === "yes").length }
+            : { id: "attendees", label: t("event.tabs.attendees"), count: going.length },
           { id: "travel", label: t("event.tabs.travel"), badge: openRequests ? t("event.tabs.looking", { count: openRequests }) : undefined },
           { id: "gear", label: t("event.tabs.gear") },
           { id: "games", label: t("event.tabs.games"), badge: my?.status === "going" && gamesToInstall ? t("event.tabs.toInstall", { count: gamesToInstall }) : undefined },
@@ -581,7 +582,9 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
         </>
       )}
 
-      {tab === "attendees" && (
+      {tab === "attendees" && interestPhase && <InterestList lanId={l.id} clanSlug={lanClan?.slug ?? null} meId={me.id} t={t} />}
+
+      {tab === "attendees" && !interestPhase && (
         <Card
           title={l.capacity ? t("event.attendeesTitleOf", { count: going.length, capacity: l.capacity }) : t("event.attendeesTitle", { count: going.length })}
           actions={full && <Pill tone="red">{t("event.fullWaitlist")}</Pill>}
@@ -653,6 +656,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
               <p className="whitespace-pre-wrap text-fg/90">{l.description}</p>
             </Card>
           )}
+          {interestPhase && <InterestList lanId={l.id} clanSlug={lanClan?.slug ?? null} meId={me.id} t={t} />}
           {news.length > 0 && (
             <Card title={t("event.news")}>
               <ul className="space-y-4">

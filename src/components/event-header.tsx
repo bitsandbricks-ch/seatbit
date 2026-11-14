@@ -154,7 +154,9 @@ function EventStatus({ lan: l, canManage, t }: { lan: Lan; canManage: boolean; t
           <p className="font-semibold text-bit">{t("eventUi.interestCheck")}</p>
           <p className="text-muted">
             {t("eventUi.interestText")}
-            <span className="block text-fg">{t("eventUi.interestCounts", { yes: n("yes"), maybe: n("maybe"), no: n("no") })}</span>
+            <Link href={`/lans/${l.id}?tab=attendees`} className="block text-fg hover:text-bit hover:underline">
+              {t("eventUi.interestCounts", { yes: n("yes"), maybe: n("maybe"), no: n("no") })}
+            </Link>
           </p>
         </div>
         {canManage && <OpenSignupButton lanId={l.id} dateTbd={l.dateTbd} />}

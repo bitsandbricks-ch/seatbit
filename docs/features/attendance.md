@@ -26,7 +26,7 @@ The event page shows your answer and checklist at the top, then the tabs **Overv
 **Coming**, **Unsure** or **Not coming**, before the *answer by* date. Also possible with the buttons on the clan's Discord announcement or with `/coming`, `/unsure`, `/not-coming` and `/lans` in Discord. `/status` and `/ticket` work there too (see [Discord commands](discord.md#commands)).
 
 - Once you have a ticket, your answer is **locked**. Leads can still change it. The answer card then shrinks to a small badge with a lock next to *Your checklist* (tap it for the hint); it comes back on the event days for the check-in.
-- During an [interest check](events.md#interest-check) the answers are *I'd come / Maybe / Not this time* instead.
+- During an [interest check](events.md#interest-check) the answers are *I'd come / Maybe / Not this time* instead, and the *Attendees* tab (then called *Interest*) lists who answered what.
 
 ### Waitlist
 
