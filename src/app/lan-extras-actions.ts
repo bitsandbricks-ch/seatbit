@@ -206,27 +206,50 @@ async function requireParticipant(lanId: string) {
   return me;
 }
 
-/** Suggests a game; the one who adds it votes for it. */
-export async function addGame(lanId: string, formData: FormData): Promise<{ error?: string }> {
-  const me = await requireParticipant(lanId);
-  mustGetLan(lanId);
-  const parsed = gameInput.safeParse({
+const parseGame = (formData: FormData) =>
+  gameInput.safeParse({
     name: formData.get("name") ?? "",
     sizeGb: formData.get("sizeGb") ?? "",
     url: String(formData.get("url") ?? "").trim(),
   });
-  if (!parsed.success) return { error: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join(", ") };
-  const existing = db
+
+/** Another game of the LAN with the same name (case-insensitive), so the list has no duplicates. */
+const sameName = (lanId: string, name: string, exceptId?: string) =>
+  db
     .select()
     .from(game)
     .where(eq(game.lanId, lanId))
     .all()
-    .find((g) => g.name.toLowerCase() === parsed.data.name.toLowerCase());
+    .find((g) => g.id !== exceptId && g.name.toLowerCase() === name.toLowerCase());
+
+/** Suggests a game; the one who adds it votes for it. */
+export async function addGame(lanId: string, formData: FormData): Promise<{ error?: string }> {
+  const me = await requireParticipant(lanId);
+  mustGetLan(lanId);
+  const parsed = parseGame(formData);
+  if (!parsed.success) return { error: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join(", ") };
+  const existing = sameName(lanId, parsed.data.name);
   if (existing) return { error: await tr("errors.gameExists", { name: existing.name }) };
   if (db.select().from(game).where(eq(game.lanId, lanId)).all().length >= 50) return { error: await tr("errors.gamesFull") };
   const g = db.insert(game).values({ lanId, ...parsed.data, addedBy: me.id }).returning().get();
   db.insert(gameVote).values({ gameId: g.id, userId: me.id, vote: true }).run();
   lanPath(lanId);
+  return {};
+}
+
+/** Fixes a game's name, size or link: whoever added it, or a lead. Votes and ticks stay. */
+export async function updateGame(gameId: string, formData: FormData): Promise<{ error?: string }> {
+  const g = db.select().from(game).where(eq(game.id, gameId)).get();
+  if (!g) throw new Error("Not found");
+  // Taking part first: who added it may have left the clan since.
+  const me = await requireParticipant(g.lanId);
+  if (g.addedBy !== me.id && !isLanManager(me, g.lanId)) throw await err("errors.gameEdit");
+  const parsed = parseGame(formData);
+  if (!parsed.success) return { error: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join(", ") };
+  const existing = sameName(g.lanId, parsed.data.name, g.id);
+  if (existing) return { error: await tr("errors.gameNameTaken", { name: existing.name }) };
+  db.update(game).set(parsed.data).where(eq(game.id, gameId)).run();
+  lanPath(g.lanId);
   return {};
 }
 

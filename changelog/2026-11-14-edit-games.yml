@@ -1,0 +1,12 @@
+date: 2026-11-14
+type: improved
+en:
+  title: "Edit games after adding them"
+  text: >-
+    Made a typo or got the size wrong? Whoever added a game, and the event's leads, can now change its name,
+    download size and store link with the pencil next to it. Votes and installed ticks stay.
+de:
+  title: "Games nachträglich bearbeiten"
+  text: >-
+    Vertippt oder die Grösse falsch? Wer ein Game hinzugefügt hat, und die Leads des Events, können jetzt
+    Name, Download-Grösse und Store-Link mit dem Stift daneben ändern. Stimmen und Installiert-Häkchen bleiben.
