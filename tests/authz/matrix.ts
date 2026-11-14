@@ -117,7 +117,7 @@ export const SPECS: Spec[] = [
   { name: "actions.updateAppearance", allow: SIGNED_IN, run: () => actions.updateAppearance({}, form({ avatarStyle: "initials", color: "" })) },
   { name: "actions.sendTestDm", allow: SIGNED_IN, run: () => actions.sendTestDm(), effect: "none" },
   { name: "actions.setMyTicketBought", allow: MEMBERS, run: () => actions.setMyTicketBought(fx.pickLan, true) },
-  { name: "actions.setMySeatWishes", allow: MEMBERS, run: () => actions.setMySeatWishes(fx.pickLan, { near: [], avoid: [], position: "edge", seat: "", note: "window" }) },
+  { name: "actions.setMySeatWishes", allow: MEMBERS, run: () => actions.setMySeatWishes(fx.pickLan, { rules: [{ kind: "edge" }], note: "window" }) },
   { name: "actions.pickMySeat", allow: MEMBERS, run: () => actions.pickMySeat(fx.pickLan, fx.pickSeat) },
 
   // ---------- actions.ts: managing events ----------

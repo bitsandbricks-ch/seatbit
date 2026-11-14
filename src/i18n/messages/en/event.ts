@@ -52,7 +52,7 @@ export const event = {
   noSeatsYet: "The leads haven't entered the group's seats yet.",
   groupSeats: "The group has {count} seats ({range}). The leads assign them after the deadline and then finalize the seat plan here.",
   seatWishes: "Seat wishes",
-  seatWishesIntro: "Tell the leads where you'd like to sit. They plan the seats after the deadline.",
+  seatWishesIntro: "Tell the leads where you'd like to sit, most important wish first. They plan the seats after the deadline.",
   swapSeats: "Swap seats",
   attendeesTitle: "Attendees ({count})",
   attendeesTitleOf: "Attendees ({count} / {capacity})",

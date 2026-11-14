@@ -1,7 +1,11 @@
 import { makeT, type T } from "../i18n/translate";
+import { seatRow } from "./seat-labels";
+import { rankWeight, type SeatRule } from "./seat-rules";
 /**
  * Seat planning with member wishes. Pure functions, no DB access.
  *
+ * Each person's wishes are ranked rules; a rule counts less the further down it is
+ * (rankWeight), so the top wish wins when two can't both be met.
  * "Near" means the same row and at most two seats apart (next to, or one seat
  * between). "Next to" for avoid means directly adjacent.
  */
@@ -9,10 +13,7 @@ import { makeT, type T } from "../i18n/translate";
 export type PlanSeat = { id: string; row: number; col: number; label: string; userId: string | null; locked: boolean };
 export type PlanPerson = {
   userId: string;
-  near: string[];
-  avoid: string[];
-  position: "any" | "edge" | "middle";
-  seat: string; // preferred label, "" = none
+  rules: SeatRule[];
   priority: number; // higher is placed first (e.g. confirmed ticket)
   order: number; // tie-break, lower first (e.g. sign-up time)
 };
@@ -25,12 +26,17 @@ function edgeSet(seats: PlanSeat[]) {
   return new Set(seats.filter((s) => !pos.has(`${s.row}:${s.col - 1}`) || !pos.has(`${s.row}:${s.col + 1}`)).map((s) => s.id));
 }
 
-function likes(a: PlanPerson | undefined, bId: string, b: PlanPerson | undefined) {
-  return !!(a?.near.includes(bId) || (a && b?.near.includes(a.userId)));
+/** Weight of a's rule of `kind` about b, 0 when there is none. */
+function personWeight(a: PlanPerson | undefined, kind: "near" | "avoid", bId: string) {
+  if (!a) return 0;
+  const i = a.rules.findIndex((r) => r.kind === kind && r.userId === bId);
+  return i === -1 ? 0 : rankWeight(i);
 }
-function dislikes(a: PlanPerson | undefined, bId: string, b: PlanPerson | undefined) {
-  return !!(a?.avoid.includes(bId) || (a && b?.avoid.includes(a.userId)));
-}
+/** The stronger of the two people's wishes about each other. */
+const mutual = (a: PlanPerson | undefined, bId: string, b: PlanPerson | undefined, kind: "near" | "avoid") =>
+  Math.max(personWeight(a, kind, bId), a ? personWeight(b, kind, a.userId) : 0);
+
+const nearIds = (p: PlanPerson) => p.rules.flatMap((r) => (r.kind === "near" ? [r.userId] : []));
 
 /**
  * Assigns seats to `people` (who don't have one yet) among the free, not-held
@@ -51,7 +57,7 @@ export function planSeats(seats: PlanSeat[], people: PlanPerson[], everyone: Pla
     parent.set(x, r);
     return r;
   };
-  for (const p of everyone) for (const n of p.near) if (byUser.has(n)) parent.set(find(p.userId), find(n));
+  for (const p of everyone) for (const n of nearIds(p)) if (byUser.has(n)) parent.set(find(p.userId), find(n));
   const groupSize = new Map<string, number>();
   for (const p of people) groupSize.set(find(p.userId), (groupSize.get(find(p.userId)) ?? 0) + 1);
 
@@ -81,12 +87,17 @@ export function planSeats(seats: PlanSeat[], people: PlanPerson[], everyone: Pla
         const d = dist(s, o);
         if (d > 2) continue;
         const other = byUser.get(uid);
-        if (likes(p, uid, other)) score += d === 1 ? 10 : 5;
-        if (d === 1 && dislikes(p, uid, other)) score -= 25;
+        const like = mutual(p, uid, other, "near");
+        if (like) score += like * (d === 1 ? 10 : 6);
+        if (d === 1) score -= mutual(p, uid, other, "avoid") * 12;
       }
-      if (p.seat && s.label.toUpperCase() === p.seat.toUpperCase()) score += 15;
-      if (p.position === "edge") score += edges.has(s.id) ? 4 : -2;
-      if (p.position === "middle") score += edges.has(s.id) ? -4 : 2;
+      p.rules.forEach((r, i) => {
+        const w = rankWeight(i);
+        if (r.kind === "seat" && s.label.toUpperCase() === r.seat) score += 12 * w;
+        if (r.kind === "row" && seatRow(s) === r.row) score += 8 * w;
+        if (r.kind === "edge") score += (edges.has(s.id) ? 6 : -2) * w;
+        if (r.kind === "middle") score += (edges.has(s.id) ? -6 : 2) * w;
+      });
       // Keep room next to me for friends still to come.
       if (unplacedFriends > 0) {
         const room = free.filter((f) => f.id !== s.id && dist(f, s) <= Math.min(unplacedFriends, 2)).length;
@@ -106,32 +117,60 @@ export function planSeats(seats: PlanSeat[], people: PlanPerson[], everyone: Pla
   return result;
 }
 
-export type WishCheck = { userId: string; ok: string[]; missed: string[] };
+/** `ok` is null while it can't be checked yet (you or the other person has no seat). */
+export type WishItem = { text: string; ok: boolean | null; rank: number };
+/** `score`: share of the checkable wishes met, weighted by rank (0..1); null when none can be checked yet. */
+export type WishCheck = { userId: string; items: WishItem[]; score: number | null };
 
-/** Which wishes the current seating meets, per person with wishes. */
+/** Weighted share of met wishes; a top wish counts more than one further down. */
+export function wishScore(items: WishItem[]): number | null {
+  let met = 0;
+  let all = 0;
+  for (const i of items) {
+    if (i.ok === null) continue;
+    const w = rankWeight(i.rank - 1);
+    all += w;
+    if (i.ok) met += w;
+  }
+  return all ? met / all : null;
+}
+
+/** Everyone's scores averaged, each person counting once; null when nothing can be checked yet. */
+export function overallScore(checks: WishCheck[]): number | null {
+  const scores = checks.flatMap((c) => (c.score === null ? [] : [c.score]));
+  return scores.length ? scores.reduce((n, x) => n + x, 0) / scores.length : null;
+}
+
+/** Which wishes the current seating meets, per person with wishes, in their ranked order. */
 export function checkWishes(seats: PlanSeat[], everyone: PlanPerson[], nameOf: (id: string) => string, t: T = makeT("en")) {
   const seatOf = new Map(seats.filter((s) => s.userId).map((s) => [s.userId!, s]));
   const edges = edgeSet(seats);
   const out: WishCheck[] = [];
   for (const p of everyone) {
+    if (!p.rules.length) continue;
     const mine = seatOf.get(p.userId);
-    const ok: string[] = [];
-    const missed: string[] = [];
-    if (!mine) continue;
-    for (const n of p.near) {
-      const o = seatOf.get(n);
-      if (!o) continue;
-      (dist(mine, o) <= 2 ? ok : missed).push(t("wishCheck.near", { name: nameOf(n) }));
-    }
-    for (const a of p.avoid) {
-      const o = seatOf.get(a);
-      if (!o) continue;
-      (dist(mine, o) === 1 ? missed : ok).push(t("wishCheck.notNextTo", { name: nameOf(a) }));
-    }
-    if (p.position === "edge") (edges.has(mine.id) ? ok : missed).push(t("wishCheck.edge"));
-    if (p.position === "middle") (edges.has(mine.id) ? missed : ok).push(t("wishCheck.middle"));
-    if (p.seat) (mine.label.toUpperCase() === p.seat.toUpperCase() ? ok : missed).push(t("wishCheck.seat", { seat: p.seat }));
-    if (ok.length || missed.length) out.push({ userId: p.userId, ok, missed });
+    const items: WishItem[] = p.rules.map((r, i) => {
+      const item = (text: string, ok: (s: PlanSeat) => boolean | null): WishItem => ({ text, ok: mine ? ok(mine) : null, rank: i + 1 });
+      switch (r.kind) {
+        case "near":
+        case "avoid": {
+          const o = seatOf.get(r.userId);
+          const name = nameOf(r.userId);
+          return r.kind === "near"
+            ? item(t("wishCheck.near", { name }), (m) => (o ? dist(m, o) <= 2 : null))
+            : item(t("wishCheck.notNextTo", { name }), (m) => (o ? dist(m, o) !== 1 : null));
+        }
+        case "seat":
+          return item(t("wishCheck.seat", { seat: r.seat }), (m) => m.label.toUpperCase() === r.seat);
+        case "row":
+          return item(t("wishCheck.row", { row: r.row }), (m) => seatRow(m) === r.row);
+        case "edge":
+          return item(t("wishCheck.edge"), (m) => edges.has(m.id));
+        case "middle":
+          return item(t("wishCheck.middle"), (m) => !edges.has(m.id));
+      }
+    });
+    out.push({ userId: p.userId, items, score: wishScore(items) });
   }
   return out;
 }

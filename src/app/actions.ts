@@ -792,10 +792,7 @@ function planPeople(lanId: string) {
     .all()
     .map((a) => ({
       userId: a.userId,
-      near: a.wishNear ?? [],
-      avoid: a.wishAvoid ?? [],
-      position: a.wishPosition,
-      seat: a.wishSeat,
+      rules: a.wishRules ?? [],
       priority: a.paid ? 2 : a.ticketBought ? 1 : 0,
       order: a.createdAt.getTime(),
     }));

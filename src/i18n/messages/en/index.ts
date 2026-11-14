@@ -106,6 +106,7 @@ import { waitlistPanel } from "./waitlistPanel";
 import { welcome } from "./welcome";
 import { whatsapp } from "./whatsapp";
 import { wishCheck } from "./wishCheck";
+import { wishOverview } from "./wishOverview";
 import { wishes } from "./wishes";
 
 export const en = {
@@ -210,6 +211,7 @@ export const en = {
   welcome,
   whatsapp,
   wishCheck,
+  wishOverview,
   wishes,
 };
 

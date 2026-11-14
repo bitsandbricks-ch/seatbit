@@ -25,7 +25,7 @@ npx tsx --test src/lib/seating.test.ts   # one file
 | --- | --- |
 | `auth.spec.ts` | Signed-out redirect, the Discord button starts OAuth with the right app, email login (wrong and right password), sign out. |
 | `rsvp.spec.ts` | Coming / unsure / not coming, the ticket locks the answer, waitlist when full, members can't open the lead view. |
-| `seats.spec.ts` | Seat wishes, self pick with a ticket, the lead finalizes, members see the final plan; no pick without a ticket. |
+| `seats.spec.ts` | Ranked seat wishes (add, reorder by arrows and drag, remove), the leads' wish score, self pick with a ticket, the lead finalizes, members see the final plan; no pick without a ticket. |
 | `payments.spec.ts` | Clan payments: a lead creates a charge, the member reports paying, the lead marks it paid. |
 
 `rsvp` and `seats` also run on a phone-sized screen (project `phone`); everything runs on desktop.

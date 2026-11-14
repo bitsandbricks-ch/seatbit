@@ -10,6 +10,7 @@ import {
 import type { ClanRole } from "../lib/clan-roles";
 import type { DiscordMode } from "../lib/discord-modes";
 import type { NameDisplay } from "../lib/names";
+import type { SeatRule } from "../lib/seat-rules";
 
 const now = sql`(cast(unixepoch('subsecond') * 1000 as integer))`;
 const id = () =>
@@ -391,12 +392,8 @@ export const attendance = sqliteTable(
     /** Set by a lead: payment / ticket confirmed. */
     paid: integer("paid", { mode: "boolean" }).default(false).notNull(),
     note: text("note").default("").notNull(),
-    /** Seat wishes: user ids to sit near / not next to (JSON arrays). */
-    wishNear: text("wish_near", { mode: "json" }).$type<string[]>().default([]).notNull(),
-    wishAvoid: text("wish_avoid", { mode: "json" }).$type<string[]>().default([]).notNull(),
-    wishPosition: text("wish_position").$type<"any" | "edge" | "middle">().default("any").notNull(),
-    /** Preferred seat label, e.g. "F7". */
-    wishSeat: text("wish_seat").default("").notNull(),
+    /** Seat wishes as ranked rules, most important first (see src/lib/seat-rules.ts). */
+    wishRules: text("wish_rules", { mode: "json" }).$type<SeatRule[]>().default([]).notNull(),
     wishNote: text("wish_note").default("").notNull(),
     /** Set by the attendee: "I booked my seat on the event's own seat plan". Cleared when their seat changes. */
     seatBooked: integer("seat_booked", { mode: "boolean" }).default(false).notNull(),

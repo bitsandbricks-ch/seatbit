@@ -31,6 +31,7 @@ import {
 import { attendanceLocked, getDisplayNames, getLan, getNames, setAttendance, signupClosed, waitlistPositions } from "./lans";
 import { appUrl } from "./mail";
 import { saveNick, saveSeatWishes, saveTicketBought } from "./member-updates";
+import { MAX_SEAT_RULES, addRule, rulePeople, type SeatRule } from "./seat-rules";
 import { nameMatches } from "./names";
 import { listGames } from "./games";
 import { type Notice, sendDiscordDm } from "./notify";
@@ -304,15 +305,26 @@ const wishEvents = (events: Lan[], meId: string) =>
   });
 
 async function wishSummary(l: Lan, a: Attendance, t: T) {
-  const names = await getDisplayNames(l.id, [...a.wishNear, ...a.wishAvoid]);
-  const who = (ids: string[]) => ids.map((id) => names.get(id) ?? "?").join(", ");
-  const lines = [
-    a.wishNear.length ? `🤝 ${t("cmd.near")}: ${who(a.wishNear)}` : "",
-    a.wishAvoid.length ? `🙅 ${t("cmd.notNextTo")}: ${who(a.wishAvoid)}` : "",
-    a.wishPosition !== "any" ? `📍 ${t(POSITIONS[a.wishPosition])}` : "",
-    a.wishSeat ? `💺 ${t("cmd.seat", { seat: a.wishSeat })}` : "",
-    a.wishNote ? `📝 ${clip(a.wishNote, 300)}` : "",
-  ].filter(Boolean);
+  const rules = a.wishRules ?? [];
+  const names = await getDisplayNames(l.id, rulePeople(rules));
+  const line = (r: SeatRule) => {
+    switch (r.kind) {
+      case "near":
+        return `🤝 ${t("cmd.near")}: ${names.get(r.userId) ?? "?"}`;
+      case "avoid":
+        return `🙅 ${t("cmd.notNextTo")}: ${names.get(r.userId) ?? "?"}`;
+      case "seat":
+        return `💺 ${t("cmd.seat", { seat: r.seat })}`;
+      case "row":
+        return `💺 ${t("cmd.row", { row: r.row })}`;
+      case "edge":
+      case "middle":
+        return `📍 ${t(POSITIONS[r.kind])}`;
+    }
+  };
+  // Numbered, because the order is the priority.
+  const lines = rules.map((r, i) => `${i + 1}. ${line(r)}`);
+  if (a.wishNote) lines.push(`📝 ${clip(a.wishNote, 300)}`);
   return lines.join("\n");
 }
 
@@ -361,15 +373,16 @@ async function wishCommand(i: Interaction): Promise<Json> {
   if ((near && !nearP) || (avoid && !avoidP))
     return reply(t("cmd.unknownPerson"));
 
-  let w = clear
-    ? { near: [] as string[], avoid: [] as string[], position: "any" as const, seat: "", note: "" }
-    : { near: a.wishNear, avoid: a.wishAvoid, position: a.wishPosition, seat: a.wishSeat, note: a.wishNote };
-  if (nearP) w = { ...w, near: [...w.near.filter((x) => x !== nearP.id), nearP.id], avoid: w.avoid.filter((x) => x !== nearP.id) };
-  if (avoidP) w = { ...w, avoid: [...w.avoid.filter((x) => x !== avoidP.id), avoidP.id], near: w.near.filter((x) => x !== avoidP.id) };
-  if (position && position in POSITIONS) w = { ...w, position };
-  if (seatWish !== undefined) w = { ...w, seat: seatWish };
+  let w: { rules: SeatRule[]; note: string } = clear ? { rules: [], note: "" } : { rules: a.wishRules ?? [], note: a.wishNote };
+  // New wishes go to the end of the list; one that contradicts an older wish takes its place.
+  if (nearP) w = { ...w, rules: addRule(w.rules, { kind: "near", userId: nearP.id }) };
+  if (avoidP) w = { ...w, rules: addRule(w.rules, { kind: "avoid", userId: avoidP.id }) };
+  if (position === "any") w = { ...w, rules: w.rules.filter((r) => r.kind !== "edge" && r.kind !== "middle") };
+  else if (position === "edge" || position === "middle") w = { ...w, rules: addRule(w.rules, { kind: position }) };
+  if (seatWish !== undefined)
+    w = { ...w, rules: seatWish.trim() ? addRule(w.rules, { kind: "seat", seat: seatWish.trim().toUpperCase() }) : w.rules.filter((r) => r.kind !== "seat") };
   if (note !== undefined) w = { ...w, note };
-  if (w.near.length > 10 || w.avoid.length > 10) return reply(t("cmd.tooMany"));
+  if (w.rules.length > MAX_SEAT_RULES) return reply(t("cmd.tooMany"));
   try {
     saveSeatWishes(l.id, me.id, w);
   } catch {

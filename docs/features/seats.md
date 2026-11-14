@@ -17,7 +17,7 @@ The **seat plan** shows the group's seat block. Members send seat wishes or pick
 
 | Step | |
 | --- | --- |
-| 1. **Seat wishes** | Members say who they want to sit with, who not right next to, edge or middle, or a specific seat. On Discord: `/wish`. |
+| 1. **Seat wishes** | Members list their wishes as ranked rules, most important first (see [Seat wishes](#seat-wishes)). On Discord: `/wish`. |
 | 2. **Self pick** (optional) | Leads turn it on; members with a ticket tap a free seat and **Take this seat**, **Move here** or **Give up my seat**. |
 | 3. **Final plan** | Leads finalize. This closes wishes and self pick, shows everyone the plan and can tell everyone their seat. Later changes notify the people who moved. **Reopen** goes back. |
 
@@ -44,6 +44,20 @@ Seats only count, and everyone sees the plan, once it is final. The member [chec
 </figure>
 </div>
 
+## Seat wishes
+
+On the event's *Seats* tab, each member keeps a list of wishes. Every wish is a rule:
+
+| Rule | Met when |
+| --- | --- |
+| **Near someone** | You sit in the same row, at most two seats apart. |
+| **Not next to someone** | That person isn't directly beside you. |
+| **A seat** | You get that seat. Add several to rank alternatives ("F7, else F9"). |
+| **A row** | You sit in that row. |
+| **At the edge** / **In the middle** | Your seat is (or isn't) at the end of a row. You can have one of the two. |
+
+The order is the priority: the top wish counts most, each one below a bit over half as much as the one above. Drag a wish by its handle (works with touch) or use the arrows to move it; every change saves right away. A wish that contradicts an older one (near and not next to the same person, edge and middle) takes the older one's place. Up to 20 wishes, plus a free-text note for the leads.
+
 ## Plan the seats
 
 *Manage → Seats*.
@@ -64,7 +78,9 @@ Tap a seat:
 
 People coming without a seat are listed under **Not seated yet**: tap one, then a seat. On desktop, drag names onto seats and seated people onto other seats to swap.
 
-**Fill free seats** seats everyone without a seat; **Re-plan everyone** starts over. The planner follows seat wishes and seats people with a ticket first.
+**Fill free seats** seats everyone without a seat; **Re-plan everyone** starts over. The planner follows seat wishes in each member's order, so when two wishes can't both be met the higher one wins, and it seats people with a ticket first.
+
+The **Seat wishes** card scores the current plan: for each member the share of their wishes that are met, weighted by their order (a met top wish counts more), and the average over everyone. Members with the lowest score come first, each with their wishes in order: ✓ met, ✗ missed, · can't be checked yet because they or the other person have no seat. The seat details panel shows the same for one person, and members' notes are listed below.
 
 ## Book on the event site
 

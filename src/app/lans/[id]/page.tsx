@@ -24,6 +24,7 @@ import { EventHeader } from "@/components/event-header";
 import { buildChecklist, onTheDay, progress } from "@/lib/checklist";
 import { LanChecklist } from "@/components/lan-checklist";
 import { SeatWishes } from "@/components/seat-wishes";
+import { seatRow } from "@/lib/seat-labels";
 import { Tabs } from "@/components/tabs";
 import { TravelBoard, type TravelPostView } from "@/components/travel-board";
 import { PackingList } from "@/components/gear-board";
@@ -364,14 +365,10 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           .filter((r) => r.userId !== me.id && (r.status === "going" || r.status === "maybe" || r.status === "waitlist"))
           .map((r) => ({ id: r.userId, name: names.get(r.userId) ?? "?" }))
           .sort((a, b) => a.name.localeCompare(b.name))}
+        names={Object.fromEntries((my.wishRules ?? []).flatMap((r) => ("userId" in r ? [[r.userId, names.get(r.userId) ?? "?"]] : [])))}
         seatLabels={[...seats].sort((a, b) => a.row - b.row || a.col - b.col).map((s) => s.label)}
-        initial={{
-          near: my.wishNear ?? [],
-          avoid: my.wishAvoid ?? [],
-          position: my.wishPosition,
-          seat: my.wishSeat,
-          note: my.wishNote,
-        }}
+        rows={[...new Set([...seats].sort((a, b) => a.row - b.row || a.col - b.col).map(seatRow))]}
+        initial={{ rules: my.wishRules ?? [], note: my.wishNote }}
       />
     </Card>
   );

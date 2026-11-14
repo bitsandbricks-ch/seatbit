@@ -1,0 +1,17 @@
+date: 2026-11-14
+type: improved
+pr: 135
+en:
+  title: "Ranked seat wishes"
+  text: >-
+    Seat wishes are now a list you put in order: sit near someone, not next to someone, a seat, a row,
+    at the edge or in the middle. Drag a wish or use the arrows to rank it; the top one counts most when
+    the seats are planned. Leads see for every member, and for the whole group, how much of their wishes
+    the seat plan meets.
+de:
+  title: "Platzwünsche nach Wichtigkeit"
+  text: >-
+    Platzwünsche sind jetzt eine Liste, die du ordnest: nahe bei jemandem, nicht neben jemandem, ein Platz,
+    eine Reihe, am Rand oder in der Mitte. Zieh einen Wunsch oder nutz die Pfeile, um ihn einzuordnen; der
+    oberste zählt bei der Sitzplanung am meisten. Leads sehen für jedes Mitglied und für die ganze Gruppe,
+    wie viel der Wünsche der Sitzplan erfüllt.

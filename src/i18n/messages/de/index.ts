@@ -103,6 +103,7 @@ import { waitlistPanel } from "./waitlistPanel";
 import { welcome } from "./welcome";
 import { whatsapp } from "./whatsapp";
 import { wishCheck } from "./wishCheck";
+import { wishOverview } from "./wishOverview";
 import { wishes } from "./wishes";
 
 export const de: Messages = {
@@ -207,5 +208,6 @@ export const de: Messages = {
   welcome,
   whatsapp,
   wishCheck,
+  wishOverview,
   wishes,
 };

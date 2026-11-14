@@ -85,8 +85,7 @@ export function mergeGuestInto(g: User, meId: string) {
       else tx.update(schema.travelSpot).set({ userId: meId }).where(eq(schema.travelSpot.id, sp.id)).run();
     }
     // Seat wishes of others that name the guest now name the real account.
-    for (const col of ["wish_near", "wish_avoid"] as const)
-      tx.run(sql`UPDATE attendance SET ${sql.raw(col)} = replace(${sql.raw(col)}, ${`"${g.id}"`}, ${`"${meId}"`}) WHERE ${sql.raw(col)} LIKE ${`%"${g.id}"%`}`);
+    tx.run(sql`UPDATE attendance SET wish_rules = replace(wish_rules, ${`"${g.id}"`}, ${`"${meId}"`}) WHERE wish_rules LIKE ${`%"${g.id}"%`}`);
     tx.delete(schema.user).where(eq(schema.user.id, g.id)).run();
   });
   // Let the clan admins know the guest now has a real account.
