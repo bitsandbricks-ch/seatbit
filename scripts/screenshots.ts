@@ -179,6 +179,9 @@ const SHOTS: Shot[] = [
     act: async (page) => {
       await page.getByRole("button", { name: "+ Add expense" }).click();
       await page.getByRole("button", { name: "Split evenly between" }).click();
+      // The list scrolls itself into view smoothly; wait until it has settled.
+      await page.getByRole("button", { name: "Done" }).waitFor();
+      await page.waitForTimeout(800);
     },
   },
   { name: "phone-interest", who: "anna", path: RETRO, full: true },
