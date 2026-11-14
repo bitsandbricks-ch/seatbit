@@ -26,6 +26,7 @@ import { LanChecklist } from "@/components/lan-checklist";
 import { SeatWishes } from "@/components/seat-wishes";
 import { LiveRefresh } from "@/components/live-refresh";
 import { seatRow } from "@/lib/seat-labels";
+import { normalizeRules } from "@/lib/seat-rules";
 import { Tabs } from "@/components/tabs";
 import { TravelBoard, type TravelPostView } from "@/components/travel-board";
 import { PackingList } from "@/components/gear-board";
@@ -370,7 +371,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
         names={Object.fromEntries((my.wishRules ?? []).flatMap((r) => ("userId" in r ? [[r.userId, names.get(r.userId) ?? "?"]] : [])))}
         seatLabels={[...seats].sort((a, b) => a.row - b.row || a.col - b.col).map((s) => s.label)}
         rows={[...new Set([...seats].sort((a, b) => a.row - b.row || a.col - b.col).map(seatRow))]}
-        initial={{ rules: my.wishRules ?? [], note: my.wishNote }}
+        initial={{ rules: normalizeRules(my.wishRules ?? [], me.id), note: my.wishNote }}
+        nearRange={l.seatNearRange}
       />
     </Card>
   );

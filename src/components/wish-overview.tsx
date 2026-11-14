@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { T } from "@/i18n/translate";
 import type { WishItem } from "@/lib/seating";
 import { Card, Pill, Segmented } from "./ui";
@@ -27,7 +28,7 @@ function Wish({ i, t, inline }: { i: WishItem; t: T; inline?: boolean }) {
   const Tag = inline ? "span" : "li";
   return (
     <Tag className={i.ok === false ? "text-fg" : "text-muted"}>
-      <span className="mr-0.5 tabular-nums text-faint">{i.rank}</span>
+      <span className="mr-0.5 tabular-nums text-faint">{i.rank ?? "–"}</span>
       <span aria-hidden className={`mr-1 font-semibold ${i.ok === null ? "text-faint" : i.ok ? "text-bit" : "text-danger"}`}>
         {i.ok === null ? "·" : i.ok ? "✓" : "✗"}
       </span>
@@ -48,6 +49,7 @@ export function WishOverview({
   overall,
   filter,
   href,
+  editHref,
   t,
 }: {
   rows: WishRow[];
@@ -55,6 +57,8 @@ export function WishOverview({
   filter: WishFilter;
   /** URL for a filter. */
   href: (f: WishFilter) => string;
+  /** Link to change a member's wishes; none once the plan is final. */
+  editHref?: (userId: string) => string;
   t: T;
 }) {
   const scored = rows.filter((r) => r.score !== null);
@@ -125,7 +129,7 @@ export function WishOverview({
                             {missed.length > 0 ? (
                               <span className="flex flex-wrap gap-x-3 gap-y-0.5">
                                 {missed.map((i) => (
-                                  <Wish key={i.rank} i={i} t={t} inline />
+                                  <Wish key={i.text} i={i} t={t} inline />
                                 ))}
                               </span>
                             ) : (
@@ -138,11 +142,16 @@ export function WishOverview({
                         {r.items.length > 0 && (
                           <ol className="space-y-0.5" aria-label={t("wishOverview.ranked", { name: r.name })}>
                             {r.items.map((i) => (
-                              <Wish key={i.rank} i={i} t={t} />
+                              <Wish key={i.text} i={i} t={t} />
                             ))}
                           </ol>
                         )}
                         {r.note && <p className="italic text-muted [overflow-wrap:anywhere]">“{r.note}”</p>}
+                        {editHref && (
+                          <Link href={editHref(r.userId)} className="inline-block pt-1 text-bit hover:underline">
+                            {t("wishLead.edit")}
+                          </Link>
+                        )}
                       </div>
                     </details>
                   </li>

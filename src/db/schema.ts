@@ -344,6 +344,8 @@ export const lan = sqliteTable("lan", {
   seatPicking: integer("seat_picking", { mode: "boolean" }).default(false).notNull(),
   /** Re-plan the seats whenever someone changes their seat wishes (until the plan is final; not during self pick). */
   seatAutoPlan: integer("seat_auto_plan", { mode: "boolean" }).default(false).notNull(),
+  /** Seats apart that still count as "near" for seat wishes. */
+  seatNearRange: integer("seat_near_range").default(4).notNull(),
   /**
    * The event's own seat plan (e.g. lal.gg's DotLAN "Sitzplan" page), where each
    * member books the seat the leads gave them. Per event: the plan id changes every year.
