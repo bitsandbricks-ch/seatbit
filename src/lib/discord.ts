@@ -18,6 +18,7 @@ import { type DmResult, dmDiscordUser, notify, notifyLater } from "./notify";
 import { makeT, type T } from "../i18n/translate";
 import { clanLocale } from "../i18n/user-locale";
 import { answerEvent, answerInterest, handleMemberCommand, handleTicketButton, memberAutocomplete } from "./discord-commands";
+import { lanChanged } from "./live";
 import {
   type DiscordUser,
   type Handled,
@@ -421,6 +422,8 @@ const pending = new Map<string, ReturnType<typeof setTimeout>>();
 
 /** Updates the attendee list on every posted announcement for a LAN (debounced). */
 export function refreshLanMessagesSoon(lanId: string) {
+  // Whatever changes the event's Discord message also changes its open pages.
+  lanChanged(lanId);
   if (!discordEnabled()) return;
   clearTimeout(pending.get(lanId));
   pending.set(

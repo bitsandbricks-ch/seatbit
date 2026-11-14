@@ -8,6 +8,7 @@ import { db, schema } from "@/db";
 import { cleanName } from "./names";
 import { makeT, type T } from "../i18n/translate";
 import { normalizeRules, seatRulesSchema } from "./seat-rules";
+import { lanChanged } from "./live";
 
 const { attendance, nickname } = schema;
 
@@ -51,6 +52,7 @@ export function saveTicketBought(lanId: string, userId: string, bought: boolean,
   if (!a) throw new Error(t("errors.answerFirst"));
   if (a.paid) throw new Error(t("errors.ticketConfirmed"));
   db.update(attendance).set({ ticketBought: bought }).where(eq(attendance.id, a.id)).run();
+  lanChanged(lanId);
 }
 
 export const wishInput = z.object({
@@ -68,4 +70,5 @@ export function saveSeatWishes(lanId: string, userId: string, input: z.input<typ
     .set({ wishRules: normalizeRules(w.rules, userId), wishNote: w.note })
     .where(eq(attendance.id, a.id))
     .run();
+  lanChanged(lanId);
 }

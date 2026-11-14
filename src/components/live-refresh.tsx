@@ -1,38 +1,85 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { seatPlanVersion } from "@/app/seat-plan-actions";
 
-const EVERY_MS = 8_000;
+/** Wait this long after a change before refreshing, so a few quick changes cause one refresh. */
+const DEBOUNCE_MS = 400;
+/** Only when the live stream can't be opened at all: refresh on a timer instead. */
+const FALLBACK_MS = 30_000;
+
+const TEXT_INPUTS = new Set(["text", "search", "email", "url", "tel", "number", "password", "date", "time", "datetime-local"]);
+
+/** Typing, choosing in a dropdown, dragging or a dialog open: a refresh now would get in the way. */
+function busy(dragging: boolean) {
+  if (dragging || document.querySelector("dialog[open]")) return true;
+  const el = document.activeElement as HTMLElement | null;
+  if (!el) return false;
+  if (el.isContentEditable || el.tagName === "TEXTAREA" || el.tagName === "SELECT") return true;
+  return el.tagName === "INPUT" && TEXT_INPUTS.has((el as HTMLInputElement).type);
+}
 
 /**
- * Keeps a seat page up to date: asks for the plan's fingerprint every few seconds while the
- * tab is visible and refreshes the page when it changed (someone moved, wished or was planned).
+ * Keeps an event page up to date: listens to /api/live/<event> and re-renders the page when
+ * someone else changed something (answers, tickets, seats, wishes, games, food, costs, travel).
+ * Waits while you type or the tab is in the background, then catches up.
  */
-export function LiveSeatRefresh({ lanId }: { lanId: string }) {
+export function LiveRefresh({ lanId }: { lanId: string }) {
   const router = useRouter();
-  const last = useRef<string | null>(null);
   useEffect(() => {
-    let stop = false;
-    const tick = async () => {
-      if (document.visibilityState !== "visible") return;
-      try {
-        const v = await seatPlanVersion(lanId);
-        if (stop) return;
-        if (last.current !== null && v !== last.current) router.refresh();
-        last.current = v;
-      } catch {
-        // Offline or signed out: try again next time.
+    let pending = false;
+    let dragging = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let fallback: ReturnType<typeof setInterval> | undefined;
+    let hadError = false;
+
+    const flush = () => {
+      timer = undefined;
+      if (!pending) return;
+      if (document.visibilityState !== "visible") return; // onVisible picks it up
+      if (busy(dragging)) {
+        timer = setTimeout(flush, 1_000);
+        return;
+      }
+      pending = false;
+      router.refresh();
+    };
+    const changed = () => {
+      pending = true;
+      if (!timer) timer = setTimeout(flush, DEBOUNCE_MS);
+    };
+
+    const es = new EventSource(`/api/live/${encodeURIComponent(lanId)}`);
+    es.onmessage = changed;
+    es.onopen = () => {
+      // Back after a dropped connection (deploy, network): changes may have been missed.
+      if (hadError) changed();
+      hadError = false;
+    };
+    es.onerror = () => {
+      hadError = true;
+      // CLOSED means the browser gave up (not allowed, server busy): poll slowly instead.
+      if (es.readyState === EventSource.CLOSED && !fallback) {
+        fallback = setInterval(() => document.visibilityState === "visible" && changed(), FALLBACK_MS);
       }
     };
-    void tick();
-    const id = setInterval(tick, EVERY_MS);
-    const onVisible = () => void tick();
+
+    const onVisible = () => {
+      if (document.visibilityState === "visible" && pending && !timer) timer = setTimeout(flush, DEBOUNCE_MS);
+    };
+    const down = () => (dragging = true);
+    const up = () => (dragging = false);
     document.addEventListener("visibilitychange", onVisible);
+    document.addEventListener("pointerdown", down, true);
+    document.addEventListener("pointerup", up, true);
+    document.addEventListener("pointercancel", up, true);
     return () => {
-      stop = true;
-      clearInterval(id);
+      es.close();
+      clearTimeout(timer);
+      clearInterval(fallback);
       document.removeEventListener("visibilitychange", onVisible);
+      document.removeEventListener("pointerdown", down, true);
+      document.removeEventListener("pointerup", up, true);
+      document.removeEventListener("pointercancel", up, true);
     };
   }, [lanId, router]);
   return null;

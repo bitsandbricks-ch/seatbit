@@ -2,6 +2,7 @@
 
 import { and, eq, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { lanChanged } from "@/lib/live";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db, schema } from "@/db";
@@ -289,6 +290,7 @@ export async function reportPaid(itemId: string, reported: boolean) {
   if (reported) audit({ actorId: me.id, action: "payment.report", clanId: ch.clanId, lanId: ch.lanId, targetUserId: me.id, data: { title: ch.title } });
   refresh(c.slug);
   if (ch.lanId) revalidatePath(`/lans/${ch.lanId}`);
+  lanChanged(ch.lanId);
 }
 
 // ---------- Online (Stripe Connect) ----------

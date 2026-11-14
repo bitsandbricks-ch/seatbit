@@ -4,6 +4,7 @@ import { err, getT, tr } from "@/i18n/server";
 import { and, eq, inArray, ne, or } from "drizzle-orm";
 import { rolesWith } from "@/lib/clan-roles";
 import { revalidatePath } from "next/cache";
+import { lanChanged } from "@/lib/live";
 import { z } from "zod";
 import { db, schema } from "@/db";
 import type { Lan } from "@/db/schema";
@@ -20,6 +21,7 @@ import { enforceLimit } from "@/lib/rate-limit";
 const { seat, seatSwap, game, gameVote, lanOrga, clanMember, user } = schema;
 
 const lanPath = (id: string) => {
+  lanChanged(id);
   revalidatePath(`/lans/${id}`);
   revalidatePath(`/lans/${id}/manage`);
 };

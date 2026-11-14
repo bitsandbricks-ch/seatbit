@@ -9,6 +9,7 @@ import { db, dbFile } from "../db";
 import { backupDisk, backupIntervalHours, backupStatus, listBackups } from "./backup";
 import { drillEnabled, lastDrill } from "./backup-drill";
 import { jobsSnapshot } from "./jobs";
+import { liveConnections } from "./live";
 
 type Labels = Record<string, string>;
 type Sample = { labels?: Labels; value: number };
@@ -74,6 +75,8 @@ export function collect(): Metric[] {
     // Database
     gauge("seatbit_database_size_bytes", "Size of the SQLite database file.", fileSize(dbFile)),
     gauge("seatbit_database_wal_bytes", "Size of the SQLite write-ahead log.", fileSize(`${dbFile}-wal`)),
+
+    gauge("seatbit_live_connections", "Open live update streams (event pages that refresh by themselves).", liveConnections()),
 
     // What the instance holds
     gauge("seatbit_users", "Accounts and guests, without deleted ones.", [

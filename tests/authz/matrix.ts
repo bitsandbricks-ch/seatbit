@@ -33,6 +33,7 @@ import * as leadExport from "../../src/app/lans/[id]/manage/export/route";
 import * as profileExport from "../../src/app/profile/export/route";
 import * as backupDownload from "../../src/app/admin/backups/[name]/route";
 import * as cron from "../../src/app/api/cron/reminders/route";
+import * as live from "../../src/app/api/live/[lanId]/route";
 
 export const MODULES = {
   actions,
@@ -167,7 +168,6 @@ export const SPECS: Spec[] = [
   { name: "actions.adminSetSeatFor", allow: LAN_MANAGERS, run: () => actions.adminSetSeatFor(fx.lan, ACTORS.member, fx.freeSeat) },
   { name: "actions.adminAutoAssignSeats", allow: LAN_MANAGERS, run: () => actions.adminAutoAssignSeats(fx.lan, "replan") },
   { name: "seat-plan-actions.setSeatAutoPlan", allow: LAN_MANAGERS, run: () => seatPlan.setSeatAutoPlan(fx.lan, !lanFlag(fx.lan, "seat_auto_plan")) },
-  { name: "seat-plan-actions.seatPlanVersion", allow: [...LAKESIDE_ATTENDEES, ...VIEWERS], effect: "none", run: () => seatPlan.seatPlanVersion(fx.lan) },
   { name: "actions.publishSeats", allow: EVENT_MANAGERS, run: () => actions.publishSeats(fx.pickLan, false) },
   { name: "actions.unpublishSeats", allow: LAN_MANAGERS, run: () => actions.unpublishSeats(fx.lan) },
   { name: "actions.saveLanType (new)", allow: EVENT_MANAGERS, run: () => actions.saveLanType(undefined, form({ clanId: fx.clan, name: "New type", reminderDays: "3", durationHours: "48" })) },
@@ -345,6 +345,7 @@ export const SPECS: Spec[] = [
 
   // ---------- Downloads (route handlers) ----------
   { name: "route GET /lans/[id]/manage/export", allow: LAN_MANAGERS, effect: "read", run: () => leadExport.GET(get(`/lans/${fx.lan}/manage/export`), params({ id: fx.lan })) },
+  { name: "route GET /api/live/[lanId]", allow: [...LAKESIDE_ATTENDEES, ...VIEWERS], effect: "read", run: () => live.GET(get(`/api/live/${fx.lan}`), params({ lanId: fx.lan })) },
   { name: "route GET /profile/export", allow: SIGNED_IN, effect: "read", run: () => profileExport.GET() },
   { name: "route GET /admin/backups/[name]", allow: ["owner"], effect: "read", run: () => backupDownload.GET(get(`/admin/backups/${fx.backup}`), params({ name: fx.backup })) },
   // Cron isn't tied to a person: only the shared secret counts, whoever is signed in.

@@ -4,6 +4,7 @@ import type { T } from "@/i18n/translate";
 
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { lanChanged } from "@/lib/live";
 import { z } from "zod";
 import { db, schema } from "@/db";
 import { TRAVEL_KINDS } from "@/db/schema";
@@ -13,7 +14,10 @@ import { canTakePart, isLanManager, requireUser } from "@/lib/session";
 
 const { attendance, travelPost, travelSpot, gearPacked, packingItem } = schema;
 
-const refresh = (lanId: string) => revalidatePath(`/lans/${lanId}`);
+const refresh = (lanId: string) => {
+  lanChanged(lanId);
+  revalidatePath(`/lans/${lanId}`);
+};
 
 /** Signed-in clan member who answered coming, unsure or waitlist for this LAN. */
 async function requireAttendee(lanId: string) {
