@@ -6,6 +6,7 @@ import { db, schema } from "@/db";
 import { auditLan } from "@/lib/audit";
 import { requireLanManager } from "@/lib/session";
 import { autoPlanAfterWishes } from "@/lib/seat-plan";
+import { clampNearRange } from "@/lib/seat-rules";
 
 const { lan } = schema;
 
@@ -20,4 +21,18 @@ export async function setSeatAutoPlan(lanId: string, on: boolean) {
   if (on) autoPlanAfterWishes(lanId, me.id, "replan");
   lanChanged(lanId);
   revalidatePath(`/lans/${lanId}`, "layout");
+}
+
+/** Manage → Seats: how many seats apart still count as "near" for this event's seat wishes. */
+export async function setSeatNearRange(lanId: string, range: number) {
+  const me = await requireLanManager(lanId);
+  const r = clampNearRange(range);
+  const before = db.select().from(lan).where(eq(lan.id, lanId)).get()!;
+  if (before.seatNearRange === r) return r;
+  db.update(lan).set({ seatNearRange: r }).where(eq(lan.id, lanId)).run();
+  auditLan(before, me.id, "seat.nearRange", { data: { range: r } });
+  autoPlanAfterWishes(lanId, me.id, "replan");
+  lanChanged(lanId);
+  revalidatePath(`/lans/${lanId}`, "layout");
+  return r;
 }

@@ -46,17 +46,23 @@ Seats only count, and everyone sees the plan, once it is final. The member [chec
 
 ## Seat wishes
 
-On the event's *Seats* tab, each member keeps a list of wishes. Every wish is a rule:
+On the event's *Seats* tab, each member keeps a ranked list of wishes:
 
-| Rule | Met when |
-| --- | --- |
-| **Near someone** | You sit as close as you chose: right next to them, within 2 or 3 seats, or anywhere in the same row. |
-| **Away from someone** | The reverse: not right next to them, not within 2 or 3 seats, or not in the same row. |
-| **A seat** | You get that seat. Add several to rank alternatives ("F7, else F9"). |
-| **A row** | You sit in that row. |
-| **At the edge** / **In the middle** | Your seat is (or isn't) at the end of a row. You can have one of the two. |
+| Wish | Met when | Limit |
+| --- | --- | --- |
+| **Right next to someone** | You sit directly beside them. Counts a bit more than its place in the list says. | One person |
+| **Near someone** | You sit within 4 seats of them in the same row (leads can change the 4, see below). | Four people |
+| **A seat** | You get that seat. Add several to rank alternatives ("F7, else F9"). | |
+| **A row** | You sit in that row. | |
+| **At the edge** / **In the middle** | Your seat is (or isn't) at the end of a row. You can have one of the two. | |
 
-The order is the priority: the top wish counts most, each one below half as much as the one above, so a wish outweighs all the wishes below it together. Everyone's wishes add up to the same total, so a member with ten wishes doesn't count more than one with three. Drag a wish by its handle (works with touch) or use the arrows to move it; every change saves right away. A wish that contradicts an older one (near and away from the same person, edge and middle) takes the older one's place. Change how close or how far on the wish itself. Up to 20 wishes, plus a free-text note for the leads.
+The order is the priority: the top wish counts most, each one below half as much as the one above, so a wish outweighs all the wishes below it together. Everyone's wishes add up to the same total, so a member with ten wishes doesn't count more than one with three. Drag a wish by its handle (works with touch) or use the arrows to move it; every change saves right away. A wish that contradicts an older one (near and right next to the same person, edge and middle) takes the older one's place.
+
+Below the ranked list, **Not right next to** lists people you don't want directly beside you, as many as you like. They aren't ranked: each one counts as much as all your other wishes together, so the planner keeps them whenever it can. Add a free-text note for the leads at the end.
+
+**Leads can change a member's wishes**, e.g. when someone told them in person: on *Manage → Seats*, pick the member under **Change someone's wishes**, or open a member in the **Seat wishes** card and choose **Change wishes**. The editor is the same one members use. A minute after the lead's last change, the member gets a Discord DM with their wishes as they are now (unless they turned DMs off on their profile), and the change shows in the event's log.
+
+**How far "near" reaches** is set per event under *Manage → Seats → Our seats* ("“Near” means within … seats", 2 to 12, default 4). Changing it re-plans right away when automatic re-planning is on.
 
 ## Plan the seats
 

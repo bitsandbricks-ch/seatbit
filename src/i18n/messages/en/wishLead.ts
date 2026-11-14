@@ -1,0 +1,22 @@
+export const wishLead = {
+  title: "Change someone's wishes",
+  intro: "Pick a member to change their seat wishes, e.g. when they told you in person.",
+  pick: "Member",
+  choose: "Pick a member…",
+  open: "Edit",
+  editing: "Seat wishes of {name}",
+  editingHint: "Changes save right away. {name} gets a Discord DM with the new wishes a minute after your last change (unless they turned DMs off).",
+  done: "Done",
+  edit: "Change wishes",
+  saved: "Saved. {name} will get a DM.",
+  nearRange: "“Near” means within",
+  nearRangeUnit: "seats",
+  nearRangeHint: "For “Near someone” wishes. “Right next to” always means the seat beside.",
+  nearRangeSaved: "Saved: near means within {range} seats.",
+  dm: {
+    subject: "A lead changed your seat wishes for {lan}",
+    text: "{lead} changed your seat wishes for {lan}. They are now:\n\n{wishes}\n\nYou can change them on the event page until the seat plan is final.",
+    none: "No wishes: anywhere is fine.",
+    note: "Note: {note}",
+  },
+};

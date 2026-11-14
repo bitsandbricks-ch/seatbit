@@ -680,9 +680,9 @@ function SeatDetails({
               )}
               <ol className="flex flex-wrap gap-1">
                 {person.wishes.items.map((w) => (
-                  <li key={w.rank}>
+                  <li key={w.text}>
                     <Pill tone={w.ok === null ? "zinc" : w.ok ? "emerald" : "red"}>
-                      {w.rank}. {w.ok === null ? "·" : w.ok ? "✓" : "✗"} {w.text}
+                      {w.rank ? `${w.rank}. ` : ""}{w.ok === null ? "·" : w.ok ? "✓" : "✗"} {w.text}
                     </Pill>
                   </li>
                 ))}

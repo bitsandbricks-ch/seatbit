@@ -7,7 +7,7 @@ import { z } from "zod";
 import { db, schema } from "@/db";
 import { cleanName } from "./names";
 import { makeT, type T } from "../i18n/translate";
-import { normalizeRules, seatRulesSchema } from "./seat-rules";
+import { MAX_NEAR, MAX_WISHES, normalizeRules, rulesProblem, seatRulesSchema } from "./seat-rules";
 import { lanChanged } from "./live";
 
 const { attendance, nickname } = schema;
@@ -61,14 +61,21 @@ export const wishInput = z.object({
 });
 export type SeatWishes = z.output<typeof wishInput>;
 
-/** Saves a member's seat wishes. The caller checks the plan isn't final yet. */
+/**
+ * Saves a member's seat wishes (by the member or a lead). The caller checks the plan isn't final yet.
+ * Returns whether anything changed.
+ */
 export function saveSeatWishes(lanId: string, userId: string, input: z.input<typeof wishInput>, t: T = makeT("en")) {
   const w = wishInput.parse(input);
+  const problem = rulesProblem(w.rules);
+  if (problem === "tooMany") throw new Error(t("wishes.errors.tooMany", { max: MAX_WISHES }));
+  if (problem === "twoNext") throw new Error(t("wishes.errors.oneNext"));
+  if (problem === "tooManyNear") throw new Error(t("wishes.errors.tooManyNear", { max: MAX_NEAR }));
   const a = myAttendance(lanId, userId);
   if (!a) throw new Error(t("errors.comingFirst"));
-  db.update(attendance)
-    .set({ wishRules: normalizeRules(w.rules, userId), wishNote: w.note })
-    .where(eq(attendance.id, a.id))
-    .run();
+  const rules = normalizeRules(w.rules, userId);
+  const changed = JSON.stringify(rules) !== JSON.stringify(a.wishRules ?? []) || w.note !== a.wishNote;
+  db.update(attendance).set({ wishRules: rules, wishNote: w.note }).where(eq(attendance.id, a.id)).run();
   lanChanged(lanId);
+  return changed;
 }
