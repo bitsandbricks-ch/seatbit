@@ -43,6 +43,7 @@ import { guestDiscord } from "./guestDiscord";
 import { guestForm } from "./guestForm";
 import { health } from "./health";
 import { home } from "./home";
+import { interestList } from "./interestList";
 import { joinPage } from "./joinPage";
 import { lanForm } from "./lanForm";
 import { language } from "./language";
@@ -146,6 +147,7 @@ export const de: Messages = {
   guestForm,
   health,
   home,
+  interestList,
   joinPage,
   lanForm,
   language,

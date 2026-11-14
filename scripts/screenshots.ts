@@ -277,6 +277,7 @@ const SHOTS: Shot[] = [
   { name: "desktop-manage-settings", who: "alex", path: `${LAKESIDE}/manage?tab=settings`, full: true },
   { name: "desktop-new-event", who: "alex", path: `${CLAN}/lans/new` },
   { name: "desktop-event-draft", who: "alex", path: `${DRAFT}/manage` },
+  { name: "desktop-interest", who: "anna", path: `${RETRO}?tab=attendees` },
   { name: "desktop-interest-manage", who: "alex", path: `${RETRO}/manage` },
   { name: "desktop-clan", who: "alex", path: CLAN },
   { name: "desktop-clan-events", who: "alex", path: `${CLAN}?tab=events` },
