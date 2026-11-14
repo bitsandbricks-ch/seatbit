@@ -101,6 +101,8 @@ export const errors: Messages["errors"] = {
   gameExists: "{name} ist schon auf der Liste. Stimm stattdessen dafür.",
   gamesFull: "Die Liste ist voll (50 Games).",
   gameRemove: "Nur wer es hinzugefügt hat oder ein Lead kann es entfernen.",
+  gameEdit: "Nur wer es hinzugefügt hat oder ein Lead kann es ändern.",
+  gameNameTaken: "Es gibt schon ein Game namens {name}.",
   publishFirst: "Veröffentliche das Event zuerst. Mitglieder sehen keine Entwürfe.",
   signUpFirst: "Melde dich zuerst für die LAN an.",
   placesTooFew: "Es sind schon mehr Leute dabei. Entfern zuerst jemanden.",

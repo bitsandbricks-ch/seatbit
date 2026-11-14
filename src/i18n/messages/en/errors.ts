@@ -99,6 +99,8 @@ export const errors = {
   gameExists: "{name} is already on the list. Vote for it instead.",
   gamesFull: "The list is full (50 games).",
   gameRemove: "Only who added it or a lead can remove it.",
+  gameEdit: "Only who added it or a lead can change it.",
+  gameNameTaken: "There is already a game called {name}.",
   publishFirst: "Publish the event first. Members can't see drafts.",
   signUpFirst: "Sign up for the LAN first.",
   placesTooFew: "More people have joined than that. Remove someone first.",

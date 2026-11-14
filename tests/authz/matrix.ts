@@ -191,6 +191,11 @@ export const SPECS: Spec[] = [
   { name: "lan-extras-actions.decideSeatSwap", allow: LAN_MANAGERS, run: () => extras.decideSeatSwap(fx.swapFromAnna, false) },
   { name: "lan-extras-actions.addGame", allow: MEMBERS, run: () => extras.addGame(fx.lan, form({ name: "Quake", sizeGb: "1", url: "" })) },
   { name: "lan-extras-actions.deleteGame", allow: ["member", ...LAN_MANAGERS], run: () => extras.deleteGame(fx.annaGame) },
+  {
+    name: "lan-extras-actions.updateGame",
+    allow: ["member", ...LAN_MANAGERS],
+    run: () => extras.updateGame(fx.annaGame, form({ name: "Anna's game 2", sizeGb: "3", url: "" })),
+  },
   { name: "lan-extras-actions.setGameMark", allow: MEMBERS, run: () => extras.setGameMark(fx.game, "installed", true), positive: "organizer" },
   { name: "lan-extras-actions.nudgeMissing", allow: LAN_MANAGERS, run: () => extras.nudgeMissing(fx.lan, "ticket"), effect: "none" },
 
