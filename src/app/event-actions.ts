@@ -3,6 +3,7 @@ import { err, tr } from "@/i18n/server";
 
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { lanChanged } from "@/lib/live";
 import { redirect } from "next/navigation";
 import { db, schema } from "@/db";
 import { INTEREST_ANSWERS, type InterestAnswer } from "@/db/schema";
@@ -17,6 +18,7 @@ import { overLimit } from "@/lib/rate-limit";
 const { lan, lanOrga, lanInterest, lanNews, clanMember, lanType, seat, attendance } = schema;
 
 const lanPath = (id: string) => {
+  lanChanged(id);
   revalidatePath(`/lans/${id}`);
   revalidatePath(`/lans/${id}/manage`);
   revalidatePath("/");

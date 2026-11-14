@@ -10,7 +10,7 @@ Seatbit runs as a single pod with a persistent volume. There is no Helm chart; t
 | **Storage** | A PersistentVolumeClaim on `/data` (database and uploads; a few hundred MB is plenty) and one on `/backups` for the built-in backups (about 14 times the database size with the default retention). |
 | **User** | The image runs as uid/gid `1001`; set `fsGroup: 1001` so the volume is writable. |
 | **Probes** | `GET /api/health` on port 3000 returns `{"ok":true}`. |
-| **Ingress** | HTTPS, forwarding `Host` and `X-Forwarded-Proto`. `BETTER_AUTH_URL` must be the public URL. |
+| **Ingress** | HTTPS, forwarding `Host` and `X-Forwarded-Proto`. `BETTER_AUTH_URL` must be the public URL. Event pages keep a long-lived connection to `/api/live/...` (Server-Sent Events) for live updates: it sends a heartbeat every 25 seconds and asks nginx not to buffer it, so default ingress-nginx and Traefik settings work. |
 | **Image tags** | `:main-<UTC timestamp>-<sha>` sorts by build time, for automatic updates (e.g. Flux image policies). See [Docker](docker.md). |
 
 ## Example

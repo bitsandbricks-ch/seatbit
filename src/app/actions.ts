@@ -2,6 +2,7 @@
 
 import { and, eq, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { lanChanged } from "@/lib/live";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db, schema } from "@/db";
@@ -46,6 +47,7 @@ import { enforceLimit, overLimit } from "@/lib/rate-limit";
 const { attendance, seat, lan, user, lanOrga, lanType } = schema;
 
 const lanPath = (id: string) => {
+  lanChanged(id);
   revalidatePath(`/lans/${id}`);
   revalidatePath(`/lans/${id}/manage`);
   revalidatePath("/");
@@ -77,6 +79,7 @@ export async function setNick(formData: FormData) {
     if (!t || (t.clanId && !isClanMember(me.id, t.clanId) && !platformCan(me, "view"))) throw new Error("Not found");
   }
   saveNick(me.id, String(formData.get("nick") ?? ""), { lanId, typeId });
+  lanChanged(lanId);
   revalidatePath("/", "layout");
 }
 

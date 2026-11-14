@@ -91,6 +91,12 @@ Every email goes out in the same layout (`renderMail` in `src/lib/mail-fill.ts`)
 
 `deliverMail()` in `mail.ts` is the only code that talks to SMTP and takes only a rendered mail (HTML and text). `npm run check:mail` (also in CI) fails when anything else imports nodemailer or calls `deliverMail()`.
 
+## Live updates
+
+Open event and Manage pages refresh by themselves when someone else changes something on that event. Server code calls `lanChanged(lanId)` from `src/lib/live.ts` after a change; the action files do that in their path helper (`lanPath`, `foodPath`, `costsPath`, `refresh`), so a new action that uses the helper is covered. `<LiveRefresh lanId>` (`src/components/live-refresh.tsx`) listens to `/api/live/<lanId>` (Server-Sent Events, only for people who pass `canViewLan`) and calls `router.refresh()`. It waits while someone types, drags or has a dialog open, and catches up when a background tab becomes visible.
+
+Only "this event changed" goes over the stream, never data: the refreshed page loads its own with the usual permission checks. The bus is in memory, which works because Seatbit runs as one process; changes from Discord commands, webhooks and background jobs are in the same process too. Changes within 250 ms are sent as one message. `seatbit_live_connections` in `/api/metrics` counts the open streams.
+
 ## Background work
 
 `src/instrumentation.ts` runs inside the server process: every minute it publishes scheduled drafts, and every *Reminder check interval* minutes it sends due reminders. Setting the interval to `0` turns that off; `/api/cron/reminders` (with `CRON_SECRET`) does the same from outside. The same timer makes the scheduled backups (`src/lib/backup.ts`) and restore-tests the newest one (`src/lib/backup-drill.ts`). Wrap new background work in `runJob()` (`src/lib/jobs.ts`): it then shows on *Admin → Health* and in the `seatbit_job_*` metrics (`src/lib/metrics.ts`, served at `/api/metrics`).

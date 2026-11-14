@@ -12,6 +12,7 @@ import { eventMailVars, renderTemplate } from "./mail-templates";
 import { localeOf } from "../i18n/user-locale";
 import type { Locale } from "../i18n/config";
 import { auditLan } from "./audit";
+import { lanChanged } from "./live";
 
 const { lan, user, clanMember, attendance, lanInterest, reminderLog } = schema;
 
@@ -108,6 +109,7 @@ export async function publishEvent(lanId: string, now = new Date(), by: string |
   const before = db.select().from(lan).where(eq(lan.id, lanId)).get();
   if (!before || before.publishedAt) return false;
   db.update(lan).set({ publishedAt: now, publishAt: null }).where(eq(lan.id, lanId)).run();
+  lanChanged(lanId);
   const l = { ...before, publishedAt: now, publishAt: null };
   auditLan(l, by, "event.publish", { data: { scheduled: by === null } });
   const { announceLan } = await import("./discord");
@@ -141,6 +143,7 @@ export async function publishDueDrafts(now = new Date()) {
 /** Ends the interest check: sign-up opens and everyone interested (except those who said no) is told. */
 export async function openSignup(l: Lan) {
   db.update(lan).set({ interestCheck: false }).where(eq(lan.id, l.id)).run();
+  lanChanged(l.id);
   const after = { ...l, interestCheck: false };
   const saidNo = new Set(
     db
@@ -166,6 +169,7 @@ export async function openSignup(l: Lan) {
 export async function cancelEvent(l: Lan, reason: string) {
   const now = new Date();
   db.update(lan).set({ cancelledAt: now, cancelReason: reason }).where(eq(lan.id, l.id)).run();
+  lanChanged(l.id);
   const after = { ...l, cancelledAt: now, cancelReason: reason };
   const { refreshLanMessages } = await import("./discord");
   await refreshLanMessages(l.id).catch(() => {});

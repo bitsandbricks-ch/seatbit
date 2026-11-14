@@ -1,0 +1,14 @@
+date: 2026-11-14
+type: new
+pr: 139
+en:
+  title: Event pages update live
+  text: >-
+    When someone answers, ticks their ticket, takes a seat, votes for a game, orders food or adds a cost,
+    everyone who has the event open sees it right away, without reloading. Pages wait while you're typing.
+de:
+  title: Event-Seiten aktualisieren sich live
+  text: >-
+    Wenn jemand antwortet, sein Ticket abhakt, einen Platz nimmt, für ein Game stimmt, Essen bestellt oder
+    Kosten erfasst, sehen es alle mit offener Event-Seite sofort, ohne neu zu laden. Während du tippst,
+    wartet die Seite.

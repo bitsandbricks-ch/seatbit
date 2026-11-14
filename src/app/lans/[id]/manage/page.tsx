@@ -27,7 +27,7 @@ import { clanCan, getClan } from "@/lib/clans";
 import { SeatFlow } from "@/components/seat-flow";
 import { checkWishes, overallScore } from "@/lib/seating";
 import { WishOverview, type WishRow } from "@/components/wish-overview";
-import { LiveSeatRefresh } from "@/components/live-refresh";
+import { LiveRefresh } from "@/components/live-refresh";
 import { getLanAccounts } from "@/lib/lan-accounts";
 import { LeadBookingList } from "@/components/seat-booking";
 import { LeadChecklist } from "@/components/lead-checklist";
@@ -397,6 +397,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
 
   return (
     <Page>
+      <LiveRefresh lanId={l.id} />
       <EventHeader
         lan={l}
         clan={lanClan}
@@ -656,7 +657,6 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
         // The seat plan is the main tool: map on the left with setup, the seat flow (wishes, self pick, finalize) and wishes below it, and the seat
         // details panel in its own column on the right (desktop).
         <div className="space-y-5">
-          <LiveSeatRefresh lanId={l.id} />
           {seats.length > 0 ? (
               <SeatMap
                 lanId={l.id}

@@ -3,6 +3,7 @@ import { err, tr } from "@/i18n/server";
 
 import { and, eq, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { lanChanged } from "@/lib/live";
 import { z } from "zod";
 import { db, schema } from "@/db";
 import type { FoodOrderStatus, User } from "@/db/schema";
@@ -20,7 +21,10 @@ const { foodOrder, foodItem, attendance, user } = schema;
 const MAX_ORDERS = 20;
 const MAX_ITEMS_PER_PERSON = 15;
 
-const foodPath = (lanId: string) => revalidatePath(`/lans/${lanId}`);
+const foodPath = (lanId: string) => {
+  lanChanged(lanId);
+  revalidatePath(`/lans/${lanId}`);
+};
 
 function myAttendance(lanId: string, userId: string) {
   return db

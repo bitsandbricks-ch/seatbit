@@ -3,6 +3,7 @@ import { err, tr } from "@/i18n/server";
 
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { lanChanged } from "@/lib/live";
 import { z } from "zod";
 import { db, schema } from "@/db";
 import type { User } from "@/db/schema";
@@ -13,7 +14,10 @@ import { canTakePart, isLanManager, requireUser } from "@/lib/session";
 
 const { costExpense, costShare, costSettlement, attendance } = schema;
 
-const costsPath = (lanId: string) => revalidatePath(`/lans/${lanId}`);
+const costsPath = (lanId: string) => {
+  lanChanged(lanId);
+  revalidatePath(`/lans/${lanId}`);
+};
 
 /** Everyone with an answer other than "not coming" can log costs; leads always. */
 function canAdd(me: User, lanId: string) {

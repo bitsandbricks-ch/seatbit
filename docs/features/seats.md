@@ -82,7 +82,7 @@ People coming without a seat are listed under **Not seated yet**: tap one, then 
 
 **Re-plan automatically when wishes change** (under *Our seats*) re-plans every seat that isn't held whenever someone changes their wishes, on the website or with `/wish`, and once right away when you turn it on. It pauses while self pick is on and once the plan is final, so it never moves a member's own pick or a final seat.
 
-Seat pages refresh by themselves every few seconds when the plan or someone's wishes change, so leads and members don't need to reload.
+Seat pages update by themselves when the plan or someone's wishes change, so leads and members don't need to reload (see [Live updates](events.md#live-updates)).
 
 The **Seat wishes** card scores the current plan: for each member the share of their wishes that are met, weighted by their order (a met top wish counts more), and the average over everyone. Members with the lowest score come first, one row each with their seat, their wishes in order (✓ met, ✗ missed, · can't be checked yet because they or the other person have no seat), their note and their score. The seat details panel shows the same for one person.
 

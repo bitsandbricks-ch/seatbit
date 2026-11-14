@@ -62,7 +62,7 @@ The container runs as uid/gid **1001**: make sure `./data` and `./backups` belon
 - Migrations run automatically on start.
 - Health check: `GET /api/health` returns `{"ok":true}`.
 - Works with a read-only root filesystem if `/tmp` and `/app/.next/cache` are writable.
-- Behind a reverse proxy, forward the `Host` header and `X-Forwarded-Proto`; `BETTER_AUTH_URL` must be the public HTTPS URL.
+- Behind a reverse proxy, forward the `Host` header and `X-Forwarded-Proto`; `BETTER_AUTH_URL` must be the public HTTPS URL. Don't buffer `/api/live/` responses (live updates use Server-Sent Events); Caddy, Traefik and nginx with default settings are fine.
 - All variables: [Configuration](configuration.md). Next: [Discord app and bot](discord.md).
 
 ## Without Docker

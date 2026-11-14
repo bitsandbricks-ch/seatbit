@@ -24,7 +24,7 @@ import { EventHeader } from "@/components/event-header";
 import { buildChecklist, onTheDay, progress } from "@/lib/checklist";
 import { LanChecklist } from "@/components/lan-checklist";
 import { SeatWishes } from "@/components/seat-wishes";
-import { LiveSeatRefresh } from "@/components/live-refresh";
+import { LiveRefresh } from "@/components/live-refresh";
 import { seatRow } from "@/lib/seat-labels";
 import { Tabs } from "@/components/tabs";
 import { TravelBoard, type TravelPostView } from "@/components/travel-board";
@@ -387,6 +387,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
 
   return (
     <Page>
+      <LiveRefresh lanId={l.id} />
       <EventHeader lan={l} clan={lanClan} mode="view" canManage={isAdmin} tab={tab} />
 
       {/* Your answer and your checklist sit above the tabs, so they show on every tab. */}
@@ -540,7 +541,6 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
 
       {tab === "seats" && (
         <>
-          <LiveSeatRefresh lanId={l.id} />
           {seats.length > 0 && my?.status === "going" && (picking || mySeatLabel) && !my.paid && !my.ticketBought && (
             <p className="rounded-md border border-warn/30 bg-warn/10 px-3 py-2 text-sm text-warn">
               {mySeatLabel

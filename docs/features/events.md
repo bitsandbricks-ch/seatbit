@@ -147,6 +147,12 @@ Short updates ("Doors open at 10:00, bring cash for pizza"). They show on the ev
 | **Cancel event…** | Tells everyone who answered and turns the Discord post red. The event stays visible, greyed out. Can be undone. |
 | **Delete** | Removes a draft or an event for good. |
 
+## Live updates
+
+The event page and *Manage* update by themselves when someone else changes something: answers, tickets, seats and wishes, games, food orders, costs, travel and packing, news, the lead to-dos. Changes from Discord commands show up the same way. You don't need to reload.
+
+If you're typing in a field, dragging or have a dialog open, the page waits until you're done, so nothing you're entering gets lost. A tab in the background catches up when you come back to it.
+
 ## On the day
 
 Members coming tap **I'm here** when they arrive, and everyone sees who is still on the way.

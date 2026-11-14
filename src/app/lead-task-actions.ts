@@ -1,6 +1,7 @@
 "use server";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { lanChanged } from "@/lib/live";
 import { db, schema } from "@/db";
 import type { LeadTask } from "@/db/schema";
 import { tr } from "@/i18n/server";
@@ -167,6 +168,7 @@ export async function toggleLanTask(lanId: string, taskId: string) {
   const done = !cur?.doneAt;
   upsertState(lanId, taskId, done ? { doneAt: new Date(), doneById: me.id } : { doneAt: null, doneById: null });
   auditLan(found.l, me.id, done ? "lead.task_done" : "lead.task_undone", { data: { task: found.x.title } });
+  lanChanged(lanId);
   revalidatePath(`/lans/${lanId}/manage`);
 }
 
@@ -180,5 +182,6 @@ export async function assignLanTask(lanId: string, taskId: string, userId: strin
   if ((cur?.assigneeId ?? null) === to) return;
   upsertState(lanId, taskId, { assigneeId: to });
   auditLan(found.l, me.id, "lead.task_assign", { targetUserId: to, data: { task: found.x.title, from: cur?.assigneeId ?? undefined } });
+  lanChanged(lanId);
   revalidatePath(`/lans/${lanId}/manage`);
 }
