@@ -111,3 +111,24 @@ test("wishScore: met top wish beats met lower wish", () => {
   assert.ok(top > low);
   assert.equal(wishScore([]), null);
 });
+
+test("near ranges: right next to needs adjacent, same row accepts any distance", () => {
+  const seats = row(6, { 1: "x", 2: "y" });
+  // Only A4..A6 are free; "next to x" can't be met, "same row as x" can.
+  const everyone = [person("x"), person("y"), person("a", [{ kind: "near", userId: "x", within: 1 }]), person("b", [{ kind: "near", userId: "x", within: "row" }])];
+  const plan = planSeats(seats, everyone.slice(2), everyone);
+  const checks = checkWishes(
+    seats.map((s) => ({ ...s, userId: s.userId ?? [...plan].find(([, sid]) => sid === s.id)?.[0] ?? null })),
+    everyone,
+    (id) => id,
+  );
+  assert.equal(checks.find((c) => c.userId === "a")!.items[0].ok, false);
+  assert.equal(checks.find((c) => c.userId === "b")!.items[0].ok, true);
+});
+
+test("avoid ranges: not within 3 seats keeps the distance", () => {
+  const seats = row(6, { 1: "x" });
+  const everyone = [person("x"), person("a", [{ kind: "avoid", userId: "x", within: 3 }])];
+  const plan = planSeats(seats, [everyone[1]], everyone);
+  assert.ok(col(plan, "a") > 4);
+});

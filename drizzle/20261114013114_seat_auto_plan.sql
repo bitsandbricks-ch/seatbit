@@ -1,0 +1,1 @@
+ALTER TABLE `lan` ADD `seat_auto_plan` integer DEFAULT false NOT NULL;

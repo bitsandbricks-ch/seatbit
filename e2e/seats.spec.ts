@@ -21,10 +21,14 @@ test.describe("seats", () => {
     // Add three wishes; each one saves right away.
     await main.getByRole("button", { name: "+ Near someone" }).click();
     await main.getByLabel("Who do you want to sit near?").selectOption(userId("ben"));
+    await main.getByLabel("How close?").selectOption({ label: "Right next to" });
     await main.getByRole("button", { name: "Add", exact: true }).click();
-    await expect.poll(rulesOf).toEqual([{ kind: "near", userId: userId("ben") }]);
-    await main.getByRole("button", { name: "+ Not next to someone" }).click();
-    await main.getByLabel("Who not right next to you?").selectOption(userId("chiara"));
+    await expect.poll(rulesOf).toEqual([{ kind: "near", userId: userId("ben"), within: 1 }]);
+    // The range can be changed on the wish itself.
+    await main.getByLabel(/^How close: Right next to Ben/).selectOption({ label: "Same row" });
+    await expect.poll(rulesOf).toEqual([{ kind: "near", userId: userId("ben"), within: "row" }]);
+    await main.getByRole("button", { name: "+ Away from someone" }).click();
+    await main.getByLabel("Who should not sit close to you?").selectOption(userId("chiara"));
     await main.getByRole("button", { name: "Add", exact: true }).click();
     await main.getByRole("button", { name: "+ At the edge" }).click();
     await expect.poll(() => rulesOf()?.length).toBe(3);
@@ -37,7 +41,7 @@ test.describe("seats", () => {
     await expect(page.getByText("Saved. The leads will try to make it work.").first()).toBeVisible();
 
     // Drag "Not next to" from the bottom to the top by its handle.
-    const handle = main.getByRole("button", { name: /^Drag to move: Not next to/ });
+    const handle = main.getByRole("button", { name: /^Drag to move: Not right next to/ });
     const top = main.getByRole("listitem").filter({ hasText: "At the edge of a row" });
     const from = (await handle.boundingBox())!;
     const to = (await top.boundingBox())!;
@@ -72,9 +76,36 @@ test.describe("seats", () => {
     const card = alex.locator("#wishes");
     await expect(card.getByText("63% met")).toBeVisible();
     const wishes = card.getByRole("list", { name: /^Wishes of Anna/ });
-    await expect(wishes.getByRole("listitem").first()).toContainText("1.");
     await expect(wishes.getByRole("listitem").first()).toContainText("near Ben");
     await expect(wishes.getByRole("listitem").nth(1)).toContainText("seat A4");
+  });
+
+  test("automatic re-planning: a wish change re-plans the seats", async ({ as }) => {
+    const id = createEvent({
+      seats: ["A1", "A2", "A3", "A4", "A5", "A6"],
+      attendees: [
+        { who: "anna", seat: "A1" },
+        { who: "ben", seat: "A6" },
+      ],
+    });
+    const alex = await as("alex");
+    await alex.goto(`/lans/${id}/manage?tab=seats`);
+    await alex.getByLabel(/Re-plan automatically when wishes change/).check();
+    await expect.poll(() => db().select().from(lan).where(eq(lan.id, id)).get()?.seatAutoPlan).toBe(true);
+
+    // Anna wants to sit right next to Ben: saving the wish moves them together.
+    const anna = await as("anna");
+    await anna.goto(`/lans/${id}?tab=seats`);
+    await anna.getByRole("button", { name: "+ Near someone" }).click();
+    await anna.getByLabel("Who do you want to sit near?").selectOption(userId("ben"));
+    await anna.getByLabel("How close?").selectOption({ label: "Right next to" });
+    await anna.getByRole("button", { name: "Add", exact: true }).click();
+    const colOf = (who: "anna" | "ben") =>
+      Number(db().select().from(seat).where(and(eq(seat.lanId, id), eq(seat.userId, userId(who)))).get()?.label.slice(1));
+    await expect.poll(() => Math.abs(colOf("anna") - colOf("ben"))).toBe(1);
+
+    // The lead's open page picks the change up by itself.
+    await expect(alex.locator("#wishes").getByText("right next to Ben")).toBeVisible({ timeout: 20_000 });
   });
 
   test("self pick: a member with a ticket takes a seat, the lead finalizes, the member sees the final plan", async ({ as }) => {

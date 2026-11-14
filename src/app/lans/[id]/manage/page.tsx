@@ -10,7 +10,7 @@ import { ReminderButtons } from "@/components/reminder-buttons";
 import { SeatMap } from "@/components/seat-map";
 import { avatarMap } from "@/lib/avatars";
 import { EventHeader } from "@/components/event-header";
-import { Card, Notice, Page, Pill, btnDanger, btnSecondary } from "@/components/ui";
+import { Card, Notice, Page, Pill, btnDanger, headerAction, headerActionFrame } from "@/components/ui";
 import { fmtDate, relative, toInputValue } from "@/lib/format";
 import { freeSpots, getLan, getNames, interestSwitch, seatView, waitlistOf } from "@/lib/lans";
 import { WaitlistPanel } from "@/components/waitlist-panel";
@@ -27,6 +27,7 @@ import { clanCan, getClan } from "@/lib/clans";
 import { SeatFlow } from "@/components/seat-flow";
 import { checkWishes, overallScore } from "@/lib/seating";
 import { WishOverview, type WishRow } from "@/components/wish-overview";
+import { LiveSeatRefresh } from "@/components/live-refresh";
 import { getLanAccounts } from "@/lib/lan-accounts";
 import { LeadBookingList } from "@/components/seat-booking";
 import { LeadChecklist } from "@/components/lead-checklist";
@@ -308,6 +309,10 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               current={seatSpec(seats)}
               unseated={going.length - seated}
               free={freeSeats}
+              autoPlan={l.seatAutoPlan}
+              autoPlanBlocked={
+                l.seatsPublishedAt ? t("seatSetup.autoPaused.final") : l.seatPicking ? t("seatSetup.autoPaused.picking") : null
+              }
             />
           </Card>
           {seats.length > 0 && (
@@ -399,9 +404,14 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
         canManage
         tab={tab}
         actions={
-          <a href={`/lans/${l.id}/manage/export`} className={btnSecondary}>
-            {t("manage.exportCsv")}
-          </a>
+          <div className={headerActionFrame}>
+            <a href={`/lans/${l.id}/manage/export`} className={headerAction}>
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+              </svg>
+              {t("manage.exportCsv")}
+            </a>
+          </div>
         }
       />
 
@@ -646,6 +656,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
         // The seat plan is the main tool: map on the left with setup, the seat flow (wishes, self pick, finalize) and wishes below it, and the seat
         // details panel in its own column on the right (desktop).
         <div className="space-y-5">
+          <LiveSeatRefresh lanId={l.id} />
           {seats.length > 0 ? (
               <SeatMap
                 lanId={l.id}

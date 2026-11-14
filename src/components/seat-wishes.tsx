@@ -4,10 +4,12 @@ import { setMySeatWishes } from "@/app/actions";
 import { btnPrimary, input } from "./ui";
 import { useT } from "@/i18n/client";
 import { useRunAction } from "./action-form";
-import { MAX_SEAT_RULES, addRule, moveRule, type SeatRule } from "@/lib/seat-rules";
+import { DEFAULT_AVOID_RANGE, DEFAULT_NEAR_RANGE, MAX_SEAT_RULES, NEAR_RANGES, RANGE_KEY, addRule, moveRule, rangeOf, type NearRange, type SeatRule } from "@/lib/seat-rules";
 
 type Wishes = { rules: SeatRule[]; note: string };
 type AddKind = "near" | "avoid" | "seat" | "row";
+
+const parseRange = (v: string): NearRange => (v === "row" ? "row" : (Number(v) as 1 | 2 | 3));
 
 const ICON: Record<SeatRule["kind"], string> = { near: "🤝", avoid: "🙅", seat: "💺", row: "↔", edge: "📍", middle: "📍" };
 // Gap between list items (space-y-2), used to shift neighbours while dragging.
@@ -41,6 +43,7 @@ export function SeatWishes({
   const savedNote = useRef(initial.note);
   const [adding, setAdding] = useState<AddKind | null>(null);
   const [pick, setPick] = useState("");
+  const [range, setRange] = useState<NearRange>(DEFAULT_NEAR_RANGE);
   const [pending, start] = useTransition();
   const run = useRunAction();
 
@@ -62,9 +65,9 @@ export function SeatWishes({
   const text = (r: SeatRule) => {
     switch (r.kind) {
       case "near":
-        return t("wishes.rule.near", { name: names[r.userId] ?? "?" });
+        return t(`wishes.rule.near.${RANGE_KEY[rangeOf(r)]}`, { name: names[r.userId] ?? "?" });
       case "avoid":
-        return t("wishes.rule.avoid", { name: names[r.userId] ?? "?" });
+        return t(`wishes.rule.avoid.${RANGE_KEY[rangeOf(r)]}`, { name: names[r.userId] ?? "?" });
       case "seat":
         return t("wishes.rule.seat", { seat: r.seat });
       case "row":
@@ -135,11 +138,24 @@ export function SeatWishes({
   const addPicked = () => {
     if (!adding || !pick) return;
     const rule: SeatRule =
-      adding === "seat" ? { kind: "seat", seat: pick } : adding === "row" ? { kind: "row", row: pick } : { kind: adding, userId: pick };
+      adding === "seat"
+        ? { kind: "seat", seat: pick }
+        : adding === "row"
+          ? { kind: "row", row: pick }
+          : adding === "near"
+            ? { kind: "near", userId: pick, within: range }
+            : { kind: "avoid", userId: pick, within: range };
     save(addRule(rules, rule));
     setAdding(null);
     setPick("");
   };
+
+  const rangeOptions = (kind: "near" | "avoid") =>
+    NEAR_RANGES.map((r) => (
+      <option key={r} value={String(r)}>
+        {t(`wishes.${kind === "near" ? "range" : "avoidRange"}.${RANGE_KEY[r]}`)}
+      </option>
+    ));
 
   const iconBtn =
     "inline-flex size-9 items-center justify-center rounded-md text-muted transition hover:bg-line hover:text-fg disabled:pointer-events-none disabled:opacity-30";
@@ -181,12 +197,34 @@ export function SeatWishes({
                 >
                   {i + 1}
                 </span>
-                <span className="ml-1 min-w-0 flex-1 leading-tight [overflow-wrap:anywhere]">
-                  <span aria-hidden className="mr-1.5">
-                    {ICON[r.kind]}
+                {r.kind === "near" || r.kind === "avoid" ? (
+                  // Who on top, how close below it: [Right next to ▾].
+                  <span className="ml-1 min-w-0 flex-1 leading-tight">
+                    <span className="block [overflow-wrap:anywhere]">
+                      <span aria-hidden className="mr-1.5">
+                        {ICON[r.kind]}
+                      </span>
+                      {names[r.userId] ?? "?"}
+                    </span>
+                    <select
+                      value={String(rangeOf(r))}
+                      disabled={pending}
+                      onChange={(e) => save(rules.map((x, j) => (j === i ? { ...r, within: parseRange(e.target.value) } : x)))}
+                      aria-label={t(r.kind === "near" ? "wishes.range.change" : "wishes.avoidRange.change", { rule: label })}
+                      className="mt-1 block w-full max-w-[15rem] rounded-md border border-line bg-surface py-0.5 pl-1.5 text-base text-fg sm:text-sm"
+                    >
+                      {rangeOptions(r.kind)}
+                    </select>
                   </span>
-                  {label}
-                </span>
+                ) : (
+                  <span className="ml-1 min-w-0 flex-1 leading-tight [overflow-wrap:anywhere]">
+                    <span aria-hidden className="mr-1.5">
+                      {ICON[r.kind]}
+                    </span>
+                    {label}
+                  </span>
+                )}
+                <span className="flex flex-col sm:flex-row">
                 <button
                   type="button"
                   disabled={pending || i === 0}
@@ -205,6 +243,7 @@ export function SeatWishes({
                 >
                   <span aria-hidden>↓</span>
                 </button>
+                </span>
                 <button
                   type="button"
                   disabled={pending}
@@ -236,6 +275,7 @@ export function SeatWishes({
                   save(addRule(rules, { kind: k }));
                 } else {
                   setAdding(adding === k ? null : k);
+                  setRange(k === "avoid" ? DEFAULT_AVOID_RANGE : DEFAULT_NEAR_RANGE);
                   setPick("");
                 }
               }}
@@ -248,12 +288,12 @@ export function SeatWishes({
           ))}
         </div>
         {adding && (
-          <div className="mt-3 flex gap-2">
+          <div className="mt-3 flex flex-wrap gap-2">
             <select
               value={pick}
               onChange={(e) => setPick(e.target.value)}
               aria-label={t(`wishes.pick.${adding}`)}
-              className={input}
+              className={`${input} min-w-0 basis-full sm:basis-0 sm:flex-1`}
             >
               <option value="">{t(`wishes.pick.${adding}`)}</option>
               {options.map((o) => (
@@ -262,6 +302,16 @@ export function SeatWishes({
                 </option>
               ))}
             </select>
+            {(adding === "near" || adding === "avoid") && (
+              <select
+                value={String(range)}
+                onChange={(e) => setRange(parseRange(e.target.value))}
+                aria-label={t(adding === "near" ? "wishes.range.label" : "wishes.avoidRange.label")}
+                className={`${input} min-w-0 flex-1 sm:w-auto sm:flex-none`}
+              >
+                {rangeOptions(adding)}
+              </select>
+            )}
             <button type="button" disabled={!pick} onClick={addPicked} className={`${btnPrimary} shrink-0`}>
               {t("wishes.addButton")}
             </button>

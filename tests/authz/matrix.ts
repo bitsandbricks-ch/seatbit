@@ -27,6 +27,7 @@ import * as settings from "../../src/app/admin/settings/actions";
 import * as backups from "../../src/app/admin/backups/actions";
 import * as emergency from "../../src/app/emergency-actions";
 import * as costs from "../../src/app/cost-actions";
+import * as seatPlan from "../../src/app/seat-plan-actions";
 import * as metrics from "../../src/app/api/metrics/route";
 import * as leadExport from "../../src/app/lans/[id]/manage/export/route";
 import * as profileExport from "../../src/app/profile/export/route";
@@ -50,6 +51,7 @@ export const MODULES = {
   "admin/backups/actions": backups,
   "emergency-actions": emergency,
   "cost-actions": costs,
+  "seat-plan-actions": seatPlan,
 } as const;
 
 export type Spec = {
@@ -164,6 +166,8 @@ export const SPECS: Spec[] = [
   { name: "actions.setSeatPicking", allow: EVENT_MANAGERS, run: () => actions.setSeatPicking(fx.pickLan, false) },
   { name: "actions.adminSetSeatFor", allow: LAN_MANAGERS, run: () => actions.adminSetSeatFor(fx.lan, ACTORS.member, fx.freeSeat) },
   { name: "actions.adminAutoAssignSeats", allow: LAN_MANAGERS, run: () => actions.adminAutoAssignSeats(fx.lan, "replan") },
+  { name: "seat-plan-actions.setSeatAutoPlan", allow: LAN_MANAGERS, run: () => seatPlan.setSeatAutoPlan(fx.lan, !lanFlag(fx.lan, "seat_auto_plan")) },
+  { name: "seat-plan-actions.seatPlanVersion", allow: [...LAKESIDE_ATTENDEES, ...VIEWERS], effect: "none", run: () => seatPlan.seatPlanVersion(fx.lan) },
   { name: "actions.publishSeats", allow: EVENT_MANAGERS, run: () => actions.publishSeats(fx.pickLan, false) },
   { name: "actions.unpublishSeats", allow: LAN_MANAGERS, run: () => actions.unpublishSeats(fx.lan) },
   { name: "actions.saveLanType (new)", allow: EVENT_MANAGERS, run: () => actions.saveLanType(undefined, form({ clanId: fx.clan, name: "New type", reminderDays: "3", durationHours: "48" })) },

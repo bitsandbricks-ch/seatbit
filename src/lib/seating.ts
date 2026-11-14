@@ -1,6 +1,6 @@
 import { makeT, type T } from "../i18n/translate";
 import { seatRow } from "./seat-labels";
-import { rankWeight, type SeatRule } from "./seat-rules";
+import { RANGE_KEY, rangeOf, rankWeight, withinRange, type SeatRule } from "./seat-rules";
 /**
  * Seat planning with member wishes. Pure functions, no DB access.
  *
@@ -26,15 +26,30 @@ function edgeSet(seats: PlanSeat[]) {
   return new Set(seats.filter((s) => !pos.has(`${s.row}:${s.col - 1}`) || !pos.has(`${s.row}:${s.col + 1}`)).map((s) => s.id));
 }
 
-/** Weight of a's rule of `kind` about b, 0 when there is none. */
-function personWeight(a: PlanPerson | undefined, kind: "near" | "avoid", bId: string) {
-  if (!a) return 0;
+/** a's rule of `kind` about b with its weight, or undefined. */
+function ruleAbout(a: PlanPerson | undefined, kind: "near" | "avoid", bId: string) {
+  if (!a) return undefined;
   const i = a.rules.findIndex((r) => r.kind === kind && r.userId === bId);
-  return i === -1 ? 0 : rankWeight(i);
+  return i === -1 ? undefined : { rule: a.rules[i], w: rankWeight(i) };
 }
-/** The stronger of the two people's wishes about each other. */
-const mutual = (a: PlanPerson | undefined, bId: string, b: PlanPerson | undefined, kind: "near" | "avoid") =>
-  Math.max(personWeight(a, kind, bId), a ? personWeight(b, kind, a.userId) : 0);
+
+/** Points for sitting `d` apart under a near rule: closer is better, nothing outside its range. */
+function nearPoints(d: number, rule: SeatRule) {
+  if (rule.kind !== "near" || !withinRange(d, rangeOf(rule))) return 0;
+  return d === 1 ? 10 : d === 2 ? 6 : 4;
+}
+
+/** The stronger of the two people's near wishes about each other, for seats `d` apart. */
+function nearScore(a: PlanPerson, bId: string, b: PlanPerson | undefined, d: number) {
+  const mine = ruleAbout(a, "near", bId);
+  const theirs = ruleAbout(b, "near", a.userId);
+  return Math.max(mine ? mine.w * nearPoints(d, mine.rule) : 0, theirs ? theirs.w * nearPoints(d, theirs.rule) : 0);
+}
+/** The stronger of the two people's "not near" wishes that seats `d` apart break. */
+function avoidWeight(a: PlanPerson, bId: string, b: PlanPerson | undefined, d: number) {
+  const hit = (x: ReturnType<typeof ruleAbout>) => (x && x.rule.kind === "avoid" && withinRange(d, rangeOf(x.rule)) ? x.w : 0);
+  return Math.max(hit(ruleAbout(a, "avoid", bId)), hit(ruleAbout(b, "avoid", a.userId)));
+}
 
 const nearIds = (p: PlanPerson) => p.rules.flatMap((r) => (r.kind === "near" ? [r.userId] : []));
 
@@ -85,11 +100,10 @@ export function planSeats(seats: PlanSeat[], people: PlanPerson[], everyone: Pla
         const uid = occupant.get(o.id);
         if (!uid || o.id === s.id) continue;
         const d = dist(s, o);
-        if (d > 2) continue;
+        if (!Number.isFinite(d)) continue;
         const other = byUser.get(uid);
-        const like = mutual(p, uid, other, "near");
-        if (like) score += like * (d === 1 ? 10 : 6);
-        if (d === 1) score -= mutual(p, uid, other, "avoid") * 12;
+        score += nearScore(p, uid, other, d);
+        score -= avoidWeight(p, uid, other, d) * 12;
       }
       p.rules.forEach((r, i) => {
         const w = rankWeight(i);
@@ -157,8 +171,8 @@ export function checkWishes(seats: PlanSeat[], everyone: PlanPerson[], nameOf: (
           const o = seatOf.get(r.userId);
           const name = nameOf(r.userId);
           return r.kind === "near"
-            ? item(t("wishCheck.near", { name }), (m) => (o ? dist(m, o) <= 2 : null))
-            : item(t("wishCheck.notNextTo", { name }), (m) => (o ? dist(m, o) !== 1 : null));
+            ? item(t(`wishCheck.near.${RANGE_KEY[rangeOf(r)]}`, { name }), (m) => (o ? withinRange(dist(m, o), rangeOf(r)) : null))
+            : item(t(`wishCheck.avoid.${RANGE_KEY[rangeOf(r)]}`, { name }), (m) => (o ? !withinRange(dist(m, o), rangeOf(r)) : null));
         }
         case "seat":
           return item(t("wishCheck.seat", { seat: r.seat }), (m) => m.label.toUpperCase() === r.seat);

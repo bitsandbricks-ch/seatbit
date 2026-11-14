@@ -25,7 +25,7 @@ import { sendReminderNow } from "@/lib/reminders";
 import { publishEvent } from "@/lib/event-notices";
 import { notify as notifyMember, notifyLanChanged, notifyLater, notifySeatChanged, trySendDiscordDm } from "@/lib/notify";
 import { appUrl } from "@/lib/mail";
-import { planSeats } from "@/lib/seating";
+import { autoPlanAfterWishes, planAndAssign } from "@/lib/seat-plan";
 import { eventMailVars, renderTemplate } from "@/lib/mail-templates";
 import { assertPlatform, canTakePart, canViewLan, requireClanPermission, requireLanManager, requireUser } from "@/lib/session";
 import { platformCan } from "@/lib/platform-roles";
@@ -784,20 +784,6 @@ export async function adminSetSeatFor(lanId: string, userId: string, seatId: str
   notifyLater(() => notifySeatChanged(mustGetLan(lanId), userId, label));
 }
 
-function planPeople(lanId: string) {
-  return db
-    .select()
-    .from(attendance)
-    .where(and(eq(attendance.lanId, lanId), eq(attendance.status, "going")))
-    .all()
-    .map((a) => ({
-      userId: a.userId,
-      rules: a.wishRules ?? [],
-      priority: a.paid ? 2 : a.ticketBought ? 1 : 0,
-      order: a.createdAt.getTime(),
-    }));
-}
-
 /**
  * Seats attendees who are coming, using their seat wishes. "fill" only seats
  * people without a seat; "replan" first clears every seat that isn't held.
@@ -805,21 +791,7 @@ function planPeople(lanId: string) {
  */
 export async function adminAutoAssignSeats(lanId: string, mode: "fill" | "replan" = "fill"): Promise<number> {
   const me = await requireLanManager(lanId);
-  if (mode === "replan") {
-    db.update(seat)
-      .set({ userId: null })
-      .where(and(eq(seat.lanId, lanId), eq(seat.locked, false)))
-      .run();
-  }
-  const seats = db.select().from(seat).where(eq(seat.lanId, lanId)).all();
-  const everyone = planPeople(lanId);
-  const seated = new Set(seats.map((s) => s.userId).filter(Boolean));
-  const plan = planSeats(seats, everyone.filter((p) => !seated.has(p.userId)), everyone);
-  db.transaction((tx) => {
-    for (const [userId, seatId] of plan) tx.update(seat).set({ userId }).where(eq(seat.id, seatId)).run();
-  });
-  // Replanning can move anyone; filling only seats people who had none.
-  clearSeatBooked(lanId, mode === "replan" ? everyone.map((p) => p.userId) : [...plan.keys()]);
+  const { plan, seats } = planAndAssign(lanId, mode);
   lanPath(lanId);
   // After the plan is out, tell people whose seat changed.
   const l = mustGetLan(lanId);
@@ -839,6 +811,7 @@ export async function setMySeatWishes(lanId: string, input: z.input<typeof wishI
   if (!canTakePart(me, lanId)) throw await err("errors.joinFirst");
   if (l.seatsPublishedAt) throw await err("errors.planFinalAsk");
   saveSeatWishes(lanId, me.id, input, await getT());
+  autoPlanAfterWishes(lanId, me.id);
   lanPath(lanId);
 }
 

@@ -9,6 +9,11 @@ export const seatSetup = {
   replanConfirm: "Re-plan all seats that aren't held? Current assignments will change.",
   planned: { one: "Planned {count} seat from scratch.", other: "Planned {count} seats from scratch." },
   replan: "Re-plan everyone",
+  auto: "Re-plan automatically when wishes change",
+  autoHint: "Every change to someone's seat wishes re-plans all seats that aren't held. Open seat pages update by themselves.",
+  autoPaused: { final: "Paused: the plan is final.", picking: "Paused while members pick their own seats." },
+  autoOnSaved: "Automatic re-planning is on. Seats re-planned.",
+  autoOffSaved: "Automatic re-planning is off.",
   status:
-    "{unseated} coming without a seat · {free} free seats. The planner follows seat wishes (near, not next to, edge/middle, preferred seat) and seats people with a ticket first.",
+    "{unseated} coming without a seat · {free} free seats. The planner follows each member's seat wishes in their order and seats people with a ticket first.",
 };

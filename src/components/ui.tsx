@@ -16,6 +16,10 @@ export const btnDanger = `${btn} bg-danger/90 text-white hover:bg-danger`;
 export const btnGhost = `${btn} text-muted hover:bg-raised hover:text-fg`;
 export const input =
   "w-full min-h-11 rounded-md border border-line bg-raised px-3 py-2 text-base text-fg placeholder:text-faint transition focus:border-bit focus:outline-none focus:ring-2 focus:ring-bit/25 disabled:opacity-60 sm:min-h-10 sm:text-sm";
+/** Header actions (Share, Export, ...) share the frame and height of the View / Manage switch. */
+export const headerActionFrame = "inline-flex rounded-lg border border-line bg-raised p-1";
+export const headerAction =
+  "inline-flex min-h-10 items-center gap-1.5 rounded-md px-3.5 text-sm font-medium text-muted transition hover:bg-surface hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bit";
 export const label = "mb-1.5 block text-xs font-medium uppercase tracking-wide text-muted";
 
 export function Card({
