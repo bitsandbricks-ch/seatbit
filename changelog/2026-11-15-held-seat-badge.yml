@@ -1,0 +1,12 @@
+date: 2026-11-15
+type: improved
+en:
+  title: "Held seats show a lock"
+  text: >-
+    Held seats now have a small lock in the seat map, also when someone sits on them, so leads see at
+    a glance which seats the automatic seat plan leaves alone.
+de:
+  title: "Reservierte Plätze zeigen ein Schloss"
+  text: >-
+    Reservierte Plätze haben im Sitzplan jetzt ein kleines Schloss, auch wenn jemand darauf sitzt. So
+    sehen Leads auf einen Blick, welche Plätze der automatische Sitzplan nicht anrührt.

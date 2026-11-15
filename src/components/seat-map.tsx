@@ -308,10 +308,11 @@ export function SeatMap({
         {taken && s.color && (
           <span aria-hidden className="absolute inset-x-1 bottom-0.5 h-[3px] rounded-full" style={{ background: s.color }} />
         )}
+        {s.locked && <HeldBadge />}
         {compact ? (
           <>
             {/* Taken seats show the nick, so the number moves into a corner badge to keep the order readable. */}
-            {taken && <SeatNo label={s.label} className="absolute left-0.5 top-0.5 max-w-[calc(100%-4px)]" />}
+            {taken && <SeatNo label={s.label} className={`absolute left-0.5 top-0.5 ${s.locked ? "max-w-[calc(100%-22px)]" : "max-w-[calc(100%-4px)]"}`} />}
             <span className={`w-full truncate font-mono text-xs leading-none ${taken ? "mt-2.5 font-semibold" : ""}`}>{short}</span>
           </>
         ) : (
@@ -321,7 +322,6 @@ export function SeatMap({
             ) : (
               <span className="font-mono text-[11px] leading-none opacity-75">
                 {s.label}
-                {s.locked ? " 🔒" : ""}
               </span>
             )}
             {s.nick && (
@@ -790,6 +790,18 @@ function Legend({ cls, children }: { cls: string; children: React.ReactNode }) {
 }
 
 /** Small seat number badge on taken seats; readable on the green "mine" fill and the taken tint. */
+/** Small lock in the corner of a held seat, taken or free, so leads see what auto assign leaves alone. */
+function HeldBadge() {
+  return (
+    <span aria-hidden className="absolute right-0.5 top-0.5 grid size-3.5 place-items-center rounded-sm bg-warn/20 text-warn sm:size-4">
+      <svg viewBox="0 0 24 24" className="size-2.5 sm:size-3" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="5" y="11" width="14" height="10" rx="2" />
+        <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+      </svg>
+    </span>
+  );
+}
+
 function SeatNo({ label, className = "" }: { label: string; className?: string }) {
   return (
     <span className={`truncate rounded-sm bg-surface/80 px-0.5 font-mono text-[9px] font-medium leading-tight text-muted sm:text-[10px] ${className}`}>
