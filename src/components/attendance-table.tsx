@@ -18,6 +18,7 @@ import { Avatar } from "./avatar";
 import type { AvatarData } from "@/lib/avatars";
 import { useT } from "@/i18n/client";
 import { useRunAction } from "./action-form";
+import { StatusIcons, type StatusKind } from "./status-icons";
 import type { MessageKey } from "@/i18n/translate";
 
 export type AttendanceRow = {
@@ -42,6 +43,8 @@ export type AttendanceRow = {
   /** Booked the seat on the event's own seat plan; null when the event has no seat plan link. */
   seatBooked?: boolean | null;
   avatar?: AvatarData;
+  /** Status icons after the name (held seat, guest, swap pending). */
+  marks?: StatusKind[];
 };
 
 const statuses: AttendanceStatus[] = ["going", "waitlist", "maybe", "declined"];
@@ -216,6 +219,11 @@ export function AttendanceTable({
                     </Link>
                   ) : (
                     r.name
+                  )}
+                  {r.marks && r.marks.length > 0 && (
+                    <span className="ml-1.5">
+                      <StatusIcons kinds={r.marks} t={t} />
+                    </span>
                   )}
                   {r.lanAccount && (
                     <span className="ml-2 font-mono text-xs font-normal text-muted lg:hidden">#{r.lanAccount}</span>
