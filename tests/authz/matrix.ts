@@ -29,6 +29,7 @@ import * as emergency from "../../src/app/emergency-actions";
 import * as costs from "../../src/app/cost-actions";
 import * as seatPlan from "../../src/app/seat-plan-actions";
 import * as seatWish from "../../src/app/seat-wish-actions";
+import * as teams from "../../src/app/team-actions";
 import * as metrics from "../../src/app/api/metrics/route";
 import * as leadExport from "../../src/app/lans/[id]/manage/export/route";
 import * as profileExport from "../../src/app/profile/export/route";
@@ -55,6 +56,7 @@ export const MODULES = {
   "cost-actions": costs,
   "seat-plan-actions": seatPlan,
   "seat-wish-actions": seatWish,
+  "team-actions": teams,
 } as const;
 
 export type Spec = {
@@ -215,6 +217,18 @@ export const SPECS: Spec[] = [
   },
   { name: "lan-extras-actions.setGameMark", allow: MEMBERS, run: () => extras.setGameMark(fx.game, "installed", true), positive: "organizer" },
   { name: "lan-extras-actions.nudgeMissing", allow: LAN_MANAGERS, run: () => extras.nudgeMissing(fx.lan, "ticket"), effect: "none" },
+
+  // ---------- team-actions.ts ----------
+  { name: "team-actions.createTeam", allow: MEMBERS, run: () => teams.createTeam(fx.annaGame, form({ name: "Team Z", size: "5", url: "", note: "" })) },
+  {
+    name: "team-actions.updateTeam",
+    allow: ["member", ...LAN_MANAGERS],
+    run: () => teams.updateTeam(fx.annaTeam, form({ name: "Renamed team", size: "4", url: "", note: "" })),
+  },
+  { name: "team-actions.deleteTeam", allow: ["member", ...LAN_MANAGERS], run: () => teams.deleteTeam(fx.annaTeam) },
+  // Anna is already in the team, so the positive control is someone else joining.
+  { name: "team-actions.joinTeam", allow: MEMBERS, run: () => teams.joinTeam(fx.annaTeam), positive: "organizer" },
+  { name: "team-actions.leaveTeam (other)", allow: ["member", ...LAN_MANAGERS], run: () => teams.leaveTeam(fx.annaTeam, "demo-anna") },
 
   // ---------- travel-gear-actions.ts ----------
   {

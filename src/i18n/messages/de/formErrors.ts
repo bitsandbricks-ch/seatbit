@@ -40,6 +40,7 @@ export const formErrors: Messages["formErrors"] = {
     durationHours: "Dauer",
     answerDaysBefore: "Antwortfrist",
     sizeGb: "Grösse",
+    size: "Spieler",
     title: "Name",
     shop: "Laden",
     note: "Notiz",

@@ -44,3 +44,41 @@ test.describe("games", () => {
     await expect(alex.getByRole("link", { name: "Trackmania 2" })).toHaveAttribute("href", "https://example.com/trackmania");
   });
 });
+
+test.describe("tournament teams", () => {
+  test("a member starts a team, another joins until it is full, the captain takes someone out", async ({ as }) => {
+    const id = createEvent({ attendees: [{ who: "anna" }, { who: "ben" }, { who: "chiara" }] });
+    const g = db().insert(schema.game).values({ lanId: id, name: "Counter-Strike 2", addedBy: userId("anna") }).returning().get();
+    db().insert(schema.gameVote).values({ gameId: g.id, userId: userId("ben"), vote: true }).run();
+
+    const anna = await as("anna");
+    await anna.goto(`/lans/${id}?tab=games`);
+    await anna.getByRole("button", { name: "Team", exact: true }).click();
+    const panel = anna.getByRole("dialog", { name: "New team for Counter-Strike 2" });
+    await panel.getByLabel("Team name").fill("Lizards A");
+    await panel.getByLabel("Players").fill("2");
+    await panel.getByRole("button", { name: "Create team" }).click();
+    await expect(anna.getByRole("button", { name: /Lizards A/ })).toContainText("1/2");
+
+    const ben = await as("ben");
+    await ben.goto(`/lans/${id}?tab=games`);
+    await ben.getByRole("button", { name: /Lizards A/ }).click();
+    const team = ben.getByRole("dialog", { name: "Lizards A" });
+    await expect(team.getByText("1 player missing")).toBeVisible();
+    await team.getByRole("button", { name: "Join" }).click();
+    await expect(team.getByText("Full", { exact: false })).toBeVisible();
+
+    // Full: Chiara can't join.
+    const chiara = await as("chiara");
+    await chiara.goto(`/lans/${id}?tab=games`);
+    await chiara.getByRole("button", { name: /Lizards A/ }).click();
+    await expect(chiara.getByRole("dialog", { name: "Lizards A" }).getByRole("button", { name: "Join" })).toHaveCount(0);
+
+    // The captain takes Ben out again, after confirming.
+    await anna.reload();
+    await anna.getByRole("button", { name: /Lizards A/ }).click();
+    await anna.getByRole("button", { name: /Take .*Ben.* out/ }).click();
+    await anna.getByRole("dialog", { name: /Take .* out of Lizards A/ }).getByRole("button", { name: "Remove" }).click();
+    await expect(anna.getByRole("dialog", { name: "Lizards A" }).getByText("1 player missing")).toBeVisible();
+  });
+});

@@ -8,6 +8,7 @@ import { useRunAction } from "./action-form";
 import { httpHref } from "@/lib/safe-url";
 import type { AvatarData } from "@/lib/avatars";
 import { Avatar } from "./avatar";
+import { TeamChips } from "./team-panel";
 
 /** Games to play at the LAN: suggest, vote, and tick off what you installed. */
 export function GameList({
@@ -117,6 +118,7 @@ export function GameList({
                     {t("games.votes", { count: g.votes })}
                     {g.votes ? `: ${g.voters.map((v) => names[v] ?? "?").join(", ")}` : ""} · {t("games.installedCount", { count: g.installed })}
                   </p>
+                  <TeamChips g={g} meId={meId} canManage={canManage} canJoin={canAdd} people={{ names, avatars }} />
                 </div>
                 <div className="flex w-full items-center gap-2 pl-8 sm:w-auto sm:pl-0">
                   <button

@@ -39,6 +39,7 @@ export const formErrors = {
     durationHours: "Duration",
     answerDaysBefore: "Answer deadline",
     sizeGb: "Size",
+    size: "Players",
     title: "Name",
     shop: "Shop",
     note: "Note",
