@@ -59,6 +59,8 @@ export function ClientTabs({
       if (!a || a.target === "_blank") return;
       const url = new URL(a.href, window.location.href);
       if (url.origin !== window.location.origin || url.pathname !== base || url.hash) return;
+      // Other params (a pager, a filter) need the server, so those links navigate normally.
+      if ([...url.searchParams.keys()].some((k) => k !== "tab")) return;
       const id = url.searchParams.get("tab") ?? first;
       if (!id || (!ids.has(id) && !groups.has(id))) return;
       e.preventDefault();
