@@ -157,3 +157,7 @@ If you're typing in a field, dragging or have a dialog open, the page waits unti
 ## On the day
 
 Members coming tap **I'm here** when they arrive, and everyone sees who is still on the way.
+
+## After the LAN
+
+Once an event is over, its overview starts with a short recap: who came, your seat, the most wanted games and how many tournament teams there were, and whether the shared costs are settled (or what you still owe, with a link to the *Costs* tab). Leads also get **Plan the next one**, which opens a new event of the same LAN type.

@@ -80,6 +80,7 @@ import { planHistory } from "./planHistory";
 import { platformRoles } from "./platformRoles";
 import { profile } from "./profile";
 import { publish } from "./publish";
+import { recap } from "./recap";
 import { reminderButtons } from "./reminderButtons";
 import { report } from "./report";
 import { roleA } from "./roleA";
@@ -195,6 +196,7 @@ export const de: Messages = {
   platformRoles,
   profile,
   publish,
+  recap,
   reminderButtons,
   report,
   roleA,
