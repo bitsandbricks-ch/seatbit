@@ -5,6 +5,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { db, schema } from "@/db";
+import { StatusIcons, type StatusKind } from "@/components/status-icons";
 import { AttendanceButtons } from "@/components/attendance-buttons";
 import { NickManager } from "@/components/nick-manager";
 import { LanIdForm } from "@/components/lan-id-form";
@@ -171,6 +172,33 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
   const linePos = waitlistPositions(id);
   const myPlace = my?.status === "waitlist" ? linePos.get(me.id) : undefined;
   const isAdmin = isLanManager(me, id);
+  // Leads see the status icons next to names on the Attendees tab (no ticket, booked, guest, held seat, swap pending).
+  const leadMarks = new Map<string, StatusKind[]>();
+  if (isAdmin && tab === "attendees") {
+    const ids = rows.map((r) => r.userId);
+    const guests = new Set(
+      ids.length ? db.select({ id: schema.user.id }).from(schema.user).where(and(inArray(schema.user.id, ids), eq(schema.user.isGuest, true))).all().map((u) => u.id) : [],
+    );
+    const inSwap = new Set(
+      db
+        .select()
+        .from(schema.seatSwap)
+        .where(and(eq(schema.seatSwap.lanId, id), inArray(schema.seatSwap.status, ["pending", "accepted"])))
+        .all()
+        .flatMap((x) => [x.fromUserId, x.toUserId]),
+    );
+    const held = new Set(seats.filter((x) => x.locked && x.userId).map((x) => x.userId!));
+    const tracksBooking = !!(l.externalPlanUrl && l.seatsPublishedAt);
+    for (const r of rows) {
+      const m: StatusKind[] = [];
+      if ((r.status === "going" || r.status === "waitlist") && !r.paid && !r.ticketBought) m.push("noTicket");
+      if (tracksBooking && r.seatBooked) m.push("booked");
+      if (guests.has(r.userId)) m.push("guest");
+      if (held.has(r.userId)) m.push("held");
+      if (inSwap.has(r.userId)) m.push("swap");
+      leadMarks.set(r.userId, m);
+    }
+  }
   const published = !!l.seatsPublishedAt;
   // Optional self-pick step: members choose their own seat until the leads finalize the plan.
   const picking = l.seatPicking && !published;
@@ -681,9 +709,9 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           title={l.capacity ? t("event.attendeesTitleOf", { count: going.length, capacity: l.capacity }) : t("event.attendeesTitle", { count: going.length })}
           actions={full && <Pill tone="red">{t("event.fullWaitlist")}</Pill>}
         >
-          <AttendeeList t={t} title={t("event.coming")} list={going} profileBase={profileBase} names={names} verified={verified} avatars={avatars} profiles={profiles} seatOf={seatOf} showPaid={isAdmin} meId={me.id} />
-          <AttendeeList t={t} title={t("event.waitlist")} positions={linePos} list={group("waitlist")} profileBase={profileBase} names={names} verified={verified} avatars={avatars} profiles={profiles} seatOf={seatOf} showPaid={isAdmin} meId={me.id} />
-          <AttendeeList t={t} title={t("event.unsure")} list={group("maybe")} profileBase={profileBase} names={names} verified={verified} avatars={avatars} profiles={profiles} seatOf={seatOf} showPaid={false} meId={me.id} />
+          <AttendeeList t={t} title={t("event.coming")} list={going} profileBase={profileBase} names={names} verified={verified} avatars={avatars} profiles={profiles} seatOf={seatOf} marks={leadMarks} meId={me.id} />
+          <AttendeeList t={t} title={t("event.waitlist")} positions={linePos} list={group("waitlist")} profileBase={profileBase} names={names} verified={verified} avatars={avatars} profiles={profiles} seatOf={seatOf} marks={leadMarks} meId={me.id} />
+          <AttendeeList t={t} title={t("event.unsure")} list={group("maybe")} profileBase={profileBase} names={names} verified={verified} avatars={avatars} profiles={profiles} seatOf={seatOf} marks={leadMarks} meId={me.id} />
           {group("declined").length > 0 && <p className="mt-3 text-xs text-muted">{t("event.cantMakeIt", { count: group("declined").length })}</p>}
         </Card>
       )}
@@ -852,7 +880,7 @@ function AttendeeList({
   names,
   verified,
   seatOf,
-  showPaid,
+  marks,
   meId,
   profileBase,
   avatars,
@@ -872,7 +900,8 @@ function AttendeeList({
   names: Map<string, string>;
   verified: Set<string>;
   seatOf: Map<string, string>;
-  showPaid: boolean;
+  /** Leads' status icons per person; empty for members. */
+  marks: Map<string, StatusKind[]>;
   meId: string;
 }) {
   if (list.length === 0) return null;
@@ -908,7 +937,7 @@ function AttendeeList({
           </a>
         )}
         {seatOf.get(a.userId) && <Pill>{seatOf.get(a.userId)}</Pill>}
-        {showPaid && (a.paid || a.ticketBought ? <Pill tone="emerald">{t("event.ticketOk")}</Pill> : <Pill tone="red">{t("event.noTicket")}</Pill>)}
+        <StatusIcons kinds={marks.get(a.userId) ?? []} t={t} />
       </span>
     </li>
   );

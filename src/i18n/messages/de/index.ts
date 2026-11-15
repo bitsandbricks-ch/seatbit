@@ -92,6 +92,7 @@ import { settingsUi } from "./settingsUi";
 import { share } from "./share";
 import { stats } from "./stats";
 import { status } from "./status";
+import { statusIcons } from "./statusIcons";
 import { support } from "./support";
 import { suspended } from "./suspended";
 import { swaps } from "./swaps";
@@ -201,6 +202,7 @@ export const de: Messages = {
   share,
   stats,
   status,
+  statusIcons,
   support,
   suspended,
   swaps,

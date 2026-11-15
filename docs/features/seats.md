@@ -79,7 +79,7 @@ Tap a seat:
 | **Give seat to** | Assign someone. |
 | **Swap / move** | Swap two people or move one. |
 | **Clear** | Free the seat. |
-| **Hold** | Members can't take it and auto-assign skips it (e.g. for a guest). |
+| **Hold** | Members can't take it and auto-assign skips it (e.g. for a guest). A small lock in the corner marks held seats in the map, free or taken (more [status icons](attendance.md#status-icons) for leads); whoever sits on a held seat stays there when the seats are re-planned. |
 | **Rename** | Match the event's numbering. |
 
 People coming without a seat are listed under **Not seated yet**: tap one, then a seat. On desktop, drag names onto seats and seated people onto other seats to swap.
