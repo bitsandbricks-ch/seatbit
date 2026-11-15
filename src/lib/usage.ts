@@ -91,7 +91,6 @@ function activityHits(since: Date): Hit[] {
     union all select user_id, created_at from attendance where created_at >= ${s}
     union all select user_id, created_at from session where created_at >= ${s}
     union all select user_id, updated_at from session where updated_at >= ${s}
-    union all select user_id, created_at from lan_interest where created_at >= ${s}
     union all select actor_id, at from audit_log where actor_id is not null and at >= ${s}
   `);
   return rows;

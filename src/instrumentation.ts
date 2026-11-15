@@ -26,9 +26,13 @@ export async function register() {
       });
   };
   // Scheduled event publishing is checked every minute, whatever the reminder interval.
-  const { publishDueDrafts } = await import("./lib/event-notices");
+  // Scheduled sign-up openings (end of an interest check) run in the same tick.
+  const { openDueSignups, publishDueDrafts } = await import("./lib/event-notices");
   const publishTick = () =>
-    void runJob("publish", () => publishDueDrafts()).catch((e) => {
+    void runJob("publish", async () => {
+      await publishDueDrafts();
+      await openDueSignups();
+    }).catch((e) => {
       console.error("[publish] failed", e);
       reportError("publish", e);
     });
