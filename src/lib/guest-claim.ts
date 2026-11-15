@@ -86,6 +86,11 @@ export function mergeGuestInto(g: User, meId: string) {
     }
     // Seat wishes of others that name the guest now name the real account.
     tx.run(sql`UPDATE attendance SET wish_rules = replace(wish_rules, ${`"${g.id}"`}, ${`"${meId}"`}) WHERE wish_rules LIKE ${`%"${g.id}"%`}`);
+    // Remembered so the guest's claim link says "done" instead of "no longer works".
+    tx.insert(schema.takenGuest)
+      .values({ guestId: g.id, claimCode: g.claimCode, userId: meId, guestName: g.name, clanId: g.guestClanId })
+      .onConflictDoNothing()
+      .run();
     tx.delete(schema.user).where(eq(schema.user.id, g.id)).run();
   });
   // Let the clan admins know the guest now has a real account.
@@ -103,6 +108,21 @@ export function mergeGuestInto(g: User, meId: string) {
       }));
     });
   }
+}
+
+/**
+ * The guest behind a claim link (or a guest id) that `userId` already took over, e.g.
+ * automatically at sign-in. Lets the link say "done" instead of "no longer works".
+ */
+export function takenGuestFor(userId: string, by: { code: string } | { guestId: string }) {
+  const t = schema.takenGuest;
+  const key = "code" in by ? eq(t.claimCode, by.code) : eq(t.guestId, by.guestId);
+  return db.select().from(t).where(and(key, eq(t.userId, userId))).get();
+}
+
+/** Whether a claim link belonged to a guest someone took over (who isn't said). */
+export function claimCodeWasUsed(code: string) {
+  return !!db.select({ id: schema.takenGuest.guestId }).from(schema.takenGuest).where(eq(schema.takenGuest.claimCode, code)).get();
 }
 
 /**
@@ -398,7 +418,12 @@ export function discordTicketState(token: string, me: User) {
   const mine = discordIdOfUser(me.id);
   if (mine !== t.d) return { kind: "wrong_discord" as const, linked: !!mine, clan: c };
   const s = guestSuggestions(c.id, me.id).find((x) => x.guest.id === t.g);
-  if (!s || c.guestClaims === "off") return { kind: "gone" as const, clan: c };
+  if (!s || c.guestClaims === "off") {
+    // Signing in with that Discord account may have taken the guest over already.
+    const taken = takenGuestFor(me.id, { guestId: t.g });
+    if (taken) return { kind: "taken" as const, clan: c, name: taken.guestName };
+    return { kind: "gone" as const, clan: c };
+  }
   // The bot matched on their Discord names; that counts like a match on the Seatbit profile.
   const claim = { guest: s.guest, match: s.match ?? t.m };
   return { kind: s.status === "pending" ? ("pending" as const) : ("ok" as const), clan: c, claim };

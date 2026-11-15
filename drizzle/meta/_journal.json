@@ -302,6 +302,13 @@
       "when": 1794648845459,
       "tag": "20261114093405_seat_wish_simplify",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "6",
+      "when": 1794685039514,
+      "tag": "20261114193719_taken_guest",
+      "breakpoints": true
     }
   ]
 }

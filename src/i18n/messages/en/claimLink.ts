@@ -1,6 +1,9 @@
 export const claimLink = {
   gone: "Link no longer works",
   goneHint: "It was used already or replaced. Ask your lead for a new one.",
+  done: "You're all set",
+  doneText: "Your account took over {name}. Your events, tickets and seat are now under your own account.",
+  doneTextClan: "Your account took over {name} in {clan}. Your events, tickets and seat are now under your own account.",
   goTo: "Go to Seatbit",
   hi: "Hi {name}!",
   added: "A lead added you as {name}. Take it over to see your events, tickets and seat with your own account.",

@@ -21,6 +21,20 @@ export default async function DiscordClaimPage({ params }: PageProps<"/claim/dis
   const st = discordTicketState(token, me);
   const clanLink = st.kind !== "invalid" ? `/clans/${st.clan.slug}` : "/";
 
+  if (st.kind === "taken") {
+    return (
+      <div className={cardPage}>
+        <h1 className={cardPageTitle}>{t("claimLink.done")}</h1>
+        <p className="text-sm text-muted">
+          {t.rich("claimLink.doneTextClan", { name: <span className="text-fg">{st.name}</span>, clan: st.clan.name })}
+        </p>
+        <Link href={clanLink} className={`${btnSecondary} w-full`}>
+          {t("discordClaim.open", { clan: st.clan.name })}
+        </Link>
+      </div>
+    );
+  }
+
   if (st.kind === "invalid" || st.kind === "gone" || st.kind === "wrong_discord") {
     const k = st.kind === "invalid" ? "invalid" : st.kind === "gone" ? "gone" : st.linked ? "wrong" : "unlinked";
     const [title, text] = [t(`discordClaim.${k}`), t(`discordClaim.${k}Hint`)];
