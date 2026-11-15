@@ -29,7 +29,6 @@ export const eventGuide: Messages["eventGuide"] = {
     planFinal: "Sitzplan ist final",
     coming: "{count} kommen",
     comingWaiting: "{count} kommen · {waiting} warten",
-    interested: "{count} wären dabei",
     travel: "{free} freie Plätze in Autos · {looking} suchen",
     travelNone: "Noch keine Fahrten oder Schlafplätze",
     packed: "{done} von {total} gepackt",

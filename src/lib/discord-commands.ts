@@ -5,7 +5,7 @@
  */
 import { and, eq } from "drizzle-orm";
 import { db, schema } from "@/db";
-import { INTEREST_ANSWERS, type Attendance, type AttendanceStatus, type InterestAnswer, type Lan, type User } from "@/db/schema";
+import type { Attendance, AttendanceStatus, Lan, User } from "@/db/schema";
 import { fmtWeekday } from "./format";
 import { fmtWhen, lanFacts, lanLink } from "./announce";
 import { buildChecklist, type StepState } from "./checklist";
@@ -39,7 +39,7 @@ import { listGames } from "./games";
 import { type Notice, sendDiscordDm } from "./notify";
 import type { T } from "../i18n/translate";
 
-const { attendance, lanInterest, lanType, nickname, seat } = schema;
+const { attendance, lanType, nickname, seat } = schema;
 
 type EditReply = (body: Json) => Promise<unknown>;
 
@@ -49,7 +49,6 @@ const openRow = (l: Lan, t: T) => linkButton(t("notice.openInSeatbit"), lanLink(
 
 /** Slash command name -> attendance answer. */
 const ANSWERS: Record<string, AttendanceStatus> = { coming: "going", unsure: "maybe", "not-coming": "declined" };
-const INTEREST_FOR: Record<string, InterestAnswer> = { going: "yes", maybe: "maybe", declined: "no" };
 
 export const MEMBER_COMMANDS = new Set([...Object.keys(ANSWERS), "status", "ticket", "nick", "wish"]);
 
@@ -113,25 +112,9 @@ function whichEvent(events: Lan[], t: T, button?: (l: Lan) => Json) {
 
 // ---------- Answering ----------
 
-/** Records an interest check answer ("would you come?"). */
-export function answerInterest(l: Lan, me: User, answer: InterestAnswer, t: T): Handled {
-  if (!l.interestCheck || l.cancelledAt) return { response: reply(t("cmd.interestOver"), { components: [openRow(l, t)] }) };
-  if (!INTEREST_ANSWERS.includes(answer)) return { response: reply(t("cmd.unknownAnswer")) };
-  const denied = notMember(me, l, t);
-  if (denied) return { response: denied };
-  db.insert(lanInterest)
-    .values({ lanId: l.id, userId: me.id, answer })
-    .onConflictDoUpdate({ target: [lanInterest.lanId, lanInterest.userId], set: { answer } })
-    .run();
-  void import("./discord").then((d) => d.refreshLanMessagesSoon(l.id)).catch(() => {});
-  const icon = { yes: "👍", maybe: "🤔", no: "👋" }[answer];
-  return { response: reply(`${icon} ${t(`cmd.interest.${answer}`, { lan: `**${l.name}**` })}`) };
-}
-
 /** Coming / unsure / not coming, from a button or a slash command. */
 export function answerEvent(l: Lan, me: User, status: AttendanceStatus, editReply: EditReply, t: T): Handled {
   if (!["going", "maybe", "declined"].includes(status)) return { response: reply(t("cmd.unknownAnswer")) };
-  if (l.interestCheck && !l.cancelledAt) return answerInterest(l, me, INTEREST_FOR[status], t);
   if (signupClosed(l)) return { response: reply(t("cmd.signupClosed", { lan: `**${l.name}**` })) };
   if (attendanceLocked(myRow(l.id, me.id))) return { response: reply(t("event.locked"), { components: [openRow(l, t)] }) };
   const denied = notMember(me, l, t);
@@ -141,6 +124,13 @@ export function answerEvent(l: Lan, me: User, status: AttendanceStatus, editRepl
     later: async () => {
       try {
         const stored = await setAttendance(l, me.id, status);
+        if (l.interestCheck) {
+          // Non-binding: no ticket hint and no DM yet, just "we'll tell you when sign-up opens".
+          const key = ({ going: "yes", maybe: "maybe", declined: "no", waitlist: "yes" } as const)[stored];
+          const icon = { yes: "👍", maybe: "🤔", no: "👋" }[key];
+          await editReply({ content: `${icon} ${t(`cmd.interest.${key}`, { lan: `**${l.name}**` })}`, components: [openRow(l, t)] });
+          return;
+        }
         const extra =
           stored === "going"
             ? ` ${t("cmd.tickLater")}`
@@ -196,7 +186,7 @@ function answerCommand(i: Interaction, status: AttendanceStatus, editReply: Edit
   const picked = pickedEvent(i, events);
   if (picked === "unknown") return { response: unknownEvent(t) };
   if (picked) return answerEvent(picked, me, status, editReply, t);
-  const open = events.filter((l) => l.interestCheck || !signupClosed(l));
+  const open = events.filter((l) => !signupClosed(l));
   if (open.length === 1) return answerEvent(open[0], me, status, editReply, t);
   if (open.length === 0)
     return { response: reply(serverClan ? t("cmd.nothingToAnswerIn", { clan: `**${serverClan.name}**` }) : t("cmd.nothingToAnswer")) };
@@ -206,7 +196,7 @@ function answerCommand(i: Interaction, status: AttendanceStatus, editReply: Edit
       type: 2,
       style: status === "going" ? 3 : status === "declined" ? 4 : 2,
       label: clip(`${label}: ${l.name}`, 80),
-      custom_id: l.interestCheck ? `int:${l.id}:${INTEREST_FOR[status]}` : `att:${l.id}:${status}`,
+      custom_id: `att:${l.id}:${status}`,
     })),
   };
 }
@@ -404,7 +394,7 @@ async function statusCard(l: Lan, me: User, t: T) {
   const nick = (await getNames(l.id, [me.id])).get(me.id)?.nick;
   const lines: string[] = [];
   if (l.interestCheck) {
-    const mine = db.select().from(lanInterest).where(and(eq(lanInterest.lanId, l.id), eq(lanInterest.userId, me.id))).get()?.answer;
+    const mine = a ? ({ going: "yes", waitlist: "yes", maybe: "maybe", declined: "no" } as const)[a.status] : null;
     lines.push(`${t("cmd.interestCheck")}: ${mine ? t(`cmd.interestMine.${mine}`) : `**${t("cmd.noAnswerYet")}**`}`);
   } else {
     const steps = buildChecklist({
@@ -466,7 +456,7 @@ async function statusCommand(i: Interaction): Promise<Json> {
     if (denied) return denied;
     const { card, attendance: a } = await statusCard(picked, me, t);
     const buttons: Json[] = [];
-    if (!signupClosed(picked) && !attendanceLocked(a) && !picked.interestCheck && a?.status !== "going" && a?.status !== "waitlist")
+    if (!signupClosed(picked) && !attendanceLocked(a) && a?.status !== "going" && a?.status !== "waitlist")
       buttons.push({ type: 2, style: 3, label: t("nudge.going"), custom_id: `att:${picked.id}:going` });
     if (a && !a.paid && !a.ticketBought && (a.status === "going" || a.status === "waitlist"))
       buttons.push({ type: 2, style: 3, label: t("cmd.haveTicket"), custom_id: `ticket:${picked.id}` });
@@ -525,7 +515,7 @@ export function memberAutocomplete(i: Interaction): Json | Promise<Json> | undef
     let list = events;
     if (me && name === "wish") list = wishEvents(events, me.id);
     if (me && name === "ticket") list = events.filter((l) => myRow(l.id, me.id)?.status === "going" || myRow(l.id, me.id)?.status === "waitlist");
-    if (name in ANSWERS) list = events.filter((l) => l.interestCheck || !signupClosed(l));
+    if (name in ANSWERS) list = events.filter((l) => !signupClosed(l));
     if (!list.length) list = events;
     return choices(list.filter((l) => !q || nameMatches(l.name, q)).map((l) => ({ name: clip(`${l.name} · ${when(l, t)}`, 100), value: l.id })));
   }
