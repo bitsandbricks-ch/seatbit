@@ -1,5 +1,6 @@
 "use server";
-import { err, tr } from "@/i18n/server";
+import { err, getT, tr } from "@/i18n/server";
+import { formError } from "@/i18n/form-errors";
 
 import { and, eq, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -54,14 +55,14 @@ function canRunOrder(me: User, o: { lanId: string; createdBy: string | null }) {
 }
 
 const orderInput = z.object({
-  title: z.string().trim().min(1, "Give it a name").max(60),
+  title: z.string().trim().min(1).max(60),
   shop: z.string().trim().max(60),
   menuUrl: optionalHttpUrl(),
   note: z.string().trim().max(300),
   closesAt: z
     .string()
     .transform((v) => (v ? new Date(v) : null))
-    .refine((d) => d === null || !isNaN(d.getTime()), "Invalid time"),
+    .refine((d) => d === null || !isNaN(d.getTime())),
   announce: z.boolean(),
 });
 
@@ -80,7 +81,7 @@ export async function createFoodOrder(lanId: string, formData: FormData): Promis
     closesAt: String(formData.get("closesAt") ?? ""),
     announce: formData.get("announce") === "on",
   });
-  if (!parsed.success) return { error: parsed.error.issues.map((i) => i.message).join(", ") };
+  if (!parsed.success) return { error: formError(parsed.error, await getT()) };
   if (db.select().from(foodOrder).where(eq(foodOrder.lanId, lanId)).all().length >= MAX_ORDERS)
     return { error: await tr("errors.foodMax", { count: MAX_ORDERS }) };
   const { announce, ...values } = parsed.data;
@@ -136,12 +137,12 @@ export async function deleteFoodOrder(orderId: string) {
 }
 
 const itemInput = z.object({
-  item: z.string().trim().min(1, "What do you want?").max(80),
+  item: z.string().trim().min(1).max(80),
   qty: z.coerce.number().int().min(1).max(20),
   price: z
     .string()
     .transform(parseMoney)
-    .refine((c) => c === null || Number.isFinite(c), "Price like 14.50"),
+    .refine((c) => c === null || Number.isFinite(c)),
   note: z.string().trim().max(80),
 });
 
@@ -158,7 +159,7 @@ export async function addFoodItem(orderId: string, formData: FormData): Promise<
     price: String(formData.get("price") ?? ""),
     note: formData.get("note") ?? "",
   });
-  if (!parsed.success) return { error: parsed.error.issues.map((i) => i.message).join(", ") };
+  if (!parsed.success) return { error: formError(parsed.error, await getT()) };
   const mine = db
     .select()
     .from(foodItem)

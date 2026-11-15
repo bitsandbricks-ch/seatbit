@@ -40,7 +40,8 @@ import { PROFILE_COLORS, PROFILE_ICONS, deleteUserAvatarFile, saveUserAvatar } f
 import { audit, auditLan, changedFields } from "@/lib/audit";
 import { cleanName } from "@/lib/names";
 import { saveNick, saveSeatWishes, saveTicketBought, type wishInput } from "@/lib/member-updates";
-import { err, getLocale, getT, localeOf, makeT, tr } from "@/i18n/server";
+import { err, getLocale, getT, localeOf, makeT, shownError, tr } from "@/i18n/server";
+import { formError } from "@/i18n/form-errors";
 import type { T } from "@/i18n/translate";
 import { enforceLimit, overLimit } from "@/lib/rate-limit";
 
@@ -73,10 +74,10 @@ export async function setNick(formData: FormData) {
   const lanId = (formData.get("lanId") as string | null) || null;
   const typeId = (formData.get("typeId") as string | null) || null;
   // Same scopes as setMyLanId: only events and LAN types the user can see.
-  if (lanId && !canViewLan(me, lanId)) throw new Error("Not found");
+  if (lanId && !canViewLan(me, lanId)) throw await err("errors.gone");
   if (typeId) {
     const t = db.select().from(lanType).where(eq(lanType.id, typeId)).get();
-    if (!t || (t.clanId && !isClanMember(me.id, t.clanId) && !platformCan(me, "view"))) throw new Error("Not found");
+    if (!t || (t.clanId && !isClanMember(me.id, t.clanId) && !platformCan(me, "view"))) throw await err("errors.gone");
   }
   saveNick(me.id, String(formData.get("nick") ?? ""), { lanId, typeId });
   lanChanged(lanId);
@@ -93,23 +94,28 @@ export async function setMyLanId(formData: FormData) {
   const lanId = String(formData.get("lanId") ?? "");
   if (typeId) {
     const t = db.select().from(lanType).where(eq(lanType.id, typeId)).get();
-    if (!t || (t.clanId && !isClanMember(me.id, t.clanId) && !platformCan(me, "view"))) throw new Error("Not found");
+    if (!t || (t.clanId && !isClanMember(me.id, t.clanId) && !platformCan(me, "view"))) throw await err("errors.gone");
     saveLanAccount(me.id, { lanId: null, typeId }, String(formData.get("lanAccount") ?? ""));
   } else {
     const l = mustGetLan(lanId);
-    if (!canViewLan(me, lanId)) throw new Error("Not found");
+    if (!canViewLan(me, lanId)) throw await err("errors.gone");
     saveLanAccount(me.id, lanAccountScope(l), String(formData.get("lanAccount") ?? ""));
   }
   revalidatePath("/", "layout");
 }
 
 const personName = z.string().transform(cleanName).pipe(z.string().min(1).max(40));
+const profileNames = z.object({ firstName: personName, lastName: personName });
 
 /** First name, surname and the user's own nickname (gamer tag, independent of events). */
 export async function updateProfile(formData: FormData) {
   const me = await requireUser({ allowIncomplete: true });
-  const firstName = personName.parse(formData.get("firstName"));
-  const lastName = personName.parse(formData.get("lastName"));
+  const parsed = profileNames.safeParse({
+    firstName: String(formData.get("firstName") ?? ""),
+    lastName: String(formData.get("lastName") ?? ""),
+  });
+  if (!parsed.success) throw shownError(formError(parsed.error, await getT()));
+  const { firstName, lastName } = parsed.data;
   db.update(user)
     .set({ firstName, lastName, name: `${firstName} ${lastName}` })
     .where(eq(user.id, me.id))
@@ -201,7 +207,7 @@ const optDate = z
   .string()
   .optional()
   .transform((v) => (v ? new Date(v) : null))
-  .refine((d) => d === null || !isNaN(d.getTime()), "Invalid date");
+  .refine((d) => d === null || !isNaN(d.getTime()));
 
 const optId = z
   .string()
@@ -214,7 +220,7 @@ const profileUrlInput = z
   .trim()
   .max(500)
   .default("")
-  .refine((v) => !v || validProfileUrl(v), "use a full https:// link with {id} where the LAN ID goes");
+  .refine((v) => !v || validProfileUrl(v));
 
 const lanInput = z.object({
   typeId: optId,
@@ -279,7 +285,7 @@ export async function saveLan(_: FormState, formData: FormData): Promise<FormSta
     Object.fromEntries([...formData.entries()].filter(([k]) => k !== "id" && k !== "clanId")),
   );
   if (!parsed.success) {
-    return { error: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join(", ") };
+    return { error: formError(parsed.error, await getT()) };
   }
   const { startsAt, endsAt, interestCheck, dateTbd: tbd, ...rest } = parsed.data;
   // On edit the switch follows interestSwitch(): free for drafts and unanswered events, else kept as is.
@@ -446,7 +452,7 @@ export async function adminAssignSeat(seatId: string, userId: string | null) {
 export async function adminSetAttendance(lanId: string, userId: string, status: AttendanceStatus) {
   const me = await requireLanManager(lanId);
   const cid = mustGetLan(lanId).clanId;
-  if (cid && !isClanMember(userId, cid)) throw new Error("Not a member of this clan");
+  if (cid && !isClanMember(userId, cid)) throw await err("errors.notInClan");
   if (!ATTENDANCE_STATUSES.includes(status)) throw new Error("Bad status");
   const before = db.select().from(attendance).where(and(eq(attendance.lanId, lanId), eq(attendance.userId, userId))).get();
   const l = mustGetLan(lanId);
@@ -529,7 +535,7 @@ export async function adminSetLanId(lanId: string, userId: string, value: string
   const me = await requireLanManager(lanId);
   const l = mustGetLan(lanId);
   const a = db.select().from(attendance).where(and(eq(attendance.lanId, lanId), eq(attendance.userId, userId))).get();
-  if (!a) throw new Error("Not on this LAN");
+  if (!a) throw await err("errors.notOnEvent");
   saveLanAccount(userId, lanAccountScope(l), value);
   if (userId !== me.id) auditLan(l, me.id, "lanid.set", { targetUserId: userId });
   lanPath(lanId);
@@ -553,7 +559,7 @@ export async function postLanToDiscord(lanId: string): Promise<number> {
 export async function unlinkDiscordChannel(channelId: string) {
   const me = await requireUser();
   const ch = db.select().from(schema.discordChannel).where(eq(schema.discordChannel.channelId, channelId)).get();
-  if (!unlinkChannel(me, channelId)) throw new Error("Not allowed");
+  if (!unlinkChannel(me, channelId)) throw await err("errors.notAllowed");
   if (ch) audit({ actorId: me.id, action: "discord.unlink", clanId: ch.clanId, data: { channel: ch.channelName || ch.channelId } });
   revalidatePath("/clans", "layout");
 }
@@ -577,7 +583,7 @@ export async function setMyTicketBought(lanId: string, bought: boolean) {
 export async function addOrga(lanId: string, userId: string) {
   const me = await requireLanManager(lanId);
   const cid = mustGetLan(lanId).clanId;
-  if (cid && !isClanMember(userId, cid)) throw new Error("Not a member of this clan");
+  if (cid && !isClanMember(userId, cid)) throw await err("errors.notInClan");
   const r = db.insert(lanOrga).values({ lanId, userId }).onConflictDoNothing().run();
   if (r.changes) auditLan(mustGetLan(lanId), me.id, "orga.add", { targetUserId: userId });
   lanPath(lanId);
@@ -913,7 +919,7 @@ export async function saveLanType(_: FormState, formData: FormData): Promise<For
     Object.fromEntries([...formData.entries()].filter(([k]) => k !== "id" && k !== "clanId")),
   );
   if (!parsed.success) {
-    return { error: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join(", ") };
+    return { error: formError(parsed.error, await getT()) };
   }
   if (parsed.data.seatSpec) {
     try {
