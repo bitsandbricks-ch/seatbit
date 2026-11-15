@@ -1,0 +1,13 @@
+date: 2026-11-15
+type: improved
+en:
+  title: "More room for the seat map"
+  text: >-
+    On the event's Seats tab, the map now uses the full width. Tapping a seat shows who sits there in
+    a short strip right above the map, instead of a side panel or a sheet that covered the seats.
+de:
+  title: "Mehr Platz für den Sitzplan"
+  text: >-
+    Im Tab Plätze eines Events nutzt der Plan jetzt die ganze Breite. Tippst du auf einen Platz,
+    zeigt ein schmaler Streifen direkt über dem Plan, wer dort sitzt, statt einer Seitenleiste oder
+    eines Fensters, das die Plätze verdeckte.

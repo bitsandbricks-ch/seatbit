@@ -1,5 +1,7 @@
 export const checklist = {
   title: "Your checklist",
+  showAll: "Show all steps",
+  showLess: "Show fewer steps",
   allSet: "All set",
   optional: "optional",
   going: {

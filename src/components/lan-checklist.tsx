@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { progress, type ChecklistStep, type StepKey } from "@/lib/checklist";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { TicketConfirm } from "./ticket-confirm";
 import { useT } from "@/i18n/client";
 
@@ -127,75 +127,92 @@ function ChecklistStrip({
   const all = done === total;
   // The guide's "next": the first required step you can act on now (not one waiting on the leads).
   const next = all ? undefined : steps.find((s) => s.state === "todo" && !s.optional)?.key;
+  // Folded: only the step that matters now; open: every step. Remembered per device.
+  const [open, setOpenState] = useState(false);
+  useEffect(() => {
+    try {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- read the per-device preference after hydration
+      if (localStorage.getItem(OPEN_KEY) === "1") setOpenState(true);
+    } catch {}
+  }, []);
+  const setOpen = (o: boolean) => {
+    setOpenState(o);
+    try {
+      localStorage.setItem(OPEN_KEY, o ? "1" : "0");
+    } catch {}
+  };
+  const focus = all ? undefined : (steps.find((s) => s.key === next) ?? steps.find((s) => s.state !== "done"));
+
   const head = (
     <div className="flex items-center gap-3">
       <h2 className="text-sm font-semibold text-fg">{t("checklist.title")}</h2>
       {answer}
+      {/* The rest of the line opens and folds the list; the answer badge has its own tap. */}
+      <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="flex min-h-8 flex-1 items-center gap-3 text-left">
       {/* All set: no full bar, so long words (German) keep their room on a phone. */}
       {all ? (
         <span className="flex-1" />
       ) : (
-        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-raised">
-          <div className="h-full bg-bit transition-all" style={{ width: `${total ? (done / total) * 100 : 0}%` }} />
-        </div>
+        <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-raised">
+          <span className="block h-full bg-bit transition-all" style={{ width: `${total ? (done / total) * 100 : 0}%` }} />
+        </span>
       )}
       <span className={`text-sm ${all ? "font-medium text-bit" : "text-muted"}`}>{all ? t("checklist.allSet") : `${done} / ${total}`}</span>
-      {all && (
-        <svg viewBox="0 0 16 16" width={14} height={14} aria-hidden className="shrink-0 text-muted transition group-open:rotate-180">
-          <path fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" d="M4 6l4 4 4-4" />
-        </svg>
-      )}
+      <span className="sr-only">{open ? t("checklist.showLess") : t("checklist.showAll")}</span>
+      <svg viewBox="0 0 16 16" width={14} height={14} aria-hidden className={`shrink-0 text-muted transition ${open ? "rotate-180" : ""}`}>
+        <path fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" d="M4 6l4 4 4-4" />
+      </svg>
+      </button>
     </div>
   );
-  const list = (
-    // Desktop: every step in one row (scrolls sideways if the screen is too narrow), never a second row.
-    <ol className="mt-3 grid gap-x-4 gap-y-3 sm:grid-cols-2 lg:grid-flow-col lg:grid-cols-none lg:auto-cols-[minmax(7rem,1fr)] lg:gap-x-3 lg:overflow-x-auto">
-      {steps.map((s, i) => (
-        // Phones: only the steps still open, so the strip stays short above the tabs.
-        <li key={s.key} className={`${s.state === "done" && !all ? "hidden sm:flex" : "flex"} gap-2.5`}>
-          <StepIcon s={s} i={i} next={s.key === next} />
-          <div className="min-w-0 flex-1">
-            <p className={`text-sm font-medium leading-6 ${s.state === "done" ? "text-muted" : "text-fg"}`}>
-              {s.title}
-              <OptionalTag s={s} />
-              {s.key === next && <span className="ml-1.5 rounded-full bg-bit-soft px-1.5 py-px text-[11px] font-medium text-bit">{t("eventGuide.next")}</span>}
-            </p>
-            {s.hint && <p className="text-xs text-muted">{s.hint}</p>}
-            {s.state !== "done" && (s.key === next || s.optional) && links[s.key] && (
-              <Link
-                href={links[s.key]!}
-                // Links to another tab keep your place, like the tabs do; a #anchor scrolls to its form.
-                scroll={links[s.key]!.includes("#")}
-                className={`mt-2 inline-flex min-h-9 items-center gap-1 rounded-md px-3 text-sm font-medium transition ${
-                  s.key === next ? "bg-bit text-on-bit hover:brightness-110" : "border border-line text-bit hover:bg-raised"
-                }`}
-              >
-                {t(`eventGuide.go.${s.key as GoKey}`)} <span aria-hidden>→</span>
-              </Link>
-            )}
-            {s.key === "ticket" && s.state !== "done" && canReportTicket && (
-              <div className="mt-2">
-                <TicketConfirm lanId={lanId} bought={ticketBought} confirmed={false} />
-              </div>
-            )}
+  const item = (s: ChecklistStep, i: number) => (
+    <>
+      <StepIcon s={s} i={i} next={s.key === next} />
+      <div className="min-w-0 flex-1">
+        <p className={`text-sm font-medium leading-6 ${s.state === "done" ? "text-muted" : "text-fg"}`}>
+          {s.title}
+          <OptionalTag s={s} />
+          {s.key === next && <span className="ml-1.5 rounded-full bg-bit-soft px-1.5 py-px text-[11px] font-medium text-bit">{t("eventGuide.next")}</span>}
+        </p>
+        {s.hint && <p className="text-xs text-muted">{s.hint}</p>}
+        {s.state !== "done" && (s.key === next || s.optional) && links[s.key] && (
+          <Link
+            href={links[s.key]!}
+            // Links to another tab keep your place, like the tabs do; a #anchor scrolls to its form.
+            scroll={links[s.key]!.includes("#")}
+            className={`mt-2 inline-flex min-h-9 items-center gap-1 rounded-md px-3 text-sm font-medium transition ${
+              s.key === next ? "bg-bit text-on-bit hover:brightness-110" : "border border-line text-bit hover:bg-raised"
+            }`}
+          >
+            {t(`eventGuide.go.${s.key as GoKey}`)} <span aria-hidden>→</span>
+          </Link>
+        )}
+        {s.key === "ticket" && s.state !== "done" && canReportTicket && (
+          <div className="mt-2">
+            <TicketConfirm lanId={lanId} bought={ticketBought} confirmed={false} />
           </div>
-        </li>
-      ))}
-    </ol>
+        )}
+      </div>
+    </>
   );
-  const box = "rounded-card border border-line bg-surface p-3 sm:p-4";
-  // All done: one line that opens on tap, so a finished checklist doesn't push the sections down.
-  return all ? (
-    <section aria-label={t("checklist.title")} className={box}>
-      <details className="group">
-        <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">{head}</summary>
-        {list}
-      </details>
-    </section>
-  ) : (
-    <section aria-label={t("checklist.title")} className={box}>
+
+  return (
+    <section aria-label={t("checklist.title")} className="rounded-card border border-line bg-surface p-3 sm:p-4">
       {head}
-      {list}
+      {open ? (
+        // Desktop: every step in one row (scrolls sideways if the screen is too narrow), never a second row.
+        <ol className="mt-3 grid gap-x-4 gap-y-3 sm:grid-cols-2 lg:grid-flow-col lg:grid-cols-none lg:auto-cols-[minmax(7rem,1fr)] lg:gap-x-3 lg:overflow-x-auto">
+          {steps.map((s, i) => (
+            <li key={s.key} className="flex gap-2.5">
+              {item(s, i)}
+            </li>
+          ))}
+        </ol>
+      ) : (
+        focus && <div className="mt-3 flex gap-2.5">{item(focus, steps.indexOf(focus))}</div>
+      )}
     </section>
   );
 }
+
+const OPEN_KEY = "seatbit:checklist-open";
