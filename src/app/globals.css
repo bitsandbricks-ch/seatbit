@@ -81,11 +81,3 @@ select {
     transform: translateY(0.5rem);
   }
 }
-
-/* Seat details pane (src/components/seat-map.tsx) slides in from the right. */
-@keyframes pane-in {
-  from {
-    opacity: 0;
-    transform: translateX(1rem);
-  }
-}

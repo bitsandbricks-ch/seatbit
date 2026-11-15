@@ -91,10 +91,9 @@ export function SeatMap({
   children?: ReactNode;
   /**
    * Where a tapped seat's details go. side: their own column on desktop, a bottom sheet on phones (lead planner).
-   * top: a compact strip above the map, everywhere. pane: the map takes the full width; the details slide in over
-   * the page (right on desktop, bottom sheet on phones).
+   * top: a compact strip above the map, everywhere, so the map keeps the full width (event page).
    */
-  details?: "side" | "top" | "pane";
+  details?: "side" | "top";
 }) {
   const admin = mode === "admin";
   const t = useT();
@@ -626,25 +625,16 @@ export function SeatMap({
       </aside>
       )}
 
-      {/* Pane style, desktop: slides in over the page's right edge instead of holding a column. */}
-      {place === "pane" && selected && !layout && (
-        <aside
-          aria-label={t("seatMap.details")}
-          className="fixed bottom-0 right-0 top-[3.5625rem] z-40 hidden w-80 overflow-y-auto border-l border-line bg-surface p-5 shadow-2xl shadow-black/70 light:shadow-black/15 motion-safe:animate-[pane-in_180ms_ease-out] lg:block 2xl:w-96"
-        >
-          {details(() => setSwapFrom(selected.id))}
-        </aside>
-      )}
 
       {/* Phones and tablets: bottom sheet. */}
-      {place !== "top" && selected && !layout && (
+      {place === "side" && selected && !layout && (
         <div className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-40 sm:bottom-4 sm:left-auto sm:right-4 sm:w-80 lg:hidden">
           <div className="max-h-[70dvh] overflow-y-auto rounded-t-card border border-line bg-surface p-4 pt-2 shadow-2xl shadow-black/70 light:shadow-black/15 sm:rounded-card sm:pt-4">
             <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-line sm:hidden" aria-hidden />
             {details(() => {
               setSwapFrom(selected.id);
               setSelectedId(null);
-            }, place === "pane")}
+            })}
           </div>
         </div>
       )}
