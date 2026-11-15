@@ -16,6 +16,12 @@ test.describe("event guide", () => {
     await anna.evaluate(() => ((window as unknown as { stay: boolean }).stay = true));
     const checklist = anna.getByRole("region", { name: "Your checklist" });
     await expect(checklist.getByText("Next")).toBeVisible();
+    // Folded, it shows only the next step; open, every step.
+    await expect(checklist.getByText("Say you're coming")).toHaveCount(0);
+    await checklist.getByRole("button", { name: /Show all steps/ }).click();
+    await expect(checklist.getByText("Say you're coming")).toBeVisible();
+    await checklist.getByRole("button", { name: /Show fewer steps/ }).click();
+    await expect(checklist.getByText("Say you're coming")).toHaveCount(0);
     await checklist.getByRole("link", { name: "Pick a seat" }).click();
     await expect(anna).toHaveURL(new RegExp(`/lans/${id}\\?tab=seats$`));
     await expect(tabs(anna).getByRole("link", { name: /^Seats/ })).toHaveAttribute("aria-current", "page");

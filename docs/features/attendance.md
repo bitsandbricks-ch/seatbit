@@ -77,6 +77,8 @@ Every move is in the [audit log](audit-log.md).
 
 Your checklist sits at the top of the event overview (on desktop above every section), on the LANs list (*Checklist 3/5*) and in `/status` on Discord. Steps only show when they apply to you and the event.
 
+On the event page it starts folded: the progress bar and only the step that matters now (marked **Next**, with a button that takes you there). Tap the bar to see every step; your choice is remembered on that device. Once everything is done, it folds into one *All set* line.
+
 <div class="phones" markdown>
 <figure markdown>
 

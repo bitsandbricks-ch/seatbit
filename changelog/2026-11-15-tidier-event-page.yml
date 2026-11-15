@@ -3,12 +3,14 @@ type: improved
 en:
   title: "A next-step guide on the event page"
   text: >-
-    Your checklist on the event page now marks your next step with a button that takes you there, like
-    "Pick a seat". Once everything is done, it folds into a single "All set" line. The event website,
+    Your checklist on the event page now starts folded and shows only your next step, with a button
+    that takes you there, like "Pick a seat". Tap it to see every step. Once everything is done, it
+    folds into a single "All set" line. The event website,
     ticket shop and share button sit in one row.
 de:
   title: "Der nächste Schritt auf der Event-Seite"
   text: >-
-    Deine Checkliste auf der Event-Seite zeigt jetzt den nächsten Schritt mit einem Knopf, der dich
-    direkt hinführt, etwa «Platz wählen». Ist alles erledigt, klappt sie zu einer Zeile «Alles erledigt»
+    Deine Checkliste auf der Event-Seite ist jetzt eingeklappt und zeigt nur deinen nächsten Schritt mit
+    einem Knopf, der dich direkt hinführt, etwa «Platz wählen». Tippe darauf, um alle Schritte zu sehen.
+    Ist alles erledigt, klappt sie zu einer Zeile «Alles erledigt»
     zusammen. Event-Website, Ticketshop und Teilen stehen in einer Zeile.
