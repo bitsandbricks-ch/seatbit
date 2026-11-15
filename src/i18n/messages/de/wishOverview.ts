@@ -2,7 +2,7 @@ import type { Messages } from "../en";
 
 export const wishOverview: Messages["wishOverview"] = {
   title: "Platzwünsche",
-  hint: "Gewichtet nach der Reihenfolge jedes Mitglieds: ein oberer Wunsch zählt mehr. Tiefste zuerst; tippe auf ein Mitglied für alle Wünsche.",
+  hint: "Gewichtet nach der Reihenfolge jedes Mitglieds: ein oberer Wunsch zählt mehr. Ein verpasster Wunsch unter den Top 5 ist orange und muss allein nicht angeschaut werden. Tiefste zuerst; tippe auf ein Mitglied für alle Wünsche.",
   met: "{pct} erfüllt",
   overall: "Erfüllte Wünsche gesamt",
   allMet: { one: "Bei {count} von {total} Mitgliedern sind alle Wünsche erfüllt", other: "Bei {count} von {total} Mitgliedern sind alle Wünsche erfüllt" },
