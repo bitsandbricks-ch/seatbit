@@ -2,7 +2,7 @@
 
 Members answer whether they come, work through their checklist and report their ticket; leads see everyone in one list.
 
-**Who:** members answer and tick off their ticket; leads can change any answer · **Where:** the event page (top card); *Manage → Attendees*
+**Who:** members answer and tick off their ticket; leads can change any answer · **Where:** the event page (top card); *Manage → People*
 
 <div class="phones" markdown>
 <figure markdown>
@@ -50,7 +50,7 @@ When the group's spots (*Spots* on the event) are full, new *Coming* answers go 
 
 ![Waitlist on the event page](../screenshots/phone-waitlist.png){ .shot width="300" }
 
-When someone stops coming (or a lead raises the spots), what happens depends on the event's setting under *Manage → Attendees → Waitlist*:
+When someone stops coming (or a lead raises the spots), what happens depends on the event's setting under *Manage → People → Waitlist*:
 
 | Setting | When a spot opens |
 | --- | --- |
@@ -63,7 +63,7 @@ People on the waitlist get no ticket reminders or nudges, and their checklist sa
 
 While people are waiting, a new *Coming* answer always queues up behind them, even when a spot is free, so nobody jumps the line.
 
-**For leads**, the *Waitlist* card on *Manage → Attendees* shows the line with each person's place, how long they've waited and whether they already have a ticket:
+**For leads**, the *Waitlist* card on *Manage → People* shows the line with each person's place, how long they've waited and whether they already have a ticket:
 
 - **↑ / ↓** move someone one place up or down.
 - **Move to coming** takes them off the waitlist now and tells them. This also works when the group is full: the lead goes over the limit on purpose.
@@ -121,11 +121,11 @@ Reminders go to people coming without a ticket before the *buy ticket by* date. 
 
 ## Attendee list
 
-*Manage → Attendees*: one row per person with answer, seat, ticket, LAN ID and a note. Filter by status, search and sort. Leads can change anyone's answer, also once it's locked.
+*Manage → People*: one row per person with answer, seat, ticket, LAN ID and a note. Filter by status, search and sort. Leads can change anyone's answer, also once it's locked.
 
 ### Status icons
 
-Leads see small icons next to names and on seats, the same everywhere: in the seat map on *Manage → Seats*, on the event's *Attendees* tab and on *Manage → Attendees* (there only the ones the table has no column for).
+Leads see small icons next to names and on seats, the same everywhere: in the seat map on *Manage → Seats*, on the event's *Attendees* tab and on *Manage → People* (there only the ones the table has no column for).
 
 | Icon | Means |
 | --- | --- |
