@@ -1,0 +1,17 @@
+export const dialog = {
+  ok: "OK",
+  cancel: "Cancel",
+  delete: "Delete",
+  remove: "Remove",
+  send: "Send",
+  post: "Post",
+  continue: "Continue",
+  cantUndo: "This can't be undone.",
+  deleteLanQ: "Delete {name}?",
+  deleteLanBody: "Answers, tickets, seats, rides and everything else of this event go too. This can't be undone.",
+  deleteClanQ: "Delete the clan {name}?",
+  deleteTypeQ: "Delete the LAN type {name}?",
+  deleteChargeQ: "Delete the charge {name}?",
+  unlinkChannelQ: "Unlink #{name}?",
+  unlinkChannelBody: "Seatbit stops posting there. You can link it again with /seatbit in Discord.",
+};

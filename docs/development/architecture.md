@@ -81,6 +81,17 @@ Every server action reports through the helpers in `src/components/action-form.t
 
 `success` is the note for a good result: leave it out for *Saved.*, pass a text, a function of the result (`(n) => t("chat.posted", { count: n })`) or `false`. A result like `{ error }` or `{ ok: false, message }` shows as an error, `{ ok: true, message }` uses its message. A thrown error shows its text when it came from `throw await err("errors.…")`; production builds hide the text of any other thrown error, so those show *That didn't work*. Simple settings save without a button: `<ActionForm auto="toggles">` (or `{...autoSave("toggles")}` on a client `<form>`) saves when a checkbox, radio, select or file changes; `"all"` also saves a text field when it loses focus with a new value. Keep a Save button on forms with several text fields and on anything that notifies people or can't be undone. Client-only notes call `toast.success()` / `toast.error()` from `src/components/toast.tsx`. Don't add inline "Saved" texts or error paragraphs next to buttons.
 
+## Confirm dialogs
+
+Never use the browser's `confirm()`, `alert()` or `prompt()`. Ask in the app's own dialog (`src/components/dialog.tsx`, mounted once as `<DialogHost />` in the root layout): it looks the same in every browser and theme, has translated buttons, a red button for deletes, and opens as a sheet at the bottom on phones.
+
+| Where | Use |
+| --- | --- |
+| Client code | `if (!(await ask({ title, body?, confirm?, danger? }))) return;` resolves `true` on confirm, `false` on Cancel, Escape or a tap outside. |
+| `<ActionForm>` (also in server components) | `confirm={{ title, body, confirm: t("dialog.delete"), danger: true }}` asks before the action runs. |
+
+Ask before anything that deletes, removes people or notifies many people. Name the action on the button (`dialog.delete`, `dialog.remove`, `dialog.send`) instead of *OK*, and put what else goes or who gets notified into `body`. A delete starts with the focus on *Cancel*.
+
 ## Mail
 
 Every email goes out in the same layout (`renderMail` in `src/lib/mail-fill.ts`), in the recipient's language. There are three ways to send one, and no other:

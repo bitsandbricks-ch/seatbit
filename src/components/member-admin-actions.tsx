@@ -6,6 +6,7 @@ import { MEMBER_ROLES, type MemberRole } from "@/lib/clan-roles";
 import { useT } from "@/i18n/client";
 import { useRunAction } from "./action-form";
 import { btnGhost } from "./ui";
+import { ask } from "./dialog";
 
 /** Role and membership controls on a member's profile: admins change roles, recruiters remove plain members. */
 export function MemberAdminActions({
@@ -49,8 +50,8 @@ export function MemberAdminActions({
           type="button"
           disabled={pending}
           className={`${btnGhost} border border-line !text-danger`}
-          onClick={() =>
-            confirm(t("memberActions.removeGuestQ", { name })) &&
+          onClick={async () =>
+            (await ask({ title: t("memberActions.removeGuestQ", { name }), confirm: t("dialog.remove"), danger: true })) &&
             run(() => deleteGuest(clanId, userId), () => router.push(`/clans/${slug}/settings?tab=members`))
           }
         >
@@ -61,9 +62,9 @@ export function MemberAdminActions({
   }
 
   const canRemove = !isSelf && (canSetRoles || role === "member");
-  const choose = (to: MemberRole) => {
+  const choose = async (to: MemberRole) => {
     if (to === role) return;
-    if (isSelf && role === "admin" && !confirm(t("memberList.giveUpAdmin"))) return;
+    if (isSelf && role === "admin" && !(await ask({ title: t("memberList.giveUpAdmin"), confirm: t("dialog.continue"), danger: true }))) return;
     run(() => setClanMemberRole(clanId, userId, to));
   };
 
@@ -97,8 +98,8 @@ export function MemberAdminActions({
           type="button"
           disabled={pending || lastAdmin}
           className={`${btnGhost} border border-line !text-danger`}
-          onClick={() =>
-            confirm(t("memberList.removeQ", { name })) &&
+          onClick={async () =>
+            (await ask({ title: t("memberList.removeQ", { name }), confirm: t("dialog.remove"), danger: true })) &&
             run(() => removeClanMember(clanId, userId), () => router.push(`/clans/${slug}/settings?tab=members`))
           }
         >

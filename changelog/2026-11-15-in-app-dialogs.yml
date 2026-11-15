@@ -1,0 +1,17 @@
+date: 2026-11-15
+type: improved
+en:
+  title: "Questions in the app instead of browser pop-ups"
+  text: >-
+    Before something is deleted or removed, or a reminder goes out to many people, Seatbit now asks
+    in its own dialog instead of the browser's pop-up: in your language and theme, with a red button
+    for things that can't be undone, and at the bottom of the screen on phones. Deleting an event,
+    a clan, a LAN type or a charge, unlinking a Discord channel and removing a guest now ask first too.
+de:
+  title: "Rückfragen in der App statt Browser-Pop-ups"
+  text: >-
+    Bevor etwas gelöscht oder entfernt wird oder eine Erinnerung an viele Leute rausgeht, fragt
+    Seatbit jetzt im eigenen Dialog statt im Pop-up des Browsers: in deiner Sprache und deinem Theme,
+    mit einem roten Knopf für alles, was sich nicht rückgängig machen lässt, und auf dem Handy unten
+    am Bildschirm. Auch das Löschen eines Events, eines Clans, eines LAN-Typs oder einer Forderung,
+    das Trennen eines Discord-Kanals und das Entfernen eines Gasts fragen jetzt zuerst nach.

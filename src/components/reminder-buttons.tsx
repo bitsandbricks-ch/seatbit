@@ -4,6 +4,7 @@ import { adminSendReminder } from "@/app/actions";
 import { btnSecondary } from "./ui";
 import { useT } from "@/i18n/client";
 import { useRunAction } from "./action-form";
+import { ask } from "./dialog";
 
 export function ReminderButtons({
   lanId,
@@ -18,9 +19,9 @@ export function ReminderButtons({
   const t = useT();
   const [pending, start] = useTransition();
   const act = useRunAction();
-  const send = (kind: "signup" | "payment" | "event", n: number) => {
+  const send = async (kind: "signup" | "payment" | "event", n: number) => {
     const what = t(`manage.reminderKind.${kind}`);
-    if (!confirm(t("reminderButtons.confirm", { what, count: n }))) return;
+    if (!(await ask({ title: t("reminderButtons.confirm", { what, count: n }), confirm: t("dialog.send") }))) return;
     start(async () => {
       await act(() => adminSendReminder(lanId, kind), (sent) => t("reminderButtons.sent", { what, count: sent }));
     });

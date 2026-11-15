@@ -6,6 +6,7 @@ import { MAX_NEAR_RANGE, MIN_NEAR_RANGE } from "@/lib/seat-rules";
 import { btnPrimary, btnSecondary, input } from "./ui";
 import { useT } from "@/i18n/client";
 import { useRunAction } from "./action-form";
+import { ask } from "./dialog";
 
 /** Lead tools: enter the seats the event gave the group, and auto-fill them. */
 export function SeatSetup({
@@ -97,8 +98,8 @@ export function SeatSetup({
           <button
             disabled={pending}
             className={btnSecondary}
-            onClick={() => {
-              if (!confirm(t("seatSetup.replanConfirm"))) return;
+            onClick={async () => {
+              if (!(await ask({ title: t("seatSetup.replanConfirm"), confirm: t("seatSetup.replan") }))) return;
               start(async () => {
                 await run(() => adminAutoAssignSeats(lanId, "replan"), (n) => t("seatSetup.planned", { count: n }));
               });

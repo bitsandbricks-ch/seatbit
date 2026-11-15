@@ -205,6 +205,18 @@ const SHOTS: Shot[] = [
   { name: "phone-profile-emergency", who: "anna", path: "/profile?tab=emergency" },
   { name: "phone-profile-notifications", who: "anna", path: "/profile?tab=notifications", full: true },
   {
+    // The app's own confirm dialog (src/components/dialog.tsx) before a delete.
+    name: "phone-confirm-dialog",
+    who: "alex",
+    path: `${CLAN}/types/demo-type-lakeside`,
+    act: async (page) => {
+      await page.getByRole("button", { name: /^Delete Lakeside LAN/ }).click();
+      await page.getByRole("dialog").waitFor();
+      // Let the sheet settle.
+      await page.waitForTimeout(300);
+    },
+  },
+  {
     // The toast after a save (src/components/toast.tsx).
     name: "phone-toast",
     who: "anna",

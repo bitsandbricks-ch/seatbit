@@ -4,6 +4,7 @@ import { postDiscordReminder, postLanToDiscord } from "@/app/actions";
 import { btnSecondary } from "./ui";
 import { useT } from "@/i18n/client";
 import { useRunAction } from "./action-form";
+import { ask } from "./dialog";
 
 type Kind = "signup" | "payment" | "event";
 
@@ -43,8 +44,8 @@ export function DiscordButtons({
             key={k.kind}
             className={btnSecondary}
             disabled={draft || pending || !channels}
-            onClick={() => {
-              if (!confirm(t("chat.confirmReminder", { label: k.label, count: channels }))) return;
+            onClick={async () => {
+              if (!(await ask({ title: t("chat.confirmReminder", { label: k.label, count: channels }), confirm: t("dialog.post") }))) return;
               start(async () => {
                 await act(() => postDiscordReminder(lanId, k.kind), (n) => t("chat.postedReminder", { label: k.label, count: n }));
               });
