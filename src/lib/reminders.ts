@@ -129,8 +129,9 @@ export function dueKinds(l: Lan, now = new Date()): ReminderKind[] {
  */
 export async function runDueReminders(now = new Date()) {
   // Scheduled drafts go live first, so they're in this round.
-  const { publishDueDrafts } = await import("./event-notices");
+  const { openDueSignups, publishDueDrafts } = await import("./event-notices");
   await publishDueDrafts(now).catch((e) => console.error("[publish] scheduled publish failed", e));
+  await openDueSignups(now).catch((e) => console.error("[publish] scheduled sign-up failed", e));
   // Drafts, cancelled events and interest checks get no reminders.
   // Suspended clans go quiet too.
   const { isClanSuspended } = await import("./clans");

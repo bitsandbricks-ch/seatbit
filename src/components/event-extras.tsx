@@ -1,43 +1,9 @@
 "use client";
 import { useState, useTransition } from "react";
-import type { InterestAnswer } from "@/db/schema";
-import { cancelLan, copyForNextYear, deleteNews, postNews, setArrived, setMyInterest, setMyInterests } from "@/app/event-actions";
-import { btn, btnDanger, btnGhost, btnPrimary, btnSecondary, input } from "./ui";
+import { cancelLan, copyForNextYear, deleteNews, postNews, setArrived, setMyInterests } from "@/app/event-actions";
+import { btnDanger, btnGhost, btnPrimary, btnSecondary, input } from "./ui";
 import { useT } from "@/i18n/client";
 import { useRunAction } from "./action-form";
-import type { MessageKey } from "@/i18n/translate";
-
-const INTEREST: { a: InterestAnswer; label: MessageKey; active: string }[] = [
-  { a: "yes", label: "eventUi.idCome", active: "border-bit bg-bit text-on-bit hover:bg-bit-hover" },
-  { a: "maybe", label: "eventUi.maybe", active: "border-warn bg-warn text-on-bit" },
-  { a: "no", label: "eventUi.notThisTime", active: "border-danger/50 bg-danger/15 text-danger" },
-];
-
-/** Interest check answer: would you come? */
-export function InterestButtons({ lanId, current }: { lanId: string; current: InterestAnswer | null }) {
-  const t = useT();
-  const [pending, start] = useTransition();
-  const act = useRunAction();
-  return (
-    <div className="space-y-2">
-      <div className="grid grid-cols-3 gap-2" aria-busy={pending}>
-        {INTEREST.map((o) => (
-          <button
-            key={o.a}
-            disabled={pending}
-            aria-pressed={current === o.a}
-            onClick={() =>
-              start(async () => void (await act(() => setMyInterest(lanId, o.a))))
-            }
-            className={`${btn} border px-2 ${current === o.a ? o.active : "border-line bg-raised text-fg hover:border-muted/40"}`}
-          >
-            {t(o.label)}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 /** Leads write news for everyone at the event. */
 export function NewsComposer({ lanId, published }: { lanId: string; published: boolean }) {

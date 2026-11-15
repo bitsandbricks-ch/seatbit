@@ -52,10 +52,8 @@ type EventOptions = {
   capacity?: number;
   /** Who already answered, with optional ticket and seat. */
   attendees?: { who: Who; status?: "going" | "maybe" | "declined"; ticket?: boolean; seat?: string }[];
-  /** Start in the interest check (published, sign-up not open yet). */
+  /** Start in the interest check (published, sign-up not open yet). Answers go in `attendees`. */
   interestCheck?: boolean;
-  /** Interest check answers. */
-  interest?: { who: Who; answer: "yes" | "maybe" | "no" }[];
 };
 
 /** A published event of the demo clan a month from now, led by Alex. Returns its id. */
@@ -87,9 +85,6 @@ export function createEvent(opts: EventOptions = {}) {
       tx.insert(schema.seat)
         .values({ lanId: id, row: 0, col: Number(label.slice(1)) - 1, label, userId: seated.get(label) ?? null })
         .run();
-    }
-    for (const i of opts.interest ?? []) {
-      tx.insert(schema.lanInterest).values({ lanId: id, userId: userId(i.who), answer: i.answer }).run();
     }
     for (const a of opts.attendees ?? []) {
       tx.insert(schema.attendance)

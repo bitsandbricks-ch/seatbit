@@ -4,7 +4,7 @@ export const lanForm: Messages["lanForm"] = {
   moved: { end: "Ende", answerBy: "Antworten bis", ticketBy: "Ticket bis", text: "{what} mit dem Beginn verschoben." },
   interest: "Mit einer Interessensabfrage starten",
   interestHint:
-    "Mitglieder sagen zuerst nur, ob sie kommen würden, vor Anmeldung, Tickets und Plätzen. Das Datum kann offen bleiben. Du öffnest die Anmeldung, wenn ihr entschieden habt.",
+    "Mitglieder antworten zuerst nur mit dabei, unsicher oder nicht dabei; Sitzplätze, Anreise und der Rest bleiben versteckt. Das Datum kann offen bleiben. Du öffnest die Anmeldung, wenn ihr entschieden habt (oder planst sie), und die Antworten bleiben.",
   interestOn: "Dieses Event ist in der Interessensabfrage. Beende sie mit «Anmeldung öffnen» oben auf der Seite.",
   interestLocked: "Die Anmeldung ist offen und Mitglieder haben geantwortet, darum geht es nicht zurück zur Interessensabfrage.",
   tbd: "Datum noch nicht fix",
