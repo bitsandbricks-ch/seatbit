@@ -196,6 +196,37 @@ function ChecklistStrip({
     </>
   );
 
+  // Folded: one slim line (step, its button) so the tabs stay close to the top on a phone.
+  const folded = (s: ChecklistStep, i: number) => {
+    const href = s.state !== "done" && s.key === next ? links[s.key] : undefined;
+    return (
+      <div className="mt-2.5">
+        <div className="flex items-center gap-2.5">
+          <StepIcon s={s} i={i} next={s.key === next} />
+          <p className="min-w-0 flex-1 truncate text-sm font-medium text-fg">
+            {s.title}
+            <OptionalTag s={s} />
+          </p>
+          {href && (
+            <Link
+              href={href}
+              scroll={href.includes("#")}
+              className="inline-flex min-h-8 shrink-0 items-center gap-1 rounded-md bg-bit px-2.5 text-sm font-medium text-on-bit transition hover:brightness-110"
+            >
+              {t(`eventGuide.go.${s.key as GoKey}`)} <span aria-hidden>→</span>
+            </Link>
+          )}
+        </div>
+        {s.hint && <p className="mt-0.5 hidden pl-8.5 text-xs text-muted sm:block">{s.hint}</p>}
+        {s.key === "ticket" && s.state !== "done" && canReportTicket && (
+          <div className="mt-2 pl-8.5">
+            <TicketConfirm lanId={lanId} bought={ticketBought} confirmed={false} />
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <section aria-label={t("checklist.title")} className="rounded-card border border-line bg-surface p-3 sm:p-4">
       {head}
@@ -209,7 +240,7 @@ function ChecklistStrip({
           ))}
         </ol>
       ) : (
-        focus && <div className="mt-3 flex gap-2.5">{item(focus, steps.indexOf(focus))}</div>
+        focus && folded(focus, steps.indexOf(focus))
       )}
     </section>
   );

@@ -18,7 +18,7 @@ type Clan = Parameters<typeof ClanAvatar>[0]["clan"] & { slug: string; name: str
 
 /** Same height as the framed share button next to them. */
 const eventLink =
-  "inline-flex min-h-[50px] items-center gap-1.5 rounded-lg border border-line px-3.5 font-medium text-bit transition hover:bg-raised";
+  "inline-flex min-h-[42px] items-center gap-1.5 rounded-lg border border-line px-3 font-medium text-bit transition hover:bg-raised sm:min-h-[50px] sm:px-3.5";
 
 /** Tabs that exist on both the event page and its manage page; switching keeps you on the same one. */
 const SHARED_TABS = ["overview", "seats", "attendees"];
@@ -61,7 +61,8 @@ export async function EventHeader({
     <PageHeader
       eyebrow={
         clan && (
-          <Link href={`/clans/${clan.slug}`} className="inline-flex max-w-full items-center gap-1.5 hover:text-fg">
+          // Phones: the clan line goes, the header has to stay short above the tabs.
+          <Link href={`/clans/${clan.slug}`} className="hidden max-w-full items-center gap-1.5 hover:text-fg sm:inline-flex">
             <ClanAvatar clan={clan} size={20} />
             <span className="truncate text-faint">
               {t.rich("eventUi.eventOf", { clan: <span className="text-fg">{clan.name}</span> })}
@@ -72,13 +73,10 @@ export async function EventHeader({
       title={l.name}
       subtitle={
         <>
-          {lanRange(l, t.locale)}
-          {l.location && (
-            <span className="block sm:inline">
-              <span className="hidden sm:inline"> · </span>
-              {l.location}
-            </span>
-          )}
+          <span className="block truncate sm:inline">
+            {lanRange(l, t.locale)}
+            {l.location && ` · ${l.location}`}
+          </span>
         </>
       }
       actions={
@@ -87,7 +85,10 @@ export async function EventHeader({
         {actions}
         {headerShare}
         {canManage && (
-          <ViewManageSwitch mode={mode} viewHref={`/lans/${l.id}${keep}`} manageHref={`/lans/${l.id}/manage${keep}`} />
+          // With the links row, phones get the small switch in that row instead.
+          <span className={links ? "hidden sm:inline-flex" : "inline-flex"}>
+            <ViewManageSwitch mode={mode} viewHref={`/lans/${l.id}${keep}`} manageHref={`/lans/${l.id}/manage${keep}`} />
+          </span>
         )}
           </>
         ) : undefined
@@ -97,15 +98,22 @@ export async function EventHeader({
         <div className="mt-1 flex flex-wrap items-center gap-2 text-sm">
           {l.websiteUrl && (
             <a href={httpHref(l.websiteUrl)} target="_blank" rel="noreferrer" className={eventLink}>
-              {t("eventUi.website")} <span aria-hidden>↗</span>
+              <span className="sm:hidden">{t("eventUi.websiteShort")}</span>
+              <span className="hidden sm:inline">{t("eventUi.website")}</span> <span aria-hidden>↗</span>
             </a>
           )}
           {l.ticketUrl && (
             <a href={httpHref(l.ticketUrl)} target="_blank" rel="noreferrer" className={eventLink}>
-              {t("eventUi.ticketShop")} <span aria-hidden>↗</span>
+              <span className="sm:hidden">{t("eventUi.ticketShopShort")}</span>
+              <span className="hidden sm:inline">{t("eventUi.ticketShop")}</span> <span aria-hidden>↗</span>
             </a>
           )}
           {share}
+          {canManage && (
+            <span className="ml-auto sm:hidden">
+              <ViewManageSwitch compact mode={mode} viewHref={`/lans/${l.id}${keep}`} manageHref={`/lans/${l.id}/manage${keep}`} />
+            </span>
+          )}
         </div>
       )}
     </PageHeader>

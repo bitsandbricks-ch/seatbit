@@ -100,7 +100,8 @@ export function SeatMap({
   const [pending, start] = useTransition();
   const runAction = useRunAction();
   const [zoom, setZoomState] = useState<Zoom>("compact");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Top style: your own seat's details show from the start, in place of a "you sit at …" line.
+  const [selectedId, setSelectedId] = useState<string | null>(() => (place === "top" ? (seats.find((s) => s.userId === meId)?.id ?? null) : null));
   const [swapFrom, setSwapFrom] = useState<string | null>(null);
   const [placing, setPlacing] = useState<string | null>(null); // userId waiting for a seat tap
   const [layout, setLayout] = useState(false);

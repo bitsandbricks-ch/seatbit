@@ -29,6 +29,8 @@ export const eventUi = {
   eventOf: "Event of {clan}",
   website: "Event website",
   ticketShop: "Ticket shop",
+  websiteShort: "Website",
+  ticketShopShort: "Tickets",
   cancelled: "Cancelled",
   cancelledBy: "The leads cancelled this event.",
   draft: "Draft",

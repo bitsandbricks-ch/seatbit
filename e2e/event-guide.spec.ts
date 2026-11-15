@@ -15,7 +15,6 @@ test.describe("event guide", () => {
     // A marker on window survives client-side switching but not a page load.
     await anna.evaluate(() => ((window as unknown as { stay: boolean }).stay = true));
     const checklist = anna.getByRole("region", { name: "Your checklist" });
-    await expect(checklist.getByText("Next")).toBeVisible();
     // Folded, it shows only the next step; open, every step.
     await expect(checklist.getByText("Say you're coming")).toHaveCount(0);
     await checklist.getByRole("button", { name: /Show all steps/ }).click();

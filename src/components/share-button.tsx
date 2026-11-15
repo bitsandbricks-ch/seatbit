@@ -45,13 +45,13 @@ export function ShareButton({
   return (
     <>
       {/* Same frame and height as the View / Manage switch next to it. */}
-      <div className={headerActionFrame}>
+      <div className={iconOnlyOnPhone ? `${headerActionFrame} max-sm:!p-0.5` : headerActionFrame}>
         <button
           type="button"
           onClick={share}
           aria-label={t("share.shareLabel")}
           title={t("share.shareLabel")}
-          className={headerAction}
+          className={iconOnlyOnPhone ? `${headerAction} max-sm:!min-h-9 max-sm:!px-2.5` : headerAction}
         >
           <ShareIcon />
           <span className={iconOnlyOnPhone ? "hidden sm:inline" : undefined}>{t("share.share")}</span>
