@@ -30,6 +30,7 @@ import * as costs from "../../src/app/cost-actions";
 import * as seatPlan from "../../src/app/seat-plan-actions";
 import * as seatWish from "../../src/app/seat-wish-actions";
 import * as teams from "../../src/app/team-actions";
+import * as search from "../../src/app/search-actions";
 import * as metrics from "../../src/app/api/metrics/route";
 import * as leadExport from "../../src/app/lans/[id]/manage/export/route";
 import * as profileExport from "../../src/app/profile/export/route";
@@ -57,6 +58,7 @@ export const MODULES = {
   "seat-plan-actions": seatPlan,
   "seat-wish-actions": seatWish,
   "team-actions": teams,
+  "search-actions": search,
 } as const;
 
 export type Spec = {
@@ -217,6 +219,10 @@ export const SPECS: Spec[] = [
   },
   { name: "lan-extras-actions.setGameMark", allow: MEMBERS, run: () => extras.setGameMark(fx.game, "installed", true), positive: "organizer" },
   { name: "lan-extras-actions.nudgeMissing", allow: LAN_MANAGERS, run: () => extras.nudgeMissing(fx.lan, "ticket"), effect: "none" },
+
+  // ---------- search-actions.ts ----------
+  // Read-only, and limited to the caller's own clans (see e2e/search.spec.ts for what it finds).
+  { name: "search-actions.quickSearch", allow: SIGNED_IN, run: () => search.quickSearch("lan"), effect: "none" },
 
   // ---------- team-actions.ts ----------
   { name: "team-actions.createTeam", allow: MEMBERS, run: () => teams.createTeam(fx.annaGame, form({ name: "Team Z", size: "5", url: "", note: "" })) },
