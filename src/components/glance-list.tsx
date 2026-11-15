@@ -16,10 +16,10 @@ export type GlanceRow = {
  * A page's tabs at a glance, on its overview: one compact row per tab with what's going on there. The rows are plain
  * links to ?tab=<id>, so with <ClientTabs> they switch tabs instantly.
  */
-export function GlanceList({ title, rows }: { title: string; rows: GlanceRow[] }) {
+export function GlanceList({ title, rows, actions }: { title: string; rows: GlanceRow[]; actions?: ReactNode }) {
   if (rows.length === 0) return null;
   return (
-    <Card title={title}>
+    <Card title={title} actions={actions}>
       <ul className="-my-1 divide-y divide-line">
         {rows.map((r) => (
           <li key={r.id}>

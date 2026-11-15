@@ -10,7 +10,7 @@ The **seat plan** shows the group's seat block. Members send seat wishes or pick
 
 - Each letter is a row; each seat sits at its number. A dotted gap means those numbers aren't the group's.
 - Free seats show their label, taken seats the first letters of the nick with the seat number in a small badge, so the order stays clear. **Large** shows whole nicks (remembered on the device).
-- Tap a seat for details: they show in a strip right above the map, so the map keeps the full width. Tap the seat again, ✕ or Esc closes them. In *Manage → Seats*, leads get a panel on the right on desktop and a sheet at the bottom on phones.
+- Your own seat's details are open when you come to the tab. Tap any seat for its details: they show in a strip right above the map, so the map keeps the full width. Tap the seat again, ✕ or Esc closes them. In *Manage → Seats*, leads get a panel on the right on desktop and a sheet at the bottom on phones.
 - **Find someone** highlights a person.
 
 ## Seat steps

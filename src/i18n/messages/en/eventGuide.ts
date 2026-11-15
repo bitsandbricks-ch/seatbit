@@ -6,6 +6,7 @@ export const eventGuide = {
     wishes: "Send seat wishes",
     pick: "Pick a seat",
     games: "Open games",
+    ticket: "Ticket shop",
   },
   /** Status lines shared by the section rows. */
   extras: {

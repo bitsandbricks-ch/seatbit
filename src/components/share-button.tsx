@@ -12,12 +12,15 @@ export function ShareButton({
   title,
   text,
   iconOnlyOnPhone = false,
+  small = false,
 }: {
   url: string;
   title: string;
   text: string;
   /** Phones show just the icon, so it fits in one row with the event's links. */
   iconOnlyOnPhone?: boolean;
+  /** Just a small icon, e.g. next to a page title. */
+  small?: boolean;
 }) {
   const t = useT();
   const [toast, setToast] = useState<"copied" | "copyFailed" | null>(null);
@@ -44,19 +47,25 @@ export function ShareButton({
 
   return (
     <>
-      {/* Same frame and height as the View / Manage switch next to it. */}
-      <div className={iconOnlyOnPhone ? `${headerActionFrame} max-sm:!p-0.5` : headerActionFrame}>
+      {small ? (
         <button
           type="button"
           onClick={share}
           aria-label={t("share.shareLabel")}
           title={t("share.shareLabel")}
-          className={iconOnlyOnPhone ? `${headerAction} max-sm:!min-h-9 max-sm:!px-2.5` : headerAction}
+          className="inline-grid h-9 w-9 place-items-center rounded-md text-base font-normal text-muted transition hover:bg-raised hover:text-fg"
         >
           <ShareIcon />
-          <span className={iconOnlyOnPhone ? "hidden sm:inline" : undefined}>{t("share.share")}</span>
         </button>
-      </div>
+      ) : (
+        // Same frame and height as the View / Manage switch next to it.
+        <div className={headerActionFrame}>
+          <button type="button" onClick={share} aria-label={t("share.shareLabel")} title={t("share.shareLabel")} className={headerAction}>
+            <ShareIcon />
+            <span className={iconOnlyOnPhone ? "hidden sm:inline" : undefined}>{t("share.share")}</span>
+          </button>
+        </div>
+      )}
       <div
         role="status"
         aria-live="polite"

@@ -7,6 +7,7 @@ export const eventGuide: Messages["eventGuide"] = {
     wishes: "Platzwünsche senden",
     pick: "Platz wählen",
     games: "Zu den Games",
+    ticket: "Ticketshop",
   },
   extras: {
     games: { one: "{count} Game installieren", other: "{count} Games installieren" },

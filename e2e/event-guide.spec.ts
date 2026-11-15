@@ -82,4 +82,15 @@ test.describe("event guide", () => {
     await expect(anna).toHaveURL(new RegExp(`\\?tab=food$`));
     await expect(anna.getByText("Food orders show up here once the event starts.")).toHaveCount(0);
   });
+
+  test("the Seats tab opens on your own seat", async ({ as }) => {
+    const id = createEvent({ seats: ["A1", "A2"], seatPicking: true, attendees: [{ who: "anna", ticket: true, seat: "A2" }] });
+
+    const anna = await as("anna");
+    await anna.goto(`/lans/${id}?tab=seats`);
+    // Your seat's details are open from the start instead of a "you sit at" line.
+    await expect(anna.getByRole("button", { name: "Give up my seat" })).toBeVisible();
+    await anna.getByRole("button", { name: /^Seat A1/ }).click();
+    await expect(anna.getByRole("button", { name: "Move here" })).toBeVisible();
+  });
 });

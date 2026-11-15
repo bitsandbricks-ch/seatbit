@@ -400,6 +400,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
     wishes: `/lans/${l.id}?tab=seats`,
     pick: `/lans/${l.id}?tab=seats`,
     games: `/lans/${l.id}?tab=games`,
+    ...(l.ticketUrl ? { ticket: httpHref(l.ticketUrl) } : {}),
   };
   // Food orders belong to the event itself: members get the On site tab only while it runs. Leads always,
   // so they can set an order up in advance.
@@ -540,8 +541,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
     return p.done === p.total;
   })();
 
-  // TEMP concept switch (hdr=b): answer and checklist only on the overview.
-  const onlyOverview = sp.hdr === "b";
+  // Your answer and your checklist sit above the tabs, so they show on every tab.
   const yours = (
       <div className={`grid gap-4 ${checklistDone ? "items-start" : "items-stretch"} ${showChecklist && !compactAnswer ? "lg:grid-cols-[20rem_minmax(0,1fr)] 2xl:grid-cols-[22rem_minmax(0,1fr)]" : ""}`}>
         {compactAnswer ? null : l.interestCheck && !l.cancelledAt ? (
@@ -605,7 +605,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
       <LiveRefresh lanId={l.id} />
       <EventHeader lan={l} clan={lanClan} mode="view" canManage={isAdmin} tab={tab} />
 
-      {!onlyOverview && yours}
+      {yours}
 
       <ClientTabs tabs={tabs} initial={tab} base={`/lans/${l.id}`} label={t("eventGuide.sectionsLabel")} partsLabel={t("eventGuide.tripLabel")}>
       <TabPanel id="travel">
@@ -736,7 +736,6 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
       </TabPanel>
 
       <TabPanel id="overview">
-        {onlyOverview && yours}
         {/* Your answer and checklist are above the tabs. Desktop: event on the left, details in a sidebar on the right.
             Phones: the event first, details last. */}
         <Columns
@@ -791,7 +790,27 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
             </>
           }
         >
-          <GlanceList title={t("eventGuide.glance")} rows={sections.filter((x) => x.id !== "overview")} />
+          <GlanceList
+            title={t("eventGuide.glance")}
+            rows={sections.filter((x) => x.id !== "overview")}
+            // The event's own pages, out of the header so it stays short.
+            actions={
+              (l.websiteUrl || l.ticketUrl) && (
+                <span className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-sm font-medium">
+                  {l.websiteUrl && (
+                    <a href={httpHref(l.websiteUrl)} target="_blank" rel="noreferrer" className="text-bit hover:underline">
+                      {t("eventUi.websiteShort")} <span aria-hidden>↗</span>
+                    </a>
+                  )}
+                  {l.ticketUrl && (
+                    <a href={httpHref(l.ticketUrl)} target="_blank" rel="noreferrer" className="text-bit hover:underline">
+                      {t("eventUi.ticketShopShort")} <span aria-hidden>↗</span>
+                    </a>
+                  )}
+                </span>
+              )
+            }
+          />
           {l.description && (
             <Card>
               <p className="whitespace-pre-wrap text-fg/90">{l.description}</p>

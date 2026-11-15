@@ -83,7 +83,23 @@ function OptionalTag({ s }: { s: ChecklistStep }) {
 }
 
 /** Steps whose work happens somewhere else on the page, so the guide can link there. */
-type GoKey = "nick" | "wishes" | "pick" | "games";
+type GoKey = "nick" | "wishes" | "pick" | "games" | "ticket";
+
+/** A step's button: the event's ticket shop opens in a new tab, everything else is a link on this page. */
+function GoLink({ href, className, children }: { href: string; className: string; children: ReactNode }) {
+  if (/^https?:/.test(href))
+    return (
+      <a href={href} target="_blank" rel="noreferrer" className={className}>
+        {children}
+      </a>
+    );
+  // Links to another tab keep your place, like the tabs do; a #anchor scrolls to its form.
+  return (
+    <Link href={href} scroll={href.includes("#")} className={className}>
+      {children}
+    </Link>
+  );
+}
 
 function StepIcon({ s, i, next = false }: { s: ChecklistStep; i: number; next?: boolean }) {
   return (
@@ -176,16 +192,14 @@ function ChecklistStrip({
         </p>
         {s.hint && <p className="text-xs text-muted">{s.hint}</p>}
         {s.state !== "done" && (s.key === next || s.optional) && links[s.key] && (
-          <Link
+          <GoLink
             href={links[s.key]!}
-            // Links to another tab keep your place, like the tabs do; a #anchor scrolls to its form.
-            scroll={links[s.key]!.includes("#")}
             className={`mt-2 inline-flex min-h-9 items-center gap-1 rounded-md px-3 text-sm font-medium transition ${
               s.key === next ? "bg-bit text-on-bit hover:brightness-110" : "border border-line text-bit hover:bg-raised"
             }`}
           >
-            {t(`eventGuide.go.${s.key as GoKey}`)} <span aria-hidden>→</span>
-          </Link>
+            {t(`eventGuide.go.${s.key as GoKey}`)} <span aria-hidden>{/^https?:/.test(links[s.key]!) ? "↗" : "→"}</span>
+          </GoLink>
         )}
         {s.key === "ticket" && s.state !== "done" && canReportTicket && (
           <div className="mt-2">
@@ -208,13 +222,12 @@ function ChecklistStrip({
             <OptionalTag s={s} />
           </p>
           {href && (
-            <Link
+            <GoLink
               href={href}
-              scroll={href.includes("#")}
               className="inline-flex min-h-8 shrink-0 items-center gap-1 rounded-md bg-bit px-2.5 text-sm font-medium text-on-bit transition hover:brightness-110"
             >
-              {t(`eventGuide.go.${s.key as GoKey}`)} <span aria-hidden>→</span>
-            </Link>
+              {t(`eventGuide.go.${s.key as GoKey}`)} <span aria-hidden>{/^https?:/.test(href) ? "↗" : "→"}</span>
+            </GoLink>
           )}
         </div>
         {s.hint && <p className="mt-0.5 hidden pl-8.5 text-xs text-muted sm:block">{s.hint}</p>}

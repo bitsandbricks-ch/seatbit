@@ -12,13 +12,8 @@ import { ShareButton } from "./share-button";
 import { lanLink } from "@/lib/announce";
 import { getT } from "@/i18n/server";
 import type { T } from "@/i18n/translate";
-import { httpHref } from "@/lib/safe-url";
 
 type Clan = Parameters<typeof ClanAvatar>[0]["clan"] & { slug: string; name: string };
-
-/** Same height as the framed share button next to them. */
-const eventLink =
-  "inline-flex min-h-[42px] items-center gap-1.5 rounded-lg border border-line px-3 font-medium text-bit transition hover:bg-raised sm:min-h-[50px] sm:px-3.5";
 
 /** Tabs that exist on both the event page and its manage page; switching keeps you on the same one. */
 const SHARED_TABS = ["overview", "seats", "attendees"];
@@ -50,18 +45,17 @@ export async function EventHeader({
       url={lanLink(l)}
       title={l.name}
       text={[l.name, lanRange(l, t.locale), l.location].filter(Boolean).join(" · ")}
-      iconOnlyOnPhone
+      small
     />
   ) : null;
-  const links = mode === "view" && (l.websiteUrl || l.ticketUrl);
-  // Event page: website, ticket shop and share sit in one row under the title, so the header stays short on phones.
-  const headerShare = links ? null : share;
+  const switchProps = { mode, viewHref: `/lans/${l.id}${keep}`, manageHref: `/lans/${l.id}/manage${keep}` };
+  // Kept short, mainly for phones: the share icon sits next to the title, the website and ticket shop live
+  // on the overview and in the checklist, and leads get a small View / Manage switch beside the title.
   return (
     <>
     <PageHeader
       eyebrow={
         clan && (
-          // Phones: the clan line goes, the header has to stay short above the tabs.
           <Link href={`/clans/${clan.slug}`} className="hidden max-w-full items-center gap-1.5 hover:text-fg sm:inline-flex">
             <ClanAvatar clan={clan} size={20} />
             <span className="truncate text-faint">
@@ -70,53 +64,37 @@ export async function EventHeader({
           </Link>
         )
       }
-      title={l.name}
-      subtitle={
+      title={
         <>
-          <span className="block truncate sm:inline">
-            {lanRange(l, t.locale)}
-            {l.location && ` · ${l.location}`}
-          </span>
+          {l.name}
+          {share && <span className="ml-1.5 inline-block align-middle">{share}</span>}
         </>
       }
+      subtitle={
+        <span className="block truncate sm:inline">
+          {lanRange(l, t.locale)}
+          {l.location && ` · ${l.location}`}
+        </span>
+      }
+      actionsBeside
       actions={
-        canManage || actions || headerShare ? (
+        canManage || actions ? (
           <>
-        {actions}
-        {headerShare}
-        {canManage && (
-          // With the links row, phones get the small switch in that row instead.
-          <span className={links ? "hidden sm:inline-flex" : "inline-flex"}>
-            <ViewManageSwitch mode={mode} viewHref={`/lans/${l.id}${keep}`} manageHref={`/lans/${l.id}/manage${keep}`} />
-          </span>
-        )}
+            {actions}
+            {canManage && (
+              <>
+                <span className="sm:hidden">
+                  <ViewManageSwitch compact {...switchProps} />
+                </span>
+                <span className="hidden sm:inline-flex">
+                  <ViewManageSwitch {...switchProps} />
+                </span>
+              </>
+            )}
           </>
         ) : undefined
       }
-    >
-      {links && (
-        <div className="mt-1 flex flex-wrap items-center gap-2 text-sm">
-          {l.websiteUrl && (
-            <a href={httpHref(l.websiteUrl)} target="_blank" rel="noreferrer" className={eventLink}>
-              <span className="sm:hidden">{t("eventUi.websiteShort")}</span>
-              <span className="hidden sm:inline">{t("eventUi.website")}</span> <span aria-hidden>↗</span>
-            </a>
-          )}
-          {l.ticketUrl && (
-            <a href={httpHref(l.ticketUrl)} target="_blank" rel="noreferrer" className={eventLink}>
-              <span className="sm:hidden">{t("eventUi.ticketShopShort")}</span>
-              <span className="hidden sm:inline">{t("eventUi.ticketShop")}</span> <span aria-hidden>↗</span>
-            </a>
-          )}
-          {share}
-          {canManage && (
-            <span className="ml-auto sm:hidden">
-              <ViewManageSwitch compact mode={mode} viewHref={`/lans/${l.id}${keep}`} manageHref={`/lans/${l.id}/manage${keep}`} />
-            </span>
-          )}
-        </div>
-      )}
-    </PageHeader>
+    />
     <EventStatus lan={l} canManage={canManage} t={t} />
     </>
   );
