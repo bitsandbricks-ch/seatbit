@@ -110,7 +110,7 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
 
   return (
     <Page>
-      <ClanHeader clan={c} meId={me.id} role={clanRole(me.id, c.id)} perms={perms} mode="manage" tab={tab} />
+      <ClanHeader clan={c} meId={me.id} role={clanRole(me.id, c.id)} perms={perms} mode="manage" tab={tab}>
 
       {tab === "general" && (
         <Columns
@@ -296,6 +296,7 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
           </Card>
         </Columns>
       )}
+      </ClanHeader>
     </Page>
   );
 }

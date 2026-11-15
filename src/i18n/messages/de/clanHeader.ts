@@ -9,5 +9,6 @@ export const clanHeader: Messages["clanHeader"] = {
   clan: "Clan",
   policy: { open: "Offen zum Beitreten", approval: "Beitritt auf Anfrage", invite: "Nur mit Einladung" },
   youAre: "du bist {role}",
+  settingsSections: "Bereiche der Clan-Einstellungen",
   sections: "Clan-Bereiche",
 };

@@ -2,8 +2,7 @@ import Link from "next/link";
 import { inArray } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { suspendClanAction, unsuspendClanAction, updateReport } from "@/app/moderation-actions";
-import { Tabs } from "@/components/tabs";
-import { Card, EmptyState, Page, PageHeader, Pill, btnDanger, btnGhost, btnSecondary, input } from "@/components/ui";
+import { Card, EmptyState, Page, PageHeader, Pill, Segmented, btnDanger, btnGhost, btnSecondary, input } from "@/components/ui";
 import { fmtDate } from "@/lib/format";
 import { getDefaultNames } from "@/lib/lans";
 import { platformCan } from "@/lib/platform-roles";
@@ -34,14 +33,13 @@ export default async function ReportsPage({ searchParams }: PageProps<"/admin/re
         title={t("moderation.reports")}
         subtitle={t("moderation.subtitle")}
       />
-      <Tabs
+      <Segmented
         label={t("moderation.reports")}
-        tabs={[
-          { id: "open", label: t("moderation.open"), badge: open ? String(open) : undefined },
-          { id: "closed", label: t("moderation.closed") },
+        options={[
+          { id: "open", label: t("moderation.open"), count: open, href: "/admin/reports?tab=open" },
+          { id: "closed", label: t("moderation.closed"), href: "/admin/reports?tab=closed" },
         ]}
-        active={tab}
-        hrefFor={(id) => `/admin/reports?tab=${id}`}
+        value={tab}
       />
       {reports.length === 0 ? (
         <EmptyState icon="box" title={t(tab === "open" ? "moderation.emptyOpen" : "moderation.emptyClosed")}>

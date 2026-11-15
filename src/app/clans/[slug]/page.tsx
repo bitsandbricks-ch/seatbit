@@ -157,7 +157,7 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
 
   return (
     <Page>
-      <ClanHeader clan={c} meId={me.id} role={role} perms={perms} mode="view" tab={tab} />
+      <ClanHeader clan={c} meId={me.id} role={role} perms={perms} mode="view" tab={tab}>
 
       {canMembers && pending + openClaims > 0 && (
         <Notice tone="warn">
@@ -389,6 +389,7 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
         </Card>
       )}
       {!perms.has("settings") && <ReportButton clanId={c.id} />}
+      </ClanHeader>
     </Page>
   );
 }

@@ -10,7 +10,8 @@ import { LanIdForm } from "@/components/lan-id-form";
 import { pickLanAccount } from "@/lib/lan-accounts";
 import { SignOutButton } from "@/components/sign-out-button";
 import { Card, Columns, Field, Input, Page, PageHeader, Segmented, btnPrimary, btnSecondary, halves } from "@/components/ui";
-import { Tabs, type Tab } from "@/components/tabs";
+import type { Tab } from "@/components/tabs";
+import { SectionLayout, type NavSection } from "@/components/section-nav";
 import { groupTabs } from "@/components/tab-groups";
 import { NotificationsForm } from "@/components/notifications-form";
 import { enabledProviders } from "@/lib/auth";
@@ -78,6 +79,14 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
   // Inside "Account" its first part is the name, language and sign-in.
   const partLabel = (x: Tab) => (x.id === "account" ? t("profile.tabs.details") : x.label);
   const href = (id: string) => (id === "account" ? "/profile" : `/profile?tab=${id}`);
+  const status: Record<string, string> = {
+    account: t("profileRows.account"),
+    lans: t("profileRows.events"),
+    emergency: t("profileRows.emergency"),
+    notifications: t(me.emailReminders ? "profileRows.emailOn" : "profileRows.emailOff") + " · " + t(hasDiscord && me.discordDms ? "profileRows.dmsOn" : "profileRows.dmsOff"),
+    data: t("profileRows.data"),
+  };
+  const sections: NavSection[] = bar.map((x) => ({ id: x.id, label: x.label, href: href(x.id), status: status[x.id] }));
 
   return (
     <Page>
@@ -91,7 +100,7 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
           </span>
         }
       />
-      <Tabs tabs={bar} active={active} hrefFor={href} label={t("nav.yourProfile")} />
+      <SectionLayout sections={sections} active={active} label={t("nav.yourProfile")} backLabel={bar[0].label}>
       {parts.length > 1 && (
         <Segmented
           label={bar.find((x) => x.id === active)?.label}
@@ -249,6 +258,7 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
           </Card>
         </Columns>
       )}
+      </SectionLayout>
     </Page>
   );
 }
