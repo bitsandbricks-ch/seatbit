@@ -2,7 +2,7 @@
 
 Offer or ask for rides and places to sleep, and keep a private packing list per event.
 
-**Who:** members · **Where:** event *Travel* and *Packing list* tabs
+**Who:** members · **Where:** event *Trip* tab → *Travel* and *Packing*
 
 ## Travel
 

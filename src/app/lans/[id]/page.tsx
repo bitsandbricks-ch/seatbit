@@ -13,7 +13,7 @@ import { getLanAccounts } from "@/lib/lan-accounts";
 import { SeatMap } from "@/components/seat-map";
 import { Avatar } from "@/components/avatar";
 import { getAvatars, type AvatarData } from "@/lib/avatars";
-import { Card, Columns, LockedAnswerBadge, Notice, Page, Pill, StatusBadge, Verified } from "@/components/ui";
+import { Card, Columns, LockedAnswerBadge, Notice, Page, Pill, Segmented, StatusBadge, Verified } from "@/components/ui";
 import { fmtDate, fmtTime, lanRange, relative } from "@/lib/format";
 import { attendanceLocked, getDisplayNames, getLan, getNames, pickNick, seatView, signupClosed, waitlistPositions } from "@/lib/lans";
 import { canTakePart as mayTakePart, canViewLan, getCurrentUser, isLanManager, isProfileComplete } from "@/lib/session";
@@ -22,7 +22,7 @@ import { EventInvite } from "@/components/event-invite";
 import { rolesWith } from "@/lib/clan-roles";
 import { EventHeader } from "@/components/event-header";
 import { buildChecklist, onTheDay, progress } from "@/lib/checklist";
-import { LanChecklist } from "@/components/lan-checklist";
+import { LanChecklist, type GuideExtra } from "@/components/lan-checklist";
 import { SeatWishes } from "@/components/seat-wishes";
 import { LiveRefresh } from "@/components/live-refresh";
 import { seatRow } from "@/lib/seat-labels";
@@ -50,7 +50,10 @@ import { httpHref } from "@/lib/safe-url";
 
 const { attendance, seat, nickname } = schema;
 
-const TABS = ["overview", "seats", "attendees", "travel", "gear", "games", "food", "costs"] as const;
+const TABS = ["overview", "seats", "attendees", "trip", "travel", "gear", "games", "food", "costs"] as const;
+/** Sections inside the Trip tab. Each keeps its own ?tab= value, so older links (mails, Discord) still land right. */
+const TRIP = ["travel", "gear", "games", "food", "costs"] as const;
+type TripTab = (typeof TRIP)[number];
 
 /** Link previews (WhatsApp, Discord, ...): name, date and place of published events; drafts stay generic. */
 export async function generateMetadata({ params }: PageProps<"/lans/[id]">): Promise<Metadata> {
@@ -77,7 +80,9 @@ export async function generateMetadata({ params }: PageProps<"/lans/[id]">): Pro
 export default async function LanPage({ params, searchParams }: PageProps<"/lans/[id]">) {
   const { id } = await params;
   const sp = await searchParams;
-  const tab = TABS.find((t) => t === sp.tab) ?? "overview";
+  const asked = TABS.find((t) => t === sp.tab) ?? "overview";
+  // "trip" is just the tab's own link; it opens the first section.
+  const tab = asked === "trip" ? "travel" : asked;
   const here = `/lans/${id}${tab === "overview" ? "" : `?tab=${tab}`}`;
   const viewer = await getCurrentUser();
   if (viewer && !isProfileComplete(viewer)) redirect(`/welcome?next=${encodeURIComponent(here)}`);
@@ -377,6 +382,46 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
     </Card>
   );
 
+  // Guide: where each open step gets done, and the optional things worth a look right now.
+  const stepLinks = {
+    nick: `/lans/${l.id}?edit=nick#nick`,
+    wishes: `/lans/${l.id}?tab=seats`,
+    pick: `/lans/${l.id}?tab=seats`,
+    games: `/lans/${l.id}?tab=games`,
+  };
+  const iAmIn = !!my && (my.status === "going" || my.status === "waitlist" || my.status === "maybe");
+  const ridesWanted = posts.filter((p) => p.mode === "request" && p.userId !== me.id && isIn(p.userId)).length;
+  const packSoon = my?.status === "going" && now < l.startsAt && !l.dateTbd && l.startsAt.getTime() - now.getTime() < 7 * 86400_000;
+  const gamesInChecklist = steps.some((s) => s.key === "games");
+  const extras: GuideExtra[] = [];
+  if (myCostBalance < 0) extras.push({ key: "owe", label: t("eventGuide.extras.owe", { amount: fmtAmount(-myCostBalance, currency) }), href: `/lans/${l.id}?tab=costs`, tone: "warn" });
+  if (myCostBalance > 0) extras.push({ key: "back", label: t("eventGuide.extras.back", { amount: fmtAmount(myCostBalance, currency) }), href: `/lans/${l.id}?tab=costs`, tone: "ok" });
+  if (iAmIn && openFood > 0) extras.push({ key: "food", label: t("eventGuide.extras.food", { count: openFood }), href: `/lans/${l.id}?tab=food` });
+  if (my?.status === "going" && !gamesInChecklist && gamesToInstall > 0)
+    extras.push({ key: "games", label: t("eventGuide.extras.games", { count: gamesToInstall }), href: `/lans/${l.id}?tab=games` });
+  if (my?.status === "going" && ridesWanted > 0 && now < l.startsAt)
+    extras.push({ key: "rides", label: t("eventGuide.extras.rides", { count: ridesWanted }), href: `/lans/${l.id}?tab=travel` });
+  if (packSoon) extras.push({ key: "pack", label: t("eventGuide.extras.pack"), href: `/lans/${l.id}?tab=gear` });
+
+  // Trip tab: one badge for the most pressing thing inside, dots on the sections themselves.
+  const tripTabs: { id: TripTab; label: string; dot: boolean }[] = [
+    { id: "travel", label: t("eventGuide.sections.travel"), dot: openRequests > 0 },
+    { id: "gear", label: t("eventGuide.sections.gear"), dot: false },
+    { id: "games", label: t("eventGuide.sections.games"), dot: my?.status === "going" && gamesToInstall > 0 },
+    { id: "food", label: t("eventGuide.sections.food"), dot: openFood > 0 },
+    { id: "costs", label: t("eventGuide.sections.costs"), dot: myCostBalance < 0 },
+  ];
+  const tripBadge =
+    myCostBalance < 0
+      ? t("event.tabs.owe", { amount: fmtAmount(-myCostBalance, currency) })
+      : openFood
+        ? t("event.tabs.open", { count: openFood })
+        : my?.status === "going" && gamesToInstall
+          ? t("event.tabs.toInstall", { count: gamesToInstall })
+          : openRequests
+            ? t("event.tabs.looking", { count: openRequests })
+            : undefined;
+
   const showChecklist = !!my && my.status !== "declined" && !l.cancelledAt && !l.interestCheck;
   // A locked answer can't be changed here, so it shrinks to a badge in the checklist and frees the space.
   // The full card stays for the waitlist place and the check-in on the day.
@@ -444,6 +489,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
             steps={steps}
             ticketBought={my.ticketBought}
             canReportTicket={my.status === "going" || my.status === "waitlist"}
+            links={watching ? {} : stepLinks}
+            extras={watching ? [] : extras}
           />
         )}
       </div>
@@ -461,19 +508,21 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           interestPhase
             ? { id: "attendees", label: t("interestList.tab"), count: interests.filter((i) => i.answer === "yes").length }
             : { id: "attendees", label: t("event.tabs.attendees"), count: going.length },
-          { id: "travel", label: t("event.tabs.travel"), badge: openRequests ? t("event.tabs.looking", { count: openRequests }) : undefined },
-          { id: "gear", label: t("event.tabs.gear") },
-          { id: "games", label: t("event.tabs.games"), badge: my?.status === "going" && gamesToInstall ? t("event.tabs.toInstall", { count: gamesToInstall }) : undefined },
-          { id: "food", label: t("event.tabs.food"), badge: openFood ? t("event.tabs.open", { count: openFood }) : undefined },
-          {
-            id: "costs",
-            label: t("event.tabs.costs"),
-            badge: myCostBalance < 0 ? t("event.tabs.owe", { amount: fmtAmount(-myCostBalance, currency) }) : undefined,
-          },
+          // Travel, packing, games, food and costs share one tab, so all tabs fit on a phone.
+          { id: "trip", label: t("eventGuide.trip"), badge: tripBadge },
         ]}
-        active={tab}
+        active={isTrip(tab) ? "trip" : tab}
         hrefFor={(tb) => (tb === "overview" ? `/lans/${l.id}` : `/lans/${l.id}?tab=${tb}`)}
       />
+
+      {isTrip(tab) && (
+        <Segmented
+          label={t("eventGuide.tripLabel")}
+          value={tab}
+          fill
+          options={tripTabs.map((x) => ({ id: x.id, href: `/lans/${l.id}?tab=${x.id}`, label: x.label, dot: x.dot }))}
+        />
+      )}
 
       {tab === "travel" && (
         <div>
@@ -676,7 +725,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           )}
 
           {/* Nick and LAN ID: one line, the forms open on tap. */}
-          <details className="group rounded-card border border-line bg-surface">
+          <details id="nick" open={sp.edit === "nick"} className="group scroll-mt-32 rounded-card border border-line bg-surface">
             <summary className="flex cursor-pointer list-none items-center gap-3 p-4 sm:px-5 [&::-webkit-details-marker]:hidden">
               <span className="min-w-0 flex-1 text-sm">
                 <span className="text-muted">{t("event.shownAsShort")} </span>
@@ -739,6 +788,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
   );
 }
 
+
+const isTrip = (tab: string): tab is TripTab => (TRIP as readonly string[]).includes(tab);
 
 function DateRow({ label, d, now, t }: { label: string; d: Date | null; now: Date; t: T }) {
   if (!d) return null;

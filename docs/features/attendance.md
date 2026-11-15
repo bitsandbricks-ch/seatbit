@@ -19,7 +19,7 @@ Members answer whether they come, work through their checklist and report their 
 </figure>
 </div>
 
-The event page shows your answer and checklist at the top, then the tabs **Overview**, **Seats**, **Attendees**, **Travel**, **Packing list**, **Games** and **Food**. The Overview has the event's description, the leads' news and a **Details** card with the deadlines, the ticket price, your ticket and the leads to contact.
+The event page shows your answer and checklist at the top, then four tabs: **Overview**, **Seats**, **Attendees** and **Trip**. *Trip* holds [travel and packing](travel-packing.md), [games](games.md), [food](food.md) and [costs](shared-costs.md) as a switch at the top, with a yellow dot where something is open; the tab itself shows the most pressing one (e.g. *CHF 12 to pay*). The event website, ticket shop and share button sit in one row under the title. The Overview has the event's description, the leads' news and a **Details** card with the deadlines, the ticket price, your ticket and the leads to contact.
 
 ## Answer
 
@@ -82,6 +82,22 @@ Your checklist sits above the tabs on every tab of the event, on the LANs list (
 | **Check in at the venue** | After step 5, only on the day: you tapped *I'm here*. |
 
 The leads have their own [lead checklist](events.md#lead-checklist).
+
+### Next step and extras
+
+The checklist is also a guide. The first step you can do now is marked **Next** and has a button that takes you there (*Pick a seat →* opens the Seats tab, *Set your nick →* opens the nick form). Optional steps get a smaller button.
+
+Below the steps, **Also for this event** shows chips for optional things that matter right now, each leading to its section in *Trip*:
+
+| Chip | Shows when |
+| --- | --- |
+| *You owe CHF 12* / *You get CHF 12 back* | Your [shared costs](shared-costs.md) balance isn't even. |
+| *Food order open* | A [food order](food.md) takes items. |
+| *3 games to install* | You're coming and haven't installed voted [games](games.md) (before the games step shows in the checklist). |
+| *2 need a ride* | Others coming are looking for a [ride](travel-packing.md), until the event starts. |
+| *Pack your bag* | You're coming and the event starts within a week. |
+
+The chips stay visible when the checklist is folded to *All set*.
 
 Optional steps don't hold back *All set* and only count towards the progress once done. Once everything is done, the checklist folds into one line (*Your checklist · All set*); tap it to see the steps again.
 
