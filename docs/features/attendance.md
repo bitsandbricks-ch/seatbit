@@ -19,7 +19,7 @@ Members answer whether they come, work through their checklist and report their 
 </figure>
 </div>
 
-The event page shows your answer and checklist at the top, then four tabs: **Overview**, **Seats**, **Attendees** and **Trip**. *Trip* holds [travel and packing](travel-packing.md), [games](games.md), [food](food.md) and [costs](shared-costs.md) as a switch at the top, with a yellow dot where something is open; the tab itself shows the most pressing one (e.g. *CHF 12 to pay*). The event website, ticket shop and share button sit in one row under the title. The Overview has the event's description, the leads' news and a **Details** card with the deadlines, the ticket price, your ticket and the leads to contact.
+The event page shows your answer and checklist at the top, then four tabs: **Overview**, **Seats**, **Attendees** and **Trip**. *Trip* holds [travel and packing](travel-packing.md), [games](games.md), [food](food.md) and [costs](shared-costs.md) as a switch at the top, with a yellow dot where something is open; the tab itself gets a yellow dot too. The event website, ticket shop and share button sit in one row under the title. The Overview has the event's description, the leads' news and a **Details** card with the deadlines, the ticket price, your ticket and the leads to contact.
 
 ## Answer
 
@@ -75,7 +75,7 @@ Your checklist sits above the tabs on every tab of the event, on the LANs list (
 | 1. **Say you're coming** | You answered *Coming*. On the waitlist it shows your place (*You're #2 on the waitlist*). |
 | 2. **Give your nickname** | You have a nick (default, LAN type or event). |
 | 3. **Buy your ticket** | You ticked *I have my ticket* before the *buy ticket by* date. That's enough: the leads trust it and don't confirm it. |
-| 4. **Pick your seat** | Only when the leads turned on [self pick](seats.md#seat-steps): you took a free seat (the step then reads *Seat F8 picked*). Needs your ticket first. While self pick is on, the Seats tab shows *pick yours* in yellow until you have a seat, then your seat in green. |
+| 4. **Pick your seat** | Only when the leads turned on [self pick](seats.md#seat-steps): you took a free seat (the step then reads *Seat F8 picked*). Needs your ticket first. While self pick is on, the Seats tab has a yellow dot until you have a seat. |
 | 4. **Send seat wishes** (optional) | Instead of *Pick your seat* when self pick is off: you sent [seat wishes](seats.md#seat-steps). Hidden once the plan is final if you sent none. |
 | 5. **Leads confirm your seat** | The leads finalized the seat plan and you have a seat. Until then it waits on them (also after you picked your own seat). With an event seat plan, the hint says whether the leads already [booked it there](seats.md#book-on-the-event-site). |
 | **Install the games** (optional) | After step 5, when someone voted for [games](games.md): you marked every voted game as installed. |

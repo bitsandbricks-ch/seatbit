@@ -10,6 +10,8 @@ export type Tab = {
   badge?: string;
   /** warn (default): something to do. ok: done, e.g. a picked seat. */
   badgeTone?: "warn" | "ok";
+  /** Show the badge as a small dot (its text stays for screen readers), e.g. when a guide on the page already says what to do. */
+  dot?: boolean;
 };
 
 /**
@@ -55,9 +57,15 @@ export function Tabs({
                       {t.count}
                     </span>
                   )}
-                  {t.badge && (
-                    <span className={`rounded-full px-1.5 py-px text-[11px] font-medium ${t.badgeTone === "ok" ? "bg-bit-soft text-bit" : "bg-warn/15 text-warn"}`}>{t.badge}</span>
-                  )}
+                  {t.badge &&
+                    (t.dot ? (
+                      <>
+                        <span aria-hidden className={`h-1.5 w-1.5 rounded-full ${t.badgeTone === "ok" ? "bg-bit" : "bg-warn"}`} />
+                        <span className="sr-only">{t.badge}</span>
+                      </>
+                    ) : (
+                      <span className={`rounded-full px-1.5 py-px text-[11px] font-medium ${t.badgeTone === "ok" ? "bg-bit-soft text-bit" : "bg-warn/15 text-warn"}`}>{t.badge}</span>
+                    ))}
                 </Link>
               </li>
             );

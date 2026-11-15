@@ -501,15 +501,16 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           {
             id: "seats",
             label: t("event.tabs.seats"),
-            // Self pick: a to-do until you took a seat, then shows which one (green).
-            badge: picking && seats.length > 0 ? (mySeatLabel ? t("event.tabs.seatPicked", { seat: mySeatLabel }) : t("event.tabs.pickYours")) : undefined,
-            badgeTone: mySeatLabel ? "ok" : "warn",
+            // Self pick: a to-do until you took a seat. Once you have one there's nothing to point at.
+            badge: picking && seats.length > 0 && !mySeatLabel ? t("event.tabs.pickYours") : undefined,
+            // The guide above says what to do; the tabs only point where. Words stay for screen readers.
+            dot: true,
           },
           interestPhase
             ? { id: "attendees", label: t("interestList.tab"), count: interests.filter((i) => i.answer === "yes").length }
             : { id: "attendees", label: t("event.tabs.attendees"), count: going.length },
           // Travel, packing, games, food and costs share one tab, so all tabs fit on a phone.
-          { id: "trip", label: t("eventGuide.trip"), badge: tripBadge },
+          { id: "trip", label: t("eventGuide.trip"), badge: tripBadge, dot: true },
         ]}
         active={isTrip(tab) ? "trip" : tab}
         hrefFor={(tb) => (tb === "overview" ? `/lans/${l.id}` : `/lans/${l.id}?tab=${tb}`)}
