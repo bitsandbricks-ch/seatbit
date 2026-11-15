@@ -15,7 +15,6 @@ test.describe("event guide", () => {
     // A marker on window survives client-side switching but not a page load.
     await anna.evaluate(() => ((window as unknown as { stay: boolean }).stay = true));
     const checklist = anna.getByRole("region", { name: "Your checklist" });
-    await expect(checklist.getByText("Next")).toBeVisible();
     // Folded, it shows only the next step; open, every step.
     await expect(checklist.getByText("Say you're coming")).toHaveCount(0);
     await checklist.getByRole("button", { name: /Show all steps/ }).click();
@@ -82,5 +81,16 @@ test.describe("event guide", () => {
     await tabs(anna).getByRole("link", { name: /^On site/ }).click();
     await expect(anna).toHaveURL(new RegExp(`\\?tab=food$`));
     await expect(anna.getByText("Food orders show up here once the event starts.")).toHaveCount(0);
+  });
+
+  test("the Seats tab opens on your own seat", async ({ as }) => {
+    const id = createEvent({ seats: ["A1", "A2"], seatPicking: true, attendees: [{ who: "anna", ticket: true, seat: "A2" }] });
+
+    const anna = await as("anna");
+    await anna.goto(`/lans/${id}?tab=seats`);
+    // Your seat's details are open from the start instead of a "you sit at" line.
+    await expect(anna.getByRole("button", { name: "Give up my seat" })).toBeVisible();
+    await anna.getByRole("button", { name: /^Seat A1/ }).click();
+    await expect(anna.getByRole("button", { name: "Move here" })).toBeVisible();
   });
 });

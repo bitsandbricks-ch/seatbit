@@ -31,6 +31,8 @@ export const eventUi: Messages["eventUi"] = {
   eventOf: "Event von {clan}",
   website: "Event-Website",
   ticketShop: "Ticketshop",
+  websiteShort: "Website",
+  ticketShopShort: "Tickets",
   cancelled: "Abgesagt",
   cancelledBy: "Die Leads haben dieses Event abgesagt.",
   draft: "Entwurf",

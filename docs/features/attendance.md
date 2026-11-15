@@ -35,7 +35,7 @@ The overview starts with your answer and checklist, then an **At a glance** card
 | **Costs** | *You owe …*, *You get … back* or *You're even* ([shared costs](shared-costs.md)). |
 | **On site** | Open [food orders](food.md). Only while the event runs, then right at the top; leads see the tab before that, to prepare an order. |
 
-Below it, the overview has the event's description, the leads' news and a **Details** card with the deadlines, the ticket price, your ticket and the leads to contact. The event website, ticket shop and share button sit in one row under the title.
+Below it, the overview has the event's description, the leads' news and a **Details** card with the deadlines, the ticket price, your ticket and the leads to contact. The header stays short: the title with a small share icon, date and place in one line, and for leads a View / Manage switch (two small icons on phones). The event website and ticket shop are links at the top of the *At a glance* card; while you still need a ticket, the checklist's *Buy your ticket* step has a button to the ticket shop too.
 
 ## Answer
 
@@ -77,7 +77,7 @@ Every move is in the [audit log](audit-log.md).
 
 Your checklist sits at the top of the event overview (on desktop above every section), on the LANs list (*Checklist 3/5*) and in `/status` on Discord. Steps only show when they apply to you and the event.
 
-On the event page it starts folded: the progress bar and only the step that matters now (marked **Next**, with a button that takes you there). Tap the bar to see every step; your choice is remembered on that device. Once everything is done, it folds into one *All set* line.
+On the event page it starts folded: the progress bar and one line with the step that matters now and a button that takes you there. Tap the bar to see every step; your choice is remembered on that device. Once everything is done, it folds into one *All set* line.
 
 <div class="phones" markdown>
 <figure markdown>

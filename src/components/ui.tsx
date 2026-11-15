@@ -126,6 +126,7 @@ export function PageHeader({
   back,
   avatar,
   children,
+  actionsBeside = false,
 }: {
   title: ReactNode;
   subtitle?: ReactNode;
@@ -138,6 +139,8 @@ export function PageHeader({
   avatar?: ReactNode;
   /** Extra lines under the subtitle (meta, links), in the title column. */
   children?: ReactNode;
+  /** Keep small actions beside the title on phones too (the title wraps instead). */
+  actionsBeside?: boolean;
 }) {
   return (
     <div className="space-y-3">
@@ -147,7 +150,7 @@ export function PageHeader({
           <span className="truncate">{back.label}</span>
         </Link>
       )}
-      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
+      <div className={`flex items-start justify-between gap-x-4 gap-y-3 ${actionsBeside ? "" : "flex-wrap"}`}>
         <div className="flex min-w-0 items-center gap-3 sm:gap-4">
           {avatar && <div className="shrink-0">{avatar}</div>}
           <div className="min-w-0">
@@ -157,7 +160,7 @@ export function PageHeader({
             {children && <div className="mt-2">{children}</div>}
           </div>
         </div>
-        {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+        {actions && <div className={`flex flex-wrap items-center gap-2 ${actionsBeside ? "shrink-0" : ""}`}>{actions}</div>}
       </div>
     </div>
   );
