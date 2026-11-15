@@ -3,6 +3,7 @@ import type { Messages } from "../en";
 export const clanHeader: Messages["clanHeader"] = {
   events: "Events",
   stats: "Statistik",
+  people: "Leute",
   general: "Allgemein",
   log: "Protokoll",
   clan: "Clan",

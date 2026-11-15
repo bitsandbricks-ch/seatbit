@@ -1,8 +1,9 @@
 "use client";
-import { useActionState, useCallback, type ComponentProps, type FocusEvent, type FormEvent } from "react";
+import { useActionState, useCallback, useRef, type ComponentProps, type FocusEvent, type FormEvent } from "react";
 import { unstable_rethrow } from "next/navigation";
 import { useT } from "@/i18n/client";
 import { actionErrorText } from "@/lib/action-error";
+import { ask, type AskOptions } from "./dialog";
 import { toast } from "./toast";
 
 // One way for every server action to report back: a toast when it worked, a toast with the
@@ -130,6 +131,7 @@ export function ActionForm({
   done = "saved",
   success,
   auto,
+  confirm,
   ...props
 }: Omit<ComponentProps<"form">, "action"> & {
   action: (form: FormData) => Promise<unknown>;
@@ -137,9 +139,34 @@ export function ActionForm({
   success?: string;
   /** Save without a button, see autoSave(). */
   auto?: "toggles" | "all";
+  /** Ask first in the built-in dialog, for deletes and other steps that can't be undone. */
+  confirm?: AskOptions;
 }) {
   const t = useT();
   const run = useRunAction();
+  const asked = useRef(false);
   const text = success ?? (done && t(`toast.${done}`));
-  return <form {...props} {...(auto ? autoSave(auto) : {})} action={(form) => run(() => action(form), text).then(() => undefined)} />;
+  const onSubmit = confirm
+    ? (e: Parameters<NonNullable<typeof props.onSubmit>>[0]) => {
+        props.onSubmit?.(e);
+        if (asked.current) return void (asked.current = false);
+        // Stop this submit, ask, and submit again with the same button once confirmed.
+        e.preventDefault();
+        const form = e.currentTarget;
+        const submitter = e.nativeEvent.submitter;
+        void ask(confirm).then((ok) => {
+          if (!ok) return;
+          asked.current = true;
+          form.requestSubmit(submitter instanceof HTMLElement ? submitter : undefined);
+        });
+      }
+    : props.onSubmit;
+  return (
+    <form
+      {...props}
+      {...(auto ? autoSave(auto) : {})}
+      onSubmit={onSubmit}
+      action={(form) => run(() => action(form), text).then(() => undefined)}
+    />
+  );
 }

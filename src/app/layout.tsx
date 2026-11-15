@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
 import { Header } from "@/components/header";
 import { MaintenanceBanner } from "@/components/maintenance-banner";
+import { DialogHost } from "@/components/dialog";
 import { Toaster } from "@/components/toast";
 import { donationsEnabled } from "@/lib/donations";
 import { getLegal } from "@/lib/legal";
@@ -115,6 +116,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           title={commitTitle}
         />
         <Toaster />
+        <DialogHost />
         </I18nProvider>
       </body>
     </html>

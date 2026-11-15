@@ -20,6 +20,7 @@ import { useT } from "@/i18n/client";
 import { useRunAction } from "./action-form";
 import { StatusIcons, type StatusKind } from "./status-icons";
 import type { MessageKey } from "@/i18n/translate";
+import { ask } from "./dialog";
 
 export type AttendanceRow = {
   id: string;
@@ -248,8 +249,9 @@ export function AttendanceTable({
               </div>
               <button
                 className={`${btnGhost} shrink-0 !px-2 text-xs !text-danger lg:hidden`}
-                onClick={() =>
-                  confirm(t("attendees.removeConfirm", { name: r.name })) && run(() => adminRemoveAttendance(lanId, r.userId))
+                onClick={async () =>
+                  (await ask({ title: t("attendees.removeConfirm", { name: r.name }), confirm: t("dialog.remove"), danger: true })) &&
+                  run(() => adminRemoveAttendance(lanId, r.userId))
                 }
               >
                 {t("attendees.remove")}
@@ -337,8 +339,9 @@ export function AttendanceTable({
             </div>
             <button
               className={`${btnGhost} !hidden !px-2 text-xs hover:!text-danger lg:!inline-flex`}
-              onClick={() =>
-                confirm(t("attendees.removeConfirm", { name: r.name })) && run(() => adminRemoveAttendance(lanId, r.userId))
+              onClick={async () =>
+                (await ask({ title: t("attendees.removeConfirm", { name: r.name }), confirm: t("dialog.remove"), danger: true })) &&
+                run(() => adminRemoveAttendance(lanId, r.userId))
               }
             >
               {t("attendees.remove")}

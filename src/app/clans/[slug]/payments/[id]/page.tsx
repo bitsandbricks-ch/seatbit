@@ -82,7 +82,11 @@ export default async function ChargePage({ params }: PageProps<"/clans/[slug]/pa
             </Card>
             <Card title={t("manage.dangerZone")}>
               <p className="mb-3 text-sm text-muted">{t("payments.deleteHint")}</p>
-              <ActionForm action={deleteCharge.bind(null, ch.id)} done="deleted">
+              <ActionForm
+                action={deleteCharge.bind(null, ch.id)}
+                done="deleted"
+                confirm={{ title: t("dialog.deleteChargeQ", { name: ch.title }), body: t("payments.deleteHint"), confirm: t("dialog.delete"), danger: true }}
+              >
                 <button className={btnDanger}>{t("payments.delete")}</button>
               </ActionForm>
             </Card>

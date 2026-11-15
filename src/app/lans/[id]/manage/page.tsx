@@ -879,7 +879,11 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
 
           {platformCan(me, "clans") && (
             <Card title={t("manage.dangerZone")}>
-              <ActionForm action={deleteLan.bind(null, l.id)} done="deleted">
+              <ActionForm
+                action={deleteLan.bind(null, l.id)}
+                done="deleted"
+                confirm={{ title: t("dialog.deleteLanQ", { name: l.name }), body: t("dialog.deleteLanBody"), confirm: t("dialog.delete"), danger: true }}
+              >
                 <button className={btnDanger}>{t("manage.deleteLan")}</button>
               </ActionForm>
             </Card>

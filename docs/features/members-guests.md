@@ -2,7 +2,7 @@
 
 Approve join requests, add people, and keep **guests**: people without a Seatbit account who can take over their guest later.
 
-**Who:** clan admins and recruiters · **Where:** clan *Manage* → *Members* and *Guests*
+**Who:** clan admins and recruiters · **Where:** clan *Manage* → *People* (*Members* and *Guests*)
 
 ## Members
 

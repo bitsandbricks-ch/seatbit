@@ -10,6 +10,7 @@ import { MEMBER_ROLES, type MemberRole } from "@/lib/clan-roles";
 import { useT } from "@/i18n/client";
 import { useRunAction } from "./action-form";
 import { RolePill } from "./role-pill";
+import { ask } from "./dialog";
 
 const PAGE_SIZE = 20;
 
@@ -172,7 +173,10 @@ export function ClanMemberAdmin({
                 <button
                   type="button"
                   className={`${btnGhost} text-xs text-danger`}
-                  onClick={() => confirm(t("memberList.removeGuestQ", { name: m.name })) && run(() => deleteGuest(clanId, m.id))}
+                  onClick={async () =>
+                    (await ask({ title: t("memberList.removeGuestQ", { name: m.name }), confirm: t("dialog.remove"), danger: true })) &&
+                    run(() => deleteGuest(clanId, m.id))
+                  }
                 >
                   {t("memberList.remove")}
                 </button>
@@ -186,10 +190,15 @@ export function ClanMemberAdmin({
                       title={m.role === "admin" && lastAdmin ? t("memberList.needsAdmin") : undefined}
                       aria-label={t("memberList.roleOf", { name: m.name })}
                       className={`${input} !w-auto !py-1 text-xs`}
-                      onChange={(e) => {
-                        const to = e.target.value as MemberRole;
-                        if (m.role === "admin" && m.id === meId && !confirm(t("memberList.giveUpAdmin"))) {
-                          e.target.value = m.role;
+                      onChange={async (e) => {
+                        const el = e.target;
+                        const to = el.value as MemberRole;
+                        if (
+                          m.role === "admin" &&
+                          m.id === meId &&
+                          !(await ask({ title: t("memberList.giveUpAdmin"), confirm: t("dialog.continue"), danger: true }))
+                        ) {
+                          el.value = m.role;
                           return;
                         }
                         run(() => setClanMemberRole(clanId, m.id, to));
@@ -207,7 +216,10 @@ export function ClanMemberAdmin({
                       type="button"
                       disabled={m.role === "admin" && lastAdmin}
                       className={`${btnGhost} text-xs text-danger`}
-                      onClick={() => confirm(t("memberList.removeQ", { name: m.name })) && run(() => removeClanMember(clanId, m.id))}
+                      onClick={async () =>
+                        (await ask({ title: t("memberList.removeQ", { name: m.name }), confirm: t("dialog.remove"), danger: true })) &&
+                        run(() => removeClanMember(clanId, m.id))
+                      }
                     >
                       {t("memberList.remove")}
                     </button>

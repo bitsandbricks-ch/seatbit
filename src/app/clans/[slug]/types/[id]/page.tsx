@@ -38,7 +38,11 @@ export default async function EditLanTypePage({ params }: PageProps<"/clans/[slu
         aside={
           <Card title={t("typePage.delete")}>
             <p className="mb-3 text-sm text-muted">{t("typePage.deleteHint")}</p>
-            <ActionForm action={deleteLanType.bind(null, ty.id)} done="deleted">
+            <ActionForm
+              action={deleteLanType.bind(null, ty.id)}
+              done="deleted"
+              confirm={{ title: t("dialog.deleteTypeQ", { name: ty.name }), body: t("typePage.deleteHint"), confirm: t("dialog.delete"), danger: true }}
+            >
               <button className={btnDanger}>{t("typePage.deleteName", { name: ty.name })}</button>
             </ActionForm>
           </Card>

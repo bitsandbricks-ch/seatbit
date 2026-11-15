@@ -7,6 +7,7 @@ import { Segmented, btnGhost, btnSecondary } from "./ui";
 import type { AvatarData } from "@/lib/avatars";
 import { useT } from "@/i18n/client";
 import { useRunAction } from "./action-form";
+import { ask } from "./dialog";
 
 export type WaitlistEntry = {
   userId: string;
@@ -109,8 +110,8 @@ export function WaitlistPanel({
                   type="button"
                   className={`${btnSecondary} !py-1.5 text-sm`}
                   disabled={pending}
-                  onClick={() =>
-                    (free !== 0 || confirm(t("waitlistPanel.overLimit", { name: e.name }))) &&
+                  onClick={async () =>
+                    (free !== 0 || (await ask({ title: t("waitlistPanel.overLimit", { name: e.name }), confirm: t("waitlistPanel.moveUp") }))) &&
                     run(() => adminMoveUp(lanId, e.userId))
                   }
                 >

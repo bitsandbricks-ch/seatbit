@@ -32,6 +32,7 @@ import { colors } from "./colors";
 import { common } from "./common";
 import { contacts } from "./contacts";
 import { costs } from "./costs";
+import { dialog } from "./dialog";
 import { discordClaim } from "./discordClaim";
 import { display } from "./display";
 import { donate } from "./donate";
@@ -142,6 +143,7 @@ export const en = {
   common,
   contacts,
   costs,
+  dialog,
   discordClaim,
   display,
   donate,

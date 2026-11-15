@@ -44,5 +44,9 @@ Seatbit has three kinds of users:
 
     ![A "Saved." note above the tab bar on a phone](../screenshots/phone-toast.png){ .shot width="280" }
 
+- **Asks before it's gone.** Deleting or removing something (an event, a clan, a member, a backup) and sending reminders to many people first asks in a small dialog inside the app, with a red button for things that can't be undone. On a phone it opens at the bottom of the screen.
+
+    ![A dialog asking "Delete the LAN type Lakeside LAN?" on a phone](../screenshots/phone-confirm-dialog.png){ .shot width="280" }
+
 - **People** are shown as *Anna "Nova" Frei*: first name, nick, surname.
 - **View / Manage:** clan and event pages have a *View* mode for everyone and a *Manage* mode for people with a role.

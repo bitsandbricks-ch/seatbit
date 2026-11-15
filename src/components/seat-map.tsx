@@ -16,6 +16,7 @@ import { Card, Pill, Segmented, btnGhost, btnPrimary, btnSecondary, input } from
 import { nameMatches } from "@/lib/names";
 import { useT } from "@/i18n/client";
 import { useRunAction } from "./action-form";
+import { ask } from "./dialog";
 import { StatusIcon, sortKinds, type StatusKind } from "./status-icons";
 
 export type SeatView = {
@@ -158,9 +159,10 @@ export function SeatMap({
     setSelectedId(target.id);
   };
 
-  function onCell(row: number, col: number, s?: SeatView) {
+  async function onCell(row: number, col: number, s?: SeatView) {
     if (admin && layout) {
-      if (s?.userId && !confirm(t("seatFlow.removeTakenQ", { seat: s.label, name: s.name ?? s.nick }))) return;
+      if (s?.userId && !(await ask({ title: t("seatFlow.removeTakenQ", { seat: s.label, name: s.name ?? s.nick }), confirm: t("dialog.remove"), danger: true })))
+        return;
       return run(() => toggleSeatCell(lanId, row, col));
     }
     if (!s) return;

@@ -122,7 +122,16 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
                   {t("clanSettings.deleteHint")}
                   {c.stripeSubscriptionId && ` ${t("clanSettings.deleteSub")}`}
                 </p>
-                <ActionForm action={deleteClan.bind(null, c.id)} done="deleted">
+                <ActionForm
+                  action={deleteClan.bind(null, c.id)}
+                  done="deleted"
+                  confirm={{
+                    title: t("dialog.deleteClanQ", { name: c.name }),
+                    body: `${t("clanSettings.deleteHint")}${c.stripeSubscriptionId ? ` ${t("clanSettings.deleteSub")}` : ""} ${t("dialog.cantUndo")}`,
+                    confirm: t("dialog.delete"),
+                    danger: true,
+                  }}
+                >
                   <button className={btnDanger}>{t("clanSettings.delete")}</button>
                 </ActionForm>
               </Card>
@@ -351,7 +360,11 @@ async function ChatTab({ t, clanId }: { t: T; clanId: string }) {
                     >
                       #{ch.channelName || ch.channelId}
                     </a>
-                    <ActionForm action={unlinkDiscordChannel.bind(null, ch.channelId)} done="removed">
+                    <ActionForm
+                      action={unlinkDiscordChannel.bind(null, ch.channelId)}
+                      done="removed"
+                      confirm={{ title: t("dialog.unlinkChannelQ", { name: ch.channelName || ch.channelId }), body: t("dialog.unlinkChannelBody"), confirm: t("clanSettings.unlink") }}
+                    >
                       <button className={`${btnGhost} text-xs text-danger`}>{t("clanSettings.unlink")}</button>
                     </ActionForm>
                   </li>
@@ -543,7 +556,11 @@ function GuestsTab({
                           <Link href={`/clans/${slug}/members/${u.id}`} className="text-sm text-bit hover:underline">
                             {t("clanSettings.profileEvents")}
                           </Link>
-                          <ActionForm action={deleteGuest.bind(null, clanId, u.id)} done="deleted">
+                          <ActionForm
+                            action={deleteGuest.bind(null, clanId, u.id)}
+                            done="deleted"
+                            confirm={{ title: t("memberList.removeGuestQ", { name: shown.label }), confirm: t("dialog.remove"), danger: true }}
+                          >
                             <button className={`${btnGhost} text-xs !text-danger`}>{t("clanSettings.removeGuest")}</button>
                           </ActionForm>
                         </div>
