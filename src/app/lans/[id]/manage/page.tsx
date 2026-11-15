@@ -52,6 +52,7 @@ import { httpHref } from "@/lib/safe-url";
 import { ActionForm } from "@/components/action-form";
 import { canSeeEmergency, emergencyForLan, logEmergencyView } from "@/lib/emergency";
 import { EmergencyList } from "@/components/emergency-list";
+import type { StatusKind } from "@/components/status-icons";
 
 const { attendance, seat, user, reminderLog } = schema;
 
@@ -259,6 +260,19 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
       note: s.note,
     }));
   const swapsToApprove = swaps.filter((s) => s.status === "accepted").length;
+  // Status icons on seats and in the attendee list: no ticket, booked on the event site, guest, swap pending.
+  const rowByUser = new Map(rows.map((r) => [r.userId, r]));
+  const inSwap = new Set(swaps.flatMap((s) => [s.fromUserId, s.toUserId]));
+  const tracksBooking = !!(l.externalPlanUrl && l.seatsPublishedAt);
+  const marksOf = (uid: string): StatusKind[] => {
+    const r = rowByUser.get(uid);
+    const m: StatusKind[] = [];
+    if (r && !r.paid && !r.ticketBought) m.push("noTicket");
+    if (tracksBooking && r?.seatBooked) m.push("booked");
+    if (userById.get(uid)?.isGuest) m.push("guest");
+    if (inSwap.has(uid)) m.push("swap");
+    return m;
+  };
   const leadSteps = buildLeadChecklist({
     lan: l,
     going: going.length,
@@ -676,7 +690,14 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
         <AttendanceTable
           lanId={l.id}
           profileBase={lanClan ? `/clans/${lanClan.slug}/members/` : null}
-          rows={tableRows}
+          rows={tableRows.map((r) => ({
+            ...r,
+            // Ticket and booking have their own columns here; the icons add what the table doesn't show.
+            marks: [
+              ...(seats.some((x) => x.userId === r.userId && x.locked) ? (["held"] as const) : []),
+              ...marksOf(r.userId).filter((k) => k === "guest" || k === "swap"),
+            ],
+          }))}
           seats={[...seats].sort((a, b) => a.row - b.row || a.col - b.col)}
           others={users
             .filter((u) => !inLan.has(u.id) && memberIds.has(u.id))
@@ -712,7 +733,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
                 cols={l.seatCols}
                 meId={me.id}
                 mode="admin"
-                seats={seats.map((s) => seatView(s, people, avatars))}
+                seats={seats.map((s) => ({ ...seatView(s, people, avatars), marks: s.userId ? marksOf(s.userId) : undefined }))}
                 assignable={going
                   .map((r) => {
                     const w = wishChecks.find((c) => c.userId === r.userId);

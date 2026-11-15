@@ -17,6 +17,7 @@ import { nameMatches } from "@/lib/names";
 import { useT } from "@/i18n/client";
 import { useRunAction } from "./action-form";
 import { ask } from "./dialog";
+import { StatusIcon, sortKinds, type StatusKind } from "./status-icons";
 
 export type SeatView = {
   id: string;
@@ -31,6 +32,8 @@ export type SeatView = {
   name?: string | null;
   /** The seated member's personal colour, shown as a bar on the seat. */
   color?: string | null;
+  /** Status icons for leads (no ticket, booked, guest, swap pending); "held" comes from `locked`. */
+  marks?: StatusKind[];
 };
 
 /** Extra info leads see about a person in the details pane. */
@@ -291,6 +294,8 @@ export function SeatMap({
           ? "ring-2 ring-bit"
           : "";
     const short = s.nick ? s.nick.slice(0, 3) : s.label;
+    // Corner icons: held plus the leads' marks, most important first; a compact seat only has room for one.
+    const icons = sortKinds([...(s.locked ? (["held"] as const) : []), ...(s.marks ?? [])]).slice(0, compact ? 1 : 3);
     return (
       <button
         key={key}
@@ -310,10 +315,17 @@ export function SeatMap({
         {taken && s.color && (
           <span aria-hidden className="absolute inset-x-1 bottom-0.5 h-[3px] rounded-full" style={{ background: s.color }} />
         )}
+        {icons.length > 0 && (
+          <span className="absolute right-0.5 top-0.5 flex gap-0.5">
+            {icons.map((k) => (
+              <StatusIcon key={k} kind={k} t={t} size={compact ? "xs" : "sm"} />
+            ))}
+          </span>
+        )}
         {compact ? (
           <>
             {/* Taken seats show the nick, so the number moves into a corner badge to keep the order readable. */}
-            {taken && <SeatNo label={s.label} className="absolute left-0.5 top-0.5 max-w-[calc(100%-4px)]" />}
+            {taken && <SeatNo label={s.label} className="absolute left-0.5 top-0.5" style={{ maxWidth: icons.length ? "calc(100% - 15px)" : "calc(100% - 4px)" }} />}
             <span className={`w-full truncate font-mono text-xs leading-none ${taken ? "mt-2.5 font-semibold" : ""}`}>{short}</span>
           </>
         ) : (
@@ -323,7 +335,6 @@ export function SeatMap({
             ) : (
               <span className="font-mono text-[11px] leading-none opacity-75">
                 {s.label}
-                {s.locked ? " 🔒" : ""}
               </span>
             )}
             {s.nick && (
@@ -512,7 +523,13 @@ export function SeatMap({
               <Legend cls="bg-raised border-line">{t("seatMap.legendFree")}</Legend>
               <Legend cls="bg-bit border-bit">{t("seatMap.legendYou")}</Legend>
               <Legend cls="bg-seat-taken/20 border-seat-taken/40">{t("seatMap.legendTaken")}</Legend>
-              <Legend cls="bg-raised/60 border-line">{t("seatMap.legendHeld")}</Legend>
+              {/* Held seats (the lock) and, for leads, the other status icons: only the ones on the map. */}
+              {sortKinds(seats.flatMap((x) => [...(x.locked ? (["held"] as const) : []), ...(x.marks ?? [])])).map((k) => (
+                <span key={k} className="inline-flex items-center gap-1.5">
+                  <StatusIcon kind={k} t={t} size="sm" />
+                  {t(`statusIcons.${k}`)}
+                </span>
+              ))}
               {anyGap && (
                 <span className="inline-flex items-center gap-1.5">
                   <span className="inline-block h-3 border-l-2 border-dotted border-faint/60" />
@@ -792,9 +809,9 @@ function Legend({ cls, children }: { cls: string; children: React.ReactNode }) {
 }
 
 /** Small seat number badge on taken seats; readable on the green "mine" fill and the taken tint. */
-function SeatNo({ label, className = "" }: { label: string; className?: string }) {
+function SeatNo({ label, className = "", style }: { label: string; className?: string; style?: React.CSSProperties }) {
   return (
-    <span className={`truncate rounded-sm bg-surface/80 px-0.5 font-mono text-[9px] font-medium leading-tight text-muted sm:text-[10px] ${className}`}>
+    <span style={style} className={`truncate rounded-sm bg-surface/80 px-0.5 font-mono text-[9px] font-medium leading-tight text-muted sm:text-[10px] ${className}`}>
       {label}
     </span>
   );
