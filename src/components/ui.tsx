@@ -173,23 +173,32 @@ export function Segmented<T extends string>({
   value,
   onChange,
   label,
+  fill = false,
 }: {
-  options: { id: T; label: ReactNode; count?: number; href?: string }[];
+  options: { id: T; label: ReactNode; count?: number; href?: string; dot?: boolean }[];
   value: T;
   onChange?: (id: T) => void;
   label?: string;
+  /** Phones: equal columns across the full width, so every option shows without scrolling sideways. */
+  fill?: boolean;
 }) {
   return (
-    <div role="group" aria-label={label} className="inline-flex max-w-full overflow-x-auto rounded-lg border border-line bg-raised p-1 text-sm">
+    <div
+      role="group"
+      aria-label={label}
+      className={`${fill ? "grid w-full auto-cols-fr grid-flow-col sm:inline-flex sm:w-auto" : "inline-flex max-w-full overflow-x-auto"} rounded-lg border border-line bg-raised p-1 text-sm`}
+    >
       {options.map((o) => {
         const on = o.id === value;
-        const cls = `inline-flex min-h-8 items-center gap-1.5 whitespace-nowrap rounded-md px-3 font-medium transition ${
+        const cls = `relative inline-flex min-h-8 items-center gap-1.5 whitespace-nowrap rounded-md ${fill ? "justify-center px-1 sm:px-3" : "px-3"} font-medium transition ${
           on ? "bg-line text-fg shadow-sm" : "text-muted hover:text-fg"
         }`;
         const inner = (
           <>
             {o.label}
             {o.count !== undefined && o.count > 0 && <span className="text-xs tabular-nums text-muted">{o.count}</span>}
+            {/* Something to do in there; a corner dot, so it takes no width. */}
+            {o.dot && <span aria-hidden className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-warn" />}
           </>
         );
         return o.href ? (
