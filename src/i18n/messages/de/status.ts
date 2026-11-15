@@ -6,7 +6,6 @@ export const status: Messages["status"] = {
   declined: "Nicht dabei",
   waitlist: "Warteliste · voll",
   none: "Keine Antwort",
-  lockedSr: ", gesperrt",
   seat: "Platz {seat}",
   verified: "Bestätigtes Konto",
   verifiedTitle: "Bestätigtes Konto: selbst angemeldet, kein Gast",

@@ -14,7 +14,7 @@ import { getLanAccounts } from "@/lib/lan-accounts";
 import { SeatMap } from "@/components/seat-map";
 import { Avatar } from "@/components/avatar";
 import { getAvatars, type AvatarData } from "@/lib/avatars";
-import { Card, Columns, LockedAnswerBadge, Notice, Page, Pill, StatusBadge, Verified } from "@/components/ui";
+import { Card, Columns, Hint, LockedAnswerBadge, Notice, Page, Pill, Verified } from "@/components/ui";
 import { fmtDate, fmtTime, lanRange, relative } from "@/lib/format";
 import { attendanceLocked, getDisplayNames, getLan, getNames, pickNick, seatView, signupClosed, waitlistPositions } from "@/lib/lans";
 import { canTakePart as mayTakePart, canViewLan, getCurrentUser, isLanManager, isProfileComplete } from "@/lib/session";
@@ -367,13 +367,19 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           {t("event.eventSeatPlan")} <span aria-hidden>↗</span>
         </a>
       )}
-      {picking && seats.length > 0 &&
-        (mySeatLabel ? (
-          <Pill tone="emerald">{t("event.seatPicked", { seat: mySeatLabel })}</Pill>
-        ) : (
-          <Pill tone="amber">{t("event.pickYourSeat")}</Pill>
-        ))}
-      {published ? <Pill tone="emerald">{t("event.final")}</Pill> : seats.length > 0 && <Pill tone="amber">{t("event.notFinal")}</Pill>}
+      {/* Your own seat shows in the details strip above the map, so only the call to action stays here. */}
+      {picking && seats.length > 0 && !mySeatLabel && <Pill tone="amber">{t("event.pickYourSeat")}</Pill>}
+      {published ? (
+        <Hint icon="lock" tone="bit" label={t("event.final")}>
+          {t("event.finalHint")}
+        </Hint>
+      ) : (
+        seats.length > 0 && (
+          <Hint icon="clock" tone="warn" label={t("event.notFinal")}>
+            {t("event.notFinalHint")}
+          </Hint>
+        )
+      )}
     </span>
   );
   const wishesCard = my?.status === "going" && !published && seats.length > 0 && (
@@ -552,10 +558,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
         </section>
         ) : (
         <section aria-label={t("event.yourAttendance")} className="rounded-card border border-line bg-surface p-3 sm:p-4">
-          <div className="mb-3 flex items-center justify-between gap-2">
-            <h2 className="text-sm font-semibold text-fg">{t("event.yourAnswer")}</h2>
-            <StatusBadge status={my?.status} seat={seatOf.get(me.id)} />
-          </div>
+          {/* No status badge: the picked button (or the answer below) already says it. */}
+          <h2 className="mb-3 text-sm font-semibold text-fg">{t("event.yourAnswer")}</h2>
           {locked || closed || watching ? (
             // Locked (ticket bought) or sign-up closed: just show the answer, no buttons.
             <div>
@@ -976,7 +980,11 @@ function AttendeeList({
             {t("event.profileShort")}
           </a>
         )}
-        {seatOf.get(a.userId) && <Pill>{seatOf.get(a.userId)}</Pill>}
+        {seatOf.get(a.userId) && (
+          <span title={t("status.seat", { seat: seatOf.get(a.userId)! })} className="px-1 font-mono text-xs text-muted">
+            {seatOf.get(a.userId)}
+          </span>
+        )}
         <StatusIcons kinds={marks.get(a.userId) ?? []} t={t} />
       </span>
     </li>

@@ -436,7 +436,8 @@ function NextEvent({
             {l.location && ` · ${l.location}`}
           </p>
         </div>
-        <StatusBadge status={status} />
+        {/* Without an answer the line below says so in warning colour; no second "No answer" badge. */}
+        {status && <StatusBadge status={status} />}
       </div>
       <p className="mt-3 text-sm text-fg/90">
         {t("clanPage.peopleComing", { count: going })}
