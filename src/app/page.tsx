@@ -5,7 +5,7 @@ import type { Lan } from "@/db/schema";
 import { EmptyState, Page, PageHeader, Pill, StatusBadge, btnPrimary } from "@/components/ui";
 import { fmtDay, lanDay, lanWeekday, relative } from "@/lib/format";
 import { requireUser, visibleLans } from "@/lib/session";
-import { buildChecklist, progress } from "@/lib/checklist";
+import { buildChecklist, progress, type ChecklistStep } from "@/lib/checklist";
 import { listGames } from "@/lib/games";
 import { waitlistPositions } from "@/lib/lans";
 import { myClans } from "@/lib/clans";
@@ -72,8 +72,11 @@ export default async function Home() {
       waitlistPlace: mine.get(l.id)?.status === "waitlist" ? waitlistPositions(l.id).get(me.id) : undefined,
       games: { voted: voted.length, toInstall: voted.filter((g) => !g.myInstalled).length },
       now,
+      t,
     });
-    return { mySeat, freeSeats, hasSeats: ls.length > 0, progress: progress(steps) };
+    // Same "next" as the event page's guide: the first required step you can act on now.
+    const next = steps.find((s) => s.state === "todo" && !s.optional);
+    return { mySeat, freeSeats, hasSeats: ls.length > 0, progress: progress(steps), next };
   };
 
   return (
@@ -151,15 +154,28 @@ function LanCard({
 }: {
   t: T;
   clan?: { id: string; name: string; avatar: string | null };
-  info: { mySeat: string | null; freeSeats: number; hasSeats: boolean; progress: { done: number; total: number } };
+  info: {
+    mySeat: string | null;
+    freeSeats: number;
+    hasSeats: boolean;
+    progress: { done: number; total: number };
+    next?: ChecklistStep;
+  };
   l: Lan;
   my?: typeof attendance.$inferSelect;
   going: number;
   now: Date;
 }) {
-  const needsAnswer = (!my || my.status === "maybe") && !l.interestCheck && !l.cancelledAt;
-  const deadlineSoon = l.signupDeadline && l.signupDeadline > now;
-  const unpaid = my && my.status === "going" && !my.paid && !my.ticketBought && l.paymentDueDate;
+  const live = !l.cancelledAt && !l.interestCheck;
+  const asked = live && my?.status !== "declined";
+  // The date that goes with the next step, when there is one.
+  const due =
+    info.next?.key === "going" && l.signupDeadline && l.signupDeadline > now
+      ? l.signupDeadline
+      : info.next?.key === "ticket" && l.paymentDueDate
+        ? l.paymentDueDate
+        : null;
+  const allSet = asked && my?.status === "going" && !info.next;
   return (
     <Link
       href={l.publishedAt ? `/lans/${l.id}` : `/lans/${l.id}/manage`}
@@ -183,25 +199,73 @@ function LanCard({
         </div>
         <StatusBadge status={my?.status} seat={info.mySeat} />
       </div>
-      <div className="mt-4 flex flex-wrap gap-2 text-xs">
-        {!l.publishedAt && <Pill tone="amber">{t("home.draft")}</Pill>}
-        {l.cancelledAt && <Pill tone="red">{t("home.cancelled")}</Pill>}
-        {l.interestCheck && !l.cancelledAt && <Pill tone="emerald">{t("home.interest")}</Pill>}
-        <Pill>{l.capacity ? t("home.goingOf", { going, capacity: l.capacity }) : t("home.going", { going })}</Pill>
-        {needsAnswer && deadlineSoon && (
-          <Pill tone="amber">{t("home.answerBy", { date: fmtDay(l.signupDeadline!), relative: relative(l.signupDeadline!, now, t.locale) })}</Pill>
+      {(l.cancelledAt || !l.publishedAt || l.interestCheck) && (
+        <div className="mt-3 flex flex-wrap gap-2 text-xs">
+          {!l.publishedAt && <Pill tone="amber">{t("home.draft")}</Pill>}
+          {l.cancelledAt && <Pill tone="red">{t("home.cancelled")}</Pill>}
+          {l.interestCheck && !l.cancelledAt && <Pill tone="emerald">{t("home.interest")}</Pill>}
+        </div>
+      )}
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-line pt-3 text-sm">
+        {asked && info.next ? (
+          <span className="flex min-w-0 items-center gap-2 font-medium text-fg">
+            <span aria-hidden className="size-2 shrink-0 rounded-full bg-warn" />
+            <span className="min-w-0">
+              {t("home.next", { step: info.next.title })}
+              {due && (
+                <span className={`font-normal ${due.getTime() - now.getTime() < 3 * 86_400_000 ? "text-warn" : "text-muted"}`}>
+                  {" · "}
+                  {t("home.by", { date: fmtDay(due), relative: relative(due, now, t.locale) })}
+                </span>
+              )}
+            </span>
+          </span>
+        ) : allSet ? (
+          <span className="flex items-center gap-1.5 font-medium text-bit">
+            <svg aria-hidden viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m5 12 5 5L19 7" />
+            </svg>
+            {t("home.allSet")}
+          </span>
+        ) : (
+          <span />
         )}
-        {unpaid && <Pill tone="red">{t("home.ticketDue", { date: fmtDay(l.paymentDueDate!) })}</Pill>}
-        {info.hasSeats && !l.cancelledAt && (
-          <Pill tone={info.freeSeats ? "zinc" : "red"}>{info.freeSeats ? t("home.seatsFree", { count: info.freeSeats }) : t("home.noSeats")}</Pill>
-        )}
-        {my && my.status !== "declined" && !l.cancelledAt && (
-          <Pill tone={info.progress.done === info.progress.total ? "emerald" : "amber"}>
-            {t("home.checklist", info.progress)}
-          </Pill>
-        )}
+        <span className="flex items-center gap-3 text-muted">
+          <Meta icon="people" label={l.capacity ? t("home.goingOf", { going, capacity: l.capacity }) : t("home.going", { going })}>
+            {l.capacity ? `${going}/${l.capacity}` : going}
+          </Meta>
+          {info.hasSeats && !l.cancelledAt && (
+            <Meta icon="seat" label={info.freeSeats ? t("home.seatsFree", { count: info.freeSeats }) : t("home.noSeats")} warn={!info.freeSeats}>
+              {info.freeSeats}
+            </Meta>
+          )}
+        </span>
       </div>
     </Link>
+  );
+}
+
+const icons = {
+  people: (
+    <>
+      <circle cx="9" cy="8" r="3.5" />
+      <path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6" />
+    </>
+  ),
+  // The pixel chair from the logo, as an outline.
+  seat: <path d="M7 3h10v9H7zM5 12h14v3H5zM7 15v6M17 15v6" />,
+};
+
+/** An icon and a short number; the full sentence is the tooltip and what screen readers say. */
+function Meta({ icon, label, warn, children }: { icon: keyof typeof icons; label: string; warn?: boolean; children: React.ReactNode }) {
+  return (
+    <span title={label} className={`inline-flex items-center gap-1 tabular-nums ${warn ? "text-danger" : ""}`}>
+      <svg aria-hidden viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        {icons[icon]}
+      </svg>
+      <span aria-hidden>{children}</span>
+      <span className="sr-only">{label}</span>
+    </span>
   );
 }
 

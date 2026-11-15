@@ -75,7 +75,7 @@ Every move is in the [audit log](audit-log.md).
 
 ## Checklist
 
-Your checklist sits at the top of the event overview (on desktop above every section), on the LANs list (*Checklist 3/5*) and in `/status` on Discord. Steps only show when they apply to you and the event.
+Your checklist sits at the top of the event overview (on desktop above every section), on the LANs list (each card shows your next step, like *Next: Buy your ticket · by 24.11.2026*, or *All set*) and in `/status` on Discord. Steps only show when they apply to you and the event.
 
 On the event page it starts folded: the progress bar and one line with the step that matters now and a button that takes you there. Tap the bar to see every step; your choice is remembered on that device. Once everything is done, it folds into one *All set* line.
 
