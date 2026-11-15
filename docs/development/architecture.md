@@ -102,6 +102,10 @@ Every email goes out in the same layout (`renderMail` in `src/lib/mail-fill.ts`)
 
 `deliverMail()` in `mail.ts` is the only code that talks to SMTP and takes only a rendered mail (HTML and text). `npm run check:mail` (also in CI) fails when anything else imports nodemailer or calls `deliverMail()`.
 
+## Side panels
+
+Details and actions for one item in a list open in `<SidePanel>` (`src/components/side-panel.tsx`): a panel on the right on desktop, a bottom sheet on phones, with a close button, Escape, a backdrop click and an *Open page* link. Put it behind an intercepted route so the URL stays shareable and Back closes it: the list's layout renders a `@panel` slot (with `default.tsx` and a `[...rest]` page returning `null`, so moving to another page closes it), and `@panel/(.)things/[id]/page.tsx` renders the same server component as the full page with `variant="panel"`. Example: clan members (`src/app/clans/[slug]/@panel`).
+
 ## Live updates
 
 Open event and Manage pages refresh by themselves when someone else changes something on that event. Server code calls `lanChanged(lanId)` from `src/lib/live.ts` after a change; the action files do that in their path helper (`lanPath`, `foodPath`, `costsPath`, `refresh`), so a new action that uses the helper is covered. `<LiveRefresh lanId>` (`src/components/live-refresh.tsx`) listens to `/api/live/<lanId>` (Server-Sent Events, only for people who pass `canViewLan`) and calls `router.refresh()`. It waits while someone types, drags or has a dialog open, and catches up when a background tab becomes visible.

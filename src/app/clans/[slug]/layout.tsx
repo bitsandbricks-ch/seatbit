@@ -6,9 +6,15 @@ import { getCurrentUser } from "@/lib/session";
 import { getT } from "@/i18n/server";
 
 /** A suspended clan is closed for everyone but platform staff, who see it with a banner. */
-export default async function ClanLayout({ children, params }: LayoutProps<"/clans/[slug]">) {
+export default async function ClanLayout({ children, panel, params }: LayoutProps<"/clans/[slug]">) {
   const c = getClanBySlug((await params).slug);
-  if (!c?.suspendedAt) return children;
+  if (!c?.suspendedAt)
+    return (
+      <>
+        {children}
+        {panel}
+      </>
+    );
   const me = await getCurrentUser();
   if (!platformCan(me, "view")) return <SuspendedClan name={c.name} />;
   const t = await getT();
@@ -19,6 +25,7 @@ export default async function ClanLayout({ children, params }: LayoutProps<"/cla
         {c.suspendedReason && ` ${t("suspended.reason", { reason: c.suspendedReason })}`}
       </Notice>
       {children}
+      {panel}
     </div>
   );
 }

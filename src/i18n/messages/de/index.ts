@@ -92,6 +92,7 @@ import { settingDefs } from "./settingDefs";
 import { settingGroups } from "./settingGroups";
 import { settingsUi } from "./settingsUi";
 import { share } from "./share";
+import { sidePanel } from "./sidePanel";
 import { stats } from "./stats";
 import { status } from "./status";
 import { statusIcons } from "./statusIcons";
@@ -204,6 +205,7 @@ export const de: Messages = {
   settingGroups,
   settingsUi,
   share,
+  sidePanel,
   stats,
   status,
   statusIcons,

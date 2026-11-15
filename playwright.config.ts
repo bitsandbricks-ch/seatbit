@@ -30,7 +30,7 @@ export default defineConfig({
   projects: [
     { name: "desktop", use: { ...devices["Desktop Chrome"] } },
     // Mobile-first: the member flows again on a phone.
-    { name: "phone", use: { ...devices["Pixel 7"] }, testMatch: /(rsvp|seats|toasts|interest|event-guide)\.spec\.ts$/ },
+    { name: "phone", use: { ...devices["Pixel 7"] }, testMatch: /(rsvp|seats|toasts|interest|event-guide|side-panel)\.spec\.ts$/ },
   ],
   webServer: {
     command: `npx tsx e2e/setup-db.ts && npx next start -p ${PORT}`,
