@@ -51,8 +51,8 @@ import { httpHref } from "@/lib/safe-url";
 const { attendance, seat, nickname } = schema;
 
 const TABS = ["overview", "seats", "attendees", "trip", "travel", "gear", "games", "food", "costs"] as const;
-/** Sections inside the Trip tab. Each keeps its own ?tab= value, so older links (mails, Discord) still land right. */
-const TRIP = ["travel", "gear", "games", "food", "costs"] as const;
+/** Sections inside the Trip tab. Food is its own "On site" tab, only during the event. Each keeps its own ?tab= value, so older links (mails, Discord) still land right. */
+const TRIP = ["travel", "gear", "games", "costs"] as const;
 type TripTab = (typeof TRIP)[number];
 
 /** Link previews (WhatsApp, Discord, ...): name, date and place of published events; drafts stay generic. */
@@ -389,6 +389,10 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
     pick: `/lans/${l.id}?tab=seats`,
     games: `/lans/${l.id}?tab=games`,
   };
+  // Food orders belong to the event itself: members get the On site tab only while it runs. Leads always,
+  // so they can set an order up in advance.
+  const foodLive = atTheVenue;
+  const showFood = foodLive || isAdmin;
   const iAmIn = !!my && (my.status === "going" || my.status === "waitlist" || my.status === "maybe");
   const ridesWanted = posts.filter((p) => p.mode === "request" && p.userId !== me.id && isIn(p.userId)).length;
   const packSoon = my?.status === "going" && now < l.startsAt && !l.dateTbd && l.startsAt.getTime() - now.getTime() < 7 * 86400_000;
@@ -396,7 +400,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
   const extras: GuideExtra[] = [];
   if (myCostBalance < 0) extras.push({ key: "owe", label: t("eventGuide.extras.owe", { amount: fmtAmount(-myCostBalance, currency) }), href: `/lans/${l.id}?tab=costs`, tone: "warn" });
   if (myCostBalance > 0) extras.push({ key: "back", label: t("eventGuide.extras.back", { amount: fmtAmount(myCostBalance, currency) }), href: `/lans/${l.id}?tab=costs`, tone: "ok" });
-  if (iAmIn && openFood > 0) extras.push({ key: "food", label: t("eventGuide.extras.food", { count: openFood }), href: `/lans/${l.id}?tab=food` });
+  if (iAmIn && foodLive && openFood > 0) extras.push({ key: "food", label: t("eventGuide.extras.food", { count: openFood }), href: `/lans/${l.id}?tab=food` });
   if (my?.status === "going" && !gamesInChecklist && gamesToInstall > 0)
     extras.push({ key: "games", label: t("eventGuide.extras.games", { count: gamesToInstall }), href: `/lans/${l.id}?tab=games` });
   if (my?.status === "going" && ridesWanted > 0 && now < l.startsAt)
@@ -408,19 +412,23 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
     { id: "travel", label: t("eventGuide.sections.travel"), dot: openRequests > 0 },
     { id: "gear", label: t("eventGuide.sections.gear"), dot: false },
     { id: "games", label: t("eventGuide.sections.games"), dot: my?.status === "going" && gamesToInstall > 0 },
-    { id: "food", label: t("eventGuide.sections.food"), dot: openFood > 0 },
     { id: "costs", label: t("eventGuide.sections.costs"), dot: myCostBalance < 0 },
   ];
   const tripBadge =
     myCostBalance < 0
       ? t("event.tabs.owe", { amount: fmtAmount(-myCostBalance, currency) })
-      : openFood
-        ? t("event.tabs.open", { count: openFood })
-        : my?.status === "going" && gamesToInstall
+      : my?.status === "going" && gamesToInstall
           ? t("event.tabs.toInstall", { count: gamesToInstall })
           : openRequests
             ? t("event.tabs.looking", { count: openRequests })
             : undefined;
+
+  const onSiteTab = {
+    id: "food",
+    label: t("eventGuide.onSite"),
+    badge: openFood ? t("event.tabs.open", { count: openFood }) : undefined,
+    dot: true,
+  };
 
   const showChecklist = !!my && my.status !== "declined" && !l.cancelledAt && !l.interestCheck;
   // A locked answer can't be changed here, so it shrinks to a badge in the checklist and frees the space.
@@ -498,6 +506,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
       <Tabs
         tabs={[
           { id: "overview", label: t("event.tabs.overview") },
+          // During the event, On site comes right after Overview; leads see it at the end before that.
+          ...(foodLive ? [onSiteTab] : []),
           {
             id: "seats",
             label: t("event.tabs.seats"),
@@ -511,6 +521,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
             : { id: "attendees", label: t("event.tabs.attendees"), count: going.length },
           // Travel, packing, games, food and costs share one tab, so all tabs fit on a phone.
           { id: "trip", label: t("eventGuide.trip"), badge: tripBadge, dot: true },
+          ...(showFood && !foodLive ? [onSiteTab] : []),
         ]}
         active={isTrip(tab) ? "trip" : tab}
         hrefFor={(tb) => (tb === "overview" ? `/lans/${l.id}` : `/lans/${l.id}?tab=${tb}`)}
@@ -553,7 +564,9 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
         </div>
       )}
 
-      {tab === "food" && foodDiets > 0 && (
+      {tab === "food" && !showFood && <Notice>{t("eventGuide.onSiteLater")}</Notice>}
+      {tab === "food" && showFood && !foodLive && <Notice>{t("eventGuide.onSiteLeads")}</Notice>}
+      {tab === "food" && showFood && foodDiets > 0 && (
         <Notice>
           {t("emergency.foodHint", { count: foodDiets })}{" "}
           <Link href={`/lans/${l.id}/manage?tab=emergency`} className="font-medium underline">
@@ -561,7 +574,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           </Link>
         </Notice>
       )}
-      {tab === "food" && (
+      {tab === "food" && showFood && (
         <FoodOrders
           lanId={l.id}
           orders={foodViews}

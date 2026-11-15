@@ -17,7 +17,10 @@ export const eventGuide: Messages["eventGuide"] = {
     owe: "Du schuldest {amount}",
     back: "Du bekommst {amount} zurück",
   },
-  sections: { travel: "Anreise", gear: "Packen", games: "Games", food: "Essen", costs: "Kosten" },
+  sections: { travel: "Anreise", gear: "Packen", games: "Games", costs: "Kosten" },
   trip: "Trip",
+  onSite: "Vor Ort",
+  onSiteLater: "Essensbestellungen erscheinen hier, sobald der Event startet.",
+  onSiteLeads: "Vor dem Event sehen nur Leads diesen Tab. Mitglieder bekommen ihn, sobald der Event startet. So kannst du eine Essensbestellung vorbereiten.",
   tripLabel: "Trip-Bereiche",
 };

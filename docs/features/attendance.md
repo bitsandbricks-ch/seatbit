@@ -19,7 +19,7 @@ Members answer whether they come, work through their checklist and report their 
 </figure>
 </div>
 
-The event page shows your answer and checklist at the top, then four tabs: **Overview**, **Seats**, **Attendees** and **Trip**. *Trip* holds [travel and packing](travel-packing.md), [games](games.md), [food](food.md) and [costs](shared-costs.md) as a switch at the top, with a yellow dot where something is open; the tab itself gets a yellow dot too. The event website, ticket shop and share button sit in one row under the title. The Overview has the event's description, the leads' news and a **Details** card with the deadlines, the ticket price, your ticket and the leads to contact.
+The event page shows your answer and checklist at the top, then four tabs: **Overview**, **Seats**, **Attendees** and **Trip**. *Trip* holds [travel and packing](travel-packing.md), [games](games.md) and [costs](shared-costs.md) as a switch at the top, with a yellow dot where something is open; the tab itself gets a yellow dot too. While the event runs, an **On site** tab with the [food orders](food.md) appears right after Overview (leads see it at the end before that, to prepare an order). The event website, ticket shop and share button sit in one row under the title. The Overview has the event's description, the leads' news and a **Details** card with the deadlines, the ticket price, your ticket and the leads to contact.
 
 ## Answer
 
@@ -92,7 +92,7 @@ Below the steps, **Also for this event** shows chips for optional things that ma
 | Chip | Shows when |
 | --- | --- |
 | *You owe CHF 12* / *You get CHF 12 back* | Your [shared costs](shared-costs.md) balance isn't even. |
-| *Food order open* | A [food order](food.md) takes items. |
+| *Food order open* | The event is running and a [food order](food.md) takes items. |
 | *3 games to install* | You're coming and haven't installed voted [games](games.md) (before the games step shows in the checklist). |
 | *2 need a ride* | Others coming are looking for a [ride](travel-packing.md), until the event starts. |
 | *Pack your bag* | You're coming and the event starts within a week. |

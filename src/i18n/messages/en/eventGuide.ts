@@ -16,8 +16,12 @@ export const eventGuide = {
     owe: "You owe {amount}",
     back: "You get {amount} back",
   },
-  /** Short names for the sections inside the Trip tab, so all five fit on a phone. */
-  sections: { travel: "Travel", gear: "Packing", games: "Games", food: "Food", costs: "Costs" },
+  /** Short names for the sections inside the Trip tab, so all four fit on a phone. */
+  sections: { travel: "Travel", gear: "Packing", games: "Games", costs: "Costs" },
   trip: "Trip",
+  /** The tab with food orders, there only while the event runs (leads: always). */
+  onSite: "On site",
+  onSiteLater: "Food orders show up here once the event starts.",
+  onSiteLeads: "Only leads see this tab before the event. Members get it once the event starts, so you can set up a food order in advance.",
   tripLabel: "Trip sections",
 };
