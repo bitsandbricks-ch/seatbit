@@ -434,6 +434,11 @@ function anneal(
  * wish's place in the ranked list, null for "not right next to"; `weight` is what it counts for.
  */
 export type WishItem = { text: string; ok: boolean | null; rank: number | null; weight: number };
+
+/** Wishes ranked below this count little (each under 3%); a miss there is shown softer and needs no look. */
+export const TOP_WISHES = 5;
+/** A missed wish that matters: in the top five, or "not right next to". */
+export const missedBadly = (i: WishItem) => i.ok === false && (i.rank === null || i.rank <= TOP_WISHES);
 /** `score`: weighted share of the checkable wishes met (0..1); null when none can be checked yet. */
 export type WishCheck = { userId: string; items: WishItem[]; score: number | null };
 

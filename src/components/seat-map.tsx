@@ -11,7 +11,7 @@ import {
   toggleSeatRow,
 } from "@/app/actions";
 import { rowLetter } from "@/lib/seat-labels";
-import type { WishItem } from "@/lib/seating";
+import { missedBadly, type WishItem } from "@/lib/seating";
 import { Card, Pill, Segmented, btnGhost, btnPrimary, btnSecondary, input } from "./ui";
 import { nameMatches } from "@/lib/names";
 import { useT } from "@/i18n/client";
@@ -689,7 +689,7 @@ function SeatDetails({
               <ol className="flex flex-wrap gap-1">
                 {person.wishes.items.map((w) => (
                   <li key={w.text}>
-                    <Pill tone={w.ok === null ? "zinc" : w.ok ? "emerald" : "red"}>
+                    <Pill tone={w.ok === null ? "zinc" : w.ok ? "emerald" : missedBadly(w) ? "red" : "amber"}>
                       {w.rank ? `${w.rank}. ` : ""}{w.ok === null ? "·" : w.ok ? "✓" : "✗"} {w.text}
                     </Pill>
                   </li>

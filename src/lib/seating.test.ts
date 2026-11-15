@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { checkWishes, overallScore, planSeats, wishScore, wishWeights, type PlanPerson, type PlanSeat } from "./seating";
+import { checkWishes, missedBadly, overallScore, planSeats, wishScore, wishWeights, type PlanPerson, type PlanSeat } from "./seating";
 import type { SeatRule } from "./seat-rules";
 
 const row = (n: number, taken: Record<number, string> = {}, held: number[] = [], r = 0): PlanSeat[] =>
@@ -225,4 +225,13 @@ test("a top wish still beats a lower one when they clash", () => {
   const plan = planSeats(seats, everyone.slice(1), everyone);
   assert.equal(plan.get("a"), "s0-1");
   assert.equal(plan.get("b"), "s0-3");
+});
+
+test("a missed wish below the top five is a soft miss, not right next to always counts", () => {
+  const item = (rank: number | null, ok: boolean | null) => ({ text: "", ok, rank, weight: 1 });
+  assert.equal(missedBadly(item(5, false)), true);
+  assert.equal(missedBadly(item(6, false)), false);
+  assert.equal(missedBadly(item(null, false)), true);
+  assert.equal(missedBadly(item(1, true)), false);
+  assert.equal(missedBadly(item(1, null)), false);
 });

@@ -6,11 +6,14 @@ en:
     The automatic seat plan now looks at everyone's wishes together and meets clearly more of them,
     for example a lower-ranked "at the edge" wish that needed a whole group to move over by a seat.
     A re-plan after someone changes their wishes keeps everyone else on their seats unless moving
-    them meets a wish better.
+    them meets a wish better. For leads, a missed wish below someone's top 5 now shows in orange
+    and alone no longer lands the member under "Needs a look".
 de:
   title: "Bessere Sitzpläne"
   text: >-
     Der automatische Sitzplan berücksichtigt die Wünsche aller zusammen und erfüllt deutlich mehr
     davon, zum Beispiel einen tiefer eingestuften Wunsch «Am Rand», für den eine ganze Gruppe um einen
     Platz rutschen musste. Ändert jemand seine Wünsche, bleiben bei der Neuplanung alle anderen auf
-    ihren Plätzen, ausser ein Wechsel erfüllt einen Wunsch besser.
+    ihren Plätzen, ausser ein Wechsel erfüllt einen Wunsch besser. Für Leads ist ein verpasster Wunsch
+    unter den Top 5 eines Mitglieds jetzt orange und bringt das Mitglied allein nicht mehr unter
+    «Anschauen».
