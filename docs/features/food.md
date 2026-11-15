@@ -2,7 +2,7 @@
 
 The pizza run or a burger order at the LAN: everyone adds what they want, one person orders and ticks off who paid.
 
-**Who:** anyone coming · **Where:** event *Food* tab
+**Who:** anyone coming · **Where:** event *Trip* tab → *Food*
 
 ## Start an order
 

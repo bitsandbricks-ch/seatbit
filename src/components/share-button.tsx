@@ -7,7 +7,18 @@ import { headerAction, headerActionFrame } from "./ui";
  * Shares a link: the phone's share sheet (WhatsApp, Discord, ...) on touch devices,
  * otherwise copies it and says so in a small toast.
  */
-export function ShareButton({ url, title, text }: { url: string; title: string; text: string }) {
+export function ShareButton({
+  url,
+  title,
+  text,
+  iconOnlyOnPhone = false,
+}: {
+  url: string;
+  title: string;
+  text: string;
+  /** Phones show just the icon, so it fits in one row with the event's links. */
+  iconOnlyOnPhone?: boolean;
+}) {
   const t = useT();
   const [toast, setToast] = useState<"copied" | "copyFailed" | null>(null);
 
@@ -43,7 +54,7 @@ export function ShareButton({ url, title, text }: { url: string; title: string; 
           className={headerAction}
         >
           <ShareIcon />
-          <span>{t("share.share")}</span>
+          <span className={iconOnlyOnPhone ? "hidden sm:inline" : undefined}>{t("share.share")}</span>
         </button>
       </div>
       <div

@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { ViewManageSwitch } from "./view-manage-switch";
 import type { Lan } from "@/db/schema";
 import { ClanAvatar } from "./clan-avatar";
-import { PageHeader, btnGhost } from "./ui";
+import { PageHeader } from "./ui";
 import { fmtDate, lanRange } from "@/lib/format";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/db";
@@ -15,6 +15,10 @@ import type { T } from "@/i18n/translate";
 import { httpHref } from "@/lib/safe-url";
 
 type Clan = Parameters<typeof ClanAvatar>[0]["clan"] & { slug: string; name: string };
+
+/** Same height as the framed share button next to them. */
+const eventLink =
+  "inline-flex min-h-[50px] items-center gap-1.5 rounded-lg border border-line px-3.5 font-medium text-bit transition hover:bg-raised";
 
 /** Tabs that exist on both the event page and its manage page; switching keeps you on the same one. */
 const SHARED_TABS = ["overview", "seats", "attendees"];
@@ -42,8 +46,16 @@ export async function EventHeader({
   const keep = SHARED_TABS.includes(tab) && tab !== "overview" ? `?tab=${tab}` : "";
   // Drafts only open for leads, so a shared link would just be a dead end for everyone else.
   const share = l.publishedAt ? (
-    <ShareButton url={lanLink(l)} title={l.name} text={[l.name, lanRange(l, t.locale), l.location].filter(Boolean).join(" · ")} />
+    <ShareButton
+      url={lanLink(l)}
+      title={l.name}
+      text={[l.name, lanRange(l, t.locale), l.location].filter(Boolean).join(" · ")}
+      iconOnlyOnPhone
+    />
   ) : null;
+  const links = mode === "view" && (l.websiteUrl || l.ticketUrl);
+  // Event page: website, ticket shop and share sit in one row under the title, so the header stays short on phones.
+  const headerShare = links ? null : share;
   return (
     <>
     <PageHeader
@@ -70,10 +82,10 @@ export async function EventHeader({
         </>
       }
       actions={
-        canManage || actions || share ? (
+        canManage || actions || headerShare ? (
           <>
         {actions}
-        {share}
+        {headerShare}
         {canManage && (
           <ViewManageSwitch mode={mode} viewHref={`/lans/${l.id}${keep}`} manageHref={`/lans/${l.id}/manage${keep}`} />
         )}
@@ -81,19 +93,20 @@ export async function EventHeader({
         ) : undefined
       }
     >
-      {mode === "view" && (l.websiteUrl || l.ticketUrl) && (
-        <p className="mt-1 flex flex-wrap gap-2 text-sm">
+      {links && (
+        <div className="mt-1 flex flex-wrap items-center gap-2 text-sm">
           {l.websiteUrl && (
-            <a href={httpHref(l.websiteUrl)} target="_blank" rel="noreferrer" className={`${btnGhost} border border-line !text-bit`}>
+            <a href={httpHref(l.websiteUrl)} target="_blank" rel="noreferrer" className={eventLink}>
               {t("eventUi.website")} <span aria-hidden>↗</span>
             </a>
           )}
           {l.ticketUrl && (
-            <a href={httpHref(l.ticketUrl)} target="_blank" rel="noreferrer" className={`${btnGhost} border border-line !text-bit`}>
+            <a href={httpHref(l.ticketUrl)} target="_blank" rel="noreferrer" className={eventLink}>
               {t("eventUi.ticketShop")} <span aria-hidden>↗</span>
             </a>
           )}
-        </p>
+          {share}
+        </div>
       )}
     </PageHeader>
     <EventStatus lan={l} canManage={canManage} t={t} />
