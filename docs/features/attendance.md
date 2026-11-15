@@ -101,6 +101,20 @@ Reminders go to people coming without a ticket before the *buy ticket by* date. 
 
 *Manage → Attendees*: one row per person with answer, seat, ticket, LAN ID and a note. Filter by status, search and sort. Leads can change anyone's answer, also once it's locked.
 
+### Status icons
+
+Leads see small icons next to names and on seats, the same everywhere: in the seat map on *Manage → Seats*, on the event's *Attendees* tab and on *Manage → Attendees* (there only the ones the table has no column for).
+
+| Icon | Means |
+| --- | --- |
+| Lock (amber) | Held seat: auto assign and re-plans leave it as it is. Everyone sees this one. |
+| ! (red) | No ticket yet. |
+| Arrows (blue) | A seat swap is waiting. |
+| Person (grey) | Guest without an account yet. |
+| Tick (green) | Seat booked on the event's site (once the plan is final and the event has a seat plan link). |
+
+A compact seat shows only the most important one, in this order; *Large* shows up to three. The seat map's legend lists the icons on the map.
+
 ![Attendees](../screenshots/desktop-manage-attendees.png){ .shot }
 
 **Export CSV** downloads the group (seat, nick, name, email, status, ticket, LAN ID, and the profile link when the event has one) for the event's organisers. It opens in Excel and Numbers with umlauts and accents intact.

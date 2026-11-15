@@ -1,12 +1,14 @@
 date: 2026-11-15
 type: improved
 en:
-  title: "Held seats show a lock"
+  title: "Status icons for leads"
   text: >-
-    Held seats now have a small lock in the seat map, also when someone sits on them, so leads see at
-    a glance which seats the automatic seat plan leaves alone.
+    Held seats now have a small lock in the seat map, also when someone sits on them. Leads also see
+    small icons for no ticket yet, seat booked on the event site, guest and a pending seat swap, on
+    the seats and next to names in the attendee lists.
 de:
-  title: "Reservierte Plätze zeigen ein Schloss"
+  title: "Status-Symbole für Leads"
   text: >-
-    Reservierte Plätze haben im Sitzplan jetzt ein kleines Schloss, auch wenn jemand darauf sitzt. So
-    sehen Leads auf einen Blick, welche Plätze der automatische Sitzplan nicht anrührt.
+    Reservierte Plätze haben im Sitzplan jetzt ein kleines Schloss, auch wenn jemand darauf sitzt.
+    Leads sehen ausserdem kleine Symbole für noch kein Ticket, Platz auf der Event-Seite gebucht, Gast
+    und offenen Platztausch, auf den Plätzen und neben den Namen in den Teilnehmerlisten.
