@@ -1,0 +1,19 @@
+date: 2026-11-15
+type: improved
+en:
+  title: "Event pages without tabs"
+  text: >-
+    The event page has no tab bar anymore. It opens on the overview with your checklist and one row
+    per section (Seats, Attendees, Travel, Packing list, Games, Costs), each with a short line on why
+    you'd open it, like "You owe CHF 12" or "3 games to install", and a yellow dot when something waits
+    for you. On desktop the rows are a sidebar. Food orders have their own On site section that shows up
+    while the event runs; leads see it earlier to set up an order in advance.
+de:
+  title: "Event-Seiten ohne Tabs"
+  text: >-
+    Die Event-Seite hat keine Tab-Leiste mehr. Sie öffnet mit der Übersicht, deiner Checkliste und einer
+    Zeile pro Bereich (Plätze, Teilnehmer, Anreise, Packliste, Games, Kosten). Jede Zeile sagt kurz,
+    warum du sie öffnen solltest, etwa «Du schuldest CHF 12» oder «3 Games installieren», und ein
+    gelber Punkt zeigt, dass dort etwas wartet. Auf dem Desktop stehen die Zeilen in einer Seitenleiste.
+    Essensbestellungen haben einen eigenen Bereich «Vor Ort», der erscheint, während der Event läuft;
+    Leads sehen ihn früher, um eine Bestellung vorzubereiten.

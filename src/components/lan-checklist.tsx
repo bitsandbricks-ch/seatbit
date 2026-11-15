@@ -5,9 +5,6 @@ import type { ReactNode } from "react";
 import { TicketConfirm } from "./ticket-confirm";
 import { useT } from "@/i18n/client";
 
-/** Something else worth doing for this event, outside the checklist: a ride to offer, food to order, money to settle. */
-export type GuideExtra = { key: string; label: string; href: string; tone?: "warn" | "ok" };
-
 export function LanChecklist({
   lanId,
   steps,
@@ -16,7 +13,6 @@ export function LanChecklist({
   variant = "list",
   answer,
   links = {},
-  extras = [],
 }: {
   lanId: string;
   steps: ChecklistStep[];
@@ -28,8 +24,6 @@ export function LanChecklist({
   answer?: ReactNode;
   /** strip only: where an open step gets done, so the checklist takes you there instead of just naming the tab. */
   links?: Partial<Record<StepKey, string>>;
-  /** strip only: optional things for this event, shown as chips under the steps (also when all is set). */
-  extras?: GuideExtra[];
 }) {
   const { done, total } = progress(steps);
   if (variant === "strip")
@@ -43,7 +37,6 @@ export function LanChecklist({
         canReportTicket={canReportTicket}
         answer={answer}
         links={links}
-        extras={extras}
       />
     );
   return (
@@ -119,13 +112,11 @@ function ChecklistStrip({
   canReportTicket,
   answer,
   links,
-  extras,
 }: {
   lanId: string;
   steps: ChecklistStep[];
   answer?: ReactNode;
   links: Partial<Record<StepKey, string>>;
-  extras: GuideExtra[];
   done: number;
   total: number;
   ticketBought: boolean;
@@ -192,41 +183,19 @@ function ChecklistStrip({
       ))}
     </ol>
   );
-  const chips = extras.length > 0 && (
-    <div className="mt-3 border-t border-line pt-3">
-      <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">{t("eventGuide.also")}</h3>
-      <ul className="flex flex-wrap gap-2">
-        {extras.map((x) => (
-          <li key={x.key}>
-            <Link
-              href={x.href}
-              scroll={false}
-              className={`inline-flex min-h-9 items-center gap-1 rounded-full border px-3 text-sm transition hover:bg-raised ${
-                x.tone === "warn" ? "border-warn/40 text-warn" : x.tone === "ok" ? "border-bit/40 text-bit" : "border-line text-fg"
-              }`}
-            >
-              {x.label} <span aria-hidden className="text-muted">→</span>
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
   const box = "rounded-card border border-line bg-surface p-3 sm:p-4";
-  // All done: one line that opens on tap, so a finished checklist doesn't push the tabs down. The extras stay visible.
+  // All done: one line that opens on tap, so a finished checklist doesn't push the sections down.
   return all ? (
     <section aria-label={t("checklist.title")} className={box}>
       <details className="group">
         <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">{head}</summary>
         {list}
       </details>
-      {chips}
     </section>
   ) : (
     <section aria-label={t("checklist.title")} className={box}>
       {head}
       {list}
-      {chips}
     </section>
   );
 }

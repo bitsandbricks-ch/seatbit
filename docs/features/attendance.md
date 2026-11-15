@@ -19,7 +19,19 @@ Members answer whether they come, work through their checklist and report their 
 </figure>
 </div>
 
-The event page shows your answer and checklist at the top, then four tabs: **Overview**, **Seats**, **Attendees** and **Trip**. *Trip* holds [travel and packing](travel-packing.md), [games](games.md) and [costs](shared-costs.md) as a switch at the top, with a yellow dot where something is open; the tab itself gets a yellow dot too. While the event runs, an **On site** tab with the [food orders](food.md) appears right after Overview (leads see it at the end before that, to prepare an order). The event website, ticket shop and share button sit in one row under the title. The Overview has the event's description, the leads' news and a **Details** card with the deadlines, the ticket price, your ticket and the leads to contact.
+The event page has no tab bar. It opens on the **overview**: your answer and checklist, then one row per section, each with a short line on why you'd open it and a yellow dot when something waits for you:
+
+| Row | Its line says |
+| --- | --- |
+| **Seats** | *Pick your seat*, your seat, or whether the plan is final. |
+| **Attendees** | How many are coming and waiting. |
+| **Travel** | Free seats in cars and how many are looking (dot: others need a [ride](travel-packing.md), until the event starts). |
+| **Packing list** | How much of your [packing list](travel-packing.md#packing-list) is packed (dot: in the last week, until all is packed). |
+| **Games** | Games you still have to install, or how many there are ([games](games.md)). |
+| **Costs** | *You owe …*, *You get … back* or *You're even* ([shared costs](shared-costs.md)). |
+| **On site** | Open [food orders](food.md). Only while the event runs, then right at the top; leads see it at the bottom before that, to prepare an order. |
+
+A row opens its section with a **← Overview** link back. On desktop the same rows are a sidebar on the left, always visible. Below the rows, the overview has the event's description, the leads' news and a **Details** card with the deadlines, the ticket price, your ticket and the leads to contact. The event website, ticket shop and share button sit in one row under the title.
 
 ## Answer
 
@@ -59,7 +71,7 @@ Every move is in the [audit log](audit-log.md).
 
 ## Checklist
 
-Your checklist sits above the tabs on every tab of the event, on the LANs list (*Checklist 3/5*) and in `/status` on Discord. Steps only show when they apply to you and the event.
+Your checklist sits at the top of the event overview (on desktop above every section), on the LANs list (*Checklist 3/5*) and in `/status` on Discord. Steps only show when they apply to you and the event.
 
 <div class="phones" markdown>
 <figure markdown>
@@ -83,21 +95,9 @@ Your checklist sits above the tabs on every tab of the event, on the LANs list (
 
 The leads have their own [lead checklist](events.md#lead-checklist).
 
-### Next step and extras
+### Next step
 
-The checklist is also a guide. The first step you can do now is marked **Next** and has a button that takes you there (*Pick a seat →* opens the Seats tab, *Set your nick →* opens the nick form). Optional steps get a smaller button.
-
-Below the steps, **Also for this event** shows chips for optional things that matter right now, each leading to its section in *Trip*:
-
-| Chip | Shows when |
-| --- | --- |
-| *You owe CHF 12* / *You get CHF 12 back* | Your [shared costs](shared-costs.md) balance isn't even. |
-| *Food order open* | The event is running and a [food order](food.md) takes items. |
-| *3 games to install* | You're coming and haven't installed voted [games](games.md) (before the games step shows in the checklist). |
-| *2 need a ride* | Others coming are looking for a [ride](travel-packing.md), until the event starts. |
-| *Pack your bag* | You're coming and the event starts within a week. |
-
-The chips stay visible when the checklist is folded to *All set*.
+The checklist is also a guide. The first step you can do now is marked **Next** and has a button that takes you there (*Pick a seat →* opens Seats, *Set your nick →* opens the nick form). Optional steps get a smaller button.
 
 Optional steps don't hold back *All set* and only count towards the progress once done. Once everything is done, the checklist folds into one line (*Your checklist · All set*); tap it to see the steps again.
 
