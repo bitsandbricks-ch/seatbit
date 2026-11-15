@@ -1,6 +1,6 @@
 export const wishOverview = {
   title: "Seat wishes",
-  hint: "Weighted by each member's own order: a top wish counts more. Lowest first; tap a member for all their wishes.",
+  hint: "Weighted by each member's own order: a top wish counts more. A missed wish below the top 5 is orange and alone doesn't need a look. Lowest first; tap a member for all their wishes.",
   met: "{pct} met",
   overall: "Wishes met overall",
   allMet: { one: "{count} of {total} member has every wish met", other: "{count} of {total} members have every wish met" },

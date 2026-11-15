@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { T } from "@/i18n/translate";
-import type { WishItem } from "@/lib/seating";
+import { missedBadly, type WishItem } from "@/lib/seating";
 import { Card, Pill, Segmented } from "./ui";
 
 export type WishRow = {
@@ -21,15 +21,17 @@ const pct = (x: number) => `${Math.round(x * 100)}%`;
 const tone = (x: number) => (x >= 0.8 ? "emerald" : x >= 0.5 ? "amber" : "red");
 const text = (x: number) => (x >= 0.8 ? "text-bit" : x >= 0.5 ? "text-warn" : "text-danger");
 const bar = (x: number) => (x >= 0.8 ? "bg-bit" : x >= 0.5 ? "bg-warn" : "bg-danger");
-const needsLook = (r: WishRow) => r.score !== 1;
+/** Unchecked, or a top-five or "not right next to" wish missed: a miss further down alone is fine. */
+const needsLook = (r: WishRow) => r.score === null || r.items.some(missedBadly);
 
-/** One wish: rank, ✓/✗/·, text. */
+/** One wish: rank, ✓/✗/·, text. A miss below the top five is orange, not red. */
 function Wish({ i, t, inline }: { i: WishItem; t: T; inline?: boolean }) {
   const Tag = inline ? "span" : "li";
+  const bad = missedBadly(i);
   return (
-    <Tag className={i.ok === false ? "text-fg" : "text-muted"}>
+    <Tag className={bad ? "text-fg" : "text-muted"}>
       <span className="mr-0.5 tabular-nums text-faint">{i.rank ?? "–"}</span>
-      <span aria-hidden className={`mr-1 font-semibold ${i.ok === null ? "text-faint" : i.ok ? "text-bit" : "text-danger"}`}>
+      <span aria-hidden className={`mr-1 font-semibold ${i.ok === null ? "text-faint" : i.ok ? "text-bit" : bad ? "text-danger" : "text-warn"}`}>
         {i.ok === null ? "·" : i.ok ? "✓" : "✗"}
       </span>
       <span className="sr-only">{i.ok === null ? t("wishOverview.srOpen") : i.ok ? t("wishOverview.srMet") : t("wishOverview.srMissed")}</span>

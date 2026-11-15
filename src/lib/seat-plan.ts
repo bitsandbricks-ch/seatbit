@@ -1,6 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { auditLan } from "./audit";
+import { lanChanged } from "./live";
 import { clearSeatBooked } from "./seat-booking";
 import { encodeMove, planSeats } from "./seating";
 import { normalizeRules } from "./seat-rules";
@@ -35,7 +36,9 @@ export function planAndAssign(lanId: string, mode: "fill" | "replan") {
     if (mode === "replan") tx.update(seat).set({ userId: null }).where(and(eq(seat.lanId, lanId), eq(seat.locked, false))).run();
     const seats = tx.select().from(seat).where(eq(seat.lanId, lanId)).all();
     const seated = new Set(seats.map((s) => s.userId).filter(Boolean));
-    const p = planSeats(seats, everyone.filter((x) => !seated.has(x.userId)), everyone, { nearRange });
+    // A re-plan starts from the old plan, so people whose wishes didn't change don't move for nothing.
+    const stay = mode === "replan" ? new Map(before.filter((s) => s.userId && !s.locked).map((s) => [s.userId!, s.id])) : undefined;
+    const p = planSeats(seats, everyone.filter((x) => !seated.has(x.userId)), everyone, { nearRange, stay });
     for (const [userId, seatId] of p) tx.update(seat).set({ userId }).where(eq(seat.id, seatId)).run();
     return p;
   });
@@ -64,5 +67,7 @@ export function autoPlanAfterWishes(lanId: string, actorId: string, mode: "auto"
   if (!l || !l.seatAutoPlan || l.seatsPublishedAt || l.seatPicking) return false;
   const { plan, moves } = planAndAssign(lanId, "replan");
   auditLan(l, actorId, "seat.auto", { data: { mode, count: plan.size, moves: moves.slice(0, MAX_LOGGED_MOVES) } });
+  // Open seat maps and wish lists show the new plan right away, whoever triggered it.
+  lanChanged(lanId);
   return true;
 }
