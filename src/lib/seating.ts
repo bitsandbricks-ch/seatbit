@@ -19,8 +19,20 @@ export type PlanPerson = {
   priority: number; // higher is placed first (e.g. confirmed ticket)
   order: number; // tie-break, lower first (e.g. sign-up time)
 };
-/** Event settings the planner needs. `nearRange`: how many seats apart still count as "near". */
-export type PlanOptions = { nearRange?: number };
+/**
+ * Event settings the planner needs. `nearRange`: how many seats apart still count as "near".
+ * `stay`: where people sat before a re-plan (userId -> seatId); they keep that seat unless moving
+ * them meets a wish, so changing one wish doesn't shuffle everyone else around.
+ */
+export type PlanOptions = { nearRange?: number; stay?: Map<string, string> };
+
+/** What the scoring needs besides who sits where. */
+type Ctx = { edges: Set<string>; range: number; stay: Map<string, string> | undefined };
+/**
+ * Worth of keeping one's old seat: far below any wish that matters (a fifth-ranked wish counts
+ * about 0.03), so it only decides between plans that meet the wishes equally well.
+ */
+const STAY = 1e-4;
 
 const dist = (a: PlanSeat, b: PlanSeat) => (a.row === b.row ? Math.abs(a.col - b.col) : Infinity);
 
@@ -78,8 +90,18 @@ export function planSeats(seats: PlanSeat[], people: PlanPerson[], everyone: Pla
   const range = opts.nearRange ?? DEFAULT_NEAR_RANGE;
   const byUser = new Map(everyone.map((p) => [p.userId, p]));
   const edges = edgeSet(seats);
+  const ctx: Ctx = { edges, range, stay: opts.stay };
   const occupant = new Map(seats.filter((s) => s.userId).map((s) => [s.id, s.userId!]));
   const result = new Map<string, string>();
+
+  // A re-plan starts from the plan as it was: people keep their old seat if it's still free and not held.
+  const usable = new Map(seats.filter((s) => !s.locked && !s.userId).map((s) => [s.id, s]));
+  for (const p of people) {
+    const sid = opts.stay?.get(p.userId);
+    if (!sid || !usable.has(sid) || occupant.has(sid)) continue;
+    occupant.set(sid, p.userId);
+    result.set(p.userId, sid);
+  }
 
   // Friend groups (union-find over "near" links) so groups are placed together.
   const parent = new Map<string, string>();
@@ -94,7 +116,7 @@ export function planSeats(seats: PlanSeat[], people: PlanPerson[], everyone: Pla
   const groupSize = new Map<string, number>();
   for (const p of people) groupSize.set(find(p.userId), (groupSize.get(find(p.userId)) ?? 0) + 1);
 
-  const queue = [...people].sort(
+  const queue = people.filter((p) => !result.has(p.userId)).sort(
     (a, b) =>
       (groupSize.get(find(b.userId)) ?? 1) - (groupSize.get(find(a.userId)) ?? 1) ||
       find(a.userId).localeCompare(find(b.userId)) ||
@@ -146,7 +168,21 @@ export function planSeats(seats: PlanSeat[], people: PlanPerson[], everyone: Pla
     placedUsers.add(p.userId);
     result.set(p.userId, best.id);
   }
-  improve(seats, occupant, new Set(result.keys()), byUser, edges, range);
+  const movable = new Set(result.keys());
+  // Polish first, so the annealing starts from (and never ends below) what moving one person at a time finds.
+  improve(seats, occupant, movable, byUser, ctx);
+  if (opts.stay) {
+    // A re-plan also tries a calm search that stays close to the old plan, and takes it unless
+    // the wide search meets the wishes better: fewer people move for nothing.
+    const calm = new Map(occupant);
+    const calmScore = anneal(seats, calm, movable, byUser, ctx, CALM);
+    const wideScore = anneal(seats, occupant, movable, byUser, ctx, HOT);
+    if (calmScore >= wideScore - 1e-9) {
+      occupant.clear();
+      for (const [sid, uid] of calm) occupant.set(sid, uid);
+    }
+  } else anneal(seats, occupant, movable, byUser, ctx, HOT);
+  improve(seats, occupant, movable, byUser, ctx);
   for (const [seatId, userId] of occupant) if (result.has(userId)) result.set(userId, seatId);
   return result;
 }
@@ -166,8 +202,8 @@ function ruleMet(r: SeatRule, mine: PlanSeat, seatOf: Map<string, PlanSeat>, edg
       const d = dist(mine, o);
       if (r.kind === "avoid") return d === 1 ? 0 : 1;
       const within = r.kind === "next" ? 1 : range;
-      if (d <= within) return 1 - 0.02 * Math.min(d - 1, 10);
-      return Number.isFinite(d) ? (0.3 * within) / d : 0;
+      if (d <= within) return 1 - 0.002 * Math.min(d - 1, 10);
+      return Number.isFinite(d) ? (0.02 * within) / d : 0;
     }
     case "seat":
       return mine.label.toUpperCase() === r.seat ? 1 : 0;
@@ -180,12 +216,25 @@ function ruleMet(r: SeatRule, mine: PlanSeat, seatOf: Map<string, PlanSeat>, edg
   }
 }
 
-/** One person's weighted satisfaction with where everyone sits (0..1). */
-function happiness(p: PlanPerson, seatOf: Map<string, PlanSeat>, edges: Set<string>, range: number) {
+const totalCache = new WeakMap<PlanPerson, number>();
+const totalOf = (p: PlanPerson) => {
+  let t = totalCache.get(p);
+  if (t === undefined) totalCache.set(p, (t = weightsOf(p).reduce((n, x) => n + x, 0)));
+  return t;
+};
+
+/**
+ * One person's weighted satisfaction with where everyone sits (0..1). Like the wish score the
+ * leads see, everyone counts the same: a long list of "not right next to" doesn't make one
+ * person matter more than someone with a single wish.
+ */
+function happiness(p: PlanPerson, seatOf: Map<string, PlanSeat>, { edges, range, stay }: Ctx) {
   const mine = seatOf.get(p.userId);
-  if (!mine || !p.rules.length) return 0;
+  if (!mine) return 0;
+  const kept = stay?.get(p.userId) === mine.id ? STAY : 0;
+  if (!p.rules.length) return kept;
   const w = weightsOf(p);
-  return p.rules.reduce((n, r, i) => n + w[i] * (ruleMet(r, mine, seatOf, edges, range) ?? 0), 0);
+  return kept + p.rules.reduce((n, r, i) => n + w[i] * (ruleMet(r, mine, seatOf, edges, range) ?? 0), 0) / totalOf(p);
 }
 
 /**
@@ -199,8 +248,7 @@ function improve(
   occupant: Map<string, string>,
   movable: Set<string>,
   byUser: Map<string, PlanPerson>,
-  edges: Set<string>,
-  range: number,
+  ctx: Ctx,
 ) {
   const seatById = new Map(seats.map((s) => [s.id, s]));
   const seatOf = new Map([...occupant].map(([sid, uid]) => [uid, seatById.get(sid)!]));
@@ -214,7 +262,7 @@ function improve(
     let n = 0;
     for (const u of all) {
       const p = byUser.get(u);
-      if (p) n += happiness(p, seatOf, edges, range);
+      if (p) n += happiness(p, seatOf, ctx);
     }
     return n;
   };
@@ -247,6 +295,138 @@ function improve(
     }
     if (!better) break;
   }
+}
+
+/** Small seeded random numbers (mulberry32), so the same wishes always give the same plan. */
+function random(seed: number) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/**
+ * Temperatures: at HOT a step that costs someone a top wish is still taken now and then, at COLD
+ * only real improvements are (it's below STAY, so keeping old seats counts by then). CALM is for
+ * re-plans that should stay close to the old plan.
+ */
+const HOT = 0.3;
+const CALM = 0.02;
+const COLD = 1e-5;
+/** Longest stretch of seats `anneal` slides along a row in one step. */
+const MAX_SLIDE = 6;
+/** Steps per open seat, and at most this many in total, so a re-plan of a big event stays quick. */
+const STEPS_PER_SEAT = 3000;
+const MAX_STEPS = 150_000;
+
+/**
+ * Simulated annealing over the whole plan, after the greedy pass. Moving one person at a time
+ * gets stuck: Reykime can't take the free edge seat F1 when that means someone without wishes
+ * lands next to a person Reykime's friend wants to avoid, even though shifting the whole group
+ * one seat over meets every wish. So besides swapping two seats this also slides a stretch of
+ * a row by one seat (everyone in it moves along, the last one jumps to the front), and early on
+ * it accepts steps that make things a bit worse to get out of such dead ends. Keeps the best plan seen.
+ */
+function anneal(
+  seats: PlanSeat[],
+  occupant: Map<string, string>,
+  movable: Set<string>,
+  byUser: Map<string, PlanPerson>,
+  ctx: Ctx,
+  hot: number,
+): number {
+  // Seats this run may change, in row order: not held, and free or taken by someone placed in this run.
+  const open = seats
+    .filter((s) => !s.locked && (!occupant.has(s.id) || movable.has(occupant.get(s.id)!)))
+    .sort((a, b) => a.row - b.row || a.col - b.col);
+  const n = open.length;
+  if (n < 2 || !movable.size) return 0;
+  const seatById = new Map(seats.map((s) => [s.id, s]));
+  const seatOf = new Map([...occupant].map(([sid, uid]) => [uid, seatById.get(sid)!]));
+  const who: (string | undefined)[] = open.map((s) => occupant.get(s.id));
+  // Without wishes (and no old plan to keep) every plan is as good as any other.
+  if (!ctx.stay && ![...byUser.values()].some((p) => p.rules.length)) return 0;
+  // Whose happiness depends on where someone sits: themselves (with wishes) and everyone with a wish about them.
+  const concerned = new Map<string, PlanPerson[]>();
+  const add = (u: string, p: PlanPerson) => {
+    const list = concerned.get(u) ?? [];
+    if (!list.includes(p)) list.push(p);
+    concerned.set(u, list);
+  };
+  for (const p of byUser.values()) {
+    if (p.rules.length || ctx.stay) add(p.userId, p);
+    for (const r of p.rules) if ("userId" in r) add(r.userId, p);
+  }
+  const affected = (uids: (string | undefined)[]) => {
+    const all = new Set<PlanPerson>();
+    for (const u of uids) if (u) for (const p of concerned.get(u) ?? []) all.add(p);
+    return all;
+  };
+  const sum = (people: Set<PlanPerson>) => {
+    let t = 0;
+    for (const p of people) t += happiness(p, seatOf, ctx);
+    return t;
+  };
+  const put = (i: number, uid: string | undefined) => {
+    who[i] = uid;
+    if (uid) seatOf.set(uid, open[i]);
+  };
+  // Stretches of neighbouring open seats in the same row, for sliding.
+  const rowEnd = new Array<number>(n);
+  for (let i = n - 1; i >= 0; i--)
+    rowEnd[i] = i + 1 < n && open[i + 1].row === open[i].row ? rowEnd[i + 1] : i;
+
+  const rand = random(n * 7919 + movable.size);
+  const steps = Math.min(MAX_STEPS, STEPS_PER_SEAT * n);
+  let score = sum(new Set([...concerned.values()].flat()));
+  let best = score;
+  let bestWho = [...who];
+  for (let step = 0; step < steps; step++) {
+    const temp = hot * (COLD / hot) ** (step / steps);
+    const i = Math.floor(rand() * n);
+    let from: number;
+    let was: (string | undefined)[];
+    let moved: (string | undefined)[];
+    if (rand() < 0.5 || rowEnd[i] === i) {
+      // Swap two seats (with a free one, that's a move).
+      const j = Math.floor(rand() * n);
+      if (i === j || (!who[i] && !who[j])) continue;
+      const [x, y] = i < j ? [i, j] : [j, i];
+      from = x;
+      was = who.slice(x, y + 1);
+      moved = [...was];
+      [moved[0], moved[moved.length - 1]] = [was[was.length - 1], was[0]];
+    } else {
+      // Slide open[i..j] by one seat, either way.
+      const j = i + 1 + Math.floor(rand() * Math.min(MAX_SLIDE, rowEnd[i] - i));
+      from = i;
+      was = who.slice(i, j + 1);
+      if (was.every((u) => !u)) continue;
+      moved = rand() < 0.5 ? [...was.slice(1), was[0]] : [was[was.length - 1], ...was.slice(0, -1)];
+    }
+    const people = affected(moved.filter((u, k) => u !== was[k]));
+    const before = sum(people);
+    moved.forEach((u, k) => put(from + k, u));
+    const delta = sum(people) - before;
+    if (delta >= 0 || rand() < Math.exp(delta / temp)) score += delta;
+    else was.forEach((u, k) => put(from + k, u));
+    if (score > best + 1e-9) {
+      best = score;
+      bestWho = [...who];
+    }
+  }
+  open.forEach((s, i) => {
+    const u = bestWho[i];
+    if (u) {
+      occupant.set(s.id, u);
+      seatOf.set(u, s);
+    } else occupant.delete(s.id);
+  });
+  return best;
 }
 
 /**

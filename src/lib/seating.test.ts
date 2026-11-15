@@ -167,3 +167,62 @@ test("wish weights: ranked wishes add up to 1, next to gets a boost, each not-ne
   const withAvoids = wishWeights([near("a"), avoid("x"), avoid("y")]);
   assert.deepEqual(withAvoids, [1, 1, 1]);
 });
+
+// Lock&Load style: one row F1-F20 (the phone wraps it into lines), six people with wishes, the rest without.
+const lockAndLoad = () => {
+  const next = (userId: string): SeatRule => ({ kind: "next", userId });
+  const nobody = ["lordnik", "aims", "charlie", "redlizz", "mardoch", "pantsch", "dejojo", "barracuda", "capi", "wolfi", "atelerix", "woods", "daxter"];
+  const wishes: Record<string, SeatRule[]> = {
+    mike: [next("sara"), { kind: "edge" }, near("pascal"), near("rosi"), near("adrian")],
+    pascal: [next("rosi"), near("mike"), near("sara"), near("adrian"), near("rico"), ...["woods", "atelerix", "lordnik", "daxter", "dejojo", "redlizz", "aims", "barracuda", "pantsch", "cedric"].map(avoid)],
+    adrian: [near("pascal")],
+    cedric: [near("rico"), avoid("lordnik"), avoid("aims"), avoid("woods"), avoid("daxter"), avoid("pantsch")],
+    rico: [near("cedric")],
+    sara: [next("mike"), near("pascal"), near("adrian"), near("rosi"), avoid("lordnik"), avoid("aims")],
+  };
+  const ids = ["mike", "pascal", "adrian", "cedric", "rico", "sara", "rosi", ...nobody];
+  return { seats: row(20, {}, [], 5), everyone: ids.map((u, i) => person(u, wishes[u], { priority: (i * 7) % 3, order: (i * 13) % 20 })) };
+};
+const seatedBy = (seats: PlanSeat[], plan: Map<string, string>) =>
+  seats.map((s) => ({ ...s, userId: [...plan].find(([, sid]) => sid === s.id)?.[0] ?? null }));
+
+test("a lower wish gets met when the whole group can move over (the edge wish at Lock&Load)", () => {
+  // The old planner put two people without wishes on F1/F2 and the group next to them: Mike's
+  // second wish (edge) was missed although shifting the group by two seats meets every wish.
+  const { seats, everyone } = lockAndLoad();
+  const plan = planSeats(seats, everyone, everyone);
+  const checks = checkWishes(seatedBy(seats, plan), everyone, (id) => id);
+  for (const c of checks) assert.equal(c.score, 1, `${c.userId}: ${c.items.filter((i) => !i.ok).map((i) => i.text).join(", ")}`);
+  assert.ok(["F1", "F20"].some((l) => plan.get("mike") === `s5-${l.slice(1)}`), "Mike at the edge");
+});
+
+test("the plan is the same every time for the same wishes", () => {
+  const a = lockAndLoad();
+  const b = lockAndLoad();
+  assert.deepEqual([...planSeats(a.seats, a.everyone, a.everyone)], [...planSeats(b.seats, b.everyone, b.everyone)]);
+});
+
+test("a re-plan keeps people where they were unless a wish moves them", () => {
+  const { seats, everyone } = lockAndLoad();
+  const first = planSeats(seats, everyone, everyone);
+  // Nothing changed: nobody moves.
+  const again = planSeats(seats, everyone, everyone, { stay: first });
+  assert.deepEqual([...again].sort(), [...first].sort());
+  // Rico now also wants the edge: only a few people move (Rico, Cedric who wants to be near Rico, and whoever makes room).
+  const changed = everyone.map((p) => (p.userId === "rico" ? { ...p, rules: [{ kind: "edge" } as SeatRule, ...p.rules] } : p));
+  const after = planSeats(seats, changed, changed, { stay: first });
+  const moved = [...after].filter(([u, s]) => first.get(u) !== s).map(([u]) => u);
+  assert.ok(moved.includes("rico") || col(after, "rico") === 1 || col(after, "rico") === 20);
+  assert.ok(moved.length <= 6, `moved: ${moved.join(", ")}`);
+  const checks = checkWishes(seatedBy(seats, after), changed, (id) => id);
+  assert.equal(checks.find((c) => c.userId === "rico")!.score, 1);
+});
+
+test("a top wish still beats a lower one when they clash", () => {
+  // Only one edge seat is free; a and b both want it, but for b it's only the second wish after sitting next to x.
+  const seats = row(5, { 2: "x" }, [5]);
+  const everyone = [person("x"), person("a", [{ kind: "edge" }]), person("b", [{ kind: "next", userId: "x" }, { kind: "edge" }])];
+  const plan = planSeats(seats, everyone.slice(1), everyone);
+  assert.equal(plan.get("a"), "s0-1");
+  assert.equal(plan.get("b"), "s0-3");
+});
