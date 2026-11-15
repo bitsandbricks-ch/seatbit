@@ -8,7 +8,7 @@ A **clan** is your group: its members, the LAN types you go to every year, the e
 
 Anyone signed in can start a clan on the **Clans** page (*Start a clan*) and becomes its first admin.
 
-The clan page has **View** and **Manage** (for admins, event managers and recruiters, with the tabs their role allows). Tabs: **Overview**, **Events**, **Members**, **Stats**.
+The clan page has **View** and **Manage** (for admins, event managers and recruiters, with the tabs their role allows). Tabs: **Overview**, **Events**, **Members**, **Payments** (once the clan charges you something), **Stats**. Tabs switch instantly; a yellow dot marks one where something waits for you.
 
 ![Clan page](../screenshots/desktop-clan.png){ .shot }
 
@@ -36,7 +36,7 @@ Everyone in a clan has one **clan role**:
 
 ## Clan settings
 
-*Manage* on the clan page. Related tabs share one place in the tab bar; a switch below the bar moves between their parts.
+*Manage* on the clan page. Related tabs share one place in the tab bar; a switch below the bar moves between their parts. Tabs switch instantly; a yellow dot marks one where something waits (join requests, payments to check).
 
 | Tab | Part | |
 | --- | --- | --- |

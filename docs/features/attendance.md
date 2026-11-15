@@ -19,9 +19,13 @@ Members answer whether they come, work through their checklist and report their 
 </figure>
 </div>
 
-The event page has no tab bar. It opens on the **overview**: your answer and checklist, then one row per section, each with a short line on why you'd open it and a yellow dot when something waits for you:
+The event page has a few tabs: **Overview**, **Seats**, **Attendees** and **Trip**, plus **On site** while the event runs. Switching tabs is instant, and the address follows (`?tab=seats`), so reloading, bookmarks and the back button land on the same tab. A yellow dot on a tab means something waits for you there.
 
-| Row | Its line says |
+**Trip** groups everything around getting there: **Travel**, **Packing list**, **Games** and **Costs**, behind a small switch at the top of the tab.
+
+The overview starts with your answer and checklist, then an **At a glance** card: one line per tab with why you'd open it, and the same yellow dot:
+
+| Line | It says |
 | --- | --- |
 | **Seats** | *Pick your seat*, your seat, or whether the plan is final. |
 | **Attendees** | How many are coming and waiting. |
@@ -29,9 +33,9 @@ The event page has no tab bar. It opens on the **overview**: your answer and che
 | **Packing list** | How much of your [packing list](travel-packing.md#packing-list) is packed (dot: in the last week, until all is packed). |
 | **Games** | Games you still have to install, or how many there are ([games](games.md)). |
 | **Costs** | *You owe …*, *You get … back* or *You're even* ([shared costs](shared-costs.md)). |
-| **On site** | Open [food orders](food.md). Only while the event runs, then right at the top; leads see it at the bottom before that, to prepare an order. |
+| **On site** | Open [food orders](food.md). Only while the event runs, then right at the top; leads see the tab before that, to prepare an order. |
 
-A row opens its section with a **← Overview** link back. On desktop the same rows are a sidebar on the left, always visible. Below the rows, the overview has the event's description, the leads' news and a **Details** card with the deadlines, the ticket price, your ticket and the leads to contact. The event website, ticket shop and share button sit in one row under the title.
+Below it, the overview has the event's description, the leads' news and a **Details** card with the deadlines, the ticket price, your ticket and the leads to contact. The event website, ticket shop and share button sit in one row under the title.
 
 ## Answer
 
@@ -72,6 +76,8 @@ Every move is in the [audit log](audit-log.md).
 ## Checklist
 
 Your checklist sits at the top of the event overview (on desktop above every section), on the LANs list (*Checklist 3/5*) and in `/status` on Discord. Steps only show when they apply to you and the event.
+
+On the event page it starts folded: the progress bar and only the step that matters now (marked **Next**, with a button that takes you there). Tap the bar to see every step; your choice is remembered on that device. Once everything is done, it folds into one *All set* line.
 
 <div class="phones" markdown>
 <figure markdown>

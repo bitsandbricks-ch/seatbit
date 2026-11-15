@@ -2,6 +2,8 @@ import type { Messages } from "../en";
 
 export const checklist: Messages["checklist"] = {
   title: "Deine Checkliste",
+  showAll: "Alle Schritte zeigen",
+  showLess: "Weniger Schritte zeigen",
   allSet: "Alles erledigt",
   optional: "optional",
   going: {

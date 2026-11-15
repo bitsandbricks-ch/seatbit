@@ -28,7 +28,8 @@ import { SeatWishes } from "@/components/seat-wishes";
 import { LiveRefresh } from "@/components/live-refresh";
 import { seatRow } from "@/lib/seat-labels";
 import { normalizeRules } from "@/lib/seat-rules";
-import { SectionLayout, type NavSection } from "@/components/section-nav";
+import { ClientTabs, TabPanel, type ClientTab } from "@/components/client-tabs";
+import { GlanceList, type GlanceRow } from "@/components/glance-list";
 import { TravelBoard, type TravelPostView } from "@/components/travel-board";
 import { PackingList } from "@/components/gear-board";
 import { PACKING_ITEMS } from "@/lib/gear";
@@ -174,7 +175,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
   const isAdmin = isLanManager(me, id);
   // Leads see the status icons next to names on the Attendees tab (no ticket, booked, guest, held seat, swap pending).
   const leadMarks = new Map<string, StatusKind[]>();
-  if (isAdmin && tab === "attendees") {
+  if (isAdmin) {
     const ids = rows.map((r) => r.userId);
     const guests = new Set(
       ids.length ? db.select({ id: schema.user.id }).from(schema.user).where(and(inArray(schema.user.id, ids), eq(schema.user.isGuest, true))).all().map((u) => u.id) : [],
@@ -255,26 +256,22 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
       spots: spots.filter((s) => s.postId === p.id).map((s) => ({ userId: s.userId, name: names.get(s.userId) ?? "?" })),
     }));
   const packed =
-    tab === "gear"
-      ? db
+    db
           .select()
           .from(schema.gearPacked)
           .where(and(eq(schema.gearPacked.lanId, id), eq(schema.gearPacked.userId, me.id)))
           .all()
-          .map((p) => p.item)
-      : [];
+          .map((p) => p.item);
   const ownItems =
-    tab === "gear"
-      ? db
+    db
           .select()
           .from(schema.packingItem)
           .where(and(eq(schema.packingItem.lanId, id), eq(schema.packingItem.userId, me.id)))
           .all()
           .sort((a, b) => +a.createdAt - +b.createdAt)
-          .map((it) => ({ id: it.id, label: it.label, packed: it.packed }))
-      : [];
+          .map((it) => ({ id: it.id, label: it.label, packed: it.packed }));
 
-  const gamePeople = tab === "games" ? [...new Set(games.flatMap((g) => [...g.voters, ...(g.addedBy ? [g.addedBy] : [])]))] : [];
+  const gamePeople = [...new Set(games.flatMap((g) => [...g.voters, ...(g.addedBy ? [g.addedBy] : [])]))];
   const gameNames = Object.fromEntries(await getDisplayNames(id, gamePeople));
   const gameAvatars = Object.fromEntries(getAvatars(gamePeople));
 
@@ -283,35 +280,30 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
   const openFood = foodOrders.filter((o) => isAcceptingItems(o, now)).length;
   const canOrderFood = isAdmin || canTakePart;
   const foodNames =
-    tab === "food"
-      ? Object.fromEntries(
+    Object.fromEntries(
           await getDisplayNames(id, [
             ...new Set(foodOrders.flatMap((o) => [...o.people.map((p) => p.userId), ...(o.createdBy ? [o.createdBy] : [])])),
           ]),
-        )
-      : {};
+        );
   const currency = foodCurrency();
   // Leads only: how many coming noted dietary needs; the details stay on the lead page.
-  const foodDiets = tab === "food" && canSeeEmergency(me, l) ? dietCount(id) : 0;
+  const foodDiets = canSeeEmergency(me, l) ? dietCount(id) : 0;
   const foodViews: FoodOrderCardView[] =
-    tab === "food"
-      ? foodOrders.map((o) => ({
+    foodOrders.map((o) => ({
           ...o,
           text: orderText(o, foodNames, currency, t),
           canRun: o.createdBy === me.id || isAdmin,
           accepting: isAcceptingItems(o, now),
           closesTime: o.closesAt ? fmtTime(o.closesAt) : null,
           closesLabel: o.closesAt ? fmtDate(o.closesAt, t.locale) : null,
-        }))
-      : [];
+        }));
 
   // Shared costs: who paid what for the group and who owes whom. Same currency as food orders.
   const costs = eventCosts(id);
   const myCostBalance = costs.balances.get(me.id) ?? 0;
-  const costIds = tab === "costs" ? [...costPeople(id)] : [];
+  const costIds = [...costPeople(id)];
   const costNames =
-    tab === "costs"
-      ? Object.fromEntries(
+    Object.fromEntries(
           await getDisplayNames(id, [
             ...new Set([
               ...costIds,
@@ -320,20 +312,15 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
               ...costs.settlements.flatMap((x) => [x.fromUserId, x.toUserId, ...(x.createdBy ? [x.createdBy] : [])]),
             ]),
           ]),
-        )
-      : {};
+        );
   const goingIds = new Set(going.map((r) => r.userId));
-  const costAvatars = tab === "costs" ? getAvatars([...costIds, me.id]) : new Map<string, AvatarData>();
+  const costAvatars = getAvatars([...costIds, me.id]);
   const costPeopleList: CostPerson[] =
-    tab === "costs"
-      ? [...new Set([...costIds, ...(isAdmin ? [me.id] : [])])]
+    [...new Set([...costIds, ...(isAdmin ? [me.id] : [])])]
           .map((uid) => ({ id: uid, name: costNames[uid] ?? "?", going: goingIds.has(uid), avatar: costAvatars.get(uid) }))
-          .sort((a, b) => Number(b.id === me.id) - Number(a.id === me.id) || Number(b.going) - Number(a.going) || a.name.localeCompare(b.name))
-      : [];
+          .sort((a, b) => Number(b.id === me.id) - Number(a.id === me.id) || Number(b.going) - Number(a.going) || a.name.localeCompare(b.name));
   const costDates: Record<string, string> =
-    tab === "costs"
-      ? Object.fromEntries([...costs.expenses, ...costs.settlements].map((x) => [x.id, fmtDate(new Date(x.createdAt), t.locale)]))
-      : {};
+    Object.fromEntries([...costs.expenses, ...costs.settlements].map((x) => [x.id, fmtDate(new Date(x.createdAt), t.locale)]));
 
   // Seat swaps: open requests I'm part of, and who I could swap with.
   const swapRows =
@@ -432,14 +419,14 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
     db.select().from(schema.packingItem).where(and(eq(schema.packingItem.lanId, id), eq(schema.packingItem.userId, me.id), eq(schema.packingItem.packed, true))).all().length;
   const waiting = group("waitlist").length;
   const href = (tb: string) => (tb === "overview" ? `/lans/${l.id}` : `/lans/${l.id}?tab=${tb}`);
-  const onSite: NavSection = {
+  const onSite: GlanceRow = {
     id: "food",
     label: t("eventGuide.onSite"),
     href: href("food"),
     status: openFood ? t("eventGuide.rows.foodOpen", { count: openFood }) : t("eventGuide.rows.foodNone"),
     dot: foodLive && openFood > 0,
   };
-  const sections: NavSection[] = [
+  const sections: GlanceRow[] = [
     { id: "overview", label: t("event.tabs.overview"), href: href("overview"), status: t("eventGuide.rows.overview") },
     // During the event, On site comes first; leads see it at the end before that.
     ...(foodLive ? [onSite] : []),
@@ -518,6 +505,31 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
     ...(showFood && !foodLive ? [onSite] : []),
   ];
 
+  // The tab bar: short, so it fits a phone. Travel, packing, games and costs share the Trip tab behind a switch.
+  const row = (rid: string) => sections.find((x) => x.id === rid);
+  const tripParts = ["travel", "gear", "games", "costs"].map((pid) => ({
+    id: pid,
+    label: t(`eventGuide.sections.${pid as "travel"}`),
+    dot: !!row(pid)?.dot,
+  }));
+  const onSiteTab: ClientTab = { id: "food", label: t("eventGuide.onSite"), badge: onSite.dot ? String(onSite.status) : undefined, dot: true };
+  const tabs: ClientTab[] = [
+    { id: "overview", label: t("event.tabs.overview") },
+    ...(foodLive ? [onSiteTab] : []),
+    { id: "seats", label: t("event.tabs.seats"), badge: row("seats")?.dot ? String(row("seats")?.status) : undefined, dot: true },
+    interestPhase
+      ? { id: "attendees", label: t("interestList.tab"), count: interests.filter((i) => i.answer === "yes").length }
+      : { id: "attendees", label: t("event.tabs.attendees"), count: going.length },
+    {
+      id: "trip",
+      label: t("eventGuide.trip"),
+      parts: tripParts,
+      badge: tripParts.filter((x) => x.dot).map((x) => row(x.id)?.status).join(", ") || undefined,
+      dot: true,
+    },
+    ...(showFood && !foodLive ? [onSiteTab] : []),
+  ];
+
   const showChecklist = !!my && my.status !== "declined" && !l.cancelledAt && !l.interestCheck;
   // A locked answer can't be changed here, so it shrinks to a badge in the checklist and frees the space.
   // The full card stays for the waitlist place and the check-in on the day.
@@ -533,8 +545,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
       <LiveRefresh lanId={l.id} />
       <EventHeader lan={l} clan={lanClan} mode="view" canManage={isAdmin} tab={tab} />
 
-      {/* Your answer and your checklist: on the hub on phones (sections stay short there), on every section on desktop. */}
-      <div className={`${tab === "overview" ? "grid" : "hidden lg:grid"} gap-4 ${checklistDone ? "items-start" : "items-stretch"} ${showChecklist && !compactAnswer ? "lg:grid-cols-[20rem_minmax(0,1fr)] 2xl:grid-cols-[22rem_minmax(0,1fr)]" : ""}`}>
+      {/* Your answer and your checklist sit above the tabs, so they show on every tab. */}
+      <div className={`grid gap-4 ${checklistDone ? "items-start" : "items-stretch"} ${showChecklist && !compactAnswer ? "lg:grid-cols-[20rem_minmax(0,1fr)] 2xl:grid-cols-[22rem_minmax(0,1fr)]" : ""}`}>
         {compactAnswer ? null : l.interestCheck && !l.cancelledAt ? (
         <section aria-label={t("event.wouldYouCome")} className="rounded-card border border-line bg-surface p-3 sm:p-4">
           <h2 className="mb-1 text-sm font-semibold text-fg">{t("event.wouldYouCome")}</h2>
@@ -590,21 +602,21 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
         )}
       </div>
 
-      <SectionLayout sections={sections} active={tab} label={t("eventGuide.sectionsLabel")} backLabel={t("event.tabs.overview")}>
-      {tab === "travel" && (
+      <ClientTabs tabs={tabs} initial={tab} base={`/lans/${l.id}`} label={t("eventGuide.sectionsLabel")} partsLabel={t("eventGuide.tripLabel")}>
+      <TabPanel id="travel">
         <div>
           <p className="mb-4 max-w-2xl text-sm text-muted">{t("event.travelIntro")}</p>
           <TravelBoard lanId={l.id} posts={travelViews} meId={me.id} canPost={canTakePart} isManager={isAdmin} />
         </div>
-      )}
+      </TabPanel>
 
-      {tab === "gear" && (
+      <TabPanel id="gear">
         <Columns>
           <PackingList lanId={l.id} items={PACKING_ITEMS} packed={packed} own={ownItems} />
         </Columns>
-      )}
+      </TabPanel>
 
-      {tab === "games" && (
+      <TabPanel id="games">
         <div className="max-w-3xl">
           <GameList
             lanId={l.id}
@@ -617,11 +629,12 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
             reminderDays={GAMES_REMINDER_DAYS}
           />
         </div>
-      )}
+      </TabPanel>
 
-      {tab === "food" && !showFood && <Notice>{t("eventGuide.onSiteLater")}</Notice>}
-      {tab === "food" && showFood && !foodLive && <Notice>{t("eventGuide.onSiteLeads")}</Notice>}
-      {tab === "food" && showFood && foodDiets > 0 && (
+      <TabPanel id="food">
+      {!showFood && <Notice>{t("eventGuide.onSiteLater")}</Notice>}
+      {showFood && !foodLive && <Notice>{t("eventGuide.onSiteLeads")}</Notice>}
+      {showFood && foodDiets > 0 && (
         <Notice>
           {t("emergency.foodHint", { count: foodDiets })}{" "}
           <Link href={`/lans/${l.id}/manage?tab=emergency`} className="font-medium underline">
@@ -629,7 +642,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           </Link>
         </Notice>
       )}
-      {tab === "food" && showFood && (
+      {showFood && (
         <FoodOrders
           lanId={l.id}
           orders={foodViews}
@@ -640,8 +653,9 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           announceHint={!l.publishedAt ? t("event.draftNoDm") : null}
         />
       )}
+      </TabPanel>
 
-      {tab === "costs" && (
+      <TabPanel id="costs">
         <SharedCosts
           lanId={l.id}
           meId={me.id}
@@ -657,9 +671,9 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           isLead={isAdmin}
           dates={costDates}
         />
-      )}
+      </TabPanel>
 
-      {tab === "seats" && (
+      <TabPanel id="seats">
         <>
           {seats.length > 0 && my?.status === "going" && (picking || mySeatLabel) && !my.paid && !my.ticketBought && (
             <p className="rounded-md border border-warn/30 bg-warn/10 px-3 py-2 text-sm text-warn">
@@ -678,33 +692,32 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
               seats={seats.map((s) => seatView(s, people, avatars))}
               title={t("event.ourSeats")}
               actions={seatPills}
+              details="top"
             >
               {wishesCard}
               {swapCard}
             </SeatMap>
           ) : (
-            <div className="grid items-start gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_22rem]">
-              <div className="min-w-0 space-y-4 sm:space-y-6">
-                <Card title={t("event.ourSeats")} actions={seatPills}>
-                  <p className="text-sm text-muted">
-                    {seats.length === 0
-                      ? t("event.noSeatsYet")
-                      : t("event.groupSeats", {
-                          count: seats.length,
-                          range: `${seats[0]?.label}${seats.length > 1 ? `–${seats[seats.length - 1]?.label}` : ""}`,
-                        })}
-                  </p>
-                </Card>
-                {wishesCard}
-              </div>
+            <div className="min-w-0 space-y-4 sm:space-y-6">
+              <Card title={t("event.ourSeats")} actions={seatPills}>
+                <p className="text-sm text-muted">
+                  {seats.length === 0
+                    ? t("event.noSeatsYet")
+                    : t("event.groupSeats", {
+                        count: seats.length,
+                        range: `${seats[0]?.label}${seats.length > 1 ? `–${seats[seats.length - 1]?.label}` : ""}`,
+                      })}
+                </p>
+              </Card>
+              {wishesCard}
             </div>
           )}
         </>
-      )}
+      </TabPanel>
 
-      {tab === "attendees" && interestPhase && <InterestList lanId={l.id} clanSlug={lanClan?.slug ?? null} meId={me.id} t={t} />}
-
-      {tab === "attendees" && !interestPhase && (
+      <TabPanel id="attendees">
+      {interestPhase && <InterestList lanId={l.id} clanSlug={lanClan?.slug ?? null} meId={me.id} t={t} />}
+      {!interestPhase && (
         <Card
           title={l.capacity ? t("event.attendeesTitleOf", { count: going.length, capacity: l.capacity }) : t("event.attendeesTitle", { count: going.length })}
           actions={full && <Pill tone="red">{t("event.fullWaitlist")}</Pill>}
@@ -715,10 +728,11 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           {group("declined").length > 0 && <p className="mt-3 text-xs text-muted">{t("event.cantMakeIt", { count: group("declined").length })}</p>}
         </Card>
       )}
+      </TabPanel>
 
-      {tab === "overview" && (
-        // Your answer and checklist are above the tabs. Desktop: event on the left, details in a sidebar on the right.
-        // Phones: the event first, details last.
+      <TabPanel id="overview">
+        {/* Your answer and checklist are above the tabs. Desktop: event on the left, details in a sidebar on the right.
+            Phones: the event first, details last. */}
         <Columns
           aside={
             <>
@@ -771,6 +785,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
             </>
           }
         >
+          <GlanceList title={t("eventGuide.glance")} rows={sections.filter((x) => x.id !== "overview")} />
           {l.description && (
             <Card>
               <p className="whitespace-pre-wrap text-fg/90">{l.description}</p>
@@ -851,8 +866,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
             </div>
           </details>
         </Columns>
-      )}
-      </SectionLayout>
+      </TabPanel>
+      </ClientTabs>
       {!isAdmin && <ReportButton lanId={l.id} />}
     </Page>
   );

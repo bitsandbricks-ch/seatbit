@@ -13,6 +13,10 @@ export const eventGuide: Messages["eventGuide"] = {
     owe: "Du schuldest {amount}",
     back: "Du bekommst {amount} zurück",
   },
+  glance: "Auf einen Blick",
+  trip: "Trip",
+  tripLabel: "Trip-Bereiche",
+  sections: { travel: "Anreise", gear: "Packen", games: "Games", costs: "Kosten" },
   sectionsLabel: "Bereiche",
   rows: {
     overview: "News, Details und dein Nick",

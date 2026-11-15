@@ -74,6 +74,7 @@ export function SeatMap({
   title,
   actions,
   children,
+  details: place = "side",
 }: {
   lanId: string;
   rows: number;
@@ -88,6 +89,11 @@ export function SeatMap({
   actions?: ReactNode;
   /** Shown under the map in the left column, next to the details panel. */
   children?: ReactNode;
+  /**
+   * Where a tapped seat's details go. side: their own column on desktop, a bottom sheet on phones (lead planner).
+   * top: a compact strip above the map, everywhere, so the map keeps the full width (event page).
+   */
+  details?: "side" | "top";
 }) {
   const admin = mode === "admin";
   const t = useT();
@@ -179,7 +185,7 @@ export function SeatMap({
     const next = selectedId === s.id ? null : s.id;
     setSelectedId(next);
     // Phones: the details sheet covers the lower half, so bring the tapped seat up.
-    if (next && window.matchMedia("(max-width: 1023px)").matches) {
+    if (next && place !== "top" && window.matchMedia("(max-width: 1023px)").matches) {
       // Scroll the whole map (not just the seat) to the top so every row stays visible above the sheet.
       document.querySelector(`[data-seat="${next}"]`)?.closest("[data-seat-grid]")?.scrollIntoView({ block: "start", behavior: "smooth" });
     }
@@ -386,7 +392,7 @@ export function SeatMap({
   };
   const anyGap = !layout && rowList.some((r) => itemsFor(r).some((it) => it.kind === "gap"));
 
-  const details = (onSwap: () => void) =>
+  const details = (onSwap: () => void, compact = place === "top") =>
     selected && (
       <SeatDetails
         key={selected.id}
@@ -403,13 +409,16 @@ export function SeatMap({
         onSwap={onSwap}
         run={run}
         lanId={lanId}
+        compact={compact}
       />
     );
 
   return (
     // Desktop: the map on the left, the details panel in its own column on the right of the page.
     // Phones and tablets: the details open as a bottom sheet.
-    <div className={`grid items-start gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_22rem] ${pending ? "cursor-progress" : ""}`}>
+    <div
+      className={`grid items-start gap-4 sm:gap-6 ${place === "side" ? "lg:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_22rem]" : ""} ${pending ? "cursor-progress" : ""}`}
+    >
       <div className="min-w-0 space-y-4 sm:space-y-6">
         <Card title={title ?? t("seatMap.title")} actions={actions}>
           <div className="space-y-3">
@@ -455,19 +464,31 @@ export function SeatMap({
               )}
             </div>
 
-            {mode === "pick" && (
-              <p className="text-sm text-muted">
-                {mySeat
-                  ? t("seatMap.pickHas", { seat: mySeat.label })
-                  : t("seatMap.pickNone")}
-              </p>
-            )}
-            {mode === "view" && (
-              <p className="text-sm text-muted">
-                {mySeat
-                  ? t.rich("seatMap.viewHas", { seat: <strong className="font-mono text-bit">{mySeat.label}</strong> })
-                  : t("seatMap.viewNone")}
-              </p>
+            {/* Top style: the tapped seat takes the hint's place, so the map doesn't move far. */}
+            {place === "top" && selected && !layout ? (
+              <div className="rounded-md border border-line bg-raised/50 p-3 motion-safe:animate-[toast-in_160ms_ease-out]">
+                {details(() => {
+                  setSwapFrom(selected.id);
+                  setSelectedId(null);
+                })}
+              </div>
+            ) : (
+              <>
+                {mode === "pick" && (
+                  <p className="text-sm text-muted">
+                    {mySeat
+                      ? t("seatMap.pickHas", { seat: mySeat.label })
+                      : t("seatMap.pickNone")}
+                  </p>
+                )}
+                {mode === "view" && (
+                  <p className="text-sm text-muted">
+                    {mySeat
+                      ? t.rich("seatMap.viewHas", { seat: <strong className="font-mono text-bit">{mySeat.label}</strong> })
+                      : t("seatMap.viewNone")}
+                  </p>
+                )}
+              </>
             )}
             {q && (
               <p className="text-xs text-muted" aria-live="polite">
@@ -574,6 +595,7 @@ export function SeatMap({
       </div>
 
       {/* Details panel: its own column on desktop, sticky while the page scrolls. */}
+      {place === "side" && (
       <aside className="hidden lg:sticky lg:top-20 lg:block">
         <div className="rounded-card border border-line bg-surface p-4 sm:p-5">
           {layout ? (
@@ -601,9 +623,11 @@ export function SeatMap({
           )}
         </div>
       </aside>
+      )}
+
 
       {/* Phones and tablets: bottom sheet. */}
-      {selected && !layout && (
+      {place === "side" && selected && !layout && (
         <div className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-40 sm:bottom-4 sm:left-auto sm:right-4 sm:w-80 lg:hidden">
           <div className="max-h-[70dvh] overflow-y-auto rounded-t-card border border-line bg-surface p-4 pt-2 shadow-2xl shadow-black/70 light:shadow-black/15 sm:rounded-card sm:pt-4">
             <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-line sm:hidden" aria-hidden />
@@ -633,6 +657,7 @@ function SeatDetails({
   onSwap,
   run,
   lanId,
+  compact = false,
 }: {
   seat: SeatView;
   person?: SeatPerson;
@@ -648,6 +673,8 @@ function SeatDetails({
   onSwap: () => void;
   run: (fn: () => Promise<unknown>) => void;
   lanId: string;
+  /** One line (seat, status, who) for the strip above the map. */
+  compact?: boolean;
 }) {
   const t = useT();
   const [pick, setPick] = useState("");
@@ -657,8 +684,42 @@ function SeatDetails({
   const status = mine ? t("seatMap.legendYou") : s.userId ? t("seatMap.legendTaken") : s.locked ? t("seatMap.legendHeld") : t("seatMap.legendFree");
   const tone = mine ? "emerald" : s.userId ? "zinc" : s.locked ? "amber" : "zinc";
 
+  const close = (
+    <button type="button" onClick={onClose} className={`${btnGhost} !min-h-8 !px-2`} aria-label={t("seatMap.close")}>
+      ✕
+    </button>
+  );
+  const account = person?.lanAccount && (
+    <p className="mt-1 text-xs text-muted">
+      {t.rich("seatMap.eventAccount", {
+        account: person.profileUrl ? (
+          <a href={person.profileUrl} target="_blank" rel="noreferrer" className="font-mono text-bit hover:underline">
+            {person.lanAccount} ↗
+          </a>
+        ) : (
+          <span className="font-mono text-fg">{person.lanAccount}</span>
+        ),
+      })}
+    </p>
+  );
+
   return (
-    <div className="space-y-3">
+    <div className={compact ? "space-y-2" : "space-y-3"}>
+      {compact ? (
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-lg font-bold leading-tight">{s.label}</span>
+            <Pill tone={tone}>{status}</Pill>
+            {s.locked && s.userId && <Pill tone="amber">{t("seatMap.legendHeld")}</Pill>}
+            <span className={`min-w-0 flex-1 truncate ${s.userId ? `font-semibold ${mine ? "text-bit" : "text-fg"}` : "text-sm text-muted"}`}>
+              {s.userId ? (s.name ?? s.nick) : s.locked ? t("seatMap.heldText") : t("seatMap.nobody")}
+            </span>
+            {close}
+          </div>
+          {account}
+        </div>
+      ) : (
+      <>
       <div className="flex items-start justify-between gap-2">
         <div>
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted">{t("seatMap.seat")}</p>
@@ -667,28 +728,14 @@ function SeatDetails({
         <div className="flex items-center gap-1">
           <Pill tone={tone}>{status}</Pill>
           {s.locked && s.userId && <Pill tone="amber">{t("seatMap.legendHeld")}</Pill>}
-          <button type="button" onClick={onClose} className={`${btnGhost} !min-h-8 !px-2`} aria-label={t("seatMap.close")}>
-            ✕
-          </button>
+          {close}
         </div>
       </div>
 
       {s.userId ? (
         <div className="rounded-md bg-raised/60 p-3">
           <p className={`text-lg font-semibold leading-tight [overflow-wrap:anywhere] ${mine ? "text-bit" : ""}`}>{s.name ?? s.nick}</p>
-          {person?.lanAccount && (
-            <p className="mt-1 text-xs text-muted">
-              {t.rich("seatMap.eventAccount", {
-                account: person.profileUrl ? (
-                  <a href={person.profileUrl} target="_blank" rel="noreferrer" className="font-mono text-bit hover:underline">
-                    {person.lanAccount} ↗
-                  </a>
-                ) : (
-                  <span className="font-mono text-fg">{person.lanAccount}</span>
-                ),
-              })}
-            </p>
-          )}
+          {account}
           {admin && person?.ticket && (
             <p className="mt-2">
               {person.ticket === "ok" ? (
@@ -720,15 +767,17 @@ function SeatDetails({
       ) : (
         <p className="text-sm text-muted">{s.locked ? t("seatMap.heldText") : t("seatMap.nobody")}</p>
       )}
+      </>
+      )}
 
       {picking && (mine || (!s.userId && !s.locked)) && (
-        <div className="border-t border-line pt-3">
+        <div className={compact ? "" : "border-t border-line pt-3"}>
           {mine ? (
-            <button type="button" disabled={pending} className={`${btnSecondary} w-full`} onClick={() => run(() => pickMySeat(lanId, null))}>
+            <button type="button" disabled={pending} className={`${btnSecondary} w-full ${compact ? "sm:w-auto" : ""}`} onClick={() => run(() => pickMySeat(lanId, null))}>
               {t("seatMap.giveUp")}
             </button>
           ) : (
-            <button type="button" disabled={pending} className={`${btnPrimary} w-full`} onClick={() => run(() => pickMySeat(lanId, s.id))}>
+            <button type="button" disabled={pending} className={`${btnPrimary} w-full ${compact ? "sm:w-auto" : ""}`} onClick={() => run(() => pickMySeat(lanId, s.id))}>
               {hasSeat ? t("seatMap.moveHere") : t("seatMap.take")}
             </button>
           )}

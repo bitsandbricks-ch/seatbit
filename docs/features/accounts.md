@@ -30,7 +30,7 @@ The **LANs** tab lists the upcoming events of all your clans, with the date, how
 
 ## Profile
 
-Your profile has four tabs: **Account**, **At events**, **Notifications** and **Your data**. The first two have parts, with a switch below the tab bar. Each part saves on its own.
+Your profile has four tabs: **Account**, **At events**, **Notifications** and **Your data**. The first two have parts, with a switch below the tab bar. Tabs switch instantly. Each part saves on its own.
 
 ![Profile](../screenshots/desktop-profile.png){ .shot }
 

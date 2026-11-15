@@ -23,6 +23,8 @@ import { claimableGuests, guestSuggestions } from "@/lib/guest-claim";
 import { getT } from "@/i18n/server";
 import type { T } from "@/i18n/translate";
 import { ActionForm } from "@/components/action-form";
+import { TabPanel } from "@/components/client-tabs";
+import { ClanStats } from "@/components/clan-stats";
 
 export default async function ClanPage({ params, searchParams }: PageProps<"/clans/[slug]">) {
   const { slug } = await params;
@@ -38,7 +40,7 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
   const canMembers = perms.has("members");
   const seesEvents = isMember || canEvents;
   const hasPayments = showsPaymentsTab(c, me.id, perms);
-  const tabs: string[] = CLAN_VIEW_TABS.filter((x) => x !== "stats" && (x !== "events" || seesEvents) && (x !== "payments" || hasPayments));
+  const tabs: string[] = CLAN_VIEW_TABS.filter((x) => (x !== "stats" || perms.has("stats")) && (x !== "events" || seesEvents) && (x !== "payments" || hasPayments));
   const tab = tabs.includes(sp.tab as string) ? (sp.tab as string) : "overview";
 
   const memberRows = db
@@ -75,7 +77,7 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
       )
     : [];
   const past =
-    seesEvents && tab === "events"
+    seesEvents
       ? visibleLans(
           me,
           db
@@ -113,10 +115,10 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
 
   // Guests that look like the viewer, and their own open request to take one over.
   const claiming = isMember && !me.isGuest && c.guestClaims !== "off";
-  const mySuggestions = claiming && tab === "overview" ? guestSuggestions(c.id, me.id) : [];
+  const mySuggestions = claiming ? guestSuggestions(c.id, me.id) : [];
   const guestMatch = mySuggestions.find((s) => s.match && !s.status);
   const myClaim = mySuggestions.find((s) => s.status === "pending");
-  const hasGuests = claiming && tab === "members" && claimableGuests(c.id, me.id).length > 0;
+  const hasGuests = claiming && claimableGuests(c.id, me.id).length > 0;
   const openClaims = canMembers
     ? db
         .select({ id: schema.guestClaim.id })
@@ -125,11 +127,11 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
         .all().length
     : 0;
 
-  const myLines = hasPayments && (tab === "overview" || tab === "payments") ? memberLines(me.id, { clanId: c.id }) : [];
+  const myLines = hasPayments ? memberLines(me.id, { clanId: c.id }) : [];
   const owed = owedSummary(myLines);
 
   // Members who aren't on the clan's Discord server(s) yet get an invite.
-  const discordInvites = isMember && tab === "overview" ? await missingServers(me.id, c.id) : [];
+  const discordInvites = isMember ? await missingServers(me.id, c.id) : [];
 
   const adminLinks = (
     [
@@ -157,7 +159,7 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
 
   return (
     <Page>
-      <ClanHeader clan={c} meId={me.id} role={role} perms={perms} mode="view" tab={tab} />
+      <ClanHeader clan={c} meId={me.id} role={role} perms={perms} mode="view" tab={tab}>
 
       {canMembers && pending + openClaims > 0 && (
         <Notice tone="warn">
@@ -177,7 +179,8 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
         </Notice>
       )}
 
-      {tab === "overview" && owed.count > 0 && (
+      <TabPanel id="overview">
+      {owed.count > 0 && (
         <Notice tone="warn">
           <span className="flex flex-wrap items-center justify-between gap-2">
             <span>{t("payments.youOwe", { amount: owed.text, count: owed.count })}</span>
@@ -188,7 +191,7 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
         </Notice>
       )}
 
-      {sp.claimed && tab === "overview" && (
+      {sp.claimed && (
         <Notice>{t("clanPage.claimedDone")}</Notice>
       )}
       {guestMatch && (
@@ -211,7 +214,6 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
         </Notice>
       )}
 
-      {tab === "overview" && (
         <Columns
           aside={
             <>
@@ -333,9 +335,10 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
             </>
           )}
         </Columns>
-      )}
+      </TabPanel>
 
-      {tab === "events" && (
+      {seesEvents && (
+      <TabPanel id="events">
         <Columns>
           <Card
             title={t("clanPage.upcoming")}
@@ -357,11 +360,19 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
             {past.length === 0 ? <p className="text-sm text-muted">{t("clanPage.noPast")}</p> : <EventList t={t} lans={past} mine={mine} past />}
           </Card>
         </Columns>
+      </TabPanel>
       )}
 
-      {tab === "payments" && <MyPayments t={t} clan={c} lines={myLines} status={typeof sp.paid === "string" ? sp.paid : undefined} />}
+      {hasPayments && (
+        <TabPanel id="payments"><MyPayments t={t} clan={c} lines={myLines} status={typeof sp.paid === "string" ? sp.paid : undefined} /></TabPanel>
+      )}
+      {perms.has("stats") && (
+        <TabPanel id="stats">
+          <ClanStats clan={c} />
+        </TabPanel>
+      )}
 
-      {tab === "members" && (
+      <TabPanel id="members">
         <Card
           title={`${t("clanPage.members")} (${members.length})`}
           actions={
@@ -387,8 +398,9 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
             </p>
           )}
         </Card>
-      )}
+      </TabPanel>
       {!perms.has("settings") && <ReportButton clanId={c.id} />}
+      </ClanHeader>
     </Page>
   );
 }

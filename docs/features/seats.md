@@ -4,13 +4,13 @@ The **seat plan** shows the group's seat block. Members send seat wishes or pick
 
 **Who:** members view, wish and pick; leads plan · **Where:** event *Seats* tab; *Manage → Seats*
 
-![Seat plan with the details panel](../screenshots/desktop-event-seats.png){ .shot }
+![Seat plan with a seat's details above the map](../screenshots/desktop-event-seats.png){ .shot }
 
 ## The plan
 
 - Each letter is a row; each seat sits at its number. A dotted gap means those numbers aren't the group's.
 - Free seats show their label, taken seats the first letters of the nick with the seat number in a small badge, so the order stays clear. **Large** shows whole nicks (remembered on the device).
-- Tap a seat for details: a panel on the right on desktop, a sheet at the bottom on phones.
+- Tap a seat for details: they show in a strip right above the map, so the map keeps the full width. Tap the seat again, ✕ or Esc closes them. In *Manage → Seats*, leads get a panel on the right on desktop and a sheet at the bottom on phones.
 - **Find someone** highlights a person.
 
 ## Seat steps
