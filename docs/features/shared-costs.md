@@ -2,7 +2,7 @@
 
 Someone paid for the group tickets, the fuel for the van or the snacks? Log it on the event, pick who it's split between, and Seatbit works out who owes whom. People tick off what they paid back. No money goes through Seatbit.
 
-**Who:** anyone coming · **Where:** event *Trip* tab → *Costs*
+**Who:** anyone coming · **Where:** event → *Costs*
 
 !!! note "Shared costs or clan payments?"
     Shared costs are money **between members** (Ben paid the fuel, the others pay Ben back). Money the **clan** collects (dues, ticket money for the clan's account) is [clan payments](payments.md).
@@ -27,7 +27,7 @@ The amount is split in whole cents; leftover cents go to the first people, so th
 - Once the money has changed hands, tap **Mark as paid** (you paid) or **Got it** (you received it). Like tickets, this is trust-based: either of the two, or a lead, can tick it.
 - **Balances** lists everyone who isn't even: `+` gets money back, `−` still owes.
 - **Paid back** lists the ticked payments. **Undo** removes one ticked by mistake.
-- The *Trip* tab shows how much you still have to pay, and your checklist shows *You owe …* or *You get … back*.
+- The *Costs* row on the event shows *You owe …* or *You get … back*.
 
 The currency is a platform setting (`FOOD_CURRENCY`, default CHF), the same as for food orders. See [Configuration](../installation/configuration.md).
 

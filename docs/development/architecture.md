@@ -26,7 +26,7 @@ src/
     lans/[id]/     event page and manage view
     clans/[slug]/  clan page, settings, members, LAN types, stats
     admin/         platform admin, settings, audit log
-  components/      React components; ui.tsx and tabs.tsx are the shared building blocks
+  components/      React components; ui.tsx and section-nav.tsx (page sections) are the shared building blocks
   db/              schema.ts (Drizzle) and the database connection
   lib/             server logic: seating, reminders, discord, mail, settings, audit ...
   instrumentation.ts  starts the reminder and scheduled-publish loop

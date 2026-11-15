@@ -170,7 +170,8 @@ const SHOTS: Shot[] = [
   { name: "phone-travel", who: "anna", path: `${LAKESIDE}?tab=travel`, full: true },
   { name: "phone-packing-list", who: "anna", path: `${LAKESIDE}?tab=gear`, full: true },
   { name: "phone-games", who: "anna", path: `${LAKESIDE}?tab=games`, full: true },
-  { name: "phone-food", who: "anna", path: `${LAKESIDE}?tab=food`, full: true },
+  // A lead: members only get the On site tab while the event runs, and the demo event is in the future.
+  { name: "phone-food", who: "alex", path: `${LAKESIDE}?tab=food`, full: true },
   { name: "phone-costs", who: "anna", path: `${LAKESIDE}?tab=costs`, full: true },
   {
     name: "phone-costs-split",

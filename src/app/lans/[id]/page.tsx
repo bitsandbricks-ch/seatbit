@@ -14,7 +14,7 @@ import { getLanAccounts } from "@/lib/lan-accounts";
 import { SeatMap } from "@/components/seat-map";
 import { Avatar } from "@/components/avatar";
 import { getAvatars, type AvatarData } from "@/lib/avatars";
-import { Card, Columns, LockedAnswerBadge, Notice, Page, Pill, Segmented, StatusBadge, Verified } from "@/components/ui";
+import { Card, Columns, LockedAnswerBadge, Notice, Page, Pill, StatusBadge, Verified } from "@/components/ui";
 import { fmtDate, fmtTime, lanRange, relative } from "@/lib/format";
 import { attendanceLocked, getDisplayNames, getLan, getNames, pickNick, seatView, signupClosed, waitlistPositions } from "@/lib/lans";
 import { canTakePart as mayTakePart, canViewLan, getCurrentUser, isLanManager, isProfileComplete } from "@/lib/session";
@@ -23,12 +23,12 @@ import { EventInvite } from "@/components/event-invite";
 import { rolesWith } from "@/lib/clan-roles";
 import { EventHeader } from "@/components/event-header";
 import { buildChecklist, onTheDay, progress } from "@/lib/checklist";
-import { LanChecklist, type GuideExtra } from "@/components/lan-checklist";
+import { LanChecklist } from "@/components/lan-checklist";
 import { SeatWishes } from "@/components/seat-wishes";
 import { LiveRefresh } from "@/components/live-refresh";
 import { seatRow } from "@/lib/seat-labels";
 import { normalizeRules } from "@/lib/seat-rules";
-import { Tabs } from "@/components/tabs";
+import { SectionLayout, type NavSection } from "@/components/section-nav";
 import { TravelBoard, type TravelPostView } from "@/components/travel-board";
 import { PackingList } from "@/components/gear-board";
 import { PACKING_ITEMS } from "@/lib/gear";
@@ -52,9 +52,7 @@ import { httpHref } from "@/lib/safe-url";
 const { attendance, seat, nickname } = schema;
 
 const TABS = ["overview", "seats", "attendees", "trip", "travel", "gear", "games", "food", "costs"] as const;
-/** Sections inside the Trip tab. Each keeps its own ?tab= value, so older links (mails, Discord) still land right. */
-const TRIP = ["travel", "gear", "games", "food", "costs"] as const;
-type TripTab = (typeof TRIP)[number];
+// "trip" was the tab that held travel, packing, games and costs; old links to it open travel.
 
 /** Link previews (WhatsApp, Discord, ...): name, date and place of published events; drafts stay generic. */
 export async function generateMetadata({ params }: PageProps<"/lans/[id]">): Promise<Metadata> {
@@ -256,7 +254,6 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
       notComing: !isIn(p.userId),
       spots: spots.filter((s) => s.postId === p.id).map((s) => ({ userId: s.userId, name: names.get(s.userId) ?? "?" })),
     }));
-  const openRequests = posts.filter((p) => p.mode === "request" && isIn(p.userId)).length;
   const packed =
     tab === "gear"
       ? db
@@ -410,45 +407,116 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
     </Card>
   );
 
-  // Guide: where each open step gets done, and the optional things worth a look right now.
+  // Guide: where each open step gets done. What else waits (rides, costs, games) shows on the section rows.
   const stepLinks = {
     nick: `/lans/${l.id}?edit=nick#nick`,
     wishes: `/lans/${l.id}?tab=seats`,
     pick: `/lans/${l.id}?tab=seats`,
     games: `/lans/${l.id}?tab=games`,
   };
-  const iAmIn = !!my && (my.status === "going" || my.status === "waitlist" || my.status === "maybe");
+  // Food orders belong to the event itself: members get the On site tab only while it runs. Leads always,
+  // so they can set an order up in advance.
+  const foodLive = atTheVenue;
+  const showFood = foodLive || isAdmin;
   const ridesWanted = posts.filter((p) => p.mode === "request" && p.userId !== me.id && isIn(p.userId)).length;
   const packSoon = my?.status === "going" && now < l.startsAt && !l.dateTbd && l.startsAt.getTime() - now.getTime() < 7 * 86400_000;
-  const gamesInChecklist = steps.some((s) => s.key === "games");
-  const extras: GuideExtra[] = [];
-  if (myCostBalance < 0) extras.push({ key: "owe", label: t("eventGuide.extras.owe", { amount: fmtAmount(-myCostBalance, currency) }), href: `/lans/${l.id}?tab=costs`, tone: "warn" });
-  if (myCostBalance > 0) extras.push({ key: "back", label: t("eventGuide.extras.back", { amount: fmtAmount(myCostBalance, currency) }), href: `/lans/${l.id}?tab=costs`, tone: "ok" });
-  if (iAmIn && openFood > 0) extras.push({ key: "food", label: t("eventGuide.extras.food", { count: openFood }), href: `/lans/${l.id}?tab=food` });
-  if (my?.status === "going" && !gamesInChecklist && gamesToInstall > 0)
-    extras.push({ key: "games", label: t("eventGuide.extras.games", { count: gamesToInstall }), href: `/lans/${l.id}?tab=games` });
-  if (my?.status === "going" && ridesWanted > 0 && now < l.startsAt)
-    extras.push({ key: "rides", label: t("eventGuide.extras.rides", { count: ridesWanted }), href: `/lans/${l.id}?tab=travel` });
-  if (packSoon) extras.push({ key: "pack", label: t("eventGuide.extras.pack"), href: `/lans/${l.id}?tab=gear` });
 
-  // Trip tab: one badge for the most pressing thing inside, dots on the sections themselves.
-  const tripTabs: { id: TripTab; label: string; dot: boolean }[] = [
-    { id: "travel", label: t("eventGuide.sections.travel"), dot: openRequests > 0 },
-    { id: "gear", label: t("eventGuide.sections.gear"), dot: false },
-    { id: "games", label: t("eventGuide.sections.games"), dot: my?.status === "going" && gamesToInstall > 0 },
-    { id: "food", label: t("eventGuide.sections.food"), dot: openFood > 0 },
-    { id: "costs", label: t("eventGuide.sections.costs"), dot: myCostBalance < 0 },
+  // The hub's rows: each says in one line why you'd open it; a dot where something waits for you.
+  // Counted like the travel board: free seats in cars and people looking for one.
+  const rideOffers = posts.filter((p) => p.kind === "ride" && p.mode === "offer" && isIn(p.userId));
+  const rideLooking = posts.filter((p) => p.kind === "ride" && p.mode === "request" && isIn(p.userId)).reduce((n, p) => n + p.places, 0);
+  const freeRideSeats = rideOffers.reduce((n, p) => n + Math.max(0, p.places - spots.filter((x) => x.postId === p.id).length), 0);
+  const packTotal = PACKING_ITEMS.length + db.select().from(schema.packingItem).where(and(eq(schema.packingItem.lanId, id), eq(schema.packingItem.userId, me.id))).all().length;
+  const packDone =
+    db.select().from(schema.gearPacked).where(and(eq(schema.gearPacked.lanId, id), eq(schema.gearPacked.userId, me.id))).all().length +
+    db.select().from(schema.packingItem).where(and(eq(schema.packingItem.lanId, id), eq(schema.packingItem.userId, me.id), eq(schema.packingItem.packed, true))).all().length;
+  const waiting = group("waitlist").length;
+  const href = (tb: string) => (tb === "overview" ? `/lans/${l.id}` : `/lans/${l.id}?tab=${tb}`);
+  const onSite: NavSection = {
+    id: "food",
+    label: t("eventGuide.onSite"),
+    href: href("food"),
+    status: openFood ? t("eventGuide.rows.foodOpen", { count: openFood }) : t("eventGuide.rows.foodNone"),
+    dot: foodLive && openFood > 0,
+  };
+  const sections: NavSection[] = [
+    { id: "overview", label: t("event.tabs.overview"), href: href("overview"), status: t("eventGuide.rows.overview") },
+    // During the event, On site comes first; leads see it at the end before that.
+    ...(foodLive ? [onSite] : []),
+    {
+      id: "seats",
+      label: t("event.tabs.seats"),
+      href: href("seats"),
+      dot: picking && seats.length > 0 && !mySeatLabel && my?.status === "going",
+      status:
+        seats.length === 0
+          ? t("eventGuide.rows.seatsNone")
+          : picking && !mySeatLabel && my?.status === "going"
+            ? t("eventGuide.rows.seatsPick")
+            : mySeatLabel
+              ? t(published ? "eventGuide.rows.seatFinal" : "eventGuide.rows.seatPicked", { seat: mySeatLabel })
+              : t(published ? "eventGuide.rows.planFinal" : "eventGuide.rows.planOpen"),
+    },
+    interestPhase
+      ? {
+          id: "attendees",
+          label: t("interestList.tab"),
+          href: href("attendees"),
+          status: t("eventGuide.rows.interested", { count: interests.filter((i) => i.answer === "yes").length }),
+        }
+      : {
+          id: "attendees",
+          label: t("event.tabs.attendees"),
+          href: href("attendees"),
+          status: waiting
+            ? t("eventGuide.rows.comingWaiting", { count: going.length, waiting })
+            : t("eventGuide.rows.coming", { count: going.length }),
+        },
+    {
+      id: "travel",
+      label: t("event.tabs.travel"),
+      href: href("travel"),
+      dot: my?.status === "going" && ridesWanted > 0 && now < l.startsAt,
+      status:
+        rideOffers.length || rideLooking
+          ? t("eventGuide.rows.travel", { free: freeRideSeats, looking: rideLooking })
+          : t("eventGuide.rows.travelNone"),
+    },
+    {
+      id: "gear",
+      label: t("event.tabs.gear"),
+      href: href("gear"),
+      dot: !!packSoon && packDone < packTotal,
+      status: t("eventGuide.rows.packed", { done: packDone, total: packTotal }),
+    },
+    {
+      id: "games",
+      label: t("event.tabs.games"),
+      href: href("games"),
+      dot: my?.status === "going" && gamesToInstall > 0,
+      status:
+        my?.status === "going" && gamesToInstall
+          ? t("eventGuide.extras.games", { count: gamesToInstall })
+          : games.length
+            ? t("eventGuide.rows.games", { count: games.length })
+            : t("eventGuide.rows.gamesNone"),
+    },
+    {
+      id: "costs",
+      label: t("event.tabs.costs"),
+      href: href("costs"),
+      dot: myCostBalance < 0,
+      status:
+        myCostBalance < 0
+          ? t("eventGuide.extras.owe", { amount: fmtAmount(-myCostBalance, currency) })
+          : myCostBalance > 0
+            ? t("eventGuide.extras.back", { amount: fmtAmount(myCostBalance, currency) })
+            : costs.totalCents > 0
+              ? t("eventGuide.rows.costsEven")
+              : t("eventGuide.rows.costsNone"),
+    },
+    ...(showFood && !foodLive ? [onSite] : []),
   ];
-  const tripBadge =
-    myCostBalance < 0
-      ? t("event.tabs.owe", { amount: fmtAmount(-myCostBalance, currency) })
-      : openFood
-        ? t("event.tabs.open", { count: openFood })
-        : my?.status === "going" && gamesToInstall
-          ? t("event.tabs.toInstall", { count: gamesToInstall })
-          : openRequests
-            ? t("event.tabs.looking", { count: openRequests })
-            : undefined;
 
   const showChecklist = !!my && my.status !== "declined" && !l.cancelledAt && !l.interestCheck;
   // A locked answer can't be changed here, so it shrinks to a badge in the checklist and frees the space.
@@ -465,8 +533,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
       <LiveRefresh lanId={l.id} />
       <EventHeader lan={l} clan={lanClan} mode="view" canManage={isAdmin} tab={tab} />
 
-      {/* Your answer and your checklist sit above the tabs, so they show on every tab. */}
-      <div className={`grid gap-4 ${checklistDone ? "items-start" : "items-stretch"} ${showChecklist && !compactAnswer ? "lg:grid-cols-[20rem_minmax(0,1fr)] 2xl:grid-cols-[22rem_minmax(0,1fr)]" : ""}`}>
+      {/* Your answer and your checklist: on the hub on phones (sections stay short there), on every section on desktop. */}
+      <div className={`${tab === "overview" ? "grid" : "hidden lg:grid"} gap-4 ${checklistDone ? "items-start" : "items-stretch"} ${showChecklist && !compactAnswer ? "lg:grid-cols-[20rem_minmax(0,1fr)] 2xl:grid-cols-[22rem_minmax(0,1fr)]" : ""}`}>
         {compactAnswer ? null : l.interestCheck && !l.cancelledAt ? (
         <section aria-label={t("event.wouldYouCome")} className="rounded-card border border-line bg-surface p-3 sm:p-4">
           <h2 className="mb-1 text-sm font-semibold text-fg">{t("event.wouldYouCome")}</h2>
@@ -518,41 +586,11 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
             ticketBought={my.ticketBought}
             canReportTicket={my.status === "going" || my.status === "waitlist"}
             links={watching ? {} : stepLinks}
-            extras={watching ? [] : extras}
           />
         )}
       </div>
 
-      <Tabs
-        tabs={[
-          { id: "overview", label: t("event.tabs.overview") },
-          {
-            id: "seats",
-            label: t("event.tabs.seats"),
-            // Self pick: a to-do until you took a seat. Once you have one there's nothing to point at.
-            badge: picking && seats.length > 0 && !mySeatLabel ? t("event.tabs.pickYours") : undefined,
-            // The guide above says what to do; the tabs only point where. Words stay for screen readers.
-            dot: true,
-          },
-          interestPhase
-            ? { id: "attendees", label: t("interestList.tab"), count: interests.filter((i) => i.answer === "yes").length }
-            : { id: "attendees", label: t("event.tabs.attendees"), count: going.length },
-          // Travel, packing, games, food and costs share one tab, so all tabs fit on a phone.
-          { id: "trip", label: t("eventGuide.trip"), badge: tripBadge, dot: true },
-        ]}
-        active={isTrip(tab) ? "trip" : tab}
-        hrefFor={(tb) => (tb === "overview" ? `/lans/${l.id}` : `/lans/${l.id}?tab=${tb}`)}
-      />
-
-      {isTrip(tab) && (
-        <Segmented
-          label={t("eventGuide.tripLabel")}
-          value={tab}
-          fill
-          options={tripTabs.map((x) => ({ id: x.id, href: `/lans/${l.id}?tab=${x.id}`, label: x.label, dot: x.dot }))}
-        />
-      )}
-
+      <SectionLayout sections={sections} active={tab} label={t("eventGuide.sectionsLabel")} backLabel={t("event.tabs.overview")}>
       {tab === "travel" && (
         <div>
           <p className="mb-4 max-w-2xl text-sm text-muted">{t("event.travelIntro")}</p>
@@ -581,7 +619,9 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
         </div>
       )}
 
-      {tab === "food" && foodDiets > 0 && (
+      {tab === "food" && !showFood && <Notice>{t("eventGuide.onSiteLater")}</Notice>}
+      {tab === "food" && showFood && !foodLive && <Notice>{t("eventGuide.onSiteLeads")}</Notice>}
+      {tab === "food" && showFood && foodDiets > 0 && (
         <Notice>
           {t("emergency.foodHint", { count: foodDiets })}{" "}
           <Link href={`/lans/${l.id}/manage?tab=emergency`} className="font-medium underline">
@@ -589,7 +629,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           </Link>
         </Notice>
       )}
-      {tab === "food" && (
+      {tab === "food" && showFood && (
         <FoodOrders
           lanId={l.id}
           orders={foodViews}
@@ -812,13 +852,12 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           </details>
         </Columns>
       )}
+      </SectionLayout>
       {!isAdmin && <ReportButton lanId={l.id} />}
     </Page>
   );
 }
 
-
-const isTrip = (tab: string): tab is TripTab => (TRIP as readonly string[]).includes(tab);
 
 function DateRow({ label, d, now, t }: { label: string; d: Date | null; now: Date; t: T }) {
   if (!d) return null;
