@@ -30,19 +30,19 @@ The **LANs** tab lists the upcoming events of all your clans, with the date, how
 
 ## Profile
 
-Your profile has one tab per topic. Each tab saves on its own.
+Your profile has four tabs: **Account**, **At events**, **Notifications** and **Your data**. The first two have parts, with a switch below the tab bar. Each part saves on its own.
 
 ![Profile](../screenshots/desktop-profile.png){ .shot }
 
-| Tab | |
-| --- | --- |
-| **Account** | First name, surname and your default **nickname**, the app's [language](languages.md), and your **sign-in methods** (link Discord if you signed in another way). |
-| **Avatar** | Discord picture, uploaded picture, emoji or initials. The colour is the ring around your avatar and your seat on the plan. |
-| **LAN nicks & IDs** | Per LAN type of your clans: a nick for every event of that type (e.g. your name on the event's own site) and your user ID or ticket number there. Only leads see the ID, unless the LAN type has a [profile link](clans.md#profile-links). |
-| **Socials** | Discord, Steam, Battle.net, Epic Games, Riot ID, EA app, Ubisoft Connect, Xbox, PlayStation, FACEIT, Twitch and YouTube. Fill in what you like; members of your clans see them on your profile, with links where the service has profile pages. |
-| **Emergency** | An emergency contact and your dietary needs or allergies, for the leads of events you come to. See [Emergency contact and diet](emergency.md). |
-| **Notifications** | Switch **email reminders** or **Discord DMs** off (DMs need a linked Discord account) and send yourself a test DM. **Events I hear about**: per clan, all new events or only certain LAN types. One-off events always count. |
-| **Your data** | Download or delete your data, see [below](#your-data). |
+| Tab | Part | |
+| --- | --- | --- |
+| **Account** | **Details** | First name, surname and your default **nickname**, the app's [language](languages.md), and your **sign-in methods** (link Discord if you signed in another way). |
+| | **Avatar** | Discord picture, uploaded picture, emoji or initials. The colour is the ring around your avatar and your seat on the plan. |
+| | **Socials** | Discord, Steam, Battle.net, Epic Games, Riot ID, EA app, Ubisoft Connect, Xbox, PlayStation, FACEIT, Twitch and YouTube. Fill in what you like; members of your clans see them on your profile, with links where the service has profile pages. |
+| **At events** | **LAN nicks & IDs** | Per LAN type of your clans: a nick for every event of that type (e.g. your name on the event's own site) and your user ID or ticket number there. Only leads see the ID, unless the LAN type has a [profile link](clans.md#profile-links). |
+| | **Emergency** | An emergency contact and your dietary needs or allergies, for the leads of events you come to. See [Emergency contact and diet](emergency.md). |
+| **Notifications** | | Switch **email reminders** or **Discord DMs** off (DMs need a linked Discord account) and send yourself a test DM. **Events I hear about**: per clan, all new events or only certain LAN types. One-off events always count. |
+| **Your data** | | Download or delete your data, see [below](#your-data). |
 
 ![LAN nicks and IDs](../screenshots/phone-profile-lans.png){ .shot width="300" } ![Notifications](../screenshots/phone-profile-notifications.png){ .shot width="300" }
 

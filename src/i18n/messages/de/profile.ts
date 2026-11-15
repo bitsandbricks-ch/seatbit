@@ -1,7 +1,7 @@
 import type { Messages } from "../en";
 
 export const profile: Messages["profile"] = {
-  tabs: { account: "Konto", look: "Avatar", lans: "LAN-Nicks & IDs", socials: "Socials", notifications: "Benachrichtigungen", data: "Deine Daten" },
+  tabs: { details: "Angaben", account: "Konto", events: "An Events", look: "Avatar", lans: "LAN-Nicks & IDs", socials: "Socials", notifications: "Benachrichtigungen", data: "Deine Daten" },
   names: "Name und Nickname",
   messages: "Nachrichten",
   signInMethods: "Anmeldemethoden",

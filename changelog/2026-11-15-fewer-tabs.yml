@@ -1,0 +1,17 @@
+date: 2026-11-15
+type: improved
+en:
+  title: "Fewer tabs in clan settings and on your profile"
+  text: >-
+    Clan settings now have five tabs instead of eight: Members, Guests and Invite links are together
+    under People, and Discord & WhatsApp sits with General. Your profile has four tabs: Account (with
+    Avatar and Socials), At events (LAN nicks and your emergency info), Notifications and Your data.
+    A switch below the tab bar moves between the parts. Old links still open the right place.
+de:
+  title: "Weniger Tabs in den Clan-Einstellungen und im Profil"
+  text: >-
+    Die Clan-Einstellungen haben jetzt fünf statt acht Tabs: Mitglieder, Gäste und Einladungslinks
+    sind zusammen unter Leute, Discord & WhatsApp steht bei Allgemein. Dein Profil hat vier Tabs:
+    Konto (mit Avatar und Socials), An Events (LAN-Nicks und deine Notfallangaben), Benachrichtigungen
+    und Deine Daten. Ein Umschalter unter der Tab-Leiste wechselt zwischen den Teilen. Alte Links
+    führen weiterhin an die richtige Stelle.

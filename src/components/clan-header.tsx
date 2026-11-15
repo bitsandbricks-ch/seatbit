@@ -12,13 +12,20 @@ import { ClanAvatar } from "./clan-avatar";
 import { DonorBadge, SupporterBadge } from "./support-card";
 import { isDonorClan } from "@/lib/donations";
 import { Tabs, type Tab } from "./tabs";
-import { PageHeader, Pill, btnPrimary } from "./ui";
+import { groupTabs } from "./tab-groups";
+import { PageHeader, Pill, Segmented, btnPrimary } from "./ui";
 import { ViewManageSwitch } from "./view-manage-switch";
 import { ActionForm } from "@/components/action-form";
 
 export const CLAN_VIEW_TABS = ["overview", "events", "members", "payments", "stats"] as const;
 export const CLAN_MANAGE_TABS = ["general", "members", "guests", "types", "invites", "chat", "payments", "log"] as const;
 export type ClanManageTab = (typeof CLAN_MANAGE_TABS)[number];
+
+/**
+ * The manage tab bar shows groups, so it stays short; a group with more than one part
+ * switches between them below the bar. Each part keeps its own ?tab= link.
+ */
+const MANAGE_GROUPS: ClanManageTab[][] = [["general", "chat"], ["members", "guests", "invites"], ["types"], ["payments"], ["log"]];
 
 
 /** Where a tab lives: stats has its own page, the rest are ?tab= on the clan or settings page. */
@@ -91,6 +98,9 @@ export async function ClanHeader({
     tab === "members" && (other === "view" || manageTabs.includes("members")) ? "members" : other === "view" ? "overview" : manageTabs[0];
 
   let tabs: Tab[];
+  // Manage mode: the parts of the open group, shown as a switch below the bar.
+  let parts: Tab[] = [];
+  let activeTab = tab;
   if (mode === "view") {
     const upcoming =
       isMember || canManage
@@ -130,7 +140,8 @@ export async function ClanHeader({
       })(),
       log: { id: "log", label: t("clanHeader.log") },
     };
-    tabs = manageTabs.map((x) => all[x]);
+    // Members, guests and invite links share the bar as "People".
+    ({ bar: tabs, active: activeTab, parts } = groupTabs(MANAGE_GROUPS, manageTabs.map((x) => all[x]), tab, { members: t("clanHeader.people") }));
   }
 
   let actions: ReactNode = null;
@@ -194,10 +205,18 @@ export async function ClanHeader({
       />
       <Tabs
         tabs={tabs}
-        active={tab}
+        active={activeTab}
         hrefFor={(x) => clanTabHref(c.slug, mode, x)}
         label={mode === "view" ? t("clanHeader.sections") : t("clanPage.links.general")}
       />
+      {parts.length > 1 && (
+        <Segmented
+          label={tabs.find((x) => x.id === activeTab)?.label}
+          value={tab}
+          fill
+          options={parts.map((x) => ({ id: x.id, href: clanTabHref(c.slug, mode, x.id), label: x.label, count: x.count, dot: !!x.badge }))}
+        />
+      )}
     </>
   );
 }

@@ -1,5 +1,5 @@
 export const profile = {
-  tabs: { account: "Account", look: "Avatar", lans: "LAN nicks & IDs", socials: "Socials", notifications: "Notifications", data: "Your data" },
+  tabs: { details: "Details", account: "Account", events: "At events", look: "Avatar", lans: "LAN nicks & IDs", socials: "Socials", notifications: "Notifications", data: "Your data" },
   names: "Name and nickname",
   messages: "Messages",
   signInMethods: "Sign-in methods",

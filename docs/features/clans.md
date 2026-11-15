@@ -36,17 +36,18 @@ Everyone in a clan has one **clan role**:
 
 ## Clan settings
 
-*Manage* on the clan page. Tabs:
+*Manage* on the clan page. Related tabs share one place in the tab bar; a switch below the bar moves between their parts.
 
-| Tab | |
-| --- | --- |
-| **General** | Name, description, avatar, join mode, guest claims, how names are shown, and the [Supporter](supporters.md) card when the instance has it on. |
-| **Members** | Join requests, guest claims, add existing users, roles. See [Members and guests](members-guests.md). |
-| **Guests** | People without an account yet. See [Guests](members-guests.md#guests). |
-| **LAN types** | Templates for LANs you go to regularly. See [below](#lan-types). |
-| **Invite links** | Links that let anyone who has them join as a member, whatever the join mode. Delete a link to stop it. |
-| **Discord & WhatsApp** | Connect the clan's Discord server. See [Discord and WhatsApp](discord.md). |
-| **Audit log** | See [Audit log](audit-log.md). |
+| Tab | Part | |
+| --- | --- | --- |
+| **General** | **General** | Name, description, avatar, join mode, guest claims, how names are shown, and the [Supporter](supporters.md) card when the instance has it on. |
+| | **Discord & WhatsApp** | Connect the clan's Discord server. See [Discord and WhatsApp](discord.md). |
+| **People** | **Members** | Join requests, guest claims, add existing users, roles. See [Members and guests](members-guests.md). |
+| | **Guests** | People without an account yet. See [Guests](members-guests.md#guests). |
+| | **Invite links** | Links that let anyone who has them join as a member, whatever the join mode. Delete a link to stop it. |
+| **LAN types** | | Templates for LANs you go to regularly. See [below](#lan-types). |
+| **Payments** | | See [Clan payments](payments.md). |
+| **Audit log** | | See [Audit log](audit-log.md). |
 
 ![Clan settings](../screenshots/desktop-clan-settings.png){ .shot }
 

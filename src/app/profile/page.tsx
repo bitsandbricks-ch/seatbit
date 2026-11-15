@@ -9,8 +9,9 @@ import { NickManager } from "@/components/nick-manager";
 import { LanIdForm } from "@/components/lan-id-form";
 import { pickLanAccount } from "@/lib/lan-accounts";
 import { SignOutButton } from "@/components/sign-out-button";
-import { Card, Columns, Field, Input, Page, PageHeader, btnPrimary, btnSecondary, halves } from "@/components/ui";
+import { Card, Columns, Field, Input, Page, PageHeader, Segmented, btnPrimary, btnSecondary, halves } from "@/components/ui";
 import { Tabs, type Tab } from "@/components/tabs";
+import { groupTabs } from "@/components/tab-groups";
 import { NotificationsForm } from "@/components/notifications-form";
 import { enabledProviders } from "@/lib/auth";
 import { requireUser } from "@/lib/session";
@@ -60,7 +61,7 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
   const joinServers =
     dmParam === "cant_dm" ? (await Promise.all(clanIds.map((id) => missingServers(me.id, id)))).flat() : [];
 
-  const tabs: Tab[] = [
+  const all: Tab[] = [
     { id: "account", label: t("profile.tabs.account") },
     { id: "look", label: t("profile.tabs.look") },
     ...(types.length > 0 ? [{ id: "lans", label: t("profile.tabs.lans") }] : []),
@@ -69,7 +70,14 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
     { id: "notifications", label: t("profile.tabs.notifications") },
     { id: "data", label: t("profile.tabs.data") },
   ];
-  const tab = tabs.find((x) => x.id === sp.tab)?.id ?? "account";
+  const tab = all.find((x) => x.id === sp.tab)?.id ?? "account";
+  // Four places in the bar; avatar and socials sit with the account, emergency info with the LAN nicks.
+  const { bar, active, parts } = groupTabs([["account", "look", "socials"], ["lans", "emergency"], ["notifications"], ["data"]], all, tab, {
+    lans: t("profile.tabs.events"),
+  });
+  // Inside "Account" its first part is the name, language and sign-in.
+  const partLabel = (x: Tab) => (x.id === "account" ? t("profile.tabs.details") : x.label);
+  const href = (id: string) => (id === "account" ? "/profile" : `/profile?tab=${id}`);
 
   return (
     <Page>
@@ -83,7 +91,15 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
           </span>
         }
       />
-      <Tabs tabs={tabs} active={tab} hrefFor={(id) => (id === "account" ? "/profile" : `/profile?tab=${id}`)} label={t("nav.yourProfile")} />
+      <Tabs tabs={bar} active={active} hrefFor={href} label={t("nav.yourProfile")} />
+      {parts.length > 1 && (
+        <Segmented
+          label={bar.find((x) => x.id === active)?.label}
+          value={tab}
+          fill
+          options={parts.map((x) => ({ id: x.id, href: href(x.id), label: partLabel(x) }))}
+        />
+      )}
 
       {tab === "account" && (
         <Columns

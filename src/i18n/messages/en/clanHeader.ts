@@ -1,6 +1,7 @@
 export const clanHeader = {
   events: "Events",
   stats: "Stats",
+  people: "People",
   general: "General",
   log: "Audit log",
   clan: "Clan",
