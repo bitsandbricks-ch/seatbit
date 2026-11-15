@@ -19,7 +19,7 @@ Members answer whether they come, work through their checklist and report their 
 </figure>
 </div>
 
-The event page shows your answer and checklist at the top, then the tabs **Overview**, **Seats**, **Attendees**, **Travel**, **Packing list**, **Games** and **Food**. The Overview has the event's description, the leads' news and a **Details** card with the deadlines, the ticket price, your ticket and the leads to contact.
+The event page shows your answer and checklist at the top, then four tabs: **Overview**, **Seats**, **Attendees** and **Trip**. *Trip* holds [travel and packing](travel-packing.md), [games](games.md), [food](food.md) and [costs](shared-costs.md) as a switch at the top, with a yellow dot where something is open; the tab itself gets a yellow dot too. The event website, ticket shop and share button sit in one row under the title. The Overview has the event's description, the leads' news and a **Details** card with the deadlines, the ticket price, your ticket and the leads to contact.
 
 ## Answer
 
@@ -75,13 +75,29 @@ Your checklist sits above the tabs on every tab of the event, on the LANs list (
 | 1. **Say you're coming** | You answered *Coming*. On the waitlist it shows your place (*You're #2 on the waitlist*). |
 | 2. **Give your nickname** | You have a nick (default, LAN type or event). |
 | 3. **Buy your ticket** | You ticked *I have my ticket* before the *buy ticket by* date. That's enough: the leads trust it and don't confirm it. |
-| 4. **Pick your seat** | Only when the leads turned on [self pick](seats.md#seat-steps): you took a free seat (the step then reads *Seat F8 picked*). Needs your ticket first. While self pick is on, the Seats tab shows *pick yours* in yellow until you have a seat, then your seat in green. |
+| 4. **Pick your seat** | Only when the leads turned on [self pick](seats.md#seat-steps): you took a free seat (the step then reads *Seat F8 picked*). Needs your ticket first. While self pick is on, the Seats tab has a yellow dot until you have a seat. |
 | 4. **Send seat wishes** (optional) | Instead of *Pick your seat* when self pick is off: you sent [seat wishes](seats.md#seat-steps). Hidden once the plan is final if you sent none. |
 | 5. **Leads confirm your seat** | The leads finalized the seat plan and you have a seat. Until then it waits on them (also after you picked your own seat). With an event seat plan, the hint says whether the leads already [booked it there](seats.md#book-on-the-event-site). |
 | **Install the games** (optional) | After step 5, when someone voted for [games](games.md): you marked every voted game as installed. |
 | **Check in at the venue** | After step 5, only on the day: you tapped *I'm here*. |
 
 The leads have their own [lead checklist](events.md#lead-checklist).
+
+### Next step and extras
+
+The checklist is also a guide. The first step you can do now is marked **Next** and has a button that takes you there (*Pick a seat →* opens the Seats tab, *Set your nick →* opens the nick form). Optional steps get a smaller button.
+
+Below the steps, **Also for this event** shows chips for optional things that matter right now, each leading to its section in *Trip*:
+
+| Chip | Shows when |
+| --- | --- |
+| *You owe CHF 12* / *You get CHF 12 back* | Your [shared costs](shared-costs.md) balance isn't even. |
+| *Food order open* | A [food order](food.md) takes items. |
+| *3 games to install* | You're coming and haven't installed voted [games](games.md) (before the games step shows in the checklist). |
+| *2 need a ride* | Others coming are looking for a [ride](travel-packing.md), until the event starts. |
+| *Pack your bag* | You're coming and the event starts within a week. |
+
+The chips stay visible when the checklist is folded to *All set*.
 
 Optional steps don't hold back *All set* and only count towards the progress once done. Once everything is done, the checklist folds into one line (*Your checklist · All set*); tap it to see the steps again.
 

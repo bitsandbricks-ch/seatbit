@@ -2,7 +2,7 @@
 
 Decide what to play and make sure everyone has it installed before the LAN.
 
-**Who:** members · **Where:** event *Games* tab
+**Who:** members · **Where:** event *Trip* tab → *Games*
 
 - **Suggest** a game with its download size. Each game shows who added it, with their avatar and the clan's name display.
 - **Fix** a game later with the pencil: name, size or store link. Whoever added it and the event's leads can edit or remove it; votes and *installed* ticks stay.

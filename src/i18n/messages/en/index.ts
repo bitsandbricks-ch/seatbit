@@ -38,6 +38,7 @@ import { donate } from "./donate";
 import { emergency } from "./emergency";
 import { errors } from "./errors";
 import { event } from "./event";
+import { eventGuide } from "./eventGuide";
 import { eventUi } from "./eventUi";
 import { food } from "./food";
 import { footer } from "./footer";
@@ -147,6 +148,7 @@ export const en = {
   emergency,
   errors,
   event,
+  eventGuide,
   eventUi,
   food,
   footer,

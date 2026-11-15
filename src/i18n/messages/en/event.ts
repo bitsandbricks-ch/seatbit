@@ -20,7 +20,6 @@ export const event = {
     costs: "Costs",
     owe: "{amount} to pay",
     pickYours: "pick yours",
-    seatPicked: "{seat} picked",
     looking: { one: "{count} looking", other: "{count} looking" },
     toInstall: "{count} to install",
     open: "{count} open",

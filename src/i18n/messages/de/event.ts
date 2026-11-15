@@ -22,7 +22,6 @@ export const event: Messages["event"] = {
     costs: "Kosten",
     owe: "{amount} offen",
     pickYours: "wähl deinen",
-    seatPicked: "{seat} gewählt",
     looking: { one: "{count} sucht", other: "{count} suchen" },
     toInstall: "{count} installieren",
     open: "{count} offen",

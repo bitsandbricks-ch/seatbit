@@ -10,6 +10,8 @@ export type Tab = {
   badge?: string;
   /** warn (default): something to do. ok: done, e.g. a picked seat. */
   badgeTone?: "warn" | "ok";
+  /** Show the badge as a small dot (its text stays for screen readers), e.g. when a guide on the page already says what to do. */
+  dot?: boolean;
 };
 
 /**
@@ -36,7 +38,7 @@ export function Tabs({
   return (
     <div className={`${sticky ? "sticky top-14 z-20 bg-ink/95 backdrop-blur" : ""} -mx-4 border-b border-line sm:-mx-6`}>
       <nav aria-label={label} className="scroll-fade-x overflow-x-auto px-4 sm:px-6">
-        <ul className="flex min-w-max gap-6 pr-8">
+        <ul className="flex min-w-max gap-5 pr-8 sm:gap-6">
           {tabs.map((t) => {
             const on = t.id === active;
             return (
@@ -55,9 +57,15 @@ export function Tabs({
                       {t.count}
                     </span>
                   )}
-                  {t.badge && (
-                    <span className={`rounded-full px-1.5 py-px text-[11px] font-medium ${t.badgeTone === "ok" ? "bg-bit-soft text-bit" : "bg-warn/15 text-warn"}`}>{t.badge}</span>
-                  )}
+                  {t.badge &&
+                    (t.dot ? (
+                      <>
+                        <span aria-hidden className={`h-1.5 w-1.5 rounded-full ${t.badgeTone === "ok" ? "bg-bit" : "bg-warn"}`} />
+                        <span className="sr-only">{t.badge}</span>
+                      </>
+                    ) : (
+                      <span className={`rounded-full px-1.5 py-px text-[11px] font-medium ${t.badgeTone === "ok" ? "bg-bit-soft text-bit" : "bg-warn/15 text-warn"}`}>{t.badge}</span>
+                    ))}
                 </Link>
               </li>
             );
