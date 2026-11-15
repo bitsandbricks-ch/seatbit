@@ -11,10 +11,8 @@ import { clanPaymentsOn, memberLines, owedSummary, paymentsAvailable, reportedCo
 import { ClanAvatar } from "./clan-avatar";
 import { DonorBadge, SupporterBadge } from "./support-card";
 import { isDonorClan } from "@/lib/donations";
-import type { Tab } from "./tabs";
-import { SectionLayout, type NavSection } from "./section-nav";
-import { groupTabs } from "./tab-groups";
-import { PageHeader, Pill, Segmented, btnPrimary } from "./ui";
+import { ClientTabs, type ClientTab } from "./client-tabs";
+import { PageHeader, Pill, btnPrimary } from "./ui";
 import { ViewManageSwitch } from "./view-manage-switch";
 import { ActionForm } from "@/components/action-form";
 
@@ -31,7 +29,7 @@ const MANAGE_GROUPS: ClanManageTab[][] = [["general", "chat"], ["members", "gues
 
 /** Where a tab lives: stats has its own page, the rest are ?tab= on the clan or settings page. */
 export function clanTabHref(slug: string, mode: "view" | "manage", tab: string) {
-  if (mode === "view") return tab === "stats" ? `/clans/${slug}/stats` : tab === "overview" ? `/clans/${slug}` : `/clans/${slug}?tab=${tab}`;
+  if (mode === "view") return tab === "overview" ? `/clans/${slug}` : `/clans/${slug}?tab=${tab}`;
   return tab === "general" ? `/clans/${slug}/settings` : `/clans/${slug}/settings?tab=${tab}`;
 }
 
@@ -48,7 +46,7 @@ export function showsPaymentsTab(c: Clan, userId: string, perms: Set<ClanPermiss
 }
 
 /**
- * The clan's header and section list, the same on the clan page, its stats and its settings. Admins, event managers
+ * The clan's header and tabs, the same on the clan page and its settings. Admins, event managers
  * and recruiters get the View / Manage switch (like on events), with the manage tabs their role allows.
  * Switching keeps you on Members if you're there.
  */
@@ -69,7 +67,7 @@ export async function ClanHeader({
   perms: Set<ClanPermission>;
   mode: "view" | "manage";
   tab: string;
-  /** The open section's content; it sits next to the section list. */
+  /** Every tab's content, each in a <TabPanel id=...>; all render at once and switch on the client. */
   children: ReactNode;
 }) {
   const t = await getT();
@@ -101,12 +99,7 @@ export async function ClanHeader({
   const keepTab =
     tab === "members" && (other === "view" || manageTabs.includes("members")) ? "members" : other === "view" ? "overview" : manageTabs[0];
 
-  let tabs: Tab[];
-  // Manage mode: the parts of the open group, shown as a switch below the bar.
-  let parts: Tab[] = [];
-  let activeTab = tab;
-  /** One line per section row: why you'd open it. */
-  let status: Record<string, string> = {};
+  let tabs: ClientTab[];
   if (mode === "view") {
     const upcoming =
       isMember || canManage
@@ -121,50 +114,46 @@ export async function ClanHeader({
     const myOwed = showsPaymentsTab(c, meId, perms) ? owedSummary(memberLines(meId, { clanId: c.id })).count : null;
     tabs = [
       { id: "overview", label: t("event.tabs.overview") },
-      ...(isMember || canManage ? [{ id: "events", label: t("clanHeader.events"), count: upcoming }] : []),
+      ...(isMember || canManage ? [{ id: "events", label: t("clanHeader.events"), count: upcoming || undefined }] : []),
       { id: "members", label: t("clanPage.members"), count: active.length },
-      ...(myOwed !== null ? [{ id: "payments", label: t("payments.title"), badge: myOwed ? t("payments.openBadge", { count: myOwed }) : undefined }] : []),
+      ...(myOwed !== null
+        ? [{ id: "payments", label: t("payments.title"), badge: myOwed ? t("payments.openBadge", { count: myOwed }) : undefined, dot: true }]
+        : []),
       ...(perms.has("stats") ? [{ id: "stats", label: t("clanHeader.stats") }] : []),
     ];
-    status = {
-      overview: t("clanRows.overview"),
-      events: upcoming ? t("clanRows.events", { count: upcoming }) : t("clanRows.noEvents"),
-      members: t("common.members", { count: active.length }),
-      payments: myOwed ? t("payments.openBadge", { count: myOwed }) : t("clanRows.allPaid"),
-      stats: t("clanRows.stats"),
-    };
   } else {
     const types = db.select({ id: schema.lanType.id }).from(schema.lanType).where(eq(schema.lanType.clanId, c.id)).all().length;
-    const all: Record<ClanManageTab, Tab> = {
+    const toCheck = c.paymentsEnabled && manageTabs.includes("payments") ? reportedCount(c.id) : 0;
+    const all: Record<ClanManageTab, ClientTab> = {
       general: { id: "general", label: t("clanHeader.general") },
       members: {
         id: "members",
         label: t("clanPage.members"),
         count: active.length - guests,
         badge: pending ? t("clanPage.links.waiting", { count: pending }) : undefined,
+        dot: true,
       },
       guests: { id: "guests", label: t("clanPage.links.guests"), count: guests },
       types: { id: "types", label: t("clanPage.links.types"), count: types },
       invites: { id: "invites", label: t("clanPage.links.invites") },
       chat: { id: "chat", label: t("manage.tabs.chat") },
-      payments: (() => {
-        const toCheck = c.paymentsEnabled && manageTabs.includes("payments") ? reportedCount(c.id) : 0;
-        return { id: "payments", label: t("payments.title"), badge: toCheck ? t("payments.toCheck", { count: toCheck }) : undefined };
-      })(),
+      payments: { id: "payments", label: t("payments.title"), badge: toCheck ? t("payments.toCheck", { count: toCheck }) : undefined, dot: true },
       log: { id: "log", label: t("clanHeader.log") },
     };
-    // Members, guests and invite links share the bar as "People".
-    ({ bar: tabs, active: activeTab, parts } = groupTabs(MANAGE_GROUPS, manageTabs.map((x) => all[x]), tab, { members: t("clanHeader.people") }));
-    status = {
-      general: t("clanRows.general"),
-      chat: t("clanRows.chat"),
-      members: pending ? t("clanPage.links.waiting", { count: pending }) : t("clanRows.people", { members: active.length - guests, guests }),
-      guests: t("clanRows.guests", { count: guests }),
-      invites: t("clanRows.invites"),
-      types: t("clanRows.types", { count: types }),
-      payments: all.payments.badge ?? t("clanRows.payments"),
-      log: t("clanRows.log"),
-    };
+    // A group with several parts takes one place in the bar; members, guests and invite links are "People".
+    tabs = MANAGE_GROUPS.map((g) => g.filter((x) => manageTabs.includes(x)).map((x) => all[x]))
+      .filter((g) => g.length > 0)
+      .map((g): ClientTab => {
+        if (g.length === 1) return g[0];
+        const waiting = g.find((x) => x.badge);
+        return {
+          id: g[0].id,
+          label: g[0].id === "members" ? t("clanHeader.people") : g[0].label,
+          badge: waiting?.badge,
+          dot: true,
+          parts: g.map((x) => ({ id: x.id, label: x.label, dot: !!x.badge })),
+        };
+      });
   }
 
   let actions: ReactNode = null;
@@ -226,24 +215,15 @@ export async function ClanHeader({
         }
         actions={actions}
       />
-      <SectionLayout
-        sections={tabs.map(
-          (x): NavSection => ({ id: x.id, label: x.label, href: clanTabHref(c.slug, mode, x.id), status: status[x.id], dot: !!x.badge }),
-        )}
-        active={activeTab}
+      <ClientTabs
+        tabs={tabs}
+        initial={tab}
+        base={mode === "view" ? `/clans/${c.slug}` : `/clans/${c.slug}/settings`}
         label={mode === "view" ? t("clanHeader.sections") : t("clanHeader.settingsSections")}
-        backLabel={tabs[0]?.label ?? ""}
+        partsLabel={t("clanHeader.parts")}
       >
-        {parts.length > 1 && (
-          <Segmented
-            label={tabs.find((x) => x.id === activeTab)?.label}
-            value={tab}
-            fill
-            options={parts.map((x) => ({ id: x.id, href: clanTabHref(c.slug, mode, x.id), label: x.label, count: x.count, dot: !!x.badge }))}
-          />
-        )}
         {children}
-      </SectionLayout>
+      </ClientTabs>
     </>
   );
 }

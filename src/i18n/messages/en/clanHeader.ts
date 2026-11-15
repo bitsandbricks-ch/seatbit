@@ -8,5 +8,6 @@ export const clanHeader = {
   policy: { open: "Open to join", approval: "Join on request", invite: "Invite only" },
   youAre: "you're {role}",
   settingsSections: "Clan settings sections",
+  parts: "Parts",
   sections: "Clan sections",
 };

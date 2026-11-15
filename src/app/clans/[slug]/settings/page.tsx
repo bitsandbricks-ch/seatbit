@@ -49,6 +49,7 @@ import { LeadTaskEditor } from "@/components/lead-task-editor";
 import { getT } from "@/i18n/server";
 import type { T } from "@/i18n/translate";
 import { ActionForm } from "@/components/action-form";
+import { TabPanel } from "@/components/client-tabs";
 
 
 export default async function ClanSettingsPage({ params, searchParams }: PageProps<"/clans/[slug]/settings">) {
@@ -112,7 +113,8 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
     <Page>
       <ClanHeader clan={c} meId={me.id} role={clanRole(me.id, c.id)} perms={perms} mode="manage" tab={tab}>
 
-      {tab === "general" && (
+      {allowed.includes("general") && (
+      <TabPanel id="general">
         <Columns
           aside={
             <>
@@ -145,9 +147,11 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
             />
           </Card>
         </Columns>
+      </TabPanel>
       )}
 
-      {tab === "members" && (
+      {allowed.includes("members") && (
+      <TabPanel id="members">
         <Columns
           aside={
             <>
@@ -253,25 +257,37 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
             />
           </Card>
         </Columns>
+      </TabPanel>
       )}
 
-      {tab === "guests" && <GuestsTab t={t} clanId={c.id} slug={c.slug} guests={guests.map((g) => g.u)} names={people} />}
+      {allowed.includes("guests") && (
+        <TabPanel id="guests"><GuestsTab t={t} clanId={c.id} slug={c.slug} guests={guests.map((g) => g.u)} names={people} /></TabPanel>
+      )}
 
-      {tab === "chat" && <ChatTab t={t} clanId={c.id} />}
+      {allowed.includes("chat") && (
+        <TabPanel id="chat"><ChatTab t={t} clanId={c.id} /></TabPanel>
+      )}
 
-      {tab === "payments" && (
+      {allowed.includes("payments") && (
+      <TabPanel id="payments">
         <PaymentsManageTab t={t} clan={c} canSettings={perms.has("settings")} stripe={typeof sp.stripe === "string" ? sp.stripe : undefined} />
+      </TabPanel>
       )}
 
-      {tab === "log" && <LogTab t={t} clanId={c.id} slug={c.slug} sp={sp} />}
+      {allowed.includes("log") && (
+        <TabPanel id="log"><LogTab t={t} clanId={c.id} slug={c.slug} sp={sp} /></TabPanel>
+      )}
 
-      {tab === "types" && (
+      {allowed.includes("types") && (
+      <TabPanel id="types">
         <Columns>
           <TypesTab t={t} clanId={c.id} slug={c.slug} />
         </Columns>
+      </TabPanel>
       )}
 
-      {tab === "invites" && (
+      {allowed.includes("invites") && (
+      <TabPanel id="invites">
         <Columns>
           <Card title={t("clanPage.links.invites")}>
             <p className="mb-3 text-sm text-muted">{t("clanSettings.invitesHint")}</p>
@@ -295,6 +311,7 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
             </ActionForm>
           </Card>
         </Columns>
+      </TabPanel>
       )}
       </ClanHeader>
     </Page>

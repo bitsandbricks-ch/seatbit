@@ -6,7 +6,6 @@ import { addMember } from "./addMember";
 import { admin } from "./admin";
 import { adminDonations } from "./adminDonations";
 import { adminLog } from "./adminLog";
-import { adminRows } from "./adminRows";
 import { adminSettings } from "./adminSettings";
 import { attendees } from "./attendees";
 import { audit } from "./audit";
@@ -24,7 +23,6 @@ import { clanForm } from "./clanForm";
 import { clanHeader } from "./clanHeader";
 import { clanPage } from "./clanPage";
 import { clans } from "./clans";
-import { clanRows } from "./clanRows";
 import { clanSettings } from "./clanSettings";
 import { cmd } from "./cmd";
 import { colors } from "./colors";
@@ -80,7 +78,6 @@ import { picker } from "./picker";
 import { planHistory } from "./planHistory";
 import { platformRoles } from "./platformRoles";
 import { profile } from "./profile";
-import { profileRows } from "./profileRows";
 import { publish } from "./publish";
 import { reminderButtons } from "./reminderButtons";
 import { report } from "./report";
@@ -120,7 +117,6 @@ export const de: Messages = {
   admin,
   adminDonations,
   adminLog,
-  adminRows,
   adminSettings,
   attendees,
   audit,
@@ -138,7 +134,6 @@ export const de: Messages = {
   clanHeader,
   clanPage,
   clans,
-  clanRows,
   clanSettings,
   cmd,
   colors,
@@ -194,7 +189,6 @@ export const de: Messages = {
   planHistory,
   platformRoles,
   profile,
-  profileRows,
   publish,
   reminderButtons,
   report,

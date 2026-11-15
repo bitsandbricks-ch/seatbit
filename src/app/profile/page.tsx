@@ -9,10 +9,8 @@ import { NickManager } from "@/components/nick-manager";
 import { LanIdForm } from "@/components/lan-id-form";
 import { pickLanAccount } from "@/lib/lan-accounts";
 import { SignOutButton } from "@/components/sign-out-button";
-import { Card, Columns, Field, Input, Page, PageHeader, Segmented, btnPrimary, btnSecondary, halves } from "@/components/ui";
-import type { Tab } from "@/components/tabs";
-import { SectionLayout, type NavSection } from "@/components/section-nav";
-import { groupTabs } from "@/components/tab-groups";
+import { Card, Columns, Field, Input, Page, PageHeader, btnPrimary, btnSecondary, halves } from "@/components/ui";
+import { ClientTabs, TabPanel, type ClientTab } from "@/components/client-tabs";
 import { NotificationsForm } from "@/components/notifications-form";
 import { enabledProviders } from "@/lib/auth";
 import { requireUser } from "@/lib/session";
@@ -62,31 +60,31 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
   const joinServers =
     dmParam === "cant_dm" ? (await Promise.all(clanIds.map((id) => missingServers(me.id, id)))).flat() : [];
 
-  const all: Tab[] = [
-    { id: "account", label: t("profile.tabs.account") },
-    { id: "look", label: t("profile.tabs.look") },
-    ...(types.length > 0 ? [{ id: "lans", label: t("profile.tabs.lans") }] : []),
-    { id: "socials", label: t("profile.tabs.socials") },
-    { id: "emergency", label: t("emergency.tab") },
+  const tab = ["account", "look", "lans", "socials", "emergency", "notifications", "data"].includes(sp.tab as string) ? (sp.tab as string) : "account";
+  // Four tabs; avatar and socials sit with the account, emergency info with the LAN nicks.
+  const tabs: ClientTab[] = [
+    {
+      id: "account",
+      label: t("profile.tabs.account"),
+      parts: [
+        { id: "account", label: t("profile.tabs.details") },
+        { id: "look", label: t("profile.tabs.look") },
+        { id: "socials", label: t("profile.tabs.socials") },
+      ],
+    },
+    types.length > 0
+      ? {
+          id: "lans",
+          label: t("profile.tabs.events"),
+          parts: [
+            { id: "lans", label: t("profile.tabs.lans") },
+            { id: "emergency", label: t("emergency.tab") },
+          ],
+        }
+      : { id: "emergency", label: t("emergency.tab") },
     { id: "notifications", label: t("profile.tabs.notifications") },
     { id: "data", label: t("profile.tabs.data") },
   ];
-  const tab = all.find((x) => x.id === sp.tab)?.id ?? "account";
-  // Four places in the bar; avatar and socials sit with the account, emergency info with the LAN nicks.
-  const { bar, active, parts } = groupTabs([["account", "look", "socials"], ["lans", "emergency"], ["notifications"], ["data"]], all, tab, {
-    lans: t("profile.tabs.events"),
-  });
-  // Inside "Account" its first part is the name, language and sign-in.
-  const partLabel = (x: Tab) => (x.id === "account" ? t("profile.tabs.details") : x.label);
-  const href = (id: string) => (id === "account" ? "/profile" : `/profile?tab=${id}`);
-  const status: Record<string, string> = {
-    account: t("profileRows.account"),
-    lans: t("profileRows.events"),
-    emergency: t("profileRows.emergency"),
-    notifications: t(me.emailReminders ? "profileRows.emailOn" : "profileRows.emailOff") + " · " + t(hasDiscord && me.discordDms ? "profileRows.dmsOn" : "profileRows.dmsOff"),
-    data: t("profileRows.data"),
-  };
-  const sections: NavSection[] = bar.map((x) => ({ id: x.id, label: x.label, href: href(x.id), status: status[x.id] }));
 
   return (
     <Page>
@@ -100,17 +98,9 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
           </span>
         }
       />
-      <SectionLayout sections={sections} active={active} label={t("nav.yourProfile")} backLabel={bar[0].label}>
-      {parts.length > 1 && (
-        <Segmented
-          label={bar.find((x) => x.id === active)?.label}
-          value={tab}
-          fill
-          options={parts.map((x) => ({ id: x.id, href: href(x.id), label: partLabel(x) }))}
-        />
-      )}
+      <ClientTabs tabs={tabs} initial={tab === "lans" && types.length === 0 ? "account" : tab} base="/profile" label={t("nav.yourProfile")} partsLabel={t("clanHeader.parts")}>
 
-      {tab === "account" && (
+      <TabPanel id="account">
         <Columns
           aside={
             <>
@@ -143,9 +133,9 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
             </ActionForm>
           </Card>
         </Columns>
-      )}
+      </TabPanel>
 
-      {tab === "look" && (
+      <TabPanel id="look">
         <Card title={t("profile.avatar")}>
           <AppearanceForm
             initial={{ style: me.avatarStyle, color: userColor(me), icon: me.icon }}
@@ -157,9 +147,10 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
             name={defaultNick || me.name}
           />
         </Card>
-      )}
+      </TabPanel>
 
-      {tab === "lans" && (
+      {types.length > 0 && (
+      <TabPanel id="lans">
         <Card title={t("profile.nicksPerType")}>
           <p className="mb-4 text-sm text-muted">{t("profile.nicksPerTypeIntro")}</p>
           <div className={halves}>
@@ -176,16 +167,17 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
             })}
           </div>
         </Card>
+      </TabPanel>
       )}
 
-      {tab === "socials" && (
+      <TabPanel id="socials">
         <Card title={t("profile.socials")}>
           <p className="mb-4 text-sm text-muted">{t("profile.socialsIntro")}</p>
           <SocialsForm values={me.socials ?? {}} />
         </Card>
-      )}
+      </TabPanel>
 
-      {tab === "emergency" && (
+      <TabPanel id="emergency">
         <Columns>
           <Card title={t("emergency.title")}>
             <p className="mb-4 text-sm text-muted">{t("emergency.intro")}</p>
@@ -193,9 +185,9 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
             <p className="mt-4 border-t border-line pt-3 text-xs text-faint">{t("emergency.privacy")}</p>
           </Card>
         </Columns>
-      )}
+      </TabPanel>
 
-      {tab === "notifications" && (
+      <TabPanel id="notifications">
         <div className={halves}>
           <Card title={t("profile.messages")}>
             <NotificationsForm email={me.email} emailReminders={me.emailReminders} discordDms={me.discordDms} hasDiscord={hasDiscord} />
@@ -244,9 +236,9 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
             </Card>
           )}
         </div>
-      )}
+      </TabPanel>
 
-      {tab === "data" && (
+      <TabPanel id="data">
         <Columns>
           <Card title={t("profile.yourData")}>
             <YourData
@@ -257,8 +249,8 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
             />
           </Card>
         </Columns>
-      )}
-      </SectionLayout>
+      </TabPanel>
+      </ClientTabs>
     </Page>
   );
 }

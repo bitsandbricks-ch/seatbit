@@ -22,9 +22,9 @@ The first account is always owner, as is anyone in the **Admin emails** setting.
 
 ## Admin page
 
-Every admin page has the same section list: a sidebar on a desktop, rows on the *Overview* on a phone (with a back link in each section). It only shows the sections your platform role may open; *Reports* shows how many are open with a yellow dot.
+Every admin page has the same tab bar at the top, so you can switch between sections from anywhere. It only shows the tabs your platform role may open; *Reports* shows how many are open.
 
-| Section | |
+| Tab | |
 | --- | --- |
 | **Overview** | Everything on the instance. Give platform roles and suspend users or clans from the lists. Deleted accounts only show as a count. |
 | **Reports** | Abuse reports from members. See [Reports and suspensions](moderation.md). |
@@ -35,7 +35,7 @@ Every admin page has the same section list: a sidebar on a desktop, rows on the 
 | **Donations** | Donations received, when donations are on. Owners only. See [Donations](donations.md). |
 | **Settings** | Platform settings: instance configuration, see below. Owners and admins only. |
 
-A moderator sees the same sections without the settings, and support without any buttons:
+A moderator sees the same tabs without the settings, and support without any buttons:
 
 ![Admin page of a moderator](../screenshots/desktop-admin-moderator.png){ .shot }
 

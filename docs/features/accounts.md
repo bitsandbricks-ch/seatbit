@@ -2,7 +2,7 @@
 
 Sign in with Discord, set your names and nicks, choose how Seatbit reaches you, and export or delete your data.
 
-**Who:** everyone · **Where:** *Profile* (your avatar on desktop, *Profile* at the bottom on phones)
+**Who:** everyone · **Where:** *Profile* (your avatar on desktop, the tab bar on phones)
 
 ## Sign in
 
@@ -30,11 +30,11 @@ The **LANs** tab lists the upcoming events of all your clans, with the date, how
 
 ## Profile
 
-Your profile has four sections: **Account**, **At events**, **Notifications** and **Your data**. On a phone, *Account* lists the others as rows; on a desktop they are a sidebar. The first two have parts, with a switch at the top. Each part saves on its own.
+Your profile has four tabs: **Account**, **At events**, **Notifications** and **Your data**. The first two have parts, with a switch below the tab bar. Tabs switch instantly. Each part saves on its own.
 
 ![Profile](../screenshots/desktop-profile.png){ .shot }
 
-| Section | Part | |
+| Tab | Part | |
 | --- | --- | --- |
 | **Account** | **Details** | First name, surname and your default **nickname**, the app's [language](languages.md), and your **sign-in methods** (link Discord if you signed in another way). |
 | | **Avatar** | Discord picture, uploaded picture, emoji or initials. The colour is the ring around your avatar and your seat on the plan. |

@@ -8,7 +8,7 @@ A **clan** is your group: its members, the LAN types you go to every year, the e
 
 Anyone signed in can start a clan on the **Clans** page (*Start a clan*) and becomes its first admin.
 
-The clan page has **View** and **Manage** (for admins, event managers and recruiters, with the sections their role allows). Sections: **Overview**, **Events**, **Members**, **Payments** (once the clan charges you something), **Stats**. On a phone, *Overview* lists the other sections as rows with one line each (how many events are coming up, what you still owe) and a yellow dot when something waits for you; each section has a back link. On a desktop, the same rows are a sidebar on the left.
+The clan page has **View** and **Manage** (for admins, event managers and recruiters, with the tabs their role allows). Tabs: **Overview**, **Events**, **Members**, **Payments** (once the clan charges you something), **Stats**. Tabs switch instantly; a yellow dot marks one where something waits for you.
 
 ![Clan page](../screenshots/desktop-clan.png){ .shot }
 
@@ -36,9 +36,9 @@ Everyone in a clan has one **clan role**:
 
 ## Clan settings
 
-*Manage* on the clan page, laid out the same way: *General* is the start on a phone and lists the other sections; a desktop shows them as a sidebar. Sections with several parts have a switch at the top.
+*Manage* on the clan page. Related tabs share one place in the tab bar; a switch below the bar moves between their parts. Tabs switch instantly; a yellow dot marks one where something waits (join requests, payments to check).
 
-| Section | Part | |
+| Tab | Part | |
 | --- | --- | --- |
 | **General** | **General** | Name, description, avatar, join mode, guest claims, how names are shown, and the [Supporter](supporters.md) card when the instance has it on. |
 | | **Discord & WhatsApp** | Connect the clan's Discord server. See [Discord and WhatsApp](discord.md). |

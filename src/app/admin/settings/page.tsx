@@ -102,8 +102,6 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
         </Notice>
       )}
 
-      {/* The bar reaches to the screen edges by itself; here it sits next to the admin section list, so keep it in the column. */}
-      <div className="px-4 sm:px-6">
       <Tabs
         tabs={tabs.map((id) => ({
           id,
@@ -113,7 +111,6 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
         active={tab}
         hrefFor={(id) => `/admin/settings?tab=${id}`}
       />
-      </div>
 
       {tab === "general" && section("general")}
 

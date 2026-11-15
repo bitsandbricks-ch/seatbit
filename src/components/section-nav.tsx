@@ -24,7 +24,6 @@ export function SectionLayout({
   active,
   label,
   backLabel,
-  heading = true,
   children,
 }: {
   /** First one is the hub (e.g. Overview). */
@@ -34,8 +33,6 @@ export function SectionLayout({
   label: string;
   /** Phones, inside a section: the back link to the hub, e.g. "Overview". */
   backLabel: string;
-  /** Off when each section brings its own page title (platform admin), so it isn't shown twice. */
-  heading?: boolean;
   children: ReactNode;
 }) {
   const [hub, ...rest] = sections;
@@ -72,7 +69,7 @@ export function SectionLayout({
             <Link href={hub.href} scroll={false} className="inline-flex min-h-11 items-center gap-1.5 text-sm text-muted hover:text-fg lg:hidden">
               <span aria-hidden>←</span> {backLabel}
             </Link>
-            {heading && <h2 className="text-xl font-semibold tracking-tight text-fg">{sections.find((x) => x.id === active)?.label}</h2>}
+            <h2 className="text-xl font-semibold tracking-tight text-fg">{sections.find((x) => x.id === active)?.label}</h2>
           </div>
         )}
         {children}
