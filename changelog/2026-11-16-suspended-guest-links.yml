@@ -1,0 +1,10 @@
+date: 2026-11-16
+type: fixed
+en:
+  title: "Guest links respect a clan's suspension"
+  text: >-
+    A guest's personal link to a suspended clan now says the clan can't take new members, and signing in no longer takes over its guests.
+de:
+  title: "Gast-Links beachten die Sperre eines Clans"
+  text: >-
+    Der persönliche Link eines Gasts zu einem gesperrten Clan sagt jetzt, dass der Clan keine neuen Mitglieder aufnimmt, und beim Anmelden werden seine Gäste nicht mehr übernommen.

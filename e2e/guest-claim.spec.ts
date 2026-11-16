@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import { eq } from "drizzle-orm";
-import { takenGuest, user } from "../src/db/schema";
+import { clan, takenGuest, user } from "../src/db/schema";
 import { db, expect, test, userId } from "./fixtures";
 import { CLAN_ID } from "./env";
 
@@ -50,5 +50,17 @@ test.describe("guest claim links", () => {
     const david = await as("david");
     await david.goto(`/claim/${g.claimCode}`);
     await expect(david.getByRole("heading", { name: "Link no longer works" })).toBeVisible();
+  });
+
+  test("a suspended clan's guest link takes nobody in", async ({ as }) => {
+    const clanId = `e2e-clan-${crypto.randomUUID().slice(0, 8)}`;
+    db().insert(clan).values({ id: clanId, name: `Clan ${clanId}`, slug: clanId, suspendedAt: new Date() }).run();
+    const g = createGuest();
+    db().update(user).set({ guestClanId: clanId }).where(eq(user.id, g.id)).run();
+    const page = await as("ben");
+    await page.goto(`/claim/${g.claimCode}`);
+    await expect(page.getByText("This clan is suspended for now and can't take new members.")).toBeVisible();
+    await expect(page.getByRole("button", { name: "That's me, take it over" })).toHaveCount(0);
+    expect(guestExists(g.id)).toBe(true);
   });
 });

@@ -29,7 +29,7 @@ Moderators, admins and owners suspend from the admin page's clan and user lists,
 | | What happens | Restore |
 | --- | --- | --- |
 | **User** | Signed out everywhere. Signing in again only shows a "your account is suspended" page with the reason and the operator's contact email. The Discord bot treats them as not linked. | *Restore* in the user list, or `admin.mjs unsuspend` |
-| **Clan** | Members see "this clan is suspended" instead of the clan and its events, nobody can join (invite links show a notice instead of the join button), the Discord bot ignores its server, and reminders stop. Platform staff still see it, with a banner. | *Restore* in the clan list or on the report |
+| **Clan** | Members see "this clan is suspended" instead of the clan and its events, nobody can join (invite and guest links show a notice instead of the join button, and guests aren't taken over at sign-in), the Discord bot ignores its server, and reminders stop. Platform staff still see it, with a banner. | *Restore* in the clan list or on the report |
 
 Nobody can suspend themselves or someone with the same or a higher platform role.
 

@@ -8,7 +8,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db, schema } from "@/db";
 import { GUEST_CLAIM_MODES } from "@/db/schema";
-import { clanCan, clanRole, clanmateIds, getClan, saveAvatar, uniqueSlug } from "@/lib/clans";
+import { clanCan, clanRole, clanmateIds, getClan, isClanSuspended, saveAvatar, uniqueSlug } from "@/lib/clans";
 import { MEMBER_ROLES, isMemberRole, type MemberRole } from "@/lib/clan-roles";
 import { guestEmail } from "@/lib/guests";
 import { LAN_ID_MAX } from "@/lib/lan-accounts";
@@ -561,6 +561,8 @@ export async function claimGuest(code: string) {
   const me = await requireUser();
   const g = db.select().from(schema.user).where(eq(schema.user.claimCode, code)).get();
   if (!g?.isGuest) redirect("/");
+  // Same rule as joining: a suspended clan takes no one new, also not through a guest's link.
+  if (isClanSuspended(g.guestClanId)) throw await err("errors.clanSuspended");
   if (g.id !== me.id) audit({ actorId: me.id, action: "guest.claimed", clanId: g.guestClanId, data: { guest: g.name } });
   mergeGuestInto(g, me.id);
   revalidatePath("/", "layout");
@@ -593,6 +595,7 @@ async function requireClaimingMember(clanId: string) {
   const me = await requireUser();
   const c = getClan(clanId);
   if (!c) throw await err("errors.clanGone");
+  if (c.suspendedAt) throw await err("errors.clanSuspended");
   const role = clanRole(me.id, clanId);
   if (me.isGuest || !isMemberRole(role)) throw await err("errors.joinFirst");
   if (c.guestClaims === "off") throw await err("errors.claimOff");
