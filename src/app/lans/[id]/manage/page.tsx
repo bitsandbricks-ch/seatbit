@@ -19,7 +19,7 @@ import { isLanManager, requireUser } from "@/lib/session";
 import { platformCan } from "@/lib/platform-roles";
 import { OrgaManager } from "@/components/orga-manager";
 import { SeatSetup } from "@/components/seat-setup";
-import { Tabs } from "@/components/tabs";
+import { ClientTabs, TabPanel, type ClientTab } from "@/components/client-tabs";
 import { DiscordButtons, WhatsAppTexts } from "@/components/chat-panel";
 import { whatsappTexts } from "@/lib/announce";
 import { discordEnabled, inviteUrl } from "@/lib/discord-api";
@@ -79,7 +79,8 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
   // Health data: only the event's own leads, not every manager (see canSeeEmergency).
   const showEmergency = canSeeEmergency(me, l);
   const tabs = TABS.filter(([x]) => x !== "emergency" || showEmergency);
-  const tab: Tab = tabs.some(([x]) => x === sp.tab) ? (sp.tab as Tab) : "overview";
+  const asked = sp.tab === "people" ? "attendees" : sp.tab;
+  const tab: Tab = tabs.some(([x]) => x === asked) ? (asked as Tab) : "overview";
   const orgaIds = db.select().from(schema.lanOrga).where(eq(schema.lanOrga.lanId, id)).all().map((o) => o.userId);
 
   const rows = db.select().from(attendance).where(eq(attendance.lanId, id)).all();
@@ -158,7 +159,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
     })
     .sort((a, b) => statusOrder[a.status] - statusOrder[b.status] || a.name.localeCompare(b.name));
 
-  // Read (and logged) only when the tab is open.
+  // Read (and logged) only when the tab is open: it's a server-loaded part, never rendered hidden.
   const emergency = tab === "emergency" ? emergencyForLan(id) : null;
   if (emergency) logEmergencyView(l, me.id, emergency.size);
   const emergencyRows = emergency
@@ -287,7 +288,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
   // The leads' own to-dos (clan, LAN type, this event) and the LAN organizers' contacts.
   const lanTypeRow = l.typeId ? db.select().from(schema.lanType).where(eq(schema.lanType.id, l.typeId)).get() : undefined;
   const contacts = lanTypeRow ? contactsOf(lanTypeRow.id) : [];
-  const taskDefs = tab === "overview" ? tasksForLan(l) : [];
+  const taskDefs = tasksForLan(l);
   const leadTasks = buildLeadTasks({
     lan: l,
     tasks: taskDefs,
@@ -453,9 +454,38 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               href={(f) => `/lans/${l.id}/manage?tab=seats${f === "all" ? "&wishes=all" : ""}#wishes`}
               t={t}
             />}
-          {seats.length > 0 && <PlanHistory rows={tab === "seats" ? auditEntries({ lanId: l.id, group: "seats" }).rows : []} names={names} t={t} />}
+          {seats.length > 0 && <PlanHistory rows={auditEntries({ lanId: l.id, group: "seats" }).rows} names={names} t={t} />}
           </div>
   );
+
+  const seatsDot = !!swapsToApprove || (going.length - seated > 0 && seats.length > 0);
+  const clientTabs: ClientTab[] = [
+    { id: "overview", label: t("event.tabs.overview") },
+    {
+      id: "seats",
+      label: t("event.tabs.seats"),
+      badge: swapsToApprove
+        ? t("manage.badge.swaps", { count: swapsToApprove })
+        : seatsDot
+          ? t("manage.badge.unseated", { count: going.length - seated })
+          : undefined,
+      dot: true,
+    },
+    {
+      id: "people",
+      label: t("manage.tabs.people"),
+      badge: memberMissing ? t("manage.badge.missing", { count: memberMissing }) : undefined,
+      dot: true,
+      // Who's coming, who's missing and (own leads only) emergency info: one tab, a small switch inside.
+      parts: [
+        { id: "attendees", label: t("manage.parts.list") },
+        { id: "missing", label: t("manage.tabs.missing"), dot: !!memberMissing },
+        ...(showEmergency ? [{ id: "emergency", label: t("emergency.manageTab"), server: true }] : []),
+      ],
+    },
+    { id: "chat", label: t("manage.tabs.messages") },
+    { id: "settings", label: t("manage.tabs.settings") },
+  ];
 
   return (
     <Page>
@@ -467,38 +497,23 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
         canManage
         tab={tab}
         actions={
-          <div className={headerActionFrame}>
-            <a href={`/lans/${l.id}/manage/export`} className={headerAction}>
+          <div className={`${headerActionFrame} max-sm:!hidden`}>
+            <a href={`/lans/${l.id}/manage/export`} className={headerAction} aria-label={t("manage.exportCsv")} title={t("manage.exportCsv")}>
               <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
               </svg>
-              {t("manage.exportCsv")}
+              <span className="hidden sm:inline">{t("manage.exportCsv")}</span>
             </a>
           </div>
         }
       />
 
-      <Tabs
-        tabs={tabs.map(([id, label]) => ({
-          id,
-          label: t(label),
-          badge:
-            id === "missing" && memberMissing
-                ? `${memberMissing}`
-                : id === "seats" && swapsToApprove
-                  ? t("manage.badge.swaps", { count: swapsToApprove })
-                  : id === "seats" && going.length - seated > 0 && seats.length
-                    ? t("manage.badge.unseated", { count: going.length - seated })
-                    : undefined,
-        }))}
-        active={tab}
-        hrefFor={(tb) => `/lans/${l.id}/manage?tab=${tb}`}
-      />
 
+      <ClientTabs tabs={clientTabs} initial={tab} base={`/lans/${l.id}/manage`} label={t("eventGuide.sectionsLabel")} partsLabel={t("manage.attendeeParts")}>
+      <TabPanel id="overview">
       {/* Full width, so all steps fit in one row on desktop. */}
-      {tab === "overview" && <LeadChecklist steps={leadSteps} />}
-      {tab === "overview" && (
-        // Same shape as the event page: the main things on the left, dates in a sidebar on the right.
+      <LeadChecklist steps={leadSteps} />
+        {/* Same shape as the event page: the main things on the left, dates in a sidebar on the right. */}
         <div className="grid grid-cols-1 items-start gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_22rem]">
           <div className="order-last space-y-4 sm:space-y-6 lg:order-none lg:col-start-2 lg:row-start-1">
             <Card id="contacts" title={t("contacts.heading")}>
@@ -601,22 +616,6 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
             )}
           </LeadTasks>
 
-          <Card title={t("manage.news")}>
-            <NewsComposer lanId={l.id} published={!!l.publishedAt} />
-            {news.length > 0 && (
-              <ul className="mt-4 space-y-3 border-t border-line pt-4">
-                {news.slice(0, 5).map((n) => (
-                  <li key={n.id} className="text-sm">
-                    <p className="whitespace-pre-wrap text-fg/90">{n.text}</p>
-                    <p className="mt-1 flex items-center gap-3 text-xs text-faint">
-                      {n.authorId ? (names.get(n.authorId) ?? "Lead") : "Lead"} · {fmtDate(n.createdAt, t.locale)}
-                      <DeleteNewsButton id={n.id} />
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
 
           {going.some((r) => r.arrivedAt) && (
             <Card title={t("manage.checkIn")}>
@@ -631,42 +630,12 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
             </Card>
           )}
 
-          <Card title={t("manage.reminders")}>
-            <div className="space-y-4 text-sm">
-              <p className="text-muted">{t("manage.remindersHint", { count: l.reminderDays })}</p>
-              {due.length > 0 && (
-                <p className="text-warn">{t("manage.windowOpen", { kinds: due.map((k) => t(`manage.reminderKind.${k as "signup" | "payment" | "event"}`)).join(", ") })}</p>
-              )}
-              <ReminderButtons
-                lanId={l.id}
-                draft={!l.publishedAt}
-                counts={{
-                  signup: l.signupDeadline ? undecided : null,
-                  payment: l.paymentDueDate ? unpaid : null,
-                  event: going.filter((r) => wantsMail(r.userId)).length,
-                }}
-              />
-              {reminders.length > 0 && (
-                <details>
-                  <summary className="cursor-pointer text-muted">{t("manage.sentReminders", { count: reminders.length })}</summary>
-                  <ul className="mt-2 space-y-1 text-xs text-muted">
-                    {reminders
-                      .sort((a, b) => b.sentAt.getTime() - a.sentAt.getTime())
-                      .map((r) => (
-                        <li key={r.id}>
-                          {fmtDate(r.sentAt, t.locale)} · {r.kind} · {names.get(r.userId) ?? "?"}
-                        </li>
-                      ))}
-                  </ul>
-                </details>
-              )}
-            </div>
-          </Card>
           </div>
         </div>
-      )}
+      </TabPanel>
 
-      {tab === "attendees" && (l.capacity != null || waitlist.length > 0) && (
+      <TabPanel id="attendees">
+      {(l.capacity != null || waitlist.length > 0) && (
         <div id="waitlist" className="mb-4 scroll-mt-20 sm:mb-6">
           <Card
             title={`${t("event.waitlist")} (${waitlist.length})`}
@@ -686,7 +655,13 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
           </Card>
         </div>
       )}
-      {tab === "attendees" && (
+        {/* Phones: the header keeps only the title, so the export sits with the list it exports. */}
+        <a href={`/lans/${l.id}/manage/export`} className="mb-3 inline-flex min-h-9 items-center gap-1.5 text-sm font-medium text-bit hover:underline sm:hidden">
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+          </svg>
+          {t("manage.exportCsv")}
+        </a>
         <AttendanceTable
           lanId={l.id}
           profileBase={lanClan ? `/clans/${lanClan.slug}/members/` : null}
@@ -704,9 +679,10 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
             .map((u) => ({ id: u.id, name: names.get(u.id) ?? u.name }))
             .sort((a, b) => a.name.localeCompare(b.name))}
         />
-      )}
 
-      {tab === "missing" && (
+      </TabPanel>
+
+      <TabPanel id="missing">
         <WhoIsMissing
           lanId={l.id}
           groups={missingGroups}
@@ -716,15 +692,17 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
           }
           cooldownMs={NUDGE_COOLDOWN_MS}
         />
-      )}
 
-      {tab === "emergency" && (
+      </TabPanel>
+
+      {emergency && (
+      <TabPanel id="emergency">
         <EmergencyList rows={emergencyRows} t={t} profileBase={lanClan ? `/clans/${lanClan.slug}/members/` : null} />
+      </TabPanel>
       )}
 
-      {tab === "seats" && (
-        // The seat plan is the main tool: map on the left with setup, the seat flow (wishes, self pick, finalize) and wishes below it, and the seat
-        // details panel in its own column on the right (desktop).
+      <TabPanel id="seats">
+        {/* The seat plan is the main tool: map on the left with setup, the seat flow (wishes, self pick, finalize) and wishes below it, and the seat details panel in its own column on the right (desktop). */}
         <div className="space-y-5">
           {seats.length > 0 ? (
               <SeatMap
@@ -754,10 +732,58 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
             seatCards
           )}
         </div>
-      )}
 
-      {tab === "chat" && (
-        <Card title={t("manage.tabs.chat")}>
+      </TabPanel>
+
+      <TabPanel id="chat">
+        <Card title={t("manage.news")}>
+          <NewsComposer lanId={l.id} published={!!l.publishedAt} />
+          {news.length > 0 && (
+            <ul className="mt-4 space-y-3 border-t border-line pt-4">
+              {news.slice(0, 5).map((n) => (
+                <li key={n.id} className="text-sm">
+                <p className="whitespace-pre-wrap text-fg/90">{n.text}</p>
+                <p className="mt-1 flex items-center gap-3 text-xs text-faint">
+                  {n.authorId ? (names.get(n.authorId) ?? "Lead") : "Lead"} · {fmtDate(n.createdAt, t.locale)}
+                  <DeleteNewsButton id={n.id} />
+                </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+        <Card title={t("manage.reminders")}>
+          <div className="space-y-4 text-sm">
+            <p className="text-muted">{t("manage.remindersHint", { count: l.reminderDays })}</p>
+            {due.length > 0 && (
+              <p className="text-warn">{t("manage.windowOpen", { kinds: due.map((k) => t(`manage.reminderKind.${k as "signup" | "payment" | "event"}`)).join(", ") })}</p>
+            )}
+            <ReminderButtons
+              lanId={l.id}
+              draft={!l.publishedAt}
+              counts={{
+                signup: l.signupDeadline ? undecided : null,
+                payment: l.paymentDueDate ? unpaid : null,
+                event: going.filter((r) => wantsMail(r.userId)).length,
+              }}
+            />
+            {reminders.length > 0 && (
+              <details>
+                <summary className="cursor-pointer text-muted">{t("manage.sentReminders", { count: reminders.length })}</summary>
+                <ul className="mt-2 space-y-1 text-xs text-muted">
+                {reminders
+                  .sort((a, b) => b.sentAt.getTime() - a.sentAt.getTime())
+                  .map((r) => (
+                    <li key={r.id}>
+                      {fmtDate(r.sentAt, t.locale)} · {r.kind} · {names.get(r.userId) ?? "?"}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
+          </div>
+        </Card>
+        <Card title={t("manage.chatTitle")}>
           <div className="space-y-5 text-sm">
             <div className="space-y-2">
               <h3 className="font-semibold text-fg">Discord</h3>
@@ -822,9 +848,10 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
             </div>
           </div>
         </Card>
-      )}
 
-      {tab === "settings" && (
+      </TabPanel>
+
+      <TabPanel id="settings">
         <div className="space-y-5">
           <Card title={t("manage.details")}>
             <LanForm
@@ -889,7 +916,8 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
             </Card>
           )}
         </div>
-      )}
+      </TabPanel>
+      </ClientTabs>
     </Page>
   );
 }
