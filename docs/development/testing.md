@@ -32,6 +32,7 @@ npx tsx --test src/lib/seating.test.ts   # one file
 | `double-submit.spec.ts` | A double click on a form button (creating an invite link) sends it once. |
 | `delete-account.spec.ts` | A member deletes their own account: DELETE must be typed, they end up signed out on the login page with a note, and their membership and upcoming answer are gone while the clan stays. |
 | `clan-leave.spec.ts` | Leaving a clan asks first, withdraws the answers on its upcoming events (the waitlist moves up), keeps answers with a ticket, and ends lead roles (a leftover lead row gives a non-member no access). |
+| `reports.spec.ts` | A member reports a clan ("Something else" needs a short text); a moderator resolves it with a note and it moves to the closed reports. |
 | `swaps.spec.ts` | Seat swaps once the plan is out: a member asks, the other agrees, a lead approves and the seats change; declining; no swaps before the plan is out. |
 | `travel.spec.ts` | Carpool: offer a ride, join and leave it, a driver takes along someone who asked; members who aren't coming can't post or join. |
 | `clan-join.spec.ts` | Joining a clan: an admin approves or declines a request, an open clan lets you in right away, an invite-only clan only through an invite link. |
