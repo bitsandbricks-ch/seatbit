@@ -2,7 +2,7 @@
 
 Seatbit reminds people before deadlines by itself. Leads can also remind by hand, and **Who's missing** lists everyone who still owes the group something, with one-tap nudges.
 
-**Who:** leads · **Where:** *Manage → Overview* and *Manage → Who's missing*
+**Who:** leads · **Where:** *Manage → News* and *Manage → People → Who's missing*
 
 ## Automatic reminders
 
@@ -22,11 +22,11 @@ Seatbit reminds people before deadlines by itself. Leads can also remind by hand
 
 ## Manual reminders
 
-*Manage → Overview* has **Remind now** buttons for **Undecided** (everyone who hasn't answered), **No ticket** (everyone without a ticket) and **Everyone coming**, to remind them right now, even if they got the automatic reminder already.
+*Manage → News* has **Remind now** buttons for **Undecided** (everyone who hasn't answered), **No ticket** (everyone without a ticket) and **Everyone coming**, to remind them right now, even if they got the automatic reminder already.
 
 ## Who's missing
 
-*Manage → Who's missing* lists everyone who still owes the group something, step by step:
+*Manage → People → Who's missing* lists everyone who still owes the group something, step by step:
 
 - no answer to the interest check, no answer at all, or still unsure
 - coming but no ticket yet, or no nickname
