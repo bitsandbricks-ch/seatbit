@@ -90,9 +90,18 @@ function unnamed(page: Page) {
   });
 }
 
+/** Pages must fit the screen: no sideways scrolling of the whole page (wide tables scroll in their own box). */
+function overflow(page: Page) {
+  return page.evaluate(() => {
+    const doc = document.documentElement;
+    return doc.scrollWidth > window.innerWidth + 1 ? `${doc.scrollWidth}px wide on a ${window.innerWidth}px screen` : null;
+  });
+}
+
 async function visitAll(page: Page, urls: string[]) {
   const crashes: string[] = [];
   const nameless: string[] = [];
+  const wide: string[] = [];
   page.on("pageerror", (e) => crashes.push(`${page.url()}: ${e.message}`));
   for (const url of urls) {
     const res = await page.goto(url);
@@ -100,9 +109,12 @@ async function visitAll(page: Page, urls: string[]) {
     await expect(page.getByRole("main").first(), url).toBeVisible();
     await expect(page.getByText(/Application error|Internal Server Error/), url).toHaveCount(0);
     for (const el of await unnamed(page)) nameless.push(`${url}: ${el}`);
+    const w = await overflow(page);
+    if (w) wide.push(`${url}: ${w}`);
   }
   expect(crashes).toEqual([]);
   expect(nameless).toEqual([]);
+  expect(wide).toEqual([]);
 }
 
 test.describe("smoke", () => {

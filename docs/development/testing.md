@@ -37,7 +37,7 @@ npx tsx --test src/lib/seating.test.ts   # one file
 | `clan-join.spec.ts` | Joining a clan: an admin approves or declines a request, an open clan lets you in right away, an invite-only clan only through an invite link. |
 | `food.spec.ts` | Food orders at the LAN: start one, add a line with a price, the runner sees the merged list and total, ticks who paid and closes it; others can't. |
 | `payments.spec.ts` | Clan payments: a lead creates a charge, the member reports paying, the lead marks it paid. |
-| `smoke.spec.ts` | Every page (and every event tab) loads on the demo data for the people who may see it (member, lead, platform owner, and a newcomer without a clan, who sees «Ask to join» on an event link instead of the event): no error status, no crash in the browser, and every visible button, link and field has a name for screen readers (a placeholder alone doesn't count). Old links redirect on the server. Add a new page or tab to its lists. |
+| `smoke.spec.ts` | Every page (and every event tab) loads on the demo data for the people who may see it (member, lead, platform owner, and a newcomer without a clan, who sees «Ask to join» on an event link instead of the event): no error status, no crash in the browser, and every visible button, link and field has a name for screen readers (a placeholder alone doesn't count), and no page scrolls sideways (the phone project runs it on a Pixel 7 screen). Old links redirect on the server. Add a new page or tab to its lists. |
 
 `rsvp`, `seats`, `smoke` and a few more also run on a phone-sized screen (project `phone`, see `testMatch` in `playwright.config.ts`); everything runs on desktop.
 
