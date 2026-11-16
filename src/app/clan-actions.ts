@@ -130,7 +130,7 @@ export async function updateClan(_: FormState, formData: FormData): Promise<Form
 export async function joinClan(clanId: string, next?: unknown) {
   const me = await requireUser();
   const c = getClan(clanId);
-  if (!c) throw new Error("Clan not found");
+  if (!c) throw await err("errors.clanGone");
   if (c.suspendedAt) throw await err("errors.clanSuspended");
   const staff = platformCan(me, "clans");
   if (c.joinPolicy === "invite" && !staff) throw await err("errors.inviteOnly");
@@ -203,7 +203,11 @@ export async function leaveClan(clanId: string) {
 export async function setClanMemberRole(clanId: string, userId: string, role: MemberRole) {
   if (!(MEMBER_ROLES as readonly string[]).includes(role)) throw new Error("Unknown role");
   const from = clanRole(userId, clanId);
-  if (!from) throw new Error("Not in this clan");
+  if (!from) {
+    // Check the caller first, so strangers can't probe who is in a clan.
+    await requireClanPermission(clanId, "members");
+    throw await err("errors.notInClan");
+  }
   const approving = from === "pending" && role === "member";
   const me = await requireClanPermission(clanId, approving ? "members" : "roles");
   if (from === role) return;
@@ -293,9 +297,9 @@ export async function deleteClan(clanId: string) {
 export async function addClanMember(clanId: string, userId: string) {
   const me = await requireClanPermission(clanId, "members");
   const u = db.select().from(schema.user).where(eq(schema.user.id, userId)).get();
-  if (!u || u.deletedAt) throw new Error("User not found");
+  if (!u || u.deletedAt) throw await err("errors.userGone");
   // Leads add people they already share a clan with; everyone else joins by invite link or request.
-  if (!platformCan(me, "clans") && !clanmateIds(me.id).has(userId)) throw new Error("User not found");
+  if (!platformCan(me, "clans") && !clanmateIds(me.id).has(userId)) throw await err("errors.userGone");
   const from = clanRole(userId, clanId);
   if (from === "pending") audit({ actorId: me.id, action: "member.approve", clanId, targetUserId: userId });
   else if (!from) audit({ actorId: me.id, action: "member.add", clanId, targetUserId: userId });
@@ -580,7 +584,7 @@ export async function setClanDiscordInvite(clanId: string, guildId: string, form
 async function requireClaimingMember(clanId: string) {
   const me = await requireUser();
   const c = getClan(clanId);
-  if (!c) throw new Error("Clan not found");
+  if (!c) throw await err("errors.clanGone");
   const role = clanRole(me.id, clanId);
   if (me.isGuest || !isMemberRole(role)) throw await err("errors.joinFirst");
   if (c.guestClaims === "off") throw await err("errors.claimOff");

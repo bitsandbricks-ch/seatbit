@@ -1,4 +1,11 @@
 export const errors = {
+  travelMax: "You already have {count} ride and sleeping posts here. Edit or remove one first.",
+  packingMax: "Your packing list is full ({count} items).",
+  gone: "This doesn't exist anymore. Reload the page and try again.",
+  userGone: "This person doesn't exist anymore.",
+  notAllowed: "You're not allowed to do that.",
+  notInClan: "This person isn't a member of this clan.",
+  notOnEvent: "This person isn't on this event.",
   taskTitle: "Give the to-do a title.",
   taskGone: "That to-do or contact doesn't exist any more.",
   contactName: "Give the contact a name.",

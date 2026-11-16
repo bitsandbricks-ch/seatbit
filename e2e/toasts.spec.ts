@@ -46,4 +46,13 @@ test.describe("toasts", () => {
     await expect(page.getByRole("list", { name: "Errors" }).getByText("You have a ticket, so your answer is locked.", { exact: false })).toBeVisible();
     await expect(page.getByRole("region", { name: "Your attendance" })).toBeVisible();
   });
+
+  test("a form error names the field in the reader's language", async ({ as }) => {
+    const page = await as("anna");
+    await page.goto("/profile");
+    // Only spaces pass the browser's required check; the server says what's wrong.
+    await page.getByRole("textbox", { name: "First name" }).fill("   ");
+    await page.getByRole("button", { name: "Save", exact: true }).first().click();
+    await expect(page.getByRole("list", { name: "Errors" }).getByText("First name: please fill this in.")).toBeVisible();
+  });
 });

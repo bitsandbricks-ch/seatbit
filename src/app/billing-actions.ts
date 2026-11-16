@@ -6,13 +6,13 @@ import { checkoutUrl, portalUrl, type SupportPlan } from "@/lib/billing";
 import { DONATION_MAX, DONATION_MIN, donationCheckoutUrl } from "@/lib/donations";
 import { getLegal } from "@/lib/legal";
 import { requireClanPermission, requireUser } from "@/lib/session";
-import { getT } from "@/i18n/server";
+import { err, getT } from "@/i18n/server";
 
 /** Sends a clan admin to Stripe Checkout to become a Supporter. */
 export async function startSupport(clanId: string, plan: SupportPlan) {
   const me = await requireClanPermission(clanId, "settings");
   const c = getClan(clanId);
-  if (!c) throw new Error("Clan not found");
+  if (!c) throw await err("errors.clanGone");
   let url: string;
   try {
     url = await checkoutUrl(c, plan === "month" ? "month" : "year", { email: me.email });
@@ -26,7 +26,7 @@ export async function startSupport(clanId: string, plan: SupportPlan) {
 export async function manageSupport(clanId: string) {
   await requireClanPermission(clanId, "settings");
   const c = getClan(clanId);
-  if (!c) throw new Error("Clan not found");
+  if (!c) throw await err("errors.clanGone");
   let url: string;
   try {
     url = await portalUrl(c);
