@@ -46,6 +46,7 @@ export const fx = {
   otherLan: "demo-lan-x",
   type: "",
   otherType: "demo-type-x",
+  legacyType: "demo-type-legacy", // from before clans: belongs to no clan
   guest: "demo-yannick",
   guestClaim: "",
   invite: "demo-invite",
@@ -93,6 +94,7 @@ export async function setup() {
   db.insert(s.clan).values({ id: fx.otherClan, name: "Other Clan", slug: "other-clan", joinPolicy: "approval" }).run();
   db.insert(s.clanMember).values({ clanId: fx.otherClan, userId: ACTORS.outsider, role: "admin" }).run();
   db.insert(s.lanType).values({ id: fx.otherType, clanId: fx.otherClan, name: "Other LAN" }).run();
+  db.insert(s.lanType).values({ id: fx.legacyType, clanId: null, name: "Old LAN" }).run();
   db.insert(s.lan)
     .values({
       id: fx.otherLan,
