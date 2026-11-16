@@ -8,7 +8,7 @@ Decide what to play and make sure everyone has it installed before the LAN.
 - **Fix** a game later with the pencil: name, size or store link. Whoever added it and the event's leads can edit or remove it; votes and *installed* ticks stay.
 - **From last time:** for an event of a LAN type, the games of the clan's previous event of that type that aren't on the list yet show above the form. Tap one to add it again, with its size and link (your vote included).
 - **Vote** for the ones you want to play. The list is sorted by votes.
-- **Tick off** what you installed. The tab shows how many games you still have to install.
+- **Tick off** what you installed. The tab shows how many of the games you voted for you still have to install, and their size. Games only others voted for don't count.
 - Two days before the LAN, everyone coming gets an *install your games* [reminder](reminders.md).
 
 ![Games](../screenshots/desktop-games.png){ .shot }

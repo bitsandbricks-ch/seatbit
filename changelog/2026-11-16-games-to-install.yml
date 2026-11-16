@@ -1,0 +1,13 @@
+date: 2026-11-16
+type: fixed
+en:
+  title: "Games to install counts only your votes"
+  text: >-
+    The "You still need … games" hint, the games step of your checklist and the dot on Games now count only
+    the games you voted for and haven't ticked as installed. Games only others want no longer show up there.
+de:
+  title: "Zu installierende Games zählen nur deine Stimmen"
+  text: >-
+    Der Hinweis «Dir fehlen noch … Games», der Games-Schritt deiner Checkliste und der Punkt bei Games zählen
+    jetzt nur die Games, für die du gestimmt und die du noch nicht als installiert abgehakt hast. Games, die
+    nur andere wollen, erscheinen dort nicht mehr.

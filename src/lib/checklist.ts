@@ -27,7 +27,7 @@ export function buildChecklist(input: {
   freeSeats: number;
   /** Place on the waitlist (1 = next), when waitlisted. */
   waitlistPlace?: number;
-  /** Games someone voted for, and how many of them I haven't marked installed. Left out: no games step. */
+  /** Games I voted for, and how many of them I haven't marked installed. Left out: no games step. */
   games?: { voted: number; toInstall: number };
   now?: Date;
   /** Language of the titles and hints; English when left out. */

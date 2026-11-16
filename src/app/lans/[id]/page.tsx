@@ -37,6 +37,7 @@ import { pastPackingItems } from "@/lib/packing-history";
 import { GameList } from "@/components/game-list";
 import { EventRecap } from "@/components/event-recap";
 import { GAMES_REMINDER_DAYS, listGames, previousGames } from "@/lib/games";
+import { myGamesTodo } from "@/lib/games-todo";
 import { SeatSwapPanel, type SwapView } from "@/components/seat-swaps";
 import { CheckInButton, DeleteNewsButton } from "@/components/event-extras";
 import { InterestList } from "@/components/interest-list";
@@ -207,7 +208,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
   const picking = l.seatPicking && !published;
   const mySeatLabel = published || picking ? (seats.find((s) => s.userId === me.id)?.label ?? null) : null;
   const games = listGames(id, me.id);
-  const gamesToInstall = games.filter((g) => g.votes > 0 && !g.myInstalled).length;
+  const gamesTodo = myGamesTodo(games);
+  const gamesToInstall = gamesTodo.toInstall;
   const steps = buildChecklist({
     lan: l,
     attendance: my,
@@ -218,7 +220,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
     hasSeatPlan: seats.length > 0,
     freeSeats: seats.filter((s) => !s.userId && !s.locked).length,
     waitlistPlace: myPlace,
-    games: { voted: games.filter((g) => g.votes > 0).length, toInstall: gamesToInstall },
+    games: gamesTodo,
     now,
     t,
   });
