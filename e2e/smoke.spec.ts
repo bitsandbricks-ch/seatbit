@@ -1,5 +1,7 @@
 import type { Page } from "@playwright/test";
-import { expect, test } from "./fixtures";
+import { eq } from "drizzle-orm";
+import { schema } from "../src/db";
+import { db, expect, signInById, test } from "./fixtures";
 
 // Every page loads for the people who may see it: no error status, no crash in the browser, and
 // every visible button, link and field has a name for screen readers.
@@ -23,6 +25,9 @@ const MEMBER_PAGES = [
   "/terms",
   "/privacy",
 ];
+
+// Someone who just signed up and isn't in any clan yet: the empty states.
+const NEWCOMER_PAGES = ["/", "/clans", "/profile", ...["notifications", "data"].map((t) => `/profile?tab=${t}`), "/changelog", "/donate"];
 
 const LEAD_PAGES = [
   `/lans/${LAN}/manage`,
@@ -103,6 +108,29 @@ async function visitAll(page: Page, urls: string[]) {
 test.describe("smoke", () => {
   test("a member can open every member page", async ({ as }) => {
     await visitAll(await as("anna"), MEMBER_PAGES);
+  });
+
+  test("a newcomer without a clan can open every page they have", async ({ browser }) => {
+    const id = `e2e-newcomer-${Date.now()}`;
+    db()
+      .insert(schema.user)
+      .values({ id, name: "Nora Neu", firstName: "Nora", lastName: "Neu", email: `${id}@example.com`, emailVerified: true, createdAt: new Date(), updatedAt: new Date() })
+      .run();
+    const context = await browser.newContext();
+    try {
+      await signInById(context, id);
+      const page = await context.newPage();
+      await visitAll(page, NEWCOMER_PAGES);
+      // An event of a clan they're not in shows how to get in, not the event itself.
+      await page.goto(`/lans/${LAN}`);
+      await expect(page.getByRole("main").first()).toBeVisible();
+      await expect(page.getByText(/Application error|Internal Server Error/)).toHaveCount(0);
+      await expect(page.getByRole("tab", { name: "Seats" })).toHaveCount(0);
+      await expect(page.getByRole("button", { name: "Ask to join" })).toBeVisible();
+    } finally {
+      await context.close();
+      db().delete(schema.user).where(eq(schema.user.id, id)).run();
+    }
   });
 
   test("a lead can open every lead page", async ({ as }) => {
