@@ -1,0 +1,12 @@
+date: 2026-11-16
+type: improved
+en:
+  title: "Date fields have their own names"
+  text: >-
+    Screen readers used to call every date field "Pick a date" or "No deadline". They now say which date it
+    is, like "Starts", "Answer by" or "Last call".
+de:
+  title: "Datumsfelder haben eigene Namen"
+  text: >-
+    Screenreader nannten bisher jedes Datumsfeld «Datum wählen» oder «Keine Frist». Jetzt sagen sie, um welches
+    Datum es geht, etwa «Beginn», «Antworten bis» oder «Bestellschluss».
