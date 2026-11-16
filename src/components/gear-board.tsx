@@ -1,5 +1,5 @@
 "use client";
-import { useState, useTransition } from "react";
+import { useOptimistic, useState, useTransition } from "react";
 import { addPackingItem, deletePackingItem, setPacked, setPackingItemPacked } from "@/app/travel-gear-actions";
 import { addPastPackingItems } from "@/app/packing-history-actions";
 import { Card, Input, btnPrimary } from "./ui";
@@ -28,8 +28,8 @@ export function PackingList({
   const [pending, start] = useTransition();
   const act = useRunAction();
   const [draft, setDraft] = useState("");
-  // Optimistic ticks, so the checkbox doesn't wait for the server.
-  const [ticks, setTicks] = useState<Record<string, boolean>>({});
+  // Ticks show at once (slow LAN wifi) and fall back if saving fails.
+  const [ticks, setTick] = useOptimistic<Record<string, boolean>, [string, boolean]>({}, (s, [k, on]) => ({ ...s, [k]: on }));
 
   const run = (fn: () => Promise<unknown>, after?: () => void) =>
     start(async () => {
@@ -62,8 +62,10 @@ export function PackingList({
                 checked={r.packed}
                 onChange={(e) => {
                   const on = e.target.checked;
-                  setTicks((t) => ({ ...t, [r.key]: on }));
-                  run(() => (r.ownId ? setPackingItemPacked(r.ownId, on) : setPacked(lanId, r.key, on)));
+                  run(() => {
+                    setTick([r.key, on]);
+                    return r.ownId ? setPackingItemPacked(r.ownId, on) : setPacked(lanId, r.key, on);
+                  });
                 }}
               />
               <span className={`truncate ${r.packed ? "text-faint line-through" : "text-fg"}`}>{r.label}</span>
