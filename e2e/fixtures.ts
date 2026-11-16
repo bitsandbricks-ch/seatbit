@@ -32,11 +32,16 @@ export const db = () => (conn ??= open());
  * ("<token>.<base64 HMAC-SHA256>", same as scripts/screenshots.ts).
  */
 export async function signIn(context: BrowserContext, who: Who) {
+  await signInById(context, userId(who));
+}
+
+/** The same for any user row, e.g. one a test created itself. */
+export async function signInById(context: BrowserContext, id: string) {
   const token = crypto.randomBytes(24).toString("base64url");
   const now = new Date();
   db()
     .insert(schema.session)
-    .values({ id: crypto.randomUUID(), token, userId: userId(who), expiresAt: new Date(now.getTime() + 864e5), createdAt: now, updatedAt: now })
+    .values({ id: crypto.randomUUID(), token, userId: id, expiresAt: new Date(now.getTime() + 864e5), createdAt: now, updatedAt: now })
     .run();
   const sig = crypto.createHmac("sha256", SECRET).update(token).digest("base64");
   await context.addCookies([{ name: "better-auth.session_token", value: encodeURIComponent(`${token}.${sig}`), url: BASE_URL, httpOnly: true, sameSite: "Lax" }]);
