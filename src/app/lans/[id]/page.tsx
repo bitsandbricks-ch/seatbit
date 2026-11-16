@@ -33,6 +33,7 @@ import { GlanceList, type GlanceRow } from "@/components/glance-list";
 import { TravelBoard, type TravelPostView } from "@/components/travel-board";
 import { PackingList } from "@/components/gear-board";
 import { PACKING_ITEMS } from "@/lib/gear";
+import { pastPackingItems } from "@/lib/packing-history";
 import { GameList } from "@/components/game-list";
 import { EventRecap } from "@/components/event-recap";
 import { GAMES_REMINDER_DAYS, listGames, previousGames } from "@/lib/games";
@@ -714,7 +715,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
 
       <TabPanel id="gear">
         <Columns>
-          <PackingList lanId={l.id} items={PACKING_ITEMS} packed={packed} own={ownItems} />
+          <PackingList lanId={l.id} items={PACKING_ITEMS} packed={packed} own={ownItems} past={l.endsAt > now ? pastPackingItems(me.id, l.id) : []} />
         </Columns>
       </TabPanel>
 

@@ -31,6 +31,7 @@ import * as seatPlan from "../../src/app/seat-plan-actions";
 import * as seatWish from "../../src/app/seat-wish-actions";
 import * as teams from "../../src/app/team-actions";
 import * as search from "../../src/app/search-actions";
+import * as packingHistory from "../../src/app/packing-history-actions";
 import * as metrics from "../../src/app/api/metrics/route";
 import * as leadExport from "../../src/app/lans/[id]/manage/export/route";
 import * as profileExport from "../../src/app/profile/export/route";
@@ -58,6 +59,7 @@ export const MODULES = {
   "seat-plan-actions": seatPlan,
   "seat-wish-actions": seatWish,
   "team-actions": teams,
+  "packing-history-actions": packingHistory,
   "search-actions": search,
 } as const;
 
@@ -262,6 +264,8 @@ export const SPECS: Spec[] = [
   { name: "travel-gear-actions.addPackingItem", allow: MEMBERS, run: () => travel.addPackingItem(fx.lan, "Fan") },
   { name: "travel-gear-actions.setPackingItemPacked", allow: ["member"], run: () => travel.setPackingItemPacked(fx.annaPackingItem, true) },
   { name: "travel-gear-actions.deletePackingItem", allow: ["member"], run: () => travel.deletePackingItem(fx.annaPackingItem) },
+  // Anna has an own item on Lakeside, which Mountain (later) offers again.
+  { name: "packing-history-actions.addPastPackingItems", allow: MEMBERS, run: () => packingHistory.addPastPackingItems(fx.pickLan) },
 
   // ---------- food-actions.ts ----------
   { name: "food-actions.createFoodOrder", allow: [...LAKESIDE_ATTENDEES, ...LAN_MANAGERS], run: () => food.createFoodOrder(fx.lan, form({ title: "Sushi", shop: "", note: "", closesAt: "" })) },

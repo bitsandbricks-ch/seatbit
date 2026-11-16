@@ -7,6 +7,9 @@ export const packing: Messages["packing"] = {
   placeholder: "Sache hinzufügen, z. B. Controller",
   newItem: "Neue Sache",
   add: "Hinzufügen",
+  pastTitle: "Von deinen früheren LANs",
+  pastAll: "Alle hinzufügen",
+  pastAdd: "{item} wieder hinzufügen",
   items: {
     pc: "PC oder Laptop",
     screen: "Bildschirm",
