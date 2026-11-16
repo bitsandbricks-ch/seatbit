@@ -4,7 +4,11 @@ import { Tabs, type Tab } from "./tabs";
 import { Segmented } from "./ui";
 
 /** A tab in the bar. With `parts`, it groups several panels behind a small switch (e.g. Trip: travel, packing, ...). */
-export type ClientTab = Tab & { parts?: { id: string; label: string; dot?: boolean }[] };
+export type ClientTab = Tab & {
+  parts?: { id: string; label: string; dot?: boolean; server?: boolean }[];
+  /** Opens with a normal page load, e.g. when reading its data is logged and must only happen on purpose. */
+  server?: boolean;
+};
 
 /**
  * Tabs that switch on the client: every panel is rendered by the server at once, a tap only shows another one, so
@@ -42,7 +46,7 @@ export function ClientTabs({
   }
 
   const first = tabs[0]?.id;
-  const ids = new Set(tabs.flatMap((t) => (t.parts ? t.parts.map((p) => p.id) : [t.id])));
+  const ids = new Set(tabs.flatMap((t) => (t.parts ? t.parts.filter((p) => !p.server).map((p) => p.id) : t.server ? [] : [t.id])));
   const hrefFor = (id: string) => (id === first ? base : `${base}?tab=${id}`);
 
   useEffect(() => {
