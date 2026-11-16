@@ -24,4 +24,6 @@ export const games: Messages["games"] = {
   add: "Hinzufügen",
   addedBy: "Hinzugefügt von {name}",
   you: "dir",
+  lastTime: "Letztes Mal an der {lan} gespielt, zum Hinzufügen antippen:",
+  addPast: "{name} wieder hinzufügen",
 };

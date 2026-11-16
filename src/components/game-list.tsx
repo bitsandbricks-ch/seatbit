@@ -1,7 +1,7 @@
 "use client";
 import { useRef, useState, useTransition } from "react";
 import { addGame, deleteGame, setGameMark, updateGame } from "@/app/lan-extras-actions";
-import type { GameView } from "@/lib/games";
+import type { GameView, PastGame } from "@/lib/games";
 import { btnGhost, btnPrimary, btnSecondary, input } from "./ui";
 import { useT } from "@/i18n/client";
 import { useRunAction } from "./action-form";
@@ -20,6 +20,7 @@ export function GameList({
   names,
   avatars,
   reminderDays,
+  lastTime,
 }: {
   lanId: string;
   games: GameView[];
@@ -30,6 +31,8 @@ export function GameList({
   names: Record<string, string>;
   avatars: Record<string, AvatarData>;
   reminderDays: number;
+  /** Games of the previous event of this LAN type that aren't on the list yet. */
+  lastTime?: { lanName: string; games: PastGame[] } | null;
 }) {
   const t = useT();
   const [pending, start] = useTransition();
@@ -42,6 +45,13 @@ export function GameList({
     });
   const toInstall = games.filter((g) => g.votes > 0 && !g.myInstalled);
   const gb = toInstall.reduce((n, g) => n + (g.sizeGb ?? 0), 0);
+  const addPast = (p: PastGame) => {
+    const fd = new FormData();
+    fd.set("name", p.name);
+    fd.set("sizeGb", p.sizeGb == null ? "" : String(p.sizeGb));
+    fd.set("url", p.url);
+    run(() => addGame(lanId, fd));
+  };
 
   return (
     <div className="space-y-5">
@@ -165,6 +175,29 @@ export function GameList({
             ),
           )}
         </ul>
+      )}
+
+      {canAdd && lastTime && lastTime.games.length > 0 && (
+        <section aria-label={t("games.lastTime", { lan: lastTime.lanName })} className="space-y-2">
+          <p className="text-xs text-muted">{t("games.lastTime", { lan: lastTime.lanName })}</p>
+          <ul className="flex flex-wrap gap-2">
+            {lastTime.games.map((p) => (
+              <li key={p.name}>
+                <button
+                  type="button"
+                  disabled={pending}
+                  onClick={() => addPast(p)}
+                  aria-label={t("games.addPast", { name: p.name })}
+                  title={t("games.votes", { count: p.votes })}
+                  className="min-h-9 rounded-md border border-dashed border-line px-3 text-sm text-muted transition hover:border-bit hover:text-fg"
+                >
+                  + {p.name}
+                  {p.sizeGb != null && <span className="ml-1.5 text-xs text-faint">{p.sizeGb} GB</span>}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
       {canAdd && (

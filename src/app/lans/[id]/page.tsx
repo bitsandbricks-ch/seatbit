@@ -35,7 +35,7 @@ import { PackingList } from "@/components/gear-board";
 import { PACKING_ITEMS } from "@/lib/gear";
 import { GameList } from "@/components/game-list";
 import { EventRecap } from "@/components/event-recap";
-import { GAMES_REMINDER_DAYS, listGames } from "@/lib/games";
+import { GAMES_REMINDER_DAYS, listGames, previousGames } from "@/lib/games";
 import { SeatSwapPanel, type SwapView } from "@/components/seat-swaps";
 import { CheckInButton, DeleteNewsButton, InterestButtons } from "@/components/event-extras";
 import { InterestList } from "@/components/interest-list";
@@ -637,6 +637,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
             names={gameNames}
             avatars={gameAvatars}
             reminderDays={GAMES_REMINDER_DAYS}
+            lastTime={l.endsAt > now ? previousGames(l) : null}
           />
         </div>
       </TabPanel>

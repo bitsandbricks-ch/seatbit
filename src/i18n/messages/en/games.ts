@@ -22,4 +22,6 @@ export const games = {
   add: "Add",
   addedBy: "Added by {name}",
   you: "you",
+  lastTime: "Played last time at {lan}, tap to add:",
+  addPast: "Add {name} again",
 };
