@@ -7,7 +7,7 @@ import { PageHeader } from "./ui";
 import { fmtDate, lanRange } from "@/lib/format";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/db";
-import { OpenSignupButton, PublishEvent, UndoCancelButton } from "./publish-event";
+import { OpenSignup, PublishEvent, UndoCancelButton } from "./publish-event";
 import { ShareButton } from "./share-button";
 import { lanLink } from "@/lib/announce";
 import { getT } from "@/i18n/server";
@@ -145,20 +145,30 @@ function EventStatus({ lan: l, canManage, t }: { lan: Lan; canManage: boolean; t
     );
   }
   if (l.interestCheck) {
-    const answers = db.select().from(schema.lanInterest).where(eq(schema.lanInterest.lanId, l.id)).all();
-    const n = (a: string) => answers.filter((x) => x.answer === a).length;
+    const answers = db.select().from(schema.attendance).where(eq(schema.attendance.lanId, l.id)).all();
+    const n = (...st: string[]) => answers.filter((x) => st.includes(x.status)).length;
     return (
       <section aria-label={t("eventUi.interestCheck")} className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-bit/40 bg-bit-soft p-3 sm:p-4">
         <div className="min-w-0 text-sm">
           <p className="font-semibold text-bit">{t("eventUi.interestCheck")}</p>
           <p className="text-muted">
-            {t("eventUi.interestText")}
-            <Link href={`/lans/${l.id}?tab=attendees`} className="block text-fg hover:text-bit hover:underline">
-              {t("eventUi.interestCounts", { yes: n("yes"), maybe: n("maybe"), no: n("no") })}
+            {t("eventUi.interestText")}{" "}
+            {l.signupOpensAt &&
+              !l.dateTbd &&
+              t.rich("eventUi.signupOpensOn", { date: <span className="text-fg">{fmtDate(l.signupOpensAt, t.locale)}</span> })}
+            <Link href={`/lans/${l.id}#interest`} className="block text-fg hover:text-bit hover:underline">
+              {t("eventUi.interestCounts", { yes: n("going", "waitlist"), maybe: n("maybe"), no: n("declined") })}
             </Link>
           </p>
         </div>
-        {canManage && <OpenSignupButton lanId={l.id} dateTbd={l.dateTbd} />}
+        {canManage && (
+          <OpenSignup
+            lanId={l.id}
+            dateTbd={l.dateTbd}
+            scheduled={l.signupOpensAt ? fmtDate(l.signupOpensAt, t.locale) : null}
+            published={!!l.publishedAt}
+          />
+        )}
       </section>
     );
   }

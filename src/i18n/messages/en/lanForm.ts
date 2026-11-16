@@ -2,7 +2,7 @@ export const lanForm = {
   moved: { end: "end", answerBy: "answer by", ticketBy: "ticket by", text: "Moved {what} along with the start." },
   interest: "Start with an interest check",
   interestHint:
-    "Members first only say whether they'd come, before sign-up, tickets and seats. The date can stay open. You open sign-up when you've decided.",
+    "Members first only answer coming, unsure or not coming; seats, travel and the rest stay hidden. The date can stay open. You open sign-up when you've decided (or schedule it), and the answers carry over.",
   interestOn: "This event is in its interest check. End it with «Open sign-up» at the top of the page.",
   interestLocked: "Sign-up is open and members have answered, so it can't go back to an interest check.",
   tbd: "Date not fixed yet",

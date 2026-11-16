@@ -7,7 +7,7 @@ An **event** is one edition of a LAN the group attends. It goes from draft (opti
 | Stage | Who sees it | What happens |
 | --- | --- | --- |
 | **Draft** | Leads, clan admins, event managers | Nothing goes out. |
-| **Interest check** (optional) | The clan | *Would you come?* answers, date can stay open. |
+| **Interest check** (optional) | The clan | Only the *Would you come?* answer and who answered; date can stay open. |
 | **Published** | The clan | Announcement, answers, tickets, seats, reminders. |
 | **LAN day** | The clan | Check-in with *I'm here*. |
 | **Cancelled** | The clan, greyed out | Everyone who answered is told. Can be undone. |
@@ -49,10 +49,12 @@ Publishing shows the event to the clan, posts the [Discord announcement](discord
 
 For when you're not sure yet if, or when, the group goes. Turn it on when creating the event, or later under *Settings* while it's a draft or nobody has answered.
 
-- Members answer *I'd come*, *Maybe* or *Not this time*. Nothing is binding.
-- Everyone sees who answered what: the Overview lists the members under *Interested*, *Maybe* and *Not interested*, with the clan's name display and avatars. The *Attendees* tab is called *Interest* until sign-up opens and shows the same list; tap the counts in the banner to get there.
+- Members answer with the usual *I'm coming*, *Unsure* or *Not coming*. Nothing is binding yet, and the event's limit doesn't count, so nobody lands on the waitlist.
+- The event page shows only that answer, the description, news and **Who answered**: the members under *Coming*, *Unsure*, *Not coming* and *No answer yet*, with the clan's name display and avatars. Seats, travel, packing, games, costs and the checklist stay hidden until sign-up opens. Tap the counts in the banner to get to the list.
+- Leads get a **Remind** button on *No answer yet*. It sends the same nudge as [Who's missing](reminders.md) (Discord DM or email, at most once every 12 hours per person).
 - The date can stay open with a rough hint like "Spring 2027".
-- **Open sign-up** (after setting the date) tells everyone who was interested (except those who said no) and starts normal answers, tickets and seats.
+- **Open sign-up** (after setting the date) asks once, then opens the rest of the event. Everyone keeps their answer, and everyone except those who said no gets a "sign-up is open" message.
+- **Schedule…** next to it opens sign-up by itself at a date and time you pick; members see when. *Don't schedule* takes it back.
 
 <div class="phones" markdown>
 <figure markdown>
@@ -122,7 +124,7 @@ The top of *Manage → Overview* lists what the leads still have to do for the e
 | Step | Done when |
 | --- | --- |
 | **Publish the event** | The event is published (waits while a scheduled publish is set). |
-| **Open sign-up** | Only during an [interest check](#interest-check): you opened sign-up. |
+| **Open sign-up** | Only during an [interest check](#interest-check): you opened sign-up (waits while an opening is scheduled). |
 | **Enter the group's seats** | The seat block is entered. |
 | **Move people up from the waitlist** | Only when you move people up by hand and a spot is free. |
 | **Everyone has a ticket** | Everyone coming ticked *I have my ticket* (or a lead ticked it for them). Waits on members, nothing to confirm. |
