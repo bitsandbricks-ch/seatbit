@@ -8,6 +8,7 @@ export const leadSteps: Messages["leadSteps"] = {
   publishDraft: "Es ist ein Entwurf: Nur Leads sehen es. Veröffentliche es oben.",
   signup: "Anmeldung öffnen",
   signupHint: "Die Interessensabfrage läuft. Nutze oben «Anmeldung öffnen», sobald ihr wisst, dass ihr geht.",
+  signupScheduled: "Die Anmeldung geht am {date} von selbst auf.",
   seats: "Plätze der Gruppe eintragen",
   seatsDone: "{count} Plätze.",
   seatsHint: "Trag den Platzblock ein, den das Event der Gruppe gegeben hat.",

@@ -180,7 +180,9 @@ export function describeAudit(
     case "event.schedule":
       return t(d.at ? "audit.eventSchedule" : "audit.eventUnschedule", { ...v, at: String(d.at ?? "") });
     case "event.signup_open":
-      return t("audit.signupOpen", v);
+      return t(d.scheduled ? "audit.signupOpenScheduled" : "audit.signupOpen", v);
+    case "event.signup_schedule":
+      return t(d.at ? "audit.signupSchedule" : "audit.signupUnschedule", { ...v, at: String(d.at ?? "") });
     case "event.cancel":
       return t(d.reason ? "audit.cancelReason" : "audit.cancel", v);
     case "event.uncancel":
