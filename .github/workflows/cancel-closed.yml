@@ -1,0 +1,46 @@
+name: Cancel runs of closed pull requests
+
+# GitHub keeps running (and queueing) a pull request's checks after it is merged
+# or closed. Merging a stack of pull requests left 100+ such runs holding the
+# repository's share of runners, so main and open pull requests waited behind
+# them. The concurrency groups only cancel older runs of the same pull request.
+on:
+  # _target so it also gets a token that may cancel on pull requests from forks.
+  # Safe: it checks out nothing and runs no code from the pull request.
+  pull_request_target:
+    types: [closed]
+
+permissions:
+  actions: write
+
+jobs:
+  cancel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Cancel queued and running checks of this pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          # Workflow runs on the pull request's branch (never pushes, so a fork's
+          # "main" can't hit ours), plus code scanning's runs on refs/pull/N/head.
+          filter='.workflow_runs[]
+            | select((.head_branch == env.HEAD_REF and .head_repository.full_name == env.HEAD_REPO and .event != "push")
+                     or .head_branch == ("refs/pull/" + env.PR + "/head"))
+            | .id'
+          for status in queued waiting pending requested in_progress; do
+            gh api --paginate -X GET "repos/$GH_REPO/actions/runs" -f status="$status" -f per_page=100 --jq "$filter"
+          done | sort -u > runs.txt
+          echo "Open runs of #$PR: $(grep -vcx "$GITHUB_RUN_ID" runs.txt || true)"
+          while read -r id; do
+            [ "$id" = "$GITHUB_RUN_ID" ] && continue
+            if gh api -X POST "repos/$GH_REPO/actions/runs/$id/cancel" > /dev/null 2>&1; then
+              echo "Cancelled $id"
+            else
+              echo "Could not cancel $id (probably finished meanwhile)"
+            fi
+          done < runs.txt
