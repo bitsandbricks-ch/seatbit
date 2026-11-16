@@ -237,7 +237,7 @@ function SuspendForm({ t, action, label }: { t: T; action: (form: FormData) => P
       <summary className={`${btnGhost} cursor-pointer list-none !text-danger`}>{t("moderation.suspend")}</summary>
       <ActionForm action={action} className="mt-2 w-64 max-w-full space-y-2 rounded-card border border-line bg-surface p-3 text-left text-sm">
         <p className="font-medium">{label}</p>
-        <input name="reason" className={input} placeholder={t("moderation.reasonPlaceholder")} maxLength={500} />
+        <input name="reason" className={input} placeholder={t("moderation.reasonPlaceholder")} aria-label={t("moderation.reasonPlaceholder")} maxLength={500} />
         <button className={btnDanger}>{t("moderation.suspend")}</button>
       </ActionForm>
     </details>

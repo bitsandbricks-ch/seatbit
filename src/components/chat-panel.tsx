@@ -84,6 +84,7 @@ export function WhatsAppTexts({ texts }: { texts: { kind: string; label: string;
       </div>
       <textarea
         readOnly
+        aria-label={current.label}
         value={current.text}
         rows={Math.min(14, current.text.split("\n").length + 1)}
         className="w-full rounded-md border border-line bg-ink p-3 font-mono text-xs text-fg"
