@@ -46,6 +46,8 @@ export type AttendanceRow = {
   avatar?: AvatarData;
   /** Status icons after the name (held seat, guest, swap pending). */
   marks?: StatusKind[];
+  /** Seat wishes a lead can change for them: how many they have and where the editor is; absent when not editable. */
+  wishes?: { count: number; href: string };
 };
 
 const statuses: AttendanceStatus[] = ["going", "waitlist", "maybe", "declined"];
@@ -299,6 +301,11 @@ export function AttendanceTable({
                   <span className={`mt-0.5 block text-[11px] ${r.seatBooked ? "text-bit" : "text-warn"}`}>
                     {r.seatBooked ? `✓ ${t("attendees.bookedOnSite")}` : t("attendees.notBookedOnSite")}
                   </span>
+                )}
+                {r.status === "going" && r.wishes && (
+                  <Link href={r.wishes.href} className="mt-0.5 block text-[11px] text-bit hover:underline">
+                    {r.wishes.count ? t("attendees.wishes", { count: r.wishes.count }) : t("attendees.addWishes")}
+                  </Link>
                 )}
               </label>
               <label className="col-span-2 flex min-h-10 cursor-pointer items-center gap-2 rounded-md border border-line px-3 py-2 text-sm sm:col-span-1 sm:self-end lg:self-auto">

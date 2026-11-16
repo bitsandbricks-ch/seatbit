@@ -1,0 +1,12 @@
+date: 2026-11-16
+type: improved
+en:
+  title: "Seat wishes from the attendee list"
+  text: >-
+    Leads now find a seat wishes link under each attendee who is coming in Manage → People. It shows how
+    many wishes they have and opens the editor right away, also for guests without an account.
+de:
+  title: "Platzwünsche aus der Teilnehmerliste"
+  text: >-
+    Leads finden unter Verwalten → Leute bei allen, die kommen, einen Link zu den Platzwünschen. Er zeigt,
+    wie viele Wünsche jemand hat, und öffnet direkt den Editor, auch für Gäste ohne Konto.

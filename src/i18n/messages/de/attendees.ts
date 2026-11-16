@@ -23,6 +23,8 @@ export const attendees: Messages["attendees"] = {
   profileTitle: "Profil auf der Event-Seite",
   removeConfirm: "{name} von dieser LAN entfernen?",
   remove: "Entfernen",
+  wishes: { one: "{count} Platzwunsch", other: "{count} Platzwünsche" },
+  addWishes: "+ Platzwünsche",
   held: "gehalten",
   bookedOnSite: "auf der Seite gebucht",
   notBookedOnSite: "nicht auf der Seite gebucht",

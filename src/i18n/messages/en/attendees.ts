@@ -21,6 +21,8 @@ export const attendees = {
   profileTitle: "Profile on the event's site",
   removeConfirm: "Remove {name} from this LAN?",
   remove: "Remove",
+  wishes: { one: "{count} seat wish", other: "{count} seat wishes" },
+  addWishes: "+ Seat wishes",
   held: "held",
   bookedOnSite: "booked on site",
   notBookedOnSite: "not booked on site",
