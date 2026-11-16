@@ -17,6 +17,7 @@ Seatbit reminds people before deadlines by itself. Leads can also remind by hand
 - They go by email and, when the clan has the [Discord bot](discord.md), as a DM and a post in the clan's channel.
 - Members turn emails or DMs off on their [profile](accounts.md#profile).
 - Drafts, cancelled events and interest checks get no reminders.
+- If one event's reminders fail, the others still go out. The run then shows the error under *Admin → Health*, and the failed reminders are tried again on the next check.
 - The server checks every *Reminder check interval* minutes (default 60). See [Configuration](../installation/configuration.md#reminders-without-a-long-running-process) for running it from cron instead.
 
 ## Manual reminders
