@@ -1,0 +1,10 @@
+date: 2026-11-16
+type: fixed
+en:
+  title: "Running events say \"happening now\""
+  text: >-
+    While a LAN is on, its card on the LANs list says "happening now" instead of when it started.
+de:
+  title: "Laufende Events zeigen «läuft gerade»"
+  text: >-
+    Während eine LAN läuft, steht auf ihrer Karte in der LAN-Liste «läuft gerade» statt wann sie begonnen hat.
