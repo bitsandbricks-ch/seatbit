@@ -247,6 +247,7 @@ docker exec seatbit node scripts/admin.mjs reset-setting discord.clientSecret
 | `grant <user> [--role=...]` | Give a [platform role](../features/admin.md#platform-roles): `owner` (default), `admin`, `moderator` or `support`. An email nobody has signed in with yet is added to the admin emails, so that person becomes owner on first sign-in. |
 | `revoke <user>` | Take the platform role away. Refuses to remove the last owner unless `--force`. |
 | `unsuspend <user>` | Lift a suspension, e.g. if you suspended yourself out by mistake. |
+| `cleanup-ex-members [--apply] [--include-going]` | One-off tidy-up for people who left a clan before leaving also withdrew them: lists their Lead roles on the clan's events and their answers on its upcoming events. Changes nothing without `--apply`; with it, a backup (`<database>.before-cleanup-<time>`) is written first. Answers with a ticket or payment always stay for the leads. "Coming" answers only go with `--include-going`, and the waitlist doesn't move up by itself then. |
 | `reset-setting <key>` | Clear a saved platform setting, so the environment variable applies again (e.g. after saving wrong Discord login values). |
 
 A user can be given by email, Discord user ID, Seatbit user ID, name or nickname. On Kubernetes use `kubectl exec deploy/seatbit -- node scripts/admin.mjs ...`; in a checkout `npm run admin -- list`.

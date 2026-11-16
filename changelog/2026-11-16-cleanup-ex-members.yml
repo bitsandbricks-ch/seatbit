@@ -1,0 +1,11 @@
+date: 2026-11-16
+type: improved
+audience: admins
+en:
+  title: "Tidy up after people who left a clan"
+  text: >-
+    The admin command line can list and remove the event answers and Lead roles that people kept after leaving a clan in the past. It shows what it would change first and writes a backup before it does.
+de:
+  title: "Aufräumen nach Leuten, die einen Clan verlassen haben"
+  text: >-
+    Die Admin-Kommandozeile kann Antworten auf Events und Lead-Rollen auflisten und entfernen, die Leute nach dem Verlassen eines Clans früher behalten haben. Sie zeigt zuerst, was sie ändern würde, und legt vorher ein Backup an.

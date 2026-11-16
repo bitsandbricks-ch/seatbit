@@ -30,6 +30,14 @@ const USAGE = `Usage: node scripts/admin.mjs <command>
                           first sign-in.
   revoke <user>           Remove the user's platform role
   unsuspend <user>        Lift a suspension
+  cleanup-ex-members [--apply] [--include-going]
+                          Lists answers on upcoming events and Lead roles that
+                          people kept after leaving a clan (before that was
+                          cleaned up on leaving). Changes nothing without
+                          --apply; with it, a backup is written first. Answers
+                          with a ticket or payment always stay. "Coming"
+                          answers are only removed with --include-going (the
+                          waitlist does not move up by itself; leads do that).
   reset-setting <key>     Remove a value saved in Platform settings, so the
                           env var applies again (e.g. discord.clientId,
                           discord.clientSecret if a bad value locks everyone out)
@@ -114,6 +122,62 @@ function saveAdminEmails(db, emails) {
   ).run(emails.join(", "), Date.now());
 }
 
+/** Not a member (or only a pending request) of the event's clan. */
+const NOT_MEMBER = `NOT EXISTS (SELECT 1 FROM clan_member m WHERE m.clan_id = l.clan_id AND m.user_id = x.user_id AND m.role <> 'pending')`;
+
+function cleanupExMembers(db, apply, includeGoing) {
+  const leads = db
+    .prepare(
+      `SELECT x.lan_id, x.user_id, l.name AS lan, u.name AS person FROM lan_orga x
+       JOIN lan l ON l.id = x.lan_id JOIN user u ON u.id = x.user_id
+       WHERE l.clan_id IS NOT NULL AND ${NOT_MEMBER}`,
+    )
+    .all();
+  const answers = db
+    .prepare(
+      `SELECT x.id, x.lan_id, x.user_id, x.status, x.ticket_bought, x.paid, l.name AS lan, u.name AS person FROM attendance x
+       JOIN lan l ON l.id = x.lan_id JOIN user u ON u.id = x.user_id
+       WHERE l.clan_id IS NOT NULL AND l.ends_at > ? AND ${NOT_MEMBER}`,
+    )
+    .all(Date.now());
+  const locked = answers.filter((a) => a.ticket_bought || a.paid);
+  const going = answers.filter((a) => !a.ticket_bought && !a.paid && a.status === "going");
+  const other = answers.filter((a) => !a.ticket_bought && !a.paid && a.status !== "going");
+  const list = (rows, what) => rows.forEach((r) => console.log(`  ${r.person} · ${r.lan}${what ? ` · ${what(r)}` : ""}`));
+
+  console.log(`Lead roles on events of clans they left: ${leads.length}`);
+  list(leads);
+  console.log(`Answers on upcoming events (maybe, not coming, waitlist): ${other.length}`);
+  list(other, (r) => r.status);
+  console.log(`"Coming" answers on upcoming events: ${going.length}${includeGoing ? "" : " (kept; add --include-going to remove)"}`);
+  list(going);
+  console.log(`Answers with a ticket or payment (always kept, for the leads): ${locked.length}`);
+  list(locked, (r) => (r.paid ? "paid" : "ticket"));
+
+  const drop = includeGoing ? [...other, ...going] : other;
+  if (!apply) {
+    console.log(`\nDry run, nothing changed. Run again with --apply to remove ${leads.length} Lead role(s) and ${drop.length} answer(s).`);
+    return;
+  }
+  if (!leads.length && !drop.length) return console.log("\nNothing to remove.");
+  const backup = `${dbFile}.before-cleanup-${new Date().toISOString().replace(/[:.]/g, "-")}`;
+  db.prepare("VACUUM INTO ?").run(backup);
+  console.log(`\nBackup written to ${backup}`);
+  db.transaction(() => {
+    const delLead = db.prepare("DELETE FROM lan_orga WHERE lan_id = ? AND user_id = ?");
+    for (const r of leads) delLead.run(r.lan_id, r.user_id);
+    const delAnswer = db.prepare("DELETE FROM attendance WHERE id = ?");
+    // A seat they held on that event is free again.
+    const freeSeat = db.prepare("UPDATE seat SET user_id = NULL WHERE lan_id = ? AND user_id = ?");
+    for (const r of drop) {
+      delAnswer.run(r.id);
+      freeSeat.run(r.lan_id, r.user_id);
+    }
+  })();
+  console.log(`Removed ${leads.length} Lead role(s) and ${drop.length} answer(s). Open event pages show it after a reload.`);
+  if (includeGoing && going.length) console.log("Freed spots don't move the waitlist up by themselves; the events' leads can do that on the attendee list.");
+}
+
 const db = cmd && cmd !== "help" && cmd !== "--help" && cmd !== "-h" ? open() : null;
 
 switch (cmd) {
@@ -182,6 +246,10 @@ switch (cmd) {
     if (!arg) fail(USAGE);
     const r = db.prepare("DELETE FROM app_setting WHERE key = ?").run(arg);
     console.log(r.changes ? `Removed the saved value of ${arg}; the env var / default applies within a few seconds.` : `${arg} has no saved value.`);
+    break;
+  }
+  case "cleanup-ex-members": {
+    cleanupExMembers(db, flags.includes("--apply"), flags.includes("--include-going"));
     break;
   }
   default:
