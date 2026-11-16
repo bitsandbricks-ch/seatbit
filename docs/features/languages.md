@@ -27,7 +27,7 @@ Each mail template has its own text per language. Platform admins switch between
 - **Posts in a channel** (event announcements, attendee lists, deadline reminders) use the clan's **Language of Discord posts** from the clan settings. When it's empty, the instance default applies.
 - Slash commands and their options show German descriptions in Discord apps set to German.
 
-WhatsApp texts on *Manage › Discord & WhatsApp* follow your own language, since you copy them yourself.
+WhatsApp texts on *Manage › News* follow your own language, since you copy them yourself.
 
 ## What is translated
 
