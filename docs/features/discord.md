@@ -2,7 +2,7 @@
 
 The Seatbit bot posts each event to the clan's Discord server with answer buttons, sends reminders and DMs, and has slash commands. For WhatsApp, Seatbit prepares texts to paste.
 
-**Who:** clan admins connect the server; leads post per event; members answer and get DMs · **Where:** clan *Manage → Discord & WhatsApp*; event *Manage → Discord & WhatsApp*
+**Who:** clan admins connect the server; leads post per event; members answer and get DMs · **Where:** clan *Manage → Discord & WhatsApp*; event *Manage → News*
 
 !!! note "Instance setup"
     The bot needs a Discord application set up by the platform admin first. See [Discord app and bot](../installation/discord.md).
@@ -67,7 +67,7 @@ Replies to one person follow their own language; posts in a channel use the clan
 
 ## Per event
 
-*Manage → Discord & WhatsApp* on an event: re-post the announcement or post a reminder by hand.
+*Manage → News* on an event: re-post the announcement or post a reminder by hand.
 
 ![Event Discord and WhatsApp](../screenshots/desktop-manage-chat.png){ .shot }
 
