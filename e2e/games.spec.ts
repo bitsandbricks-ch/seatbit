@@ -1,7 +1,35 @@
+import { eq } from "drizzle-orm";
 import { schema } from "../src/db";
+import { CLAN_ID } from "./env";
 import { createEvent, db, expect, test, userId } from "./fixtures";
 
 test.describe("games", () => {
+  test("last year's games of the same LAN type are one tap away", async ({ as }) => {
+    const DAY = 86_400_000;
+    const type = db().insert(schema.lanType).values({ clanId: CLAN_ID, name: `Type ${Date.now()}` }).returning().get();
+    const last = createEvent({ name: `Last year ${Date.now()}` });
+    const next = createEvent({ attendees: [{ who: "anna" }] });
+    db()
+      .update(schema.lan)
+      .set({ typeId: type.id, startsAt: new Date(Date.now() - 365 * DAY), endsAt: new Date(Date.now() - 363 * DAY) })
+      .where(eq(schema.lan.id, last))
+      .run();
+    db().update(schema.lan).set({ typeId: type.id }).where(eq(schema.lan.id, next)).run();
+    db().insert(schema.game).values({ lanId: last, name: "Unreal Tournament", sizeGb: 8 }).run();
+    db().insert(schema.game).values({ lanId: last, name: "Trackmania" }).run();
+    db().insert(schema.game).values({ lanId: next, name: "trackmania" }).run();
+
+    const anna = await as("anna");
+    await anna.goto(`/lans/${next}?tab=games`);
+    // Trackmania is on the list already (any case), so only Unreal is offered.
+    await expect(anna.getByRole("button", { name: "Add Trackmania again" })).toHaveCount(0);
+    await anna.getByRole("button", { name: "Add Unreal Tournament again" }).click();
+    await expect(anna.getByRole("button", { name: "Add Unreal Tournament again" })).toHaveCount(0);
+    // Added like any other game: on the list with 8 GB, and Anna's vote.
+    const row = anna.getByRole("listitem").filter({ hasText: "Unreal Tournament" }).filter({ hasText: "8 GB" });
+    await expect(row.getByText(/^1 vote: Anna/)).toBeVisible();
+  });
+
   test("who added a game can fix it later, others can't", async ({ as }) => {
     const id = createEvent({ attendees: [{ who: "anna" }, { who: "david" }] });
     const g = db().insert(schema.game).values({ lanId: id, name: "Quak", sizeGb: 1, addedBy: userId("anna") }).returning().get();
