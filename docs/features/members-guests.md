@@ -18,7 +18,7 @@ Approve join requests, add people, and keep **guests**: people without a Seatbit
 
 ### Member profiles
 
-Click a name to open the member's profile. From the clan pages it opens in a side panel (on the right on a computer, from the bottom on a phone), so the list stays where it was; *Open page* or a shared link shows it as a full page. The profile shows their events, nicks, [socials](accounts.md#profile) and, where the LAN type has a [profile link](clans.md#profile-links), their profile on the event's site. Admins and recruiters also see contact details, LAN IDs and tickets.
+Click a name to open the member's profile. From the clan pages and an event (attendees, leads) it opens in a side panel (on the right on a computer, from the bottom on a phone), so the list or the event stays where it was; *Open page* or a shared link shows it as a full page. The profile shows their events, nicks, [socials](accounts.md#profile) and, where the LAN type has a [profile link](clans.md#profile-links), their profile on the event's site. Admins and recruiters also see contact details, LAN IDs and tickets.
 
 ![Member profile](../screenshots/phone-member-profile.png){ .shot width="300" }
 

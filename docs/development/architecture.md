@@ -108,7 +108,7 @@ Fewer badges: a badge earns its place when it changes what something means (Draf
 
 ## Side panels
 
-Details and actions for one item in a list open in `<SidePanel>` (`src/components/side-panel.tsx`): a panel on the right on desktop, a bottom sheet on phones, with a close button, Escape, a backdrop click and an *Open page* link. Put it behind an intercepted route so the URL stays shareable and Back closes it: the list's layout renders a `@panel` slot (with `default.tsx` and a `[...rest]` page returning `null`, so moving to another page closes it), and `@panel/(.)things/[id]/page.tsx` renders the same server component as the full page with `variant="panel"`. Example: clan members (`src/app/clans/[slug]/@panel`).
+Details and actions for one item in a list open in `<SidePanel>` (`src/components/side-panel.tsx`): a panel on the right on desktop, a bottom sheet on phones, with a close button, Escape, a backdrop click and an *Open page* link. Put it behind an intercepted route so the URL stays shareable and Back closes it: the list's layout renders a `@panel` slot (with `default.tsx` and a `[...rest]` page returning `null`, so moving to another page closes it), and `@panel/(.)things/[id]/page.tsx` renders the same server component as the full page with `variant="panel"`. Example: clan members (`src/app/clans/[slug]/@panel`). A page under another path intercepts from the root with `(...)`: the event pages open members from `src/app/lans/[id]/@panel/(...)clans/[slug]/members/[userId]`.
 
 ## Live updates
 
