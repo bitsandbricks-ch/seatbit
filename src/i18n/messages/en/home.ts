@@ -14,6 +14,7 @@ export const home = {
   next: "Next: {step}",
   by: "by {date} ({relative})",
   allSet: "All set",
+  happeningNow: "happening now",
   seatsFree: { one: "{count} seat free", other: "{count} seats free" },
   noSeats: "No seats left",
   welcomeTitle: "Welcome to Seatbit",
