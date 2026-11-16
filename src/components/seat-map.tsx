@@ -724,8 +724,8 @@ function SeatDetails({
         <div>
           <div className="flex items-center gap-2">
             <span className="font-mono text-lg font-bold leading-tight">{s.label}</span>
-            <Pill tone={tone}>{status}</Pill>
-            {s.locked && s.userId && <Pill tone="amber">{t("seatMap.legendHeld")}</Pill>}
+            {/* The name (green when it's you) or "nobody" says what the status pill would. */}
+            {s.locked && <StatusIcon kind="held" t={t} />}
             <span className={`min-w-0 flex-1 truncate ${s.userId ? `font-semibold ${mine ? "text-bit" : "text-fg"}` : "text-sm text-muted"}`}>
               {s.userId ? (s.name ?? s.nick) : s.locked ? t("seatMap.heldText") : t("seatMap.nobody")}
             </span>

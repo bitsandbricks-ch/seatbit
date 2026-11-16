@@ -3,7 +3,8 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { deleteGuest, removeClanMember, setClanMemberRole } from "@/app/clan-actions";
 import { PagerBar, matches, usePager } from "./pager";
-import { Pill, Verified, btnGhost, btnSecondary, input } from "./ui";
+import { Verified, btnGhost, btnSecondary, input } from "./ui";
+import { StatusIcon } from "./status-icons";
 import { Avatar } from "./avatar";
 import type { AvatarData } from "@/lib/avatars";
 import { MEMBER_ROLES, type MemberRole } from "@/lib/clan-roles";
@@ -55,7 +56,7 @@ export function ClanMemberGrid({
               </span>
               <span className="flex shrink-0 gap-1">
                 <RolePill role={m.role} />
-                {m.guest && <Pill>{t("clanSettings.guest")}</Pill>}
+                {m.guest && <StatusIcon kind="guest" t={t} />}
               </span>
             </Link>
           </li>
@@ -160,7 +161,7 @@ export function ClanMemberAdmin({
                   {m.name}
                 </Link>{" "}
                 {!m.isGuest && <Verified />} <RolePill role={m.role} />
-                {m.isGuest && <Pill>{t("clanSettings.guest")}</Pill>}
+                {m.isGuest && <StatusIcon kind="guest" t={t} />}
               </span>
               <span className="block truncate text-xs text-muted">
                 {m.full !== m.name && `${m.full} · `}

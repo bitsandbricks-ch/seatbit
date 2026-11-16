@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
 
 // Small pieces with built-in text live in a client module so they can use the translations.
-export { LockedAnswerBadge, StatusBadge, Verified } from "./ui-client";
+export { Hint, LockedAnswerBadge, StatusBadge, Verified } from "./ui-client";
 
 /**
  * Buttons and inputs are 40px tall on phones (thumb-sized) and a bit tighter
