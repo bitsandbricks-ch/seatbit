@@ -44,12 +44,12 @@ export function MaintenanceForm({
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <span className={label}>{t("settingDefs.maintenance_startsAt.label")}</span>
-          <DateTimePicker name="startsAt" defaultValue={startsAt} defaultTime="22:00" />
+          <DateTimePicker name="startsAt" label={t("settingDefs.maintenance_startsAt.label")} defaultValue={startsAt} defaultTime="22:00" />
           <p className="mt-1 text-xs text-muted">{t("settingDefs.maintenance_startsAt.help")}</p>
         </div>
         <div>
           <span className={label}>{t("settingDefs.maintenance_endsAt.label")}</span>
-          <DateTimePicker name="endsAt" defaultValue={endsAt} defaultTime="23:00" />
+          <DateTimePicker name="endsAt" label={t("settingDefs.maintenance_endsAt.label")} defaultValue={endsAt} defaultTime="23:00" />
           <p className="mt-1 text-xs text-muted">{t("settingDefs.maintenance_endsAt.help")}</p>
         </div>
       </div>

@@ -240,7 +240,7 @@ function DateField({
   return (
     <div>
       <span className={labelCls}>{label}</span>
-      <DateTimePicker name={name} value={value} onChange={onChange} required={required} defaultTime={defaultTime} placeholder={required ? t("picker.pick") : t("lanForm.noDeadline")} />
+      <DateTimePicker name={name} label={label} value={value} onChange={onChange} required={required} defaultTime={defaultTime} placeholder={required ? t("picker.pick") : t("lanForm.noDeadline")} />
       {hint && <span className="mt-1.5 block text-xs text-muted">{hint}</span>}
     </div>
   );

@@ -363,7 +363,7 @@ function NewOrder({ lanId, first, announceHint }: { lanId: string; first: boolea
         </div>
         <div>
           <span className={label}>{t("food.lastCallOptional")}</span>
-          <DateTimePicker name="closesAt" defaultTime="18:00" placeholder={t("food.noLastCall")} />
+          <DateTimePicker name="closesAt" label={t("food.lastCallOptional")} defaultTime="18:00" placeholder={t("food.noLastCall")} />
         </div>
         <div>
           <label className={label} htmlFor="food-note">

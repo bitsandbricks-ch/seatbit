@@ -80,6 +80,7 @@ export function DateTimePicker({
   required,
   defaultTime = "18:00",
   placeholder,
+  label,
 }: {
   name: string;
   defaultValue?: string;
@@ -90,6 +91,8 @@ export function DateTimePicker({
   /** Time used when someone picks a day before setting a time. */
   defaultTime?: string;
   placeholder?: string;
+  /** What the field is for ("Starts"), for screen readers; the placeholder is only the empty state. */
+  label?: string;
 }) {
   const t = useT();
   const loc = t.locale;
@@ -181,7 +184,7 @@ export function DateTimePicker({
           type="text"
           inputMode="text"
           autoComplete="off"
-          aria-label={placeholder}
+          aria-label={label ?? placeholder}
           title={t("picker.typeHint")}
           placeholder={placeholder}
           value={text ?? (value ? formatPickerValue(value, loc) : "")}
@@ -222,7 +225,7 @@ export function DateTimePicker({
           aria-haspopup="dialog"
           aria-expanded={open}
           aria-controls={popId}
-          aria-label={t("picker.open")}
+          aria-label={label ? `${t("picker.open")}: ${label}` : t("picker.open")}
           className="grid h-10 w-10 shrink-0 place-items-center rounded-r-md text-muted hover:text-fg"
         >
           <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
