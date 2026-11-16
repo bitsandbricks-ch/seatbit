@@ -1,0 +1,12 @@
+date: 2026-11-16
+type: fixed
+en:
+  title: "Clearer messages when something changed in the meantime"
+  text: >-
+    When a ride filled up, a seat was taken or a post was deleted while you had the page open, you now get
+    the reason instead of a general error.
+de:
+  title: "Klarere Meldungen, wenn sich inzwischen etwas geändert hat"
+  text: >-
+    Wenn eine Mitfahrt voll wurde, ein Platz besetzt oder ein Beitrag gelöscht wurde, während du die Seite
+    offen hattest, siehst du jetzt den Grund statt einer allgemeinen Fehlermeldung.

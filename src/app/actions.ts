@@ -635,11 +635,11 @@ function parseSeatSpec(spec: string, t: T): string[][] {
     } else if (single) {
       [prefix, from, to] = [single[1].toUpperCase(), Number(single[2]), Number(single[2])];
     } else {
-      throw new Error(t("errors.seatParse", { raw }));
+      throw shownError(t("errors.seatParse", { raw }));
     }
-    if (!prefix) throw new Error(t("errors.seatRow", { raw }));
+    if (!prefix) throw shownError(t("errors.seatRow", { raw }));
     if (to < from) [from, to] = [to, from];
-    if (to - from > 200) throw new Error(t("errors.seatTooMany", { raw }));
+    if (to - from > 200) throw shownError(t("errors.seatTooMany", { raw }));
     const row = rows.get(prefix) ?? [];
     for (let n = from; n <= to; n++) {
       const label = `${prefix}${n}`;
@@ -748,17 +748,17 @@ async function pickMySeatOrThrow(lanId: string, seatId: string | null) {
   const me = await requireUser();
   const t = await getT();
   const l = mustGetLan(lanId);
-  if (!canTakePart(me, lanId)) throw new Error(t("errors.joinFirst"));
-  if (!l.seatPicking || l.seatsPublishedAt) throw new Error(t(l.seatsPublishedAt ? "errors.planFinalMove" : "errors.pickClosed"));
+  if (!canTakePart(me, lanId)) throw shownError(t("errors.joinFirst"));
+  if (!l.seatPicking || l.seatsPublishedAt) throw shownError(t(l.seatsPublishedAt ? "errors.planFinalMove" : "errors.pickClosed"));
   const a = db.select().from(attendance).where(and(eq(attendance.lanId, lanId), eq(attendance.userId, me.id))).get();
-  if (a?.status !== "going") throw new Error(t("errors.comingFirst"));
-  if (seatId && !a.ticketBought && !a.paid) throw new Error(t("errors.ticketFirst"));
+  if (a?.status !== "going") throw shownError(t("errors.comingFirst"));
+  if (seatId && !a.ticketBought && !a.paid) throw shownError(t("errors.ticketFirst"));
   db.transaction((tx) => {
     if (seatId) {
       const s = tx.select().from(seat).where(and(eq(seat.id, seatId), eq(seat.lanId, lanId))).get();
-      if (!s) throw new Error(t("errors.noSeat"));
-      if (s.locked) throw new Error(t("errors.seatHeld", { seat: s.label }));
-      if (s.userId && s.userId !== me.id) throw new Error(t("errors.seatTaken", { seat: s.label }));
+      if (!s) throw shownError(t("errors.noSeat"));
+      if (s.locked) throw shownError(t("errors.seatHeld", { seat: s.label }));
+      if (s.userId && s.userId !== me.id) throw shownError(t("errors.seatTaken", { seat: s.label }));
     }
     tx.update(seat).set({ userId: null }).where(and(eq(seat.lanId, lanId), eq(seat.userId, me.id))).run();
     if (seatId) tx.update(seat).set({ userId: me.id }).where(eq(seat.id, seatId)).run();

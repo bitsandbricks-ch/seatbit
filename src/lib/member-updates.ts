@@ -9,6 +9,7 @@ import { cleanName } from "./names";
 import { makeT, type T } from "../i18n/translate";
 import { MAX_NEAR, MAX_WISHES, normalizeRules, rulesProblem, seatRulesSchema } from "./seat-rules";
 import { lanChanged } from "./live";
+import { shownError } from "@/lib/action-error";
 
 const { attendance, nickname } = schema;
 
@@ -49,8 +50,8 @@ const myAttendance = (lanId: string, userId: string) =>
 /** "I bought my ticket" (or not). Once a lead confirmed it, only they can change it. */
 export function saveTicketBought(lanId: string, userId: string, bought: boolean, t: T = makeT("en")) {
   const a = myAttendance(lanId, userId);
-  if (!a) throw new Error(t("errors.answerFirst"));
-  if (a.paid) throw new Error(t("errors.ticketConfirmed"));
+  if (!a) throw shownError(t("errors.answerFirst"));
+  if (a.paid) throw shownError(t("errors.ticketConfirmed"));
   db.update(attendance).set({ ticketBought: bought }).where(eq(attendance.id, a.id)).run();
   lanChanged(lanId);
 }
@@ -68,11 +69,11 @@ export type SeatWishes = z.output<typeof wishInput>;
 export function saveSeatWishes(lanId: string, userId: string, input: z.input<typeof wishInput>, t: T = makeT("en")) {
   const w = wishInput.parse(input);
   const problem = rulesProblem(w.rules);
-  if (problem === "tooMany") throw new Error(t("wishes.errors.tooMany", { max: MAX_WISHES }));
-  if (problem === "twoNext") throw new Error(t("wishes.errors.oneNext"));
-  if (problem === "tooManyNear") throw new Error(t("wishes.errors.tooManyNear", { max: MAX_NEAR }));
+  if (problem === "tooMany") throw shownError(t("wishes.errors.tooMany", { max: MAX_WISHES }));
+  if (problem === "twoNext") throw shownError(t("wishes.errors.oneNext"));
+  if (problem === "tooManyNear") throw shownError(t("wishes.errors.tooManyNear", { max: MAX_NEAR }));
   const a = myAttendance(lanId, userId);
-  if (!a) throw new Error(t("errors.comingFirst"));
+  if (!a) throw shownError(t("errors.comingFirst"));
   const rules = normalizeRules(w.rules, userId);
   const changed = JSON.stringify(rules) !== JSON.stringify(a.wishRules ?? []) || w.note !== a.wishNote;
   db.update(attendance).set({ wishRules: rules, wishNote: w.note }).where(eq(attendance.id, a.id)).run();
