@@ -6,6 +6,7 @@ import { DateTimePicker } from "./date-time-picker";
 import { PROFILE_URL_HINT } from "@/lib/profile-link";
 import { Field, Input, btnPrimary, input, label as labelCls } from "./ui";
 import { useT } from "@/i18n/client";
+import { shiftDays, shiftExact, toLocal } from "@/lib/date-shift";
 
 export type LanFormValues = {
   id?: string;
@@ -37,10 +38,6 @@ export type LanFormValues = {
 
 type TypeOption = { id: string; name: string; durationHours?: number; answerDaysBefore?: number | null };
 
-const toLocal = (d: Date) => {
-  const p = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
-};
 const fromLocal = (v: string) => (v ? new Date(v) : null);
 const valid = (d: Date | null): d is Date => !!d && !isNaN(d.getTime());
 
@@ -56,26 +53,21 @@ export function LanForm({ values, types }: { values: LanFormValues; types: TypeO
   const type = types.find((x) => x.id === typeId);
 
   /**
-   * A new start moves the other dates with it: when they were set, by the same amount (keeps the
-   * event's length and the deadlines' distance); otherwise from the LAN type's usual length and
-   * "answer by" days.
+   * A new start moves the other dates with it: when they were set, the end by the same amount (keeps
+   * the event's length) and the deadlines by the same number of days at their own time; otherwise
+   * from the LAN type's usual length and "answer by" days.
    */
   const changeStart = (v: string) => {
-    const prev = fromLocal(startsAt);
     const next = fromLocal(v);
     setStartsAt(v);
     if (!valid(next)) return;
-    const shift = (s: string) => {
-      const d = fromLocal(s);
-      return valid(prev) && valid(d) ? toLocal(new Date(d.getTime() + next.getTime() - prev.getTime())) : "";
-    };
     const done: string[] = [];
-    const end = shift(endsAt) || toLocal(new Date(next.getTime() + (type?.durationHours ?? 46) * 3600_000));
+    const end = shiftExact(endsAt, startsAt, v) || toLocal(new Date(next.getTime() + (type?.durationHours ?? 46) * 3600_000));
     if (end !== endsAt) {
       setEndsAt(end);
       done.push(t("lanForm.moved.end"));
     }
-    let dl = shift(deadline);
+    let dl = shiftDays(deadline, startsAt, v);
     const days = type ? type.answerDaysBefore : 30;
     if (!dl && days != null) {
       const d = new Date(next.getTime() - days * 86_400_000);
@@ -86,7 +78,7 @@ export function LanForm({ values, types }: { values: LanFormValues; types: TypeO
       setDeadline(dl);
       done.push(t("lanForm.moved.answerBy"));
     }
-    const tb = shift(ticketBy);
+    const tb = shiftDays(ticketBy, startsAt, v);
     if (tb && tb !== ticketBy) {
       setTicketBy(tb);
       done.push(t("lanForm.moved.ticketBy"));

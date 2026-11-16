@@ -31,6 +31,8 @@ test("a lead creates a draft and publishes it", async ({ as }) => {
   // The server runs in Europe/Zurich (playwright.config.ts): 10:00 there is 09:00 UTC in winter.
   expect(lan.startsAt.toISOString()).toBe("2027-12-14T09:00:00.000Z");
   expect(lan.endsAt.toISOString()).toBe("2027-12-16T15:00:00.000Z");
+  // "Answer by" moved along with the start by whole days and kept its 23:59.
+  expect(lan.signupDeadline?.toISOString()).toMatch(/T22:59:00/);
 
   const anna = await as("anna");
   await anna.goto(`/lans/${lan.id}`);

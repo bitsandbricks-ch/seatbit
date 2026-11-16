@@ -22,7 +22,7 @@ An **event** is one edition of a LAN the group attends. It goes from draft (opti
 
 | Field | |
 | --- | --- |
-| **Start, end** | Set the start and the end follows from the type's usual length. Moving the start later moves the end and the deadlines by the same amount. |
+| **Start, end** | Set the start and the end follows from the type's usual length. Moving the start moves the end by the same amount, so the event keeps its length, and the deadlines by the same number of days at their own time (an «answer by» at 23:59 stays at 23:59). |
 | **Answer by** | When the group must know who comes (e.g. before booking the seat block). Defaults from the type's days before. |
 | **Buy ticket by** | Deadline for tickets. |
 | **Spots** | How many people the group can bring. When full, new answers go on the [waitlist](attendance.md#waitlist); leads choose whether the next in line moves up by itself or they pick. |
