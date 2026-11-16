@@ -912,6 +912,8 @@ const lanTypeInput = z.object({
 export async function saveLanType(_: FormState, formData: FormData): Promise<FormState> {
   const id = (formData.get("id") as string) || null;
   const existing = id ? db.select().from(lanType).where(eq(lanType.id, id)).get() : undefined;
+  // An edit stays in the type's own clan; a type of no clan (from before clans) isn't anyone's to edit.
+  if (id && !existing?.clanId) throw await err("errors.gone");
   const clanId = existing?.clanId ?? String(formData.get("clanId") ?? "");
   if (!clanId) return { error: await tr("errors.pickClan") };
   const me = await requireClanPermission(clanId, "events");

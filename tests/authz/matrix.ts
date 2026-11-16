@@ -189,6 +189,12 @@ export const SPECS: Spec[] = [
   { name: "actions.unpublishSeats", allow: LAN_MANAGERS, run: () => actions.unpublishSeats(fx.lan) },
   { name: "actions.saveLanType (new)", allow: EVENT_MANAGERS, run: () => actions.saveLanType(undefined, form({ clanId: fx.clan, name: "New type", reminderDays: "3", durationHours: "48" })) },
   { name: "actions.saveLanType (edit)", allow: EVENT_MANAGERS, run: () => actions.saveLanType(undefined, form({ id: fx.type, name: "Renamed type", reminderDays: "3", durationHours: "48" })) },
+  {
+    name: "actions.saveLanType (type of no clan)",
+    allow: NOBODY,
+    noPositive: "a LAN type without a clan can't be edited through a clan",
+    run: () => actions.saveLanType(undefined, form({ id: fx.legacyType, clanId: fx.clan, name: "Taken over", reminderDays: "3", durationHours: "48" })),
+  },
   { name: "actions.deleteLanType", allow: EVENT_MANAGERS, run: () => actions.deleteLanType(fx.type) },
 
   // ---------- event-actions.ts ----------
