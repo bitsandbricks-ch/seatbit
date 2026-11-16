@@ -8,8 +8,8 @@ const answer = (lanId: string, user: string) =>
   db().select().from(attendance).where(and(eq(attendance.lanId, lanId), eq(attendance.userId, user))).get();
 
 // Leaving a clan (after a confirm) withdraws the answers on its upcoming events, so the spot goes to
-// the waitlist; an answer with a ticket stays for the leads.
-test("leaving a clan frees the spots one held, but keeps answers with a ticket", async ({ browser }) => {
+// the waitlist, and ends their lead roles; an answer with a ticket stays for the leads.
+test("leaving a clan frees the spots one held and ends lead roles, but keeps answers with a ticket", async ({ browser }) => {
   const id = `e2e-quitter-${Date.now()}`;
   const now = new Date();
   db()
@@ -20,6 +20,8 @@ test("leaving a clan frees the spots one held, but keeps answers with a ticket",
   const full = createEvent({ capacity: 1 });
   db().insert(attendance).values({ lanId: full, userId: id, status: "going" }).run();
   db().insert(attendance).values({ lanId: full, userId: userId("ben"), status: "waitlist", waitlistedAt: now }).run();
+  // A lead of one of the clan's events: that role goes with the membership.
+  db().insert(schema.lanOrga).values({ lanId: full, userId: id }).run();
   const ticketed = createEvent();
   db().insert(attendance).values({ lanId: ticketed, userId: id, status: "going", ticketBought: true }).run();
 
@@ -27,6 +29,8 @@ test("leaving a clan frees the spots one held, but keeps answers with a ticket",
   try {
     await signInById(context, id);
     const page = await context.newPage();
+    await page.goto(`/lans/${full}/manage`);
+    await expect(page).toHaveURL(/\/manage/);
     await page.goto(`/clans/${CLAN_SLUG}`);
     await page.getByRole("button", { name: "Leave clan" }).click();
     const dialog = page.getByRole("dialog");
@@ -38,6 +42,12 @@ test("leaving a clan frees the spots one held, but keeps answers with a ticket",
     expect(answer(full, id)).toBeUndefined();
     expect(answer(full, userId("ben"))?.status).toBe("going");
     expect(answer(ticketed, id)?.status).toBe("going");
+    expect(db().select().from(schema.lanOrga).where(eq(schema.lanOrga.userId, id)).all()).toEqual([]);
+
+    // Even a lead role left behind (older data) gives a non-member no way in.
+    db().insert(schema.lanOrga).values({ lanId: full, userId: id }).run();
+    await page.goto(`/lans/${full}/manage`);
+    await expect(page).not.toHaveURL(/\/manage/);
   } finally {
     await context.close();
   }
