@@ -1,3 +1,6 @@
+/** Own items per person and event; more is a mistake or spam. */
+export const MAX_PACKING_ITEMS = 60;
+
 /** The personal packing list every member gets for a LAN. */
 export const PACKING_ITEMS = [
   { id: "pc", label: "PC or laptop" },

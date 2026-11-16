@@ -5,6 +5,9 @@ export const packing = {
   placeholder: "Add an item, e.g. controller",
   newItem: "New item",
   add: "Add",
+  pastTitle: "From your earlier LANs",
+  pastAll: "Add all",
+  pastAdd: "Add {item} again",
   items: {
     pc: "PC or laptop",
     screen: "Screen",

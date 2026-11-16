@@ -1,6 +1,7 @@
 "use client";
 import { useState, useTransition } from "react";
 import { addPackingItem, deletePackingItem, setPacked, setPackingItemPacked } from "@/app/travel-gear-actions";
+import { addPastPackingItems } from "@/app/packing-history-actions";
 import { Card, Input, btnPrimary } from "./ui";
 import { useT } from "@/i18n/client";
 import { useRunAction } from "./action-form";
@@ -14,11 +15,14 @@ export function PackingList({
   items,
   packed,
   own,
+  past = [],
 }: {
   lanId: string;
   items: readonly { id: string; label: string }[];
   packed: string[];
   own: { id: string; label: string; packed: boolean }[];
+  /** Own items from earlier LANs that aren't on this list yet. */
+  past?: string[];
 }) {
   const t = useT();
   const [pending, start] = useTransition();
@@ -96,6 +100,38 @@ export function PackingList({
           {t("packing.add")}
         </button>
       </form>
+      {past.length > 0 && (
+        <section aria-label={t("packing.pastTitle")} className="mt-4 border-t border-line pt-3">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <p className="text-xs text-muted">{t("packing.pastTitle")}</p>
+            {past.length > 1 && (
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() => run(() => addPastPackingItems(lanId))}
+                className="text-xs font-medium text-bit hover:underline"
+              >
+                {t("packing.pastAll")}
+              </button>
+            )}
+          </div>
+          <ul className="flex flex-wrap gap-2">
+            {past.map((label) => (
+              <li key={label}>
+                <button
+                  type="button"
+                  disabled={pending}
+                  onClick={() => run(() => addPackingItem(lanId, label))}
+                  aria-label={t("packing.pastAdd", { item: label })}
+                  className="min-h-9 rounded-md border border-dashed border-line px-3 text-sm text-muted transition hover:border-bit hover:text-fg"
+                >
+                  + {label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </Card>
   );
 }
