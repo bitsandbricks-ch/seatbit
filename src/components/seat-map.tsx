@@ -101,7 +101,7 @@ export function SeatMap({
   const runAction = useRunAction();
   const [zoom, setZoomState] = useState<Zoom>("compact");
   // Top style: your own seat's details show from the start, in place of a "you sit at …" line.
-  const [selectedId, setSelectedId] = useState<string | null>(() => (place === "top" ? (seats.find((s) => s.userId === meId)?.id ?? null) : null));
+  const [selectedId, setSelectedId] = useState<string | null>(() => (place === "top" && mode !== "admin" ? (seats.find((s) => s.userId === meId)?.id ?? null) : null));
   const [swapFrom, setSwapFrom] = useState<string | null>(null);
   const [placing, setPlacing] = useState<string | null>(null); // userId waiting for a seat tap
   const [layout, setLayout] = useState(false);
@@ -503,6 +503,7 @@ export function SeatMap({
                       : t("seatMap.viewNone")}
                   </p>
                 )}
+                {admin && place === "top" && !layout && !hint && <p className="text-sm text-muted">{t("seatMap.detailsAdmin")}</p>}
               </>
             )}
             {q && (
@@ -718,6 +719,33 @@ function SeatDetails({
     </p>
   );
 
+  const ticket =
+    admin && s.userId && person?.ticket ? (
+      person.ticket === "ok" ? (
+        <Pill tone="emerald">{t("seatMap.ticketOk")}</Pill>
+      ) : person.ticket === "reported" ? (
+        <Pill tone="amber">{t("seatMap.ticketReported")}</Pill>
+      ) : (
+        <Pill tone="red">{t("seatMap.noTicket")}</Pill>
+      )
+    ) : null;
+  const wishes = admin && s.userId && person?.wishes && person.wishes.items.length > 0 && (
+    <div className="mt-2">
+      {person.wishes.score !== null && (
+        <p className="mb-1 text-xs text-muted">{t("seatMap.wishesMet", { pct: `${Math.round(person.wishes.score * 100)}%` })}</p>
+      )}
+      <ol className="flex flex-wrap gap-1">
+        {person.wishes.items.map((w) => (
+          <li key={w.text}>
+            <Pill tone={w.ok === null ? "zinc" : w.ok ? "emerald" : missedBadly(w) ? "red" : "amber"}>
+              {w.rank ? `${w.rank}. ` : ""}{w.ok === null ? "·" : w.ok ? "✓" : "✗"} {w.text}
+            </Pill>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+
   return (
     <div className={compact ? "space-y-2" : "space-y-3"}>
       {compact ? (
@@ -729,9 +757,11 @@ function SeatDetails({
             <span className={`min-w-0 flex-1 truncate ${s.userId ? `font-semibold ${mine ? "text-bit" : "text-fg"}` : "text-sm text-muted"}`}>
               {s.userId ? (s.name ?? s.nick) : s.locked ? t("seatMap.heldText") : t("seatMap.nobody")}
             </span>
+            {ticket}
             {close}
           </div>
           {account}
+          {wishes}
         </div>
       ) : (
       <>
@@ -751,33 +781,8 @@ function SeatDetails({
         <div className="rounded-md bg-raised/60 p-3">
           <p className={`text-lg font-semibold leading-tight [overflow-wrap:anywhere] ${mine ? "text-bit" : ""}`}>{s.name ?? s.nick}</p>
           {account}
-          {admin && person?.ticket && (
-            <p className="mt-2">
-              {person.ticket === "ok" ? (
-                <Pill tone="emerald">{t("seatMap.ticketOk")}</Pill>
-              ) : person.ticket === "reported" ? (
-                <Pill tone="amber">{t("seatMap.ticketReported")}</Pill>
-              ) : (
-                <Pill tone="red">{t("seatMap.noTicket")}</Pill>
-              )}
-            </p>
-          )}
-          {admin && person?.wishes && person.wishes.items.length > 0 && (
-            <div className="mt-2">
-              {person.wishes.score !== null && (
-                <p className="mb-1 text-xs text-muted">{t("seatMap.wishesMet", { pct: `${Math.round(person.wishes.score * 100)}%` })}</p>
-              )}
-              <ol className="flex flex-wrap gap-1">
-                {person.wishes.items.map((w) => (
-                  <li key={w.text}>
-                    <Pill tone={w.ok === null ? "zinc" : w.ok ? "emerald" : missedBadly(w) ? "red" : "amber"}>
-                      {w.rank ? `${w.rank}. ` : ""}{w.ok === null ? "·" : w.ok ? "✓" : "✗"} {w.text}
-                    </Pill>
-                  </li>
-                ))}
-              </ol>
-            </div>
-          )}
+          {ticket && <p className="mt-2">{ticket}</p>}
+          {wishes}
         </div>
       ) : (
         <p className="text-sm text-muted">{s.locked ? t("seatMap.heldText") : t("seatMap.nobody")}</p>
@@ -800,8 +805,8 @@ function SeatDetails({
       )}
 
       {admin && (
-        <div className="space-y-2 border-t border-line pt-3">
-          <div className="flex gap-2">
+        <div className={`border-t border-line pt-3 ${compact ? "flex flex-wrap items-center gap-2" : "space-y-2"}`}>
+          <div className={`flex gap-2 ${compact ? "min-w-0 flex-1 basis-72" : ""}`}>
             <select value={pick} onChange={(e) => setPick(e.target.value)} className={`${input} !min-h-10 min-w-0 flex-1`} aria-label={t("seatMap.personFor")}>
               <option value="">{s.userId ? t("seatMap.giveTo") : t("seatMap.assignSomeone")}</option>
               {assignable
@@ -828,7 +833,8 @@ function SeatDetails({
               {seatOfUser.get(pick) && s.userId ? t("seatMap.swap") : t("seatMap.assign")}
             </button>
           </div>
-          <div className="flex flex-wrap gap-1.5">
+          {/* In the strip the actions stay small, so the map isn't pushed far down on a phone. */}
+          <div className={`flex flex-wrap gap-1.5 ${compact ? "[&>button]:!px-2.5 sm:[&>button]:!px-3" : ""}`}>
             <button type="button" className={btnSecondary} onClick={onSwap} disabled={pending}>
               {s.userId ? t("seatMap.swapMove") : t("seatMap.moveSomeone")}
             </button>
@@ -846,7 +852,7 @@ function SeatDetails({
           </div>
           {renaming && (
             <form
-              className="flex gap-2"
+              className={`flex gap-2 ${compact ? "basis-full" : ""}`}
               onSubmit={(e) => {
                 e.preventDefault();
                 if (label.trim()) run(() => renameSeat(s.id, label));

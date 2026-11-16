@@ -1,0 +1,13 @@
+date: 2026-11-16
+type: improved
+en:
+  title: "More room for the Lead seat plan"
+  text: >-
+    On Manage → Seats, a tapped seat's details and actions now open in a strip above the map, like on the
+    event page, so the map uses the full width. The cards below fill two columns without gaps.
+de:
+  title: "Mehr Platz für den Sitzplan der Leads"
+  text: >-
+    Unter Verwalten → Plätze öffnen sich die Details und Aktionen eines Platzes jetzt in einem Streifen
+    über dem Plan, wie auf der Event-Seite. So nutzt der Plan die ganze Breite. Die Karten darunter füllen
+    zwei Spalten ohne Lücken.

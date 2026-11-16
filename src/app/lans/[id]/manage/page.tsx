@@ -347,22 +347,10 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
       .sort((a, b) => a.name.localeCompare(b.name)),
   }));
 
+  // Two balanced columns (CSS columns), so a short card doesn't leave a hole next to a long one; things to act on first.
   const seatCards = (
-          <div className="grid items-start gap-5 lg:grid-cols-2">
-          <Card title={t("manage.ourSeats")}>
-            <p className="mb-4 text-sm text-muted">{t("manage.ourSeatsHint")}</p>
-            <SeatSetup
-              lanId={l.id}
-              current={seatSpec(seats)}
-              unseated={going.length - seated}
-              free={freeSeats}
-              autoPlan={l.seatAutoPlan}
-              nearRange={l.seatNearRange}
-              autoPlanBlocked={
-                l.seatsPublishedAt ? t("seatSetup.autoPaused.final") : l.seatPicking ? t("seatSetup.autoPaused.picking") : null
-              }
-            />
-          </Card>
+          <div className="space-y-5">
+          <div className="gap-5 lg:columns-2 [&>*]:mb-5 [&>*]:break-inside-avoid">
           {seats.length > 0 && (
             <Card
               title={t("manage.seatSteps")}
@@ -439,6 +427,22 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               )}
             </Card>
           )}
+          <Card title={t("manage.ourSeats")}>
+            <p className="mb-4 text-sm text-muted">{t("manage.ourSeatsHint")}</p>
+            <SeatSetup
+              lanId={l.id}
+              current={seatSpec(seats)}
+              unseated={going.length - seated}
+              free={freeSeats}
+              autoPlan={l.seatAutoPlan}
+              nearRange={l.seatNearRange}
+              autoPlanBlocked={
+                l.seatsPublishedAt ? t("seatSetup.autoPaused.final") : l.seatPicking ? t("seatSetup.autoPaused.picking") : null
+              }
+            />
+          </Card>
+          {seats.length > 0 && <PlanHistory rows={auditEntries({ lanId: l.id, group: "seats" }).rows} names={names} t={t} />}
+          </div>
           {seats.length > 0 && !l.seatsPublishedAt && (
             <WishLeadEditor
               lanId={l.id}
@@ -460,7 +464,6 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               href={(f) => `/lans/${l.id}/manage?tab=seats${f === "all" ? "&wishes=all" : ""}#wishes`}
               t={t}
             />}
-          {seats.length > 0 && <PlanHistory rows={auditEntries({ lanId: l.id, group: "seats" }).rows} names={names} t={t} />}
           </div>
   );
 
@@ -709,7 +712,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
       )}
 
       <TabPanel id="seats">
-        {/* The seat plan is the main tool: map on the left with setup, the seat flow (wishes, self pick, finalize) and wishes below it, and the seat details panel in its own column on the right (desktop). */}
+        {/* The seat plan is the main tool: the tapped seat's details above the full-width map, setup and the seat flow below. */}
         <div className="space-y-5">
           {seats.length > 0 ? (
               <SeatMap
@@ -718,6 +721,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
                 cols={l.seatCols}
                 meId={me.id}
                 mode="admin"
+                details="top"
                 seats={seats.map((s) => ({ ...seatView(s, people, avatars), marks: s.userId ? marksOf(s.userId) : undefined }))}
                 assignable={going
                   .map((r) => {

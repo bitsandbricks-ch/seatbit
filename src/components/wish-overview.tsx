@@ -71,7 +71,6 @@ export function WishOverview({
   return (
     <Card
       id="wishes"
-      className="lg:col-span-2"
       title={t("wishOverview.title")}
       actions={overall !== null && <Pill tone={tone(overall)}>{t("wishOverview.met", { pct: pct(overall) })}</Pill>}
     >
