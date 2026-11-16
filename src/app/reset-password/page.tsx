@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { authClient } from "@/lib/auth-client";
@@ -11,7 +12,15 @@ function ResetForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  if (!token) return <p className="text-sm text-danger">{t("pages.resetInvalid")}</p>;
+  if (!token)
+    return (
+      <div className="space-y-3 text-sm">
+        <p className="text-danger">{t("pages.resetInvalid")}</p>
+        <Link href="/forgot-password" className="text-bit hover:underline">
+          {t("pages.resetAgain")}
+        </Link>
+      </div>
+    );
   return (
     <form
       className="space-y-4"
@@ -35,7 +44,10 @@ function ResetForm() {
       </Field>
       {error && (
         <p role="alert" className="text-sm text-danger">
-          {error}
+          {error}{" "}
+          <Link href="/forgot-password" className="text-bit hover:underline">
+            {t("pages.resetAgain")}
+          </Link>
         </p>
       )}
       <button disabled={busy} className={`${btnPrimary} w-full`}>{t("pages.setPassword")}</button>

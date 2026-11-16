@@ -45,7 +45,9 @@ test.describe("password reset", () => {
     await other.goto(link);
     await other.getByLabel("New password").fill("e2e-another-password");
     await other.getByRole("button", { name: "Set password" }).click();
-    await expect(other.getByRole("alert").filter({ hasText: /\S/ })).toHaveText("This reset link is invalid or expired.");
+    const refused = other.getByRole("alert").filter({ hasText: /\S/ });
+    await expect(refused).toContainText("This reset link is invalid or expired.");
+    await expect(refused.getByRole("link", { name: "Request a new link" })).toHaveAttribute("href", "/forgot-password");
     await other.close();
   });
 
