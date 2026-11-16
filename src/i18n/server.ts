@@ -5,7 +5,7 @@ import { instanceLocale } from "./user-locale";
 import { getCurrentUser } from "@/lib/session";
 import { LOCALE_COOKIE, isLocale, matchAcceptLanguage, type Locale } from "./config";
 import { makeT, type MessageKey, type Vars } from "./translate";
-import { MESSAGE_DIGEST } from "@/lib/action-error";
+import { shownError } from "@/lib/action-error";
 
 /** This request's language: the profile choice, then the cookie, then the browser, then the instance default. */
 export const getLocale = cache(async (): Promise<Locale> => {
@@ -36,7 +36,4 @@ export async function err(key: MessageKey, vars?: Vars) {
   return shownError(await tr(key, vars));
 }
 
-/** An Error whose already translated text reaches the toast in production too. */
-export function shownError(message: string) {
-  return Object.assign(new Error(message), { digest: MESSAGE_DIGEST + message });
-}
+export { shownError };

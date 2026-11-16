@@ -33,9 +33,10 @@ async function requireAttendee(lanId: string) {
   return me;
 }
 
-function mustGetPost(postId: string) {
+/** Someone else may have just deleted it: say so instead of a bare error. */
+async function mustGetPost(postId: string) {
   const p = db.select().from(travelPost).where(eq(travelPost.id, postId)).get();
-  if (!p) throw new Error("Not found");
+  if (!p) throw await err("errors.gone");
   return p;
 }
 
@@ -65,7 +66,7 @@ export async function saveTravelPost(lanId: string, input: TravelInput, postId?:
   if (!parsed.success) throw shownError(formError(parsed.error, await getT()));
   const v = parsed.data;
   if (postId) {
-    const p = mustGetPost(postId);
+    const p = await mustGetPost(postId);
     if (p.userId !== me.id || p.lanId !== lanId) throw await err("errors.notAllowed");
     if (p.mode === "offer" && v.places < takenPlaces(postId))
       throw await err("errors.placesTooFew");
@@ -88,7 +89,7 @@ export async function saveTravelPost(lanId: string, input: TravelInput, postId?:
 /** The author or a lead removes a post (its passengers/guests are released). */
 export async function deleteTravelPost(postId: string) {
   const me = await requireUser();
-  const p = mustGetPost(postId);
+  const p = await mustGetPost(postId);
   if (p.userId !== me.id && !isLanManager(me, p.lanId)) throw await err("errors.notAllowed");
   db.delete(travelPost).where(eq(travelPost.id, postId)).run();
   refresh(p.lanId);
@@ -96,11 +97,11 @@ export async function deleteTravelPost(postId: string) {
 
 /** Adds `userId` to an offer, and drops their open request of the same kind (it's solved). */
 function addSpot(p: typeof travelPost.$inferSelect, userId: string, t: T) {
-  if (p.mode !== "offer") throw new Error(t("errors.joinOffers"));
-  if (p.userId === userId) throw new Error(t("errors.ownOffer"));
+  if (p.mode !== "offer") throw shownError(t("errors.joinOffers"));
+  if (p.userId === userId) throw shownError(t("errors.ownOffer"));
   db.transaction((tx) => {
     const taken = tx.select({ id: travelSpot.id }).from(travelSpot).where(eq(travelSpot.postId, p.id)).all().length;
-    if (taken >= p.places) throw new Error(t("errors.noPlaces"));
+    if (taken >= p.places) throw shownError(t("errors.noPlaces"));
     tx.insert(travelSpot).values({ postId: p.id, userId }).onConflictDoNothing().run();
     tx.delete(travelPost)
       .where(
@@ -116,7 +117,7 @@ function addSpot(p: typeof travelPost.$inferSelect, userId: string, t: T) {
 }
 
 export async function joinTravelOffer(postId: string) {
-  const p = mustGetPost(postId);
+  const p = await mustGetPost(postId);
   const me = await requireAttendee(p.lanId);
   addSpot(p, me.id, await getT());
   refresh(p.lanId);
@@ -125,7 +126,7 @@ export async function joinTravelOffer(postId: string) {
 /** Leave an offer you joined, or (as its author or a lead) remove someone from it. */
 export async function leaveTravelOffer(postId: string, userId?: string) {
   const me = await requireUser();
-  const p = mustGetPost(postId);
+  const p = await mustGetPost(postId);
   const target = userId ?? me.id;
   if (target !== me.id && p.userId !== me.id && !isLanManager(me, p.lanId)) throw await err("errors.notAllowed");
   db.delete(travelSpot).where(and(eq(travelSpot.postId, postId), eq(travelSpot.userId, target))).run();
@@ -134,9 +135,9 @@ export async function leaveTravelOffer(postId: string, userId?: string) {
 
 /** A driver/host answers a request: the requester gets a place in the driver's offer of that kind. */
 export async function takeAlong(requestId: string, offerId: string) {
-  const req = mustGetPost(requestId);
+  const req = await mustGetPost(requestId);
   const me = await requireAttendee(req.lanId);
-  const offer = mustGetPost(offerId);
+  const offer = await mustGetPost(offerId);
   if (req.mode !== "request" || offer.userId !== me.id || offer.lanId !== req.lanId || offer.kind !== req.kind)
     throw await err("errors.pickOwnOffer");
   addSpot(offer, req.userId, await getT());
@@ -176,22 +177,22 @@ export async function addPackingItem(lanId: string, label: string) {
   refresh(lanId);
 }
 
-function mustGetMyItem(userId: string, itemId: string) {
+async function mustGetMyItem(userId: string, itemId: string) {
   const it = db.select().from(packingItem).where(eq(packingItem.id, itemId)).get();
-  if (!it || it.userId !== userId) throw new Error("Not found");
+  if (!it || it.userId !== userId) throw await err("errors.gone");
   return it;
 }
 
 export async function setPackingItemPacked(itemId: string, packed: boolean) {
   const me = await requireUser();
-  const it = mustGetMyItem(me.id, itemId);
+  const it = await mustGetMyItem(me.id, itemId);
   db.update(packingItem).set({ packed }).where(eq(packingItem.id, it.id)).run();
   refresh(it.lanId);
 }
 
 export async function deletePackingItem(itemId: string) {
   const me = await requireUser();
-  const it = mustGetMyItem(me.id, itemId);
+  const it = await mustGetMyItem(me.id, itemId);
   db.delete(packingItem).where(eq(packingItem.id, it.id)).run();
   refresh(it.lanId);
 }
