@@ -30,6 +30,48 @@ export async function LeadTasks({
   // Open ones first, then the locked ones, done ones last; the defined order within each.
   const rank = { todo: 0, locked: 1, done: 2 } as const;
   const sorted = [...tasks].sort((a, b) => rank[a.state] - rank[b.state]);
+  const open = sorted.filter((x) => x.state !== "done");
+  const finished = sorted.filter((x) => x.state === "done");
+  const row = (x: (typeof tasks)[number]) => (
+    <li key={x.id} className={`flex gap-3 py-3 ${x.state === "locked" ? "opacity-70" : ""}`}>
+          <ActionForm action={toggleLanTask.bind(null, lanId, x.id)}>
+            <button
+              aria-label={t(x.state === "done" ? "leadTasks.untick" : "leadTasks.tick")}
+              title={t(x.state === "done" ? "leadTasks.untick" : "leadTasks.tick")}
+              className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-bold ${
+                x.state === "done" ? "bg-bit text-on-bit" : "border border-line text-muted hover:border-bit hover:text-bit"
+              }`}
+            >
+              {x.state === "done" ? "✓" : x.state === "locked" ? "🔒" : ""}
+            </button>
+          </ActionForm>
+          <div className="min-w-0 flex-1 space-y-1">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <p className={`text-sm font-medium ${x.state === "done" ? "text-muted line-through" : "text-fg"}`}>{x.title}</p>
+              {x.due && x.state !== "done" && (
+                <Pill tone={x.overdue ? "red" : "zinc"}>
+                  {t(x.overdue ? "leadTasks.overdue" : "leadTasks.due", { date: fmtWeekday(x.due, t.locale) })}
+                </Pill>
+              )}
+              <span className="text-xs text-faint">{t(`leadTasks.scope.${x.scope}`)}</span>
+            </div>
+            {x.state === "locked" && <p className="text-xs text-warn">{t("leadTasks.waitingFor", { steps: x.waitingFor.join(", ") })}</p>}
+            {x.note && x.state === "todo" && <p className="whitespace-pre-line text-xs text-muted">{x.note}</p>}
+            {x.contact && x.state === "todo" && (
+              <div className="rounded-bit bg-raised px-2.5 py-1.5">
+                <ContactDetails c={x.contact} t={t} compact />
+              </div>
+            )}
+            {x.state === "done" ? (
+              <p className="text-xs text-muted">
+                {t("leadTasks.doneBy", { name: (x.doneById && names.get(x.doneById)) || t("audit.someone"), date: fmtDate(x.doneAt, t.locale) })}
+              </p>
+            ) : (
+              <TaskAssignee lanId={lanId} taskId={x.id} value={x.assigneeId} leads={leads} />
+            )}
+          </div>
+        </li>
+  );
   return (
     <Card
       id="lead-tasks"
@@ -40,48 +82,18 @@ export async function LeadTasks({
       {tasks.length === 0 ? (
         <p className="text-sm text-muted">{t("leadTasks.empty")}</p>
       ) : (
-        <ul className="divide-y divide-line">
-          {sorted.map((x) => (
-            <li key={x.id} className={`flex gap-3 py-3 ${x.state === "locked" ? "opacity-70" : ""}`}>
-              <ActionForm action={toggleLanTask.bind(null, lanId, x.id)}>
-                <button
-                  aria-label={t(x.state === "done" ? "leadTasks.untick" : "leadTasks.tick")}
-                  title={t(x.state === "done" ? "leadTasks.untick" : "leadTasks.tick")}
-                  className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-bold ${
-                    x.state === "done" ? "bg-bit text-on-bit" : "border border-line text-muted hover:border-bit hover:text-bit"
-                  }`}
-                >
-                  {x.state === "done" ? "✓" : x.state === "locked" ? "🔒" : ""}
-                </button>
-              </ActionForm>
-              <div className="min-w-0 flex-1 space-y-1">
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <p className={`text-sm font-medium ${x.state === "done" ? "text-muted line-through" : "text-fg"}`}>{x.title}</p>
-                  {x.due && x.state !== "done" && (
-                    <Pill tone={x.overdue ? "red" : "zinc"}>
-                      {t(x.overdue ? "leadTasks.overdue" : "leadTasks.due", { date: fmtWeekday(x.due, t.locale) })}
-                    </Pill>
-                  )}
-                  <span className="text-xs text-faint">{t(`leadTasks.scope.${x.scope}`)}</span>
-                </div>
-                {x.state === "locked" && <p className="text-xs text-warn">{t("leadTasks.waitingFor", { steps: x.waitingFor.join(", ") })}</p>}
-                {x.note && x.state !== "done" && <p className="whitespace-pre-line text-xs text-muted">{x.note}</p>}
-                {x.contact && x.state !== "done" && (
-                  <div className="rounded-bit bg-raised px-2.5 py-1.5">
-                    <ContactDetails c={x.contact} t={t} compact />
-                  </div>
-                )}
-                {x.state === "done" ? (
-                  <p className="text-xs text-muted">
-                    {t("leadTasks.doneBy", { name: (x.doneById && names.get(x.doneById)) || t("audit.someone"), date: fmtDate(x.doneAt, t.locale) })}
-                  </p>
-                ) : (
-                  <TaskAssignee lanId={lanId} taskId={x.id} value={x.assigneeId} leads={leads} />
-                )}
-              </div>
-            </li>
-          ))}
-        </ul>
+        <>
+          <ul className="divide-y divide-line">{open.map(row)}</ul>
+          {/* Done ones fold away, so the open ones stay short on a phone. */}
+          {finished.length > 0 && (
+            <details className="group mt-1 border-t border-line pt-2">
+              <summary className="cursor-pointer list-none py-1 text-sm text-muted hover:text-fg [&::-webkit-details-marker]:hidden">
+                {t("leadTasks.showDone", { count: finished.length })}
+              </summary>
+              <ul className="divide-y divide-line">{finished.map(row)}</ul>
+            </details>
+          )}
+        </>
       )}
       {children}
       {editLinks.length > 0 && (
