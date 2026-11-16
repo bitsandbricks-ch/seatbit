@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import { and, asc, eq } from "drizzle-orm";
 import { db, schema } from "@/db";
-import type { AttendanceStatus, InterestAnswer, Lan } from "@/db/schema";
+import type { AttendanceStatus, Lan } from "@/db/schema";
 import { avatarUrl, clanCan, getClan, myClans } from "./clans";
 import { roleCan } from "./clan-roles";
 import { platformCan } from "./platform-roles";
@@ -17,7 +17,7 @@ import { nameMatches } from "./names";
 import { type DmResult, dmDiscordUser, notify, notifyLater } from "./notify";
 import { makeT, type T } from "../i18n/translate";
 import { clanLocale } from "../i18n/user-locale";
-import { answerEvent, answerInterest, handleMemberCommand, handleTicketButton, memberAutocomplete } from "./discord-commands";
+import { answerEvent, handleMemberCommand, handleTicketButton, memberAutocomplete } from "./discord-commands";
 import { lanChanged } from "./live";
 import {
   type DiscordUser,
@@ -102,29 +102,14 @@ function attendanceButtons(l: Lan, t: T, disabled = false) {
   ];
 }
 
-/** Interest check buttons: would you come? */
-function interestButtons(l: Lan, t: T) {
-  const btn = (a: InterestAnswer, label: string, style: number) => ({ type: 2, style, label, custom_id: `int:${l.id}:${a}` });
-  return [
-    {
-      type: 1,
-      components: [
-        btn("yes", t("eventUi.idCome"), 3),
-        btn("maybe", t("eventUi.maybe"), 2),
-        btn("no", t("eventUi.notThisTime"), 4),
-        { type: 2, style: 5, label: t("notice.openInSeatbit"), url: lanLink(l) },
-      ],
-    },
-  ];
-}
-
 /** The interest check post: who'd come, who maybe. */
 async function interestMessage(l: Lan) {
   const t = lanT(l);
-  const rows = db.select().from(schema.lanInterest).where(eq(schema.lanInterest.lanId, l.id)).all();
+  const rows = db.select().from(schema.attendance).where(eq(schema.attendance.lanId, l.id)).all();
   const names = await getDisplayNames(l.id, rows.map((r) => r.userId));
-  const who = (a: string) => rows.filter((r) => r.answer === a).map((r) => names.get(r.userId) ?? "?").sort((x, y) => x.localeCompare(y));
-  const yes = who("yes");
+  const who = (...st: string[]) =>
+    rows.filter((r) => st.includes(r.status)).map((r) => names.get(r.userId) ?? "?").sort((x, y) => x.localeCompare(y));
+  const yes = who("going", "waitlist");
   const maybe = who("maybe");
   const c = l.clanId ? getClan(l.clanId) : undefined;
   const icon = c && avatarUrl(c);
@@ -143,7 +128,8 @@ async function interestMessage(l: Lan) {
         footer: { text: t("bot.interestFooter") },
       },
     ],
-    components: interestButtons(l, t),
+    // The same three answers as sign-up; they carry over when it opens.
+    components: attendanceButtons(l, t),
     allowed_mentions: { parse: [] },
   };
 }
@@ -639,9 +625,9 @@ export function handleInteraction(i: Interaction): Handled {
     if (!l) return { response: reply(t("bot.lanGone")) };
     const me = seatbitUserFor(discordUser);
     if (!me) return { response: notLinked(t) };
-    return kind === "int"
-      ? answerInterest(l, me, answer as InterestAnswer, t)
-      : answerEvent(l, me, answer as AttendanceStatus, editReply, t);
+    // "int:" buttons on older interest check posts and reminders answered yes / maybe / no.
+    const status = kind === "int" ? (({ yes: "going", maybe: "maybe", no: "declined" }) as Record<string, AttendanceStatus>)[answer] : answer;
+    return answerEvent(l, me, status as AttendanceStatus, editReply, t);
   }
 
   // "I have my ticket" button from /ticket and /status

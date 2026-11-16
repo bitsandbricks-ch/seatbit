@@ -401,11 +401,11 @@ export async function seedDemo({ force = false, discord = false } = {}) {
       ])
       .run();
 
-    // Interest check answers for the Retro Weekend (Anna hasn't answered yet).
-    const interest: [string, "yes" | "maybe" | "no"][] = [
-      ["alex", "yes"], ["ben", "yes"], ["chiara", "maybe"], ["finn", "yes"], ["lea", "no"], ["rafael", "yes"], ["nina", "maybe"],
+    // Interest check answers for the Retro Weekend (Anna and a few others haven't answered yet).
+    const interest: [string, "going" | "maybe" | "declined"][] = [
+      ["alex", "going"], ["ben", "going"], ["chiara", "maybe"], ["finn", "going"], ["lea", "declined"], ["rafael", "going"], ["nina", "maybe"],
     ];
-    for (const [key, answer] of interest) tx.insert(s.lanInterest).values({ lanId: events.retro, userId: ids[key], answer }).run();
+    for (const [key, status] of interest) tx.insert(s.attendance).values({ lanId: events.retro, userId: ids[key], status }).run();
 
     // Lead news on the Lakeside LAN.
     tx.insert(s.lanNews)

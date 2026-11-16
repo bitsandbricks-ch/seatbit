@@ -31,7 +31,6 @@ export const eventGuide = {
     planFinal: "Seat plan is final",
     coming: "{count} coming",
     comingWaiting: "{count} coming · {waiting} waiting",
-    interested: "{count} would come",
     travel: "{free} free seats in cars · {looking} looking",
     travelNone: "No rides or places to sleep yet",
     packed: "{done} of {total} packed",
