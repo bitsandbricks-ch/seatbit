@@ -4,7 +4,9 @@ import type { AttendanceStatus, Lan, Nickname } from "@/db/schema";
 import { appUrl } from "./mail";
 import { personLabel, type NameDisplay } from "./names";
 import { eventMailVars, renderTemplate } from "./mail-templates";
-import { localeOf } from "../i18n/user-locale";
+import { instanceLocale, localeOf } from "../i18n/user-locale";
+import { makeT } from "../i18n/translate";
+import { shownError } from "./action-error";
 import { notify } from "./notify";
 
 const { attendance, nickname, seat, user, lan } = schema;
@@ -264,7 +266,8 @@ export function getLan(id: string) {
 /** getLan for server actions: an unknown id is a bug or a stale page, not something to show nicely. */
 export function mustGetLan(id: string) {
   const l = getLan(id);
-  if (!l) throw new Error("Event not found");
+  // Deleted while someone had it open: say so (in the instance language; no request here).
+  if (!l) throw shownError(makeT(instanceLocale())("errors.eventGone"));
   return l;
 }
 
