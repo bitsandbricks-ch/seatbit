@@ -99,7 +99,7 @@ Members set a nick and their user ID **per LAN type**, so they enter their name 
 Many LAN sites have a public page per participant, e.g. `https://example.com/user/?id=4039`. Put that link into the LAN type's **Member profile link** with `{id}` instead of the number: `https://example.com/user/?id={id}`. Seatbit then builds each member's link from the LAN ID they entered and shows a **Profile ↗** link:
 
 - next to each name in the event's **Attendees** tab (all members see it),
-- in *Manage → Attendees*, on the seat plan's details pane and in the CSV export,
+- in *Manage → People*, on the seat plan's details pane and in the CSV export,
 - on the member's clan profile and their own profile.
 
 An event can have its own link (event *Settings*); empty means the LAN type's. Without a profile link, LAN IDs stay visible to leads, admins and the member only.
