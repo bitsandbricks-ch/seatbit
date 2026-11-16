@@ -174,7 +174,7 @@ export function ChargeForm({
 
       <div>
         <span className={label}>{t("payments.form.due")}</span>
-        <DateTimePicker name="dueAt" defaultTime="23:59" placeholder={t("payments.form.noDue")} />
+        <DateTimePicker name="dueAt" label={t("payments.form.due")} defaultTime="23:59" placeholder={t("payments.form.noDue")} />
         <p className="mt-1.5 text-xs text-faint">{t("payments.form.dueHint")}</p>
       </div>
 
@@ -205,7 +205,7 @@ export function ChargeEditForm({ chargeId, title, note, dueAt }: { chargeId: str
       </Field>
       <div>
         <span className={label}>{t("payments.form.due")}</span>
-        <DateTimePicker name="dueAt" defaultValue={dueAt} defaultTime="23:59" placeholder={t("payments.form.noDue")} />
+        <DateTimePicker name="dueAt" label={t("payments.form.due")} defaultValue={dueAt} defaultTime="23:59" placeholder={t("payments.form.noDue")} />
       </div>
       <Field label={t("payments.form.note")}>
         <textarea name="note" maxLength={1000} rows={2} defaultValue={note} className={textarea} />
