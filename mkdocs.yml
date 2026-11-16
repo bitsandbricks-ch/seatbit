@@ -103,6 +103,7 @@ nav:
           - Members and guests: features/members-guests.md
           - Languages: features/languages.md
           - Light and dark theme: features/theme.md
+          - Quick search: features/search.md
           - What's new: features/whats-new.md
       - Events:
           - Event lifecycle: features/events.md

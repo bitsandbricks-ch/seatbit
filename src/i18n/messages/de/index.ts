@@ -85,6 +85,7 @@ import { report } from "./report";
 import { roleA } from "./roleA";
 import { roleInfo } from "./roleInfo";
 import { roles } from "./roles";
+import { search } from "./search";
 import { seatFlow } from "./seatFlow";
 import { seatMap } from "./seatMap";
 import { seatSetup } from "./seatSetup";
@@ -199,6 +200,7 @@ export const de: Messages = {
   roleA,
   roleInfo,
   roles,
+  search,
   seatFlow,
   seatMap,
   seatSetup,

@@ -11,6 +11,7 @@ import { avatarData } from "@/lib/avatars";
 import { getT } from "@/i18n/server";
 import { getTheme } from "@/lib/theme-server";
 import { DisplayMenu } from "./display-menu";
+import { QuickSearch } from "./quick-search";
 
 export async function Header() {
   const me = await getCurrentUser();
@@ -44,6 +45,7 @@ export async function Header() {
           </Link>
           {me && <TopNav items={items} />}
           <div className="ml-auto flex items-center gap-2">
+            {me && <QuickSearch />}
             <DisplayMenu theme={theme} />
             {me ? (
               <>
