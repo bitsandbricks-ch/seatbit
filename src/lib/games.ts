@@ -1,4 +1,4 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull, isNull, lt, ne } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Lan, User } from "@/db/schema";
 import { appUrl } from "./mail";
@@ -7,7 +7,7 @@ import { makeT } from "../i18n/translate";
 import { localeOf } from "../i18n/user-locale";
 import { teamsByGame, type TeamView } from "./teams";
 
-const { game, gameVote, attendance, user, reminderLog } = schema;
+const { game, gameVote, attendance, user, reminderLog, lan } = schema;
 const DAY = 24 * 60 * 60 * 1000;
 
 /** How long before the LAN the "install your games" reminder goes out. */
@@ -54,6 +54,46 @@ export function listGames(lanId: string, meId?: string): GameView[] {
       };
     })
     .sort((a, b) => b.votes - a.votes || a.name.localeCompare(b.name));
+}
+
+export type PastGame = { name: string; sizeGb: number | null; url: string; votes: number };
+
+/**
+ * The games of the clan's previous event of the same LAN type that aren't on this list yet,
+ * most votes first, so a yearly LAN doesn't start its list from scratch.
+ */
+export function previousGames(l: Lan, limit = 12): { lanName: string; games: PastGame[] } | null {
+  if (!l.typeId || !l.clanId) return null;
+  const prev = db
+    .select()
+    .from(lan)
+    .where(
+      and(
+        eq(lan.clanId, l.clanId),
+        eq(lan.typeId, l.typeId),
+        ne(lan.id, l.id),
+        lt(lan.startsAt, l.startsAt),
+        isNotNull(lan.publishedAt),
+        isNull(lan.cancelledAt),
+      ),
+    )
+    .orderBy(desc(lan.startsAt))
+    .limit(1)
+    .get();
+  if (!prev) return null;
+  const have = new Set(
+    db
+      .select({ name: game.name })
+      .from(game)
+      .where(eq(game.lanId, l.id))
+      .all()
+      .map((g) => g.name.trim().toLowerCase()),
+  );
+  const games = listGames(prev.id)
+    .filter((g) => !have.has(g.name.trim().toLowerCase()))
+    .slice(0, limit)
+    .map((g) => ({ name: g.name, sizeGb: g.sizeGb, url: g.url, votes: g.votes }));
+  return games.length ? { lanName: prev.name, games } : null;
 }
 
 /** Games with at least one vote, for the reminder (top 10). */
