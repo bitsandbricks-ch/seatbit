@@ -36,6 +36,7 @@ import { cancelSupport } from "@/lib/billing";
 import { NAME_DISPLAYS, cleanName } from "@/lib/names";
 import { safeNext } from "@/lib/safe-url";
 import { overLimit } from "@/lib/rate-limit";
+import { withdrawFromClanEvents } from "@/lib/clan-leave";
 
 const { clan, clanMember, clanInvite } = schema;
 
@@ -186,12 +187,16 @@ function adminCount(clanId: string) {
 
 export async function leaveClan(clanId: string) {
   const me = await requireUser();
-  if (clanRole(me.id, clanId) === "admin" && adminCount(clanId) <= 1) {
+  const role = clanRole(me.id, clanId);
+  if (role === "admin" && adminCount(clanId) <= 1) {
     throw await err("errors.lastAdmin");
   }
+  // Only a real member had answers; pending requests and non-members change nothing else.
+  const wasMember = !!role && role !== "pending";
   db.delete(clanMember)
     .where(and(eq(clanMember.clanId, clanId), eq(clanMember.userId, me.id)))
     .run();
+  if (wasMember) await withdrawFromClanEvents(clanId, me.id);
   revalidatePath("/", "layout");
   redirect("/clans");
 }
@@ -261,6 +266,7 @@ export async function removeClanMember(clanId: string, userId: string) {
   db.delete(clanMember)
     .where(and(eq(clanMember.clanId, clanId), eq(clanMember.userId, userId)))
     .run();
+  if (role && role !== "pending") await withdrawFromClanEvents(clanId, userId);
   revalidatePath("/", "layout");
 }
 
