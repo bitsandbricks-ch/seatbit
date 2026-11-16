@@ -1,0 +1,10 @@
+date: 2026-11-15
+type: fixed
+en:
+  title: "Seat map uses the full width again"
+  text: >-
+    Fixed a problem where long seat rows wrapped too early and left empty space next to the seat map.
+de:
+  title: "Sitzplan nutzt wieder die ganze Breite"
+  text: >-
+    Ein Problem behoben, bei dem lange Sitzreihen zu früh umbrachen und neben dem Sitzplan Platz frei blieb.

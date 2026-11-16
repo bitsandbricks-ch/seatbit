@@ -193,7 +193,7 @@ export const SPECS: Spec[] = [
 
   // ---------- event-actions.ts ----------
   { name: "event-actions.schedulePublish", allow: ["clanAdmin", "organizer", "owner"], run: () => eventActions.schedulePublish(fx.draftLan, day(3)) },
-  { name: "event-actions.setMyInterest", allow: MEMBERS, run: () => eventActions.setMyInterest(fx.interestLan, "yes") },
+  { name: "event-actions.scheduleSignup", allow: EVENT_MANAGERS, run: () => eventActions.scheduleSignup(fx.interestLan, null), effect: "none" },
   { name: "event-actions.openSignupNow", allow: EVENT_MANAGERS, run: () => eventActions.openSignupNow(fx.interestLan), effect: "none" },
   { name: "event-actions.cancelLan", allow: LAN_MANAGERS, run: () => eventActions.cancelLan(fx.lan, "test") },
   { name: "event-actions.uncancelLan", allow: LAN_MANAGERS, run: () => eventActions.uncancelLan(fx.lan), effect: "none" },

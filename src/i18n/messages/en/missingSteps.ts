@@ -11,7 +11,7 @@ export const missingSteps = {
     book: "Seat not booked on the event site",
   },
   hint: {
-    interest: "Haven't said if they'd come. The nudge asks yes, maybe or no (with buttons in the DM).",
+    interest: "Haven't said if they'd come. The nudge asks coming, unsure or not coming (with buttons in the DM).",
     answer: "Clan members who haven't answered at all. The nudge asks coming, unsure or not coming.",
     unsure: "Said unsure. The nudge asks if they know yet.",
     ticket: "Coming, but haven't ticked that they have a ticket. The nudge links the ticket shop and the deadline.",

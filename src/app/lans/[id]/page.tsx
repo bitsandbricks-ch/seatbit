@@ -37,7 +37,7 @@ import { GameList } from "@/components/game-list";
 import { EventRecap } from "@/components/event-recap";
 import { GAMES_REMINDER_DAYS, listGames } from "@/lib/games";
 import { SeatSwapPanel, type SwapView } from "@/components/seat-swaps";
-import { CheckInButton, DeleteNewsButton, InterestButtons } from "@/components/event-extras";
+import { CheckInButton, DeleteNewsButton } from "@/components/event-extras";
 import { InterestList } from "@/components/interest-list";
 import { FoodOrders, type FoodOrderCardView } from "@/components/food-orders";
 import { SharedCosts, type CostPerson } from "@/components/shared-costs";
@@ -222,9 +222,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
     t,
   });
   const full = l.capacity != null && going.length >= l.capacity;
-  const interests = l.interestCheck ? db.select().from(schema.lanInterest).where(eq(schema.lanInterest.lanId, id)).all() : [];
-  const myInterest = interests.find((i) => i.userId === me.id)?.answer ?? null;
-  // During the interest check nobody has signed up yet, so the attendees tab shows who answered instead.
+  // Interest check: the page is just the answer and who answered; the rest opens with sign-up.
   const interestPhase = l.interestCheck && !l.cancelledAt;
   const news = db
     .select()
@@ -452,21 +450,14 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
               ? t(published ? "eventGuide.rows.seatFinal" : "eventGuide.rows.seatPicked", { seat: mySeatLabel })
               : t(published ? "eventGuide.rows.planFinal" : "eventGuide.rows.planOpen"),
     },
-    interestPhase
-      ? {
-          id: "attendees",
-          label: t("interestList.tab"),
-          href: href("attendees"),
-          status: t("eventGuide.rows.interested", { count: interests.filter((i) => i.answer === "yes").length }),
-        }
-      : {
-          id: "attendees",
-          label: t("event.tabs.attendees"),
-          href: href("attendees"),
-          status: waiting
-            ? t("eventGuide.rows.comingWaiting", { count: going.length, waiting })
-            : t("eventGuide.rows.coming", { count: going.length }),
-        },
+    {
+      id: "attendees",
+      label: t("event.tabs.attendees"),
+      href: href("attendees"),
+      status: waiting
+        ? t("eventGuide.rows.comingWaiting", { count: going.length, waiting })
+        : t("eventGuide.rows.coming", { count: going.length }),
+    },
     {
       id: "travel",
       label: t("event.tabs.travel"),
@@ -525,9 +516,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
     { id: "overview", label: t("event.tabs.overview") },
     ...(foodLive ? [onSiteTab] : []),
     { id: "seats", label: t("event.tabs.seats"), badge: row("seats")?.dot ? String(row("seats")?.status) : undefined, dot: true },
-    interestPhase
-      ? { id: "attendees", label: t("interestList.tab"), count: interests.filter((i) => i.answer === "yes").length }
-      : { id: "attendees", label: t("event.tabs.attendees"), count: going.length },
+    { id: "attendees", label: t("event.tabs.attendees"), count: going.length },
     {
       id: "trip",
       label: t("eventGuide.trip"),
@@ -551,11 +540,16 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
   // Your answer and your checklist sit above the tabs, so they show on every tab.
   const yours = (
       <div className={`grid gap-4 ${checklistDone ? "items-start" : "items-stretch"} ${showChecklist && !compactAnswer ? "lg:grid-cols-[20rem_minmax(0,1fr)] 2xl:grid-cols-[22rem_minmax(0,1fr)]" : ""}`}>
-        {compactAnswer ? null : l.interestCheck && !l.cancelledAt ? (
+        {compactAnswer ? null : interestPhase ? (
+        // Same three answers as sign-up later; they carry over when the Leads open it.
         <section aria-label={t("event.wouldYouCome")} className="rounded-card border border-line bg-surface p-3 sm:p-4">
           <h2 className="mb-1 text-sm font-semibold text-fg">{t("event.wouldYouCome")}</h2>
           <p className="mb-3 text-sm text-muted">{t("event.notBinding")}</p>
-          {watching ? <p className="text-sm text-muted">{t("event.staffView")}</p> : <InterestButtons lanId={l.id} current={myInterest} />}
+          {watching ? (
+            <p className="text-sm text-muted">{t("event.staffView")}</p>
+          ) : (
+            <AttendanceButtons lanId={l.id} current={my?.status ?? null} disabled={false} />
+          )}
         </section>
         ) : (
         <section aria-label={t("event.yourAttendance")} className="rounded-card border border-line bg-surface p-3 sm:p-4">
@@ -604,6 +598,104 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
         )}
       </div>
   );
+
+  const detailsAside = (
+            <>
+            {lanClan && <EventPaymentsCard t={t} clan={lanClan} lines={myPayments} />}
+            <Card title={t("event.details")}>
+              <dl className="space-y-3 text-sm">
+                <DateRow label={t("event.answerBy")} d={l.signupDeadline} now={now} t={t} />
+                <DateRow label={t("event.buyTicketBy")} d={l.paymentDueDate} now={now} t={t} />
+                {l.price && (
+                  <div className="flex justify-between">
+                    <dt className="text-muted">{t("event.ticketPrice")}</dt>
+                    <dd>{l.price}</dd>
+                  </div>
+                )}
+                {my && (my.status === "going" || (my.status === "waitlist" && (my.paid || my.ticketBought))) && l.paymentDueDate && (
+                  <div className="flex justify-between">
+                    <dt className="text-muted">{t("event.yourTicket")}</dt>
+                    <dd>
+                      {my.paid || my.ticketBought ? (
+                        <Pill tone="emerald">{t("event.ticketOk")}</Pill>
+                      ) : (
+                        <Pill tone="red">{t("event.ticketOpen")}</Pill>
+                      )}
+                    </dd>
+                  </div>
+                )}
+              </dl>
+              {orgas.length > 0 && (
+                <div className="mt-4 border-t border-line pt-4">
+                  <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">{orgaIds.length ? t("event.leads") : t("event.contact")}</h3>
+                  <ul className="space-y-2">
+                    {orgas.map((o) => (
+                      <li key={o.id} className="flex items-center justify-between gap-2 text-sm">
+                        {lanClan ? (
+                          <Link href={`/clans/${lanClan.slug}/members/${o.id}`} className="min-w-0 truncate font-medium text-fg hover:text-bit hover:underline">
+                            {orgaNames.get(o.id) ?? o.name}
+                          </Link>
+                        ) : (
+                          <span className="min-w-0 truncate font-medium text-fg">{orgaNames.get(o.id) ?? o.name}</span>
+                        )}
+                        <a href={`mailto:${o.email}?subject=${encodeURIComponent(l.name)}`} className="shrink-0 text-bit hover:underline">
+                          {t("event.email")}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </Card>
+            </>
+  );
+  const newsCard = news.length > 0 && (
+            <Card title={t("event.news")}>
+              <ul className="space-y-4">
+                {news.slice(0, 5).map((n) => (
+                  <li key={n.id} className="text-sm">
+                    <p className="whitespace-pre-wrap text-fg/90">{n.text}</p>
+                    <p className="mt-1 flex items-center gap-3 text-xs text-faint">
+                      {(n.authorId && newsNames.get(n.authorId)) || t("event.lead")} · {fmtDate(n.createdAt, t.locale)}
+                      {isAdmin && <DeleteNewsButton id={n.id} />}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          );
+
+  if (interestPhase) {
+    return (
+      <Page>
+        <LiveRefresh lanId={l.id} />
+        <EventHeader lan={l} clan={lanClan} mode="view" canManage={isAdmin} tab="overview" />
+        {yours}
+        <Columns aside={detailsAside}>
+          <Notice>
+            {l.signupOpensAt && !l.dateTbd
+              ? t("interestList.laterOn", { date: fmtDate(l.signupOpensAt, t.locale) })
+              : t("interestList.later")}
+          </Notice>
+          {l.description && (
+            <Card>
+              <p className="whitespace-pre-wrap text-fg/90">{l.description}</p>
+            </Card>
+          )}
+          <InterestList
+            lanId={l.id}
+            clanId={l.clanId}
+            clanSlug={lanClan?.slug ?? null}
+            meId={me.id}
+            canRemind={isAdmin && !!l.publishedAt}
+            t={t}
+          />
+          {newsCard}
+        </Columns>
+        {!isAdmin && <ReportButton lanId={l.id} />}
+      </Page>
+    );
+  }
 
   return (
     <Page>
@@ -726,8 +818,6 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
       </TabPanel>
 
       <TabPanel id="attendees">
-      {interestPhase && <InterestList lanId={l.id} clanSlug={lanClan?.slug ?? null} meId={me.id} t={t} />}
-      {!interestPhase && (
         <Card
           title={l.capacity ? t("event.attendeesTitleOf", { count: going.length, capacity: l.capacity }) : t("event.attendeesTitle", { count: going.length })}
           actions={full && <Pill tone="red">{t("event.fullWaitlist")}</Pill>}
@@ -737,63 +827,13 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           <AttendeeList t={t} title={t("event.unsure")} list={group("maybe")} profileBase={profileBase} names={names} verified={verified} avatars={avatars} profiles={profiles} seatOf={seatOf} marks={leadMarks} meId={me.id} />
           {group("declined").length > 0 && <p className="mt-3 text-xs text-muted">{t("event.cantMakeIt", { count: group("declined").length })}</p>}
         </Card>
-      )}
       </TabPanel>
 
       <TabPanel id="overview">
         {/* Your answer and checklist are above the tabs. Desktop: event on the left, details in a sidebar on the right.
             Phones: the event first, details last. */}
         <Columns
-          aside={
-            <>
-            {lanClan && <EventPaymentsCard t={t} clan={lanClan} lines={myPayments} />}
-            <Card title={t("event.details")}>
-              <dl className="space-y-3 text-sm">
-                <DateRow label={t("event.answerBy")} d={l.signupDeadline} now={now} t={t} />
-                <DateRow label={t("event.buyTicketBy")} d={l.paymentDueDate} now={now} t={t} />
-                {l.price && (
-                  <div className="flex justify-between">
-                    <dt className="text-muted">{t("event.ticketPrice")}</dt>
-                    <dd>{l.price}</dd>
-                  </div>
-                )}
-                {my && (my.status === "going" || (my.status === "waitlist" && (my.paid || my.ticketBought))) && l.paymentDueDate && (
-                  <div className="flex justify-between">
-                    <dt className="text-muted">{t("event.yourTicket")}</dt>
-                    <dd>
-                      {my.paid || my.ticketBought ? (
-                        <Pill tone="emerald">{t("event.ticketOk")}</Pill>
-                      ) : (
-                        <Pill tone="red">{t("event.ticketOpen")}</Pill>
-                      )}
-                    </dd>
-                  </div>
-                )}
-              </dl>
-              {orgas.length > 0 && (
-                <div className="mt-4 border-t border-line pt-4">
-                  <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">{orgaIds.length ? t("event.leads") : t("event.contact")}</h3>
-                  <ul className="space-y-2">
-                    {orgas.map((o) => (
-                      <li key={o.id} className="flex items-center justify-between gap-2 text-sm">
-                        {lanClan ? (
-                          <Link href={`/clans/${lanClan.slug}/members/${o.id}`} className="min-w-0 truncate font-medium text-fg hover:text-bit hover:underline">
-                            {orgaNames.get(o.id) ?? o.name}
-                          </Link>
-                        ) : (
-                          <span className="min-w-0 truncate font-medium text-fg">{orgaNames.get(o.id) ?? o.name}</span>
-                        )}
-                        <a href={`mailto:${o.email}?subject=${encodeURIComponent(l.name)}`} className="shrink-0 text-bit hover:underline">
-                          {t("event.email")}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </Card>
-            </>
-          }
+          aside={detailsAside}
         >
           {l.publishedAt && !l.cancelledAt && l.endsAt < now && <EventRecap lan={l} me={me} clanSlug={lanClan?.slug ?? null} t={t} />}
           <GlanceList
@@ -822,22 +862,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
               <p className="whitespace-pre-wrap text-fg/90">{l.description}</p>
             </Card>
           )}
-          {interestPhase && <InterestList lanId={l.id} clanSlug={lanClan?.slug ?? null} meId={me.id} t={t} />}
-          {news.length > 0 && (
-            <Card title={t("event.news")}>
-              <ul className="space-y-4">
-                {news.slice(0, 5).map((n) => (
-                  <li key={n.id} className="text-sm">
-                    <p className="whitespace-pre-wrap text-fg/90">{n.text}</p>
-                    <p className="mt-1 flex items-center gap-3 text-xs text-faint">
-                      {(n.authorId && newsNames.get(n.authorId)) || t("event.lead")} · {fmtDate(n.createdAt, t.locale)}
-                      {isAdmin && <DeleteNewsButton id={n.id} />}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          )}
+          {newsCard}
 
           {/* Nick and LAN ID: one line, the forms open on tap. */}
           <details id="nick" open={sp.edit === "nick"} className="group scroll-mt-32 rounded-card border border-line bg-surface">

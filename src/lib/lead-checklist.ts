@@ -1,5 +1,6 @@
 import type { Lan } from "@/db/schema";
 import type { StepState } from "./checklist";
+import { fmtDate } from "./format";
 import { makeT, type T } from "../i18n/translate";
 
 /** Built-in steps a custom to-do can wait for, in checklist order. */
@@ -39,8 +40,11 @@ export function buildLeadChecklist(input: {
     steps.push({
       key: "signup",
       title: t("leadSteps.signup"),
-      state: "todo",
-      hint: t("leadSteps.signupHint"),
+      state: l.signupOpensAt && !l.dateTbd ? "pending" : "todo",
+      hint:
+        l.signupOpensAt && !l.dateTbd
+          ? t("leadSteps.signupScheduled", { date: fmtDate(l.signupOpensAt, t.locale) })
+          : t("leadSteps.signupHint"),
     });
   }
 

@@ -126,7 +126,7 @@ export function attendanceLocked(a: { ticketBought: boolean; paid: boolean } | n
 }
 
 export function signupClosed(l: Lan, now = new Date()) {
-  return !!l.cancelledAt || l.interestCheck || (l.signupDeadline && l.signupDeadline < now) || l.endsAt < now;
+  return !!l.cancelledAt || (l.signupDeadline && l.signupDeadline < now) || l.endsAt < now;
 }
 
 /**
@@ -147,7 +147,8 @@ export async function setAttendance(
     .get();
 
   let status = requested;
-  if (status === "going" && existing?.status !== "going" && !opts.force) {
+  // The interest check is non-binding, so nobody queues yet; the limit counts once sign-up opens.
+  if (status === "going" && existing?.status !== "going" && !opts.force && !l.interestCheck) {
     // Nobody jumps the line: with people waiting, a new "coming" queues up behind them.
     if (l.capacity != null && (goingCount(l.id) >= l.capacity || waitlistOf(l.id).length > 0)) status = "waitlist";
   }
