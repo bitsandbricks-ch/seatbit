@@ -193,7 +193,12 @@ function LanCard({
           <h3 className="text-lg font-semibold tracking-tight">{l.name}</h3>
           <p className="text-sm text-muted">
             {lanWeekday(l, t.locale)}
-            {!l.dateTbd && <span className="text-faint"> · {relative(l.startsAt, now, t.locale)}</span>}
+            {!l.dateTbd &&
+              (l.startsAt <= now && !l.cancelledAt ? (
+                <span className="font-medium text-bit"> · {t("home.happeningNow")}</span>
+              ) : (
+                <span className="text-faint"> · {relative(l.startsAt, now, t.locale)}</span>
+              ))}
           </p>
           {l.location && <p className="truncate text-sm text-muted">{l.location}</p>}
         </div>

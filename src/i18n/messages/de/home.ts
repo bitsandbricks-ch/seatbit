@@ -16,6 +16,7 @@ export const home: Messages["home"] = {
   next: "Als Nächstes: {step}",
   by: "bis {date} ({relative})",
   allSet: "Alles erledigt",
+  happeningNow: "läuft gerade",
   seatsFree: { one: "{count} Platz frei", other: "{count} Plätze frei" },
   noSeats: "Keine Plätze mehr frei",
   welcomeTitle: "Willkommen bei Seatbit",
