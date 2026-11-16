@@ -13,7 +13,7 @@ export const missingSteps: Messages["missingSteps"] = {
     book: "Platz nicht auf der Event-Seite gebucht",
   },
   hint: {
-    interest: "Haben nicht gesagt, ob sie kommen würden. Der Stupser fragt ja, vielleicht oder nein (mit Knöpfen in der DM).",
+    interest: "Haben nicht gesagt, ob sie kommen würden. Der Stupser fragt dabei, unsicher oder nicht dabei (mit Knöpfen in der DM).",
     answer: "Clan-Mitglieder, die gar nicht geantwortet haben. Der Stupser fragt: komme, unsicher oder komme nicht.",
     unsure: "Haben unsicher gesagt. Der Stupser fragt, ob sie es schon wissen.",
     ticket: "Kommen, haben aber nicht abgehakt, dass sie ein Ticket haben. Der Stupser verlinkt den Ticketshop und die Frist.",

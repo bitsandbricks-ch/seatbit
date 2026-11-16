@@ -5,9 +5,6 @@ export const eventUi: Messages["eventUi"] = {
   imComing: "Ich komme",
   unsure: "Unsicher",
   notComing: "Nicht dabei",
-  idCome: "Ich käme",
-  maybe: "Vielleicht",
-  notThisTime: "Diesmal nicht",
   haveTicket: "Ich habe mein Ticket",
   confirmedByLead: "(von einem Lead bestätigt)",
   delete: "Löschen",
@@ -42,5 +39,6 @@ export const eventUi: Messages["eventUi"] = {
   fillIn: "Füll die Details aus und veröffentliche dann sofort oder wähle einen Zeitpunkt.",
   interestCheck: "Interessensabfrage",
   interestText: "Wärst du dabei? Noch ist nichts verbindlich: Anmeldung, Tickets und Plätze kommen, sobald die Leads entscheiden.",
-  interestCounts: "{yes} interessiert · {maybe} vielleicht · {no} nicht",
+  interestCounts: "{yes} dabei · {maybe} unsicher · {no} nicht dabei",
+  signupOpensOn: "Die Anmeldung geht am {date} auf.",
 };

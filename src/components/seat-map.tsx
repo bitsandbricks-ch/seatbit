@@ -109,7 +109,7 @@ export function SeatMap({
   const [dragOver, setDragOver] = useState<string | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   // Measured seat size and how many seats fit on one line (long rows wrap).
-  const [dims, setDims] = useState({ cap: 999, w: 40, g: 4 });
+  const [dims, setDims] = useState({ cap: 999, avail: 0, min: 40, max: 56, g: 4 });
 
   useEffect(() => {
     try {
@@ -225,8 +225,10 @@ export function SeatMap({
       const max = compact ? 56 : 112;
       // Minus the padding that keeps selection rings visible, the row letter, its gap and the wrap indent.
       const avail = el.clientWidth - 12 - 20 - 4 - 12;
+      // Hidden (a tab that isn't open yet) measures 0; keep the last size until it shows.
+      if (el.clientWidth === 0) return;
       const cap = Math.max(1, Math.floor((avail + g) / (min + g)));
-      setDims({ cap, w: Math.max(min, Math.min(max, Math.floor((avail + g) / cap - g))), g });
+      setDims({ cap, avail, min, max, g });
     };
     measure();
     const ro = new ResizeObserver(measure);
@@ -391,6 +393,18 @@ export function SeatMap({
     }
     return lines;
   };
+  const rowLines = new Map(rowList.map((r) => [r, linesFor(itemsFor(r))] as const));
+  // One seat width for the whole map: the widest line fills the space, so wrapped rows don't leave
+  // half the width empty (the cap above is counted at the smallest seat size).
+  const seatW = (() => {
+    let w = dims.max;
+    for (const lines of rowLines.values())
+      for (const line of lines) {
+        const units = line.reduce((n, it) => n + unit(it), 0);
+        if (units) w = Math.min(w, Math.floor((dims.avail - (line.length - 1) * dims.g) / units));
+      }
+    return Math.max(dims.min, w);
+  })();
   const anyGap = !layout && rowList.some((r) => itemsFor(r).some((it) => it.kind === "gap"));
 
   const details = (onSwap: () => void, compact = place === "top") =>
@@ -509,7 +523,7 @@ export function SeatMap({
 
             <div ref={wrapRef} data-seat-grid className={`-mx-1.5 scroll-mt-20 space-y-2 overflow-x-auto p-1.5 ${pending ? "opacity-70" : ""}`}>
               {rowList.map((row) => {
-                const lines = linesFor(itemsFor(row));
+                const lines = rowLines.get(row)!;
                 return (
                   <div key={row} role="group" aria-label={t("seatMap.row", { row: rowLetterOf(row) })} className="flex items-start gap-1">
                     {rowLabel(row, lines.length > 1)}
@@ -521,14 +535,14 @@ export function SeatMap({
                               <div
                                 key={`g${it.from}`}
                                 className={`${cell} grid shrink-0 place-items-center`}
-                                style={{ width: dims.w / 2 }}
+                                style={{ width: seatW / 2 }}
                                 title={t("seatMap.notOurs", { seats: `${rowLetterOf(row)}${it.from}${it.to > it.from ? `–${rowLetterOf(row)}${it.to}` : ""}` })}
                                 aria-hidden
                               >
                                 <span className="h-3/5 border-l-2 border-dotted border-faint/60" />
                               </div>
                             ) : (
-                              <div key={it.col} className="shrink-0" style={{ width: dims.w }}>
+                              <div key={it.col} className="shrink-0" style={{ width: seatW }}>
                                 {renderCell(row, it.col)}
                               </div>
                             ),
