@@ -17,4 +17,6 @@ Members offer or ask for **rides** and **places to sleep**, grouped by town.
 
 Everyone gets a private **packing list** per event with the usual items (PC, screen, cables, headset, ticket, sleeping bag, ...). Add your own items and tick them off while you pack. Nobody else sees it. There is no shared gear list.
 
+Items you added yourself at earlier LANs show below the list under *From your earlier LANs*: tap one to add it again, or **Add all**.
+
 ![Packing list](../screenshots/phone-packing-list.png){ .shot width="300" }

@@ -10,7 +10,7 @@ import { z } from "zod";
 import { db, schema } from "@/db";
 import { TRAVEL_KINDS } from "@/db/schema";
 import { getLan } from "@/lib/lans";
-import { PACKING_ITEMS } from "@/lib/gear";
+import { MAX_PACKING_ITEMS, PACKING_ITEMS } from "@/lib/gear";
 import { canTakePart, isLanManager, requireUser } from "@/lib/session";
 
 const { attendance, travelPost, travelSpot, gearPacked, packingItem } = schema;
@@ -41,8 +41,6 @@ function mustGetPost(postId: string) {
 
 /** Enough for an offer and a request of each kind; more is a mistake or spam. */
 const MAX_POSTS_PER_PERSON = 6;
-/** Own packing items per person and event. */
-const MAX_PACKING_ITEMS = 60;
 
 const takenPlaces = (postId: string) =>
   db.select({ id: travelSpot.id }).from(travelSpot).where(eq(travelSpot.postId, postId)).all().length;
