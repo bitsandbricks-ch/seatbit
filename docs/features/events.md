@@ -98,7 +98,7 @@ Someone who opens the link but can't see the event yet gets a card with the even
 </figure>
 </div>
 
-For ready-made WhatsApp texts with the link (announcement, reminders), see *Manage → Discord & WhatsApp*.
+For ready-made WhatsApp texts with the link (announcement, reminders), see *Manage → News*.
 
 ## Manage
 
@@ -106,11 +106,10 @@ Leads see **View / Manage** next to the event title. *Manage* has the tabs:
 
 | Tab | |
 | --- | --- |
-| **Overview** | The lead checklist, [lead to-dos and organizer contacts](lead-todos.md), a strip with the numbers (coming, unsure, tickets, seats; each opens its tab), deadlines, news, [manual reminders](reminders.md#manual-reminders). |
+| **Overview** | The lead checklist, [lead to-dos and organizer contacts](lead-todos.md) (done ones fold away), a strip with the numbers (coming, unsure, tickets, seats; each opens its tab), deadlines. |
 | **Seats** | The seat planner. See [Seats](seats.md#plan-the-seats). |
-| **Attendees** | Answers, tickets, LAN IDs, CSV export. See [Attendance](attendance.md#attendee-list). |
-| **Who's missing** | Who still owes something, with nudges. See [Who's missing](reminders.md#whos-missing). |
-| **Discord & WhatsApp** | Re-post the announcement, post reminders, WhatsApp texts. See [Discord](discord.md#per-event). |
+| **People** | Switch between *Who's coming* (answers, tickets, LAN IDs, CSV export; see [Attendance](attendance.md#attendee-list)), *Who's missing* (who still owes something, with nudges; see [Who's missing](reminders.md#whos-missing)) and *Emergency* (see [Emergency contact and diet](emergency.md)). |
+| **News** | News for attendees, [manual reminders](reminders.md#manual-reminders), and Discord & WhatsApp: re-post the announcement, post reminders, WhatsApp texts. See [Discord](discord.md#per-event). |
 | **Settings** | Details, dates, spots, links, co-leads, copy, cancel, delete. |
 
 ![Manage overview](../screenshots/desktop-manage.png){ .shot }
