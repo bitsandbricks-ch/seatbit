@@ -126,3 +126,4 @@ Only "this event changed" goes over the stream, never data: the refreshed page l
 
 - Server code that touches the database must not be imported by client components (`"use client"`); `better-sqlite3` breaks the client bundle.
 - Instance-wide options are platform settings, not constants or env-only variables. See [Code guidelines](../contributing/guidelines.md).
+- Moved pages get their old URL in `redirects()` in `next.config.ts`, not a page that only calls `redirect()`. The root `loading.tsx` streams every page, so such a page answers 200, shows the loading screen and only then jumps on the client.
