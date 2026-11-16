@@ -618,6 +618,41 @@ export const gameVote = sqliteTable(
   (t) => [uniqueIndex("game_vote_uq").on(t.gameId, t.userId)],
 );
 
+/** A tournament team for a game at a LAN: who plays together, e.g. 5 for CS2. */
+export const team = sqliteTable(
+  "team",
+  {
+    id: id(),
+    gameId: text("game_id")
+      .notNull()
+      .references(() => game.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    /** Players the team needs; full at this size. */
+    size: integer("size").notNull(),
+    /** Tournament page on the event's site, or a note where to sign up. */
+    url: text("url").default("").notNull(),
+    note: text("note").default("").notNull(),
+    /** The captain: who made the team. Edits it with the leads. */
+    createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  (t) => [index("team_game_idx").on(t.gameId)],
+);
+
+export const teamMember = sqliteTable(
+  "team_member",
+  {
+    teamId: text("team_id")
+      .notNull()
+      .references(() => team.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    joinedAt: integer("joined_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  (t) => [uniqueIndex("team_member_uq").on(t.teamId, t.userId)],
+);
+
 // ---------- Chat integrations ----------
 
 /** Discord channels the bot posts a clan's LAN announcements and reminders to. A server belongs to one clan. */

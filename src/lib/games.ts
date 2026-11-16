@@ -5,6 +5,7 @@ import { appUrl } from "./mail";
 import { notify } from "./notify";
 import { makeT } from "../i18n/translate";
 import { localeOf } from "../i18n/user-locale";
+import { teamsByGame, type TeamView } from "./teams";
 
 const { game, gameVote, attendance, user, reminderLog } = schema;
 const DAY = 24 * 60 * 60 * 1000;
@@ -23,11 +24,14 @@ export type GameView = {
   installed: number;
   myVote: boolean;
   myInstalled: boolean;
+  /** Tournament teams for this game. */
+  teams: TeamView[];
 };
 
 /** A LAN's games, most votes first, with my own marks. */
 export function listGames(lanId: string, meId?: string): GameView[] {
   const games = db.select().from(game).where(eq(game.lanId, lanId)).all();
+  const teams = games.length ? teamsByGame(lanId) : new Map<string, TeamView[]>();
   const marks = games.length
     ? db.select().from(gameVote).where(inArray(gameVote.gameId, games.map((g) => g.id))).all()
     : [];
@@ -46,6 +50,7 @@ export function listGames(lanId: string, meId?: string): GameView[] {
         installed: mine.filter((m) => m.installed).length,
         myVote: !!me?.vote,
         myInstalled: !!me?.installed,
+        teams: teams.get(g.id) ?? [],
       };
     })
     .sort((a, b) => b.votes - a.votes || a.name.localeCompare(b.name));

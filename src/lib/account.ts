@@ -136,6 +136,7 @@ export async function deleteAccount(userId: string) {
     tx.delete(schema.lanOrga).where(eq(schema.lanOrga.userId, userId)).run();
     tx.delete(schema.seatSwap).where(or(eq(schema.seatSwap.fromUserId, userId), eq(schema.seatSwap.toUserId, userId))).run();
     tx.delete(schema.gameVote).where(eq(schema.gameVote.userId, userId)).run();
+    tx.delete(schema.teamMember).where(eq(schema.teamMember.userId, userId)).run();
     tx.delete(schema.travelSpot).where(eq(schema.travelSpot.userId, userId)).run();
     tx.delete(schema.travelPost).where(eq(schema.travelPost.userId, userId)).run();
     tx.delete(schema.gearPacked).where(eq(schema.gearPacked.userId, userId)).run();
@@ -230,6 +231,13 @@ export function exportUserData(userId: string) {
     .from(schema.gameVote)
     .innerJoin(schema.game, eq(schema.game.id, schema.gameVote.gameId))
     .where(eq(schema.gameVote.userId, userId))
+    .all();
+  const teams = db
+    .select({ t: schema.team, g: schema.game })
+    .from(schema.teamMember)
+    .innerJoin(schema.team, eq(schema.team.id, schema.teamMember.teamId))
+    .innerJoin(schema.game, eq(schema.game.id, schema.team.gameId))
+    .where(eq(schema.teamMember.userId, userId))
     .all();
   const swaps = db
     .select()
@@ -354,6 +362,7 @@ export function exportUserData(userId: string) {
     games: {
       suggested: games.map((g) => ({ event: event(g.lanId), name: g.name, sizeGb: g.sizeGb, url: g.url, at: g.createdAt })),
       votes: votes.map(({ v, g }) => ({ event: event(g.lanId), game: g.name, vote: v.vote, installed: v.installed })),
+      teams: teams.map(({ t, g }) => ({ event: event(g.lanId), game: g.name, team: t.name, captain: t.createdBy === userId })),
     },
     seatSwaps: swaps.map((s) => ({
       event: event(s.lanId),

@@ -59,6 +59,7 @@ export const fx = {
   annaPackingItem: "demo-pack-anna",
   game: "demo-game-cs",
   annaGame: "demo-game-anna",
+  annaTeam: "demo-team-anna", // on the CS game, Anna is its captain and only player
   foodOrder: "demo-food-pizza", // run by Anna
   annaFoodItem: "",
   charge: "demo-charge-dues",
@@ -133,6 +134,8 @@ export async function setup() {
   // Things that belong to Anna, so others can try to touch them.
   db.insert(s.packingItem).values({ id: fx.annaPackingItem, lanId: fx.lan, userId: ACTORS.member, label: "Headset", packed: false }).run();
   db.insert(s.game).values({ id: fx.annaGame, lanId: fx.lan, name: "Anna's game", addedBy: ACTORS.member }).run();
+  db.insert(s.team).values({ id: fx.annaTeam, gameId: fx.game, name: "Anna's team", size: 5, createdBy: ACTORS.member }).run();
+  db.insert(s.teamMember).values({ teamId: fx.annaTeam, userId: ACTORS.member }).run();
   db.insert(s.costExpense).values({ id: fx.annaExpense, lanId: fx.lan, title: "Snacks", amountCents: 2000, paidBy: ACTORS.member, createdBy: ACTORS.member }).run();
   db.insert(s.costShare).values([
     { expenseId: fx.annaExpense, userId: ACTORS.member, amountCents: 1000 },

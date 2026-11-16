@@ -103,6 +103,7 @@ import { support } from "./support";
 import { suspended } from "./suspended";
 import { swaps } from "./swaps";
 import { systemMail } from "./systemMail";
+import { teams } from "./teams";
 import { templateEditor } from "./templateEditor";
 import { toast } from "./toast";
 import { travel } from "./travel";
@@ -216,6 +217,7 @@ export const en = {
   suspended,
   swaps,
   systemMail,
+  teams,
   templateEditor,
   toast,
   travel,

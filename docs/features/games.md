@@ -19,3 +19,14 @@ Decide what to play and make sure everyone has it installed before the LAN.
 
 </figure>
 </div>
+
+## Tournament teams
+
+Playing a tournament at the LAN? Build the team under the game:
+
+- **+ Team** under a game starts a team: name, number of players (2 to 16), an optional link to the tournament page on the event's site and a note. Whoever starts it is the **captain** and its first player. Leads can set up teams without playing in them.
+- Each team shows as a chip under the game with its places, like *Lizards A 2/5*, or a check mark when it's full. Tap it to open the team in a side panel: players, open places, and who voted for the game but has no team yet.
+- **Join** a team with a free place; you play in one team per game. **Leave team** takes you out again.
+- The captain and the event's leads edit or delete the team and can take players out (after a confirmation).
+- When a team is full, its players get a Discord DM with the line-up.
+- Teams are part of [your data](accounts.md) export and go when you delete your account.
