@@ -220,6 +220,12 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
         names: Object.fromEntries(rulePeople(editRules).map((uid) => [uid, names.get(uid) ?? editNames?.get(uid)?.label ?? "?"])),
       }
     : null;
+  // People list: a shortcut into the wish editor above for everyone who is coming (guests too).
+  const wishCount = new Map(going.map((r) => [r.userId, (r.wishRules ?? []).length + (r.wishNote ? 1 : 0)]));
+  const wishHrefOf = (uid: string) =>
+    seats.length > 0 && !l.seatsPublishedAt && wishCount.has(uid)
+      ? { count: wishCount.get(uid)!, href: `/lans/${l.id}/manage?tab=seats&editWishes=${encodeURIComponent(uid)}#edit-wishes` }
+      : undefined;
   const orderedSeats = [...seats].sort((a, b) => a.row - b.row || a.col - b.col);
   const wishRows: WishRow[] = going
     .filter((r) => (r.wishRules ?? []).length > 0 || r.wishNote)
@@ -667,6 +673,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
           profileBase={lanClan ? `/clans/${lanClan.slug}/members/` : null}
           rows={tableRows.map((r) => ({
             ...r,
+            wishes: wishHrefOf(r.userId),
             // Ticket and booking have their own columns here; the icons add what the table doesn't show.
             marks: [
               ...(seats.some((x) => x.userId === r.userId && x.locked) ? (["held"] as const) : []),
