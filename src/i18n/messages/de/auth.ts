@@ -21,6 +21,7 @@ export const auth: Messages["auth"] = {
   forgot: "Passwort vergessen?",
   haveAccount: "Schon ein Konto? Anmelden",
   somethingWrong: "Etwas ist schiefgelaufen",
+  passwordChanged: "Dein Passwort wurde geändert. Melde dich mit dem neuen an.",
   deleted: "Dein Konto und deine Daten wurden gelöscht. Danke, dass du Seatbit genutzt hast.",
   legal: "Mit dem Fortfahren akzeptierst du die {terms} und die {privacy}.",
   terms: "Nutzungsbedingungen",
