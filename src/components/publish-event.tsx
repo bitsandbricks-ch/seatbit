@@ -1,7 +1,8 @@
 "use client";
 import { useState, useTransition } from "react";
 import { publishLan } from "@/app/actions";
-import { openSignupNow, schedulePublish, uncancelLan } from "@/app/event-actions";
+import { openSignupNow, schedulePublish, scheduleSignup, uncancelLan } from "@/app/event-actions";
+import { ask } from "./dialog";
 import { DateTimePicker } from "./date-time-picker";
 import { btnGhost, btnPrimary, btnSecondary } from "./ui";
 import { useT } from "@/i18n/client";
@@ -91,39 +92,78 @@ export function PublishEvent({
   );
 }
 
-/** Ends the interest check. */
-export function OpenSignupButton({ lanId, dateTbd }: { lanId: string; dateTbd: boolean }) {
+/** Ends the interest check now (after a confirm) or at a set time. */
+export function OpenSignup({
+  lanId,
+  dateTbd,
+  scheduled,
+  published,
+}: {
+  lanId: string;
+  dateTbd: boolean;
+  /** "Sat 14.11.2026, 18:00" when an opening time is set. */
+  scheduled: string | null;
+  published: boolean;
+}) {
   const t = useT();
   const [pending, start] = useTransition();
-  const [confirm, setConfirm] = useState(false);
-  const run = useRunAction();
+  const [scheduling, setScheduling] = useState(false);
+  const runAction = useRunAction();
+  const run = (task: () => Promise<{ error?: string } | void>) =>
+    start(async () => {
+      if (await runAction(task)) setScheduling(false);
+    });
   if (dateTbd) {
     return <span className="text-sm text-muted">{t("publish.setDateFirst")}</span>;
   }
-  if (!confirm) {
+  if (scheduling) {
     return (
-      <button className={btnPrimary} onClick={() => setConfirm(true)}>
-        {t("leadSteps.signup")}
-      </button>
+      <form
+        className="flex w-full flex-wrap items-center gap-2 sm:w-auto"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const at = String(new FormData(e.currentTarget).get("signupOpensAt") ?? "");
+          if (!at) return toast.error(t("publish.pickTime"));
+          run(() => scheduleSignup(lanId, at));
+        }}
+      >
+        <div className="min-w-56 flex-1">
+          <DateTimePicker name="signupOpensAt" defaultTime="18:00" placeholder={t("publish.openOn")} />
+        </div>
+        <button disabled={pending} className={btnPrimary}>
+          {t("publish.schedule")}
+        </button>
+        <button type="button" disabled={pending} className={btnGhost} onClick={() => setScheduling(false)}>
+          {t("common.cancel")}
+        </button>
+      </form>
     );
   }
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <span className="text-sm text-fg">{t("publish.openSignupConfirm")}</span>
       <button
         disabled={pending}
         className={btnPrimary}
-        onClick={() =>
-          start(async () => {
-            await run(() => openSignupNow(lanId));
-          })
-        }
+        onClick={async () => {
+          const ok = await ask({
+            title: t("publish.openSignupQ"),
+            body: published ? t("publish.openSignupConfirm") : t("publish.openSignupDraft"),
+            confirm: t("publish.yesOpen"),
+          });
+          if (ok) run(() => openSignupNow(lanId));
+        }}
       >
-        {pending ? t("publish.opening") : t("publish.yesOpen")}
+        {pending ? t("publish.opening") : t("leadSteps.signup")}
       </button>
-      <button disabled={pending} className={btnGhost} onClick={() => setConfirm(false)}>
-        {t("common.cancel")}
-      </button>
+      {scheduled ? (
+        <button disabled={pending} className={btnSecondary} onClick={() => run(() => scheduleSignup(lanId, null))}>
+          {t("publish.unscheduleSignup")}
+        </button>
+      ) : (
+        <button className={btnSecondary} onClick={() => setScheduling(true)}>
+          {t("publish.scheduleOpen")}
+        </button>
+      )}
     </div>
   );
 }
