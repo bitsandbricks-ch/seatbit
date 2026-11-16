@@ -112,7 +112,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/admin/re
                         <details>
                           <summary className={`${btnGhost} cursor-pointer list-none !text-danger`}>{t("moderation.suspendClan", { name: c.name })}</summary>
                           <ActionForm action={suspendClanAction.bind(null, c.id)} className="mt-2 flex flex-wrap gap-2">
-                            <input name="reason" className={`${input} min-w-0 flex-1`} placeholder={t("moderation.reasonPlaceholder")} maxLength={500} />
+                            <input name="reason" className={`${input} min-w-0 flex-1`} placeholder={t("moderation.reasonPlaceholder")} aria-label={t("moderation.reasonPlaceholder")} maxLength={500} />
                             <button className={btnDanger}>{t("moderation.suspend")}</button>
                           </ActionForm>
                         </details>

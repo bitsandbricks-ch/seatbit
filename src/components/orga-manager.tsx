@@ -37,7 +37,7 @@ export function OrgaManager({
       </ul>
       {candidates.length > 0 && (
         <div className="flex gap-2">
-          <select value={pick} onChange={(e) => setPick(e.target.value)} className={`${input} !w-auto`}>
+          <select value={pick} onChange={(e) => setPick(e.target.value)} aria-label={t("orgas.addPlaceholder")} className={`${input} !w-auto`}>
             <option value="">{t("orgas.addPlaceholder")}</option>
             {candidates.map((c) => (
               <option key={c.id} value={c.id}>

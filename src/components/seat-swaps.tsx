@@ -113,6 +113,7 @@ export function SeatSwapPanel({
               onChange={(e) => setNote(e.target.value)}
               maxLength={200}
               placeholder={t("swaps.why")}
+              aria-label={t("swaps.why")}
               className={input}
             />
             <button disabled={pending || !to} className={btnSecondary}>

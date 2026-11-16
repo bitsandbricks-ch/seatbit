@@ -1,0 +1,12 @@
+date: 2026-11-16
+type: improved
+en:
+  title: "Better screen reader support"
+  text: >-
+    A few fields that only had a grey hint inside, like the reason for a seat swap or the news text for an
+    event, now have a proper label, so screen readers can name them.
+de:
+  title: "Bessere Unterstützung für Screenreader"
+  text: >-
+    Einige Felder, die nur einen grauen Hinweis im Feld hatten, etwa der Grund für einen Platztausch oder der
+    News-Text eines Events, haben jetzt eine richtige Beschriftung, damit Screenreader sie benennen können.
