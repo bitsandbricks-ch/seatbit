@@ -31,7 +31,7 @@ The overview starts with your answer and checklist, then an **At a glance** card
 | **Attendees** | How many are coming and waiting. |
 | **Travel** | Free seats in cars and how many are looking (dot: others need a [ride](travel-packing.md), until the event starts). |
 | **Packing list** | How much of your [packing list](travel-packing.md#packing-list) is packed (dot: in the last week, until all is packed). |
-| **Games** | Games you still have to install, or how many there are ([games](games.md)). |
+| **Games** | Games you voted for and still have to install, or how many there are ([games](games.md)). |
 | **Costs** | *You owe …*, *You get … back* or *You're even* ([shared costs](shared-costs.md)). |
 | **On site** | Open [food orders](food.md). Only while the event runs, then right at the top; leads see the tab before that, to prepare an order. |
 
@@ -96,7 +96,7 @@ On the event page it starts folded: the progress bar and one line with the step 
 | 4. **Pick your seat** | Only when the leads turned on [self pick](seats.md#seat-steps): you took a free seat (the step then reads *Seat F8 picked*). Needs your ticket first. While self pick is on, the Seats tab has a yellow dot until you have a seat. |
 | 4. **Send seat wishes** (optional) | Instead of *Pick your seat* when self pick is off: you sent [seat wishes](seats.md#seat-steps). Hidden once the plan is final if you sent none. |
 | 5. **Leads confirm your seat** | The leads finalized the seat plan and you have a seat. Until then it waits on them (also after you picked your own seat). With an event seat plan, the hint says whether the leads already [booked it there](seats.md#book-on-the-event-site). |
-| **Install the games** (optional) | After step 5, when someone voted for [games](games.md): you marked every voted game as installed. |
+| **Install the games** (optional) | After step 5, when you voted for [games](games.md): you marked every game you voted for as installed. |
 | **Check in at the venue** | After step 5, only on the day: you tapped *I'm here*. |
 
 The leads have their own [lead checklist](events.md#lead-checklist).

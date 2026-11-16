@@ -9,6 +9,7 @@ import { httpHref } from "@/lib/safe-url";
 import type { AvatarData } from "@/lib/avatars";
 import { Avatar } from "./avatar";
 import { TeamChips } from "./team-panel";
+import { myGamesTodo } from "@/lib/games-todo";
 
 /** Games to play at the LAN: suggest, vote, and tick off what you installed. */
 export function GameList({
@@ -51,8 +52,9 @@ export function GameList({
       return setGameMark(id, kind, on);
     });
   const voted = (g: { id: string; myVote: boolean }) => marks[`${g.id}:vote`] ?? g.myVote;
-  const toInstall = games.filter((g) => g.votes > 0 && !g.myInstalled);
-  const gb = toInstall.reduce((n, g) => n + (g.sizeGb ?? 0), 0);
+  const { toInstall, gb } = myGamesTodo(
+    games.map((g) => ({ ...g, myVote: voted(g), myInstalled: marks[`${g.id}:installed`] ?? g.myInstalled })),
+  );
   const addPast = (p: PastGame) => {
     const fd = new FormData();
     fd.set("name", p.name);
@@ -65,9 +67,9 @@ export function GameList({
     <div className="space-y-5">
       <p className="text-sm text-muted">
         {t("games.intro")} {t("games.reminder", { days: reminderDays })}
-        {toInstall.length > 0 && (
+        {toInstall > 0 && (
           <span className="block text-warn">
-            {gb ? t("games.stillNeedGb", { count: toInstall.length, gb }) : t("games.stillNeed", { count: toInstall.length })}
+            {gb ? t("games.stillNeedGb", { count: toInstall, gb }) : t("games.stillNeed", { count: toInstall })}
           </span>
         )}
       </p>

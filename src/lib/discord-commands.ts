@@ -36,6 +36,7 @@ import { MAX_NEAR, addRule, normalizeRules, rulePeople, rulesProblem, type SeatR
 import { wishLines } from "./wish-text";
 import { nameMatches } from "./names";
 import { listGames } from "./games";
+import { myGamesTodo } from "./games-todo";
 import { type Notice, sendDiscordDm } from "./notify";
 import type { T } from "../i18n/translate";
 
@@ -406,10 +407,7 @@ async function statusCard(l: Lan, me: User, t: T) {
       hasSeatPlan: seats.length > 0,
       freeSeats: seats.filter((s) => !s.userId && !s.locked).length,
       waitlistPlace: a?.status === "waitlist" ? waitlistPositions(l.id).get(me.id) : undefined,
-      games: (() => {
-        const voted = listGames(l.id, me.id).filter((g) => g.votes > 0);
-        return { voted: voted.length, toInstall: voted.filter((g) => !g.myInstalled).length };
-      })(),
+      games: myGamesTodo(listGames(l.id, me.id)),
     });
     if (!a) lines.push(`⬜ **${t("cmd.noAnswerYet")}**: \`/coming\`, \`/unsure\` ${t("cmd.or")} \`/not-coming\``);
     else if (a.status !== "going")
