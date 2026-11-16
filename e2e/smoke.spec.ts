@@ -56,7 +56,7 @@ const ADMIN_PAGES = [
 ];
 
 /**
- * Visible buttons, links and fields that a screen reader can't name: no text, no aria-label, no
+ * Visible buttons, links, fields and images that a screen reader can't name: no text, no aria-label, no
  * <label>. A placeholder alone doesn't count, it disappears once someone types.
  */
 function unnamed(page: Page) {
@@ -66,7 +66,7 @@ function unnamed(page: Page) {
       return r.width > 0 && r.height > 0;
     };
     const describe = (el: Element) =>
-      [el.tagName.toLowerCase(), ...["name", "type", "placeholder", "href", "class"].map((a) => el.getAttribute(a) && `${a}=${el.getAttribute(a)!.slice(0, 50)}`)]
+      [el.tagName.toLowerCase(), ...["name", "type", "placeholder", "href", "src", "class"].map((a) => el.getAttribute(a) && `${a}=${el.getAttribute(a)!.slice(0, 50)}`)]
         .filter(Boolean)
         .join(" ");
     const out: string[] = [];
@@ -74,6 +74,10 @@ function unnamed(page: Page) {
       if (!shown(el)) continue;
       const name = (el.getAttribute("aria-label") || el.textContent || el.getAttribute("title") || "").trim();
       if (!name && !el.getAttribute("aria-labelledby") && !el.querySelector("img[alt]:not([alt=''])")) out.push(describe(el));
+    }
+    // Images say what they show (alt="" marks a decorative one).
+    for (const el of document.querySelectorAll("img:not([alt]), svg[role=img]:not([aria-label]):not([aria-labelledby])")) {
+      if (shown(el) && !el.closest("[aria-hidden=true]")) out.push(describe(el) + " (no alt)");
     }
     for (const el of document.querySelectorAll("input:not([type=hidden]), select, textarea")) {
       // aria-hidden: the date picker's form value, which its own button names.
