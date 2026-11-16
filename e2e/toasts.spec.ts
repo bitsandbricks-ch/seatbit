@@ -1,5 +1,5 @@
 import { and, eq } from "drizzle-orm";
-import { attendance, travelPost, travelSpot, user } from "../src/db/schema";
+import { attendance, lan, travelPost, travelSpot, user } from "../src/db/schema";
 import { createEvent, db, expect, test, userId } from "./fixtures";
 
 // Toasts: the note at the bottom after a save, and the reason when it failed.
@@ -71,5 +71,16 @@ test.describe("toasts", () => {
     db().insert(travelSpot).values({ postId: ride.id, userId: userId("chiara") }).run();
     await join.click();
     await expect(page.getByRole("list", { name: "Errors" }).getByText("No free places left.")).toBeVisible();
+  });
+
+  test("an event deleted while the page is open says so", async ({ as }) => {
+    const id = createEvent();
+    const page = await as("anna");
+    await page.goto(`/lans/${id}`);
+    const coming = page.getByRole("button", { name: "I'm coming" });
+    await expect(coming).toBeVisible();
+    db().delete(lan).where(eq(lan.id, id)).run();
+    await coming.click();
+    await expect(page.getByRole("list", { name: "Errors" }).getByText("This event doesn't exist anymore.")).toBeVisible();
   });
 });
