@@ -1,0 +1,12 @@
+date: 2026-11-16
+type: fixed
+en:
+  title: "Old links open the right page straight away"
+  text: >-
+    Old links to clan stats and to an event's admin page now go straight to the new page instead of
+    showing a loading screen first.
+de:
+  title: "Alte Links öffnen direkt die richtige Seite"
+  text: >-
+    Alte Links zur Clan-Statistik und zur Admin-Seite eines Events führen jetzt direkt zur neuen Seite,
+    ohne zuerst einen Ladebildschirm zu zeigen.

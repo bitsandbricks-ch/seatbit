@@ -68,6 +68,17 @@ test.describe("smoke", () => {
     await visitAll(await as("alex"), LEAD_PAGES);
   });
 
+  test("old links redirect on the server, not after showing another page", async ({ request }) => {
+    for (const [from, to] of [
+      [`/admin/lans/${LAN}`, `/lans/${LAN}/manage`],
+      [`${CLAN}/stats`, `${CLAN}?tab=stats`],
+    ]) {
+      const res = await request.get(from, { maxRedirects: 0 });
+      expect(res.status(), from).toBe(308);
+      expect(res.headers().location, from).toBe(to);
+    }
+  });
+
   test("the platform owner can open every admin page", async ({ as }) => {
     await visitAll(await as("alex"), ADMIN_PAGES);
   });
