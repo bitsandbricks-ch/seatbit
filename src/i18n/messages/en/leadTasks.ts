@@ -1,4 +1,5 @@
 export const leadTasks = {
+  showDone: { one: "Show {count} done", other: "Show {count} done" },
   heading: "Lead to-dos",
   hint: "Tick them off when they're done. A to-do opens once the steps it waits for are done.",
   empty: "No to-dos for this event yet.",
