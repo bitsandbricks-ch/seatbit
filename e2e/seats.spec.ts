@@ -1,5 +1,7 @@
+import crypto from "node:crypto";
 import { and, eq } from "drizzle-orm";
-import { attendance, auditLog, lan, seat } from "../src/db/schema";
+import { attendance, auditLog, lan, seat, user } from "../src/db/schema";
+import { CLAN_ID } from "./env";
 import { createEvent, db, expect, test, userId } from "./fixtures";
 
 const seatOf = (lanId: string, label: string) =>
@@ -87,6 +89,34 @@ test.describe("seats", () => {
     await expect
       .poll(() => db().select().from(auditLog).where(and(eq(auditLog.lanId, id), eq(auditLog.action, "seat.wishes"))).all().length)
       .toBe(1);
+  });
+
+  test("a lead opens a guest's wishes from the attendee list", async ({ as }) => {
+    const id = createEvent({ seats: ["A1", "A2", "A3"], attendees: [{ who: "anna" }] });
+    const guest = `e2e-guest-${crypto.randomUUID().slice(0, 8)}`;
+    db()
+      .insert(user)
+      .values({ id: guest, name: "Gus Guest", firstName: "Gus", lastName: "Guest", email: `${guest}@guest.example.com`, isGuest: true, guestClanId: CLAN_ID })
+      .run();
+    db().insert(attendance).values({ lanId: id, userId: guest, status: "going" }).run();
+    db()
+      .update(attendance)
+      .set({ wishRules: [{ kind: "seat", seat: "A1" }] })
+      .where(and(eq(attendance.lanId, id), eq(attendance.userId, userId("anna"))))
+      .run();
+    const rulesOf = () => db().select().from(attendance).where(and(eq(attendance.lanId, id), eq(attendance.userId, guest))).get()?.wishRules;
+
+    const alex = await as("alex");
+    await alex.goto(`/lans/${id}/manage?tab=people`);
+    // Anna's link counts her wish; the guest has none yet.
+    await expect(alex.getByRole("link", { name: "1 seat wish" })).toBeVisible();
+    await alex.getByRole("link", { name: "+ Seat wishes" }).click();
+    const card = alex.locator("#edit-wishes");
+    await expect(card.getByRole("heading", { name: /Seat wishes of Gus/ })).toBeVisible();
+    await card.getByRole("button", { name: "+ Right next to someone" }).click();
+    await card.getByLabel("Who do you want right next to you?").selectOption(userId("anna"));
+    await card.getByRole("button", { name: "Add", exact: true }).first().click();
+    await expect.poll(rulesOf).toEqual([{ kind: "next", userId: userId("anna") }]);
   });
 
   test("leads set how far near is", async ({ as }) => {

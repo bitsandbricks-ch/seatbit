@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState, useTransition } from "react";
+import { useOptimistic, useRef, useState, useTransition } from "react";
 import { addGame, deleteGame, setGameMark, updateGame } from "@/app/lan-extras-actions";
 import type { GameView, PastGame } from "@/lib/games";
 import { btnGhost, btnPrimary, btnSecondary, input } from "./ui";
@@ -44,7 +44,17 @@ export function GameList({
     start(async () => {
       await act(fn);
     });
-  const { toInstall, gb } = myGamesTodo(games);
+  // Vote and "installed" show at once (slow LAN wifi) and fall back if saving fails.
+  const [marks, setMark] = useOptimistic<Record<string, boolean>, [string, boolean]>({}, (s, [k, on]) => ({ ...s, [k]: on }));
+  const mark = (id: string, kind: "vote" | "installed", on: boolean) =>
+    run(() => {
+      setMark([`${id}:${kind}`, on]);
+      return setGameMark(id, kind, on);
+    });
+  const voted = (g: { id: string; myVote: boolean }) => marks[`${g.id}:vote`] ?? g.myVote;
+  const { toInstall, gb } = myGamesTodo(
+    games.map((g) => ({ ...g, myVote: voted(g), myInstalled: marks[`${g.id}:installed`] ?? g.myInstalled })),
+  );
   const addPast = (p: PastGame) => {
     const fd = new FormData();
     fd.set("name", p.name);
@@ -133,18 +143,18 @@ export function GameList({
                 <div className="flex w-full items-center gap-2 pl-8 sm:w-auto sm:pl-0">
                   <button
                     disabled={pending}
-                    aria-pressed={g.myVote}
-                    onClick={() => run(() => setGameMark(g.id, "vote", !g.myVote))}
-                    className={`min-h-9 rounded-md border px-3 text-sm transition ${g.myVote ? "border-bit bg-bit-soft text-bit" : "border-line text-muted hover:text-fg"}`}
+                    aria-pressed={voted(g)}
+                    onClick={() => mark(g.id, "vote", !voted(g))}
+                    className={`min-h-9 rounded-md border px-3 text-sm transition ${voted(g) ? "border-bit bg-bit-soft text-bit" : "border-line text-muted hover:text-fg"}`}
                   >
-                    {g.myVote ? t("games.voted") : t("games.vote")}
+                    {voted(g) ? t("games.voted") : t("games.vote")}
                   </button>
                   <label className="flex min-h-9 items-center gap-2 rounded-md border border-line px-3 text-sm">
                     <input
                       type="checkbox"
-                      checked={g.myInstalled}
+                      checked={marks[`${g.id}:installed`] ?? g.myInstalled}
                       disabled={pending}
-                      onChange={(e) => run(() => setGameMark(g.id, "installed", e.target.checked))}
+                      onChange={(e) => mark(g.id, "installed", e.target.checked)}
                       className="h-4 w-4 accent-bit"
                     />
                     {t("games.installed")}

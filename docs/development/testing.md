@@ -26,9 +26,14 @@ npx tsx --test src/lib/seating.test.ts   # one file
 | `auth.spec.ts` | Signed-out redirect, the Discord button starts OAuth with the right app, email login (wrong and right password), sign out. |
 | `rsvp.spec.ts` | Coming / unsure / not coming, the ticket locks the answer, waitlist when full, members can't open the lead view. |
 | `seats.spec.ts` | Ranked seat wishes (add, reorder by arrows and drag, remove), the leads' wish score, self pick with a ticket, the lead finalizes, members see the final plan; no pick without a ticket. |
+| `profile.spec.ts` | A new nickname and socials show on the member page (Twitch as a link, Battle.net as text); first name can't be emptied. Puts Elena's profile back afterwards. |
+| `create-event.spec.ts` | A lead creates an event by typing the dates (fields found by their own names), it stays hidden from members as a draft, and shows up for them once published. |
+| `swaps.spec.ts` | Seat swaps once the plan is out: a member asks, the other agrees, a lead approves and the seats change; declining; no swaps before the plan is out. |
 | `travel.spec.ts` | Carpool: offer a ride, join and leave it, a driver takes along someone who asked; members who aren't coming can't post or join. |
+| `clan-join.spec.ts` | Joining a clan: an admin approves or declines a request, an open clan lets you in right away, an invite-only clan only through an invite link. |
+| `food.spec.ts` | Food orders at the LAN: start one, add a line with a price, the runner sees the merged list and total, ticks who paid and closes it; others can't. |
 | `payments.spec.ts` | Clan payments: a lead creates a charge, the member reports paying, the lead marks it paid. |
-| `smoke.spec.ts` | Every page loads on the demo data for the people who may see it (member, lead, platform owner): no error status, no crash in the browser. Add a new page or tab to its lists. |
+| `smoke.spec.ts` | Every page (and every event tab) loads on the demo data for the people who may see it (member, lead, platform owner, and a newcomer without a clan, who sees «Ask to join» on an event link instead of the event): no error status, no crash in the browser, and every visible button, link and field has a name for screen readers (a placeholder alone doesn't count). Old links redirect on the server. Add a new page or tab to its lists. |
 
 `rsvp`, `seats`, `smoke` and a few more also run on a phone-sized screen (project `phone`, see `testMatch` in `playwright.config.ts`); everything runs on desktop.
 

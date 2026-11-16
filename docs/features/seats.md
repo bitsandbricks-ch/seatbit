@@ -60,7 +60,7 @@ The order is the priority: the top wish counts most, each one below half as much
 
 Below the ranked list, **Not right next to** lists people you don't want directly beside you, as many as you like. They aren't ranked: each one counts as much as all your other wishes together, so the planner keeps them whenever it can. Add a free-text note for the leads at the end.
 
-**Leads can change a member's wishes**, e.g. when someone told them in person: on *Manage → Seats*, pick the member under **Change someone's wishes**, or open a member in the **Seat wishes** card and choose **Change wishes**. The editor is the same one members use. A minute after the lead's last change, the member gets a Discord DM with their wishes as they are now (unless they turned DMs off on their profile), and the change shows in the event's log.
+**Leads can change a member's wishes**, e.g. when someone told them in person: on *Manage → Seats*, pick the member under **Change someone's wishes**, open a member in the **Seat wishes** card and choose **Change wishes**, or use the **Seat wishes** link under someone's seat in *Manage → People*. This works for guests without an account too. The editor is the same one members use. A minute after the lead's last change, the member gets a Discord DM with their wishes as they are now (unless they turned DMs off on their profile), and the change shows in the event's log.
 
 **How far "near" reaches** is set per event under *Manage → Seats → Our seats* ("“Near” means within … seats", 2 to 12, default 4). Changing it re-plans right away when automatic re-planning is on.
 

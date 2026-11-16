@@ -31,6 +31,7 @@ export function NewsComposer({ lanId, published }: { lanId: string; published: b
         rows={3}
         maxLength={2000}
         placeholder={t("eventUi.newsPlaceholder")}
+        aria-label={t("eventUi.postNews")}
         className={input}
       />
       <div className="flex flex-wrap items-center gap-3">

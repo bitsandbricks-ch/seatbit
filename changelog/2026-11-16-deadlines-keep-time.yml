@@ -1,0 +1,12 @@
+date: 2026-11-16
+type: fixed
+en:
+  title: "Deadlines keep their time when the start moves"
+  text: >-
+    When you change an event's start time, the «answer by» and ticket deadlines now move by whole days and
+    keep their own time, instead of ending up at odd times like 15:59.
+de:
+  title: "Fristen behalten ihre Uhrzeit, wenn sich der Beginn verschiebt"
+  text: >-
+    Wenn du den Beginn eines Events änderst, verschieben sich «Antworten bis» und die Ticket-Frist jetzt um
+    ganze Tage und behalten ihre Uhrzeit, statt auf krummen Zeiten wie 15:59 zu landen.

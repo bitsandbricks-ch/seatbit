@@ -46,6 +46,8 @@ export type AttendanceRow = {
   avatar?: AvatarData;
   /** Status icons after the name (held seat, guest, swap pending). */
   marks?: StatusKind[];
+  /** Seat wishes a lead can change for them: how many they have and where the editor is; absent when not editable. */
+  wishes?: { count: number; href: string };
 };
 
 const statuses: AttendanceStatus[] = ["going", "waitlist", "maybe", "declined"];
@@ -300,6 +302,11 @@ export function AttendanceTable({
                     {r.seatBooked ? `✓ ${t("attendees.bookedOnSite")}` : t("attendees.notBookedOnSite")}
                   </span>
                 )}
+                {r.status === "going" && r.wishes && (
+                  <Link href={r.wishes.href} className="mt-0.5 block text-[11px] text-bit hover:underline">
+                    {r.wishes.count ? t("attendees.wishes", { count: r.wishes.count }) : t("attendees.addWishes")}
+                  </Link>
+                )}
               </label>
               <label className="col-span-2 flex min-h-10 cursor-pointer items-center gap-2 rounded-md border border-line px-3 py-2 text-sm sm:col-span-1 sm:self-end lg:self-auto">
                 <input
@@ -354,7 +361,7 @@ export function AttendanceTable({
 
       {others.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 border-t border-line pt-4">
-          <select value={addUser} onChange={(e) => setAddUser(e.target.value)} className={`${input} min-w-0 flex-1 sm:!w-auto sm:flex-none`}>
+          <select value={addUser} onChange={(e) => setAddUser(e.target.value)} aria-label={t("attendees.addMember")} className={`${input} min-w-0 flex-1 sm:!w-auto sm:flex-none`}>
             <option value="">{t("attendees.addMember")}</option>
             {others.map((o) => (
               <option key={o.id} value={o.id}>

@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState, useTransition } from "react";
+import { useOptimistic, useRef, useState, useTransition } from "react";
 import {
   addFoodItem,
   createFoodOrder,
@@ -92,6 +92,8 @@ function OrderCard({
   currency: string;
 }) {
   const { pending, run, t } = useRun();
+  // Paid ticks show at once (slow LAN wifi) and fall back if saving fails.
+  const [paidNow, setPaidNow] = useOptimistic<Record<string, boolean>, [string, boolean]>({}, (s, [id, on]) => ({ ...s, [id]: on }));
   const [copied, setCopied] = useState(false);
   // Deleting an order with items needs a second tap (no browser dialog).
   const [confirming, setConfirming] = useState(false);
@@ -159,9 +161,15 @@ function OrderCard({
                           <input
                             type="checkbox"
                             className="h-4 w-4 accent-bit"
-                            checked={p.paid}
+                            checked={paidNow[p.userId] ?? p.paid}
                             disabled={pending}
-                            onChange={(e) => run(() => setFoodPaid(o.id, p.userId, e.target.checked))}
+                            onChange={(e) => {
+                              const on = e.target.checked;
+                              run(() => {
+                                setPaidNow([p.userId, on]);
+                                return setFoodPaid(o.id, p.userId, on);
+                              });
+                            }}
                           />
                           {t("food.paid")}
                         </label>
@@ -355,7 +363,7 @@ function NewOrder({ lanId, first, announceHint }: { lanId: string; first: boolea
         </div>
         <div>
           <span className={label}>{t("food.lastCallOptional")}</span>
-          <DateTimePicker name="closesAt" defaultTime="18:00" placeholder={t("food.noLastCall")} />
+          <DateTimePicker name="closesAt" label={t("food.lastCallOptional")} defaultTime="18:00" placeholder={t("food.noLastCall")} />
         </div>
         <div>
           <label className={label} htmlFor="food-note">
