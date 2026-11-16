@@ -1,6 +1,7 @@
 import type { Messages } from "../en";
 
 export const leadTasks: Messages["leadTasks"] = {
+  showDone: { one: "{count} erledigte zeigen", other: "{count} erledigte zeigen" },
   heading: "Lead-To-dos",
   hint: "Hak sie ab, wenn sie erledigt sind. Ein To-do geht auf, sobald die Schritte erledigt sind, auf die es wartet.",
   empty: "Noch keine To-dos für dieses Event.",
