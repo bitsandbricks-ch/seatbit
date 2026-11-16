@@ -2,7 +2,7 @@
 
 Members can leave an emergency contact and their dietary needs or allergies. The leads of an event they come to see them, so they know whom to call if something happens at the LAN and what to keep in mind when ordering food.
 
-**Who:** members fill it in, leads see it · **Where:** *Profile → Emergency*; event *Manage → Emergency*
+**Who:** members fill it in, leads see it · **Where:** *Profile → Emergency*; event *Manage → People → Emergency*
 
 ## Fill it in
 
@@ -31,7 +31,7 @@ Clear all fields and save to remove it.
 
 ## For leads
 
-*Manage → Emergency* lists everyone coming (not the waitlist) with their seat, emergency contact and dietary needs, and shows how many filled it in. A second card collects all dietary needs for food orders. On the event's *Food* tab, leads see how many people coming noted dietary needs, with a link to the list.
+*Manage → People → Emergency* lists everyone coming (not the waitlist) with their seat, emergency contact and dietary needs, and shows how many filled it in. A second card collects all dietary needs for food orders. On the event's *Food* tab, leads see how many people coming noted dietary needs, with a link to the list.
 
 ![Emergency tab on desktop](../screenshots/desktop-manage-emergency.png){ .shot }
 
