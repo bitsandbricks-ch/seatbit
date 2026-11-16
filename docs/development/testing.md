@@ -27,6 +27,7 @@ npx tsx --test src/lib/seating.test.ts   # one file
 | `rsvp.spec.ts` | Coming / unsure / not coming, the ticket locks the answer, waitlist when full, members can't open the lead view. |
 | `seats.spec.ts` | Ranked seat wishes (add, reorder by arrows and drag, remove), the leads' wish score, self pick with a ticket, the lead finalizes, members see the final plan; no pick without a ticket. |
 | `travel.spec.ts` | Carpool: offer a ride, join and leave it, a driver takes along someone who asked; members who aren't coming can't post or join. |
+| `clan-join.spec.ts` | Joining a clan: an admin approves or declines a request, an open clan lets you in right away, an invite-only clan only through an invite link. |
 | `payments.spec.ts` | Clan payments: a lead creates a charge, the member reports paying, the lead marks it paid. |
 | `smoke.spec.ts` | Every page loads on the demo data for the people who may see it (member, lead, platform owner): no error status, no crash in the browser. Add a new page or tab to its lists. |
 
