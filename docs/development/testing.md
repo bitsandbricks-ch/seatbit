@@ -27,8 +27,9 @@ npx tsx --test src/lib/seating.test.ts   # one file
 | `rsvp.spec.ts` | Coming / unsure / not coming, the ticket locks the answer, waitlist when full, members can't open the lead view. |
 | `seats.spec.ts` | Ranked seat wishes (add, reorder by arrows and drag, remove), the leads' wish score, self pick with a ticket, the lead finalizes, members see the final plan; no pick without a ticket. |
 | `payments.spec.ts` | Clan payments: a lead creates a charge, the member reports paying, the lead marks it paid. |
+| `smoke.spec.ts` | Every page loads on the demo data for the people who may see it (member, lead, platform owner): no error status, no crash in the browser. Add a new page or tab to its lists. |
 
-`rsvp` and `seats` also run on a phone-sized screen (project `phone`); everything runs on desktop.
+`rsvp`, `seats`, `smoke` and a few more also run on a phone-sized screen (project `phone`, see `testMatch` in `playwright.config.ts`); everything runs on desktop.
 
 ### Running them
 
