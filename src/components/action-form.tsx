@@ -1,9 +1,10 @@
 "use client";
-import { useActionState, useCallback, useRef, type ComponentProps, type FocusEvent, type FormEvent } from "react";
+import { useActionState, useCallback, useEffect, useRef, type ComponentProps, type FocusEvent, type FormEvent } from "react";
 import { unstable_rethrow } from "next/navigation";
 import { useT } from "@/i18n/client";
 import { actionErrorText } from "@/lib/action-error";
 import { ask, type AskOptions } from "./dialog";
+import { installKeepTyped, markFailed } from "./keep-typed";
 import { toast } from "./toast";
 
 // One way for every server action to report back: a toast when it worked, a toast with the
@@ -38,10 +39,15 @@ const isRedirect = (e: unknown) =>
 
 function useNotify() {
   const t = useT();
+  // A failed save keeps what people typed (React would reset the form).
+  useEffect(installKeepTyped, []);
   const done = useCallback(
     <R,>(r: R, success: Success<R> | undefined) => {
       const bad = failure(r);
-      if (bad) return void toast.error(bad);
+      if (bad) {
+        markFailed();
+        return void toast.error(bad);
+      }
       const text = typeof success === "function" ? success(r) : success;
       if (text === false) return;
       toast.success(text ?? ownMessage(r) ?? t("toast.saved"));
@@ -53,6 +59,7 @@ function useNotify() {
       // A redirect at the end of an action (create, delete, join) means it worked.
       if (isRedirect(e) && typeof success !== "function" && success !== false) toast.success(success ?? t("toast.saved"));
       unstable_rethrow(e);
+      markFailed();
       console.error(e);
       toast.error(actionErrorText(e) ?? t("toast.failed"));
     },
