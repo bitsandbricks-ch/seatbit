@@ -29,6 +29,7 @@ npx tsx --test src/lib/seating.test.ts   # one file
 | `profile.spec.ts` | A new nickname and socials show on the member page (Twitch as a link, Battle.net as text); first name can't be emptied. Puts Elena's profile back afterwards. |
 | `create-event.spec.ts` | A lead creates an event by typing the dates (fields found by their own names), it stays hidden from members as a draft, and shows up for them once published. |
 | `admin-settings.spec.ts` | The operator saves their legal details on the platform settings and the terms show them; a wrong value saves nothing and keeps what was typed (also on the maintenance notice); emptied fields go back to the defaults; members can't open the page. |
+| `double-submit.spec.ts` | A double click on a form button (creating an invite link) sends it once. |
 | `swaps.spec.ts` | Seat swaps once the plan is out: a member asks, the other agrees, a lead approves and the seats change; declining; no swaps before the plan is out. |
 | `travel.spec.ts` | Carpool: offer a ride, join and leave it, a driver takes along someone who asked; members who aren't coming can't post or join. |
 | `clan-join.spec.ts` | Joining a clan: an admin approves or declines a request, an open clan lets you in right away, an invite-only clan only through an invite link. |

@@ -83,6 +83,8 @@ Every server action reports through the helpers in `src/components/action-form.t
 
 React clears a `<form action>` once its action finishes, also after an error. The helpers put back what was typed when the action failed (`src/components/keep-typed.ts`), so people only fix the wrong field; after a success the form clears as usual. Don't give a form a `key` that changes on a failed save: a re-mounted form loses its values before they can be put back (see `settings-section.tsx`, which keeps the last good save's `at`).
 
+While an `<ActionForm>` runs, it drops further submits and sets `aria-busy` (its buttons dim): a double click or an impatient second click sends it once. Forms with `auto` are left out, so quick changes to several toggles all save. `useToastAction` forms show `pending` on their button themselves (`disabled={pending}`).
+
 Ticks and toggles people tap a lot at the LAN (packed, installed, vote, paid) change at once and don't wait for the server: keep the shown value in `useOptimistic` and set it inside the action's transition (`run(() => { setTick([key, on]); return saveTick(key, on); })`). When the save fails, the box goes back to the saved value by itself and the toast says why.
 
 ## Confirm dialogs

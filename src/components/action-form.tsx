@@ -1,5 +1,5 @@
 "use client";
-import { useActionState, useCallback, useEffect, useRef, type ComponentProps, type FocusEvent, type FormEvent } from "react";
+import { useActionState, useCallback, useEffect, useRef, useState, type ComponentProps, type FocusEvent, type FormEvent } from "react";
 import { unstable_rethrow } from "next/navigation";
 import { useT } from "@/i18n/client";
 import { actionErrorText } from "@/lib/action-error";
@@ -152,11 +152,26 @@ export function ActionForm({
   const t = useT();
   const run = useRunAction();
   const asked = useRef(false);
+  // While the action runs, further submits are dropped: a double click or an impatient second
+  // click on a slow connection would otherwise send it twice (two invites, two posts).
+  // Auto-saving forms are left alone, so quick changes to several toggles all save.
+  const sending = useRef(false);
+  const [busy, setBusy] = useState(false);
   const text = success ?? (done && t(`toast.${done}`));
+  type SubmitEvent = Parameters<NonNullable<typeof props.onSubmit>>[0];
+  const guard = (e: SubmitEvent) => {
+    if (auto || e.defaultPrevented) return;
+    if (sending.current) return void e.preventDefault();
+    sending.current = true;
+    setBusy(true);
+  };
   const onSubmit = confirm
-    ? (e: Parameters<NonNullable<typeof props.onSubmit>>[0]) => {
+    ? (e: SubmitEvent) => {
         props.onSubmit?.(e);
-        if (asked.current) return void (asked.current = false);
+        if (asked.current) {
+          asked.current = false;
+          return guard(e);
+        }
         // Stop this submit, ask, and submit again with the same button once confirmed.
         e.preventDefault();
         const form = e.currentTarget;
@@ -167,13 +182,25 @@ export function ActionForm({
           form.requestSubmit(submitter instanceof HTMLElement ? submitter : undefined);
         });
       }
-    : props.onSubmit;
+    : (e: SubmitEvent) => {
+        props.onSubmit?.(e);
+        guard(e);
+      };
   return (
     <form
       {...props}
       {...(auto ? autoSave(auto) : {})}
       onSubmit={onSubmit}
-      action={(form) => run(() => action(form), text).then(() => undefined)}
+      aria-busy={busy || undefined}
+      action={(form) =>
+        run(() => action(form), text)
+          .then(() => undefined)
+          // finally: a redirect at the end is rethrown and must not leave the form locked.
+          .finally(() => {
+            sending.current = false;
+            setBusy(false);
+          })
+      }
     />
   );
 }
