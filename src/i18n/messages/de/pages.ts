@@ -8,6 +8,7 @@ export const pages: Messages["pages"] = {
   resetSent: "Wenn diese Adresse ein Konto hat, ist ein Link zum Zurücksetzen unterwegs.",
   sendReset: "Link senden",
   resetInvalid: "Dieser Link ist ungültig oder abgelaufen.",
+  resetAgain: "Neuen Link anfordern",
   resetFailed: "Zurücksetzen fehlgeschlagen",
   newPassword: "Neues Passwort",
   setPassword: "Passwort setzen",

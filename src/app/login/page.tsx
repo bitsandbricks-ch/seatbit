@@ -11,5 +11,6 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   // Only allow same-site paths.
   const next = safeNext(raw);
   if (await getCurrentUser()) redirect(next);
-  return <AuthForm mode="login" providers={enabledProviders()} next={next} notice={sp.deleted ? (await getT())("auth.deleted") : undefined} />;
+  const t = await getT();
+  return <AuthForm mode="login" providers={enabledProviders()} next={next} notice={sp.deleted ? t("auth.deleted") : sp.reset ? t("auth.passwordChanged") : undefined} />;
 }
