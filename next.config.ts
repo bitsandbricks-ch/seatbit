@@ -19,6 +19,14 @@ const nextConfig: NextConfig = {
   env: { SEATBIT_COMMIT: commitSha() },
   serverExternalPackages: ["better-sqlite3"],
   poweredByHeader: false,
+  // Old links. Here and not as a page calling redirect(): the root loading.tsx streams pages, so a
+  // page redirect would answer 200 and jump on the client, showing the wrong page for a moment.
+  async redirects() {
+    return [
+      { source: "/admin/lans/:id", destination: "/lans/:id/manage", permanent: true },
+      { source: "/clans/:slug/stats", destination: "/clans/:slug?tab=stats", permanent: true },
+    ];
+  },
   // Security headers on every response; the page CSP (with its nonce) comes from src/proxy.ts.
   async headers() {
     return [
