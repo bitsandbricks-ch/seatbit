@@ -381,10 +381,13 @@ export const lan = sqliteTable("lan", {
   /** A draft with this set goes live by itself at that time. */
   publishAt: integer("publish_at", { mode: "timestamp_ms" }),
   /**
-   * Optional first phase: members only say whether they're interested, before sign-up, tickets and
-   * seats. A lead then opens sign-up (sets it false).
+   * Optional first phase: members only answer coming / unsure / not coming (non-binding, no waitlist);
+   * seats, travel, games and the rest stay hidden. A lead then opens sign-up (sets it false), and the
+   * answers carry over.
    */
   interestCheck: integer("interest_check", { mode: "boolean" }).default(false).notNull(),
+  /** During the interest check: sign-up opens by itself at this time. */
+  signupOpensAt: integer("signup_opens_at", { mode: "timestamp_ms" }),
   /**
    * The date isn't fixed yet (only allowed during the interest check). startsAt/endsAt then hold a
    * placeholder for sorting; show `dateHint` (e.g. "spring 2027") instead.
@@ -835,26 +838,6 @@ export const userActivity = sqliteTable(
     day: text("day").notNull(),
   },
   (t) => [uniqueIndex("user_activity_user_day_idx").on(t.userId, t.day), index("user_activity_day_idx").on(t.day)],
-);
-
-export const INTEREST_ANSWERS = ["yes", "maybe", "no"] as const;
-export type InterestAnswer = (typeof INTEREST_ANSWERS)[number];
-
-/** Answers during an event's interest check (before sign-up opens). */
-export const lanInterest = sqliteTable(
-  "lan_interest",
-  {
-    id: id(),
-    lanId: text("lan_id")
-      .notNull()
-      .references(() => lan.id, { onDelete: "cascade" }),
-    userId: text("user_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    answer: text("answer").$type<InterestAnswer>().notNull(),
-    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
-  },
-  (t) => [uniqueIndex("lan_interest_uq").on(t.lanId, t.userId)],
 );
 
 /** Short updates from the leads to everyone at an event ("doors open 10:00"). */

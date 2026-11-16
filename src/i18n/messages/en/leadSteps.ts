@@ -6,6 +6,7 @@ export const leadSteps = {
   publishDraft: "It's a draft: only leads see it. Publish it at the top.",
   signup: "Open sign-up",
   signupHint: "The interest check is running. Use Open sign-up at the top once you know you're going.",
+  signupScheduled: "Sign-up opens by itself on {date}.",
   seats: "Enter the group's seats",
   seatsDone: "{count} seats.",
   seatsHint: "Add the seat block the event gave the group.",

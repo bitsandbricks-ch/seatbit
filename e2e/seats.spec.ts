@@ -192,6 +192,29 @@ test.describe("seats", () => {
     await expect(anna.getByRole("button", { name: "Move here" })).toHaveCount(0);
   });
 
+  test("long rows wrap into lines that fill the width", async ({ as }) => {
+    const id = createEvent({
+      seats: Array.from({ length: 30 }, (_, i) => `A${i + 1}`),
+      seatPicking: true,
+      attendees: [{ who: "anna", ticket: true }],
+    });
+    const page = await as("anna");
+    // Start on another tab, so the map first renders hidden.
+    await page.goto(`/lans/${id}`);
+    await page.getByRole("navigation").getByRole("link", { name: /^Seats/ }).click();
+    // Large: seats grow to fill. (Compact stays small and may leave room on wide screens.)
+    {
+      await page.getByRole("button", { name: "Large", exact: true }).click();
+      const gap = await page.locator("[data-seat-grid]").evaluate((grid) => {
+        const right = Math.max(...[...grid.querySelectorAll("[aria-label^='Seat ']")].map((b) => b.getBoundingClientRect().right));
+        const first = grid.querySelector("[aria-label^='Seat ']")!.getBoundingClientRect().width;
+        // Room left on the right of the widest line, in seats.
+        return (grid.getBoundingClientRect().right - 6 - right) / first;
+      });
+      expect(gap).toBeLessThan(1);
+    }
+  });
+
   test("a member without a ticket can't pick a seat yet", async ({ as }) => {
     const id = createEvent({ seats: ["A1", "A2"], seatPicking: true, attendees: [{ who: "anna" }] });
     const page = await as("anna");
