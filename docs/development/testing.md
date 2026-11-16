@@ -31,12 +31,16 @@ npx tsx --test src/lib/seating.test.ts   # one file
 | `admin-settings.spec.ts` | The operator saves their legal details on the platform settings and the terms show them; a wrong value saves nothing and keeps what was typed (also on the maintenance notice); emptied fields go back to the defaults; members can't open the page. |
 | `double-submit.spec.ts` | A double click on a form button (creating an invite link) sends it once. |
 | `delete-account.spec.ts` | A member deletes their own account: DELETE must be typed, they end up signed out on the login page with a note, and their membership and upcoming answer are gone while the clan stays. |
+| `clan-leave.spec.ts` | Leaving a clan asks first, withdraws the answers on its upcoming events (the waitlist moves up), keeps answers with a ticket, and ends lead roles (a leftover lead row gives a non-member no access). |
+| `reports.spec.ts` | A member reports a clan ("Something else" needs a short text); a moderator resolves it with a note and it moves to the closed reports. |
+| `emergency.spec.ts` | A member saves an emergency contact; the event lead sees it with a phone link and the look is logged; a plain member coming too sees nothing; two days after the event the lead loses access. |
+| `password-reset.spec.ts` | Email login only: a reset link sets a new password, the login page says so, the new password signs in and the same link is refused a second time; an unknown address gets the same answer and no link. |
 | `swaps.spec.ts` | Seat swaps once the plan is out: a member asks, the other agrees, a lead approves and the seats change; declining; no swaps before the plan is out. |
 | `travel.spec.ts` | Carpool: offer a ride, join and leave it, a driver takes along someone who asked; members who aren't coming can't post or join. |
 | `clan-join.spec.ts` | Joining a clan: an admin approves or declines a request, an open clan lets you in right away, an invite-only clan only through an invite link. |
 | `food.spec.ts` | Food orders at the LAN: start one, add a line with a price, the runner sees the merged list and total, ticks who paid and closes it; others can't. |
 | `payments.spec.ts` | Clan payments: a lead creates a charge, the member reports paying, the lead marks it paid. |
-| `smoke.spec.ts` | Every page (and every event tab) loads on the demo data for the people who may see it (member, lead, platform owner, and a newcomer without a clan, who sees «Ask to join» on an event link instead of the event): no error status, no crash in the browser, and every visible button, link and field has a name for screen readers (a placeholder alone doesn't count). Old links redirect on the server. Add a new page or tab to its lists. |
+| `smoke.spec.ts` | Every page (and every event tab) loads on the demo data for the people who may see it (member, lead, platform owner, and a newcomer without a clan, who sees «Ask to join» on an event link instead of the event): no error status, no crash in the browser, and every visible button, link, field and image has a name for screen readers (a placeholder alone doesn't count; alt="" marks a decorative image), and no page scrolls sideways (the phone project runs it on a Pixel 7 screen). Old links redirect on the server. Add a new page or tab to its lists. |
 
 `rsvp`, `seats`, `smoke` and a few more also run on a phone-sized screen (project `phone`, see `testMatch` in `playwright.config.ts`); everything runs on desktop.
 

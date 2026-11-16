@@ -74,6 +74,8 @@ export function isLanManager(u: { id: string; role: string }, lanId: string) {
   const l = db.select({ clanId: schema.lan.clanId }).from(schema.lan).where(eq(schema.lan.id, lanId)).get();
   if (l?.clanId && clanCan(u, l.clanId, "events")) return true;
   if (isClanSuspended(l?.clanId)) return false;
+  // Event leads must still be in the clan: someone who left keeps no access through an old lead role.
+  if (l?.clanId && !isClanMember(u.id, l.clanId)) return false;
   return !!db
     .select()
     .from(schema.lanOrga)

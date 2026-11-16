@@ -76,4 +76,16 @@ test.describe("joining a clan", () => {
     await expect(anna).toHaveURL(new RegExp(`/clans/${id}(\\?.*)?$`));
     expect(roleOf(id, "anna")).toBe("member");
   });
+
+  test("an invite link to a suspended clan doesn't let anyone in", async ({ as }) => {
+    const id = createClan("invite");
+    const code = crypto.randomBytes(8).toString("hex");
+    db().insert(schema.clanInvite).values({ code, clanId: id, createdBy: userId("alex") }).run();
+    db().update(clan).set({ suspendedAt: new Date() }).where(eq(clan.id, id)).run();
+    const anna = await as("anna");
+    await anna.goto(`/join/${code}`);
+    await expect(anna.getByText("This clan is suspended for now and can't take new members.")).toBeVisible();
+    await expect(anna.getByRole("button", { name: "Join clan" })).toHaveCount(0);
+    expect(roleOf(id, "anna")).toBeUndefined();
+  });
 });
