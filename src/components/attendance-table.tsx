@@ -354,7 +354,7 @@ export function AttendanceTable({
 
       {others.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 border-t border-line pt-4">
-          <select value={addUser} onChange={(e) => setAddUser(e.target.value)} className={`${input} min-w-0 flex-1 sm:!w-auto sm:flex-none`}>
+          <select value={addUser} onChange={(e) => setAddUser(e.target.value)} aria-label={t("attendees.addMember")} className={`${input} min-w-0 flex-1 sm:!w-auto sm:flex-none`}>
             <option value="">{t("attendees.addMember")}</option>
             {others.map((o) => (
               <option key={o.id} value={o.id}>
