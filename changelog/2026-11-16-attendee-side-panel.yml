@@ -1,0 +1,12 @@
+date: 2026-11-16
+type: improved
+en:
+  title: "Profiles open beside the event"
+  text: >-
+    Tapping someone in an event's attendee list or its leads now opens their profile in a side panel, and
+    closing it takes you back to the same tab.
+de:
+  title: "Profile öffnen sich neben dem Event"
+  text: >-
+    Tippst du in der Teilnehmerliste eines Events oder bei den Leads auf jemanden, öffnet sich das Profil
+    jetzt in einem Seitenpanel. Schliesst du es, bist du wieder im gleichen Tab.
