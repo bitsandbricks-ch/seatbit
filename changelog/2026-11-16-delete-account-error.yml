@@ -1,0 +1,10 @@
+date: 2026-11-16
+type: fixed
+en:
+  title: "Clearer message when deleting an account fails"
+  text: >-
+    If deleting your account doesn't work, the message now says what to do next, in your language.
+de:
+  title: "Klarere Meldung, wenn das Löschen des Kontos scheitert"
+  text: >-
+    Klappt das Löschen deines Kontos nicht, sagt die Meldung jetzt in deiner Sprache, was du tun kannst.
