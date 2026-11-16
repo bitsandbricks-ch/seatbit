@@ -72,7 +72,7 @@ Below the ranked list, **Not right next to** lists people you don't want directl
 
 **Our seats:** enter the seats the event gave you, e.g. `F1-F16, F19-F22`. Saving again keeps assignments for seats that stay in the list. **Edit seats** in the map shows every number of a row: tap a dashed one to add it, a seat to remove it.
 
-Tap a seat:
+Tap a seat: its details (who sits there, ticket, wishes) and these actions open in a strip above the map, so the map keeps the full width:
 
 | Action | |
 | --- | --- |
@@ -90,7 +90,7 @@ People coming without a seat are listed under **Not seated yet**: tap one, then 
 
 Seat pages update by themselves when the plan or someone's wishes change, so leads and members don't need to reload (see [Live updates](events.md#live-updates)).
 
-The **Seat wishes** card scores the current plan: for each member the share of their wishes that are met, weighted by their order (a met top wish counts more), and the average over everyone. **Needs a look** (the default) lists only members with a missed wish in their top 5, a missed "not right next to", or wishes that can't be checked yet; **Everyone** lists all members with wishes. Each member is one line, lowest score first: their seat, how many wishes are met, their score and the wishes the plan misses. Tap a member for all their wishes in order (✓ met, ✗ missed, an orange ✗ for a missed wish below the top 5, which counts little, · can't be checked yet because they or the other person have no seat) and their note. The seat details panel shows the same for one person.
+The **Seat wishes** card scores the current plan: for each member the share of their wishes that are met, weighted by their order (a met top wish counts more), and the average over everyone. **Needs a look** (the default) lists only members with a missed wish in their top 5, a missed "not right next to", or wishes that can't be checked yet; **Everyone** lists all members with wishes. Each member is one line, lowest score first: their seat, how many wishes are met, their score and the wishes the plan misses. Tap a member for all their wishes in order (✓ met, ✗ missed, an orange ✗ for a missed wish below the top 5, which counts little, · can't be checked yet because they or the other person have no seat) and their note. The seat details above the map show the same for one person.
 
 The **Plan history** card lists every change to the seats, newest first: re-plans (by a lead, or automatic after a wish change), moves, swaps, held seats and the final plan. For each re-plan it shows who moved from which seat to which, or that nobody moved.
 
