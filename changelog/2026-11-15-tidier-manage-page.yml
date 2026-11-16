@@ -1,0 +1,15 @@
+date: 2026-11-15
+type: improved
+en:
+  title: "A tidier Manage page for leads"
+  text: >-
+    The Manage page of an event has fewer tabs. Attendees, who's missing and emergency info sit together
+    under People, with a switch between them. News, manual reminders and Discord & WhatsApp share the new
+    News tab. The tabs switch instantly, and done lead to-dos fold away so the open ones stay in view.
+de:
+  title: "Eine aufgeräumte Verwalten-Seite für Leads"
+  text: >-
+    Die Verwalten-Seite eines Events hat weniger Tabs. Teilnehmende, wer noch fehlt und Notfallinfos sind
+    unter Leute zusammengefasst, mit einem Umschalter. News, Erinnerungen von Hand und Discord & WhatsApp
+    teilen sich den neuen Tab News. Die Tabs wechseln sofort, und erledigte Lead-To-dos klappen weg, damit
+    die offenen sichtbar bleiben.
