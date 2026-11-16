@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 import { and, asc, eq, gt, inArray, isNotNull, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Clan, User } from "@/db/schema";
-import { clanRole, getClan } from "./clans";
+import { clanRole, getClan, isClanSuspended } from "./clans";
 import { isMemberRole } from "./clan-roles";
 import { getDefaultNames } from "./lans";
 import { fmtDate, fmtDay } from "./format";
@@ -136,7 +136,8 @@ export function claimGuestsByEmail(userId: string) {
     .select()
     .from(schema.user)
     .where(and(eq(schema.user.isGuest, true), sql`lower(${schema.user.inviteEmail}) = ${normEmail(me.email)}`))
-    .all();
+    .all()
+    .filter((g) => !isClanSuspended(g.guestClanId));
   for (const g of guests) {
     audit({ actorId: me.id, action: "guest.claimed", clanId: g.guestClanId, data: { guest: g.name } });
     mergeGuestInto(g, me.id);
@@ -368,7 +369,8 @@ export function claimGuestsByDiscord(userId: string) {
     .select()
     .from(schema.user)
     .where(and(eq(schema.user.isGuest, true), eq(schema.user.guestDiscordId, discordId)))
-    .all();
+    .all()
+    .filter((g) => !isClanSuspended(g.guestClanId));
   for (const g of guests) {
     audit({ actorId: me.id, action: "guest.claimed", clanId: g.guestClanId, data: { guest: g.name, via: "discord" } });
     mergeGuestInto(g, me.id);
@@ -415,6 +417,8 @@ export function discordTicketState(token: string, me: User) {
   const t = readDiscordClaimTicket(token);
   const c = t && getClan(t.c);
   if (!t || !c) return { kind: "invalid" as const };
+  // A suspended clan takes no one new, so its guests can't be taken over either.
+  if (c.suspendedAt) return { kind: "gone" as const, clan: c };
   const mine = discordIdOfUser(me.id);
   if (mine !== t.d) return { kind: "wrong_discord" as const, linked: !!mine, clan: c };
   const s = guestSuggestions(c.id, me.id).find((x) => x.guest.id === t.g);

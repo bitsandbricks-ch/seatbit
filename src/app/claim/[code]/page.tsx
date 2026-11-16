@@ -2,7 +2,7 @@ import Link from "next/link";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { claimGuest } from "@/app/clan-actions";
-import { btnPrimary, btnSecondary, cardPage, cardPageTitle } from "@/components/ui";
+import { Notice, btnPrimary, btnSecondary, cardPage, cardPageTitle } from "@/components/ui";
 import { getClan } from "@/lib/clans";
 import { claimCodeWasUsed, takenGuestFor } from "@/lib/guest-claim";
 import { getCurrentUser, isProfileComplete } from "@/lib/session";
@@ -53,6 +53,13 @@ export default async function ClaimPage({ params }: PageProps<"/claim/[code]">) 
   if (!me) redirect(`/login?next=${encodeURIComponent(`/claim/${code}`)}`);
   if (!isProfileComplete(me)) redirect(`/welcome?next=${encodeURIComponent(`/claim/${code}`)}`);
   const clan = g.guestClanId ? getClan(g.guestClanId) : null;
+  if (clan?.suspendedAt)
+    return (
+      <div className={cardPage}>
+        <h1 className={cardPageTitle}>{clan.name}</h1>
+        <Notice tone="warn">{t("joinPage.suspended")}</Notice>
+      </div>
+    );
   const going = db.select().from(schema.attendance).where(eq(schema.attendance.userId, g.id)).all().length;
 
   return (
