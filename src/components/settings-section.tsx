@@ -102,12 +102,24 @@ function SettingField({ s }: { s: SettingView }) {
   );
 }
 
+/**
+ * useToastAction for the platform settings forms, which re-mount on `key={state?.at}` to pick up
+ * the saved values. A failed save keeps the last good save's `at`, so the form isn't re-mounted
+ * and what was typed stays.
+ */
+export function useSettingsAction(action: Action) {
+  return useToastAction<ActionResult>(async (prev, form) => {
+    const r = await action(prev, form);
+    return r?.ok ? r : r && { ...r, at: prev?.at ?? 0 };
+  }, undefined);
+}
+
 /** One section of the platform settings, saved on its own. */
 export function SettingsSection({ fields, action }: { fields: SettingView[]; action: Action }) {
   const t = useT();
-  const [state, formAction, pending] = useToastAction(action, undefined);
+  const [state, formAction, pending] = useSettingsAction(action);
   return (
-    // Re-mount after each save so inputs pick up the new saved values.
+    // Re-mount after each successful save so inputs pick up the new saved values.
     <form key={state?.at ?? 0} action={formAction} className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         {fields.map((f) => (

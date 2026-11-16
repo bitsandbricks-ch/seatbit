@@ -1,0 +1,12 @@
+date: 2026-11-16
+type: fixed
+en:
+  title: "Forms keep what you typed when saving fails"
+  text: >-
+    When a save didn't work, for example because one field was wrong, forms used to go back to the old values.
+    Now everything you typed stays, so you only fix the field the message names.
+de:
+  title: "Formulare behalten deine Eingaben, wenn das Speichern scheitert"
+  text: >-
+    Wenn das Speichern nicht klappte, etwa weil ein Feld falsch war, sprangen Formulare auf die alten Werte
+    zurück. Jetzt bleibt alles, was du eingegeben hast, und du korrigierst nur das Feld aus der Meldung.

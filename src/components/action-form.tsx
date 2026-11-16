@@ -1,9 +1,10 @@
 "use client";
-import { useActionState, useCallback, useRef, type ComponentProps, type FocusEvent, type FormEvent } from "react";
+import { useActionState, useCallback, useEffect, useRef, useState, type ComponentProps, type FocusEvent, type FormEvent } from "react";
 import { unstable_rethrow } from "next/navigation";
 import { useT } from "@/i18n/client";
 import { actionErrorText } from "@/lib/action-error";
 import { ask, type AskOptions } from "./dialog";
+import { installKeepTyped, markFailed } from "./keep-typed";
 import { toast } from "./toast";
 
 // One way for every server action to report back: a toast when it worked, a toast with the
@@ -38,10 +39,15 @@ const isRedirect = (e: unknown) =>
 
 function useNotify() {
   const t = useT();
+  // A failed save keeps what people typed (React would reset the form).
+  useEffect(installKeepTyped, []);
   const done = useCallback(
     <R,>(r: R, success: Success<R> | undefined) => {
       const bad = failure(r);
-      if (bad) return void toast.error(bad);
+      if (bad) {
+        markFailed();
+        return void toast.error(bad);
+      }
       const text = typeof success === "function" ? success(r) : success;
       if (text === false) return;
       toast.success(text ?? ownMessage(r) ?? t("toast.saved"));
@@ -53,6 +59,7 @@ function useNotify() {
       // A redirect at the end of an action (create, delete, join) means it worked.
       if (isRedirect(e) && typeof success !== "function" && success !== false) toast.success(success ?? t("toast.saved"));
       unstable_rethrow(e);
+      markFailed();
       console.error(e);
       toast.error(actionErrorText(e) ?? t("toast.failed"));
     },
@@ -145,11 +152,26 @@ export function ActionForm({
   const t = useT();
   const run = useRunAction();
   const asked = useRef(false);
+  // While the action runs, further submits are dropped: a double click or an impatient second
+  // click on a slow connection would otherwise send it twice (two invites, two posts).
+  // Auto-saving forms are left alone, so quick changes to several toggles all save.
+  const sending = useRef(false);
+  const [busy, setBusy] = useState(false);
   const text = success ?? (done && t(`toast.${done}`));
+  type SubmitEvent = Parameters<NonNullable<typeof props.onSubmit>>[0];
+  const guard = (e: SubmitEvent) => {
+    if (auto || e.defaultPrevented) return;
+    if (sending.current) return void e.preventDefault();
+    sending.current = true;
+    setBusy(true);
+  };
   const onSubmit = confirm
-    ? (e: Parameters<NonNullable<typeof props.onSubmit>>[0]) => {
+    ? (e: SubmitEvent) => {
         props.onSubmit?.(e);
-        if (asked.current) return void (asked.current = false);
+        if (asked.current) {
+          asked.current = false;
+          return guard(e);
+        }
         // Stop this submit, ask, and submit again with the same button once confirmed.
         e.preventDefault();
         const form = e.currentTarget;
@@ -160,13 +182,25 @@ export function ActionForm({
           form.requestSubmit(submitter instanceof HTMLElement ? submitter : undefined);
         });
       }
-    : props.onSubmit;
+    : (e: SubmitEvent) => {
+        props.onSubmit?.(e);
+        guard(e);
+      };
   return (
     <form
       {...props}
       {...(auto ? autoSave(auto) : {})}
       onSubmit={onSubmit}
-      action={(form) => run(() => action(form), text).then(() => undefined)}
+      aria-busy={busy || undefined}
+      action={(form) =>
+        run(() => action(form), text)
+          .then(() => undefined)
+          // finally: a redirect at the end is rethrown and must not leave the form locked.
+          .finally(() => {
+            sending.current = false;
+            setBusy(false);
+          })
+      }
     />
   );
 }

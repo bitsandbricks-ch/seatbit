@@ -52,8 +52,11 @@ test.describe("toasts", () => {
     await page.goto("/profile");
     // Only spaces pass the browser's required check; the server says what's wrong.
     await page.getByRole("textbox", { name: "First name" }).fill("   ");
+    await page.getByRole("textbox", { name: "Surname" }).fill("Typed-in");
     await page.getByRole("button", { name: "Save", exact: true }).first().click();
     await expect(page.getByRole("list", { name: "Errors" }).getByText("First name: please fill this in.")).toBeVisible();
+    // The form keeps what was typed, so only the wrong field needs fixing.
+    await expect(page.getByRole("textbox", { name: "Surname" })).toHaveValue("Typed-in");
   });
 
   test("a ride that filled up in the meantime says so, not just that something failed", async ({ as }) => {

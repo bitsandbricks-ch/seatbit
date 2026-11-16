@@ -74,6 +74,7 @@ export const errors: Messages["errors"] = {
   unlinked: "Getrennt.",
   claimOff: "In diesem Clan werden Gäste über ihren eigenen Link übernommen. Frag einen Admin.",
   claimedAlready: "Dieser Gast wurde schon übernommen.",
+  deleteFailed: "Dein Konto konnte nicht gelöscht werden. Melde dich wieder an und versuch es noch einmal; klappt es weiterhin nicht, wende dich an den Betreiber dieser Seite.",
   typeDelete: "Tipp DELETE zur Bestätigung.",
   onlyAdminOf: "Du bist der einzige Admin von {clans}. Mach zuerst jemand anderen zum Admin.",
   onlyPlatformAdmin: "Du bist der einzige Plattform-Owner. Mach zuerst jemand anderen zum Owner.",

@@ -1,0 +1,12 @@
+date: 2026-11-16
+type: fixed
+en:
+  title: "A double click sends a form only once"
+  text: >-
+    Clicking a button twice, or again while a slow connection was still saving, could do things twice, like
+    creating two invite links. Buttons now dim while saving, and further clicks are ignored until it is done.
+de:
+  title: "Ein Doppelklick sendet ein Formular nur einmal"
+  text: >-
+    Ein zweiter Klick, auch während eine langsame Verbindung noch speicherte, konnte Dinge doppelt auslösen,
+    etwa zwei Einladungslinks erstellen. Knöpfe werden jetzt beim Speichern blasser, und weitere Klicks zählen erst, wenn es fertig ist.

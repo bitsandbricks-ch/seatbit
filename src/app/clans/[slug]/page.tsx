@@ -152,7 +152,16 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
     .map((l) => ({ ...l, href: l.tab === "general" ? `/clans/${c.slug}/settings` : `/clans/${c.slug}/settings?tab=${l.tab}` }));
 
   const leave = role && (
-    <ActionForm action={leaveClan.bind(null, c.id)} className="flex justify-end" done={false}>
+    <ActionForm
+      action={leaveClan.bind(null, c.id)}
+      className="flex justify-end"
+      done={false}
+      confirm={
+        role === "pending"
+          ? undefined
+          : { title: t("dialog.leaveClanQ", { name: c.name }), body: t("dialog.leaveClanBody"), confirm: t("clanPage.leave") }
+      }
+    >
       <button className={`${btnGhost} hover:!text-danger`}>{role === "pending" ? t("clanPage.cancelRequest") : t("clanPage.leave")}</button>
     </ActionForm>
   );
