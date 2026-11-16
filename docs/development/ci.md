@@ -11,6 +11,9 @@ All checks run on GitHub Actions. Every pull request must pass them before it is
 | **Container image** (`image.yml`) | Pull requests and the merge queue build; `main` and `v*` tags push | Native amd64 and arm64 builds, merged into one multi-arch image on GHCR. |
 | **Security** (`security.yml`) | Pull requests, merge queue, `main`, and weekly on Monday | [Permission tests](permission-tests.md); Trivy scans of the dependencies, the Dockerfile and committed secrets, and of the built container image. Fixable high and critical findings fail the job; on `main` and the weekly run the findings also go to the repository's code scanning (if it is turned on). |
 | **Screenshots** (`screenshots.yml`) | Pushes to `main` that touch the UI | Regenerate `docs/screenshots/` and open or update an *Update screenshots* pull request. See [Screenshots](screenshots.md). |
+| **Cancel runs of closed pull requests** (`cancel-closed.yml`) | A pull request is merged or closed | Cancels that pull request's queued and running checks, including code scanning's. |
+
+Each workflow has a `concurrency` group per branch or pull request, so a new push cancels the older run of the same pull request (and a new merge the older `main` build). GitHub doesn't stop a pull request's runs when it is merged or closed, though; with a stack of pull requests that left over a hundred runs queued for the shared runners, and `main` waited behind them. `cancel-closed.yml` cancels them instead. Code scanning (CodeQL, if turned on in its default setup) runs once per push to `main` and per pull request with no such group.
 
 Dependabot opens grouped pull requests: weekly npm updates (minor and patch together, security fixes together as soon as they are out), weekly updates of the Node.js base image in the `Dockerfile` (within the same major version), and monthly GitHub Actions and docs (pip) updates.
 
