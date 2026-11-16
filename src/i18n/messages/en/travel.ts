@@ -16,7 +16,6 @@ export const travel = {
     need: { one: "{count} seat", other: "{count} seats" },
     take: "Take along",
     notePh: "e.g. big trunk, room for a tower PC",
-    sayComing: "Say you're coming (or unsure) on the Overview tab to offer or ask for a ride.",
   },
   sleep: {
     offer: "Offer a place to sleep",
@@ -35,9 +34,8 @@ export const travel = {
     need: { one: "{count} place", other: "{count} places" },
     take: "Host",
     notePh: "e.g. air mattress, bring a sleeping bag",
-    sayComing: "Say you're coming (or unsure) on the Overview tab to offer or ask for a place to sleep.",
   },
-  label: "Travel",
+  sayComing: "Say you're coming (or unsure) on the Overview tab to offer or ask for a ride or a place to sleep.",
   carpool: "Carpool",
   sleeping: "Sleeping",
   looking: { one: "{count} looking", other: "{count} looking" },

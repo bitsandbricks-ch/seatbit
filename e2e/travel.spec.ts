@@ -12,6 +12,9 @@ test.describe("travel", () => {
 
     const ben = await as("ben");
     await ben.goto(`/lans/${id}?tab=travel`);
+    // Rides and places to sleep are two cards, no switch between them.
+    await expect(ben.getByRole("heading", { name: "Carpool" })).toBeVisible();
+    await expect(ben.getByRole("heading", { name: "Sleeping" })).toBeVisible();
     await ben.getByRole("button", { name: "Offer a ride" }).click();
     await ben.getByLabel("Leaving from", { exact: true }).filter({ visible: true }).fill("Zug");
     await ben.getByLabel("Free seats", { exact: true }).filter({ visible: true }).fill("2");

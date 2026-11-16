@@ -6,7 +6,7 @@ Offer or ask for rides and places to sleep, and keep a private packing list per 
 
 ## Travel
 
-Members offer or ask for **rides** and **places to sleep**, grouped by town.
+Members offer or ask for **rides** and **places to sleep**, grouped by town. Rides (*Carpool*) and places to sleep (*Sleeping*) are two cards, side by side on a computer and one below the other on a phone.
 
 - Join an offer with free places with one tap.
 - Drivers can take someone who asked along, which also clears the request.
