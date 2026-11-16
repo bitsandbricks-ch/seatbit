@@ -72,6 +72,7 @@ export const errors = {
   unlinked: "Unlinked.",
   claimOff: "In this clan, guests are taken over through their own link. Ask an admin.",
   claimedAlready: "That guest was taken over already.",
+  deleteFailed: "Your account couldn't be deleted. Sign in again and try once more; if it keeps failing, contact the operator of this site.",
   typeDelete: "Type DELETE to confirm.",
   onlyAdminOf: "You're the only admin of {clans}. Make someone else admin first.",
   onlyPlatformAdmin: "You're the only platform owner. Make someone else owner first.",

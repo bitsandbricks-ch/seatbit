@@ -1,0 +1,10 @@
+date: 2026-11-16
+type: fixed
+en:
+  title: "Invite links respect a clan's suspension"
+  text: >-
+    An invite link to a suspended clan now says the clan can't take new members, instead of offering to join.
+de:
+  title: "Einladungslinks beachten die Sperre eines Clans"
+  text: >-
+    Ein Einladungslink zu einem gesperrten Clan sagt jetzt, dass der Clan keine neuen Mitglieder aufnimmt, statt den Beitritt anzubieten.

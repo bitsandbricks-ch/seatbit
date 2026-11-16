@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { joinWithInvite } from "@/app/clan-actions";
 import { ClanAvatar } from "@/components/clan-avatar";
-import { btnPrimary, cardPage, cardPageTitle } from "@/components/ui";
+import { Notice, btnPrimary, cardPage, cardPageTitle } from "@/components/ui";
 import { getCurrentUser } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { getT } from "@/i18n/server";
@@ -23,9 +23,13 @@ export default async function JoinPage({ params }: PageProps<"/join/[code]">) {
           <ClanAvatar clan={c} size={88} />
           <p className="text-sm text-muted">{t("joinPage.invited")}</p>
           <h1 className={cardPageTitle}>{c.name}</h1>
-          <ActionForm action={joinWithInvite.bind(null, code)} done={false}>
-            <button className={btnPrimary}>{t("joinPage.join")}</button>
-          </ActionForm>
+          {c.suspendedAt ? (
+            <Notice tone="warn">{t("joinPage.suspended")}</Notice>
+          ) : (
+            <ActionForm action={joinWithInvite.bind(null, code)} done={false}>
+              <button className={btnPrimary}>{t("joinPage.join")}</button>
+            </ActionForm>
+          )}
         </div>
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useToastAction } from "./action-form";
+import { useSettingsAction } from "./settings-section";
 import type { ActionResult } from "@/app/admin/settings/actions";
 import { DateTimePicker } from "./date-time-picker";
 import { btnPrimary, btnSecondary, input, label } from "./ui";
@@ -23,7 +23,7 @@ export function MaintenanceForm({
   canAnnounce: boolean;
 }) {
   const t = useT();
-  const [state, formAction, pending] = useToastAction(action, undefined);
+  const [state, formAction, pending] = useSettingsAction(action);
   return (
     <form key={state?.at ?? 0} action={formAction} className="space-y-4">
       <div>
@@ -76,9 +76,9 @@ export function MaintenanceForm({
 /** A post the admin writes for the public announcements channel. */
 export function AnnounceForm({ action }: { action: Action }) {
   const t = useT();
-  const [state, formAction, pending] = useToastAction(action, undefined);
+  const [state, formAction, pending] = useSettingsAction(action);
   return (
-    <form key={state?.ok ? state.at : 0} action={formAction} className="space-y-3">
+    <form key={state?.at ?? 0} action={formAction} className="space-y-3">
       <div>
         <label className={label} htmlFor="announce-title">
           {t("adminSettings.announceTitle")}

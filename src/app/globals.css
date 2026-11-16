@@ -31,6 +31,12 @@ body {
   border-radius: 0.375rem;
 }
 
+/* A form whose action is running (ActionForm): its buttons show that it's on it. */
+form[aria-busy="true"] :is(button, [type="submit"]) {
+  opacity: 0.6;
+  cursor: progress;
+}
+
 /* Bigger tap targets for checkboxes and radios. */
 input[type="checkbox"],
 input[type="radio"] {
