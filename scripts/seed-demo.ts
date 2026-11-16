@@ -577,6 +577,23 @@ export async function seedDemo({ force = false, discord = false } = {}) {
       }
     }
 
+    // Tournament teams: a full one and one still looking for players. Not on Counter-Strike,
+    // which the permission tests use for their own team.
+    tx.insert(s.team)
+      .values([
+        { id: "demo-team-wololo", gameId: "demo-game-aoe", name: "Wololo", size: 2, url: "https://example.com/tournament", createdBy: ids.lea },
+        { id: "demo-team-pitcrew", gameId: "demo-game-tm", name: "Pit Crew", size: 4, note: "Relay cup on Saturday", createdBy: ids.nina },
+      ])
+      .run();
+    tx.insert(s.teamMember)
+      .values([
+        { teamId: "demo-team-wololo", userId: ids.lea },
+        { teamId: "demo-team-wololo", userId: ids.gina },
+        { teamId: "demo-team-pitcrew", userId: ids.nina },
+        { teamId: "demo-team-pitcrew", userId: ids.chiara },
+      ])
+      .run();
+
     // Food: a pizza order Anna collects on Saturday, and Friday's kebab run (already ordered).
     const sat = new Date(start.getTime() + DAY);
     sat.setHours(19, 0, 0, 0);
