@@ -1,9 +1,13 @@
 export const manage = {
-  tabs: { attendees: "Attendees", missing: "Who's missing", chat: "Discord & WhatsApp", settings: "Settings" },
+  tabs: { attendees: "Attendees", missing: "Who's missing", chat: "Discord & WhatsApp", settings: "Settings", messages: "News", people: "People" },
   badge: {
     swaps: { one: "{count} swap to approve", other: "{count} swaps to approve" },
+    missing: { one: "{count} missing", other: "{count} missing" },
     unseated: "{count} unseated",
   },
+  parts: { list: "Who's coming" },
+  attendeeParts: "Attendee views",
+  chatTitle: "Discord & WhatsApp",
   guestInvited: "guest, invited at {email}",
   guestNoLogin: "guest, no login yet",
   since: "since {date}",
