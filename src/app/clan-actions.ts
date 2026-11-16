@@ -166,6 +166,8 @@ export async function joinWithInvite(code: string) {
   const inv = db.select().from(clanInvite).where(eq(clanInvite.code, code)).get();
   const c = inv && getClan(inv.clanId);
   if (!c) throw await err("errors.inviteInvalid");
+  // Same rule as joining without a link: a suspended clan takes no one new.
+  if (c.suspendedAt) throw await err("errors.clanSuspended");
   db.insert(clanMember)
     .values({ clanId: c.id, userId: me.id, role: "member" })
     .onConflictDoUpdate({
