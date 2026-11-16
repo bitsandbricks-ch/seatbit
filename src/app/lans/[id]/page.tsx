@@ -34,6 +34,7 @@ import { TravelBoard, type TravelPostView } from "@/components/travel-board";
 import { PackingList } from "@/components/gear-board";
 import { PACKING_ITEMS } from "@/lib/gear";
 import { GameList } from "@/components/game-list";
+import { EventRecap } from "@/components/event-recap";
 import { GAMES_REMINDER_DAYS, listGames } from "@/lib/games";
 import { SeatSwapPanel, type SwapView } from "@/components/seat-swaps";
 import { CheckInButton, DeleteNewsButton } from "@/components/event-extras";
@@ -834,6 +835,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
         <Columns
           aside={detailsAside}
         >
+          {l.publishedAt && !l.cancelledAt && l.endsAt < now && <EventRecap lan={l} me={me} clanSlug={lanClan?.slug ?? null} t={t} />}
           <GlanceList
             title={t("eventGuide.glance")}
             rows={sections.filter((x) => x.id !== "overview")}
