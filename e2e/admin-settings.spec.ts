@@ -2,7 +2,7 @@ import { inArray } from "drizzle-orm";
 import { schema } from "../src/db";
 import { db, expect, test } from "./fixtures";
 
-const KEYS = ["legal.operatorName", "legal.contactEmail"];
+const KEYS = ["legal.operatorName", "legal.contactEmail", "maintenance.message", "maintenance.startsAt", "maintenance.endsAt"];
 // The test clears what it set through the page; this only catches a test that stopped halfway.
 test.afterEach(() => {
   db().delete(schema.appSetting).where(inArray(schema.appSetting.key, KEYS)).run();
@@ -41,6 +41,25 @@ test.describe("platform settings", () => {
     await expect(toasts).toContainText("Saved 2 changes.");
     await alex.goto("/terms");
     await expect(alex.getByText("Example Gaming Club")).toHaveCount(0);
+  });
+
+  test("a maintenance notice with the end before the start keeps what was typed", async ({ as }) => {
+    const alex = await as("alex");
+    await alex.goto("/admin/settings?tab=maintenance");
+    const message = alex.getByLabel("Message", { exact: true });
+    const starts = alex.getByRole("textbox", { name: "Starts", exact: true });
+    const ends = alex.getByRole("textbox", { name: "Ends", exact: true });
+    await message.fill("Server move tonight");
+    await starts.fill("20.12.2027 22:00");
+    await starts.blur();
+    await ends.fill("20.12.2027 21:00");
+    await ends.blur();
+    await alex.getByRole("button", { name: "Save", exact: true }).filter({ visible: true }).click();
+    await expect(alex.getByRole("list", { name: "Errors" })).toContainText("The end has to be after the start.");
+    await expect(message).toHaveValue("Server move tonight");
+    await expect(starts).toHaveValue(/20\.12\.2027, 22:00/);
+    await expect(ends).toHaveValue(/20\.12\.2027, 21:00/);
+    expect(db().select().from(schema.appSetting).where(inArray(schema.appSetting.key, KEYS)).all()).toEqual([]);
   });
 
   test("members can't open the platform settings", async ({ as }) => {
