@@ -1,6 +1,5 @@
 "use server";
-import { err, getT, shownError } from "@/i18n/server";
-import { formError } from "@/i18n/form-errors";
+import { err, getT } from "@/i18n/server";
 import type { T } from "@/i18n/translate";
 
 import { and, eq } from "drizzle-orm";
@@ -23,7 +22,7 @@ const refresh = (lanId: string) => {
 /** Signed-in clan member who answered coming, unsure or waitlist for this LAN. */
 async function requireAttendee(lanId: string) {
   const me = await requireUser();
-  if (!getLan(lanId) || !canTakePart(me, lanId)) throw await err("errors.eventGone");
+  if (!getLan(lanId) || !canTakePart(me, lanId)) throw new Error("LAN not found");
   const a = db
     .select({ status: attendance.status })
     .from(attendance)
@@ -39,11 +38,6 @@ function mustGetPost(postId: string) {
   return p;
 }
 
-/** Enough for an offer and a request of each kind; more is a mistake or spam. */
-const MAX_POSTS_PER_PERSON = 6;
-/** Own packing items per person and event. */
-const MAX_PACKING_ITEMS = 60;
-
 const takenPlaces = (postId: string) =>
   db.select({ id: travelSpot.id }).from(travelSpot).where(eq(travelSpot.postId, postId)).all().length;
 
@@ -52,7 +46,7 @@ const takenPlaces = (postId: string) =>
 const postInput = z.object({
   kind: z.enum(TRAVEL_KINDS),
   mode: z.enum(["offer", "request"]),
-  town: z.string().trim().min(1).max(40),
+  town: z.string().trim().min(1, "Enter a town").max(40),
   places: z.coerce.number().int().min(1).max(20),
   whenText: z.string().trim().max(60).default(""),
   note: z.string().trim().max(200).default(""),
@@ -63,12 +57,10 @@ export type TravelInput = z.input<typeof postInput>;
 /** Offer or ask for a ride / sleeping spot. With postId, edits the user's own post. */
 export async function saveTravelPost(lanId: string, input: TravelInput, postId?: string) {
   const me = await requireAttendee(lanId);
-  const parsed = postInput.safeParse(input);
-  if (!parsed.success) throw shownError(formError(parsed.error, await getT()));
-  const v = parsed.data;
+  const v = postInput.parse(input);
   if (postId) {
     const p = mustGetPost(postId);
-    if (p.userId !== me.id || p.lanId !== lanId) throw await err("errors.notAllowed");
+    if (p.userId !== me.id || p.lanId !== lanId) throw new Error("Not your post");
     if (p.mode === "offer" && v.places < takenPlaces(postId))
       throw await err("errors.placesTooFew");
     db.update(travelPost)
@@ -76,12 +68,6 @@ export async function saveTravelPost(lanId: string, input: TravelInput, postId?:
       .where(eq(travelPost.id, postId))
       .run();
   } else {
-    const mine = db
-      .select({ id: travelPost.id })
-      .from(travelPost)
-      .where(and(eq(travelPost.lanId, lanId), eq(travelPost.userId, me.id)))
-      .all().length;
-    if (mine >= MAX_POSTS_PER_PERSON) throw await err("errors.travelMax", { count: MAX_POSTS_PER_PERSON });
     db.insert(travelPost).values({ lanId, userId: me.id, ...v }).run();
   }
   refresh(lanId);
@@ -91,7 +77,7 @@ export async function saveTravelPost(lanId: string, input: TravelInput, postId?:
 export async function deleteTravelPost(postId: string) {
   const me = await requireUser();
   const p = mustGetPost(postId);
-  if (p.userId !== me.id && !isLanManager(me, p.lanId)) throw await err("errors.notAllowed");
+  if (p.userId !== me.id && !isLanManager(me, p.lanId)) throw new Error("Not your post");
   db.delete(travelPost).where(eq(travelPost.id, postId)).run();
   refresh(p.lanId);
 }
@@ -129,7 +115,7 @@ export async function leaveTravelOffer(postId: string, userId?: string) {
   const me = await requireUser();
   const p = mustGetPost(postId);
   const target = userId ?? me.id;
-  if (target !== me.id && p.userId !== me.id && !isLanManager(me, p.lanId)) throw await err("errors.notAllowed");
+  if (target !== me.id && p.userId !== me.id && !isLanManager(me, p.lanId)) throw new Error("Not allowed");
   db.delete(travelSpot).where(and(eq(travelSpot.postId, postId), eq(travelSpot.userId, target))).run();
   refresh(p.lanId);
 }
@@ -150,7 +136,7 @@ export async function takeAlong(requestId: string, offerId: string) {
 /** Tick or untick an item on the member's own packing list. */
 export async function setPacked(lanId: string, item: string, packed: boolean) {
   const me = await requireUser();
-  if (!canTakePart(me, lanId)) throw await err("errors.eventGone");
+  if (!canTakePart(me, lanId)) throw new Error("LAN not found");
   if (!PACKING_ITEMS.some((p) => p.id === item)) throw new Error("Unknown item");
   if (packed) db.insert(gearPacked).values({ lanId, userId: me.id, item }).onConflictDoNothing().run();
   else
@@ -160,21 +146,13 @@ export async function setPacked(lanId: string, item: string, packed: boolean) {
   refresh(lanId);
 }
 
-const itemLabel = z.object({ label: z.string().trim().min(1).max(40) });
+const itemLabel = z.string().trim().min(1, "Enter an item").max(40);
 
 /** Add an item of your own to your packing list. */
 export async function addPackingItem(lanId: string, label: string) {
   const me = await requireUser();
-  if (!canTakePart(me, lanId)) throw await err("errors.eventGone");
-  const parsed = itemLabel.safeParse({ label });
-  if (!parsed.success) throw shownError(formError(parsed.error, await getT()));
-  const mine = db
-    .select({ id: packingItem.id })
-    .from(packingItem)
-    .where(and(eq(packingItem.lanId, lanId), eq(packingItem.userId, me.id)))
-    .all().length;
-  if (mine >= MAX_PACKING_ITEMS) throw await err("errors.packingMax", { count: MAX_PACKING_ITEMS });
-  db.insert(packingItem).values({ lanId, userId: me.id, label: parsed.data.label }).run();
+  if (!canTakePart(me, lanId)) throw new Error("LAN not found");
+  db.insert(packingItem).values({ lanId, userId: me.id, label: itemLabel.parse(label) }).run();
   refresh(lanId);
 }
 

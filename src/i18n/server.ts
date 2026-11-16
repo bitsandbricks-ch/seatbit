@@ -33,10 +33,6 @@ export async function tr(key: MessageKey, vars?: Vars) {
  * The text also goes into the digest, so the toast can show it in production too.
  */
 export async function err(key: MessageKey, vars?: Vars) {
-  return shownError(await tr(key, vars));
-}
-
-/** An Error whose already translated text reaches the toast in production too. */
-export function shownError(message: string) {
+  const message = await tr(key, vars);
   return Object.assign(new Error(message), { digest: MESSAGE_DIGEST + message });
 }

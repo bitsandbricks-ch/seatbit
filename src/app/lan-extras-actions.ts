@@ -1,6 +1,5 @@
 "use server";
 import { err, getT, tr } from "@/i18n/server";
-import { formError } from "@/i18n/form-errors";
 
 import { and, eq, inArray, ne, or } from "drizzle-orm";
 import { rolesWith } from "@/lib/clan-roles";
@@ -64,7 +63,7 @@ function seatOf(lanId: string, userId: string) {
 export async function requestSeatSwap(lanId: string, toUserId: string, note = "") {
   const me = await requireUser();
   const l = mustGetLan(lanId);
-  if (!canTakePart(me, lanId)) throw await err("errors.gone");
+  if (!canTakePart(me, lanId)) throw new Error("Not found");
   if (!l.seatsPublishedAt) throw await err("errors.swapsLater");
   if (toUserId === me.id) throw await err("errors.pickElse");
   const mine = seatOf(lanId, me.id);
@@ -136,7 +135,7 @@ export async function cancelSeatSwap(swapId: string) {
 /** Lead approves (swaps the two seats as they are now) or rejects an accepted swap. */
 export async function decideSeatSwap(swapId: string, approve: boolean) {
   const s = db.select().from(seatSwap).where(eq(seatSwap.id, swapId)).get();
-  if (!s) throw await err("errors.gone");
+  if (!s) throw new Error("Not found");
   const me = await requireLanManager(s.lanId);
   if (!OPEN.includes(s.status as (typeof OPEN)[number])) throw await err("errors.requestClosed");
   const l = mustGetLan(s.lanId);
@@ -230,7 +229,7 @@ export async function addGame(lanId: string, formData: FormData): Promise<{ erro
   const me = await requireParticipant(lanId);
   mustGetLan(lanId);
   const parsed = parseGame(formData);
-  if (!parsed.success) return { error: formError(parsed.error, await getT()) };
+  if (!parsed.success) return { error: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join(", ") };
   const existing = sameName(lanId, parsed.data.name);
   if (existing) return { error: await tr("errors.gameExists", { name: existing.name }) };
   if (db.select().from(game).where(eq(game.lanId, lanId)).all().length >= 50) return { error: await tr("errors.gamesFull") };
@@ -243,12 +242,12 @@ export async function addGame(lanId: string, formData: FormData): Promise<{ erro
 /** Fixes a game's name, size or link: whoever added it, or a lead. Votes and ticks stay. */
 export async function updateGame(gameId: string, formData: FormData): Promise<{ error?: string }> {
   const g = db.select().from(game).where(eq(game.id, gameId)).get();
-  if (!g) throw await err("errors.gone");
+  if (!g) throw new Error("Not found");
   // Taking part first: who added it may have left the clan since.
   const me = await requireParticipant(g.lanId);
   if (g.addedBy !== me.id && !isLanManager(me, g.lanId)) throw await err("errors.gameEdit");
   const parsed = parseGame(formData);
-  if (!parsed.success) return { error: formError(parsed.error, await getT()) };
+  if (!parsed.success) return { error: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join(", ") };
   const existing = sameName(g.lanId, parsed.data.name, g.id);
   if (existing) return { error: await tr("errors.gameNameTaken", { name: existing.name }) };
   db.update(game).set(parsed.data).where(eq(game.id, gameId)).run();
@@ -269,7 +268,7 @@ export async function deleteGame(gameId: string) {
 /** Sets my vote or "installed" tick for a game. */
 export async function setGameMark(gameId: string, field: "vote" | "installed", value: boolean) {
   const g = db.select().from(game).where(eq(game.id, gameId)).get();
-  if (!g) throw await err("errors.gone");
+  if (!g) throw new Error("Not found");
   const me = await requireParticipant(g.lanId);
   db.insert(gameVote)
     .values({ gameId, userId: me.id, [field]: value })

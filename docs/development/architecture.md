@@ -64,7 +64,7 @@ The UI is in English and German, without locale prefixes in the URL. `src/i18n/s
 - Dates: pass `t.locale` to the formatters in `src/lib/format.ts` (weekday names change, the format doesn't).
 - German uses Swiss spelling: "ss", never "ß". The per-event role is "Lead" in both languages.
 - Mails and Discord messages use `localeOf(user)`: the saved language, else the instance default. Posts in a clan's Discord channels use `clanLocale(clan)`. Mail templates are stored per language (`mailtpl.<id>.<part>` for English, `.de` appended for German).
-- Server actions translate what reaches people: `throw await err("errors.joinFirst")` and `{ error: await tr("errors.pickClan") }` from `src/i18n/server.ts`. Pure guards nobody hits through the UI ("Bad status") stay English. Form validation with zod: `safeParse`, then `{ error: formError(parsed.error, await getT()) }` (or `throw shownError(formError(...))`) from `src/i18n/form-errors.ts`; it names each bad field with its label from `formErrors.fields` and the reason in the reader's language. Don't put English texts into zod schemas or show `issue.message`.
+- Server actions translate what reaches people: `throw await err("errors.joinFirst")` and `{ error: await tr("errors.pickClan") }` from `src/i18n/server.ts`. Pure guards nobody hits through the UI ("Bad status") stay English.
 - `npm run check:i18n` (also in CI) parses every `.tsx` and fails on JSX text, user-facing attributes (`title`, `label`, `placeholder`, ...) and `confirm()` text that don't go through `t()`. Brand names and ALL-CAPS words are allowed; `// i18n-ignore` marks a deliberate exception, `i18n-ignore-file` a file written once per language (the legal pages, `TermsEn` / `TermsDe`).
 
 ## Toasts

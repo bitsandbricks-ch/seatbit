@@ -211,7 +211,7 @@ export async function deleteNews(newsId: string) {
 /** Which of a clan's events the member hears about: null = all, or a list of LAN type ids. */
 export async function setMyInterests(clanId: string, typeIds: string[] | null) {
   const me = await requireUser();
-  if (!isClanMember(me.id, clanId)) throw await err("errors.notInClan");
+  if (!isClanMember(me.id, clanId)) throw new Error("Not in this clan");
   const valid = new Set(
     db.select({ id: lanType.id }).from(lanType).where(eq(lanType.clanId, clanId)).all().map((t) => t.id),
   );

@@ -1,13 +1,6 @@
 import type { Messages } from "../en";
 
 export const errors: Messages["errors"] = {
-  travelMax: "Du hast hier schon {count} Einträge für Mitfahrten und Schlafplätze. Bearbeite oder entferne zuerst einen.",
-  packingMax: "Deine Packliste ist voll ({count} Sachen).",
-  gone: "Das gibt es nicht mehr. Lade die Seite neu und versuche es nochmals.",
-  userGone: "Diese Person gibt es nicht mehr.",
-  notAllowed: "Das darfst du nicht.",
-  notInClan: "Diese Person ist nicht Mitglied dieses Clans.",
-  notOnEvent: "Diese Person ist nicht bei diesem Event dabei.",
   taskTitle: "Gib dem To-do einen Titel.",
   taskGone: "Dieses To-do oder dieser Kontakt existiert nicht mehr.",
   contactName: "Gib dem Kontakt einen Namen.",
