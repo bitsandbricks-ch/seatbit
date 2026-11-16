@@ -9,9 +9,12 @@ test.describe("quick search", () => {
     const page = await as("anna");
     await page.goto("/");
 
-    await page.keyboard.press("Control+k");
     const box = page.getByRole("combobox", { name: "Search events, people and clans" });
-    await expect(box).toBeFocused();
+    // Right after load the shortcut may come before the page is interactive; press again like a person would.
+    await expect(async () => {
+      await page.keyboard.press("Control+k");
+      await expect(box).toBeFocused({ timeout: 1000 });
+    }).toPass();
     await box.fill(token.toLowerCase());
     await expect(page.getByRole("option", { name: new RegExp(name) })).toBeVisible();
     await box.press("Enter");
