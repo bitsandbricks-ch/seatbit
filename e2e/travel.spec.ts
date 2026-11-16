@@ -3,6 +3,7 @@ import { schema } from "../src/db";
 import { createEvent, db, expect, test, userId } from "./fixtures";
 
 const { travelPost, travelSpot } = schema;
+// Fields by visible label only: hidden tabs (food, costs) have fields with the same names.
 
 // Carpool: offer a ride, others join and leave it, a driver takes someone along who asked.
 test.describe("travel", () => {
@@ -12,9 +13,9 @@ test.describe("travel", () => {
     const ben = await as("ben");
     await ben.goto(`/lans/${id}?tab=travel`);
     await ben.getByRole("button", { name: "Offer a ride" }).click();
-    await ben.getByLabel("Leaving from").fill("Zug");
-    await ben.getByLabel("Free seats").fill("2");
-    await ben.getByLabel("When").fill("Fri 16:00");
+    await ben.getByLabel("Leaving from", { exact: true }).filter({ visible: true }).fill("Zug");
+    await ben.getByLabel("Free seats", { exact: true }).filter({ visible: true }).fill("2");
+    await ben.getByLabel("When", { exact: true }).filter({ visible: true }).fill("Fri 16:00");
     await ben.getByRole("button", { name: "Post offer" }).click();
     await expect(ben.getByText("2 of 2 seats free")).toBeVisible();
     const offer = db().select().from(travelPost).where(eq(travelPost.lanId, id)).get();
@@ -45,7 +46,7 @@ test.describe("travel", () => {
     const anna = await as("anna");
     await anna.goto(`/lans/${id}?tab=travel`);
     await anna.getByRole("button", { name: "Need a ride" }).click();
-    await anna.getByLabel("From").fill("Baar");
+    await anna.getByLabel("From", { exact: true }).filter({ visible: true }).fill("Baar");
     await anna.getByRole("button", { name: "Post request" }).click();
     await expect(anna.getByText("needs a ride")).toBeVisible();
 
