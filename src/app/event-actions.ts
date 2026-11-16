@@ -6,7 +6,6 @@ import { revalidatePath } from "next/cache";
 import { lanChanged } from "@/lib/live";
 import { redirect } from "next/navigation";
 import { db, schema } from "@/db";
-import { INTEREST_ANSWERS, type InterestAnswer } from "@/db/schema";
 import { addClanAdminsAsOrgas, getDisplayNames, mustGetLan } from "@/lib/lans";
 import { cancelEvent, openSignup, publishEvent, sendNews, uncancelEvent } from "@/lib/event-notices";
 import { isClanMember } from "@/lib/clans";
@@ -15,7 +14,7 @@ import { auditLan } from "@/lib/audit";
 import { fmtDate } from "@/lib/format";
 import { overLimit } from "@/lib/rate-limit";
 
-const { lan, lanOrga, lanInterest, lanNews, clanMember, lanType, seat, attendance } = schema;
+const { lan, lanOrga, lanNews, clanMember, lanType, seat, attendance } = schema;
 
 const lanPath = (id: string) => {
   lanChanged(id);
@@ -45,18 +44,25 @@ export async function schedulePublish(lanId: string, at: string | null): Promise
 
 // ---------------- Interest check ----------------
 
-/** A member's answer during the interest check: yes / maybe / no. */
-export async function setMyInterest(lanId: string, answer: InterestAnswer) {
-  const me = await requireUser();
+/**
+ * Sets (or clears, with null) when sign-up opens by itself and ends the interest check. A time in the
+ * past opens it now. Needs a fixed date, like opening by hand.
+ */
+export async function scheduleSignup(lanId: string, at: string | null): Promise<{ error?: string; sent?: number } | void> {
+  const me = await requireLanManager(lanId);
   const l = mustGetLan(lanId);
-  if (!canTakePart(me, lanId)) throw await err("errors.joinFirst");
-  if (!l.interestCheck || l.cancelledAt) throw await err("errors.interestOver");
-  if (!INTEREST_ANSWERS.includes(answer)) throw new Error("Bad answer");
-  db.insert(lanInterest)
-    .values({ lanId, userId: me.id, answer })
-    .onConflictDoUpdate({ target: [lanInterest.lanId, lanInterest.userId], set: { answer } })
-    .run();
-  void import("@/lib/discord").then((d) => d.refreshLanMessagesSoon(lanId)).catch(() => {});
+  if (!l.interestCheck) return { error: await tr("errors.interestOver") };
+  const when = at ? new Date(at) : null;
+  if (when && isNaN(when.getTime())) return { error: await tr("errors.validDate") };
+  if (when && l.dateTbd) return { error: await tr("errors.dateFirst") };
+  if (when && when <= new Date()) {
+    auditLan(l, me.id, "event.signup_open");
+    const sent = await openSignup(l);
+    lanPath(lanId);
+    return { sent };
+  }
+  db.update(lan).set({ signupOpensAt: when }).where(eq(lan.id, lanId)).run();
+  auditLan(l, me.id, "event.signup_schedule", { data: { at: when ? fmtDate(when) : null } });
   lanPath(lanId);
 }
 

@@ -7,7 +7,7 @@ export const mailtpl = {
   waitlistPromoted: { title: "Moved up from the waitlist", when: "A spot opens and someone on the waitlist moves to coming." },
   eventPublished: { title: "New event", when: "A lead publishes an event (or it goes live at its scheduled time), to members interested in that kind of event." },
   interestCheck: { title: "Interest check", when: "A lead publishes an event that starts with an interest check." },
-  signupOpen: { title: "Sign-up open", when: "A lead ends the interest check and opens sign-up." },
+  signupOpen: { title: "Sign-up open", when: "A lead ends the interest check and opens sign-up (by hand or at the scheduled time)." },
   eventCancelled: { title: "Event cancelled", when: "A lead cancels an event, to everyone who answered." },
   eventNews: { title: "News from the leads", when: "A lead posts news on an event, to everyone coming, unsure or on the waitlist." },
 };

@@ -7,7 +7,6 @@ export const cmd = {
   anotherClan: "another clan",
   whichEvent: "Which event?",
   whichEventAdd: "Which event? Add `event:` and pick one:",
-  interestOver: "The interest check is over.",
   unknownAnswer: "Unknown answer.",
   interest: {
     yes: "Noted: you'd come for {lan}. We'll tell you when sign-up opens.",

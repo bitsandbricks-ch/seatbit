@@ -9,7 +9,7 @@ import { notify, type Notice } from "./notify";
 import { makeT } from "../i18n/translate";
 import { localeOf } from "../i18n/user-locale";
 
-const { attendance, clanMember, user, seat, nickname, reminderLog, lanInterest, account } = schema;
+const { attendance, clanMember, user, seat, nickname, reminderLog, account } = schema;
 
 /**
  * Steps members still owe for an event. "member" steps can be nudged (DM / mail);
@@ -131,10 +131,7 @@ export function whoIsMissing(l: Lan): MissingGroup[] {
 
   if (l.interestCheck) {
     // Phase 1: only the interest check matters, sign-up hasn't opened.
-    const answered = new Set(
-      db.select().from(lanInterest).where(eq(lanInterest.lanId, l.id)).all().map((i) => i.userId),
-    );
-    for (const m of members) if (!answered.has(m.id)) add("interest", m.id);
+    for (const m of members) if (!byUser.has(m.id)) add("interest", m.id);
   } else {
     for (const m of members) {
       const a = byUser.get(m.id);
@@ -179,11 +176,7 @@ function nudgeMessage(step: NudgeStep, l: Lan, u: User): Notice {
         ...base,
         subject: t("nudge.interest", { lan: l.name }),
         text: `${hi}\n\n${t("nudge.interestText", { lan: l.name })}\n\n${url}`,
-        buttons: [
-          { type: 2, style: 3, label: t("nudge.yes"), custom_id: `int:${l.id}:yes` },
-          { type: 2, style: 2, label: t("nudge.maybeShort"), custom_id: `int:${l.id}:maybe` },
-          { type: 2, style: 4, label: t("nudge.no"), custom_id: `int:${l.id}:no` },
-        ],
+        buttons: attButtons,
       };
     case "answer":
       return {
