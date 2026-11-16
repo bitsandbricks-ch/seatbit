@@ -2,7 +2,7 @@
 
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { LOCALES } from "@/i18n/config";
-import { err, getT, tr } from "@/i18n/server";
+import { err, getT, shownError, tr } from "@/i18n/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -574,7 +574,7 @@ export async function claimGuestFromDiscord(token: string) {
 export async function setClanDiscordInvite(clanId: string, guildId: string, formData: FormData) {
   await requireClanPermission(clanId, "settings");
   const r = setServerInvite(clanId, guildId, String(formData.get("inviteUrl") ?? ""), await getT());
-  if (r.error) throw new Error(r.error);
+  if (r.error) throw shownError(r.error);
   revalidatePath("/clans", "layout");
 }
 

@@ -14,3 +14,8 @@ export function actionErrorText(e: unknown): string | null {
   if (process.env.NODE_ENV !== "production" && e instanceof Error && e.message) return e.message;
   return null;
 }
+
+/** An Error whose already translated text reaches the toast in production too. */
+export function shownError(message: string) {
+  return Object.assign(new Error(message), { digest: MESSAGE_DIGEST + message });
+}

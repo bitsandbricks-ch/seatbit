@@ -1,5 +1,5 @@
 import { and, eq } from "drizzle-orm";
-import { attendance, user } from "../src/db/schema";
+import { attendance, lan, travelPost, travelSpot, user } from "../src/db/schema";
 import { createEvent, db, expect, test, userId } from "./fixtures";
 
 // Toasts: the note at the bottom after a save, and the reason when it failed.
@@ -54,5 +54,33 @@ test.describe("toasts", () => {
     await page.getByRole("textbox", { name: "First name" }).fill("   ");
     await page.getByRole("button", { name: "Save", exact: true }).first().click();
     await expect(page.getByRole("list", { name: "Errors" }).getByText("First name: please fill this in.")).toBeVisible();
+  });
+
+  test("a ride that filled up in the meantime says so, not just that something failed", async ({ as }) => {
+    const id = createEvent({ attendees: [{ who: "anna" }, { who: "ben" }, { who: "chiara" }] });
+    const ride = db()
+      .insert(travelPost)
+      .values({ lanId: id, userId: userId("ben"), kind: "ride", mode: "offer", places: 1, town: "Zug" })
+      .returning()
+      .get();
+    const page = await as("anna");
+    await page.goto(`/lans/${id}?tab=travel`);
+    const join = page.getByRole("button", { name: "Join ride" });
+    await expect(join).toBeVisible();
+    // Chiara takes the last place while Anna still has the page open.
+    db().insert(travelSpot).values({ postId: ride.id, userId: userId("chiara") }).run();
+    await join.click();
+    await expect(page.getByRole("list", { name: "Errors" }).getByText("No free places left.")).toBeVisible();
+  });
+
+  test("an event deleted while the page is open says so", async ({ as }) => {
+    const id = createEvent();
+    const page = await as("anna");
+    await page.goto(`/lans/${id}`);
+    const coming = page.getByRole("button", { name: "I'm coming" });
+    await expect(coming).toBeVisible();
+    db().delete(lan).where(eq(lan.id, id)).run();
+    await coming.click();
+    await expect(page.getByRole("list", { name: "Errors" }).getByText("This event doesn't exist anymore.")).toBeVisible();
   });
 });
