@@ -1,11 +1,15 @@
 import type { Messages } from "../en";
 
 export const manage: Messages["manage"] = {
-  tabs: { attendees: "Teilnehmende", missing: "Wer fehlt", chat: "Discord & WhatsApp", settings: "Einstellungen" },
+  tabs: { attendees: "Teilnehmende", missing: "Wer fehlt", chat: "Discord & WhatsApp", settings: "Einstellungen", messages: "News", people: "Leute" },
   badge: {
     swaps: { one: "{count} Tausch zu bestätigen", other: "{count} Tausche zu bestätigen" },
+    missing: { one: "{count} fehlt", other: "{count} fehlen" },
     unseated: "{count} ohne Platz",
   },
+  parts: { list: "Wer kommt" },
+  attendeeParts: "Ansicht",
+  chatTitle: "Discord & WhatsApp",
   guestInvited: "Gast, eingeladen an {email}",
   guestNoLogin: "Gast, noch kein Login",
   since: "seit {date}",

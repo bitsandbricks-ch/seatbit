@@ -10,7 +10,7 @@ Besides the built-in [lead checklist](events.md#lead-checklist), which Seatbit t
 
 *Manage → Overview* lists the event's to-dos, open ones first:
 
-- **Tick** the circle when it's done. The list shows who ticked it and when; tick again to reopen it.
+- **Tick** the circle when it's done. The list shows who ticked it and when; tick again to reopen it. Done ones fold away under *Show N done*.
 - **Who does it:** give the to-do to one of the event's leads.
 - **Due:** a to-do can be due a number of days before (or after) the start. Overdue ones are marked red. Events with an open date have no due dates yet.
 - **Opens after:** a to-do can wait for built-in checklist steps or other to-dos. Until they are done it shows a lock and what it waits for. Leads can still tick it early.
