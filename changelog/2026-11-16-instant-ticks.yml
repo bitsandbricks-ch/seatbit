@@ -1,0 +1,13 @@
+date: 2026-11-16
+type: improved
+en:
+  title: "Ticks show right away"
+  text: >-
+    Ticking an item as packed, a game as installed or voted, or someone as paid for a food order now shows
+    at once, even on slow LAN wifi. If it can't be saved, the tick goes back and you see why.
+de:
+  title: "Häkchen erscheinen sofort"
+  text: >-
+    Wenn du etwas als eingepackt, ein Spiel als installiert oder gewählt oder bei einer Essensbestellung
+    jemanden als bezahlt markierst, siehst du das jetzt sofort, auch im langsamen LAN-WLAN. Klappt das
+    Speichern nicht, verschwindet das Häkchen wieder und du siehst den Grund.

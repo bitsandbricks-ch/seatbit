@@ -30,6 +30,25 @@ test.describe("games", () => {
     await expect(row.getByText(/^1 vote: Anna/)).toBeVisible();
   });
 
+  test("vote and installed show at once and are saved", async ({ as }) => {
+    const id = createEvent({ attendees: [{ who: "anna" }] });
+    const g = db().insert(schema.game).values({ lanId: id, name: "Worms" }).returning().get();
+    const anna = await as("anna");
+    await anna.goto(`/lans/${id}?tab=games`);
+    const row = anna.getByRole("listitem").filter({ hasText: "Worms" });
+    // check() fails unless the box is ticked right after the click, before the server answers.
+    await row.getByRole("checkbox", { name: "Installed" }).check();
+    await row.getByRole("button", { name: "▲ Vote" }).click();
+    await expect(row.getByRole("button", { name: "▲ Voted" })).toBeVisible();
+    await expect(row.getByText(/^1 vote: Anna/)).toBeVisible();
+    await expect(row.getByRole("checkbox", { name: "Installed" })).toBeChecked();
+    expect(db().select().from(schema.gameVote).where(eq(schema.gameVote.gameId, g.id)).get()).toMatchObject({
+      userId: userId("anna"),
+      vote: true,
+      installed: true,
+    });
+  });
+
   test("who added a game can fix it later, others can't", async ({ as }) => {
     const id = createEvent({ attendees: [{ who: "anna" }, { who: "david" }] });
     const g = db().insert(schema.game).values({ lanId: id, name: "Quak", sizeGb: 1, addedBy: userId("anna") }).returning().get();

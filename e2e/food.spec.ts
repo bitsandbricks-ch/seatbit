@@ -45,7 +45,7 @@ test.describe("food orders", () => {
     await ben.reload();
     await expect(ben.getByRole("listitem").filter({ hasText: /^2x Margherita$/ })).toBeVisible();
     await expect(ben.getByText("Total CHF 25.00")).toBeVisible();
-    await ben.getByRole("checkbox", { name: "Paid" }).click();
+    await ben.getByRole("checkbox", { name: "Paid" }).check();
     await expect(ben.getByText("all paid")).toBeVisible();
     await expect(ben.getByRole("checkbox", { name: "Paid" })).toBeChecked();
     expect(db().select().from(foodItem).where(eq(foodItem.orderId, order!.id)).get()?.paid).toBe(true);
@@ -58,6 +58,25 @@ test.describe("food orders", () => {
     await anna.reload();
     await expect(anna.getByRole("button", { name: "Add", exact: true })).toBeHidden();
     await expect(anna.getByRole("button", { name: "Remove Margherita" })).toBeHidden();
+  });
+
+  test("a paid tick that can't be saved goes back", async ({ as }) => {
+    const id = runningEvent();
+    const order = db()
+      .insert(foodOrder)
+      .values({ lanId: id, title: "Kebab", createdBy: userId("ben") })
+      .returning()
+      .get();
+    db().insert(foodItem).values({ orderId: order.id, userId: userId("anna"), item: "Dürüm", qty: 1, priceCents: 1100 }).run();
+    const ben = await as("ben");
+    await ben.goto(`/lans/${id}?tab=food`);
+    const paid = ben.getByRole("checkbox", { name: "Paid" });
+    await expect(paid).not.toBeChecked();
+    // Someone deletes the order while Ben still has it open.
+    db().delete(foodOrder).where(eq(foodOrder.id, order.id)).run();
+    await paid.click();
+    await expect(ben.getByRole("list", { name: "Errors" }).getByText("This food order is gone.")).toBeVisible();
+    await expect(paid).not.toBeChecked();
   });
 
   test("only who runs the order ticks who paid", async ({ as }) => {
