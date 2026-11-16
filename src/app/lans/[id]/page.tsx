@@ -711,7 +711,16 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
       <TabPanel id="travel">
         <div>
           <p className="mb-4 max-w-2xl text-sm text-muted">{t("event.travelIntro")}</p>
-          <TravelBoard lanId={l.id} posts={travelViews} meId={me.id} canPost={canTakePart} isManager={isAdmin} />
+          {/* Rides and places to sleep side by side (stacked on phones) instead of a third level of switches. */}
+          {!canTakePart && <p className="mb-4 rounded-md bg-raised/60 px-3 py-2 text-sm text-muted">{t("travel.sayComing")}</p>}
+          <div className="grid items-start gap-5 lg:grid-cols-2">
+            <Card title={t("travel.carpool")}>
+              <TravelBoard kind="ride" lanId={l.id} posts={travelViews} meId={me.id} canPost={canTakePart} isManager={isAdmin} />
+            </Card>
+            <Card title={t("travel.sleeping")}>
+              <TravelBoard kind="sleep" lanId={l.id} posts={travelViews} meId={me.id} canPost={canTakePart} isManager={isAdmin} />
+            </Card>
+          </div>
         </div>
       </TabPanel>
 

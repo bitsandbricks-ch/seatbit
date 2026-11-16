@@ -18,7 +18,6 @@ export const travel: Messages["travel"] = {
     need: { one: "{count} Platz", other: "{count} Plätze" },
     take: "Mitnehmen",
     notePh: "z. B. grosser Kofferraum, Platz für einen Tower-PC",
-    sayComing: "Sag im Tab Übersicht, dass du kommst (oder unsicher bist), um eine Fahrt anzubieten oder zu suchen.",
   },
   sleep: {
     offer: "Schlafplatz anbieten",
@@ -37,9 +36,8 @@ export const travel: Messages["travel"] = {
     need: { one: "{count} Schlafplatz", other: "{count} Schlafplätze" },
     take: "Aufnehmen",
     notePh: "z. B. Luftmatratze, Schlafsack mitbringen",
-    sayComing: "Sag im Tab Übersicht, dass du kommst (oder unsicher bist), um einen Schlafplatz anzubieten oder zu suchen.",
   },
-  label: "Anreise",
+  sayComing: "Sag im Tab Übersicht, dass du kommst (oder unsicher bist), um eine Fahrt oder einen Schlafplatz anzubieten oder zu suchen.",
   carpool: "Fahrgemeinschaft",
   sleeping: "Übernachten",
   looking: { one: "{count} sucht", other: "{count} suchen" },

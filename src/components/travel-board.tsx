@@ -9,7 +9,7 @@ import {
   type TravelInput,
 } from "@/app/travel-gear-actions";
 import type { TravelKind } from "@/db/schema";
-import { Field, Input, Pill, Segmented, btnGhost, btnPrimary, btnSecondary } from "./ui";
+import { Field, Input, Pill, btnGhost, btnPrimary, btnSecondary } from "./ui";
 import { useT } from "@/i18n/client";
 import { useRunAction } from "./action-form";
 
@@ -36,14 +36,16 @@ export function TravelBoard({
   meId,
   canPost,
   isManager,
+  kind,
 }: {
+  /** Rides or places to sleep; the event page shows one card each. */
+  kind: TravelKind;
   lanId: string;
   posts: TravelPostView[];
   meId: string;
   canPost: boolean;
   isManager: boolean;
 }) {
-  const [kind, setKind] = useState<TravelKind>("ride");
   const [form, setForm] = useState<{ mode: "offer" | "request"; post?: TravelPostView } | null>(null);
   const [pending, start] = useTransition();
   const act = useRunAction();
@@ -72,28 +74,17 @@ export function TravelBoard({
   const sorted = [...groups.values()].sort((a, b) => a.town.localeCompare(b.town));
   for (const g of sorted) g.posts.sort((a, b) => Number(a.mode === "request") - Number(b.mode === "request"));
   const towns = [...new Set(posts.map((p) => p.town.trim()).filter(Boolean))].sort();
-  const count = (k: TravelKind) => posts.filter((p) => p.kind === k).length;
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Segmented
-          label={t("travel.label")}
-          value={kind}
-          onChange={(k) => {
-            setKind(k);
-            setForm(null);
-          }}
-          options={(["ride", "sleep"] as const).map((k) => ({ id: k, label: k === "ride" ? t("travel.carpool") : t("travel.sleeping"), count: count(k) }))}
-        />
-        <p className="text-sm text-muted">
-          <span className="text-bit">{t(`travel.${kind}.free`, { count: free })}</span> ·{" "}
-          <span className="text-warn">{t("travel.looking", { count: looking })}</span>
-        </p>
-      </div>
+      <p className="text-sm text-muted">
+        <span className="text-bit">{t(`travel.${kind}.free`, { count: free })}</span> ·{" "}
+        <span className="text-warn">{t("travel.looking", { count: looking })}</span>
+      </p>
 
-      {canPost ? (
-        form ? (
+      {/* Not taking part: the page says once above both cards how to join in. */}
+      {canPost &&
+        (form ? (
           <PostForm
             key={`${kind}-${form.mode}-${form.post?.id ?? "new"}`}
             kind={kind}
@@ -113,16 +104,11 @@ export function TravelBoard({
               {t(`travel.${kind}.request`)}
             </button>
           </div>
-        )
-      ) : (
-        <p className="rounded-md bg-raised/60 px-3 py-2 text-sm text-muted">
-          {t(`travel.${kind}.sayComing`)}
-        </p>
-      )}
+        ))}
 
       {sorted.length === 0 && <p className="text-sm text-muted">{t(`travel.${kind}.empty`)}</p>}
 
-      <div className="grid items-start gap-x-6 gap-y-4 lg:grid-cols-2">
+      <div className="grid items-start gap-x-6 gap-y-4">
       {sorted.map((g) => (
         <section key={townKey(g.town)} className="min-w-0">
           <h3 className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted">
