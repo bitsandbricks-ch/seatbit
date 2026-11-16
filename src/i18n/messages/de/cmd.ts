@@ -9,7 +9,6 @@ export const cmd: Messages["cmd"] = {
   anotherClan: "einem anderen Clan",
   whichEvent: "Welches Event?",
   whichEventAdd: "Welches Event? Ergänze `event:` und wähl eines:",
-  interestOver: "Die Interessensabfrage ist vorbei.",
   unknownAnswer: "Unbekannte Antwort.",
   interest: {
     yes: "Notiert: Du würdest an {lan} kommen. Wir sagen dir, wenn die Anmeldung öffnet.",
