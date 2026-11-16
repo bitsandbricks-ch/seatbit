@@ -6,6 +6,7 @@ export const pages = {
   resetSent: "If that address has an account, a reset link is on its way.",
   sendReset: "Send reset link",
   resetInvalid: "This reset link is invalid or expired.",
+  resetAgain: "Request a new link",
   resetFailed: "Reset failed",
   newPassword: "New password",
   setPassword: "Set password",

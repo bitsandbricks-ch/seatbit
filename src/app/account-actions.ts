@@ -24,7 +24,9 @@ export async function deleteMyAccount(_: DeleteState, formData: FormData): Promi
   try {
     await deleteAccount(me.id);
   } catch (e) {
-    return { error: e instanceof Error ? e.message : "Deleting failed." };
+    // Already signed out by now, so the text says to sign in again; the details go to the log.
+    console.error("account deletion failed", me.id, e);
+    return { error: await tr("errors.deleteFailed") };
   }
   redirect("/login?deleted=1");
 }

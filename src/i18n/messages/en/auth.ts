@@ -19,6 +19,7 @@ export const auth = {
   forgot: "Forgot password?",
   haveAccount: "Already have an account? Sign in",
   somethingWrong: "Something went wrong",
+  passwordChanged: "Your password was changed. Sign in with the new one.",
   deleted: "Your account and your data were deleted. Thanks for using Seatbit.",
   legal: "By continuing you agree to the {terms} and the {privacy}.",
   terms: "Terms of Service",

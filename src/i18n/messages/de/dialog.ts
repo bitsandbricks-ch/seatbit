@@ -14,6 +14,8 @@ export const dialog: Messages["dialog"] = {
   deleteClanQ: "Den Clan {name} löschen?",
   deleteTypeQ: "Den LAN-Typ {name} löschen?",
   deleteChargeQ: "Die Forderung {name} löschen?",
+  leaveClanQ: "{name} verlassen?",
+  leaveClanBody: "Du siehst die Events des Clans nicht mehr, und deine Antworten zu seinen kommenden Events werden zurückgezogen (solche mit Ticket oder Zahlung bleiben, damit die Leads das regeln). Um zurückzukommen, fragst du wieder an.",
   unlinkChannelQ: "#{name} trennen?",
   unlinkChannelBody: "Seatbit postet dort nicht mehr. Du kannst ihn mit /seatbit in Discord wieder verbinden.",
 };

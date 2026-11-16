@@ -12,6 +12,8 @@ export const dialog = {
   deleteClanQ: "Delete the clan {name}?",
   deleteTypeQ: "Delete the LAN type {name}?",
   deleteChargeQ: "Delete the charge {name}?",
+  leaveClanQ: "Leave {name}?",
+  leaveClanBody: "You won't see the clan's events any more, and your answers on its upcoming events are withdrawn (ones with a ticket or payment stay for the leads to sort out). To come back, you ask to join again.",
   unlinkChannelQ: "Unlink #{name}?",
   unlinkChannelBody: "Seatbit stops posting there. You can link it again with /seatbit in Discord.",
 };
