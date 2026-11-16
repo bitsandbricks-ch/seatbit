@@ -1,0 +1,13 @@
+date: 2026-11-16
+type: fixed
+audience: admins
+en:
+  title: "Fixed a problem with reminders"
+  text: >-
+    A problem with one event no longer holds up the reminders of the other events. The error still shows
+    on the Health page.
+de:
+  title: "Problem mit Erinnerungen behoben"
+  text: >-
+    Ein Problem bei einem Event hält die Erinnerungen der anderen Events nicht mehr auf. Der Fehler
+    erscheint weiterhin auf der Health-Seite.

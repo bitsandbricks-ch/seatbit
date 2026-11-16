@@ -91,8 +91,8 @@ async function send(kind: ReminderKind, l: Lan, users: User[], dedupe: boolean) 
         .get();
       if (already) continue;
     }
-    const m = message(kind, l, u);
     try {
+      const m = message(kind, l, u);
       const r = await notify(u, { kind: "reminder", ...m, url: `${appUrl}/lans/${l.id}` });
       if (!r.email && !r.dm) continue;
       db.insert(reminderLog)
@@ -104,7 +104,7 @@ async function send(kind: ReminderKind, l: Lan, users: User[], dedupe: boolean) 
         .run();
       sent++;
     } catch (e) {
-      console.error("[reminders] %s to %s failed", kind, u.email, e);
+      console.error("[reminders] %s to user %s failed", kind, u.id, e);
     }
   }
   return sent;
@@ -142,6 +142,7 @@ export async function runDueReminders(now = new Date()) {
     .all()
     .filter((l) => !isClanSuspended(l.clanId));
   const result: { lan: string; kind: string; sent: number }[] = [];
+  const failures: unknown[] = [];
   // Clan payments due soon: not tied to an event.
   const { runPaymentReminders } = await import("./payments");
   const paid = await runPaymentReminders(now).catch((e) => {
@@ -151,15 +152,21 @@ export async function runDueReminders(now = new Date()) {
   if (paid) result.push({ lan: "", kind: "payment_due", sent: paid });
   for (const l of lans) {
     const kinds = dueKinds(l, now);
-    for (const kind of kinds) {
-      const sent = await send(kind, l, recipients(kind, l), true);
-      if (sent) result.push({ lan: l.name, kind, sent });
-    }
-    // "Install your games" a couple of days before the LAN, once per person.
-    const games = await import("./games");
-    if (games.gamesReminderDue(l, now)) {
-      const sent = await games.sendGamesReminder(l);
-      if (sent) result.push({ lan: l.name, kind: "games", sent });
+    // One broken event must not stop the reminders of all the events after it.
+    try {
+      for (const kind of kinds) {
+        const sent = await send(kind, l, recipients(kind, l), true);
+        if (sent) result.push({ lan: l.name, kind, sent });
+      }
+      // "Install your games" a couple of days before the LAN, once per person.
+      const games = await import("./games");
+      if (games.gamesReminderDue(l, now)) {
+        const sent = await games.sendGamesReminder(l);
+        if (sent) result.push({ lan: l.name, kind: "games", sent });
+      }
+    } catch (e) {
+      console.error("[reminders] event %s failed", l.id, e);
+      failures.push(e);
     }
     // Same reminders as a post in the configured Discord channels, once each.
     const { postDueChannelReminders, refreshLanMessages } = await import("./discord");
@@ -171,6 +178,11 @@ export async function runDueReminders(now = new Date()) {
     } catch (e) {
       console.error("[reminders] discord failed", e);
     }
+  }
+  // Still fails the job (Health page, ops channel), but only after every other event had its turn.
+  if (failures.length) {
+    const first = failures[0] instanceof Error ? failures[0].message : String(failures[0]);
+    throw new AggregateError(failures, `${failures.length} event(s) failed, first: ${first}`);
   }
   return result;
 }
