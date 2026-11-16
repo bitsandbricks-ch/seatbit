@@ -134,7 +134,6 @@ export async function deleteAccount(userId: string) {
     tx.delete(schema.lanAccount).where(eq(schema.lanAccount.userId, userId)).run();
     tx.delete(clanMember).where(eq(clanMember.userId, userId)).run();
     tx.delete(schema.lanOrga).where(eq(schema.lanOrga.userId, userId)).run();
-    tx.delete(schema.lanInterest).where(eq(schema.lanInterest.userId, userId)).run();
     tx.delete(schema.seatSwap).where(or(eq(schema.seatSwap.fromUserId, userId), eq(schema.seatSwap.toUserId, userId))).run();
     tx.delete(schema.gameVote).where(eq(schema.gameVote.userId, userId)).run();
     tx.delete(schema.travelSpot).where(eq(schema.travelSpot.userId, userId)).run();
@@ -215,7 +214,6 @@ export function exportUserData(userId: string) {
     .all();
   const seats = db.select().from(seat).where(eq(seat.userId, userId)).all();
   const orgaOf = new Set(db.select().from(schema.lanOrga).where(eq(schema.lanOrga.userId, userId)).all().map((o) => o.lanId));
-  const interests = db.select().from(schema.lanInterest).where(eq(schema.lanInterest.userId, userId)).all();
   const lans = new Map(db.select({ id: lan.id, name: lan.name, clanId: lan.clanId, typeId: lan.typeId }).from(lan).all().map((l) => [l.id, l]));
   const types = new Map(db.select({ id: schema.lanType.id, name: schema.lanType.name }).from(schema.lanType).all().map((t) => [t.id, t.name]));
   const clans = new Map(db.select({ id: clan.id, name: clan.name }).from(clan).all().map((c) => [c.id, c.name]));
@@ -342,7 +340,6 @@ export function exportUserData(userId: string) {
       updatedAt: a.updatedAt,
     })),
     orgaOf: [...orgaOf].map(event),
-    interestCheckAnswers: interests.map((i) => ({ event: event(i.lanId), answer: i.answer, at: i.createdAt })),
     travel: {
       myPosts: posts.map((p) => ({ event: event(p.lanId), kind: p.kind, mode: p.mode, town: p.town, places: p.places, when: p.whenText, note: p.note, createdAt: p.createdAt })),
       joined: spots.map((s) => {

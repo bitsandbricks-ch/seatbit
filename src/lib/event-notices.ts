@@ -14,7 +14,7 @@ import type { Locale } from "../i18n/config";
 import { auditLan } from "./audit";
 import { lanChanged } from "./live";
 
-const { lan, user, clanMember, attendance, lanInterest, reminderLog } = schema;
+const { lan, user, clanMember, attendance, reminderLog } = schema;
 
 /** Whether a member wants to hear about an event: all events, or the event's LAN type is one they picked. */
 export function wantsEvent(interestTypes: string[] | null | undefined, l: Pick<Lan, "typeId">) {
@@ -34,22 +34,15 @@ export function interestedMembers(l: Lan): User[] {
     .map((r) => r.u);
 }
 
-/** Everyone who answered for the event: coming, unsure or waitlist, plus "yes"/"maybe" in the interest check. */
+/** Everyone who answered for the event: coming, unsure or waitlist (in the interest check too). */
 export function involvedMembers(l: Lan): User[] {
-  const fromAttendance = db
+  return db
     .select({ u: user })
     .from(attendance)
     .innerJoin(user, eq(user.id, attendance.userId))
     .where(and(eq(attendance.lanId, l.id), inArray(attendance.status, ["going", "maybe", "waitlist"])))
-    .all();
-  const fromInterest = db
-    .select({ u: user })
-    .from(lanInterest)
-    .innerJoin(user, eq(user.id, lanInterest.userId))
-    .where(and(eq(lanInterest.lanId, l.id), inArray(lanInterest.answer, ["yes", "maybe"])))
-    .all();
-  const byId = new Map([...fromAttendance, ...fromInterest].map((r) => [r.u.id, r.u]));
-  return [...byId.values()];
+    .all()
+    .map((r) => r.u);
 }
 
 /** Sends one notice per user, at most once per (event, user, kind) when `dedupe` is set. Returns how many got it. */
@@ -140,16 +133,19 @@ export async function publishDueDrafts(now = new Date()) {
   return due.length;
 }
 
-/** Ends the interest check: sign-up opens and everyone interested (except those who said no) is told. */
+/**
+ * Ends the interest check: sign-up opens with everyone's answer carried over, and everyone interested
+ * (except those who said no) is told.
+ */
 export async function openSignup(l: Lan) {
-  db.update(lan).set({ interestCheck: false }).where(eq(lan.id, l.id)).run();
+  db.update(lan).set({ interestCheck: false, signupOpensAt: null }).where(eq(lan.id, l.id)).run();
   lanChanged(l.id);
-  const after = { ...l, interestCheck: false };
+  const after = { ...l, interestCheck: false, signupOpensAt: null };
   const saidNo = new Set(
     db
-      .select({ userId: lanInterest.userId })
-      .from(lanInterest)
-      .where(and(eq(lanInterest.lanId, l.id), eq(lanInterest.answer, "no")))
+      .select({ userId: attendance.userId })
+      .from(attendance)
+      .where(and(eq(attendance.lanId, l.id), eq(attendance.status, "declined")))
       .all()
       .map((r) => r.userId),
   );
@@ -163,6 +159,25 @@ export async function openSignup(l: Lan) {
     (u) => eventMail("signupOpen", after, u, (loc) => ({ deadline: deadlineVar(after, loc) })),
     { reminder: true },
   );
+}
+
+/**
+ * Opens sign-up on every interest check whose scheduled time has come (run with the publish loop).
+ * Events whose date is still open wait: sign-up needs a fixed date.
+ */
+export async function openDueSignups(now = new Date()) {
+  const due = db
+    .select()
+    .from(lan)
+    .where(and(eq(lan.interestCheck, true), isNull(lan.cancelledAt), isNotNull(lan.signupOpensAt), lte(lan.signupOpensAt, now)))
+    .all()
+    .filter((l) => !l.dateTbd);
+  for (const l of due) {
+    auditLan(l, null, "event.signup_open", { data: { scheduled: true } });
+    await openSignup(l);
+    console.log(`[publish] sign-up for ${l.name} opened as scheduled`);
+  }
+  return due.length;
 }
 
 /** Cancels an event and tells everyone who had answered (always by mail too: it matters). */
