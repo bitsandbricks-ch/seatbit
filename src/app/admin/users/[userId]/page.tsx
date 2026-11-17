@@ -20,8 +20,9 @@ import { getDefaultNames, pickNick } from "@/lib/lans";
 import { STAFF_ROLES, isStaff, platformCan } from "@/lib/platform-roles";
 import { requirePlatform } from "@/lib/session";
 import { UserAdminActions } from "../../user-admin-actions";
-import { updateMemberLanInfo } from "@/app/member-lan-actions";
+import { updateUserLanInfo } from "@/app/member-lan-actions";
 import { MemberLanForm } from "@/components/member-lan-form";
+import { allTypes } from "@/lib/lan-types";
 
 /**
  * One account for platform staff: who it is, how they sign in, their Discord, clans, nicks and
@@ -76,11 +77,8 @@ export default async function AdminUserPage({ params }: PageProps<"/admin/users/
   const discord = u.isGuest ? null : discordIdentity(u.id);
   const defaultNick = pickNick(nicks, { lanId: null, typeId: null }, "");
   const now = new Date();
-  // Owners and admins manage every clan, so they fix nicks and LAN IDs per clan like its admins.
-  const editClans = platformCan(me, "clans") && !u.isGuest ? memberships.filter((r) => r.m.role !== "pending").map((r) => r.c) : [];
-  const editTypes = editClans.length
-    ? db.select().from(schema.lanType).where(inArray(schema.lanType.clanId, editClans.map((c) => c.id))).orderBy(schema.lanType.name).all()
-    : [];
+  // Owners and admins manage every clan, so they fix nicks and LAN IDs for every (global) LAN type.
+  const editTypes = platformCan(me, "clans") && !u.isGuest ? allTypes() : [];
   const typeRow = (ty: { id: string; name: string }) => {
     const ns = nicks.filter((n) => n.typeId === ty.id && !n.lanId);
     return { id: ty.id, name: ty.name, nick: (ns.find((n) => n.isPrimary) ?? ns[0])?.nick ?? "", lanId: lanIds.find((a) => a.typeId === ty.id && !a.lanId)?.value ?? "" };
@@ -89,7 +87,7 @@ export default async function AdminUserPage({ params }: PageProps<"/admin/users/
   // Nicks and LAN IDs by scope: default, per LAN type, per single event.
   const scopes = [
     { key: "default", label: t("member.default"), typeId: null as string | null, lanId: null as string | null },
-    ...types.map((ty) => ({ key: ty.id, label: `${ty.name} · ${clanName(ty.clanId) ?? "—"}`, typeId: ty.id, lanId: null })),
+    ...types.map((ty) => ({ key: ty.id, label: ty.name, typeId: ty.id, lanId: null })),
     ...nickLans.map((l) => ({ key: l.id, label: l.name, typeId: null, lanId: l.id })),
   ]
     .map((s) => {
@@ -111,7 +109,7 @@ export default async function AdminUserPage({ params }: PageProps<"/admin/users/
   return (
     <Page>
       <PageHeader
-        back={{ href: "/admin", label: t("admin.tabs.overview") }}
+        back={{ href: "/admin/users", label: t("admin.users") }}
         avatar={<Avatar data={avatarData(u)} size={56} />}
         title={
           <span className="inline-flex max-w-full items-center gap-2">
@@ -272,19 +270,14 @@ export default async function AdminUserPage({ params }: PageProps<"/admin/users/
             </dl>
           </Card>
 
-          {editClans.some((c) => editTypes.some((ty) => ty.clanId === c.id)) && (
+          {editTypes.length > 0 && (
             <Card title={t("memberLan.title")}>
-              <div className="space-y-3">
-                {editClans.map((c) => (
-                  <MemberLanForm
-                    key={c.id}
-                    label={t("memberLan.editIn", { clan: c.name })}
-                    action={updateMemberLanInfo.bind(null, c.id, u.id)}
-                    defaultNick={defaultNick}
-                    types={editTypes.filter((ty) => ty.clanId === c.id).map(typeRow)}
-                  />
-                ))}
-              </div>
+              <MemberLanForm
+                label={t("memberLan.edit")}
+                action={updateUserLanInfo.bind(null, u.id)}
+                defaultNick={defaultNick}
+                types={editTypes.map(typeRow)}
+              />
             </Card>
           )}
 

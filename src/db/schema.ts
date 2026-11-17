@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   integer,
+  primaryKey,
   sqliteTable,
   text,
   uniqueIndex,
@@ -306,32 +307,57 @@ export const clanInvite = sqliteTable("clan_invite", {
   createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
 });
 
-/** A recurring LAN party (e.g. "Lock & Load") that yearly events are created from. */
+/**
+ * A recurring LAN party (e.g. "Lock & Load") that yearly events are created from. Global: platform
+ * staff keep the list, every clan picks the ones it goes to (clanLanType) and adds its own defaults.
+ * Members' nicks and LAN IDs per type are global too, so they follow a member into every clan.
+ */
 export const lanType = sqliteTable("lan_type", {
   id: id(),
-  clanId: text("clan_id").references(() => clan.id, { onDelete: "cascade" }),
+  /**
+   * The clan that owned the type before types became global; always null now. Kept because SQLite
+   * can't drop a foreign-key column without rebuilding the table, and rebuilding it in a migration
+   * (foreign keys on) would cascade into everyone's nicks, LAN IDs and to-dos for the type.
+   */
+  legacyClanId: text("clan_id").references(() => clan.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   description: text("description").default("").notNull(),
   location: text("location").default("").notNull(),
   websiteUrl: text("website_url").default("").notNull(),
   ticketUrl: text("ticket_url").default("").notNull(),
   price: text("price").default("").notNull(),
-  capacity: integer("capacity"),
-  reminderDays: integer("reminder_days").default(3).notNull(),
-  /** Seats the group usually gets, e.g. "F1-F20". Copied into new events. */
-  seatSpec: text("seat_spec").default("").notNull(),
   /** Usual length of the event in hours (e.g. Fri 18:00 to Sun 16:00 = 46): fills the end when the start is set. */
   durationHours: integer("duration_hours").default(46).notNull(),
-  /** "Answer by" this many days before the start; null = no answer deadline by default. */
-  answerDaysBefore: integer("answer_days_before").default(30),
-  /** Where the Discord bot puts each event of this type: see DISCORD_MODES. */
-  discordMode: text("discord_mode").$type<DiscordMode>().default("channel").notNull(),
   /** Link to a member's profile on the event's site, with {id} for their LAN ID (e.g. https://example.com/user/?id={id}). */
   profileUrl: text("profile_url").default("").notNull(),
-  /** Events of this type also get the clan's lead to-dos "for all LAN types", not only their own. */
-  clanLeadTasks: integer("clan_lead_tasks", { mode: "boolean" }).default(true).notNull(),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
 });
+
+/** A global LAN type a clan goes to, with the clan's own defaults for new events of it. */
+export const clanLanType = sqliteTable(
+  "clan_lan_type",
+  {
+    clanId: text("clan_id")
+      .notNull()
+      .references(() => clan.id, { onDelete: "cascade" }),
+    typeId: text("type_id")
+      .notNull()
+      .references(() => lanType.id, { onDelete: "cascade" }),
+    /** Group spots the clan usually gets; null = unlimited. */
+    capacity: integer("capacity"),
+    reminderDays: integer("reminder_days").default(3).notNull(),
+    /** Seats the group usually gets, e.g. "F1-F20". Copied into new events. */
+    seatSpec: text("seat_spec").default("").notNull(),
+    /** "Answer by" this many days before the start; null = no answer deadline by default. */
+    answerDaysBefore: integer("answer_days_before").default(30),
+    /** Where the Discord bot puts each event of this type: see DISCORD_MODES. */
+    discordMode: text("discord_mode").$type<DiscordMode>().default("channel").notNull(),
+    /** Events of this type also get the clan's lead to-dos "for all LAN types", not only their own. */
+    clanLeadTasks: integer("clan_lead_tasks", { mode: "boolean" }).default(true).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.clanId, t.typeId] }), index("clan_lan_type_type_idx").on(t.typeId)],
+);
 
 export const lan = sqliteTable("lan", {
   id: id(),
@@ -806,6 +832,7 @@ export const packingItem = sqliteTable(
 export type User = typeof user.$inferSelect;
 export type Lan = typeof lan.$inferSelect;
 export type LanType = typeof lanType.$inferSelect;
+export type ClanLanType = typeof clanLanType.$inferSelect;
 export type Clan = typeof clan.$inferSelect;
 export type Donation = typeof donation.$inferSelect;
 export type Attendance = typeof attendance.$inferSelect;
@@ -1034,12 +1061,14 @@ export type FoodItem = typeof foodItem.$inferSelect;
 
 /**
  * People at the LAN's own organizers (not the clan) the leads deal with: ticket desk, seat
- * planner, ... Per LAN type, since the organizers stay the same from year to year.
+ * planner, ... Per clan and LAN type, since the organizers stay the same from year to year.
  */
 export const leadContact = sqliteTable(
   "lead_contact",
   {
     id: id(),
+    /** Whose contact this is: each clan keeps its own people at the organizers. Set on every row. */
+    clanId: text("clan_id").references(() => clan.id, { onDelete: "cascade" }),
     typeId: text("type_id")
       .notNull()
       .references(() => lanType.id, { onDelete: "cascade" }),

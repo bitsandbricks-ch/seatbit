@@ -11,6 +11,7 @@ import { adminDonations } from "./adminDonations";
 import { adminLog } from "./adminLog";
 import { adminSettings } from "./adminSettings";
 import { adminUser } from "./adminUser";
+import { adminUsers } from "./adminUsers";
 import { attendees } from "./attendees";
 import { audit } from "./audit";
 import { auditLog } from "./auditLog";
@@ -55,6 +56,7 @@ import { interestList } from "./interestList";
 import { joinPage } from "./joinPage";
 import { lanForm } from "./lanForm";
 import { language } from "./language";
+import { lanTypes } from "./lanTypes";
 import { leadSteps } from "./leadSteps";
 import { leadTasks } from "./leadTasks";
 import { legal } from "./legal";
@@ -130,6 +132,7 @@ export const en = {
   adminLog,
   adminSettings,
   adminUser,
+  adminUsers,
   attendees,
   audit,
   auditLog,
@@ -174,6 +177,7 @@ export const en = {
   joinPage,
   lanForm,
   language,
+  lanTypes,
   leadSteps,
   leadTasks,
   legal,

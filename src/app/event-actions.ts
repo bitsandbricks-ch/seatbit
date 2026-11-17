@@ -9,12 +9,13 @@ import { db, schema } from "@/db";
 import { addClanAdminsAsOrgas, getDisplayNames, mustGetLan } from "@/lib/lans";
 import { cancelEvent, openSignup, publishEvent, sendNews, uncancelEvent } from "@/lib/event-notices";
 import { isClanMember } from "@/lib/clans";
+import { clanTypes } from "@/lib/lan-types";
 import { canTakePart, isLanManager, requireLanManager, requireUser } from "@/lib/session";
 import { auditLan } from "@/lib/audit";
 import { fmtDate } from "@/lib/format";
 import { overLimit } from "@/lib/rate-limit";
 
-const { lan, lanOrga, lanNews, clanMember, lanType, seat, attendance } = schema;
+const { lan, lanOrga, lanNews, clanMember, seat, attendance } = schema;
 
 const lanPath = (id: string) => {
   lanChanged(id);
@@ -213,7 +214,7 @@ export async function setMyInterests(clanId: string, typeIds: string[] | null) {
   const me = await requireUser();
   if (!isClanMember(me.id, clanId)) throw await err("errors.notInClan");
   const valid = new Set(
-    db.select({ id: lanType.id }).from(lanType).where(eq(lanType.clanId, clanId)).all().map((t) => t.id),
+    clanTypes(clanId).map((t) => t.id),
   );
   const value = typeIds === null ? null : typeIds.filter((t) => valid.has(t));
   db.update(clanMember)

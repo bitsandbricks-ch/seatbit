@@ -22,10 +22,12 @@ export type AdminSection = {
 
 export const ADMIN_SECTIONS: AdminSection[] = [
   { href: "/admin", label: "admin.tabs.overview", perm: "view" },
+  { href: "/admin/users", label: "admin.users", perm: "view" },
   { href: "/admin/reports", label: "moderation.reports", perm: "reports", badge: openReportCount },
   { href: "/admin/stats", label: "admin.usage", perm: "view" },
   { href: "/admin/health", label: "health.title", perm: "view" },
   { href: "/admin/log", label: "clanHeader.log", perm: "view" },
+  { href: "/admin/types", label: "clanPage.links.types", perm: "types" },
   { href: "/admin/backups", label: "admin.backups", perm: "owner" },
   { href: "/admin/donations", label: "adminDonations.title", perm: "owner", enabled: donationsEnabled },
   { href: "/admin/settings", label: "admin.tabs.settings", perm: "settings" },

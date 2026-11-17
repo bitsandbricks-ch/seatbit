@@ -29,7 +29,7 @@ A Discord server belongs to one clan.
 
 ## Thread or channel per event
 
-Each [LAN type](clans.md#lan-types) chooses where the bot puts its events, under **Discord** in the type's settings:
+Each clan chooses per [LAN type](clans.md#lan-types) where the bot puts its events, under **Discord** on the type's page in *Clan settings → LAN types*:
 
 | Setting | Announcement | Reminders and news |
 | --- | --- | --- |

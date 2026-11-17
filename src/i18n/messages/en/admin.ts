@@ -10,6 +10,7 @@ export const admin = {
   users: "Users",
   guests: { one: "{count} guest", other: "{count} guests" },
   deleted: "{count} deleted",
+  newestUsers: "Newest accounts",
   noClans: "No clans yet.",
   settings: "Settings",
   noLans: "No LANs yet. Clan admins add them from their clan page.",
