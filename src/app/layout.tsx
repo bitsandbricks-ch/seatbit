@@ -64,9 +64,16 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     <html lang={t.locale} data-theme={theme === "system" ? undefined : theme} className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans">
         <I18nProvider locale={t.locale}>
+        {/* First stop for keyboard users: past the top bar straight to the page. Visible only when focused. */}
+        <a
+          href="#main"
+          className="sr-only z-50 rounded-md bg-bit px-3 py-2 text-sm font-medium text-on-bit focus:not-sr-only focus:fixed focus:left-3 focus:top-3"
+        >
+          {t("common.skipToContent")}
+        </a>
         <Header />
         <MaintenanceBanner />
-        <main className="mx-auto w-full max-w-7xl flex-1 px-4 sm:px-6 pb-8 pt-5 sm:pt-8">{children}</main>
+        <main id="main" tabIndex={-1} className="outline-none mx-auto w-full max-w-7xl flex-1 px-4 sm:px-6 pb-8 pt-5 sm:pt-8">{children}</main>
         <footer className="flex flex-wrap justify-center gap-x-4 gap-y-1 border-t border-line/50 px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-5 text-xs text-muted sm:pb-6">
           <span>Seatbit</span>
           <Link href="/terms" className="hover:text-fg">

@@ -9,5 +9,6 @@ export const common = {
   manage: "Manage",
   view: "View",
   viewOrManage: "View or manage",
+  skipToContent: "Skip to content",
   members: { one: "{count} member", other: "{count} members" },
 };
