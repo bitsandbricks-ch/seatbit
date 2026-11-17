@@ -161,6 +161,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
       ...seats.flatMap((s) => (s.userId ? [s.userId] : [])),
       ...posts.map((p) => p.userId),
       ...spots.map((s) => s.userId),
+      // Leads who added one of my seat wishes ("Added by …").
+      ...(rows.find((r) => r.userId === me.id)?.wishRules ?? []).flatMap((r) => (r.by ? [r.by] : [])),
     ]),
   ]);
   // The clan's name display (default Name "Nick" Surname); the bare nick only inside small seat cells.
@@ -399,7 +401,9 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           .filter((r) => r.userId !== me.id && (r.status === "going" || r.status === "maybe" || r.status === "waitlist"))
           .map((r) => ({ id: r.userId, name: names.get(r.userId) ?? "?" }))
           .sort((a, b) => a.name.localeCompare(b.name))}
-        names={Object.fromEntries((my.wishRules ?? []).flatMap((r) => ("userId" in r ? [[r.userId, names.get(r.userId) ?? "?"]] : [])))}
+        names={Object.fromEntries(
+          (my.wishRules ?? []).flatMap((r) => [...("userId" in r ? [r.userId] : []), ...(r.by ? [r.by] : [])]).map((uid) => [uid, names.get(uid) ?? "?"]),
+        )}
         seatLabels={[...seats].sort((a, b) => a.row - b.row || a.col - b.col).map((s) => s.label)}
         rows={[...new Set([...seats].sort((a, b) => a.row - b.row || a.col - b.col).map(seatRow))]}
         initial={{ rules: normalizeRules(my.wishRules ?? [], me.id), note: my.wishNote }}

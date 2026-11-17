@@ -212,7 +212,9 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
     .sort(byName);
   const editRow = typeof sp.editWishes === "string" && !l.seatsPublishedAt ? going.find((r) => r.userId === sp.editWishes) : undefined;
   const editRules = editRow ? normalizeRules(editRow.wishRules ?? [], editRow.userId) : [];
-  const editMissing = rulePeople(editRules).filter((uid) => !names.has(uid));
+  // People the wishes name, plus who added them.
+  const editIds = [...new Set([...rulePeople(editRules), ...editRules.flatMap((r) => (r.by ? [r.by] : []))])];
+  const editMissing = editIds.filter((uid) => !names.has(uid));
   const editNames = editMissing.length ? await getNames(id, editMissing) : null;
   const wishEditing = editRow
     ? {
@@ -220,7 +222,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
         name: names.get(editRow.userId) ?? "?",
         rules: editRules,
         note: editRow.wishNote,
-        names: Object.fromEntries(rulePeople(editRules).map((uid) => [uid, names.get(uid) ?? editNames?.get(uid)?.label ?? "?"])),
+        names: Object.fromEntries(editIds.map((uid) => [uid, names.get(uid) ?? editNames?.get(uid)?.label ?? "?"])),
       }
     : null;
   // People list: a shortcut into the wish editor above for everyone who is coming (guests too).
