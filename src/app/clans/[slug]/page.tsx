@@ -10,7 +10,7 @@ import { ClanHeader, CLAN_VIEW_TABS, showsPaymentsTab } from "@/components/clan-
 import { MyPayments } from "@/components/clan-payments";
 import { memberLines, owedSummary, paymentsAvailable } from "@/lib/payments";
 import { ClanMemberGrid } from "@/components/clan-member-list";
-import { Card, Columns, EmptyState, Notice, Page, Pill, StatusBadge, btnGhost, btnPrimary, btnSecondary } from "@/components/ui";
+import { Card, Columns, EmptyState, Notice, Page, Pill, StatusBadge, btnGhost, btnPrimary, btnSecondary, halves } from "@/components/ui";
 import { lanDay, lanRange } from "@/lib/format";
 import { clanPerms, clanRole, getClanBySlug } from "@/lib/clans";
 import { MANAGE_TAB_PERMS, isMemberRole } from "@/lib/clan-roles";
@@ -351,7 +351,8 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
 
       {seesEvents && (
       <TabPanel id="events">
-        <Columns>
+        {/* Upcoming and past side by side on wide screens instead of one narrow column. */}
+        <div className={halves}>
           <Card
             title={t("clanPage.upcoming")}
             actions={
@@ -371,7 +372,7 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
           <Card title={t("clanPage.past")}>
             {past.length === 0 ? <p className="text-sm text-muted">{t("clanPage.noPast")}</p> : <EventList t={t} lans={past} mine={mine} past />}
           </Card>
-        </Columns>
+        </div>
       </TabPanel>
       )}
 

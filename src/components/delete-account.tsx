@@ -27,14 +27,15 @@ export function YourData({
   const blocked = blockingClans.length > 0 || lastPlatformAdmin;
 
   return (
-    <div className="space-y-4 text-sm">
+    // Download and delete side by side on wide screens, one under the other on phones.
+    <div className="grid gap-4 text-sm lg:grid-cols-2 lg:gap-6">
       <div className="space-y-2">
         <p className="text-muted">{t("profile.data.exportText")}</p>
         <a href="/profile/export" className={`${btnSecondary} w-full`} download>
           {t("profile.data.download")}
         </a>
       </div>
-      <div className="space-y-2 border-t border-line pt-4">
+      <div className="space-y-2 border-t border-line pt-4 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
         {!open ? (
           <>
             <p className="text-muted">{t("profile.data.deleteText")}</p>
