@@ -1,0 +1,13 @@
+date: 2026-11-17
+type: improved
+en:
+  title: "Seats set the event's size"
+  text: >-
+    Once an event has a seat plan, each seat is a spot. Adding a seat opens a spot, and the next person
+    on the waitlist moves up. Events without seats keep the number of spots you type in.
+de:
+  title: "Die Sitze bestimmen die Grösse des Events"
+  text: >-
+    Sobald ein Event einen Sitzplan hat, ist jeder Sitz ein Platz. Kommt ein Sitz dazu, wird ein Platz
+    frei und die nächste Person auf der Warteliste rückt nach. Events ohne Sitze behalten die Anzahl
+    Plätze, die du eingibst.

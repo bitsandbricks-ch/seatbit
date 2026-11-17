@@ -27,7 +27,7 @@ export const profile: Messages["profile"] = {
   avatar: "Avatar & Farbe",
   socials: "Socials",
   socialsIntro: "Deine Gaming- und Social-Konten, damit dich die anderen hinzufügen können. Mitglieder deiner Clans sehen sie auf deinem Profil.",
-  socialShow: "Auf meinem Profil zeigen",
+  socialShow: "Im Profil zeigen",
   socialFromDiscord: "Aus deinem verknüpften Discord-Konto übernommen. Speichere, um es zu behalten.",
   interests: "Events, über die ich informiert werde",
   interestsIntro: "Wer eine Nachricht bekommt, wenn ein neues Event veröffentlicht wird. Wähle pro Clan die LAN-Arten, die dich interessieren.",

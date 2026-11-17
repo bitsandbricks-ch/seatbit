@@ -1,6 +1,6 @@
+import { MemberBadges } from "@/components/member-badges";
+import { memberBadges } from "@/lib/member-badges";
 import { allTypes, clanTypes, typesOfClans } from "@/lib/lan-types";
-import { DonorBadge } from "@/components/support-card";
-import { isDonor } from "@/lib/donations";
 import { eq } from "drizzle-orm";
 import { myClans } from "@/lib/clans";
 import { db, schema } from "@/db";
@@ -102,19 +102,17 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
         subtitle={
           <span className="flex min-w-0 flex-wrap items-center gap-2">
             <span className="truncate">{me.email}</span>
-            {isDonor(me.id) && <DonorBadge label={t("donate.badgeLabel")} title={t("donate.badgePerson")} />}
+            <MemberBadges b={memberBadges([me.id]).get(me.id)} t={t} full />
           </span>
         }
       />
       <ClientTabs tabs={tabs} initial={tab === "lans" && types.length === 0 ? "account" : tab} base="/profile" label={t("nav.yourProfile")} partsLabel={t("clanHeader.parts")}>
 
       <TabPanel id="account">
+        {/* Names and language on the left, how you sign in on the right, so neither column runs long. */}
         <Columns
           aside={
             <>
-              <Card title={t("language.label")}>
-                <LanguageSelect saved={me.locale} />
-              </Card>
               <Card title={t("profile.signInMethods")}>
                 <LinkedAccounts linked={accounts.map((a) => a.providerId)} available={enabledProviders()} />
               </Card>
@@ -145,6 +143,9 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
               <button className={btnPrimary}>{t("common.save")}</button>
             </ActionForm>
           </Card>
+          <Card title={t("language.label")}>
+            <LanguageSelect saved={me.locale} />
+          </Card>
         </Columns>
       </TabPanel>
 
@@ -166,7 +167,7 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
       <TabPanel id="lans">
         <Card title={t("profile.nicksPerType")}>
           <p className="mb-4 text-sm text-muted">{t("profile.nicksPerTypeIntro")}</p>
-          <div className={halves}>
+          <div className={`grid items-start gap-4 sm:grid-cols-2 ${types.length > 2 ? "xl:grid-cols-3" : ""}`}>
             {types.map((ty) => {
               const id = pickLanAccount(lanIds, { id: "", typeId: ty.id });
               return (
@@ -191,13 +192,11 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
       </TabPanel>
 
       <TabPanel id="emergency">
-        <Columns>
-          <Card title={t("emergency.title")}>
-            <p className="mb-4 text-sm text-muted">{t("emergency.intro")}</p>
-            <EmergencyForm values={getEmergencyInfo(me.id)} />
-            <p className="mt-4 border-t border-line pt-3 text-xs text-faint">{t("emergency.privacy")}</p>
-          </Card>
-        </Columns>
+        <Card title={t("emergency.title")}>
+          <p className="mb-4 text-sm text-muted">{t("emergency.intro")}</p>
+          <EmergencyForm values={getEmergencyInfo(me.id)} />
+          <p className="mt-4 border-t border-line pt-3 text-xs text-faint">{t("emergency.privacy")}</p>
+        </Card>
       </TabPanel>
 
       <TabPanel id="notifications">
@@ -252,16 +251,14 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
       </TabPanel>
 
       <TabPanel id="data">
-        <Columns>
-          <Card title={t("profile.yourData")}>
-            <YourData
-              blockingClans={deletion.blockingClans.map((c) => ({ name: c.name, slug: c.slug }))}
-              clansToDelete={deletion.clansToDelete.map((c) => c.name)}
-              lastPlatformAdmin={deletion.lastPlatformAdmin}
-              upcomingEvents={deletion.upcomingEvents}
-            />
-          </Card>
-        </Columns>
+        <Card title={t("profile.yourData")}>
+          <YourData
+            blockingClans={deletion.blockingClans.map((c) => ({ name: c.name, slug: c.slug }))}
+            clansToDelete={deletion.clansToDelete.map((c) => c.name)}
+            lastPlatformAdmin={deletion.lastPlatformAdmin}
+            upcomingEvents={deletion.upcomingEvents}
+          />
+        </Card>
       </TabPanel>
       </ClientTabs>
     </Page>

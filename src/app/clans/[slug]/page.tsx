@@ -10,7 +10,7 @@ import { ClanHeader, CLAN_VIEW_TABS, showsPaymentsTab } from "@/components/clan-
 import { MyPayments } from "@/components/clan-payments";
 import { memberLines, owedSummary, paymentsAvailable } from "@/lib/payments";
 import { ClanMemberGrid } from "@/components/clan-member-list";
-import { Card, Columns, EmptyState, Notice, Page, Pill, StatusBadge, btnGhost, btnPrimary, btnSecondary } from "@/components/ui";
+import { Card, Columns, EmptyState, Notice, Page, Pill, StatusBadge, btnGhost, btnPrimary, btnSecondary, halves } from "@/components/ui";
 import { lanDay, lanRange } from "@/lib/format";
 import { clanPerms, clanRole, getClanBySlug } from "@/lib/clans";
 import { MANAGE_TAB_PERMS, isMemberRole } from "@/lib/clan-roles";
@@ -19,7 +19,7 @@ import { personLabel } from "@/lib/names";
 import { avatarData } from "@/lib/avatars";
 import { requireUser, visibleLans } from "@/lib/session";
 import { missingServers } from "@/lib/discord-invite";
-import { discordStates } from "@/lib/discord-verify";
+import { memberBadges } from "@/lib/member-badges";
 import { claimableGuests, guestSuggestions } from "@/lib/guest-claim";
 import { getT } from "@/i18n/server";
 import type { T } from "@/i18n/translate";
@@ -54,7 +54,7 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
   const nicks = memberRows.length
     ? db.select().from(schema.nickname).where(inArray(schema.nickname.userId, memberRows.map((m) => m.u.id))).all()
     : [];
-  const discordOf = discordStates(memberRows.map((m) => m.u.id));
+  const badgesOf = memberBadges(memberRows.map((m) => m.u.id));
   const members = memberRows
     .filter((m) => m.role !== "pending")
     .map((m) => ({
@@ -63,7 +63,7 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
       guest: m.u.isGuest,
       name: personLabel(m.u, pickNick(nicks.filter((n) => n.userId === m.u.id), { lanId: null, typeId: null }, m.u.name), c.nameDisplay),
       avatar: avatarData(m.u),
-      discord: discordOf.get(m.u.id),
+      badges: badgesOf.get(m.u.id),
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
 
@@ -351,7 +351,8 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
 
       {seesEvents && (
       <TabPanel id="events">
-        <Columns>
+        {/* Upcoming and past side by side on wide screens instead of one narrow column. */}
+        <div className={halves}>
           <Card
             title={t("clanPage.upcoming")}
             actions={
@@ -371,7 +372,7 @@ export default async function ClanPage({ params, searchParams }: PageProps<"/cla
           <Card title={t("clanPage.past")}>
             {past.length === 0 ? <p className="text-sm text-muted">{t("clanPage.noPast")}</p> : <EventList t={t} lans={past} mine={mine} past />}
           </Card>
-        </Columns>
+        </div>
       </TabPanel>
       )}
 

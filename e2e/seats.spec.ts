@@ -71,7 +71,7 @@ test.describe("seats", () => {
   test("a lead changes a member's wishes and the change is logged", async ({ as }) => {
     const id = createEvent({
       seats: ["A1", "A2", "A3", "A4"],
-      attendees: [{ who: "anna" }, { who: "ben" }],
+      attendees: [{ who: "anna" }, { who: "ben" }, { who: "chiara" }],
     });
     const rulesOf = () =>
       db().select().from(attendance).where(and(eq(attendance.lanId, id), eq(attendance.userId, userId("anna")))).get()?.wishRules;
@@ -84,11 +84,25 @@ test.describe("seats", () => {
     await card.getByRole("button", { name: "+ Right next to someone" }).click();
     await card.getByLabel("Who do you want right next to you?").selectOption(userId("ben"));
     await card.getByRole("button", { name: "Add", exact: true }).first().click();
-    await expect.poll(rulesOf).toEqual([{ kind: "next", userId: userId("ben") }]);
-    await expect(alex.getByText(/will get a DM/).first()).toBeVisible();
+    // The wish remembers that Alex added it; no DM unless the lead ticks the box.
+    await expect.poll(rulesOf).toEqual([{ kind: "next", userId: userId("ben"), by: userId("alex") }]);
+    await expect(alex.getByText("Saved.", { exact: true }).first()).toBeVisible();
     await expect
       .poll(() => db().select().from(auditLog).where(and(eq(auditLog.lanId, id), eq(auditLog.action, "seat.wishes"))).all().length)
       .toBe(1);
+    await card.getByLabel(/Tell Anna .*by Discord DM/).check();
+    await expect(alex.getByText(/will get a DM/).first()).toBeVisible();
+
+    // Swap the person in the wish instead of removing and adding it again.
+    await card.getByRole("button", { name: /^Change the person in: Right next to Ben/ }).click();
+    await card.getByLabel(/^Instead of Ben/).selectOption(userId("chiara"));
+    await card.getByRole("button", { name: "Change", exact: true }).click();
+    await expect.poll(rulesOf).toEqual([{ kind: "next", userId: userId("chiara"), by: userId("alex") }]);
+
+    // Anna sees who added it.
+    const anna = await as("anna");
+    await anna.goto(`/lans/${id}?tab=seats`);
+    await expect(anna.getByText(/^Added by Alex/)).toBeVisible();
   });
 
   test("a lead opens a guest's wishes from the attendee list", async ({ as }) => {
@@ -116,7 +130,7 @@ test.describe("seats", () => {
     await card.getByRole("button", { name: "+ Right next to someone" }).click();
     await card.getByLabel("Who do you want right next to you?").selectOption(userId("anna"));
     await card.getByRole("button", { name: "Add", exact: true }).first().click();
-    await expect.poll(rulesOf).toEqual([{ kind: "next", userId: userId("anna") }]);
+    await expect.poll(rulesOf).toEqual([{ kind: "next", userId: userId("anna"), by: userId("alex") }]);
   });
 
   test("leads set how far near is", async ({ as }) => {

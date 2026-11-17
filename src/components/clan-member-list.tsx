@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { deleteGuest, removeClanMember, setClanMemberRole } from "@/app/clan-actions";
 import { PagerBar, matches, usePager } from "./pager";
-import { Verified, btnGhost, btnSecondary, input } from "./ui";
+import { btnGhost, btnSecondary, input } from "./ui";
 import { StatusIcon } from "./status-icons";
 import { Avatar } from "./avatar";
 import type { AvatarData } from "@/lib/avatars";
@@ -12,7 +12,7 @@ import { useT } from "@/i18n/client";
 import { useRunAction } from "./action-form";
 import { RolePill } from "./role-pill";
 import { ask } from "./dialog";
-import { DiscordBadge, type DiscordState } from "./discord-badge";
+import { MemberBadges, type Badges } from "./member-badges";
 
 const PAGE_SIZE = 20;
 
@@ -22,7 +22,7 @@ export function ClanMemberGrid({
   members,
 }: {
   slug: string;
-  members: { id: string; name: string; role: MemberRole; guest?: boolean; avatar?: AvatarData; discord?: DiscordState }[];
+  members: { id: string; name: string; role: MemberRole; guest?: boolean; avatar?: AvatarData; badges?: Badges }[];
 }) {
   const t = useT();
   const [q, setQ] = useState("");
@@ -53,8 +53,7 @@ export function ClanMemberGrid({
               <span className="flex min-w-0 items-center gap-3">
                 <Avatar data={m.avatar} size={32} />
                 <span className="truncate font-medium">{m.name}</span>
-                {!m.guest && <Verified />}
-                {m.discord && <DiscordBadge state={m.discord} t={t} />}
+                <MemberBadges b={m.badges} t={t} />
               </span>
               <span className="flex shrink-0 gap-1">
                 <RolePill role={m.role} />
@@ -82,10 +81,8 @@ export type ClanMemberRow = {
   role: MemberRole;
   isGuest: boolean;
   avatar?: AvatarData;
-  /** Discord linked, or found on the clan's server by `/seatbit validate`. */
-  discord?: DiscordState;
-  /** Their Discord user id, so the badge links to their Discord profile. */
-  discordId?: string;
+  /** Check mark, Discord (links to their Discord profile), Donor. */
+  badges?: Badges;
 };
 
 type RoleFilter = "all" | MemberRole;
@@ -166,7 +163,7 @@ export function ClanMemberAdmin({
                 <Link href={`/clans/${slug}/members/${m.id}`} className="hover:text-bit hover:underline">
                   {m.name}
                 </Link>{" "}
-                {!m.isGuest && <Verified />} {m.discord && <DiscordBadge state={m.discord} discordId={m.discordId} t={t} />} <RolePill role={m.role} />
+                <MemberBadges b={m.badges} t={t} linkDiscord /> <RolePill role={m.role} />
                 {m.isGuest && <StatusIcon kind="guest" t={t} />}
               </span>
               <span className="block truncate text-xs text-muted">

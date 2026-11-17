@@ -7,17 +7,21 @@ import { z } from "zod";
 export const SEAT_RULE_KINDS = ["next", "near", "avoid", "seat", "row", "edge", "middle"] as const;
 export type SeatRuleKind = (typeof SEAT_RULE_KINDS)[number];
 
-export type SeatRule =
-  /** Right next to someone. At most one per member. */
-  | { kind: "next"; userId: string }
-  /** Within the event's near range (Manage → Seats, default 4 seats). */
-  | { kind: "near"; userId: string }
-  /** Not right next to someone. Any number, not ranked. */
-  | { kind: "avoid"; userId: string }
-  | { kind: "seat"; seat: string }
-  | { kind: "row"; row: string }
-  | { kind: "edge" }
-  | { kind: "middle" };
+/** `by`: who added the wish, only when it was someone else (a lead). Set by the server, never trusted from a form. */
+type ByWhom = { by?: string };
+export type SeatRule = ByWhom &
+  (
+    /** Right next to someone. At most one per member. */
+    | { kind: "next"; userId: string }
+    /** Within the event's near range (Manage → Seats, default 4 seats). */
+    | { kind: "near"; userId: string }
+    /** Not right next to someone. Any number, not ranked. */
+    | { kind: "avoid"; userId: string }
+    | { kind: "seat"; seat: string }
+    | { kind: "row"; row: string }
+    | { kind: "edge" }
+    | { kind: "middle" }
+  );
 
 /** Ranked wishes have no real cap; this only stops runaway lists. */
 export const MAX_WISHES = 20;
@@ -31,14 +35,15 @@ export const MIN_NEAR_RANGE = 2;
 export const MAX_NEAR_RANGE = 12;
 
 const person = z.string().min(1).max(64);
+const by = person.optional();
 export const seatRuleSchema = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("next"), userId: person }),
-  z.object({ kind: z.literal("near"), userId: person }),
-  z.object({ kind: z.literal("avoid"), userId: person }),
-  z.object({ kind: z.literal("seat"), seat: z.string().trim().min(1).max(12) }),
-  z.object({ kind: z.literal("row"), row: z.string().trim().min(1).max(4) }),
-  z.object({ kind: z.literal("edge") }),
-  z.object({ kind: z.literal("middle") }),
+  z.object({ kind: z.literal("next"), userId: person, by }),
+  z.object({ kind: z.literal("near"), userId: person, by }),
+  z.object({ kind: z.literal("avoid"), userId: person, by }),
+  z.object({ kind: z.literal("seat"), seat: z.string().trim().min(1).max(12), by }),
+  z.object({ kind: z.literal("row"), row: z.string().trim().min(1).max(4), by }),
+  z.object({ kind: z.literal("edge"), by }),
+  z.object({ kind: z.literal("middle"), by }),
 ]);
 export const seatRulesSchema = z.array(seatRuleSchema).max(MAX_WISHES + MAX_AVOIDS);
 
@@ -77,15 +82,19 @@ export function normalizeRules(rules: SeatRule[], selfId?: string): SeatRule[] {
   let hasNext = false;
   let nears = 0;
   for (const r of rules) {
-    let clean: SeatRule =
-      r.kind === "seat" ? { kind: "seat", seat: r.seat.trim().toUpperCase() } : r.kind === "row" ? { kind: "row", row: r.row.trim().toUpperCase() } : r;
-    if (isPersonRule(clean)) {
-      if (clean.userId === selfId) continue;
-      // Drop leftovers such as an old range: a person rule is just kind + who.
-      clean = { kind: clean.kind, userId: clean.userId };
-    }
+    const base =
+      r.kind === "seat"
+        ? { kind: r.kind, seat: r.seat.trim().toUpperCase() }
+        : r.kind === "row"
+          ? { kind: r.kind, row: r.row.trim().toUpperCase() }
+          : // Drop leftovers such as an old range: a person rule is just kind + who.
+            isPersonRule(r)
+            ? { kind: r.kind, userId: r.userId }
+            : { kind: r.kind };
+    if ("userId" in base && base.userId === selfId) continue;
+    let clean = { ...base, ...byOf(r, selfId) } as SeatRule;
     if (clean.kind === "next") {
-      if (hasNext) clean = { kind: "near", userId: clean.userId };
+      if (hasNext) clean = { kind: "near", userId: clean.userId, ...byOf(clean) };
       hasNext = true;
     }
     const key = ruleKey(clean);
@@ -97,6 +106,38 @@ export function normalizeRules(rules: SeatRule[], selfId?: string): SeatRule[] {
     } else if (avoids.length < MAX_AVOIDS) avoids.push(clean);
   }
   return [...ranked, ...avoids];
+}
+
+/** `{ by }` when someone other than the member added the rule, else nothing. */
+const byOf = (r: SeatRule, selfId?: string): ByWhom => (r.by && r.by !== selfId ? { by: r.by } : {});
+
+/** The same wish, ignoring who added it. */
+export const sameRule = (a: SeatRule, b: SeatRule) => a.kind === b.kind && ruleKey(a) === ruleKey(b);
+
+/**
+ * Marks who added each wish when `actorId` saves `rules` for `selfId`: wishes that were there before
+ * keep their mark (also when moved), new or changed ones get `actorId`, unless the member saves
+ * their own. Whatever the form sent as `by` is ignored.
+ */
+export function stampRules(rules: SeatRule[], before: SeatRule[], selfId: string, actorId: string): SeatRule[] {
+  return rules.map((r) => {
+    const rule = { ...r };
+    delete rule.by;
+    const old = before.find((b) => sameRule(b, r));
+    const by = old ? old.by : actorId !== selfId ? actorId : undefined;
+    return (by && by !== selfId ? { ...rule, by } : rule) as SeatRule;
+  });
+}
+
+/**
+ * Puts another person into the person wish at `index` (same kind, same rank). A wish that was
+ * already about the new person goes, as two wishes about one person contradict.
+ */
+export function changeRulePerson(rules: SeatRule[], index: number, userId: string): SeatRule[] {
+  const r = rules[index];
+  if (!r || !isPersonRule(r) || r.userId === userId) return rules;
+  const changed = { kind: r.kind, userId } as SeatRule;
+  return rules.flatMap((x, i) => (i === index ? [changed] : isPersonRule(x) && x.userId === userId ? [] : [x]));
 }
 
 /** Why a rule list can't be saved as it is, or null. */

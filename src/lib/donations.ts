@@ -1,5 +1,5 @@
 import "server-only";
-import { and, desc, eq, gt, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, isNull, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Clan } from "@/db/schema";
 import { audit } from "./audit";
@@ -247,4 +247,17 @@ export function adminDonations(page = 0) {
     .all();
   const count = db.select({ n: sql<number>`count(*)` }).from(schema.donation).get()?.n ?? 0;
   return { rows, totals, count };
+}
+
+/** Which of these people show the Donor badge (one query for a whole list). */
+export function donorIds(userIds: string[]) {
+  if (!donationsEnabled() || userIds.length === 0) return new Set<string>();
+  return new Set(
+    db
+      .select({ userId: schema.donation.userId })
+      .from(schema.donation)
+      .where(and(inArray(schema.donation.userId, userIds), isNull(schema.donation.clanId), badgeWhere()))
+      .all()
+      .flatMap((r) => (r.userId ? [r.userId] : [])),
+  );
 }

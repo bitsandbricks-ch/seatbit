@@ -5,7 +5,9 @@ import type { AttendanceStatus } from "@/db/schema";
 import { getNames } from "@/lib/lans";
 import { getAvatars } from "@/lib/avatars";
 import { Avatar } from "./avatar";
-import { Card, Verified } from "./ui";
+import { Card } from "./ui";
+import { MemberBadges } from "./member-badges";
+import { memberBadges } from "@/lib/member-badges";
 import { InterestRemind } from "./interest-remind";
 import type { MessageKey, T } from "@/i18n/translate";
 
@@ -55,6 +57,7 @@ export async function InterestList({
   ]);
   const ids = [...groupOf.keys()];
   const people = await getNames(lanId, ids);
+  const badges = memberBadges(ids);
   const avatars = getAvatars(ids);
   const label = (uid: string) => people.get(uid)?.label ?? "?";
 
@@ -98,7 +101,7 @@ export async function InterestList({
                         ) : (
                           <span className={`truncate ${mine ? "font-semibold text-bit" : ""}`}>{label(uid)}</span>
                         )}
-                        {people.get(uid)?.verified && <Verified />}
+                        <MemberBadges b={badges.get(uid)} t={t} />
                       </li>
                     );
                   })}

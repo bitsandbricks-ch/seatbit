@@ -1,5 +1,6 @@
 "use client";
 
+import { MemberBadges, type Badges } from "./member-badges";
 import Link from "next/link";
 import { useState } from "react";
 import { useT } from "@/i18n/client";
@@ -57,7 +58,10 @@ export function WishOverview({
   overall,
   filter: initial,
   editBase,
+  badges = {},
 }: {
+  /** Marks after names, by user id. */
+  badges?: Record<string, Badges>;
   rows: WishRow[];
   overall: number | null;
   filter: WishFilter;
@@ -130,7 +134,8 @@ export function WishOverview({
                     <details className="group">
                       <summary className="grid cursor-pointer list-none grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-0.5 py-2.5 [&::-webkit-details-marker]:hidden">
                         <span className="min-w-0">
-                          <span className="font-medium leading-tight [overflow-wrap:anywhere]">{r.name}</span>
+                          <span className="font-medium leading-tight [overflow-wrap:anywhere]">{r.name}</span>{" "}
+                          <MemberBadges b={badges[r.userId]} t={t} />
                           <span className="ml-1.5 font-mono text-xs text-faint">{r.seat ?? t("wishOverview.noSeat")}</span>
                           {r.full && r.full !== r.name && <span className="block text-xs text-faint [overflow-wrap:anywhere]">{r.full}</span>}
                         </span>

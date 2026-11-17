@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { MemberBadges, type Badges } from "@/components/member-badges";
+import { memberBadges } from "@/lib/member-badges";
 import { discordInfo } from "@/lib/discord-verify";
 import { discordUserUrl } from "@/components/discord-badge";
 import { ReportButton } from "@/components/report-button";
@@ -17,9 +19,9 @@ import { getLanAccounts } from "@/lib/lan-accounts";
 import { SeatMap } from "@/components/seat-map";
 import { Avatar } from "@/components/avatar";
 import { getAvatars, type AvatarData } from "@/lib/avatars";
-import { Card, Columns, Hint, LockedAnswerBadge, Notice, Page, Pill, Verified } from "@/components/ui";
+import { Card, Columns, Hint, LockedAnswerBadge, Notice, Page, Pill } from "@/components/ui";
 import { fmtDate, fmtTime, lanRange, relative } from "@/lib/format";
-import { attendanceLocked, getDisplayNames, getLan, getNames, pickNick, seatView, signupClosed, waitlistPositions } from "@/lib/lans";
+import { attendanceLocked, capacityOf, getDisplayNames, getLan, getNames, pickNick, seatView, signupClosed, waitlistPositions } from "@/lib/lans";
 import { canTakePart as mayTakePart, canViewLan, getCurrentUser, isLanManager, isProfileComplete } from "@/lib/session";
 import { clanRole, getClan } from "@/lib/clans";
 import { EventInvite } from "@/components/event-invite";
@@ -161,11 +163,13 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
       ...seats.flatMap((s) => (s.userId ? [s.userId] : [])),
       ...posts.map((p) => p.userId),
       ...spots.map((s) => s.userId),
+      // Leads who added one of my seat wishes ("Added by …").
+      ...(rows.find((r) => r.userId === me.id)?.wishRules ?? []).flatMap((r) => (r.by ? [r.by] : [])),
     ]),
   ]);
   // The clan's name display (default Name "Nick" Surname); the bare nick only inside small seat cells.
   const names = new Map([...people].map(([uid, n]) => [uid, n.label]));
-  const verified = new Set([...people].flatMap(([uid, n]) => (n.verified ? [uid] : [])));
+  const badges = memberBadges([...people.keys()]);
   const my = rows.find((r) => r.userId === me.id);
   const seatOf = new Map(
     seats.filter((s) => s.userId && (l.seatsPublishedAt || isLanManager(me, id))).map((s) => [s.userId!, s.label]),
@@ -230,7 +234,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
     now,
     t,
   });
-  const full = l.capacity != null && going.length >= l.capacity;
+  const capacity = capacityOf(l);
+  const full = capacity != null && going.length >= capacity;
   // Interest check: the page is just the answer and who answered; the rest opens with sign-up.
   const interestPhase = l.interestCheck && !l.cancelledAt;
   const news = db
@@ -399,7 +404,9 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           .filter((r) => r.userId !== me.id && (r.status === "going" || r.status === "maybe" || r.status === "waitlist"))
           .map((r) => ({ id: r.userId, name: names.get(r.userId) ?? "?" }))
           .sort((a, b) => a.name.localeCompare(b.name))}
-        names={Object.fromEntries((my.wishRules ?? []).flatMap((r) => ("userId" in r ? [[r.userId, names.get(r.userId) ?? "?"]] : [])))}
+        names={Object.fromEntries(
+          (my.wishRules ?? []).flatMap((r) => [...("userId" in r ? [r.userId] : []), ...(r.by ? [r.by] : [])]).map((uid) => [uid, names.get(uid) ?? "?"]),
+        )}
         seatLabels={[...seats].sort((a, b) => a.row - b.row || a.col - b.col).map((s) => s.label)}
         rows={[...new Set([...seats].sort((a, b) => a.row - b.row || a.col - b.col).map(seatRow))]}
         initial={{ rules: normalizeRules(my.wishRules ?? [], me.id), note: my.wishNote }}
@@ -738,25 +745,21 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
       </TabPanel>
 
       <TabPanel id="gear">
-        <Columns>
-          <PackingList lanId={l.id} items={PACKING_ITEMS} packed={packed} own={ownItems} past={l.endsAt > now ? pastPackingItems(me.id, l.id) : []} />
-        </Columns>
+        <PackingList lanId={l.id} items={PACKING_ITEMS} packed={packed} own={ownItems} past={l.endsAt > now ? pastPackingItems(me.id, l.id) : []} />
       </TabPanel>
 
       <TabPanel id="games">
-        <div className="max-w-3xl">
-          <GameList
-            lanId={l.id}
-            games={games}
-            meId={me.id}
-            canManage={isAdmin}
-            canAdd={canTakePart || isAdmin}
-            names={gameNames}
-            avatars={gameAvatars}
-            reminderDays={GAMES_REMINDER_DAYS}
-            lastTime={l.endsAt > now ? previousGames(l) : null}
-          />
-        </div>
+        <GameList
+          lanId={l.id}
+          games={games}
+          meId={me.id}
+          canManage={isAdmin}
+          canAdd={canTakePart || isAdmin}
+          names={gameNames}
+          avatars={gameAvatars}
+          reminderDays={GAMES_REMINDER_DAYS}
+          lastTime={l.endsAt > now ? previousGames(l) : null}
+        />
       </TabPanel>
 
       <TabPanel id="food">
@@ -845,12 +848,12 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
 
       <TabPanel id="attendees">
         <Card
-          title={l.capacity ? t("event.attendeesTitleOf", { count: going.length, capacity: l.capacity }) : t("event.attendeesTitle", { count: going.length })}
+          title={capacity ? t("event.attendeesTitleOf", { count: going.length, capacity }) : t("event.attendeesTitle", { count: going.length })}
           actions={full && <Pill tone="red">{t("event.fullWaitlist")}</Pill>}
         >
-          <AttendeeList t={t} title={t("event.coming")} list={going} profileBase={profileBase} names={names} verified={verified} avatars={avatars} profiles={profiles} seatOf={seatOf} marks={leadMarks} meId={me.id} />
-          <AttendeeList t={t} title={t("event.waitlist")} positions={linePos} list={group("waitlist")} profileBase={profileBase} names={names} verified={verified} avatars={avatars} profiles={profiles} seatOf={seatOf} marks={leadMarks} meId={me.id} />
-          <AttendeeList t={t} title={t("event.unsure")} list={group("maybe")} profileBase={profileBase} names={names} verified={verified} avatars={avatars} profiles={profiles} seatOf={seatOf} marks={leadMarks} meId={me.id} />
+          <AttendeeList t={t} title={t("event.coming")} list={going} profileBase={profileBase} names={names} badges={badges} linkDiscord={isAdmin} avatars={avatars} profiles={profiles} seatOf={seatOf} marks={leadMarks} meId={me.id} />
+          <AttendeeList t={t} title={t("event.waitlist")} positions={linePos} list={group("waitlist")} profileBase={profileBase} names={names} badges={badges} linkDiscord={isAdmin} avatars={avatars} profiles={profiles} seatOf={seatOf} marks={leadMarks} meId={me.id} />
+          <AttendeeList t={t} title={t("event.unsure")} list={group("maybe")} profileBase={profileBase} names={names} badges={badges} linkDiscord={isAdmin} avatars={avatars} profiles={profiles} seatOf={seatOf} marks={leadMarks} meId={me.id} />
           {group("declined").length > 0 && <p className="mt-3 text-xs text-muted">{t("event.cantMakeIt", { count: group("declined").length })}</p>}
         </Card>
       </TabPanel>
@@ -975,7 +978,8 @@ function AttendeeList({
   title,
   list,
   names,
-  verified,
+  badges,
+  linkDiscord,
   seatOf,
   marks,
   meId,
@@ -995,7 +999,9 @@ function AttendeeList({
   title: string;
   list: (typeof attendance.$inferSelect)[];
   names: Map<string, string>;
-  verified: Set<string>;
+  badges: Map<string, Badges>;
+  /** Leads: the Discord mark opens their Discord profile. */
+  linkDiscord: boolean;
   seatOf: Map<string, string>;
   /** Leads' status icons per person; empty for members. */
   marks: Map<string, StatusKind[]>;
@@ -1019,7 +1025,7 @@ function AttendeeList({
       ) : (
         <span className={`truncate ${a.userId === meId ? "font-semibold text-bit" : ""}`}>{names.get(a.userId)}</span>
       )}
-      {verified.has(a.userId) && <Verified />}
+      <MemberBadges b={badges.get(a.userId)} t={t} linkDiscord={linkDiscord} />
       </span>
       <span className="flex shrink-0 gap-1">
         {profiles.get(a.userId) && (

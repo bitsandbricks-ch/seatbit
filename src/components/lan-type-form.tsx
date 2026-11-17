@@ -80,7 +80,7 @@ export function ClanTypeForm({
   return (
     <form action={formAction} className="space-y-5">
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label={t("typeForm.spots")}>
+        <Field label={t("typeForm.spots")} hint={t("typeForm.spotsHint")}>
           <Input type="number" min={1} name="capacity" defaultValue={values.capacity} />
         </Field>
         <Field label={t("typeForm.seats")} hint={t("typeForm.seatsHint")}>

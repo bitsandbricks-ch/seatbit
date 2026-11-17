@@ -27,6 +27,8 @@ export type LanFormValues = {
   paymentDueDate: string;
   price: string;
   capacity: string;
+  /** Seats in the event's seat plan (new events: in the LAN type's seat list). Set, they are the spots. */
+  seatCount?: number;
   reminderDays: number;
   /** In the interest check (new events: whether to start with one). */
   interestCheck?: boolean;
@@ -193,9 +195,17 @@ export function LanForm({ values, types }: { values: LanFormValues; types: TypeO
         <Field label={t("lanForm.price")}>
           <Input name="price" defaultValue={values.price} placeholder={t("lanForm.pricePlaceholder")} />
         </Field>
-        <Field label={t("lanForm.spots")} hint={t("lanForm.spotsHint")}>
-          <Input type="number" min={1} name="capacity" defaultValue={values.capacity} />
-        </Field>
+        {values.seatCount ? (
+          // The seat plan sets the size; the typed number is kept for when the plan is cleared.
+          <Field label={t("lanForm.spots")} hint={t("lanForm.spotsFromSeats")}>
+            <input type="hidden" name="capacity" value={values.capacity} />
+            <Input type="number" value={values.seatCount} readOnly disabled />
+          </Field>
+        ) : (
+          <Field label={t("lanForm.spots")} hint={t("lanForm.spotsHint")}>
+            <Input type="number" min={1} name="capacity" defaultValue={values.capacity} />
+          </Field>
+        )}
         <Field label={t("lanForm.remindDays")}>
           <Input type="number" min={0} max={60} name="reminderDays" defaultValue={values.reminderDays} />
         </Field>

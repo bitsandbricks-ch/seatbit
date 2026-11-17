@@ -1,0 +1,14 @@
+date: 2026-11-17
+type: improved
+en:
+  title: "Seat wishes: change the person, see who added a wish"
+  text: >-
+    Swap the person in a seat wish with ✎ instead of removing and adding it again. Wishes a Lead adds
+    for you say who added them. When Leads change someone's wishes, the Discord DM is now optional and
+    off unless they tick it.
+de:
+  title: "Platzwünsche: Person ändern und sehen, wer einen Wunsch hinzugefügt hat"
+  text: >-
+    Mit ✎ tauschst du die Person in einem Platzwunsch aus, statt ihn zu löschen und neu hinzuzufügen.
+    Wünsche, die ein Lead für dich hinzufügt, zeigen, von wem sie sind. Ändern Leads die Wünsche von
+    jemandem, ist die Discord-DM jetzt freiwillig und nur an, wenn sie sie ankreuzen.
