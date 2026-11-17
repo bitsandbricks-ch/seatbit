@@ -469,7 +469,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               )}
             </Card>
           )}
-          <Card title={t("manage.ourSeats")}>
+          <Card id="our-seats" title={t("manage.ourSeats")}>
             <p className="mb-4 text-sm text-muted">{t("manage.ourSeatsHint")}</p>
             <SeatSetup
               lanId={l.id}
