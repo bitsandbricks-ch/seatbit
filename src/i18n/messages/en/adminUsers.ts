@@ -1,0 +1,20 @@
+export const adminUsers = {
+  subtitle: "Every account on this Seatbit. Open one for the details; give platform roles and suspend from here.",
+  search: "Search name, nick, email or Discord",
+  sort: "Sort",
+  sortBy: { name: "Name", active: "Last active", new: "Newest" },
+  filter: {
+    all: "All",
+    staff: "Platform staff",
+    members: "With login",
+    guests: "Guests",
+    discord: "Discord linked",
+    noDiscord: "No Discord",
+    suspended: "Suspended",
+  },
+  clans: { one: "{count} clan", other: "{count} clans" },
+  active: "active {date}",
+  guestOf: "Guest of {clan}",
+  none: "Nobody matches.",
+  all: "All users",
+};

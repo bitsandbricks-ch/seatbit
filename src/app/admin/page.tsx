@@ -2,12 +2,12 @@ import Link from "next/link";
 import { desc } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { suspendClanAction, unsuspendClanAction } from "@/app/moderation-actions";
-import { SuspendForm, UserAdminActions } from "./user-admin-actions";
+import { SuspendForm } from "./user-admin-actions";
 import { Card, Notice, Page, PageHeader, Pill, btnGhost } from "@/components/ui";
 import { ClanAvatar } from "@/components/clan-avatar";
-import { lanDay } from "@/lib/format";
+import { fmtWeekday, lanDay } from "@/lib/format";
 import { requirePlatform } from "@/lib/session";
-import { STAFF_ROLES, isStaff, platformCan } from "@/lib/platform-roles";
+import { STAFF_ROLES, platformCan } from "@/lib/platform-roles";
 import { getLegal } from "@/lib/legal";
 import { backupStatus } from "@/lib/backup";
 import { getDefaultNames } from "@/lib/lans";
@@ -161,30 +161,32 @@ export default async function AdminPage() {
         )}
       </Card>
 
-      <Card title={`${t("admin.users")} (${users.length})`}>
+      <Card
+        title={t("admin.newestUsers")}
+        actions={
+          <Link href="/admin/users" className="text-sm text-bit hover:underline">
+            {t("adminUsers.all")} ({users.length}) →
+          </Link>
+        }
+      >
         <ul className="-my-1 divide-y divide-line">
-          {users.map((u) => {
-            const name = people.get(u.id)?.full ?? u.name;
-            return (
-              <li key={u.id} className="flex min-h-12 flex-wrap items-center justify-between gap-x-3 gap-y-2 py-2">
-                <span className="min-w-0">
-                  <span className="flex flex-wrap items-center gap-2">
-                    <Link href={`/admin/users/${u.id}`} className="truncate font-medium hover:text-bit">
-                      {name}
-                    </Link>
-                    {isStaff(u) ? (
-                      <Pill tone="emerald">{t(`platformRoles.name.${u.role as (typeof STAFF_ROLES)[number]}`)}</Pill>
-                    ) : u.isGuest ? (
-                      <Pill>{t("clanSettings.guest")}</Pill>
-                    ) : null}
-                    {u.suspendedAt && <Pill tone="red">{t("moderation.suspended")}</Pill>}
+          {[...users]
+            .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+            .slice(0, 5)
+            .map((u) => (
+              <li key={u.id}>
+                <Link
+                  href={`/admin/users/${u.id}`}
+                  className="-mx-2 flex min-h-12 items-center justify-between gap-3 rounded-md px-2 py-2 transition hover:bg-raised/60"
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate font-medium">{people.get(u.id)?.full ?? u.name}</span>
+                    <span className="block truncate text-xs text-muted">{u.isGuest ? t("admin.guestNoLogin") : u.email}</span>
                   </span>
-                  <span className="block truncate text-xs text-muted">{u.isGuest ? t("admin.guestNoLogin") : u.email}</span>
-                </span>
-                <UserAdminActions t={t} me={me} u={u} name={name} />
+                  <span className="shrink-0 text-xs text-muted">{fmtWeekday(u.createdAt, t.locale)}</span>
+                </Link>
               </li>
-            );
-          })}
+            ))}
         </ul>
       </Card>
 
