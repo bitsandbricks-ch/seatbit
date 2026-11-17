@@ -1,0 +1,20 @@
+export const adminUsers = {
+  subtitle: "Alle Konten auf diesem Seatbit. Öffne eines für die Details; Plattformrollen und Sperren gehen direkt hier.",
+  search: "Name, Nick, E-Mail oder Discord suchen",
+  sort: "Sortieren",
+  sortBy: { name: "Name", active: "Zuletzt aktiv", new: "Neueste" },
+  filter: {
+    all: "Alle",
+    staff: "Plattform-Team",
+    members: "Mit Login",
+    guests: "Gäste",
+    discord: "Discord verknüpft",
+    noDiscord: "Ohne Discord",
+    suspended: "Gesperrt",
+  },
+  clans: { one: "{count} Clan", other: "{count} Clans" },
+  active: "aktiv {date}",
+  guestOf: "Gast von {clan}",
+  none: "Niemand gefunden.",
+  all: "Alle Nutzer",
+};

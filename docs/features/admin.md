@@ -15,7 +15,7 @@ Platform staff run the instance: they see all clans, events and users, change th
 | **Moderator** | The [report queue](moderation.md), suspending and restoring users and clans. No settings. |
 | **Support** | Read-only: the admin page, every clan and event, the audit log. To help people, without changing anything. |
 
-The first account is always owner, as is anyone in the **Admin emails** setting. Give roles in the user list on the admin page or with the [admin CLI](../installation/operations.md#admin-cli). Nobody changes their own role, and admins can't touch owners or other admins, so there is always an owner. The last owner can't delete their account.
+The first account is always owner, as is anyone in the **Admin emails** setting. Give roles in *Admin → Users* or with the [admin CLI](../installation/operations.md#admin-cli). Nobody changes their own role, and admins can't touch owners or other admins, so there is always an owner. The last owner can't delete their account.
 
 !!! note "Upgrading"
     Instances from before platform roles had one admin flag. The upgrade turns every existing admin into an owner, so nobody loses rights.
@@ -26,7 +26,8 @@ Every admin page has the same tab bar at the top, so you can switch between sect
 
 | Tab | |
 | --- | --- |
-| **Overview** | Everything on the instance. Give platform roles and suspend users or clans from the lists. Tap a user's name for their [user details](#user-details). Deleted accounts only show as a count. |
+| **Overview** | Everything on the instance at a glance: clans (suspend them from the list), events and the newest accounts. |
+| **Users** | Every account, with search, filters and pages; give platform roles and suspend users. See [Users](#users). |
 | **Reports** | Abuse reports from members. See [Reports and suspensions](moderation.md). |
 | **Usage** | Accounts, active people, clans and events over time. All platform staff. See [Usage](#usage). |
 | **Backups** | Database backups: schedule, back up now, download. Owners only. See [Backups](../installation/operations.md#backups). |
@@ -39,9 +40,20 @@ A moderator sees the same tabs without the settings, and support without any but
 
 ![Admin page of a moderator](../screenshots/desktop-admin-moderator.png){ .shot }
 
+## Users
+
+*Admin → Users* lists every account. Each row shows the avatar, name, the real-account check mark and the [Discord badge](discord.md#discord-verification) (grey: linked, green: verified on a clan's server), the platform role, *Guest* and *Suspended*, the email (or the guest's clan), how many clans they're in and when they were last active.
+
+- **Search** by name, nick, email or Discord username.
+- **Filter** by platform staff, accounts with a login, guests, Discord linked, no Discord, or suspended; each chip shows how many.
+- **Sort** by name, last active or newest, 25 per page.
+- **Platform role** and **Suspend** on each row, as far as your role allows. Deleted accounts don't show.
+
+![Users](../screenshots/desktop-admin-users.png){ .shot }
+
 ## User details
 
-Tap a name in the user list on *Overview* to open that person's page. All platform staff see it; it shows what you need to help someone or to check an account:
+Tap a name in *Admin → Users* (or under *Newest accounts* on the overview) to open that person's page. All platform staff see it; it shows what you need to help someone or to check an account:
 
 - **Account:** email (and whether it's verified), how they sign in, first name and surname, language, user ID to copy, since when the account exists and when it was last active. For guests: their clan, the invite email and when it was sent.
 - **Discord:** linked username and user ID, and whether the bot verified them on a clan's server. For guests, the Discord member a lead linked.

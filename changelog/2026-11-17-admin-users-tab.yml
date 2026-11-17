@@ -1,0 +1,16 @@
+date: 2026-11-17
+type: improved
+audience: admins
+en:
+  title: "Users tab in the admin"
+  text: >-
+    The admin has its own Users tab: search by name, nick, email or Discord, filter by staff, guests,
+    Discord or suspended, sort by name, last active or newest, and page through. Each row shows the
+    badges, clans and last activity, with platform role and suspend right there.
+de:
+  title: "Tab «Nutzer» im Admin"
+  text: >-
+    Der Admin hat einen eigenen Tab «Nutzer»: Suche nach Name, Nick, E-Mail oder Discord, Filter nach
+    Plattform-Team, Gästen, Discord oder gesperrt, Sortierung nach Name, zuletzt aktiv oder neueste,
+    mit Seiten. Jede Zeile zeigt die Abzeichen, Clans und die letzte Aktivität, Plattformrolle und
+    Sperren gehen direkt dort.
