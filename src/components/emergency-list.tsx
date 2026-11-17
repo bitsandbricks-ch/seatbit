@@ -1,3 +1,4 @@
+import { MemberBadges, type Badges } from "./member-badges";
 import Link from "next/link";
 import type { AvatarData } from "@/lib/avatars";
 import type { T } from "@/i18n/translate";
@@ -19,7 +20,18 @@ export type EmergencyRow = {
 const telHref = (phone: string) => `tel:${phone.replace(/[^\d+]/g, "")}`;
 
 /** Manage › Emergency: contacts and dietary needs of everyone coming, for the leads only. */
-export function EmergencyList({ rows, t, profileBase }: { rows: EmergencyRow[]; t: T; profileBase: string | null }) {
+export function EmergencyList({
+  rows,
+  t,
+  profileBase,
+  badges = {},
+}: {
+  rows: EmergencyRow[];
+  t: T;
+  profileBase: string | null;
+  /** Marks after names, by user id. */
+  badges?: Record<string, Badges>;
+}) {
   const filled = rows.filter((r) => r.contactName || r.contactPhone || r.diet);
   const missing = rows.filter((r) => !r.contactName && !r.contactPhone && !r.diet);
   const diets = rows.filter((r) => r.diet);
@@ -47,6 +59,7 @@ export function EmergencyList({ rows, t, profileBase }: { rows: EmergencyRow[]; 
                       ) : (
                         <span className="font-medium text-fg">{r.name}</span>
                       )}
+                      <MemberBadges b={badges[r.userId]} t={t} linkDiscord />
                       {r.seat && <span className="text-xs text-muted">{t("emergency.seat", { seat: r.seat })}</span>}
                     </div>
                     {r.full !== r.name && <p className="text-xs text-faint">{r.full}</p>}

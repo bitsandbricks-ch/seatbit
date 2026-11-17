@@ -42,7 +42,8 @@ import { requireUser } from "@/lib/session";
 import { unlinkDiscordChannel } from "@/app/actions";
 import { discordEnabled, inviteUrl } from "@/lib/discord-api";
 import { clanServers } from "@/lib/discord-invite";
-import { clanGuildIds, discordInfo } from "@/lib/discord-verify";
+import { clanGuildIds } from "@/lib/discord-verify";
+import { memberBadges } from "@/lib/member-badges";
 import { ValidateDiscordButton } from "@/components/discord-verify-buttons";
 import { AuditLog, auditQuery, parseAuditFilter } from "@/components/audit-log";
 import { auditEntries, auditedEvents } from "@/lib/audit";
@@ -84,7 +85,7 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
     // Only from people still in the clan (or asking to join it from Discord), for guests still waiting to be claimed.
     .filter((r) => members.some((m) => m.u.id === r.userId) && members.some((m) => m.u.id === r.guestId));
   const active = members.filter((m) => m.role !== "pending");
-  const discordOf = discordInfo(active.map((m) => m.u.id));
+  const badgesOf = memberBadges(active.map((m) => m.u.id));
   const hasServer = clanGuildIds(c.id).length > 0;
   const guests = active.filter((m) => m.u.isGuest);
   const inClan = new Set(members.map((m) => m.u.id));
@@ -265,8 +266,7 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
                 role: isMemberRole(role) ? role : "member",
                 isGuest: u.isGuest,
                 avatar: avatarData(u),
-                discord: discordOf.get(u.id)?.state,
-                discordId: discordOf.get(u.id)?.id,
+                badges: badgesOf.get(u.id),
               }))}
             />
           </Card>

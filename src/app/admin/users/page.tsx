@@ -4,6 +4,7 @@ import { Card, Page, PageHeader } from "@/components/ui";
 import { getT } from "@/i18n/server";
 import { avatarData } from "@/lib/avatars";
 import { discordStates } from "@/lib/discord-verify";
+import { memberBadges } from "@/lib/member-badges";
 import { fmtWeekday } from "@/lib/format";
 import { getDefaultNames } from "@/lib/lans";
 import { STAFF_ROLES, isStaff } from "@/lib/platform-roles";
@@ -20,6 +21,7 @@ export default async function AdminUsersPage() {
   const ids = users.map((u) => u.id);
   const names = getDefaultNames(ids);
   const discord = discordStates(ids);
+  const badges = memberBadges(ids);
   const clans = db.select({ id: schema.clan.id, name: schema.clan.name }).from(schema.clan).all();
   const memberCount = new Map(
     db
@@ -57,6 +59,7 @@ export default async function AdminUsersPage() {
       isGuest: u.isGuest,
       suspended: !!u.suspendedAt,
       discord: discord.get(u.id),
+      badges: badges.get(u.id),
       clans: memberCount.get(u.id) ?? 0,
       lastActive: day ? fmtWeekday(new Date(`${day}T12:00:00`), t.locale) : null,
       lastDay: day,

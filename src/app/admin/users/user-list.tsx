@@ -2,9 +2,10 @@
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import { Avatar } from "@/components/avatar";
-import { DiscordBadge, type DiscordState } from "@/components/discord-badge";
+import type { DiscordState } from "@/components/discord-badge";
+import { MemberBadges, type Badges } from "@/components/member-badges";
 import { PagerBar, matches, usePager } from "@/components/pager";
-import { Pill, Verified, btnGhost, btnSecondary, input } from "@/components/ui";
+import { Pill, btnGhost, btnSecondary, input } from "@/components/ui";
 import { useT } from "@/i18n/client";
 import type { AvatarData } from "@/lib/avatars";
 
@@ -23,6 +24,8 @@ export type AdminUserRow = {
   isGuest: boolean;
   suspended: boolean;
   discord?: DiscordState;
+  /** Check mark, Discord, Donor. */
+  badges?: Badges;
   clans: number;
   /** "Thu 29.10.2026", or null when never seen. */
   lastActive: string | null;
@@ -104,8 +107,7 @@ export function AdminUserList({ users }: { users: AdminUserRow[] }) {
               <span className="min-w-0">
                 <span className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
                   <span className="truncate font-medium group-hover:text-bit">{u.name}</span>
-                  {!u.isGuest && <Verified />}
-                  {u.discord && <DiscordBadge state={u.discord} t={t} />}
+                  <MemberBadges b={u.badges} t={t} />
                   {u.role && <Pill tone="emerald">{u.role}</Pill>}
                   {u.isGuest && <Pill>{t("clanSettings.guest")}</Pill>}
                   {u.suspended && <Pill tone="red">{t("moderation.suspended")}</Pill>}

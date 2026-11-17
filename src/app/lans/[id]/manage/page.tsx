@@ -23,7 +23,7 @@ import { ClientTabs, TabPanel, type ClientTab } from "@/components/client-tabs";
 import { DiscordButtons, WhatsAppTexts } from "@/components/chat-panel";
 import { whatsappTexts } from "@/lib/announce";
 import { discordEnabled, inviteUrl } from "@/lib/discord-api";
-import { discordInfo } from "@/lib/discord-verify";
+import { memberBadges } from "@/lib/member-badges";
 import { clanCan, getClan } from "@/lib/clans";
 import { SeatFlow } from "@/components/seat-flow";
 import { checkWishes, overallScore } from "@/lib/seating";
@@ -137,7 +137,9 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
   const going = rows.filter((r) => r.status === "going");
 
   const statusOrder = { going: 0, waitlist: 1, maybe: 2, declined: 3 };
-  const discordOf = discordInfo(rows.map((r) => r.userId));
+  // Everyone the People and Seats tabs can list: attendees and clan members.
+  const badgesOf = memberBadges(users.map((u) => u.id));
+  const badges = Object.fromEntries(badgesOf);
   const tableRows = rows
     .map((r) => {
       const u = userById.get(r.userId)!;
@@ -158,7 +160,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
         seat: seatOf.get(r.userId) ?? null,
         seatId: seats.find((s) => s.userId === r.userId)?.id ?? null,
         seatBooked: l.externalPlanUrl && l.seatsPublishedAt ? r.seatBooked : null,
-        discord: discordOf.get(r.userId),
+        badges: badgesOf.get(r.userId),
       };
     })
     .sort((a, b) => statusOrder[a.status] - statusOrder[b.status] || a.name.localeCompare(b.name));
@@ -469,6 +471,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
             />
           )}
           {seats.length > 0 && <WishOverview
+              badges={badges}
               rows={wishRows}
               editHref={l.seatsPublishedAt ? undefined : (uid) => `/lans/${l.id}/manage?tab=seats&editWishes=${encodeURIComponent(uid)}${sp.wishes === "all" ? "&wishes=all" : ""}#edit-wishes`}
               overall={overallScore(wishChecks)}
@@ -667,6 +670,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
             }
           >
             <WaitlistPanel
+              badges={badges}
               lanId={l.id}
               entries={waitlist}
               free={free}
@@ -706,6 +710,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
 
       <TabPanel id="missing">
         <WhoIsMissing
+          badges={badges}
           lanId={l.id}
           groups={missingGroups}
           profileBase={lanClan ? `/clans/${lanClan.slug}/members/` : null}
@@ -719,7 +724,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
 
       {emergency && (
       <TabPanel id="emergency">
-        <EmergencyList rows={emergencyRows} t={t} profileBase={lanClan ? `/clans/${lanClan.slug}/members/` : null} />
+        <EmergencyList badges={badges} rows={emergencyRows} t={t} profileBase={lanClan ? `/clans/${lanClan.slug}/members/` : null} />
       </TabPanel>
       )}
 

@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { MemberBadges, type Badges } from "@/components/member-badges";
+import { memberBadges } from "@/lib/member-badges";
 import { discordInfo } from "@/lib/discord-verify";
 import { discordUserUrl } from "@/components/discord-badge";
 import { ReportButton } from "@/components/report-button";
@@ -17,7 +19,7 @@ import { getLanAccounts } from "@/lib/lan-accounts";
 import { SeatMap } from "@/components/seat-map";
 import { Avatar } from "@/components/avatar";
 import { getAvatars, type AvatarData } from "@/lib/avatars";
-import { Card, Columns, Hint, LockedAnswerBadge, Notice, Page, Pill, Verified } from "@/components/ui";
+import { Card, Columns, Hint, LockedAnswerBadge, Notice, Page, Pill } from "@/components/ui";
 import { fmtDate, fmtTime, lanRange, relative } from "@/lib/format";
 import { attendanceLocked, capacityOf, getDisplayNames, getLan, getNames, pickNick, seatView, signupClosed, waitlistPositions } from "@/lib/lans";
 import { canTakePart as mayTakePart, canViewLan, getCurrentUser, isLanManager, isProfileComplete } from "@/lib/session";
@@ -167,7 +169,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
   ]);
   // The clan's name display (default Name "Nick" Surname); the bare nick only inside small seat cells.
   const names = new Map([...people].map(([uid, n]) => [uid, n.label]));
-  const verified = new Set([...people].flatMap(([uid, n]) => (n.verified ? [uid] : [])));
+  const badges = memberBadges([...people.keys()]);
   const my = rows.find((r) => r.userId === me.id);
   const seatOf = new Map(
     seats.filter((s) => s.userId && (l.seatsPublishedAt || isLanManager(me, id))).map((s) => [s.userId!, s.label]),
@@ -849,9 +851,9 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           title={capacity ? t("event.attendeesTitleOf", { count: going.length, capacity }) : t("event.attendeesTitle", { count: going.length })}
           actions={full && <Pill tone="red">{t("event.fullWaitlist")}</Pill>}
         >
-          <AttendeeList t={t} title={t("event.coming")} list={going} profileBase={profileBase} names={names} verified={verified} avatars={avatars} profiles={profiles} seatOf={seatOf} marks={leadMarks} meId={me.id} />
-          <AttendeeList t={t} title={t("event.waitlist")} positions={linePos} list={group("waitlist")} profileBase={profileBase} names={names} verified={verified} avatars={avatars} profiles={profiles} seatOf={seatOf} marks={leadMarks} meId={me.id} />
-          <AttendeeList t={t} title={t("event.unsure")} list={group("maybe")} profileBase={profileBase} names={names} verified={verified} avatars={avatars} profiles={profiles} seatOf={seatOf} marks={leadMarks} meId={me.id} />
+          <AttendeeList t={t} title={t("event.coming")} list={going} profileBase={profileBase} names={names} badges={badges} linkDiscord={isAdmin} avatars={avatars} profiles={profiles} seatOf={seatOf} marks={leadMarks} meId={me.id} />
+          <AttendeeList t={t} title={t("event.waitlist")} positions={linePos} list={group("waitlist")} profileBase={profileBase} names={names} badges={badges} linkDiscord={isAdmin} avatars={avatars} profiles={profiles} seatOf={seatOf} marks={leadMarks} meId={me.id} />
+          <AttendeeList t={t} title={t("event.unsure")} list={group("maybe")} profileBase={profileBase} names={names} badges={badges} linkDiscord={isAdmin} avatars={avatars} profiles={profiles} seatOf={seatOf} marks={leadMarks} meId={me.id} />
           {group("declined").length > 0 && <p className="mt-3 text-xs text-muted">{t("event.cantMakeIt", { count: group("declined").length })}</p>}
         </Card>
       </TabPanel>
@@ -976,7 +978,8 @@ function AttendeeList({
   title,
   list,
   names,
-  verified,
+  badges,
+  linkDiscord,
   seatOf,
   marks,
   meId,
@@ -996,7 +999,9 @@ function AttendeeList({
   title: string;
   list: (typeof attendance.$inferSelect)[];
   names: Map<string, string>;
-  verified: Set<string>;
+  badges: Map<string, Badges>;
+  /** Leads: the Discord mark opens their Discord profile. */
+  linkDiscord: boolean;
   seatOf: Map<string, string>;
   /** Leads' status icons per person; empty for members. */
   marks: Map<string, StatusKind[]>;
@@ -1020,7 +1025,7 @@ function AttendeeList({
       ) : (
         <span className={`truncate ${a.userId === meId ? "font-semibold text-bit" : ""}`}>{names.get(a.userId)}</span>
       )}
-      {verified.has(a.userId) && <Verified />}
+      <MemberBadges b={badges.get(a.userId)} t={t} linkDiscord={linkDiscord} />
       </span>
       <span className="flex shrink-0 gap-1">
         {profiles.get(a.userId) && (

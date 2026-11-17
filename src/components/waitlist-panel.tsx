@@ -1,4 +1,5 @@
 "use client";
+import { MemberBadges, type Badges } from "./member-badges";
 import Link from "next/link";
 import { useTransition } from "react";
 import { adminMoveUp, adminReorderWaitlist, setWaitlistAuto } from "@/app/actions";
@@ -27,7 +28,10 @@ export function WaitlistPanel({
   free,
   auto,
   profileBase = null,
+  badges = {},
 }: {
+  /** Marks after names, by user id. */
+  badges?: Record<string, Badges>;
   lanId: string;
   entries: WaitlistEntry[];
   /** Free spots in the group's block; null = no limit. */
@@ -76,7 +80,8 @@ export function WaitlistPanel({
                     </Link>
                   ) : (
                     e.name
-                  )}
+                  )}{" "}
+                  <MemberBadges b={badges[e.userId]} t={t} linkDiscord />
                 </p>
                 <p className="truncate text-xs text-muted">
                   {e.full !== e.name && `${e.full} · `}

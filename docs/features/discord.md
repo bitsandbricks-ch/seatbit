@@ -65,7 +65,7 @@ The same rules apply as on the website: once you have a ticket, your answer is l
 
 ## Discord verification
 
-A Discord badge after a name shows that the member linked a Discord account. It's grey when the account is only linked, and green once Seatbit has seen that account on one of the clan's Discord servers (**verified**). The badge shows in the clan's member list, in *Clan settings → Members* and on member profiles.
+A Discord badge after a name shows that the member linked a Discord account. It's grey when the account is only linked, and green once Seatbit has seen that account on one of the clan's Discord servers (**verified**). It sits with the other marks after a name (check mark for a real account, **Donor**), which show the same everywhere a member is listed: your profile, member profiles, the clan's member lists, the event's attendee lists and interest check, and the Leads' *Manage* pages (attendees, waitlist, who's missing, emergency info, seat wishes).
 
 - **Members** verify themselves with `/verify` on the clan's server, or with **Verify** in *Profile → Account → Discord*, which checks the linked account against the servers of all their clans.
 - **Leads who manage members** check everyone at once with `/seatbit validate` on the server, or **Check Discord** in *Clan settings → Members* (against all the clan's servers). The bot marks the members it finds and lists who isn't on the server and who has no Discord linked. The check is logged in the clan's audit log.
