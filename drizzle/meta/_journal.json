@@ -344,6 +344,13 @@
       "when": 1794931496199,
       "tag": "20261117160456_global_lan_types",
       "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "6",
+      "when": 1794957008655,
+      "tag": "20261117231008_lookup_indexes",
+      "breakpoints": true
     }
   ]
 }
