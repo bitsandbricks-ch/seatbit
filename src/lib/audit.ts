@@ -243,7 +243,7 @@ export function describeAudit(
     case "seat.picking":
       return t(d.open ? "audit.pickOpen" : "audit.pickClose", v);
     case "seat.variantSave":
-      return t(d.from === "wishes" ? "audit.variantPlan" : "audit.variantSave", v);
+      return t(d.from === "wishes" ? "audit.variantPlan" : d.from === "thorough" ? "audit.variantThorough" : "audit.variantSave", v);
     case "seat.variantUpdate":
       return t("audit.variantUpdate", v);
     case "seat.variantApply":

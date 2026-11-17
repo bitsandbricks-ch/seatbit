@@ -84,7 +84,17 @@ Tap a seat: its details (who sits there, ticket, wishes) and these actions open 
 
 People coming without a seat are listed under **Not seated yet**: tap one, then a seat. On desktop, drag names onto seats and seated people onto other seats to swap.
 
-**Fill free seats** seats everyone without a seat; **Re-plan everyone** starts over. The planner follows seat wishes in each member's order, so when two wishes can't both be met the higher one wins, and it seats people with a ticket first. It looks at the whole plan at once: after a first rough plan it tries thousands of changes (swapping two seats, sliding a group along the row by one seat) and keeps the plan that meets the most wishes for everyone together, weighted by each member's order. That way a group moves over to give someone their edge seat even when that takes several steps, and a wish like "near Reykime" is still met when Reykime was seated earlier. The plan is worked out in full first and then saved in one go. The same wishes always give the same plan, and a re-plan keeps people on their seats unless moving them meets a wish better, so changing one member's wishes doesn't shuffle everyone else. Held seats never move, and **Fill free seats** leaves people who already have a seat where they are.
+**Fill free seats** seats everyone without a seat; **Re-plan everyone** starts over. The planner follows seat wishes in each member's order, so when two wishes can't both be met the higher one wins, and it seats people with a ticket first. It looks at the whole plan at once: after a first rough plan it tries thousands of changes and keeps the plan that meets the most wishes for everyone together, weighted by each member's order. A change can swap two people, swap two groups of neighbours (also between rows, so a whole group of friends can change rows together) or move a group along the row while the others shift over to make room. That way a group moves over to give someone their edge seat even when that takes several steps, and a wish like "near Reykime" is still met when Reykime was seated earlier. The plan is worked out in full first and then saved in one go. The same wishes always give the same plan, and a re-plan keeps people on their seats unless moving them meets a wish better, so changing one member's wishes doesn't shuffle everyone else. Held seats never move, and **Fill free seats** leaves people who already have a seat where they are.
+
+**How hard the planner looks** (above the buttons) has three levels:
+
+| Level | What it does |
+| --- | --- |
+| **Quick** | One search. This is what the automatic re-plan after a wish change uses. |
+| **Extended** (default) | Several searches from different starting points; keeps the best plan. Stops as soon as every wish is met. Takes a few seconds at most. |
+| **Thorough** | Keeps searching in the background for up to 2 minutes (operators can change that, see [configuration](../installation/configuration.md)), and stops as soon as every wish is met. It doesn't touch the live seats: the best plan it finds is saved as a new [variant](#variants) ("Thorough search 1"), which you preview and apply like any other. One search per event at a time; a server restart ends it without a result. |
+
+When every wish can be met, Extended nearly always finds such a plan. If a plan still misses wishes you think could be met, try Thorough.
 
 **Re-plan automatically when wishes change** (under *Our seats*) re-plans every seat that isn't held whenever someone changes their wishes, on the website or with `/wish`, and once right away when you turn it on. It pauses while self pick is on and once the plan is final, so it never moves a member's own pick or a final seat.
 
@@ -101,7 +111,7 @@ The **Seat plan variants** card keeps seat arrangements under a name, so you can
 ![Seat plan variants on Manage → Seats](../screenshots/desktop-manage-seat-variants.png){ .shot }
 
 - **Save current plan** keeps who sits where right now. Leave the name empty for "Variant 1", "Variant 2" and so on.
-- **Plan from wishes** lets the planner seat everyone from their seat wishes into a new variant, without touching the live seats. Held seats keep their person. Unlike **Re-plan everyone**, nobody's current seat counts, so you get a real alternative to a hand-made plan.
+- **Plan from wishes** lets the planner (Extended) seat everyone from their seat wishes into a new variant, without touching the live seats. The **Thorough** search under *Our seats* saves its result here too. Held seats keep their person. Unlike **Re-plan everyone**, nobody's current seat counts, so you get a real alternative to a hand-made plan.
 - Each variant shows how many people coming have a seat in it, how well **today's** seat wishes are met (checked again every time, not when it was saved) and how many people would move compared with the live plan. The live plan is the first row, for comparison.
 - **Preview** shows the variant on the map and in the Seat wishes card. The bar above the map compares it with the live plan: the wish score of both, who it suits worse and how many it suits better. Tap a seat to see that person's wishes.
 

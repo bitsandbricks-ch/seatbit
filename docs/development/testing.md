@@ -66,3 +66,7 @@ After a failure, `test-results/` has a screenshot and a trace per failed test (`
 - **Demo users:** `alex` is platform owner, clan admin and lead; `anna`, `ben`, `chiara`, ... are members. See `scripts/seed-demo.ts`.
 
 Add a test when you build or change a core flow (answering, tickets, seats, payments, permissions).
+
+## Seat planner benchmark
+
+`npm run bench:seats -- [layout] [events] [max wishes] [effort]` makes up events where every seat wish can be met (people are seated at random first and only wish for what that plan gives them) and counts how often the planner still misses a wish, and how long it takes. Layout is seats per row (`20`, `10,10,10`), effort `quick`, `extended` or `thorough`. Run it before and after changing `src/lib/seating.ts`; the unit tests in `seating.test.ts` check a few of these events too.

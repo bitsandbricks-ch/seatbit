@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { checkWishes, missedBadly, overallScore, planSeats, wishScore, wishWeights, type PlanPerson, type PlanSeat } from "./seating";
+import { checkWishes, missedBadly, overallScore, planSeats, planSeatsAsync, wishScore, wishWeights, type PlanPerson, type PlanSeat } from "./seating";
+import { missedWishes, plantedEvent } from "./seating-bench";
 import type { SeatRule } from "./seat-rules";
 
 const row = (n: number, taken: Record<number, string> = {}, held: number[] = [], r = 0): PlanSeat[] =>
@@ -234,4 +235,42 @@ test("a missed wish below the top five is a soft miss, not right next to always 
   assert.equal(missedBadly(item(null, false)), true);
   assert.equal(missedBadly(item(1, true)), false);
   assert.equal(missedBadly(item(1, null)), false);
+});
+
+// Made-up events where every wish can be met (see seating-bench.ts). Before groups could move as
+// one block, the quick search missed a wish in about a quarter of these on a 20-seat row.
+test("the quick search meets every wish on almost all events where that's possible", () => {
+  let missed = 0;
+  for (let seed = 0; seed < 30; seed++) {
+    const { seats, people } = plantedEvent(seed, [20]);
+    if (missedWishes(seats, people, planSeats(seats, people, people)).length) missed++;
+  }
+  assert.ok(missed <= 2, `${missed} of 30 plans miss a wish`);
+});
+
+test("the extended search meets every wish when that's possible, also across rows", () => {
+  for (let seed = 0; seed < 12; seed++) {
+    const { seats, people } = plantedEvent(seed, [10, 10, 10]);
+    assert.deepEqual(missedWishes(seats, people, planSeats(seats, people, people, { effort: "extended" })), [], `event ${seed}`);
+  }
+});
+
+test("a friend group swaps rows as one block to meet a row wish", () => {
+  // Row A is full of a group whose leader wants row B, row B of a group that wants row A.
+  const seats = [...row(4), ...row(4, {}, [], 1)];
+  const chain = (ids: string[], r: string): PlanPerson[] =>
+    ids.map((u, i) => person(u, [...(i === 0 ? [{ kind: "row", row: r } as SeatRule] : []), ...(i ? [{ kind: "next", userId: ids[i - 1] } as SeatRule] : [])]));
+  const everyone = [...chain(["a", "b", "c", "d"], "B"), ...chain(["e", "f", "g", "h"], "A")];
+  const placed = seats.map((s, i) => ({ ...s, userId: everyone[i].userId }));
+  const stay = new Map(placed.map((s) => [s.userId!, s.id]));
+  const plan = planSeats(seats, everyone, everyone, { stay, effort: "extended" });
+  assert.deepEqual(missedWishes(seats, everyone, plan), []);
+});
+
+test("the thorough search stops as soon as every wish is met", async () => {
+  const { seats, people } = plantedEvent(3, [20]);
+  const started = Date.now();
+  const plan = await planSeatsAsync(seats, people, people, { effort: "thorough", until: Date.now() + 60_000 });
+  assert.deepEqual(missedWishes(seats, people, plan), []);
+  assert.ok(Date.now() - started < 10_000);
 });

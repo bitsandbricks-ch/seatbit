@@ -9,7 +9,8 @@ import { DEFAULT_NEAR_RANGE, isRanked, wishWeights, type SeatRule } from "./seat
  * same total however many they have, so a long list doesn't outweigh a short one.
  * "Right next to" pulls a bit harder, and every "not right next to" counts as much as all
  * ranked wishes together (see wishWeights). The planner seats people one by one, then
- * keeps moving and swapping them while that makes the people involved happier overall.
+ * keeps moving and swapping people and whole groups while that makes everyone happier overall,
+ * as often as the effort says (PlanEffort). `npm run bench:seats` measures how well that works.
  */
 
 export type PlanSeat = { id: string; row: number; col: number; label: string; userId: string | null; locked: boolean };
@@ -24,7 +25,16 @@ export type PlanPerson = {
  * `stay`: where people sat before a re-plan (userId -> seatId); they keep that seat unless moving
  * them meets a wish, so changing one wish doesn't shuffle everyone else around.
  */
-export type PlanOptions = { nearRange?: number; stay?: Map<string, string> };
+export type PlanOptions = { nearRange?: number; stay?: Map<string, string>; effort?: PlanEffort; until?: number };
+/**
+ * How hard the planner looks. "quick" runs the search once (re-plans after every wish change);
+ * "extended" runs it several times from different random starts and keeps the best plan; "thorough"
+ * keeps going until every wish is met or `until` (a time in ms) has passed, so it only runs in the
+ * background (see planSeatsAsync).
+ */
+export type PlanEffort = "quick" | "extended" | "thorough";
+export const PLAN_EFFORTS: PlanEffort[] = ["quick", "extended", "thorough"];
+const RUNS: Record<PlanEffort, number> = { quick: 1, extended: 8, thorough: 10_000 };
 
 /** What the scoring needs besides who sits where. */
 type Ctx = { edges: Set<string>; range: number; stay: Map<string, string> | undefined };
@@ -87,6 +97,32 @@ const friendIds = (p: PlanPerson) => p.rules.flatMap((r) => (r.kind === "near" |
  * seats, scoring each choice by the wishes. Returns userId -> seatId.
  */
 export function planSeats(seats: PlanSeat[], people: PlanPerson[], everyone: PlanPerson[], opts: PlanOptions = {}) {
+  const run = planner(seats, people, everyone, { ...opts, effort: opts.effort === "thorough" ? "extended" : opts.effort });
+  for (;;) {
+    const r = run.next();
+    if (r.done) return r.value;
+  }
+}
+
+/**
+ * planSeats for the longer searches: hands the server back between slices of the search, so a
+ * search that takes seconds or minutes doesn't hold up everyone else's page loads.
+ */
+export async function planSeatsAsync(seats: PlanSeat[], people: PlanPerson[], everyone: PlanPerson[], opts: PlanOptions = {}) {
+  const run = planner(seats, people, everyone, opts);
+  for (;;) {
+    const r = run.next();
+    if (r.done) return r.value;
+    await new Promise((ok) => setImmediate(ok));
+  }
+}
+
+function* planner(
+  seats: PlanSeat[],
+  people: PlanPerson[],
+  everyone: PlanPerson[],
+  opts: PlanOptions,
+): Generator<void, Map<string, string>> {
   const range = opts.nearRange ?? DEFAULT_NEAR_RANGE;
   const byUser = new Map(everyone.map((p) => [p.userId, p]));
   const edges = edgeSet(seats);
@@ -175,13 +211,13 @@ export function planSeats(seats: PlanSeat[], people: PlanPerson[], everyone: Pla
     // A re-plan also tries a calm search that stays close to the old plan, and takes it unless
     // the wide search meets the wishes better: fewer people move for nothing.
     const calm = new Map(occupant);
-    const calmScore = anneal(seats, calm, movable, byUser, ctx, CALM);
-    const wideScore = anneal(seats, occupant, movable, byUser, ctx, HOT);
+    const calmScore = yield* anneal(seats, calm, movable, byUser, ctx, CALM);
+    const wideScore = yield* search(seats, occupant, movable, byUser, ctx, opts);
     if (calmScore >= wideScore - 1e-9) {
       occupant.clear();
       for (const [sid, uid] of calm) occupant.set(sid, uid);
     }
-  } else anneal(seats, occupant, movable, byUser, ctx, HOT);
+  } else yield* search(seats, occupant, movable, byUser, ctx, opts);
   improve(seats, occupant, movable, byUser, ctx);
   for (const [seatId, userId] of occupant) if (result.has(userId)) result.set(userId, seatId);
   return result;
@@ -297,6 +333,49 @@ function improve(
   }
 }
 
+/**
+ * Runs the annealing as often as the effort says, each time with other random numbers, and keeps
+ * the best plan. Every third run starts from the best plan so far instead and searches more calmly
+ * around it. Stops early once every wish is met: no plan can do better than that.
+ */
+function* search(
+  seats: PlanSeat[],
+  occupant: Map<string, string>,
+  movable: Set<string>,
+  byUser: Map<string, PlanPerson>,
+  ctx: Ctx,
+  opts: PlanOptions,
+): Generator<void, number> {
+  const runs = RUNS[opts.effort ?? "quick"];
+  let best = -Infinity;
+  let bestPlan = occupant;
+  for (let run = 0; run < runs; run++) {
+    if (run > 0 && (allMet(seats, bestPlan, byUser, ctx) || (opts.until !== undefined && Date.now() >= opts.until))) break;
+    const fromBest = run % 3 === 2;
+    const plan = new Map(fromBest ? bestPlan : occupant);
+    const score = yield* anneal(seats, plan, movable, byUser, ctx, fromBest ? HOT / 3 : HOT, run);
+    if (score > best + 1e-9) {
+      best = score;
+      bestPlan = plan;
+    }
+  }
+  occupant.clear();
+  for (const [sid, uid] of bestPlan) occupant.set(sid, uid);
+  return best;
+}
+
+/** Whether every wish that can be checked is met (a met wish scores at least 0.98, a missed one under 0.02). */
+function allMet(seats: PlanSeat[], occupant: Map<string, string>, byUser: Map<string, PlanPerson>, ctx: Ctx) {
+  const seatById = new Map(seats.map((s) => [s.id, s]));
+  const seatOf = new Map([...occupant].map(([sid, uid]) => [uid, seatById.get(sid)!]));
+  for (const p of byUser.values()) {
+    const mine = seatOf.get(p.userId);
+    if (!mine) continue;
+    for (const r of p.rules) if ((ruleMet(r, mine, seatOf, ctx.edges, ctx.range) ?? 1) < 0.5) return false;
+  }
+  return true;
+}
+
 /** Small seeded random numbers (mulberry32), so the same wishes always give the same plan. */
 function random(seed: number) {
   let a = seed >>> 0;
@@ -317,28 +396,34 @@ function random(seed: number) {
 const HOT = 0.3;
 const CALM = 0.02;
 const COLD = 1e-5;
-/** Longest stretch of seats `anneal` slides along a row in one step. */
-const MAX_SLIDE = 6;
+/** Longest stretch of seats `anneal` rotates along a row in one step. */
+const MAX_SLIDE = 8;
+/** Largest group of neighbours `anneal` swaps as one block. */
+const MAX_BLOCK = 12;
 /** Steps per open seat, and at most this many in total, so a re-plan of a big event stays quick. */
 const STEPS_PER_SEAT = 3000;
 const MAX_STEPS = 150_000;
+/** Steps between two breaks in planSeatsAsync (a few milliseconds). */
+const SLICE = 2000;
 
 /**
  * Simulated annealing over the whole plan, after the greedy pass. Moving one person at a time
  * gets stuck: Reykime can't take the free edge seat F1 when that means someone without wishes
  * lands next to a person Reykime's friend wants to avoid, even though shifting the whole group
- * one seat over meets every wish. So besides swapping two seats this also slides a stretch of
- * a row by one seat (everyone in it moves along, the last one jumps to the front), and early on
- * it accepts steps that make things a bit worse to get out of such dead ends. Keeps the best plan seen.
+ * one seat over meets every wish. So besides swapping two seats this also swaps two blocks of
+ * neighbours (a group moves as one, also to another row) and rotates a stretch of a row (a group
+ * moves along, the others shift over), and early on it accepts steps that make things a bit worse
+ * to get out of such dead ends. Keeps the best plan seen. Yields now and then (see planSeatsAsync).
  */
-function anneal(
+function* anneal(
   seats: PlanSeat[],
   occupant: Map<string, string>,
   movable: Set<string>,
   byUser: Map<string, PlanPerson>,
   ctx: Ctx,
   hot: number,
-): number {
+  run = 0,
+): Generator<void, number> {
   // Seats this run may change, in row order: not held, and free or taken by someone placed in this run.
   const open = seats
     .filter((s) => !s.locked && (!occupant.has(s.id) || movable.has(occupant.get(s.id)!)))
@@ -380,40 +465,56 @@ function anneal(
   for (let i = n - 1; i >= 0; i--)
     rowEnd[i] = i + 1 < n && open[i + 1].row === open[i].row ? rowEnd[i + 1] : i;
 
-  const rand = random(n * 7919 + movable.size);
+  const rand = random(n * 7919 + movable.size + run * 104729);
   const steps = Math.min(MAX_STEPS, STEPS_PER_SEAT * n);
   let score = sum(new Set([...concerned.values()].flat()));
   let best = score;
   let bestWho = [...who];
   for (let step = 0; step < steps; step++) {
+    if (step % SLICE === SLICE - 1) yield;
     const temp = hot * (COLD / hot) ** (step / steps);
     const i = Math.floor(rand() * n);
-    let from: number;
-    let was: (string | undefined)[];
+    // A step: the open seats it touches (`at`) and who sits there afterwards (`moved`).
+    let at: number[];
     let moved: (string | undefined)[];
-    if (rand() < 0.5 || rowEnd[i] === i) {
+    const kind = rand();
+    if (kind < 0.4 || rowEnd[i] === i) {
       // Swap two seats (with a free one, that's a move).
       const j = Math.floor(rand() * n);
       if (i === j || (!who[i] && !who[j])) continue;
-      const [x, y] = i < j ? [i, j] : [j, i];
-      from = x;
-      was = who.slice(x, y + 1);
-      moved = [...was];
-      [moved[0], moved[moved.length - 1]] = [was[was.length - 1], was[0]];
+      at = [i, j];
+      moved = [who[j], who[i]];
+    } else if (kind < 0.7) {
+      // Swap two blocks of neighbours, so a pair or a small group moves as one. Without this,
+      // friends sitting together have to split up first, which costs their wishes, so a better
+      // spot for the whole group is never found.
+      // Mostly small groups; now and then a big one, so a whole group can change rows.
+      const k = 2 + Math.floor(rand() ** 2 * Math.min(MAX_BLOCK - 1, rowEnd[i] - i));
+      const j = Math.floor(rand() * n);
+      if (rowEnd[j] - j < k - 1 || (j < i + k && i < j + k)) continue;
+      const flip = rand() < 0.5; // the block can turn round, changing who sits at its ends
+      at = [];
+      moved = [];
+      for (let m = 0; m < k; m++) {
+        at.push(i + m, j + m);
+        moved.push(who[j + (flip ? k - 1 - m : m)], who[i + (flip ? k - 1 - m : m)]);
+      }
     } else {
-      // Slide open[i..j] by one seat, either way.
-      const j = i + 1 + Math.floor(rand() * Math.min(MAX_SLIDE, rowEnd[i] - i));
-      from = i;
-      was = who.slice(i, j + 1);
-      if (was.every((u) => !u)) continue;
-      moved = rand() < 0.5 ? [...was.slice(1), was[0]] : [was[was.length - 1], ...was.slice(0, -1)];
+      // Rotate a stretch of a row: a block moves along and the seats it passes shift over to
+      // make room (sliding everyone by one is the smallest such step).
+      const len = 2 + Math.floor(rand() * Math.min(MAX_SLIDE - 1, rowEnd[i] - i));
+      const by = 1 + Math.floor(rand() * (len - 1));
+      at = Array.from({ length: len }, (_, m) => i + m);
+      moved = at.map((_, m) => who[i + ((m + by) % len)]);
     }
+    const was = at.map((x) => who[x]);
     const people = affected(moved.filter((u, k) => u !== was[k]));
+    if (!people.size && moved.every((u, k) => u === was[k])) continue;
     const before = sum(people);
-    moved.forEach((u, k) => put(from + k, u));
+    at.forEach((x, k) => put(x, moved[k]));
     const delta = sum(people) - before;
     if (delta >= 0 || rand() < Math.exp(delta / temp)) score += delta;
-    else was.forEach((u, k) => put(from + k, u));
+    else at.forEach((x, k) => put(x, was[k]));
     if (score > best + 1e-9) {
       best = score;
       bestWho = [...who];

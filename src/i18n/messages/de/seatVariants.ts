@@ -5,6 +5,8 @@ export const seatVariants: Messages["seatVariants"] = {
   hint: "Speichere, wer wo sitzt, unter einem Namen, probiere etwas anderes aus und wechsle zurück. Nur Leads sehen Varianten; Mitglieder sehen den aktiven Plan, sobald er final ist. Jede Variante wird mit den heutigen Platzwünschen geprüft.",
   name: "Name der Variante",
   namePlaceholder: "Name, z. B. Freunde vorne (optional)",
+  thoroughName: "Gründliche Suche",
+  searching: "Gründliche Suche läuft. Ihr bester Plan erscheint hier spätestens um {until} als «{name}».",
   defaultName: "Variante",
   saveLive: "Aktuellen Plan speichern",
   planNew: "Aus Wünschen planen",
