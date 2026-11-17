@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { SOCIAL_MAX, cleanSocials, listSocials } from "./socials";
+import { SOCIAL_MAX, cleanSocials, hiddenFromForm, listSocials } from "./socials";
 
 const href = (key: string, value: string) => listSocials({ [key]: value })[0]?.href;
 
@@ -38,4 +38,17 @@ test("cleanSocials keeps known keys, trims and caps the length", () => {
 test("listSocials keeps the display order", () => {
   assert.deepEqual(listSocials({ youtube: "a", discord: "b" }).map((s) => s.key), ["discord", "youtube"]);
   assert.deepEqual(listSocials(null), []);
+});
+
+test("Discord falls back to the linked account's username", () => {
+  assert.equal(listSocials({}, { discordUsername: "pixel" })[0]?.value, "pixel");
+  assert.equal(listSocials({ discord: "typed" }, { discordUsername: "pixel" })[0]?.value, "typed");
+  assert.equal(listSocials({}, {}).length, 0);
+});
+
+test("hidden: unticked Show boxes, and listSocials marks them", () => {
+  const hidden = hiddenFromForm({ steam: "x", show_steam: "on", twitch: "y" });
+  assert.ok(hidden.includes("twitch") && !hidden.includes("steam"));
+  const rows = listSocials({ steam: "x", twitch: "y" }, { hidden });
+  assert.deepEqual(rows.map((r) => [r.key, r.hidden]), [["steam", false], ["twitch", true]]);
 });

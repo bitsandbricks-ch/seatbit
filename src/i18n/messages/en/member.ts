@@ -1,5 +1,7 @@
 export const member = {
   noSocials: "No socials added yet.",
+  socialHidden: "hidden",
+  socialHiddenHint: "Only you see this one; others don't.",
   guestNoLogin: "guest · no login yet",
   since: "in the clan since {date}",
   attended: "LANs attended",

@@ -87,10 +87,21 @@ export function cleanSocials(input: Record<string, unknown>) {
   return out;
 }
 
-/** The member's filled-in socials in display order, with a link where the service has one. */
-export function listSocials(socials: Record<string, string> | null | undefined) {
+/** The keys whose "Show on profile" box was left unticked (`show_<key>` checkboxes). */
+export function hiddenFromForm(input: Record<string, unknown>) {
+  return SOCIALS.filter((s) => !input[`show_${s.key}`]).map((s) => s.key);
+}
+
+/**
+ * The member's filled-in socials in display order, with a link where the service has one.
+ * `discordUsername`: the linked Discord account's name, used when they didn't type one.
+ */
+export function listSocials(
+  socials: Record<string, string> | null | undefined,
+  { discordUsername, hidden = [] }: { discordUsername?: string | null; hidden?: string[] } = {},
+) {
   return SOCIALS.flatMap((s) => {
-    const value = socials?.[s.key];
-    return value ? [{ key: s.key, label: s.label, value, href: s.link?.(value) ?? null }] : [];
+    const value = socials?.[s.key] || (s.key === "discord" ? discordUsername : null);
+    return value ? [{ key: s.key, label: s.label, value, href: s.link?.(value) ?? null, hidden: hidden.includes(s.key) }] : [];
   });
 }

@@ -220,7 +220,13 @@ export async function MemberProfile({ slug, userId, variant }: { slug: string; u
           </Card>
 
           <Card title={t("member.socials")}>
-            <SocialList socials={u.socials ?? {}} discordId={discord?.accountId} />
+            <SocialList
+              socials={u.socials ?? {}}
+              discordId={discord?.accountId}
+              discordUsername={u.discordUsername}
+              hidden={u.hiddenSocials ?? []}
+              isSelf={isSelf}
+            />
           </Card>
 
           {seesPrivate && (

@@ -2,6 +2,8 @@ import type { Messages } from "../en";
 
 export const member: Messages["member"] = {
   noSocials: "Noch keine Socials hinzugefügt.",
+  socialHidden: "versteckt",
+  socialHiddenHint: "Nur du siehst diesen Eintrag, andere nicht.",
   guestNoLogin: "Gast · noch kein Login",
   since: "im Clan seit {date}",
   attended: "LANs besucht",
