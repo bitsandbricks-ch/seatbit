@@ -1,12 +1,11 @@
 import { eq } from "drizzle-orm";
 import { schema } from "../src/db";
-import { CLAN_ID } from "./env";
 import { createEvent, db, expect, test, userId } from "./fixtures";
 
 test.describe("games", () => {
   test("last year's games of the same LAN type are one tap away", async ({ as }) => {
     const DAY = 86_400_000;
-    const type = db().insert(schema.lanType).values({ clanId: CLAN_ID, name: `Type ${Date.now()}` }).returning().get();
+    const type = db().insert(schema.lanType).values({ name: `Type ${Date.now()}` }).returning().get();
     const last = createEvent({ name: `Last year ${Date.now()}` });
     const next = createEvent({ attendees: [{ who: "anna" }] });
     db()

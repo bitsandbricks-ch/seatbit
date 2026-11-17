@@ -43,7 +43,6 @@ export const errors: Messages["errors"] = {
   pickClan: "Wähl einen Clan.",
   setDates: "Gib an, wann das Event beginnt und endet.",
   endAfterStart: "Das Ende muss nach dem Start sein.",
-  typeOtherClan: "Dieser LAN-Typ gehört zu einem anderen Clan.",
   publishFirstSend: "Veröffentliche das Event zuerst. Entwürfe verschicken nichts.",
   seatFormat: "Verwende einen Reihenbuchstaben und eine Zahl, z.B. F12.",
   seatExists: "{seat} gibt es schon. Jede Platznummer kann nur einmal vorkommen.",

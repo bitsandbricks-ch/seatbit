@@ -11,9 +11,9 @@ Platform staff run the instance: they see all clans, events and users, change th
 | Role | Can |
 | --- | --- |
 | **Owner** | Everything, including the *Supporters* (billing) and *Operator & legal* settings and giving the owner role. |
-| **Admin** | Platform settings and mail templates, manage every clan and event like their admins, give and take the moderator and support roles, reports and suspensions. |
+| **Admin** | Platform settings, mail templates and [LAN types](#lan-types), manage every clan and event like their admins, give and take the moderator and support roles, reports and suspensions. |
 | **Moderator** | The [report queue](moderation.md), suspending and restoring users and clans. No settings. |
-| **Support** | Read-only: the admin page, every clan and event, the audit log. To help people, without changing anything. |
+| **Support** | Read-only: the admin page, every clan and event, the audit log, to help people. Also keeps the [LAN types](#lan-types). |
 
 The first account is always owner, as is anyone in the **Admin emails** setting. Give roles in the user list on the admin page or with the [admin CLI](../installation/operations.md#admin-cli). Nobody changes their own role, and admins can't touch owners or other admins, so there is always an owner. The last owner can't delete their account.
 
@@ -47,12 +47,22 @@ Tap a name in the user list on *Overview* to open that person's page. All platfo
 - **Discord:** linked username and user ID, and whether the bot verified them on a clan's server. For guests, the Discord member a lead linked.
 - **Clans:** every clan they're in, with their role and since when. Each opens their member profile in that clan.
 - **Events:** every event they answered, across all clans, with their answer, seat and ticket.
-- **Nicks:** the default nick, the nick per LAN type and per event. Owners and admins also see the LAN IDs, and can change the nick and LAN ID per LAN type for each of the person's clans (**Edit for** *clan*), like that clan's admins; the change shows in the clan's audit log.
+- **Nicks:** the default nick, the nick per LAN type and per event. Owners and admins also see the LAN IDs, and can change the nick and LAN ID for every LAN type (**Edit nicks & LAN IDs**); the change shows in the platform audit log.
 - **Socials** from their profile.
 
 Give a platform role or suspend the account from the top of the page, as in the list. Emergency contacts and dietary needs don't show here: only the leads of an event see those.
 
 ![User details](../screenshots/desktop-admin-user.png){ .shot }
+
+## LAN types
+
+The **LAN types** tab holds the LAN parties every clan picks from (see [LAN types](clans.md#lan-types)). Owners, admins and support add and edit them: name, location, website, ticket shop, price, usual length and the member profile link. Each type exists once; two types can't share a name.
+
+The list shows how many clans use each type and how many events it has. A type's page lists the clans that use it. **Delete** removes it for every clan: their defaults, contacts and to-dos for it, and members' nicks and LAN IDs for it, go too. Its events stay, without a type.
+
+Seats, spots, deadlines, Discord placement, contacts and to-dos stay per clan: each clan sets them on the type's page in its own settings.
+
+![LAN types on the admin page](../screenshots/desktop-admin-types.png){ .shot }
 
 ## Platform settings
 
