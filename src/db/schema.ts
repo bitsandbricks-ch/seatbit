@@ -38,6 +38,11 @@ export const user = sqliteTable("user", {
   discordDms: integer("discord_dms", { mode: "boolean" }).default(true).notNull(),
   /** "en" | "de" chosen on the profile; null = follow the browser (and the instance default for mails). */
   locale: text("locale"),
+  /** Discord username of the linked account ("name", or "name#1234" for old accounts), refreshed on each Discord sign-in. */
+  discordUsername: text("discord_username"),
+  /** Discord user id the bot found on one of the member's clan servers; verified while it matches the linked account. */
+  discordVerifiedId: text("discord_verified_id"),
+  discordVerifiedAt: integer("discord_verified_at", { mode: "timestamp_ms" }),
   // Guests: members a lead added who have no login yet. They belong to one clan
   // and are taken over by a real account through their claim link.
   isGuest: integer("is_guest", { mode: "boolean" }).default(false).notNull(),

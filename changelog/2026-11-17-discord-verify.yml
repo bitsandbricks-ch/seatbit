@@ -1,0 +1,17 @@
+date: 2026-11-17
+type: new
+en:
+  title: "Discord username, ID and verification"
+  text: >-
+    Your profile now shows your Discord username and user ID, with a button to copy the ID. A Discord
+    badge after names shows who linked Discord; it turns green once they're verified on the clan's
+    server. Verify yourself with /verify in the server or the Verify button on your profile. Clan admins
+    check everyone at once with /seatbit validate or Check Discord in the clan settings.
+de:
+  title: "Discord-Benutzername, ID und Bestätigung"
+  text: >-
+    Dein Profil zeigt jetzt deinen Discord-Benutzernamen und deine Benutzer-ID, mit einem Button zum
+    Kopieren der ID. Ein Discord-Abzeichen nach Namen zeigt, wer Discord verknüpft hat; es wird grün,
+    sobald jemand auf dem Server des Clans bestätigt ist. Bestätige dich mit /verify auf dem Server oder
+    dem Button «Bestätigen» im Profil. Clan-Admins prüfen alle auf einmal mit /seatbit validate oder
+    «Discord prüfen» in den Clan-Einstellungen.

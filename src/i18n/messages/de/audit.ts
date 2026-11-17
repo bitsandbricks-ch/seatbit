@@ -79,6 +79,7 @@ export const audit: Messages["audit"] = {
   donationRefund: "eine Spende von {amount} wurde zurückerstattet",
   supporterDonation: "der Clan ist dank einer Spende Supporter{until}",
   supporterEnd: "das Supporter-Abo des Clans ist abgelaufen",
+  discordValidate: "hat die Mitglieder mit Discord abgeglichen ({verified} von {total} bestätigt)",
   paymentsOn: "hat Clan-Zahlungen eingeschaltet",
   paymentsOnInfo: "hat Clan-Zahlungen eingeschaltet und die Zahlungsangaben geändert",
   paymentsOff: "hat Clan-Zahlungen ausgeschaltet",

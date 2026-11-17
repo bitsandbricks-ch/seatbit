@@ -116,6 +116,12 @@ export const commands = [
     type: 1,
   },
   {
+    name: "verify",
+    description: "Confirm that your Seatbit account is on this server",
+    type: 1,
+    dm_permission: false,
+  },
+  {
     name: "claim",
     description: "Take over the guest profile your clan's leads made for you",
     type: 1,
@@ -153,6 +159,7 @@ export const commands = [
       },
       { type: 1, name: "stop", description: "Stop posting in this channel" },
       { type: 1, name: "announce", description: "Post your clan's upcoming LANs in this channel now" },
+      { type: 1, name: "validate", description: "Check which clan members are on this server and mark them verified" },
     ],
   },
 ];
@@ -194,6 +201,8 @@ const DE: Record<string, string> = {
   "Only needed if you manage several clans": "Nur nötig, wenn du mehrere Clans verwaltest",
   "Stop posting in this channel": "In diesem Kanal nicht mehr posten",
   "Post your clan's upcoming LANs in this channel now": "Poste die kommenden LANs deines Clans jetzt in diesem Kanal",
+  "Confirm that your Seatbit account is on this server": "Bestätige, dass dein Seatbit-Konto auf diesem Server ist",
+  "Check which clan members are on this server and mark them verified": "Prüfe, welche Clan-Mitglieder auf diesem Server sind, und markiere sie als bestätigt",
 };
 
 /** Adds German description (and choice) localizations to every command and option. */

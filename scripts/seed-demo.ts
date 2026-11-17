@@ -111,6 +111,17 @@ export async function seedDemo({ force = false, discord = false } = {}) {
             : { id: `demo-acc-${p.key}`, accountId: id, providerId: "credential", userId: id, password, updatedAt: new Date() },
         )
         .run();
+      if (discord) {
+        // Usernames as the Discord sign-in stores them; every other member verified on the clan's server.
+        const accountId = `10000000000000${String(1000 + i)}`;
+        tx.update(s.user)
+          .set({
+            discordUsername: SOCIALS[p.key]?.discord ?? p.nick.toLowerCase().replace(/[^a-z0-9_.]/g, ""),
+            ...(i % 2 === 0 && { discordVerifiedId: accountId, discordVerifiedAt: new Date(Date.now() - 20 * DAY) }),
+          })
+          .where(eq(s.user.id, id))
+          .run();
+      }
       tx.insert(s.nickname).values({ userId: id, nick: p.nick, isPrimary: true }).run();
     });
 

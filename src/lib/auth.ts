@@ -5,6 +5,7 @@ import { nextCookies } from "better-auth/next-js";
 import { count, isNull } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { claimGuestsByDiscord, claimGuestsByEmail } from "./guest-claim";
+import { rememberDiscordUsername } from "./discord-verify";
 import { sendSystemMail } from "./system-mail";
 import { localeOf } from "../i18n/user-locale";
 import { getBoolSetting, getSetting, settingsFingerprint } from "./settings";
@@ -107,11 +108,18 @@ function build() {
           // Linking Discord on the profile later counts too.
           after: async (a) => {
             if (a.providerId !== "discord") return;
+            void rememberDiscordUsername(a.userId, a.accessToken); // don't hold up the sign-in
             try {
               claimGuestsByDiscord(a.userId);
             } catch (e) {
               console.error("[guests] Discord auto-claim failed", e);
             }
+          },
+        },
+        // Each Discord sign-in stores fresh tokens: pick up a changed username then.
+        update: {
+          after: async (a) => {
+            if (a?.providerId === "discord") void rememberDiscordUsername(a.userId, a.accessToken);
           },
         },
       },

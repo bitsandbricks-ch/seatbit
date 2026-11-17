@@ -42,6 +42,8 @@ import { requireUser } from "@/lib/session";
 import { unlinkDiscordChannel } from "@/app/actions";
 import { discordEnabled, inviteUrl } from "@/lib/discord-api";
 import { clanServers } from "@/lib/discord-invite";
+import { clanGuildIds, discordStates } from "@/lib/discord-verify";
+import { ValidateDiscordButton } from "@/components/discord-verify-buttons";
 import { AuditLog, auditQuery, parseAuditFilter } from "@/components/audit-log";
 import { auditEntries, auditedEvents } from "@/lib/audit";
 import { ensureDefaultTasks, tasksAt } from "@/lib/lead-tasks";
@@ -80,6 +82,8 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
     // Only from people still in the clan (or asking to join it from Discord), for guests still waiting to be claimed.
     .filter((r) => members.some((m) => m.u.id === r.userId) && members.some((m) => m.u.id === r.guestId));
   const active = members.filter((m) => m.role !== "pending");
+  const discordOf = discordStates(active.map((m) => m.u.id));
+  const hasServer = clanGuildIds(c.id).length > 0;
   const guests = active.filter((m) => m.u.isGuest);
   const inClan = new Set(members.map((m) => m.u.id));
   const seeAll = platformCan(me, "clans");
@@ -239,6 +243,12 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
           )}
           <Card title={`${t("clanPage.members")} (${active.length - guests.length})`}>
             <p className="mb-3 text-sm text-muted">{t(perms.has("roles") ? "clanSettings.rolesHint" : "clanSettings.rolesOnlyAdmins")}</p>
+            {discordEnabled() && hasServer && (
+              <div className="mb-3 flex flex-wrap items-center gap-3">
+                <ValidateDiscordButton clanId={c.id} />
+                <span className="text-xs text-muted">{t("discordVerify.hint")}</span>
+              </div>
+            )}
             <ClanMemberAdmin
               clanId={c.id}
               slug={c.slug}
@@ -253,6 +263,7 @@ export default async function ClanSettingsPage({ params, searchParams }: PagePro
                 role: isMemberRole(role) ? role : "member",
                 isGuest: u.isGuest,
                 avatar: avatarData(u),
+                discord: discordOf.get(u.id),
               }))}
             />
           </Card>

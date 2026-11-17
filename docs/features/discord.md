@@ -55,11 +55,24 @@ Members can do the everyday things straight from Discord, in the clan's server o
 | `/lans` | Your upcoming LANs of this server's clan (in DMs: all your clans) with answer buttons. Only you see it. |
 | `/claim` | Take over the guest profile the leads made for you. Lists the clan's guests with your name or nick; `/claim guest:<name>` picks one. See [Claiming a guest on Discord](members-guests.md#on-discord). |
 | `/guest guest:<name> member:<name>` | Leads who manage members: say which Discord member a guest is. `member` suggests only people on the server who aren't in the clan on Seatbit yet. See [Linking a guest to a Discord member](members-guests.md#on-discord). |
+| `/verify` | Confirm that your Seatbit account is on this clan's server. Your Discord badge turns green. See [Discord verification](#discord-verification). |
 | `/seatbit here` | Link this channel to your clan. |
 | `/seatbit announce` | Post the clan's upcoming LANs in this channel. |
+| `/seatbit validate` | Leads who manage members: check every clan member against this server. See [Discord verification](#discord-verification). |
 | `/seatbit stop` | Unlink this channel. |
 
 The same rules apply as on the website: once you have a ticket, your answer is locked and only leads can change it; sign-up closes at the *answer by* date; you only see and answer your own clan's events. The `event:` option suggests the matching events as you type.
+
+## Discord verification
+
+A Discord badge after a name shows that the member linked a Discord account. It's grey when the account is only linked, and green once Seatbit has seen that account on one of the clan's Discord servers (**verified**). The badge shows in the clan's member list, in *Clan settings → Members* and on member profiles.
+
+- **Members** verify themselves with `/verify` on the clan's server, or with **Verify** in *Profile → Account → Discord*, which checks the linked account against the servers of all their clans.
+- **Leads who manage members** check everyone at once with `/seatbit validate` on the server, or **Check Discord** in *Clan settings → Members* (against all the clan's servers). The bot marks the members it finds and lists who isn't on the server and who has no Discord linked. The check is logged in the clan's audit log.
+
+Verification belongs to the Discord account: linking a different one shows the badge grey again until it's verified. Nothing is removed when someone leaves the server; run the check again to see who's missing.
+
+Both checks need the Discord bot on the server. Usernames of accounts linked before this feature show up after their next Discord sign-in or the next check.
 
 ## Language
 

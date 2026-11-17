@@ -26,6 +26,7 @@ import * as locale from "../../src/app/locale-actions";
 import * as settings from "../../src/app/admin/settings/actions";
 import * as backups from "../../src/app/admin/backups/actions";
 import * as emergency from "../../src/app/emergency-actions";
+import * as discordVerify from "../../src/app/discord-verify-actions";
 import * as costs from "../../src/app/cost-actions";
 import * as seatPlan from "../../src/app/seat-plan-actions";
 import * as seatWish from "../../src/app/seat-wish-actions";
@@ -55,6 +56,7 @@ export const MODULES = {
   "admin/settings/actions": settings,
   "admin/backups/actions": backups,
   "emergency-actions": emergency,
+  "discord-verify-actions": discordVerify,
   "cost-actions": costs,
   "seat-plan-actions": seatPlan,
   "seat-wish-actions": seatWish,
@@ -383,6 +385,8 @@ export const SPECS: Spec[] = [
   { name: "admin/settings/actions.saveMaintenance", allow: PLATFORM_SETTINGS, run: () => settings.saveMaintenance({ ok: true, message: "", at: 0 }, form({ message: "Down soon", startsAt: day(1) })) },
   { name: "admin/backups/actions.backupNow", allow: ["owner"], run: () => backups.backupNow(), effect: "none" },
   { name: "admin/backups/actions.testNewestBackup", allow: ["owner"], run: () => backups.testNewestBackup(), effect: "none" },
+  { name: "discord-verify-actions.verifyMyDiscord", allow: SIGNED_IN, run: () => discordVerify.verifyMyDiscord(), effect: "none" },
+  { name: "discord-verify-actions.validateClanDiscord", allow: CLAN_MEMBERS_PERM, run: () => discordVerify.validateClanDiscord(fx.clan), effect: "none" },
   { name: "emergency-actions.updateEmergencyInfo", allow: SIGNED_IN, run: () => emergency.updateEmergencyInfo({}, form({ contactName: "Mum", contactPhone: "+41 79 000 00 00", diet: "" })) },
   { name: "admin/backups/actions.removeBackup", allow: ["owner"], run: () => backups.removeBackup("seatbit-none.db"), effect: "none" },
 
