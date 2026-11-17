@@ -41,7 +41,6 @@ export const errors = {
   pickClan: "Pick a clan.",
   setDates: "Set when the event starts and ends.",
   endAfterStart: "The end must be after the start.",
-  typeOtherClan: "That LAN type belongs to another clan.",
   publishFirstSend: "Publish the event first. Drafts don't send anything.",
   seatFormat: "Use a row letter and a number, e.g. F12.",
   seatExists: "{seat} already exists. Each seat number can only be there once.",

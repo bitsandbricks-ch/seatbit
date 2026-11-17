@@ -318,6 +318,12 @@ export function describeAudit(
       return t(d.created ? "audit.typeCreate" : "audit.typeEdit", v);
     case "type.delete":
       return t("audit.typeDelete", v);
+    case "type.clan_add":
+      return t("audit.typeClanAdd", v);
+    case "type.clan_settings":
+      return t("audit.typeClanSettings", v);
+    case "type.clan_remove":
+      return t("audit.typeClanRemove", v);
     case "discord.unlink":
       return t("audit.discordChannelUnlink", v);
     case "platform.role":

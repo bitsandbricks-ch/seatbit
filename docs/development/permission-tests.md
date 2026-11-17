@@ -19,7 +19,7 @@ It needs no running server and no setup: it seeds a throwaway database with the 
 | `member` | Plain member, coming to Lakeside LAN |
 | `lead` | Plain member, lead of Lakeside LAN only |
 | `recruiter`, `organizer`, `clanAdmin` | The clan roles (organizer is "Event manager") |
-| `support`, `moderator` | Platform staff, not in the demo clan (they may look, not change) |
+| `support`, `moderator` | Platform staff, not in the demo clan (they may look, not change; support also keeps the global LAN types) |
 | `owner` | Platform owner |
 
 ## How it decides

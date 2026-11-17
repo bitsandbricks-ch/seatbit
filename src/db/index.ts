@@ -44,12 +44,12 @@ function withMigrationLock(fn: () => void) {
 }
 
 /**
- * Databases from before clans existed: put all LANs, LAN types and users into
- * one clan so nothing is orphaned. Runs only while LANs/types without a clan exist.
+ * Databases from before clans existed: put all LANs and users into one clan so
+ * nothing is orphaned (LAN types are global). Runs only while LANs without a clan exist.
  */
 function backfillDefaultClan(sqlite: Database.Database) {
   const orphans = sqlite
-    .prepare("SELECT (SELECT count(*) FROM lan WHERE clan_id IS NULL) + (SELECT count(*) FROM lan_type WHERE clan_id IS NULL) AS n")
+    .prepare("SELECT count(*) AS n FROM lan WHERE clan_id IS NULL")
     .get() as { n: number };
   if (!orphans.n) return;
   sqlite.transaction(() => {
@@ -64,7 +64,9 @@ function backfillDefaultClan(sqlite: Database.Database) {
         .run(clan.id);
     }
     sqlite.prepare("UPDATE lan SET clan_id = ? WHERE clan_id IS NULL").run(clan.id);
-    sqlite.prepare("UPDATE lan_type SET clan_id = ? WHERE clan_id IS NULL").run(clan.id);
+    sqlite
+      .prepare("INSERT OR IGNORE INTO clan_lan_type (clan_id, type_id) SELECT DISTINCT clan_id, type_id FROM lan WHERE clan_id = ? AND type_id IS NOT NULL")
+      .run(clan.id);
   })();
 }
 

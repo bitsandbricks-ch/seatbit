@@ -7,11 +7,12 @@ import type { LeadTask } from "@/db/schema";
 import { tr } from "@/i18n/server";
 import { auditLan } from "@/lib/audit";
 import { getLan } from "@/lib/lans";
+import { getType } from "@/lib/lan-types";
 import { LEAD_STEP_DEPS } from "@/lib/lead-checklist";
 import { isLanManager, requireClanPermission, requireLanManager } from "@/lib/session";
 import type { FormState } from "./actions";
 
-const { leadTask, leadContact, lanTask, lanType } = schema;
+const { leadTask, leadContact, lanTask, clanLanType } = schema;
 
 const str = (fd: FormData, k: string, max = 200) => String(fd.get(k) ?? "").trim().slice(0, max);
 
@@ -48,9 +49,9 @@ export async function saveLeadTask(_: FormState, fd: FormData): Promise<FormStat
       if (!l?.clanId) return { error: await tr("errors.taskGone") };
       scope = { clanId: l.clanId, typeId: null, lanId };
     } else if (typeId) {
-      const ty = db.select().from(lanType).where(eq(lanType.id, typeId)).get();
-      if (!ty?.clanId) return { error: await tr("errors.taskGone") };
-      scope = { clanId: ty.clanId, typeId, lanId: null };
+      // Types are global; the to-do belongs to the clan that adds it (checked below).
+      if (!getType(typeId)) return { error: await tr("errors.taskGone") };
+      scope = { clanId: str(fd, "clanId"), typeId, lanId: null };
     } else scope = { clanId: str(fd, "clanId"), typeId: null, lanId: null };
   }
   await requireTaskEditor(scope);
@@ -69,9 +70,8 @@ export async function saveLeadTask(_: FormState, fd: FormData): Promise<FormStat
   const due = dueRaw === "" ? null : Math.max(-365, Math.min(365, Math.round(Number(dueRaw))));
   const contactId = str(fd, "contactId") || null;
   const found = contactId ? db.select().from(leadContact).where(eq(leadContact.id, contactId)).get() : undefined;
-  // Only a contact of one of this clan's LAN types.
-  const contactClan = found ? db.select({ clanId: lanType.clanId }).from(lanType).where(eq(lanType.id, found.typeId)).get()?.clanId : null;
-  const contact = found && contactClan === scope.clanId ? found : undefined;
+  // Only one of this clan's own contacts.
+  const contact = found && found.clanId === scope.clanId ? found : undefined;
   const values = {
     title,
     note: str(fd, "note", 2000),
@@ -97,11 +97,14 @@ export async function deleteLeadTask(id: string) {
   revalidateTasks();
 }
 
-export async function setClanLeadTasks(typeId: string, fd: FormData) {
-  const ty = db.select().from(lanType).where(eq(lanType.id, typeId)).get();
-  if (!ty?.clanId) return;
-  await requireClanPermission(ty.clanId, "events");
-  db.update(lanType).set({ clanLeadTasks: fd.get("on") === "on" }).where(eq(lanType.id, typeId)).run();
+export async function setClanLeadTasks(clanId: string, typeId: string, fd: FormData) {
+  await requireClanPermission(clanId, "events");
+  if (!getType(typeId)) return;
+  const clanLeadTasks = fd.get("on") === "on";
+  db.insert(clanLanType)
+    .values({ clanId, typeId, clanLeadTasks })
+    .onConflictDoUpdate({ target: [clanLanType.clanId, clanLanType.typeId], set: { clanLeadTasks } })
+    .run();
   revalidateTasks();
 }
 
@@ -111,9 +114,9 @@ export async function saveLeadContact(_: FormState, fd: FormData): Promise<FormS
   const id = str(fd, "id") || null;
   const existing = id ? db.select().from(leadContact).where(eq(leadContact.id, id)).get() : undefined;
   const typeId = existing?.typeId ?? str(fd, "typeId");
-  const ty = db.select().from(lanType).where(eq(lanType.id, typeId)).get();
-  if (!ty?.clanId || (id && !existing)) return { error: await tr("errors.taskGone") };
-  await requireClanPermission(ty.clanId, "events");
+  const clanId = existing ? existing.clanId : str(fd, "clanId");
+  if (!clanId || !getType(typeId) || (id && !existing)) return { error: await tr("errors.taskGone") };
+  await requireClanPermission(clanId, "events");
   const name = str(fd, "name");
   if (!name) return { error: await tr("errors.contactName") };
   const url = str(fd, "url", 500);
@@ -128,7 +131,7 @@ export async function saveLeadContact(_: FormState, fd: FormData): Promise<FormS
     note: str(fd, "note", 1000),
   };
   if (existing) db.update(leadContact).set(values).where(eq(leadContact.id, existing.id)).run();
-  else db.insert(leadContact).values({ ...values, typeId }).run();
+  else db.insert(leadContact).values({ ...values, clanId, typeId }).run();
   revalidateTasks();
   return { ok: true };
 }
@@ -136,9 +139,8 @@ export async function saveLeadContact(_: FormState, fd: FormData): Promise<FormS
 export async function deleteLeadContact(id: string) {
   const c = db.select().from(leadContact).where(eq(leadContact.id, id)).get();
   if (!c) return;
-  const ty = db.select().from(lanType).where(eq(lanType.id, c.typeId)).get();
-  if (!ty?.clanId) return;
-  await requireClanPermission(ty.clanId, "events");
+  if (!c.clanId) return;
+  await requireClanPermission(c.clanId, "events");
   db.delete(leadContact).where(eq(leadContact.id, id)).run();
   revalidateTasks();
 }

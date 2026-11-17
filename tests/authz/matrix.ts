@@ -21,6 +21,7 @@ import * as food from "../../src/app/food-actions";
 import * as payments from "../../src/app/payment-actions";
 import * as billing from "../../src/app/billing-actions";
 import * as tasks from "../../src/app/lead-task-actions";
+import * as lanTypes from "../../src/app/lan-type-actions";
 import * as moderation from "../../src/app/moderation-actions";
 import * as account from "../../src/app/account-actions";
 import * as locale from "../../src/app/locale-actions";
@@ -52,6 +53,7 @@ export const MODULES = {
   "payment-actions": payments,
   "billing-actions": billing,
   "lead-task-actions": tasks,
+  "lan-type-actions": lanTypes,
   "moderation-actions": moderation,
   "account-actions": account,
   "locale-actions": locale,
@@ -97,6 +99,8 @@ const CLAN_MEMBERS_PERM: Actor[] = ["recruiter", "clanAdmin", "owner"];
 const CLAN_SETTINGS: Actor[] = ["clanAdmin", "owner"];
 const CLAN_PAYMENTS: Actor[] = ["organizer", "clanAdmin", "owner"];
 const PLATFORM_SETTINGS: Actor[] = ["owner"];
+/** Keep the global LAN types: platform owners, admins and support. */
+const TYPE_STAFF: Actor[] = ["support", "owner"];
 const PLATFORM_SUSPEND: Actor[] = ["moderator", "owner"];
 const NOBODY: Actor[] = [];
 /** Platform staff who may look at every clan's events, read-only. */
@@ -125,7 +129,7 @@ export const SPECS: Spec[] = [
   { name: "actions.setNick", allow: SIGNED_IN, run: () => actions.setNick(form({ nick: "Zed" })) },
   { name: "actions.setNick (other clan's event)", allow: ["outsider", ...VIEWERS, "owner"], run: () => actions.setNick(form({ nick: "Zed", lanId: fx.otherLan })) },
   { name: "actions.setNick (demo event)", allow: [...MEMBERS, ...VIEWERS], run: () => actions.setNick(form({ nick: "Zed", lanId: fx.lan })) },
-  { name: "actions.setMyLanId", allow: [...MEMBERS, ...VIEWERS], run: () => actions.setMyLanId(form({ typeId: fx.type, lanAccount: "99999" })) },
+  { name: "actions.setMyLanId", allow: SIGNED_IN, run: () => actions.setMyLanId(form({ typeId: fx.type, lanAccount: "99999" })) },
   { name: "actions.updateProfile", allow: SIGNED_IN, run: () => actions.updateProfile(form({ firstName: "Zora", lastName: "Test" })) },
   { name: "actions.completeProfile", allow: SIGNED_IN, run: () => actions.completeProfile(form({ firstName: "Zora", lastName: "Test" })) },
   { name: "actions.updateNotifications", allow: SIGNED_IN, run: () => actions.updateNotifications({}, form({ emailReminders: "on" })) },
@@ -148,9 +152,9 @@ export const SPECS: Spec[] = [
     run: () => actions.saveLan(undefined, form({ id: fx.lan, name: "Renamed LAN", startsAt: day(30), endsAt: day(32), reminderDays: "3" })),
   },
   {
-    name: "actions.saveLan (other clan's LAN type)",
-    allow: NOBODY,
-    noPositive: "a LAN type from another clan is always refused",
+    // LAN types are global: the other clan's leads may use a type the demo clan also goes to.
+    name: "actions.saveLan (a type the clan doesn't have yet)",
+    allow: ["outsider", "owner"],
     run: () => actions.saveLan(undefined, form({ id: fx.otherLan, typeId: fx.type, name: "Other LAN", startsAt: day(40), endsAt: day(42), reminderDays: "3" })),
   },
   { name: "actions.publishLan", allow: ["clanAdmin", "organizer", "owner"], run: () => actions.publishLan(fx.draftLan) },
@@ -193,15 +197,18 @@ export const SPECS: Spec[] = [
   },
   { name: "actions.publishSeats", allow: EVENT_MANAGERS, run: () => actions.publishSeats(fx.pickLan, false) },
   { name: "actions.unpublishSeats", allow: LAN_MANAGERS, run: () => actions.unpublishSeats(fx.lan) },
-  { name: "actions.saveLanType (new)", allow: EVENT_MANAGERS, run: () => actions.saveLanType(undefined, form({ clanId: fx.clan, name: "New type", reminderDays: "3", durationHours: "48" })) },
-  { name: "actions.saveLanType (edit)", allow: EVENT_MANAGERS, run: () => actions.saveLanType(undefined, form({ id: fx.type, name: "Renamed type", reminderDays: "3", durationHours: "48" })) },
+
+  // ---------- lan-type-actions.ts ----------
+  { name: "lan-type-actions.saveLanType (new)", allow: TYPE_STAFF, run: () => lanTypes.saveLanType(undefined, form({ name: `New type ${Date.now()}`, durationHours: "48" })) },
+  { name: "lan-type-actions.saveLanType (edit)", allow: TYPE_STAFF, run: () => lanTypes.saveLanType(undefined, form({ id: fx.type, name: `Renamed type ${Date.now()}`, durationHours: "48" })) },
+  { name: "lan-type-actions.deleteLanType", allow: TYPE_STAFF, run: () => lanTypes.deleteLanType(fx.otherType) },
+  { name: "lan-type-actions.addClanType", allow: EVENT_MANAGERS, run: () => lanTypes.addClanType(fx.clan, form({ typeId: fx.otherType })) },
   {
-    name: "actions.saveLanType (type of no clan)",
-    allow: NOBODY,
-    noPositive: "a LAN type without a clan can't be edited through a clan",
-    run: () => actions.saveLanType(undefined, form({ id: fx.legacyType, clanId: fx.clan, name: "Taken over", reminderDays: "3", durationHours: "48" })),
+    name: "lan-type-actions.saveClanType",
+    allow: EVENT_MANAGERS,
+    run: () => lanTypes.saveClanType(fx.clan, fx.type, undefined, form({ reminderDays: "4", seatSpec: "F1-F4", discordMode: "thread", capacity: `${Date.now() % 1000 + 1}` })),
   },
-  { name: "actions.deleteLanType", allow: EVENT_MANAGERS, run: () => actions.deleteLanType(fx.type) },
+  { name: "lan-type-actions.removeClanType", allow: EVENT_MANAGERS, run: () => lanTypes.removeClanType(fx.clan, fx.type) },
 
   // ---------- event-actions.ts ----------
   { name: "event-actions.schedulePublish", allow: ["clanAdmin", "organizer", "owner"], run: () => eventActions.schedulePublish(fx.draftLan, day(3)) },
@@ -326,8 +333,8 @@ export const SPECS: Spec[] = [
   { name: "lead-task-actions.saveLeadTask (edit)", allow: EVENT_MANAGERS, run: () => tasks.saveLeadTask(undefined, form({ id: fx.leadTask, title: "Edited", dueDays: "5" })) },
   { name: "lead-task-actions.deleteLeadTask", allow: EVENT_MANAGERS, run: () => tasks.deleteLeadTask(fx.leadTask) },
   { name: "lead-task-actions.deleteLeadTask (event)", allow: LAN_MANAGERS, run: () => tasks.deleteLeadTask(fx.lanLeadTask) },
-  { name: "lead-task-actions.setClanLeadTasks", allow: EVENT_MANAGERS, run: () => tasks.setClanLeadTasks(fx.type, form({})) },
-  { name: "lead-task-actions.saveLeadContact", allow: EVENT_MANAGERS, run: () => tasks.saveLeadContact(undefined, form({ typeId: fx.type, name: "Crew" })) },
+  { name: "lead-task-actions.setClanLeadTasks", allow: EVENT_MANAGERS, run: () => tasks.setClanLeadTasks(fx.clan, fx.type, form({})) },
+  { name: "lead-task-actions.saveLeadContact", allow: EVENT_MANAGERS, run: () => tasks.saveLeadContact(undefined, form({ clanId: fx.clan, typeId: fx.type, name: "Crew" })) },
   { name: "lead-task-actions.deleteLeadContact", allow: EVENT_MANAGERS, run: () => tasks.deleteLeadContact(fx.leadContact) },
   { name: "lead-task-actions.toggleLanTask", allow: LAN_MANAGERS, run: () => tasks.toggleLanTask(fx.lan, fx.leadTask) },
   { name: "lead-task-actions.assignLanTask", allow: LAN_MANAGERS, run: () => tasks.assignLanTask(fx.lan, fx.leadTask, ACTORS.lead) },
@@ -355,6 +362,11 @@ export const SPECS: Spec[] = [
     name: "member-lan-actions.updateMemberLanInfo",
     allow: CLAN_MEMBERS_PERM,
     run: () => memberLan.updateMemberLanInfo(fx.clan, ACTORS.member, undefined, form({ [`lanId_${fx.type}`]: "99999", [`nick_${fx.type}`]: "AuthzNick" })),
+  },
+  {
+    name: "member-lan-actions.updateUserLanInfo",
+    allow: PLATFORM_SETTINGS,
+    run: () => memberLan.updateUserLanInfo(ACTORS.member, undefined, form({ [`lanId_${fx.otherType}`]: "77777", [`nick_${fx.otherType}`]: "AdminNick" })),
   },
   { name: "clan-actions.resendGuestDiscordDm", allow: CLAN_MEMBERS_PERM, run: () => clanActions.resendGuestDiscordDm(fx.clan, fx.guest), effect: "none" },
   { name: "clan-actions.unlinkGuestDiscord", allow: CLAN_MEMBERS_PERM, run: () => clanActions.unlinkGuestDiscord(fx.clan, fx.guest), effect: "none" },

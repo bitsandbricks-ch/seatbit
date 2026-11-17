@@ -1,6 +1,7 @@
+import { allTypes, clanTypes, typesOfClans } from "@/lib/lan-types";
 import { DonorBadge } from "@/components/support-card";
 import { isDonor } from "@/lib/donations";
-import { asc, eq, inArray } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { myClans } from "@/lib/clans";
 import { db, schema } from "@/db";
 import { sendTestDm, updateProfile } from "@/app/actions";
@@ -49,9 +50,12 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
   const memberships = db.select().from(schema.clanMember).where(eq(schema.clanMember.userId, me.id)).all();
   const myClanList = myClans(me.id);
   const clanIds = myClanList.map((c) => c.clan.id);
-  const types = clanIds.length
-    ? db.select().from(schema.lanType).where(inArray(schema.lanType.clanId, clanIds)).orderBy(asc(schema.lanType.name)).all()
-    : [];
+  // The types my clans go to, plus any I already keep a nick or ID for (types are global).
+  const ownTypeIds = new Set([...nicks, ...lanIds].map((n) => (n.lanId ? null : n.typeId)).filter((x): x is string => !!x));
+  const clanTypeList = typesOfClans(clanIds);
+  const extraTypes = allTypes().filter((ty) => ownTypeIds.has(ty.id) && !clanTypeList.some((x) => x.id === ty.id));
+  const types = [...clanTypeList, ...extraTypes].sort((a, b) => a.name.localeCompare(b.name));
+  const interestTypes = new Map(clanIds.map((id) => [id, clanTypes(id)]));
   const accounts = db
     .select({ providerId: schema.account.providerId })
     .from(schema.account)
@@ -224,18 +228,18 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
               </ActionForm>
             )}
           </Card>
-          {types.length > 0 && (
+          {clanTypeList.length > 0 && (
             <Card title={t("profile.interests")}>
               <p className="mb-4 text-sm text-muted">{t("profile.interestsIntro")}</p>
               <div className="space-y-5">
                 {myClanList
-                  .filter((c) => types.some((ty) => ty.clanId === c.clan.id))
+                  .filter((c) => interestTypes.get(c.clan.id)?.length)
                   .map((c) => (
                     <div key={c.clan.id}>
                       {myClanList.length > 1 && <h3 className="mb-2 text-sm font-medium text-fg">{c.clan.name}</h3>}
                       <InterestsForm
                         clanId={c.clan.id}
-                        types={types.filter((ty) => ty.clanId === c.clan.id).map((ty) => ({ id: ty.id, name: ty.name }))}
+                        types={(interestTypes.get(c.clan.id) ?? []).map((ty) => ({ id: ty.id, name: ty.name }))}
                         current={memberships.find((m) => m.clanId === c.clan.id)?.interestTypes ?? null}
                       />
                     </div>

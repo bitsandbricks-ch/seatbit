@@ -12,15 +12,16 @@ export type StaffRole = (typeof STAFF_ROLES)[number];
  * settings: platform settings and mail templates. owner: billing and legal settings, the owner role.
  * roles: give and take platform roles. clans: manage any clan and event like their admins.
  * reports: the abuse report queue. suspend: suspend and restore users and clans.
+ * types: add, edit and delete the global LAN types clans pick from.
  */
-export const PLATFORM_PERMISSIONS = ["view", "settings", "owner", "roles", "clans", "reports", "suspend"] as const;
+export const PLATFORM_PERMISSIONS = ["view", "settings", "owner", "roles", "clans", "reports", "suspend", "types"] as const;
 export type PlatformPermission = (typeof PLATFORM_PERMISSIONS)[number];
 
 export const PLATFORM_ROLE_PERMS: Record<StaffRole, readonly PlatformPermission[]> = {
   owner: PLATFORM_PERMISSIONS,
-  admin: ["view", "settings", "roles", "clans", "reports", "suspend"],
+  admin: ["view", "settings", "roles", "clans", "reports", "suspend", "types"],
   moderator: ["view", "reports", "suspend"],
-  support: ["view"],
+  support: ["view", "types"],
 };
 
 /** Settings groups only owners may see and change (backups hold everyone's data). */

@@ -42,8 +42,6 @@ export const clanSettings: Messages["clanSettings"] = {
   memberInviteHint:
     "Mitglieder, die nicht auf eurem Server sind, sehen auf der Clan-Seite einen Button «Discord beitreten» und bekommen den Link, wenn ihre Beitrittsanfrage angenommen wird. Der Bot erstellt die Einladung selbst, wenn er darf («Einladung erstellen»), oder du fügst deine eigene ein.",
   server: "Server {id}",
-  typesHint:
-    "Wiederkehrende LAN-Partys wie Lock & Load oder SwitzerLAN. Das Event jedes Jahres wird aus seinem Typ erstellt, und Mitglieder behalten einen Nick pro Typ.",
   noTypes: "Noch keine LAN-Typen.",
   seats: "Plätze {seats}",
   threadPerEvent: "Discord-Thread pro Event",

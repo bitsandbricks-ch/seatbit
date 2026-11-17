@@ -212,30 +212,38 @@ export async function seedDemo({ force = false, discord = false } = {}) {
       .values([
         {
           id: lakeside,
-          clanId,
           name: "Lakeside LAN",
-          description: "Big weekend LAN in a sports hall by the lake. We always get a block in row F.",
+          description: "Big weekend LAN in a sports hall by the lake.",
           location: "Sports hall, Lakeside",
           websiteUrl: "https://example.com/lakeside-lan",
           ticketUrl: "https://example.com/lakeside-lan/tickets",
           price: "CHF 65",
-          capacity: 20,
-          seatSpec: "F1-F16, F19-F22",
-          discordMode: "thread",
           profileUrl: "https://example.com/lakeside-lan/user/?id={id}",
         },
         {
           id: mountain,
-          clanId,
           name: "Mountain Mayhem",
           description: "Small cosy LAN in a mountain hut. Sleeping in the hut is included.",
           location: "Mountain hut, Alpstadt",
           websiteUrl: "https://example.com/mountain-mayhem",
           ticketUrl: "https://example.com/mountain-mayhem/tickets",
           price: "CHF 90 incl. food",
-          capacity: 12,
-          seatSpec: "A1-A6, B1-B6",
         },
+        {
+          id: "demo-type-pixel",
+          name: "Pixel Party",
+          description: "Yearly city LAN. No clan of this demo goes there yet.",
+          location: "Convention centre, Rivertown",
+          websiteUrl: "https://example.com/pixel-party",
+          price: "CHF 45",
+        },
+      ])
+      .run();
+    // The clan's own defaults for the types it goes to (we always get a block in row F).
+    tx.insert(s.clanLanType)
+      .values([
+        { clanId, typeId: lakeside, capacity: 20, seatSpec: "F1-F16, F19-F22", discordMode: "thread" },
+        { clanId, typeId: mountain, capacity: 12, seatSpec: "A1-A6, B1-B6" },
       ])
       .run();
     // Anna uses another nick at Lakeside LAN, and her participant number there.
@@ -374,6 +382,7 @@ export async function seedDemo({ force = false, discord = false } = {}) {
       .values([
         {
           id: "demo-contact-seats",
+          clanId,
           typeId: lakeside,
           name: "Jonas Beispiel",
           role: "Seat planning",
@@ -383,6 +392,7 @@ export async function seedDemo({ force = false, discord = false } = {}) {
         },
         {
           id: "demo-contact-crew",
+          clanId,
           typeId: lakeside,
           name: "Lakeside LAN crew",
           role: "Tickets and general questions",

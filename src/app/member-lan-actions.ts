@@ -2,12 +2,13 @@
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db, schema } from "@/db";
+import { allTypes, clanTypes } from "@/lib/lan-types";
 import { err, tr } from "@/i18n/server";
 import { audit } from "@/lib/audit";
 import { LAN_ID_MAX, saveLanAccount } from "@/lib/lan-accounts";
 import { lanChanged } from "@/lib/live";
 import { saveNick } from "@/lib/member-updates";
-import { requireClanPermission } from "@/lib/session";
+import { assertPlatform, requireClanPermission } from "@/lib/session";
 import type { FormState } from "./actions";
 
 /**
@@ -25,7 +26,39 @@ export async function updateMemberLanInfo(clanId: string, userId: string, _: For
   const u = db.select().from(schema.user).where(eq(schema.user.id, userId)).get();
   if (!m || m.role === "pending" || !u || u.deletedAt) throw await err("errors.gone");
 
-  const types = db.select({ id: schema.lanType.id, name: schema.lanType.name }).from(schema.lanType).where(eq(schema.lanType.clanId, clanId)).all();
+  const changed = await applyLanInfo(userId, clanTypes(clanId), formData);
+  if (!Array.isArray(changed)) return changed;
+  if (changed.length === 0) return { ok: true };
+
+  const fields = [changed.some((c) => c.nick) && "nicks", changed.some((c) => c.lanId) && "LAN IDs"].filter((f): f is string => !!f);
+  audit({ actorId: me.id, action: "member.lan_info", clanId, targetUserId: userId, data: { fields, types: changed.map((c) => c.type) } });
+  // Nicks show on the clan's event pages, so open ones refresh.
+  const now = new Date();
+  for (const l of db.select({ id: schema.lan.id, endsAt: schema.lan.endsAt }).from(schema.lan).where(eq(schema.lan.clanId, clanId)).all())
+    if (l.endsAt >= now) lanChanged(l.id);
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+/**
+ * Platform owners and admins set anyone's nick and LAN ID for every LAN type at once (types are
+ * global, so this isn't tied to one clan). Audit-logged like the clan version.
+ */
+export async function updateUserLanInfo(userId: string, _: FormState, formData: FormData): Promise<FormState> {
+  const me = await assertPlatform("clans");
+  const u = db.select().from(schema.user).where(eq(schema.user.id, userId)).get();
+  if (!u || u.deletedAt || u.isGuest) throw await err("errors.gone");
+  const changed = await applyLanInfo(userId, allTypes(), formData);
+  if (!Array.isArray(changed)) return changed;
+  if (changed.length === 0) return { ok: true };
+  const fields = [changed.some((c) => c.nick) && "nicks", changed.some((c) => c.lanId) && "LAN IDs"].filter((f): f is string => !!f);
+  audit({ actorId: me.id, action: "member.lan_info", targetUserId: userId, data: { fields, types: changed.map((c) => c.type) } });
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+/** Saves the nick_<type> and lanId_<type> fields the form has; returns what changed, or an error. */
+async function applyLanInfo(userId: string, types: { id: string; name: string }[], formData: FormData) {
   const nicks = db.select().from(schema.nickname).where(eq(schema.nickname.userId, userId)).all();
   const ids = db.select().from(schema.lanAccount).where(eq(schema.lanAccount.userId, userId)).all();
   const nickOf = (typeId: string) => {
@@ -44,14 +77,5 @@ export async function updateMemberLanInfo(clanId: string, userId: string, _: For
     if (row.lanId) saveLanAccount(userId, { lanId: null, typeId: t.id }, lanId!);
     if (row.nick || row.lanId) changed.push(row);
   }
-  if (changed.length === 0) return { ok: true };
-
-  const fields = [changed.some((c) => c.nick) && "nicks", changed.some((c) => c.lanId) && "LAN IDs"].filter((f): f is string => !!f);
-  audit({ actorId: me.id, action: "member.lan_info", clanId, targetUserId: userId, data: { fields, types: changed.map((c) => c.type) } });
-  // Nicks show on the clan's event pages, so open ones refresh.
-  const now = new Date();
-  for (const l of db.select({ id: schema.lan.id, endsAt: schema.lan.endsAt }).from(schema.lan).where(eq(schema.lan.clanId, clanId)).all())
-    if (l.endsAt >= now) lanChanged(l.id);
-  revalidatePath("/", "layout");
-  return { ok: true };
+  return changed;
 }
