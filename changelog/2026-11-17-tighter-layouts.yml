@@ -1,0 +1,14 @@
+date: 2026-11-17
+type: improved
+en:
+  title: "Tidier profile and fewer empty spaces"
+  text: >-
+    Your profile uses the full width on bigger screens: the avatar picker, socials, emergency info and
+    your data sit side by side instead of in one narrow column. The packing list, the games list and the
+    clan's events tab also spread out on desktop, and everything stays one column on phones.
+de:
+  title: "Aufgeräumteres Profil und weniger leere Flächen"
+  text: >-
+    Dein Profil nutzt auf grösseren Bildschirmen die ganze Breite: Avatar-Auswahl, Socials, Notfallangaben
+    und deine Daten stehen nebeneinander statt in einer schmalen Spalte. Auch die Packliste, die Spieleliste
+    und der Event-Tab des Clans verteilen sich auf dem Desktop, auf dem Handy bleibt alles einspaltig.

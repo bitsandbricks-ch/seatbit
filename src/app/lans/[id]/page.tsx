@@ -739,25 +739,21 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
       </TabPanel>
 
       <TabPanel id="gear">
-        <Columns>
-          <PackingList lanId={l.id} items={PACKING_ITEMS} packed={packed} own={ownItems} past={l.endsAt > now ? pastPackingItems(me.id, l.id) : []} />
-        </Columns>
+        <PackingList lanId={l.id} items={PACKING_ITEMS} packed={packed} own={ownItems} past={l.endsAt > now ? pastPackingItems(me.id, l.id) : []} />
       </TabPanel>
 
       <TabPanel id="games">
-        <div className="max-w-3xl">
-          <GameList
-            lanId={l.id}
-            games={games}
-            meId={me.id}
-            canManage={isAdmin}
-            canAdd={canTakePart || isAdmin}
-            names={gameNames}
-            avatars={gameAvatars}
-            reminderDays={GAMES_REMINDER_DAYS}
-            lastTime={l.endsAt > now ? previousGames(l) : null}
-          />
-        </div>
+        <GameList
+          lanId={l.id}
+          games={games}
+          meId={me.id}
+          canManage={isAdmin}
+          canAdd={canTakePart || isAdmin}
+          names={gameNames}
+          avatars={gameAvatars}
+          reminderDays={GAMES_REMINDER_DAYS}
+          lastTime={l.endsAt > now ? previousGames(l) : null}
+        />
       </TabPanel>
 
       <TabPanel id="food">
