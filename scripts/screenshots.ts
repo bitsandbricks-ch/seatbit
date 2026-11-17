@@ -209,7 +209,7 @@ const SHOTS: Shot[] = [
     // The app's own confirm dialog (src/components/dialog.tsx) before a delete.
     name: "phone-confirm-dialog",
     who: "alex",
-    path: `${CLAN}/types/demo-type-lakeside`,
+    path: "/admin/types/demo-type-lakeside",
     act: async (page) => {
       await page.getByRole("button", { name: /^Delete Lakeside LAN/ }).click();
       await page.getByRole("dialog").waitFor();
