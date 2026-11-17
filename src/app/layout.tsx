@@ -108,13 +108,13 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               {t.rich("footer.poweredBy", { site: <span className="font-semibold">bitsandbricks.ch</span> })}
             </a>
           </div>
+          {/* Desktop: pinned to the screen's bottom-left corner. Inside the footer, so screen readers find it there. */}
+          <CommitLink
+            sourceUrl={getLegal().sourceUrl}
+            className="fixed bottom-2 left-3 z-20 hidden text-[11px] text-faint sm:block"
+            title={commitTitle}
+          />
         </footer>
-        {/* Desktop: pinned to the screen's bottom-left corner. */}
-        <CommitLink
-          sourceUrl={getLegal().sourceUrl}
-          className="fixed bottom-2 left-3 z-20 hidden text-[11px] text-faint sm:block"
-          title={commitTitle}
-        />
         <Toaster />
         <DialogHost />
         </I18nProvider>

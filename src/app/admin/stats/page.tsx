@@ -91,7 +91,7 @@ export default async function UsageStatsPage({ searchParams }: PageProps<"/admin
       </div>
 
       <Card title={t("usage.table")}>
-        <div className="-mx-4 overflow-x-auto px-4 sm:-mx-5 sm:px-5">
+        <div tabIndex={0} aria-label={t("usage.table")} className="-mx-4 overflow-x-auto px-4 sm:-mx-5 sm:px-5">
           <table className="w-full min-w-[36rem] text-sm tabular-nums">
             <thead className="text-left text-xs text-muted">
               <tr className="border-b border-line">

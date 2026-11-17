@@ -1,6 +1,6 @@
 import { ActionButton, SettingsSection } from "@/components/settings-section";
 import { Tabs } from "@/components/tabs";
-import { Card, Notice, Page, PageHeader } from "@/components/ui";
+import { Card, Notice, Page, PageHeader, inlineLink } from "@/components/ui";
 import { inviteUrl } from "@/lib/discord-api";
 import { appUrl, mailTarget } from "@/lib/mail";
 import { requireAdmin } from "@/lib/session";
@@ -152,7 +152,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
             <Url label={t("adminSettings.interactions")} value={`${appUrl}/api/discord/interactions`} />
             {invite && (
               <div className="text-xs">
-                <a href={invite} target="_blank" rel="noreferrer" className="text-bit hover:underline">
+                <a href={invite} target="_blank" rel="noreferrer" className={inlineLink}>
                   {t("adminSettings.botInvite")}
                 </a>
               </div>
@@ -213,12 +213,12 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
           <p className="text-xs text-muted">
             {t.rich("adminSettings.legalHint", {
               terms: (
-                <a href="/terms" className="text-bit hover:underline">
+                <a href="/terms" className={inlineLink}>
                   {t("footer.terms")}
                 </a>
               ),
               privacy: (
-                <a href="/privacy" className="text-bit hover:underline">
+                <a href="/privacy" className={inlineLink}>
                   {t("footer.privacy")}
                 </a>
               ),
@@ -296,7 +296,7 @@ function BillingInfo({ t }: { t: T }) {
       {!billingEnabled() && !donationsEnabled() && problems.length === 0 && <p className="text-xs text-muted">{t("adminSettings.billingOff")}</p>}
       {donationsEnabled() && (
         <p className="text-xs text-muted">
-          <a href="/admin/donations" className="text-bit hover:underline">
+          <a href="/admin/donations" className={inlineLink}>
             {t("adminSettings.donationsLink")}
           </a>
         </p>
@@ -307,7 +307,7 @@ function BillingInfo({ t }: { t: T }) {
           {supporters.map((c, i) => (
             <span key={c.slug}>
               {i > 0 && ", "}
-              <a href={`/clans/${c.slug}`} className="text-bit hover:underline">
+              <a href={`/clans/${c.slug}`} className={inlineLink}>
                 {c.name}
               </a>{" "}
               ({t(c.plan === "month" ? "adminSettings.monthly" : "adminSettings.yearly")}, {t("adminSettings.until", { date: c.until ? fmtDay(c.until) : "–" })})

@@ -14,13 +14,13 @@
   --color-line: #2a2a35;       /* borders, dividers */
   --color-fg: #f4f4f5;         /* primary text */
   --color-muted: #a1a1aa;      /* secondary text */
-  --color-faint: #71717a;      /* hints, footers */
+  --color-faint: #8a8a94;      /* hints, footers (AA on surface and raised) */
 
   /* Brand: Bit Green, the colour of "your seat" */
   --color-bit: #2ee59d;        /* primary accent, your seat, primary buttons (text on it: ink) */
   --color-bit-hover: #5cefb5;
   --color-bit-deep: #0e9f6e;   /* accent on light backgrounds, logos on white */
-  --color-bit-ink: #047857;    /* green text on light backgrounds (AA) */
+  --color-bit-ink: #036c4e;    /* green text on light backgrounds (AA) */
   --color-on-bit: #0b0b0f;     /* text on bit fills */
   --color-bit-soft: #2ee59d1f; /* tinted badge / selected background */
 
@@ -29,6 +29,7 @@
   --color-seat-locked: #3f3f46;
   --color-warn: #fbbf24;       /* due soon, maybe */
   --color-danger: #f87171;     /* overdue, unpaid, can't make it */
+  --color-on-danger: #0b0b0f;  /* text on danger fills */
 
   /* Shape */
   --radius-bit: 0.375rem;      /* seat cells, small chips */
@@ -54,17 +55,18 @@
   --color-fg: #111118;
   --color-muted: #52525b;
   --color-faint: #6b6b75;
-  --color-bit: #047857;
+  --color-bit: #036c4e;
   --color-bit-hover: #065f46;
-  --color-bit-deep: #047857;
-  --color-bit-ink: #047857;
+  --color-bit-deep: #036c4e;
+  --color-bit-ink: #036c4e;
   --color-on-bit: #ffffff;
-  --color-bit-soft: #04785717;
-  --color-seat-taken: #0369a1;
+  --color-bit-soft: #036c4e17;
+  --color-seat-taken: #075985;
   --color-seat-locked: #d4d4d8;
-  --color-warn: #b45309;
-  --color-danger: #c81e1e;
-  --avatar-ink: 60%;
+  --color-warn: #9a4508;
+  --color-danger: #b91c1c;
+  --color-on-danger: #ffffff;
+  --avatar-ink: 45%;
 }
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
@@ -76,17 +78,18 @@
     --color-fg: #111118;
     --color-muted: #52525b;
     --color-faint: #6b6b75;
-    --color-bit: #047857;
+    --color-bit: #036c4e;
     --color-bit-hover: #065f46;
-    --color-bit-deep: #047857;
-    --color-bit-ink: #047857;
+    --color-bit-deep: #036c4e;
+    --color-bit-ink: #036c4e;
     --color-on-bit: #ffffff;
-    --color-bit-soft: #04785717;
-    --color-seat-taken: #0369a1;
+    --color-bit-soft: #036c4e17;
+    --color-seat-taken: #075985;
     --color-seat-locked: #d4d4d8;
-    --color-warn: #b45309;
-    --color-danger: #c81e1e;
-    --avatar-ink: 60%;
+    --color-warn: #9a4508;
+    --color-danger: #b91c1c;
+    --color-on-danger: #ffffff;
+    --avatar-ink: 45%;
   }
 }
 

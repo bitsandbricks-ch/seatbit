@@ -1,0 +1,12 @@
+date: 2026-11-18
+type: improved
+en:
+  title: Easier to read
+  text: >-
+    Small hints, warnings and red badges have more contrast in both themes, links inside text are
+    underlined, and screen readers find their way around pages more easily.
+de:
+  title: Besser lesbar
+  text: >-
+    Kleine Hinweise, Warnungen und rote Badges haben in beiden Designs mehr Kontrast, Links im Text sind
+    unterstrichen, und Screenreader finden sich auf den Seiten besser zurecht.

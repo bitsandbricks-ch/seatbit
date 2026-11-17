@@ -40,9 +40,10 @@ npx tsx --test src/lib/seating.test.ts   # one file
 | `clan-join.spec.ts` | Joining a clan: an admin approves or declines a request, an open clan lets you in right away, an invite-only clan only through an invite link. |
 | `food.spec.ts` | Food orders at the LAN: start one, add a line with a price, the runner sees the merged list and total, ticks who paid and closes it; others can't. |
 | `payments.spec.ts` | Clan payments: a lead creates a charge, the member reports paying, the lead marks it paid. |
-| `smoke.spec.ts` | Every page (and every event tab) loads on the demo data for the people who may see it (member, lead, platform owner, and a newcomer without a clan, who sees «Ask to join» on an event link instead of the event): no error status, no crash in the browser, and every visible button, link, field and image has a name for screen readers (a placeholder alone doesn't count; alt="" marks a decorative image), and no page scrolls sideways (the phone project runs it on a Pixel 7 screen). Old links redirect on the server. Add a new page or tab to its lists. |
+| `smoke.spec.ts` | Every page (and every event tab) loads on the demo data for the people who may see it (member, lead, platform owner, and a newcomer without a clan, who sees «Ask to join» on an event link instead of the event): no error status, no crash in the browser, and every visible button, link, field and image has a name for screen readers (a placeholder alone doesn't count; alt="" marks a decorative image), and no page scrolls sideways (the phone project runs it on a Pixel 7 screen). Old links redirect on the server. Add a new page or tab to its lists in `e2e/pages.ts`. |
+| `a11y.spec.ts` | [axe](https://github.com/dequelabs/axe-core) checks the same pages (`e2e/pages.ts`) in the dark and the light theme, on desktop and phone: colour contrast (WCAG AA), links that only differ by colour, heading order, landmarks, keyboard access to scroll boxes. Rows dimmed on purpose (`opacity-60`/`opacity-70`: past or cancelled events, locked to-dos) are left out. When it fails after a colour change, fix the token in `brand/tokens.css`; links inside running text use `inlineLink` from `src/components/ui.tsx`. |
 
-`rsvp`, `seats`, `smoke` and a few more also run on a phone-sized screen (project `phone`, see `testMatch` in `playwright.config.ts`); everything runs on desktop.
+`rsvp`, `seats`, `smoke`, `a11y` and a few more also run on a phone-sized screen (project `phone`, see `testMatch` in `playwright.config.ts`); everything runs on desktop.
 
 ### Running them
 

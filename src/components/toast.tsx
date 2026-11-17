@@ -52,7 +52,7 @@ function Icon({ tone }: { tone: ToastTone }) {
       </svg>
     </span>
   ) : (
-    <span aria-hidden className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-danger font-mono text-sm font-bold text-white">
+    <span aria-hidden className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-danger font-mono text-sm font-bold text-on-danger">
       !
     </span>
   );

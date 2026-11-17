@@ -143,7 +143,8 @@ export default async function BackupsPage() {
           <li>{t("backups.restore4")}</li>
         </ol>
         <p className="mt-3 text-sm text-muted">{t("backups.restoreScript")}</p>
-        <pre className="mt-2 overflow-x-auto rounded-bit bg-raised p-3 text-xs">
+        {/* tabIndex: keyboard users can scroll the box sideways too. */}
+        <pre tabIndex={0} className="mt-2 overflow-x-auto rounded-bit bg-raised p-3 text-xs">
           {/* i18n-ignore: command */}
           node scripts/restore.mjs restore latest --yes
         </pre>
