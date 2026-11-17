@@ -7,6 +7,7 @@ import { admin } from "./admin";
 import { adminDonations } from "./adminDonations";
 import { adminLog } from "./adminLog";
 import { adminSettings } from "./adminSettings";
+import { adminUser } from "./adminUser";
 import { attendees } from "./attendees";
 import { audit } from "./audit";
 import { auditLog } from "./auditLog";
@@ -61,6 +62,7 @@ import { maintenance } from "./maintenance";
 import { manage } from "./manage";
 import { member } from "./member";
 import { memberActions } from "./memberActions";
+import { memberLan } from "./memberLan";
 import { memberList } from "./memberList";
 import { missing } from "./missing";
 import { missingSteps } from "./missingSteps";
@@ -124,6 +126,7 @@ export const de: Messages = {
   adminDonations,
   adminLog,
   adminSettings,
+  adminUser,
   attendees,
   audit,
   auditLog,
@@ -178,6 +181,7 @@ export const de: Messages = {
   manage,
   member,
   memberActions,
+  memberLan,
   memberList,
   missing,
   missingSteps,

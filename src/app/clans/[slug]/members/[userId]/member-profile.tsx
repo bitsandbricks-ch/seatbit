@@ -9,6 +9,8 @@ import { CopyField } from "@/components/copy-field";
 import { MemberAdminActions } from "@/components/member-admin-actions";
 import { GuestEditForm } from "@/components/guest-form";
 import { resendGuestDiscordDm, unlinkGuestDiscord, updateGuest } from "@/app/clan-actions";
+import { updateMemberLanInfo } from "@/app/member-lan-actions";
+import { MemberLanForm } from "@/components/member-lan-form";
 import { GuestDiscordLink } from "@/components/guest-discord";
 import { DiscordBadge } from "@/components/discord-badge";
 import { discordIdentity } from "@/lib/discord-verify";
@@ -216,6 +218,20 @@ export async function MemberProfile({ slug, userId, variant }: { slug: string; u
             </dl>
             {seesPrivate && typeRows.some((r) => r.lanId) && (
               <p className="mt-3 text-xs text-faint">{t(isSelf ? "member.idsPrivateSelf" : "member.idsPrivate")}</p>
+            )}
+            {isManager && !u.isGuest && !isSelf && (
+              <div className="mt-3">
+                <MemberLanForm
+                  action={updateMemberLanInfo.bind(null, c.id, u.id)}
+                  defaultNick={defaultNick}
+                  types={types.map((ty) => ({
+                    id: ty.id,
+                    name: ty.name,
+                    nick: nicks.find((n) => n.typeId === ty.id && !n.lanId && n.isPrimary)?.nick ?? nicks.find((n) => n.typeId === ty.id && !n.lanId)?.nick ?? "",
+                    lanId: lanAccounts.find((a) => a.typeId === ty.id && !a.lanId)?.value ?? "",
+                  }))}
+                />
+              </div>
             )}
           </Card>
 

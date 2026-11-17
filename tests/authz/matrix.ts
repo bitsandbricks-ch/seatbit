@@ -13,6 +13,7 @@ import { ALL_ACTORS, fx, form, ACTORS } from "./harness";
 import { db } from "../../src/db";
 import * as actions from "../../src/app/actions";
 import * as clanActions from "../../src/app/clan-actions";
+import * as memberLan from "../../src/app/member-lan-actions";
 import * as eventActions from "../../src/app/event-actions";
 import * as extras from "../../src/app/lan-extras-actions";
 import * as travel from "../../src/app/travel-gear-actions";
@@ -43,6 +44,7 @@ import * as live from "../../src/app/api/live/[lanId]/route";
 export const MODULES = {
   actions,
   "clan-actions": clanActions,
+  "member-lan-actions": memberLan,
   "event-actions": eventActions,
   "lan-extras-actions": extras,
   "travel-gear-actions": travel,
@@ -348,6 +350,12 @@ export const SPECS: Spec[] = [
   { name: "clan-actions.addGuestToLan", allow: LAN_MANAGERS, run: () => clanActions.addGuestToLan(fx.lan, undefined, form({ firstName: "Gus", lastName: "Guest" })) },
   { name: "clan-actions.updateGuest", allow: CLAN_MEMBERS_PERM, run: () => clanActions.updateGuest(fx.clan, fx.guest, undefined, form({ firstName: "Yan", lastName: "Renamed" })) },
   { name: "clan-actions.deleteGuest", allow: CLAN_MEMBERS_PERM, run: () => clanActions.deleteGuest(fx.clan, fx.guest) },
+  // ---------- member-lan-actions.ts ----------
+  {
+    name: "member-lan-actions.updateMemberLanInfo",
+    allow: CLAN_MEMBERS_PERM,
+    run: () => memberLan.updateMemberLanInfo(fx.clan, ACTORS.member, undefined, form({ [`lanId_${fx.type}`]: "99999", [`nick_${fx.type}`]: "AuthzNick" })),
+  },
   { name: "clan-actions.resendGuestDiscordDm", allow: CLAN_MEMBERS_PERM, run: () => clanActions.resendGuestDiscordDm(fx.clan, fx.guest), effect: "none" },
   { name: "clan-actions.unlinkGuestDiscord", allow: CLAN_MEMBERS_PERM, run: () => clanActions.unlinkGuestDiscord(fx.clan, fx.guest), effect: "none" },
   { name: "clan-actions.renewGuestLink", allow: CLAN_MEMBERS_PERM, run: () => clanActions.renewGuestLink(fx.clan, fx.guest) },

@@ -9,8 +9,11 @@ export function DiscordIdentity({
   t,
   identity,
   canVerify,
+  others = false,
 }: {
   t: T;
+  /** Someone else's account (platform staff): leaves out the hint addressed to the owner. */
+  others?: boolean;
   /** The bot is set up, so it can look the account up. */
   canVerify: boolean;
   identity: { id: string; username: string | null; verifiedAt: Date | null };
@@ -27,12 +30,12 @@ export function DiscordIdentity({
       </div>
       <div>
         <span className={label}>{t("discordVerify.userId")}</span>
-        <CopyField value={identity.id} />
+        <CopyField value={identity.id} label={t("discordVerify.userId")} />
       </div>
       {identity.verifiedAt ? (
         <div className="space-y-1">
           <Pill tone="emerald">{t("discordVerify.verifiedOn", { date: fmtDay(identity.verifiedAt) })}</Pill>
-          <p className="text-xs text-muted">{t("discordVerify.verifiedHint")}</p>
+          {!others && <p className="text-xs text-muted">{t("discordVerify.verifiedHint")}</p>}
         </div>
       ) : (
         <p className="text-xs text-muted">{t("discordVerify.notVerified")}</p>

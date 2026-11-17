@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { desc } from "drizzle-orm";
 import { db, schema } from "@/db";
-import { setPlatformRole, suspendClanAction, suspendUserAction, unsuspendClanAction, unsuspendUserAction } from "@/app/moderation-actions";
-import { Card, Notice, Page, PageHeader, Pill, btnDanger, btnGhost, input } from "@/components/ui";
+import { suspendClanAction, unsuspendClanAction } from "@/app/moderation-actions";
+import { SuspendForm, UserAdminActions } from "./user-admin-actions";
+import { Card, Notice, Page, PageHeader, Pill, btnGhost } from "@/components/ui";
 import { ClanAvatar } from "@/components/clan-avatar";
 import { lanDay } from "@/lib/format";
 import { requirePlatform } from "@/lib/session";
-import { STAFF_ROLES, assignableRoles, canSetRole, isStaff, outranks, platformCan } from "@/lib/platform-roles";
-import type { T } from "@/i18n/translate";
+import { STAFF_ROLES, isStaff, platformCan } from "@/lib/platform-roles";
 import { getLegal } from "@/lib/legal";
 import { backupStatus } from "@/lib/backup";
 import { getDefaultNames } from "@/lib/lans";
@@ -24,7 +24,6 @@ export default async function AdminPage() {
     reports: platformCan(me, "reports"),
     suspend: platformCan(me, "suspend"),
   };
-  const roles = assignableRoles(me);
   const lans = db
     .select()
     .from(schema.lan)
@@ -166,12 +165,13 @@ export default async function AdminPage() {
         <ul className="-my-1 divide-y divide-line">
           {users.map((u) => {
             const name = people.get(u.id)?.full ?? u.name;
-            const login = !u.isGuest;
             return (
               <li key={u.id} className="flex min-h-12 flex-wrap items-center justify-between gap-x-3 gap-y-2 py-2">
                 <span className="min-w-0">
                   <span className="flex flex-wrap items-center gap-2">
-                    <span className="truncate font-medium">{name}</span>
+                    <Link href={`/admin/users/${u.id}`} className="truncate font-medium hover:text-bit">
+                      {name}
+                    </Link>
                     {isStaff(u) ? (
                       <Pill tone="emerald">{t(`platformRoles.name.${u.role as (typeof STAFF_ROLES)[number]}`)}</Pill>
                     ) : u.isGuest ? (
@@ -181,35 +181,7 @@ export default async function AdminPage() {
                   </span>
                   <span className="block truncate text-xs text-muted">{u.isGuest ? t("admin.guestNoLogin") : u.email}</span>
                 </span>
-                {login && u.id !== me.id && (
-                  <span className="flex shrink-0 flex-wrap items-center justify-end gap-1">
-                    {canSetRole(me, u) && (
-                      <ActionForm action={setPlatformRole.bind(null, u.id)} auto="toggles" className="flex items-center gap-1">
-                        <select
-                          name="role"
-                          defaultValue={u.role}
-                          aria-label={t("platformRoles.roleOf", { name })}
-                          className={`${input} !w-auto !py-1.5 text-sm`}
-                        >
-                          {roles.map((r) => (
-                            <option key={r} value={r}>
-                              {t(`platformRoles.name.${r}`)}
-                            </option>
-                          ))}
-                        </select>
-                      </ActionForm>
-                    )}
-                    {can.suspend &&
-                      outranks(me, u) &&
-                      (u.suspendedAt ? (
-                        <ActionForm action={unsuspendUserAction.bind(null, u.id)}>
-                          <button className={btnGhost}>{t("moderation.restore")}</button>
-                        </ActionForm>
-                      ) : (
-                        <SuspendForm t={t} action={suspendUserAction.bind(null, u.id)} label={t("moderation.suspendUser", { name })} />
-                      ))}
-                  </span>
-                )}
+                <UserAdminActions t={t} me={me} u={u} name={name} />
               </li>
             );
           })}
@@ -227,20 +199,6 @@ export default async function AdminPage() {
         </dl>
       </Card>
     </Page>
-  );
-}
-
-/** "Suspend" that opens a reason field first, so nobody suspends by a stray tap. */
-function SuspendForm({ t, action, label }: { t: T; action: (form: FormData) => Promise<void>; label: string }) {
-  return (
-    <details className="group">
-      <summary className={`${btnGhost} cursor-pointer list-none !text-danger`}>{t("moderation.suspend")}</summary>
-      <ActionForm action={action} className="mt-2 w-64 max-w-full space-y-2 rounded-card border border-line bg-surface p-3 text-left text-sm">
-        <p className="font-medium">{label}</p>
-        <input name="reason" className={input} placeholder={t("moderation.reasonPlaceholder")} aria-label={t("moderation.reasonPlaceholder")} maxLength={500} />
-        <button className={btnDanger}>{t("moderation.suspend")}</button>
-      </ActionForm>
-    </details>
   );
 }
 

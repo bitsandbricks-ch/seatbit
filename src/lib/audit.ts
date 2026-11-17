@@ -278,6 +278,8 @@ export function describeAudit(
       if (d.to === "admin") return t("audit.roleAdmin", v);
       if (d.to === "member") return t("audit.roleMember", { who, from: role(d.from ?? "admin") });
       return t("audit.role", { who, role: role(d.to) });
+    case "member.lan_info":
+      return t("audit.memberLanInfo", { who, fields: list(d.fields), types: list(d.types) });
     case "member.remove":
       return t(d.pending ? "audit.memberDecline" : "audit.memberRemove", v);
     case "member.account_deleted":

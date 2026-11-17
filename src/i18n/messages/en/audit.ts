@@ -103,6 +103,7 @@ export const audit = {
   roleMember: "made {who} a plain member (was {from})",
   role: "made {who} {role}",
   memberDecline: "declined the join request of {who}",
+  memberLanInfo: "changed the {fields} of {who} ({types})",
   memberRemove: "removed {who} from the clan",
   accountLeft: "deleted their account and left the clan",
   inviteCreate: "created an invite link",
