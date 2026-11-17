@@ -21,6 +21,7 @@ import { useRunAction } from "./action-form";
 import { StatusIcons, type StatusKind } from "./status-icons";
 import type { MessageKey } from "@/i18n/translate";
 import { ask } from "./dialog";
+import { DiscordBadge, type DiscordState } from "./discord-badge";
 
 export type AttendanceRow = {
   id: string;
@@ -44,6 +45,8 @@ export type AttendanceRow = {
   /** Booked the seat on the event's own seat plan; null when the event has no seat plan link. */
   seatBooked?: boolean | null;
   avatar?: AvatarData;
+  /** Linked Discord account: the badge links to their Discord profile so a lead can DM them. */
+  discord?: { state: DiscordState; id: string };
   /** Status icons after the name (held seat, guest, swap pending). */
   marks?: StatusKind[];
   /** Seat wishes a lead can change for them: how many they have and where the editor is; absent when not editable. */
@@ -222,6 +225,11 @@ export function AttendanceTable({
                     </Link>
                   ) : (
                     r.name
+                  )}
+                  {r.discord && (
+                    <span className="ml-1.5">
+                      <DiscordBadge state={r.discord.state} discordId={r.discord.id} t={t} />
+                    </span>
                   )}
                   {r.marks && r.marks.length > 0 && (
                     <span className="ml-1.5">

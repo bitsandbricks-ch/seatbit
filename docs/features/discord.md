@@ -70,6 +70,8 @@ A Discord badge after a name shows that the member linked a Discord account. It'
 - **Members** verify themselves with `/verify` on the clan's server, or with **Verify** in *Profile → Account → Discord*, which checks the linked account against the servers of all their clans.
 - **Leads who manage members** check everyone at once with `/seatbit validate` on the server, or **Check Discord** in *Clan settings → Members* (against all the clan's servers). The bot marks the members it finds and lists who isn't on the server and who has no Discord linked. The check is logged in the clan's audit log.
 
+For leads the badge is a link: in the event's attendee list (*Manage*), in *Clan settings → Members* and on member profiles it opens the member's Discord profile, where **Message** starts a DM. Members see a **Discord** link next to each Lead's **Email** on the event page.
+
 Verification belongs to the Discord account: linking a different one shows the badge grey again until it's verified. Nothing is removed when someone leaves the server; run the check again to see who's missing.
 
 Both checks need the Discord bot on the server. Usernames of accounts linked before this feature show up after their next Discord sign-in or the next check.

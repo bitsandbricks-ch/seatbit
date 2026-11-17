@@ -11,6 +11,8 @@ export const discordVerify: Messages["discordVerify"] = {
   notVerified: "Noch auf keinem Clan-Server bestätigt",
   // Lead view
   badge: "Auf Discord bestätigt",
+  discordLink: "Discord",
+  openProfile: "Discord-Profil öffnen, um eine Nachricht zu senden",
   linked: "Discord verknüpft",
   // Bot
   noServerClan: "Dieser Server ist noch mit keinem Clan verknüpft. Führe zuerst `/seatbit here` aus.",

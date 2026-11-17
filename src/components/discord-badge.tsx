@@ -6,21 +6,35 @@ const LOGO =
 
 export type DiscordState = "linked" | "verified";
 
+/** The member's page on Discord, with the Message button. Opens in the Discord app when installed. */
+export const discordUserUrl = (discordId: string) => `https://discord.com/users/${discordId}`;
+
 /**
- * Small Discord mark next to a name for leads: grey when the member linked a Discord
- * account, green when `/seatbit validate` found it on the clan's server.
+ * Small Discord mark next to a name: grey when the member linked a Discord account,
+ * green when they're verified on the clan's server. With `discordId` (lead views) it
+ * links to their Discord profile, so a lead can message them.
  * Pure markup, safe in server and client components.
  */
-export function DiscordBadge({ state, t }: { state: DiscordState; t: T }) {
+export function DiscordBadge({ state, t, discordId }: { state: DiscordState; t: T; discordId?: string }) {
   const label = t(state === "verified" ? "discordVerify.badge" : "discordVerify.linked");
+  const cls = `inline-grid size-4 shrink-0 place-items-center rounded-sm align-[-0.2em] ${state === "verified" ? "bg-bit/20 text-bit" : "bg-line text-muted"}`;
+  const icon = (
+    <svg aria-hidden viewBox="0 0 24 24" className="size-3" fill="currentColor">
+      <path d={LOGO} />
+    </svg>
+  );
+  if (discordId) {
+    const open = `${label} · ${t("discordVerify.openProfile")}`;
+    return (
+      <a href={discordUserUrl(discordId)} target="_blank" rel="noreferrer" title={open} className={`${cls} hover:ring-1 hover:ring-current`}>
+        {icon}
+        <span className="sr-only">{open}</span>
+      </a>
+    );
+  }
   return (
-    <span
-      title={label}
-      className={`inline-grid size-4 shrink-0 place-items-center rounded-sm align-[-0.2em] ${state === "verified" ? "bg-bit/20 text-bit" : "bg-line text-muted"}`}
-    >
-      <svg aria-hidden viewBox="0 0 24 24" className="size-3" fill="currentColor">
-        <path d={LOGO} />
-      </svg>
+    <span title={label} className={cls}>
+      {icon}
       <span className="sr-only">{label}</span>
     </span>
   );

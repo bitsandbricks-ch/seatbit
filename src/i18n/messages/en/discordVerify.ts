@@ -9,6 +9,8 @@ export const discordVerify = {
   notVerified: "Not verified on a clan server yet",
   // Lead view
   badge: "Verified on Discord",
+  discordLink: "Discord",
+  openProfile: "Open their Discord profile to send a message",
   linked: "Discord linked",
   // Bot
   noServerClan: "This server isn't linked to a clan yet. Run `/seatbit here` first.",

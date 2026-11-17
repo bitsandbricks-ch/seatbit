@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { discordInfo } from "@/lib/discord-verify";
+import { discordUserUrl } from "@/components/discord-badge";
 import { ReportButton } from "@/components/report-button";
 import { SuspendedClan } from "@/components/suspended-clan";
 import Link from "next/link";
@@ -133,6 +135,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
         .all()
         .map((r) => r.u);
   const orgaNames = await getDisplayNames(id, orgas.map((o) => o.id));
+  const orgaDiscord = discordInfo(orgas.map((o) => o.id));
   const myNick = pickNick(myNicks, { lanId: id, typeId: l.typeId }, me.name);
   const myLanId = getLanAccounts(l, [me.id]).get(me.id) ?? null;
   // Each attendee's profile on the event's site, when the event or its type has a link pattern.
@@ -641,9 +644,16 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
                         ) : (
                           <span className="min-w-0 truncate font-medium text-fg">{orgaNames.get(o.id) ?? o.name}</span>
                         )}
-                        <a href={`mailto:${o.email}?subject=${encodeURIComponent(l.name)}`} className="shrink-0 text-bit hover:underline">
-                          {t("event.email")}
-                        </a>
+                        <span className="flex shrink-0 gap-3">
+                          {orgaDiscord.get(o.id) && (
+                            <a href={discordUserUrl(orgaDiscord.get(o.id)!.id)} target="_blank" rel="noreferrer" className="text-bit hover:underline">
+                              {t("discordVerify.discordLink")}
+                            </a>
+                          )}
+                          <a href={`mailto:${o.email}?subject=${encodeURIComponent(l.name)}`} className="text-bit hover:underline">
+                            {t("event.email")}
+                          </a>
+                        </span>
                       </li>
                     ))}
                   </ul>
