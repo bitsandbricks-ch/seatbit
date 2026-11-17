@@ -1,0 +1,14 @@
+date: 2026-11-17
+type: new
+en:
+  title: "Admins can fix nicks and LAN IDs"
+  text: >-
+    Clan admins and recruiters can now set a member's nick and LAN ID for each of the clan's LAN
+    types, right on the member's profile: handy when someone sends you their ticket number. Every
+    change shows in the clan's audit log.
+de:
+  title: "Admins können Nicks und LAN-IDs korrigieren"
+  text: >-
+    Clan-Admins und Recruiter können jetzt den Nick und die LAN-ID eines Mitglieds für jeden
+    LAN-Typ des Clans setzen, direkt im Profil des Mitglieds: praktisch, wenn dir jemand die
+    Ticketnummer schickt. Jede Änderung steht im Audit-Log des Clans.

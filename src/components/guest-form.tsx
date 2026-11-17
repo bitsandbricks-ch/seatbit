@@ -72,24 +72,7 @@ export function GuestEditForm({
       <Field label={t("auth.nickname")} hint={t("guestForm.nickHint")}>
         <Input name="nick" maxLength={32} defaultValue={guest.nick} />
       </Field>
-      {types.length > 0 && (
-        <fieldset className="space-y-3">
-          <legend className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">{t("guestForm.perType")}</legend>
-          {types.map((ty) => (
-            <div key={ty.id} className="rounded-md border border-line p-3">
-              <p className="mb-2 text-sm font-medium">{ty.name}</p>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Field label="Nick">
-                  <Input name={`nick_${ty.id}`} maxLength={32} defaultValue={ty.nick} placeholder={guest.nick || t("guestForm.sameAsDefault")} />
-                </Field>
-                <Field label={t("guestForm.lanId")}>
-                  <Input name={`lanId_${ty.id}`} maxLength={40} defaultValue={ty.lanId} placeholder={t("guestForm.lanIdPlaceholder")} />
-                </Field>
-              </div>
-            </div>
-          ))}
-        </fieldset>
-      )}
+      {types.length > 0 && <LanTypeFields types={types} defaultNick={guest.nick} />}
       <Field label={t("member.email")} hint={t("guestForm.emailEditHint")}>
         <Input name="email" type="email" maxLength={200} autoComplete="off" defaultValue={guest.email} />
       </Field>
@@ -97,5 +80,28 @@ export function GuestEditForm({
         {pending ? t("common.saving") : t("guestForm.save")}
       </button>
     </form>
+  );
+}
+
+/** Nick and LAN ID for each of a clan's LAN types, as `nick_<typeId>` and `lanId_<typeId>` fields. */
+export function LanTypeFields({ types, defaultNick }: { types: GuestEditTypeRow[]; defaultNick: string }) {
+  const t = useT();
+  return (
+    <fieldset className="space-y-3">
+      <legend className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">{t("guestForm.perType")}</legend>
+      {types.map((ty) => (
+        <div key={ty.id} className="rounded-md border border-line p-3">
+          <p className="mb-2 text-sm font-medium">{ty.name}</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Nick">
+              <Input name={`nick_${ty.id}`} maxLength={32} defaultValue={ty.nick} placeholder={defaultNick || t("guestForm.sameAsDefault")} />
+            </Field>
+            <Field label={t("guestForm.lanId")}>
+              <Input name={`lanId_${ty.id}`} maxLength={40} defaultValue={ty.lanId} placeholder={t("guestForm.lanIdPlaceholder")} />
+            </Field>
+          </div>
+        </div>
+      ))}
+    </fieldset>
   );
 }

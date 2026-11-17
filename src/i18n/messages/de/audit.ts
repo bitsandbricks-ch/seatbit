@@ -105,6 +105,7 @@ export const audit: Messages["audit"] = {
   roleMember: "hat {who} zum einfachen Mitglied gemacht (war {from})",
   role: "hat {who} zu {role} gemacht",
   memberDecline: "hat die Beitrittsanfrage von {who} abgelehnt",
+  memberLanInfo: "hat {fields} von {who} geändert ({types})",
   memberRemove: "hat {who} aus dem Clan entfernt",
   accountLeft: "hat das eigene Konto gelöscht und den Clan verlassen",
   inviteCreate: "hat einen Einladungslink erstellt",

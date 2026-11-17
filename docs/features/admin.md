@@ -47,7 +47,7 @@ Tap a name in the user list on *Overview* to open that person's page. All platfo
 - **Discord:** linked username and user ID, and whether the bot verified them on a clan's server. For guests, the Discord member a lead linked.
 - **Clans:** every clan they're in, with their role and since when. Each opens their member profile in that clan.
 - **Events:** every event they answered, across all clans, with their answer, seat and ticket.
-- **Nicks:** the default nick, the nick per LAN type and per event. Owners and admins also see the LAN IDs.
+- **Nicks:** the default nick, the nick per LAN type and per event. Owners and admins also see the LAN IDs, and can change the nick and LAN ID per LAN type for each of the person's clans (**Edit for** *clan*), like that clan's admins; the change shows in the clan's audit log.
 - **Socials** from their profile.
 
 Give a platform role or suspend the account from the top of the page, as in the list. Emergency contacts and dietary needs don't show here: only the leads of an event see those.

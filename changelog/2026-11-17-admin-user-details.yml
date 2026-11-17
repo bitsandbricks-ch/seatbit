@@ -6,10 +6,10 @@ en:
   text: >-
     Tap a name in the user list on the admin page to see that person's account: email, sign-in,
     Discord, clans and roles, events with answers and seats, nicks and when they were last active.
-    Platform roles and suspensions work from there too.
+    Platform roles, suspensions and nicks and LAN IDs per clan work from there too.
 de:
   title: "Benutzerdetails für das Plattform-Team"
   text: >-
     Tippe in der Benutzerliste der Admin-Seite auf einen Namen, um das Konto dieser Person zu sehen:
     E-Mail, Anmeldung, Discord, Clans und Rollen, Events mit Antworten und Plätzen, Nicks und wann sie
-    zuletzt aktiv war. Plattformrollen und Sperren gehen auch von dort aus.
+    zuletzt aktiv war. Plattformrollen, Sperren sowie Nicks und LAN-IDs pro Clan gehen auch von dort aus.

@@ -65,6 +65,7 @@ import { maintenance } from "./maintenance";
 import { manage } from "./manage";
 import { member } from "./member";
 import { memberActions } from "./memberActions";
+import { memberLan } from "./memberLan";
 import { memberList } from "./memberList";
 import { missing } from "./missing";
 import { missingSteps } from "./missingSteps";
@@ -183,6 +184,7 @@ export const en = {
   manage,
   member,
   memberActions,
+  memberLan,
   memberList,
   missing,
   missingSteps,
