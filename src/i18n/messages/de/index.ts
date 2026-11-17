@@ -8,6 +8,7 @@ import { adminDonations } from "./adminDonations";
 import { adminLog } from "./adminLog";
 import { adminSettings } from "./adminSettings";
 import { adminUser } from "./adminUser";
+import { adminUsers } from "./adminUsers";
 import { attendees } from "./attendees";
 import { audit } from "./audit";
 import { auditLog } from "./auditLog";
@@ -128,6 +129,7 @@ export const de: Messages = {
   adminLog,
   adminSettings,
   adminUser,
+  adminUsers,
   attendees,
   audit,
   auditLog,

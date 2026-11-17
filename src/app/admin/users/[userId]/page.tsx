@@ -109,7 +109,7 @@ export default async function AdminUserPage({ params }: PageProps<"/admin/users/
   return (
     <Page>
       <PageHeader
-        back={{ href: "/admin", label: t("admin.tabs.overview") }}
+        back={{ href: "/admin/users", label: t("admin.users") }}
         avatar={<Avatar data={avatarData(u)} size={56} />}
         title={
           <span className="inline-flex max-w-full items-center gap-2">

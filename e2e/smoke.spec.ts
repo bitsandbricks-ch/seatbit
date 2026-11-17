@@ -52,6 +52,7 @@ const ADMIN_PAGES = [
   "/admin/types/new",
   "/admin/types/demo-type-lakeside",
   `/admin/lans/${LAN}`,
+  "/admin/users",
   "/admin/users/demo-ben",
   ...["mail", "discord", "general", "automation", "maintenance", "legal", "billing", "connect", "templates", "server"].map(
     (t) => `/admin/settings?tab=${t}`,

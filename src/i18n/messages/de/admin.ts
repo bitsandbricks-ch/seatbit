@@ -12,6 +12,7 @@ export const admin: Messages["admin"] = {
   users: "Nutzer",
   guests: { one: "{count} Gast", other: "{count} Gäste" },
   deleted: "{count} gelöscht",
+  newestUsers: "Neueste Konten",
   noClans: "Noch keine Clans.",
   settings: "Einstellungen",
   noLans: "Noch keine LANs. Clan-Admins fügen sie auf ihrer Clan-Seite hinzu.",
