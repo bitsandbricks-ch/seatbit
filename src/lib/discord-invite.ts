@@ -13,6 +13,15 @@ export function normalizeInvite(raw: string) {
   return m ? `https://discord.gg/${m[1]}` : null;
 }
 
+// Channels where the bot couldn't create an invite, and when. Pages call this on every load,
+// so without it a missing "Create Invite" permission costs a Discord round trip each time.
+const g = globalThis as unknown as {
+  __seatbitInviteFailed?: Map<string, number>;
+  __seatbitGuildMembers?: Map<string, { inGuild: boolean | null; at: number }>;
+};
+const inviteFailed = (g.__seatbitInviteFailed ??= new Map());
+const INVITE_RETRY = 10 * 60_000;
+
 /**
  * An invite link for a linked server: the one an admin set, else one the bot
  * creates in the linked channel (needs "Create Invite"), stored for next time.
@@ -20,19 +29,25 @@ export function normalizeInvite(raw: string) {
 async function ensureInvite(row: typeof discordChannel.$inferSelect) {
   if (row.inviteUrl) return row.inviteUrl;
   if (!discordEnabled()) return null;
+  const failedAt = inviteFailed.get(row.channelId);
+  if (failedAt && Date.now() - failedAt < INVITE_RETRY) return null;
   try {
-    const inv = await api<{ code: string; guild?: { name?: string } }>("POST", `/channels/${row.channelId}/invites`, {
-      max_age: 0,
-      max_uses: 0,
-      unique: false,
-    });
+    const inv = await api<{ code: string; guild?: { name?: string } }>(
+      "POST",
+      `/channels/${row.channelId}/invites`,
+      { max_age: 0, max_uses: 0, unique: false },
+      undefined,
+      { quick: true },
+    );
     const url = `https://discord.gg/${inv.code}`;
     db.update(discordChannel)
       .set({ inviteUrl: url, guildName: inv.guild?.name ?? row.guildName })
       .where(eq(discordChannel.guildId, row.guildId))
       .run();
+    inviteFailed.delete(row.channelId);
     return url;
   } catch (e) {
+    inviteFailed.set(row.channelId, Date.now());
     console.warn(`[discord] can't create an invite for ${row.guildId} (missing "Create Invite"?)`, String(e).slice(0, 200));
     return null;
   }
@@ -43,20 +58,17 @@ export async function clanServers(clanId: string): Promise<ClanServer[]> {
   const rows = db.select().from(discordChannel).where(eq(discordChannel.clanId, clanId)).all();
   const byGuild = new Map<string, typeof rows>();
   for (const r of rows) byGuild.set(r.guildId, [...(byGuild.get(r.guildId) ?? []), r]);
-  const out: ClanServer[] = [];
-  for (const [guildId, list] of byGuild) {
-    const withInvite = list.find((r) => r.inviteUrl) ?? list[0];
-    out.push({
+  return Promise.all(
+    [...byGuild].map(async ([guildId, list]) => ({
       guildId,
       guildName: list.find((r) => r.guildName)?.guildName ?? "",
-      inviteUrl: await ensureInvite(withInvite),
-    });
-  }
-  return out;
+      inviteUrl: await ensureInvite(list.find((r) => r.inviteUrl) ?? list[0]),
+    })),
+  );
 }
 
-// Membership answers change rarely; cache them so pages stay fast.
-const g = globalThis as unknown as { __seatbitGuildMembers?: Map<string, { inGuild: boolean; at: number }> };
+// Membership answers change rarely; cache them so pages stay fast. "Can't tell" (bot not on
+// that server, Discord down) is cached briefly too, or every page load would ask again.
 const cache = (g.__seatbitGuildMembers ??= new Map());
 const TTL_IN = 30 * 60_000;
 const TTL_OUT = 2 * 60_000;
@@ -67,7 +79,7 @@ export async function isInGuild(guildId: string, discordUserId: string): Promise
   const hit = cache.get(key);
   if (hit && Date.now() - hit.at < (hit.inGuild ? TTL_IN : TTL_OUT)) return hit.inGuild;
   try {
-    await api("GET", `/guilds/${guildId}/members/${discordUserId}`);
+    await api("GET", `/guilds/${guildId}/members/${discordUserId}`, undefined, undefined, { quick: true });
     cache.set(key, { inGuild: true, at: Date.now() });
     return true;
   } catch (e) {
@@ -76,6 +88,7 @@ export async function isInGuild(guildId: string, discordUserId: string): Promise
       cache.set(key, { inGuild: false, at: Date.now() });
       return false;
     }
+    cache.set(key, { inGuild: null, at: Date.now() });
     return null;
   }
 }
@@ -94,9 +107,8 @@ export async function missingServers(userId: string, clanId: string): Promise<Cl
     .where(and(eq(account.userId, userId), eq(account.providerId, "discord")))
     .get()?.id;
   if (!discordId) return servers;
-  const out: ClanServer[] = [];
-  for (const s of servers) if ((await isInGuild(s.guildId, discordId)) === false) out.push(s);
-  return out;
+  const inGuild = await Promise.all(servers.map((s) => isInGuild(s.guildId, discordId)));
+  return servers.filter((_, i) => inGuild[i] === false);
 }
 
 /** Admin sets (or clears, with "") the invite link for one of the clan's servers. */

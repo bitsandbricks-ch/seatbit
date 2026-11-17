@@ -21,9 +21,16 @@ export function discordEnabled() {
 
 export type Json = Record<string, unknown>;
 
-export async function api<T = Json>(method: string, path: string, body?: unknown, tokenOverride?: string): Promise<T> {
+/**
+ * `quick`: for calls a page waits on. A short timeout and no waiting out a rate limit,
+ * so a slow or busy Discord can't hold a page for seconds.
+ */
+export type ApiOptions = { quick?: boolean };
+
+export async function api<T = Json>(method: string, path: string, body?: unknown, tokenOverride?: string, opts: ApiOptions = {}): Promise<T> {
   const token = tokenOverride ?? botToken();
   const res = await fetch(`${API}${path}`, {
+    signal: AbortSignal.timeout(opts.quick ? 3_000 : 15_000),
     method,
     headers: {
       ...(token && { Authorization: `Bot ${token}` }),
@@ -32,10 +39,10 @@ export async function api<T = Json>(method: string, path: string, body?: unknown
     },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
-  if (res.status === 429) {
+  if (res.status === 429 && !opts.quick) {
     const { retry_after } = (await res.json()) as { retry_after: number };
     await new Promise((r) => setTimeout(r, Math.ceil(retry_after * 1000)));
-    return api(method, path, body, tokenOverride);
+    return api(method, path, body, tokenOverride, opts);
   }
   if (!res.ok) {
     const err = new Error(`Discord ${method} ${path} -> ${res.status}: ${await res.text()}`) as Error & { status: number };

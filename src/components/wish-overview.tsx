@@ -1,4 +1,8 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
+import { useT } from "@/i18n/client";
 import type { T } from "@/i18n/translate";
 import { missedBadly, type WishItem } from "@/lib/seating";
 import { Card, Pill, Segmented } from "./ui";
@@ -44,29 +48,38 @@ function Wish({ i, t, inline }: { i: WishItem; t: T; inline?: boolean }) {
  * The leads' view of everyone's seat wishes against the current plan: one weighted score
  * overall and per member (a top wish counts more), lowest first. By default it lists only
  * the members who need a look. Each member is one line with their missed wishes; tapping
- * it opens the full ranked list and the note. The filter is a link, so it works without JS.
+ * it opens the full ranked list and the note. The filter switches in the browser: going back
+ * to the server re-rendered all of Manage for a list that is already here. It still updates
+ * `wishes` in the URL, so a reload or live refresh keeps the choice.
  */
 export function WishOverview({
   rows,
   overall,
-  filter,
-  href,
-  editHref,
-  t,
+  filter: initial,
+  editBase,
 }: {
   rows: WishRow[];
   overall: number | null;
   filter: WishFilter;
-  /** URL for a filter. */
-  href: (f: WishFilter) => string;
-  /** Link to change a member's wishes; none once the plan is final. */
-  editHref?: (userId: string) => string;
-  t: T;
+  /** Link to change a member's wishes, the user id gets appended; none once the plan is final. */
+  editBase?: string;
 }) {
+  const t = useT();
+  const [filter, setFilterState] = useState(initial);
+  const setFilter = (f: WishFilter) => {
+    setFilterState(f);
+    const url = new URL(window.location.href);
+    if (f === "all") url.searchParams.set("wishes", "all");
+    else url.searchParams.delete("wishes");
+    window.history.replaceState(window.history.state, "", url);
+  };
+  const editHref = editBase
+    ? (uid: string) => `${editBase}${encodeURIComponent(uid)}${filter === "all" ? "&wishes=all" : ""}#edit-wishes`
+    : undefined;
   const scored = rows.filter((r) => r.score !== null);
   const happy = scored.filter((r) => r.score === 1).length;
   const look = rows.filter(needsLook);
-  const shown = (filter === "look" ? look : rows).sort((a, b) => (a.score ?? 2) - (b.score ?? 2) || a.name.localeCompare(b.name));
+  const shown = [...(filter === "look" ? look : rows)].sort((a, b) => (a.score ?? 2) - (b.score ?? 2) || a.name.localeCompare(b.name));
 
   return (
     <Card
@@ -95,9 +108,10 @@ export function WishOverview({
               <Segmented
                 label={t("wishOverview.filter")}
                 value={filter}
+                onChange={setFilter}
                 options={[
-                  { id: "look", label: t("wishOverview.needsLook"), count: look.length, href: href("look") },
-                  { id: "all", label: t("wishOverview.everyone"), count: rows.length, href: href("all") },
+                  { id: "look", label: t("wishOverview.needsLook"), count: look.length },
+                  { id: "all", label: t("wishOverview.everyone"), count: rows.length },
                 ]}
               />
               {scored.length > 0 && <p className="text-xs text-muted">{t("wishOverview.allMet", { count: happy, total: scored.length })}</p>}

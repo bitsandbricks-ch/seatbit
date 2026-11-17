@@ -25,7 +25,7 @@ A Discord server belongs to one clan.
 | **News** | With a thread or a channel per event (see below), lead news is posted there too. |
 | **DMs** | When something changes for a member (their seat, the final plan, moving up from the waitlist, reminders, nudges), with buttons like *I have my ticket*. Answering on Discord (buttons or `/coming`, `/unsure`, `/not-coming`) also sends a confirmation DM with the date, place and next step, since the reply in the channel is only visible for a while. Members can turn DMs off on their profile. |
 | **Join requests** | Admins and recruiters get a DM when someone asks to join or claims a guest. |
-| **Server invite** | Members who aren't on the server see **Join our Discord** on the clan page. The bot creates the invite if it has *Create Invite*; otherwise paste your own invite link in the clan settings. |
+| **Server invite** | Members who aren't on the server see **Join our Discord** on the clan page. The bot creates the invite if it has *Create Invite*; otherwise paste your own invite link in the clan settings. After a failed try the bot waits 10 minutes before it tries again, so pages stay fast. |
 
 ## Thread or channel per event
 

@@ -184,7 +184,7 @@ test.describe("seats", () => {
     await expect(history.getByText(/so the seats were re-planned/)).toBeVisible({ timeout: 20_000 });
     await expect(history.getByText(/moved:.*Anna.*→/).first()).toBeVisible();
     // Anna's wish is met now, so she's under "Everyone", not "Needs a look".
-    await alex.locator("#wishes").getByRole("link", { name: /Everyone/ }).click();
+    await alex.locator("#wishes").getByRole("button", { name: /Everyone/ }).click();
     await alex.locator("#wishes summary", { hasText: "Anna" }).click();
     await expect(alex.locator("#wishes").getByText("right next to Ben")).toBeVisible();
   });
