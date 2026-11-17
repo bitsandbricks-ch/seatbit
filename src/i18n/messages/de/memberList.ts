@@ -14,4 +14,5 @@ export const memberList: Messages["memberList"] = {
   roleOf: "Rolle von {name}",
   giveUpAdmin: "Deine eigenen Admin-Rechte abgeben? Das kannst du selbst nicht rückgängig machen.",
   removeQ: "{name} aus dem Clan entfernen?",
+  removeBody: "Die Person wird von den kommenden Events des Clans genommen: Ihr Platz geht an die Warteliste, und Platzwünsche, Fahrten und Teams, die sie nennen, werden entfernt. Antworten mit Ticket oder Zahlung bleiben, markiert als nicht mehr im Clan, damit die Leads das regeln. Vergangene Events bleiben, wie sie waren.",
 };

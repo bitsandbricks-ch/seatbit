@@ -50,6 +50,18 @@ export async function register() {
       }),
     15_000,
   );
+  // Older data: people who left a clan before leaving withdrew their answers on its events.
+  const { withdrawFormerMembers } = await import("./lib/clan-leave");
+  setTimeout(
+    () =>
+      void runJob("former-members", withdrawFormerMembers)
+        .then((n) => n && console.log("[former-members] cleaned up", n))
+        .catch((e) => {
+          console.error("[former-members] failed", e);
+          reportError("former-members", e);
+        }),
+    20_000,
+  );
   // Scheduled database backups (interval and folder from the platform settings).
   // Each new backup then gets a restore test (also ones a cron job wrote).
   const { runScheduledBackup } = await import("./lib/backup");

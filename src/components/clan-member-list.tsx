@@ -222,7 +222,7 @@ export function ClanMemberAdmin({
                       disabled={m.role === "admin" && lastAdmin}
                       className={`${btnGhost} text-xs text-danger`}
                       onClick={async () =>
-                        (await ask({ title: t("memberList.removeQ", { name: m.name }), confirm: t("dialog.remove"), danger: true })) &&
+                        (await ask({ title: t("memberList.removeQ", { name: m.name }), body: t("memberList.removeBody"), confirm: t("dialog.remove"), danger: true })) &&
                         run(() => removeClanMember(clanId, m.id))
                       }
                     >

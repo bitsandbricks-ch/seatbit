@@ -1,4 +1,5 @@
 export const statusIcons = {
+  left: "No longer in the clan",
   held: "Held seat",
   noTicket: "No ticket yet",
   swap: "Seat swap pending",

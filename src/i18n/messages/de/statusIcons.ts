@@ -1,6 +1,7 @@
 import type { Messages } from "../en";
 
 export const statusIcons: Messages["statusIcons"] = {
+  left: "Nicht mehr im Clan",
   held: "Reservierter Platz",
   noTicket: "Noch kein Ticket",
   swap: "Platztausch offen",

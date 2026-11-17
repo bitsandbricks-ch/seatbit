@@ -144,7 +144,7 @@ The metrics only hold totals, no names, clans or ids:
 | `seatbit_database_size_bytes`, `seatbit_database_wal_bytes` | SQLite file and WAL size. |
 | `seatbit_users{kind}`, `seatbit_active_users{window}`, `seatbit_sessions`, `seatbit_clans` | Accounts and guests, active accounts in the last 1/7/30 days, signed-in sessions, clans. |
 | `seatbit_events{state}`, `seatbit_upcoming_attendances{status}`, `seatbit_open_reports` | Events (draft, upcoming, past, cancelled), answers to upcoming events, unhandled abuse reports. |
-| `seatbit_job_runs_total{job}`, `seatbit_job_failures_total{job}`, `seatbit_job_last_success_timestamp_seconds{job}`, `seatbit_job_running{job}` | Background jobs: `reminders`, `publish`, `backup`, `restore-test`, `upgrade`. |
+| `seatbit_job_runs_total{job}`, `seatbit_job_failures_total{job}`, `seatbit_job_last_success_timestamp_seconds{job}`, `seatbit_job_running{job}` | Background jobs: `reminders`, `publish`, `backup`, `restore-test`, `upgrade`, `former-members`. |
 | `seatbit_problems_total{kind}`, `seatbit_mails_total{result}` | Server errors, failed mails and Discord calls (as on *Admin → Health*), mails sent. |
 | `seatbit_live_connections` | Open live update streams: event pages that refresh by themselves. |
 | `seatbit_backup_files`, `seatbit_backup_size_bytes`, `seatbit_backup_last_timestamp_seconds`, `seatbit_backup_interval_seconds`, `seatbit_backup_last_failed` | Backups in the folder and when the newest was written. |

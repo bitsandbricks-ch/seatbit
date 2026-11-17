@@ -6,6 +6,7 @@ import { notFound, redirect } from "next/navigation";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { StatusIcons, type StatusKind } from "@/components/status-icons";
+import { formerMembersOf } from "@/lib/clan-leave";
 import { AttendanceButtons } from "@/components/attendance-buttons";
 import { NickManager } from "@/components/nick-manager";
 import { LanIdForm } from "@/components/lan-id-form";
@@ -176,7 +177,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
   const linePos = waitlistPositions(id);
   const myPlace = my?.status === "waitlist" ? linePos.get(me.id) : undefined;
   const isAdmin = isLanManager(me, id);
-  // Leads see the status icons next to names on the Attendees tab (no ticket, booked, guest, held seat, swap pending).
+  // Leads see the status icons next to names on the Attendees tab (left the clan, no ticket, booked, guest, held seat, swap pending).
   const leadMarks = new Map<string, StatusKind[]>();
   if (isAdmin) {
     const ids = rows.map((r) => r.userId);
@@ -193,8 +194,10 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
     );
     const held = new Set(seats.filter((x) => x.locked && x.userId).map((x) => x.userId!));
     const tracksBooking = !!(l.externalPlanUrl && l.seatsPublishedAt);
+    const former = formerMembersOf(id);
     for (const r of rows) {
       const m: StatusKind[] = [];
+      if (former.has(r.userId)) m.push("left");
       if ((r.status === "going" || r.status === "waitlist") && !r.paid && !r.ticketBought) m.push("noTicket");
       if (tracksBooking && r.seatBooked) m.push("booked");
       if (guests.has(r.userId)) m.push("guest");
