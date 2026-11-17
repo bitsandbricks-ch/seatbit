@@ -1,5 +1,5 @@
-import { DonorBadge } from "@/components/support-card";
-import { isDonor } from "@/lib/donations";
+import { MemberBadges } from "@/components/member-badges";
+import { memberBadges } from "@/lib/member-badges";
 import { asc, eq, inArray } from "drizzle-orm";
 import { myClans } from "@/lib/clans";
 import { db, schema } from "@/db";
@@ -98,7 +98,7 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
         subtitle={
           <span className="flex min-w-0 flex-wrap items-center gap-2">
             <span className="truncate">{me.email}</span>
-            {isDonor(me.id) && <DonorBadge label={t("donate.badgeLabel")} title={t("donate.badgePerson")} />}
+            <MemberBadges b={memberBadges([me.id]).get(me.id)} t={t} full />
           </span>
         }
       />

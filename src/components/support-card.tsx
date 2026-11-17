@@ -101,14 +101,4 @@ export function SupporterBadge({ title }: { title: string }) {
   );
 }
 
-/** Small "Donor" mark for a person or clan who gave a one-off donation in the last year. */
-export function DonorBadge({ label, title }: { label: string; title: string }) {
-  return (
-    <span
-      title={title}
-      className="inline-flex items-center gap-1 whitespace-nowrap rounded-bit border border-bit/30 bg-bit-soft px-1.5 py-0.5 text-xs font-medium text-bit"
-    >
-      <span aria-hidden>♥</span> {label}
-    </span>
-  );
-}
+export { DonorBadge } from "./member-badges";

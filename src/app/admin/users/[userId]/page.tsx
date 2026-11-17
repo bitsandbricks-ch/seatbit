@@ -1,15 +1,16 @@
 import Link from "next/link";
+import { MemberBadges } from "@/components/member-badges";
+import { memberBadges } from "@/lib/member-badges";
 import { notFound } from "next/navigation";
 import { desc, eq, inArray } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { Avatar } from "@/components/avatar";
 import { ClanAvatar } from "@/components/clan-avatar";
 import { CopyField } from "@/components/copy-field";
-import { DiscordBadge } from "@/components/discord-badge";
 import { DiscordIdentity } from "@/components/discord-identity";
 import { RolePill } from "@/components/role-pill";
 import { SocialList } from "@/components/social-list";
-import { Card, Notice, Page, PageHeader, Pill, StatTile, StatusBadge, Verified, columns, stack } from "@/components/ui";
+import { Card, Notice, Page, PageHeader, Pill, StatTile, StatusBadge, columns, stack } from "@/components/ui";
 import { getT } from "@/i18n/server";
 import type { T } from "@/i18n/translate";
 import { avatarData } from "@/lib/avatars";
@@ -116,8 +117,7 @@ export default async function AdminUserPage({ params }: PageProps<"/admin/users/
         title={
           <span className="inline-flex max-w-full items-center gap-2">
             <span className="truncate">{name}</span>
-            {!u.isGuest && <Verified size={20} />}
-            {discord && <DiscordBadge state={discord.verifiedAt ? "verified" : "linked"} t={t} />}
+            <MemberBadges b={memberBadges([u.id]).get(u.id)} t={t} linkDiscord size={20} full />
           </span>
         }
         subtitle={

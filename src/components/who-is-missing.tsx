@@ -1,4 +1,5 @@
 "use client";
+import { MemberBadges, type Badges } from "./member-badges";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { nudgeMissing } from "@/app/lan-extras-actions";
@@ -12,6 +13,7 @@ import { toast } from "./toast";
 
 export type MissingPersonView = {
   userId: string;
+  badges?: Badges;
   name: string;
   avatar?: AvatarData;
   discord: boolean;
@@ -38,7 +40,10 @@ export function WhoIsMissing({
   profileBase,
   blocked,
   cooldownMs,
+  badges = {},
 }: {
+  /** Marks after names, by user id. */
+  badges?: Record<string, Badges>;
   lanId: string;
   groups: MissingGroupView[];
   profileBase: string | null;
@@ -47,8 +52,9 @@ export function WhoIsMissing({
   cooldownMs: number;
 }) {
   const t = useT();
-  const members = groups.filter((g) => g.who === "member");
-  const orga = groups.filter((g) => g.who === "orga");
+  const withBadges = groups.map((g) => ({ ...g, people: g.people.map((p) => ({ ...p, badges: badges[p.userId] })) }));
+  const members = withBadges.filter((g) => g.who === "member");
+  const orga = withBadges.filter((g) => g.who === "orga");
   if (groups.length === 0)
     return (
       <Card>
@@ -110,13 +116,16 @@ function PeopleList({ people, profileBase, action }: { people: MissingPersonView
           <span className="flex min-w-0 items-center gap-2">
             <Avatar data={p.avatar} size={24} />
             <span className="min-w-0">
-              {profileBase ? (
-                <Link href={`${profileBase}${p.userId}`} className="block truncate text-fg hover:text-bit hover:underline">
-                  {p.name}
-                </Link>
-              ) : (
-                <span className="block truncate text-fg">{p.name}</span>
-              )}
+              <span className="flex min-w-0 items-center gap-1.5">
+                {profileBase ? (
+                  <Link href={`${profileBase}${p.userId}`} className="block truncate text-fg hover:text-bit hover:underline">
+                    {p.name}
+                  </Link>
+                ) : (
+                  <span className="block truncate text-fg">{p.name}</span>
+                )}
+                <MemberBadges b={p.badges} t={t} linkDiscord />
+              </span>
               {action && (
                 <span className="block text-xs text-faint">
                   {p.discord && p.email ? (

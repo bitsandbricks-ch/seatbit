@@ -1,5 +1,3 @@
-import { DonorBadge } from "@/components/support-card";
-import { isDonor } from "@/lib/donations";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, asc, eq } from "drizzle-orm";
@@ -12,10 +10,12 @@ import { resendGuestDiscordDm, unlinkGuestDiscord, updateGuest } from "@/app/cla
 import { updateMemberLanInfo } from "@/app/member-lan-actions";
 import { MemberLanForm } from "@/components/member-lan-form";
 import { GuestDiscordLink } from "@/components/guest-discord";
-import { DiscordBadge, discordUserUrl } from "@/components/discord-badge";
+import { discordUserUrl } from "@/components/discord-badge";
+import { MemberBadges } from "@/components/member-badges";
+import { memberBadges } from "@/lib/member-badges";
 import { discordIdentity } from "@/lib/discord-verify";
 import { guestDiscordLines } from "@/lib/guest-claim";
-import { Card, Page, PageHeader, Pill, StatTile, StatusBadge, Verified, columns, stack } from "@/components/ui";
+import { Card, Page, PageHeader, Pill, StatTile, StatusBadge, columns, stack } from "@/components/ui";
 import { clanPerms, getClanBySlug, isClanMember } from "@/lib/clans";
 import { isMemberRole } from "@/lib/clan-roles";
 import { RolePill } from "@/components/role-pill";
@@ -130,15 +130,13 @@ export async function MemberProfile({ slug, userId, variant }: { slug: string; u
             {/* Managers and the member themself also see the full name the clan's display leaves out. */}
             {seesPrivate && fullName !== shownName && <span>{fullName}</span>}
             {u.isGuest && <Pill>{t("member.guestNoLogin")}</Pill>}
-            {!u.isGuest && isDonor(u.id) && <DonorBadge label={t("donate.badgeLabel")} title={t("donate.badgePerson")} />}
             <span>{t("member.since", { date: fmtWeekday(membership.createdAt, t.locale) })}</span>
           </span>
   );
   const title = (
     <span className="inline-flex max-w-full items-center gap-2">
       <span className="truncate">{shownName}</span>
-      {!u.isGuest && <Verified size={variant === "page" ? 20 : 16} />}
-      {dIdentity && <DiscordBadge state={dIdentity.verifiedAt ? "verified" : "linked"} t={t} />}
+      <MemberBadges b={memberBadges([u.id]).get(u.id)} t={t} linkDiscord={isManager} size={variant === "page" ? 20 : 16} full />
     </span>
   );
 
