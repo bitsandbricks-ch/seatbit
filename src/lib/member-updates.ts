@@ -7,7 +7,7 @@ import { z } from "zod";
 import { db, schema } from "@/db";
 import { cleanName } from "./names";
 import { makeT, type T } from "../i18n/translate";
-import { MAX_NEAR, MAX_WISHES, normalizeRules, rulesProblem, seatRulesSchema } from "./seat-rules";
+import { MAX_NEAR, MAX_WISHES, normalizeRules, rulesProblem, seatRulesSchema, stampRules } from "./seat-rules";
 import { lanChanged } from "./live";
 import { shownError } from "@/lib/action-error";
 
@@ -64,9 +64,10 @@ export type SeatWishes = z.output<typeof wishInput>;
 
 /**
  * Saves a member's seat wishes (by the member or a lead). The caller checks the plan isn't final yet.
+ * `actorId` is who saves (a lead, or the member themself): new wishes from a lead remember who added them.
  * Returns whether anything changed.
  */
-export function saveSeatWishes(lanId: string, userId: string, input: z.input<typeof wishInput>, t: T = makeT("en")) {
+export function saveSeatWishes(lanId: string, userId: string, input: z.input<typeof wishInput>, t: T = makeT("en"), actorId = userId) {
   const w = wishInput.parse(input);
   const problem = rulesProblem(w.rules);
   if (problem === "tooMany") throw shownError(t("wishes.errors.tooMany", { max: MAX_WISHES }));
@@ -74,7 +75,7 @@ export function saveSeatWishes(lanId: string, userId: string, input: z.input<typ
   if (problem === "tooManyNear") throw shownError(t("wishes.errors.tooManyNear", { max: MAX_NEAR }));
   const a = myAttendance(lanId, userId);
   if (!a) throw shownError(t("errors.comingFirst"));
-  const rules = normalizeRules(w.rules, userId);
+  const rules = normalizeRules(stampRules(w.rules, normalizeRules(a.wishRules ?? [], userId), userId, actorId), userId);
   const changed = JSON.stringify(rules) !== JSON.stringify(a.wishRules ?? []) || w.note !== a.wishNote;
   db.update(attendance).set({ wishRules: rules, wishNote: w.note }).where(eq(attendance.id, a.id)).run();
   lanChanged(lanId);

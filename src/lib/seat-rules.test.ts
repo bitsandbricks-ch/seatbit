@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { MAX_WISHES, addRule, moveRule, normalizeRules, rulesProblem, type SeatRule } from "./seat-rules";
+import { MAX_WISHES, addRule, changeRulePerson, moveRule, normalizeRules, rulesProblem, stampRules, type SeatRule } from "./seat-rules";
 
 test("normalizeRules: upper-cases, drops self and keeps the higher-ranked of contradicting rules", () => {
   const rules: SeatRule[] = [
@@ -75,4 +75,31 @@ test("rulesProblem: four near, one right next to, any number of not-next-to", ()
 test("normalizeRules keeps only the first four near", () => {
   const rules = ["a", "b", "c", "d", "e"].map((u) => ({ kind: "near", userId: u }) as SeatRule);
   assert.deepEqual(normalizeRules([...rules, { kind: "edge" }]).map((r) => ("userId" in r ? r.userId : r.kind)), ["a", "b", "c", "d", "edge"]);
+});
+
+test("stampRules marks wishes a lead adds and keeps marks when the list moves", () => {
+  const before: SeatRule[] = [{ kind: "edge" }, { kind: "near", userId: "b", by: "lead" }];
+  // The lead moves the near wish up and adds a seat; the form's own `by` values are ignored.
+  const saved = stampRules([{ kind: "near", userId: "b" }, { kind: "edge", by: "x" }, { kind: "seat", seat: "A1" }], before, "me", "lead");
+  assert.deepEqual(saved, [{ kind: "near", userId: "b", by: "lead" }, { kind: "edge" }, { kind: "seat", seat: "A1", by: "lead" }]);
+  // The member's own new wishes carry no mark, and old marks stay.
+  const own = stampRules([...saved, { kind: "row", row: "B" }], saved, "me", "me");
+  assert.deepEqual(own.at(-1), { kind: "row", row: "B" });
+  assert.equal(own[0].by, "lead");
+  // Changing a wish's kind counts as a new wish.
+  assert.equal(stampRules([{ kind: "next", userId: "b" }], before, "me", "me")[0].by, undefined);
+});
+
+test("normalizeRules keeps who added a wish, never the member themself", () => {
+  assert.deepEqual(normalizeRules([{ kind: "middle", by: "lead" }, { kind: "avoid", userId: "c", by: "me" }], "me"), [
+    { kind: "middle", by: "lead" },
+    { kind: "avoid", userId: "c" },
+  ]);
+});
+
+test("changeRulePerson swaps the person in place and drops a clashing wish", () => {
+  const rules: SeatRule[] = [{ kind: "next", userId: "a", by: "lead" }, { kind: "edge" }, { kind: "avoid", userId: "b" }];
+  assert.deepEqual(changeRulePerson(rules, 0, "c"), [{ kind: "next", userId: "c" }, { kind: "edge" }, { kind: "avoid", userId: "b" }]);
+  assert.deepEqual(changeRulePerson(rules, 0, "b"), [{ kind: "next", userId: "b" }, { kind: "edge" }]);
+  assert.equal(changeRulePerson(rules, 1, "c"), rules);
 });

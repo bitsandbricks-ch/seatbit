@@ -30,6 +30,13 @@ export function scheduleWishChangedDm(lanId: string, userId: string, leadId: str
   pending.set(key, timer);
 }
 
+/** Drops a DM that is still waiting, e.g. when the lead switches the DM off. */
+export function cancelWishChangedDm(lanId: string, userId: string) {
+  const key = `${lanId}:${userId}`;
+  clearTimeout(pending.get(key));
+  pending.delete(key);
+}
+
 export async function sendWishChangedDm(lanId: string, userId: string, leadId: string) {
   const l = db.select().from(lan).where(eq(lan.id, lanId)).get();
   const a = db.select().from(attendance).where(and(eq(attendance.lanId, lanId), eq(attendance.userId, userId))).get();

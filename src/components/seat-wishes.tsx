@@ -5,7 +5,7 @@ import { setMemberSeatWishes } from "@/app/seat-wish-actions";
 import { btnPrimary, input } from "./ui";
 import { useT } from "@/i18n/client";
 import { useRunAction } from "./action-form";
-import { MAX_NEAR, MAX_WISHES, addRule, isRanked, moveRule, type SeatRule } from "@/lib/seat-rules";
+import { MAX_NEAR, MAX_WISHES, addRule, changeRulePerson, isPersonRule, isRanked, moveRule, type SeatRule } from "@/lib/seat-rules";
 import { wishIcon, wishText } from "@/lib/wish-text";
 
 type Wishes = { rules: SeatRule[]; note: string };
@@ -18,7 +18,7 @@ const GAP = 8;
  * Seat wishes: ranked wishes (the top one matters most, one "right next to" at most) and an unranked
  * "not right next to" list. Ranked wishes move by drag (handle, works with touch) or the
  * up/down buttons; every change saves right away. With `member`, a lead edits that member's
- * wishes (the member gets a DM).
+ * wishes (the member gets a DM only if the lead ticks it). Wishes someone else added say who.
  */
 export function SeatWishes({
   lanId,
@@ -33,7 +33,7 @@ export function SeatWishes({
   lanId: string;
   /** People who can be picked for near / next to / not next to. */
   people: { id: string; name: string }[];
-  /** Names for everyone the rules mention (also people no longer coming). */
+  /** Names for everyone the rules mention (also people no longer coming, and who added a wish). */
   names: Record<string, string>;
   seatLabels: string[];
   /** Row letters of the seat plan. */
@@ -51,24 +51,33 @@ export function SeatWishes({
   const [adding, setAdding] = useState<AddKind | null>(null);
   const [pick, setPick] = useState("");
   const [avoidPick, setAvoidPick] = useState("");
+  // The person wish whose person is being swapped (its index in `rules`), and the pick for it.
+  const [changing, setChanging] = useState<number | null>(null);
+  const [changePick, setChangePick] = useState("");
+  const [dm, setDm] = useState(false);
   const [pending, start] = useTransition();
   const run = useRunAction();
 
   const ranked = rules.filter(isRanked);
   const avoids = rules.filter((r): r is Extract<SeatRule, { kind: "avoid" }> => r.kind === "avoid");
 
-  const save = (next: SeatRule[], nextNote = note) => {
+  const save = (next: SeatRule[], nextNote = note, sendDm = dm) => {
     const before = rules;
     const noteBefore = savedNote.current;
     // Ranked wishes first, then "not right next to": the order the server keeps too.
     const ordered = [...next.filter(isRanked), ...next.filter((r) => !isRanked(r))];
     setRules(ordered);
+    // Indexes move with the save, so an open "change person" picker closes.
+    setChanging(null);
     // Set before the request so a blur right after Enter doesn't save twice.
     savedNote.current = nextNote;
     start(async () => {
       const w = { rules: ordered, note: nextNote };
       const ok = member
-        ? await run(() => setMemberSeatWishes(lanId, member.id, w), t("wishLead.saved", { name: member.name }))
+        ? await run(
+            () => setMemberSeatWishes(lanId, member.id, w, sendDm),
+            sendDm ? t("wishLead.saved", { name: member.name }) : t("wishLead.savedNoDm"),
+          )
         : await run(() => setMySeatWishes(lanId, w), t("wishes.saved"));
       if (!ok) {
         setRules(before);
@@ -80,6 +89,43 @@ export function SeatWishes({
 
   const nameOf = (id: string) => names[id] ?? people.find((p) => p.id === id)?.name ?? "?";
   const text = (r: SeatRule) => wishText(r, t, nameOf, nearRange);
+  const addedBy = (r: SeatRule) => (r.by && r.by !== member?.id ? t("wishes.addedBy", { name: nameOf(r.by) }) : null);
+
+  const startChange = (r: SeatRule) => {
+    const at = rules.indexOf(r);
+    setChanging(changing === at ? null : at);
+    setChangePick("");
+  };
+  const changing_ = changing === null ? undefined : rules[changing];
+  const changeOptions =
+    changing_ && isPersonRule(changing_) ? people.filter((p) => p.id !== changing_.userId).map((p) => ({ value: p.id, label: p.name })) : [];
+  const applyChange = () => {
+    if (changing === null || !changePick) return;
+    save(changeRulePerson(rules, changing, changePick));
+    setChanging(null);
+    setChangePick("");
+  };
+  const changeForm = (r: SeatRule) =>
+    isPersonRule(r) && (
+      <div className="flex basis-full flex-wrap gap-2 px-1 pb-1 pt-2">
+        <select
+          value={changePick}
+          onChange={(e) => setChangePick(e.target.value)}
+          aria-label={t("wishes.change.pick", { name: nameOf(r.userId) })}
+          className={`${input} min-w-0 basis-full sm:basis-0 sm:flex-1`}
+        >
+          <option value="">{t("wishes.change.pick", { name: nameOf(r.userId) })}</option>
+          {changeOptions.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+        <button type="button" disabled={!changePick || pending} onClick={applyChange} className={`${btnPrimary} shrink-0`}>
+          {t("wishes.change.save")}
+        </button>
+      </div>
+    );
 
   // --- Drag to reorder (pointer events, so it works with touch too) ---
   const listRef = useRef<HTMLOListElement>(null);
@@ -166,6 +212,25 @@ export function SeatWishes({
 
   return (
     <div className="space-y-4 text-sm">
+      {member && (
+        <label className="flex items-start gap-2 rounded-md bg-raised/60 px-3 py-2.5">
+          <input
+            type="checkbox"
+            checked={dm}
+            disabled={pending}
+            onChange={(e) => {
+              setDm(e.target.checked);
+              // Saves as it is, so switching off drops a DM that is still waiting, and on sends one.
+              save(rules, note, e.target.checked);
+            }}
+            className="mt-0.5 accent-bit"
+          />
+          <span>
+            <span className="block text-fg/90">{t("wishLead.dm.toggle", { name: member.name })}</span>
+            <span className="block text-xs text-muted">{t("wishLead.dm.toggleHint")}</span>
+          </span>
+        </label>
+      )}
       {ranked.length === 0 ? (
         <p className="rounded-md bg-raised/60 px-3 py-2.5 text-muted">{t("wishes.empty")}</p>
       ) : (
@@ -181,7 +246,7 @@ export function SeatWishes({
               <li
                 key={`${r.kind}:${"userId" in r ? r.userId : "seat" in r ? r.seat : "row" in r ? r.row : ""}`}
                 style={{ transform: `translateY(${shift(i)}px)` }}
-                className={`relative flex items-center gap-1 rounded-md border bg-raised/60 py-1 pl-1 pr-1 ${
+                className={`relative flex flex-wrap items-center gap-1 rounded-md border bg-raised/60 py-1 pl-1 pr-1 ${
                   dragging ? "z-10 border-bit shadow-lg" : "border-line transition-transform"
                 }`}
               >
@@ -210,7 +275,21 @@ export function SeatWishes({
                     {wishIcon(r)}
                   </span>
                   {label}
+                  {addedBy(r) && <span className="mt-0.5 block text-xs text-muted">{addedBy(r)}</span>}
                 </span>
+                {isPersonRule(r) && (
+                  <button
+                    type="button"
+                    disabled={pending}
+                    aria-expanded={changing === rules.indexOf(r)}
+                    onClick={() => startChange(r)}
+                    aria-label={t("wishes.change.button", { rule: label })}
+                    title={t("wishes.change.hint")}
+                    className={iconBtn}
+                  >
+                    <span aria-hidden>✎</span>
+                  </button>
+                )}
                 <span className="flex flex-col sm:flex-row">
                   <button
                     type="button"
@@ -240,6 +319,7 @@ export function SeatWishes({
                 >
                   <span aria-hidden>✕</span>
                 </button>
+                {changing !== null && changing === rules.indexOf(r) && changeForm(r)}
               </li>
             );
           })}
@@ -310,8 +390,22 @@ export function SeatWishes({
         {avoids.length > 0 ? (
           <ul className="flex flex-wrap gap-1.5" aria-label={t("wishes.avoid.title")}>
             {avoids.map((r) => (
-              <li key={r.userId} className="inline-flex items-center gap-1 rounded-full bg-line/60 py-0.5 pl-3 pr-1 text-xs text-fg/90">
-                <span className="[overflow-wrap:anywhere]">{nameOf(r.userId)}</span>
+              <li
+                key={r.userId}
+                title={addedBy(r) ?? undefined}
+                className="inline-flex items-center gap-1 rounded-full bg-line/60 py-0.5 pl-1 pr-1 text-xs text-fg/90"
+              >
+                <button
+                  type="button"
+                  aria-expanded={changing === rules.indexOf(r)}
+                  onClick={() => startChange(r)}
+                  aria-label={t("wishes.change.button", { rule: text(r) })}
+                  className="rounded-full px-2 py-1 text-left hover:bg-line [overflow-wrap:anywhere]"
+                >
+                  {nameOf(r.userId)}
+                  {r.by && r.by !== member?.id && <span className="ml-1 text-muted">· {t("wishes.byShort", { name: nameOf(r.by) })}</span>}
+                  <span aria-hidden className="ml-1 text-muted">✎</span>
+                </button>
                 <button
                   type="button"
                   onClick={() => save(rules.filter((x) => x !== r))}
@@ -326,6 +420,7 @@ export function SeatWishes({
         ) : (
           <p className="text-xs text-faint">{t("wishes.avoid.none")}</p>
         )}
+        {changing_?.kind === "avoid" && changeForm(changing_)}
         <div className="flex flex-wrap gap-2">
           <select
             value={avoidPick}
