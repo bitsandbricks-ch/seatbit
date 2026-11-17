@@ -52,6 +52,8 @@ Tap a name in the user list on *Overview* to open that person's page. All platfo
 
 Give a platform role or suspend the account from the top of the page, as in the list. Emergency contacts and dietary needs don't show here: only the leads of an event see those.
 
+![User details](../screenshots/desktop-admin-user.png){ .shot }
+
 ## Platform settings
 
 | Tab | | Docs |

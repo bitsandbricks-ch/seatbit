@@ -240,7 +240,7 @@ export default async function AdminUserPage({ params }: PageProps<"/admin/users/
                 ))}
               </ul>
             ) : discord ? (
-              <DiscordIdentity t={t} identity={discord} canVerify={false} />
+              <DiscordIdentity t={t} identity={discord} canVerify={false} others />
             ) : (
               <p className="text-sm text-muted">{t("member.notLinked")}</p>
             )}
@@ -252,7 +252,7 @@ export default async function AdminUserPage({ params }: PageProps<"/admin/users/
                 <div key={s.key} className="flex justify-between gap-3">
                   <dt className="min-w-0 truncate text-muted">{s.label}</dt>
                   <dd className="min-w-0 text-right">
-                    <span className="block truncate font-medium">{s.nick ?? (s.key === "default" ? defaultNick || "—" : "—")}</span>
+                    <span className="block truncate font-medium">{s.nick ?? (defaultNick || "—")}</span>
                     {s.others.length > 0 && <span className="block truncate text-xs text-muted">{s.others.join(", ")}</span>}
                     {s.lanId && <span className="block truncate text-xs text-faint">ID {s.lanId}</span>}
                   </dd>
