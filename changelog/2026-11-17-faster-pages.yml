@@ -1,0 +1,12 @@
+date: 2026-11-17
+type: improved
+en:
+  title: "Faster seat wishes and clan pages"
+  text: >-
+    On Manage › Seats, switching the seat wishes between "Needs a look" and "Everyone" is instant now.
+    Clan pages no longer wait for Discord when it is slow or the bot is missing a permission.
+de:
+  title: "Schnellere Sitzwünsche und Clan-Seiten"
+  text: >-
+    Unter Verwalten › Plätze wechseln die Sitzwünsche jetzt sofort zwischen «Anschauen» und
+    «Alle». Clan-Seiten warten nicht mehr auf Discord, wenn es langsam ist oder dem Bot eine Berechtigung fehlt.

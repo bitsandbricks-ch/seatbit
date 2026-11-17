@@ -473,11 +473,9 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
           {seats.length > 0 && <WishOverview
               badges={badges}
               rows={wishRows}
-              editHref={l.seatsPublishedAt ? undefined : (uid) => `/lans/${l.id}/manage?tab=seats&editWishes=${encodeURIComponent(uid)}${sp.wishes === "all" ? "&wishes=all" : ""}#edit-wishes`}
+              editBase={l.seatsPublishedAt ? undefined : `/lans/${l.id}/manage?tab=seats&editWishes=`}
               overall={overallScore(wishChecks)}
               filter={sp.wishes === "all" ? "all" : "look"}
-              href={(f) => `/lans/${l.id}/manage?tab=seats${f === "all" ? "&wishes=all" : ""}#wishes`}
-              t={t}
             />}
           </div>
   );
