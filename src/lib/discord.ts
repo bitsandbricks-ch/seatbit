@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import { and, asc, eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { AttendanceStatus, Lan } from "@/db/schema";
-import { avatarUrl, clanCan, getClan, myClans } from "./clans";
+import { avatarUrl, clanCan, clanRole, getClan, myClans } from "./clans";
 import { roleCan } from "./clan-roles";
 import { platformCan } from "./platform-roles";
 import { type ChatReminderKind, fmtWhen, lanFacts, lanLink, lanSummary } from "./announce";
@@ -19,6 +19,7 @@ import { makeT, type T } from "../i18n/translate";
 import { clanLocale } from "../i18n/user-locale";
 import { answerEvent, handleMemberCommand, handleTicketButton, memberAutocomplete } from "./discord-commands";
 import { lanChanged } from "./live";
+import { markVerified, verifyClanMembers, verifyCounts, verifyReport } from "./discord-verify";
 import {
   type DiscordUser,
   type Handled,
@@ -646,6 +647,19 @@ export function handleInteraction(i: Interaction): Handled {
     return claimCommand(i, t, i.data.custom_id.slice("claim:".length));
   }
 
+  // /verify: a member confirms they're on their clan's server
+  if (i.type === 2 && i.data?.name === "verify") {
+    const c = clanForGuild(i.guild_id);
+    if (!c) return { response: reply(t("bot.serverNotLinkedAsk")) };
+    const me = seatbitUserFor(discordUser);
+    if (!me) return { response: notLinked(t) };
+    const role = clanRole(me.id, c.id);
+    if (!role || role === "pending") return { response: reply(t("discordVerify.notMember", { clan: `**${c.name}**` })) };
+    // Running it here proves they're on this server with this Discord account.
+    markVerified(me.id, discordUser, i.member?.user ?? i.user);
+    return { response: reply(`✅ ${t("discordVerify.selfDone", { clan: `**${c.name}**` })}`) };
+  }
+
   // /guest member:<@…> guest:<…>: a lead says who a guest is
   if (i.type === 2 && i.data?.name === "guest") return linkGuestCommand(i, t, editReply);
 
@@ -737,6 +751,22 @@ export function handleInteraction(i: Interaction): Handled {
       db.delete(discordChannel).where(eq(discordChannel.channelId, channelId)).run();
       db.delete(discordMessage).where(eq(discordMessage.channelId, channelId)).run();
       return { response: reply(t("bot.stopped")) };
+    }
+
+    if (sub?.name === "validate") {
+      const c = clanForGuild(guildId);
+      if (!c) return { response: reply(t("discordVerify.noServerClan")) };
+      const me = seatbitUserFor(discordUser);
+      if (!me) return { response: notLinked(t) };
+      if (!clanCan(me, c.id, "members")) return { response: reply(t("discordVerify.needAdmin", { clan: c.name })) };
+      return {
+        response: { type: 5, data: { flags: EPHEMERAL } },
+        later: async () => {
+          const r = await verifyClanMembers(c.id, [guildId]);
+          await editReply({ content: verifyReport(t, c.name, r), allowed_mentions: { parse: [] } });
+          audit({ actorId: me.id, clanId: c.id, action: "clan.discord_validate", data: verifyCounts(r) });
+        },
+      };
     }
 
     if (sub?.name === "announce") {

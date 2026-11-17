@@ -30,6 +30,9 @@ import { LanguageSelect } from "@/components/language-switch";
 import { ActionForm } from "@/components/action-form";
 import { EmergencyForm } from "@/components/emergency-form";
 import { getEmergencyInfo } from "@/lib/emergency";
+import { DiscordIdentity } from "@/components/discord-identity";
+import { discordIdentity } from "@/lib/discord-verify";
+import { discordEnabled } from "@/lib/discord-api";
 
 const DM_RESULTS = ["ok", "dms_off", "guest", "bot_not_set_up", "no_discord", "cant_dm", "error"] as const;
 
@@ -55,6 +58,7 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
     .where(eq(schema.account.userId, me.id))
     .all();
   const hasDiscord = accounts.some((a) => a.providerId === "discord");
+  const discord = hasDiscord ? discordIdentity(me.id) : null;
   // After a refused test DM: the clan servers they're not on, with invites.
   const deletion = checkDeletion(me.id);
   const joinServers =
@@ -110,6 +114,11 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
               <Card title={t("profile.signInMethods")}>
                 <LinkedAccounts linked={accounts.map((a) => a.providerId)} available={enabledProviders()} />
               </Card>
+              {discord && (
+                <Card title={t("discordVerify.title")}>
+                  <DiscordIdentity t={t} identity={discord} canVerify={discordEnabled()} />
+                </Card>
+              )}
               <div className="sm:hidden">
                 <SignOutButton className={`${btnSecondary} w-full`} />
               </div>

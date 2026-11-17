@@ -34,6 +34,7 @@ import { contacts } from "./contacts";
 import { costs } from "./costs";
 import { dialog } from "./dialog";
 import { discordClaim } from "./discordClaim";
+import { discordVerify } from "./discordVerify";
 import { display } from "./display";
 import { donate } from "./donate";
 import { emergency } from "./emergency";
@@ -150,6 +151,7 @@ export const en = {
   costs,
   dialog,
   discordClaim,
+  discordVerify,
   display,
   donate,
   emergency,

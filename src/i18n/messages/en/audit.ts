@@ -77,6 +77,7 @@ export const audit = {
   donationRefund: "a donation of {amount} was refunded",
   supporterDonation: "the clan is a Supporter{until} thanks to a donation",
   supporterEnd: "the clan's Supporter subscription ended",
+  discordValidate: "checked the members against Discord ({verified} of {total} verified)",
   paymentsOn: "turned clan payments on",
   paymentsOnInfo: "turned clan payments on and changed the payment details",
   paymentsOff: "turned clan payments off",

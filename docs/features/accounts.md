@@ -36,7 +36,7 @@ Your profile has four tabs: **Account**, **At events**, **Notifications** and **
 
 | Tab | Part | |
 | --- | --- | --- |
-| **Account** | **Details** | First name, surname and your default **nickname**, the app's [language](languages.md), and your **sign-in methods** (link Discord if you signed in another way). |
+| **Account** | **Details** | First name, surname and your default **nickname**, the app's [language](languages.md), and your **sign-in methods** (link Discord if you signed in another way). With Discord linked, the **Discord** card shows your username and user ID (with **Copy**) and whether you're [verified on your clan's server](discord.md#discord-verification), with a **Verify** button. The username is refreshed each time you sign in with Discord. |
 | | **Avatar** | Discord picture, uploaded picture, emoji or initials. The colour is the ring around your avatar and your seat on the plan. |
 | | **Socials** | Discord, Steam, Battle.net, Epic Games, Riot ID, EA app, Ubisoft Connect, Xbox, PlayStation, FACEIT, Twitch and YouTube. Fill in what you like; members of your clans see them on your profile, with links where the service has profile pages. |
 | **At events** | **LAN nicks & IDs** | Per LAN type of your clans: a nick for every event of that type (e.g. your name on the event's own site) and your user ID or ticket number there. Only leads see the ID, unless the LAN type has a [profile link](clans.md#profile-links). |

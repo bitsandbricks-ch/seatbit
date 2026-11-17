@@ -10,12 +10,14 @@ import { MemberAdminActions } from "@/components/member-admin-actions";
 import { GuestEditForm } from "@/components/guest-form";
 import { resendGuestDiscordDm, unlinkGuestDiscord, updateGuest } from "@/app/clan-actions";
 import { GuestDiscordLink } from "@/components/guest-discord";
+import { DiscordBadge } from "@/components/discord-badge";
+import { discordIdentity } from "@/lib/discord-verify";
 import { guestDiscordLines } from "@/lib/guest-claim";
 import { Card, Page, PageHeader, Pill, StatTile, StatusBadge, Verified, columns, stack } from "@/components/ui";
 import { clanPerms, getClanBySlug, isClanMember } from "@/lib/clans";
 import { isMemberRole } from "@/lib/clan-roles";
 import { RolePill } from "@/components/role-pill";
-import { fmtDate, fmtWeekday, lanWeekday } from "@/lib/format";
+import { fmtDate, fmtDay, fmtWeekday, lanWeekday } from "@/lib/format";
 import { pickNick } from "@/lib/lans";
 import { personLabel } from "@/lib/names";
 import { appUrl } from "@/lib/mail";
@@ -114,6 +116,7 @@ export async function MemberProfile({ slug, userId, variant }: { slug: string; u
     .from(schema.account)
     .where(and(eq(schema.account.userId, u.id), eq(schema.account.providerId, "discord")))
     .get();
+  const dIdentity = discord ? discordIdentity(u.id) : null;
   const role = isMemberRole(membership.role) ? membership.role : "member";
   const avatar = avatarData(u);
   const shownName = personLabel(u, defaultNick, c.nameDisplay);
@@ -133,6 +136,7 @@ export async function MemberProfile({ slug, userId, variant }: { slug: string; u
     <span className="inline-flex max-w-full items-center gap-2">
       <span className="truncate">{shownName}</span>
       {!u.isGuest && <Verified size={variant === "page" ? 20 : 16} />}
+      {dIdentity && <DiscordBadge state={dIdentity.verifiedAt ? "verified" : "linked"} t={t} />}
     </span>
   );
 
@@ -238,7 +242,21 @@ export async function MemberProfile({ slug, userId, variant }: { slug: string; u
                         {u.email}
                       </a>
                     </Row>
-                    {isManager && <Row label="Discord">{t(discord ? "clanSettings.linked" : "member.notLinked")}</Row>}
+                    {isManager && (
+                      <Row label="Discord">
+                        {dIdentity ? (
+                          <>
+                            {dIdentity.username ? `@${dIdentity.username}` : t("clanSettings.linked")}{" "}
+                            <span className="font-mono text-xs text-muted">{dIdentity.id}</span>
+                            {dIdentity.verifiedAt && (
+                              <span className="block text-xs text-bit">{t("discordVerify.verifiedOn", { date: fmtDay(dIdentity.verifiedAt) })}</span>
+                            )}
+                          </>
+                        ) : (
+                          t("member.notLinked")
+                        )}
+                      </Row>
+                    )}
                   </>
                 )}
               </dl>

@@ -259,6 +259,8 @@ export function describeAudit(
     }
     case "clan.supporter_end":
       return t("audit.supporterEnd");
+    case "clan.discord_validate":
+      return t("audit.discordValidate", v);
     case "platform.donation": {
       const amount = typeof d.amount === "number" && typeof d.currency === "string" ? fmtMoney(d.amount, d.currency) : "";
       return t(e.clanId ? "audit.donationClan" : "audit.donation", { amount });

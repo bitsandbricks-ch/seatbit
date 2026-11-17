@@ -12,6 +12,7 @@ import { useT } from "@/i18n/client";
 import { useRunAction } from "./action-form";
 import { RolePill } from "./role-pill";
 import { ask } from "./dialog";
+import { DiscordBadge, type DiscordState } from "./discord-badge";
 
 const PAGE_SIZE = 20;
 
@@ -21,7 +22,7 @@ export function ClanMemberGrid({
   members,
 }: {
   slug: string;
-  members: { id: string; name: string; role: MemberRole; guest?: boolean; avatar?: AvatarData }[];
+  members: { id: string; name: string; role: MemberRole; guest?: boolean; avatar?: AvatarData; discord?: DiscordState }[];
 }) {
   const t = useT();
   const [q, setQ] = useState("");
@@ -53,6 +54,7 @@ export function ClanMemberGrid({
                 <Avatar data={m.avatar} size={32} />
                 <span className="truncate font-medium">{m.name}</span>
                 {!m.guest && <Verified />}
+                {m.discord && <DiscordBadge state={m.discord} t={t} />}
               </span>
               <span className="flex shrink-0 gap-1">
                 <RolePill role={m.role} />
@@ -80,6 +82,8 @@ export type ClanMemberRow = {
   role: MemberRole;
   isGuest: boolean;
   avatar?: AvatarData;
+  /** Discord linked, or found on the clan's server by `/seatbit validate`. */
+  discord?: DiscordState;
 };
 
 type RoleFilter = "all" | MemberRole;
@@ -160,7 +164,7 @@ export function ClanMemberAdmin({
                 <Link href={`/clans/${slug}/members/${m.id}`} className="hover:text-bit hover:underline">
                   {m.name}
                 </Link>{" "}
-                {!m.isGuest && <Verified />} <RolePill role={m.role} />
+                {!m.isGuest && <Verified />} {m.discord && <DiscordBadge state={m.discord} t={t} />} <RolePill role={m.role} />
                 {m.isGuest && <StatusIcon kind="guest" t={t} />}
               </span>
               <span className="block truncate text-xs text-muted">
