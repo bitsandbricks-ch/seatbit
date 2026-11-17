@@ -45,8 +45,7 @@ export const fx = {
   openLan: "demo-lan-open", // published, nobody answered yet
   otherLan: "demo-lan-x",
   type: "",
-  otherType: "demo-type-x",
-  legacyType: "demo-type-legacy", // from before clans: belongs to no clan
+  otherType: "demo-type-x", // a global type only the outsider's clan goes to
   guest: "demo-yannick",
   guestClaim: "",
   invite: "demo-invite",
@@ -93,8 +92,8 @@ export async function setup() {
   user(ACTORS.outsider, "Olaf");
   db.insert(s.clan).values({ id: fx.otherClan, name: "Other Clan", slug: "other-clan", joinPolicy: "approval" }).run();
   db.insert(s.clanMember).values({ clanId: fx.otherClan, userId: ACTORS.outsider, role: "admin" }).run();
-  db.insert(s.lanType).values({ id: fx.otherType, clanId: fx.otherClan, name: "Other LAN" }).run();
-  db.insert(s.lanType).values({ id: fx.legacyType, clanId: null, name: "Old LAN" }).run();
+  db.insert(s.lanType).values({ id: fx.otherType, name: "Other LAN" }).run();
+  db.insert(s.clanLanType).values({ clanId: fx.otherClan, typeId: fx.otherType }).run();
   db.insert(s.lan)
     .values({
       id: fx.otherLan,
@@ -154,7 +153,7 @@ export async function setup() {
     if (!row) throw new Error(`Fixture missing: ${sql}`);
     return row.id;
   };
-  fx.type = get("SELECT id FROM lan_type WHERE clan_id = ? ORDER BY name", fx.clan);
+  fx.type = get("SELECT type_id AS id FROM clan_lan_type WHERE clan_id = ? ORDER BY type_id", fx.clan);
   fx.guestClaim = get("SELECT id FROM guest_claim WHERE status = 'pending'");
   fx.seat = get("SELECT id FROM seat WHERE lan_id = ? AND user_id IS NOT NULL ORDER BY label", fx.lan);
   fx.freeSeat = get("SELECT id FROM seat WHERE lan_id = ? AND user_id IS NULL ORDER BY label", fx.lan);

@@ -1,3 +1,4 @@
+import { allTypes, clanTypes } from "@/lib/lan-types";
 import { DonorBadge } from "@/components/support-card";
 import { isDonor } from "@/lib/donations";
 import Link from "next/link";
@@ -63,12 +64,8 @@ export async function MemberProfile({ slug, userId, variant }: { slug: string; u
 
   const nicks = db.select().from(schema.nickname).where(eq(schema.nickname.userId, u.id)).all();
   const defaultNick = pickNick(nicks, { lanId: null, typeId: null }, "");
-  const types = db
-    .select()
-    .from(schema.lanType)
-    .where(eq(schema.lanType.clanId, c.id))
-    .orderBy(asc(schema.lanType.name))
-    .all();
+  const types = clanTypes(c.id);
+  const typeNames = new Map(allTypes().map((ty) => [ty.id, ty.name]));
   // IDs are private, except where the LAN type links them to a profile on the event's site.
   const lanAccounts = db.select().from(schema.lanAccount).where(eq(schema.lanAccount.userId, u.id)).all();
   const typeRows = types
@@ -100,7 +97,7 @@ export async function MemberProfile({ slug, userId, variant }: { slug: string; u
       a,
       seat: seatVisible ? s!.label : null,
       nick: pickNick(nicks, { lanId: l.id, typeId: l.typeId }, u.name),
-      typeName: types.find((ty) => ty.id === l.typeId)?.name,
+      typeName: l.typeId ? typeNames.get(l.typeId) : undefined,
     };
   });
   const upcoming = events.filter((e) => e.lan.endsAt >= now);

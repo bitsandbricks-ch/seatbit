@@ -38,7 +38,7 @@ test("a clan admin sets a member's LAN ID and nick", async ({ as }) => {
 test("a platform owner sets it from the user's admin page", async ({ as }) => {
   const alex = await as("alex");
   await alex.goto(`/admin/users/${anna}`);
-  await alex.getByText("Edit for Pixel Pirates").click();
+  await alex.getByText("Edit nicks & LAN IDs").click();
   await lakeside(alex).getByRole("textbox", { name: "LAN ID" }).fill("");
   await alex.getByRole("button", { name: "Save" }).click();
   await expect(alex.getByRole("list", { name: "Notifications" }).getByText("Saved.")).toBeVisible();

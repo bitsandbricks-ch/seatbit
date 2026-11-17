@@ -39,6 +39,7 @@ import { LeadBookingList } from "@/components/seat-booking";
 import { LeadChecklist } from "@/components/lead-checklist";
 import { buildLeadChecklist } from "@/lib/lead-checklist";
 import { hasWishes } from "@/lib/checklist";
+import { clanType, clanTypes, getType } from "@/lib/lan-types";
 import { buildLeadTasks, contactsOf, lanTaskStates, tasksForLan } from "@/lib/lead-tasks";
 import { LeadTasks } from "@/components/lead-tasks";
 import { LeadTaskEditor } from "@/components/lead-task-editor";
@@ -108,7 +109,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
   const lanIds = getLanAccounts(l, rows.map((r) => r.userId));
   const profilePat = profilePattern(
     l,
-    l.typeId ? db.select().from(schema.lanType).where(eq(schema.lanType.id, l.typeId)).get() : null,
+    l.typeId ? getType(l.typeId) : null,
   );
   const userById = new Map(users.map((u) => [u.id, u]));
   const seatOf = new Map(seats.filter((s) => s.userId).map((s) => [s.userId!, s.label]));
@@ -298,9 +299,13 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
     t,
   });
   // The leads' own to-dos (clan, LAN type, this event) and the LAN organizers' contacts.
-  const lanTypeRow = l.typeId ? db.select().from(schema.lanType).where(eq(schema.lanType.id, l.typeId)).get() : undefined;
-  const contacts = lanTypeRow ? contactsOf(lanTypeRow.id) : [];
+  const lanTypeRow = l.typeId ? getType(l.typeId) : undefined;
+  const contacts = lanTypeRow && l.clanId ? contactsOf(l.clanId, lanTypeRow.id) : [];
   const taskDefs = tasksForLan(l);
+  // The clan's types, plus this event's own when the clan has taken it off its list.
+  const ownTypes = l.clanId ? clanTypes(l.clanId) : [];
+  const currentType = l.typeId && !ownTypes.some((x) => x.id === l.typeId) ? clanType(l.clanId, l.typeId) : undefined;
+  const typeOptions = currentType ? [...ownTypes, currentType] : ownTypes;
   const leadTasks = buildLeadTasks({
     lan: l,
     tasks: taskDefs,
@@ -872,7 +877,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
         <div className="space-y-5">
           <Card title={t("manage.details")}>
             <LanForm
-              types={db.select().from(schema.lanType).where(eq(schema.lanType.clanId, l.clanId ?? "")).all()}
+              types={typeOptions}
               values={{
                 id: l.id,
                 typeId: l.typeId ?? "",
