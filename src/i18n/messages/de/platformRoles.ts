@@ -7,8 +7,8 @@ export const platformRoles: Messages["platformRoles"] = {
   name: { owner: "Owner", admin: "Admin", moderator: "Moderator", support: "Support", member: "Keine Rolle" },
   info: {
     owner: "Alles, auch Zahlungen und die Betreiber- und Rechtsangaben.",
-    admin: "Plattform-Einstellungen, Mail-Vorlagen, Rollen unter Admin und alle Clans und Events.",
+    admin: "Plattform-Einstellungen, Mail-Vorlagen, LAN-Typen, Rollen unter Admin und alle Clans und Events.",
     moderator: "Bearbeitet Meldungen und kann Nutzer und Clans sperren. Keine Einstellungen.",
-    support: "Sieht Nutzer, Clans, Events und das Protokoll, ohne etwas zu ändern, um Leuten zu helfen.",
+    support: "Sieht Nutzer, Clans, Events und das Protokoll, ohne etwas zu ändern, um Leuten zu helfen. Pflegt die LAN-Typen.",
   },
 };

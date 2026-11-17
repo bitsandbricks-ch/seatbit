@@ -337,6 +337,13 @@
       "when": 1794928617655,
       "tag": "20261117151657_hidden_socials",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "6",
+      "when": 1794931496199,
+      "tag": "20261117160456_global_lan_types",
+      "breakpoints": true
     }
   ]
 }

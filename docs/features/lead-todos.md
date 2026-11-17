@@ -45,7 +45,7 @@ A to-do has a **title**, optional **notes** (how to do it, links), **opens after
 
 ## Organizer contacts
 
-Contacts belong to a **LAN type**, since the organizers stay the same from year to year. On the LAN type's page, card *Organizer contacts*, add a name, what they do (e.g. *Seat planning*), email, Discord, phone, website and a note. Only leads see them, on *Manage → Overview* of every event of that type.
+Contacts belong to a **LAN type** in your clan, since the organizers stay the same from year to year. LAN types are shared by every clan, but each clan keeps its own contacts and to-dos for them. On the LAN type's page, card *Organizer contacts*, add a name, what they do (e.g. *Seat planning*), email, Discord, phone, website and a note. Only leads see them, on *Manage → Overview* of every event of that type.
 
 ![Contacts and to-dos of a LAN type](../screenshots/desktop-lan-type-tasks.png){ .shot }
 
