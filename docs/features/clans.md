@@ -81,7 +81,7 @@ A **LAN type** describes a LAN party you go to regularly, e.g. *Lock & Load* or 
 | Field | |
 | --- | --- |
 | Location, website, ticket shop, price | Copied to each event. |
-| Spots | How many people the group usually brings. |
+| Spots | How many people the group usually brings. Only used when the type has no seats: with seats, each seat is a spot. |
 | Seats | The seats you usually get, e.g. `F1-F20`. |
 | Usual length | In hours, e.g. Fri 18:00 to Sun 16:00 = 46. Sets the event's end. |
 | Answer by | Days before the start members must answer (default 30). |

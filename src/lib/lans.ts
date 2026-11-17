@@ -110,6 +110,19 @@ export async function getNicks(lanId: string, userIds: string[]) {
   return new Map([...(await getNames(lanId, userIds))].map(([id, n]) => [id, n.nick]));
 }
 
+/** Seats in a LAN's seat plan (held ones included: they are the group's too). */
+export function seatCount(lanId: string) {
+  return db.select({ id: seat.id }).from(seat).where(eq(seat.lanId, lanId)).all().length;
+}
+
+/**
+ * How many people the group can bring: the seat plan's size once it has seats, so adding a seat opens
+ * a spot; otherwise the spots typed in on the event (null = unlimited).
+ */
+export function capacityOf(l: Pick<Lan, "id" | "capacity">): number | null {
+  return seatCount(l.id) || l.capacity;
+}
+
 export function goingCount(lanId: string) {
   return db
     .select({ id: attendance.id })
@@ -152,7 +165,8 @@ export async function setAttendance(
   // The interest check is non-binding, so nobody queues yet; the limit counts once sign-up opens.
   if (status === "going" && existing?.status !== "going" && !opts.force && !l.interestCheck) {
     // Nobody jumps the line: with people waiting, a new "coming" queues up behind them.
-    if (l.capacity != null && (goingCount(l.id) >= l.capacity || waitlistOf(l.id).length > 0)) status = "waitlist";
+    const cap = capacityOf(l);
+    if (cap != null && (goingCount(l.id) >= cap || waitlistOf(l.id).length > 0)) status = "waitlist";
   }
   // Joining the waitlist puts you at the end; staying on it keeps your place.
   const waitlistedAt = status === "waitlist" ? (existing?.status === "waitlist" ? existing.waitlistedAt : new Date()) : null;
@@ -192,7 +206,8 @@ export function waitlistPositions(lanId: string) {
 
 /** Free spots in the group's block; null when the event has no limit. */
 export function freeSpots(l: Lan) {
-  return l.capacity == null ? null : Math.max(0, l.capacity - goingCount(l.id));
+  const cap = capacityOf(l);
+  return cap == null ? null : Math.max(0, cap - goingCount(l.id));
 }
 
 /** Someone left "coming": move the waitlist up, or tell the leads when they pick by hand. */
@@ -217,8 +232,9 @@ async function spotOpened(l: Lan) {
  * Only when the event moves people up by itself (waitlistAuto).
  */
 export async function promoteFromWaitlist(l: Lan) {
-  if (l.capacity == null || !l.waitlistAuto) return;
-  let free = l.capacity - goingCount(l.id);
+  const cap = capacityOf(l);
+  if (cap == null || !l.waitlistAuto) return;
+  let free = cap - goingCount(l.id);
   for (const a of waitlistOf(l.id)) {
     if (free <= 0) break;
     await moveUp(l, a.userId);

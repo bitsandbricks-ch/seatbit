@@ -4,6 +4,7 @@ import { db, schema } from "@/db";
 import { Card, Columns, Page, PageHeader, Segmented } from "@/components/ui";
 import { LanForm } from "@/components/lan-form";
 import { toInputValue } from "@/lib/format";
+import { seatSpecCount } from "@/lib/seat-spec";
 import { requireUser } from "@/lib/session";
 import { getT } from "@/i18n/server";
 import { clanCan, getClanBySlug, myClans } from "@/lib/clans";
@@ -104,6 +105,7 @@ export default async function NewLanPage({ params, searchParams }: PageProps<"/c
             paymentDueDate: "",
             price: ty?.price ?? "",
             capacity: ty?.capacity?.toString() ?? "",
+            seatCount: ty?.seatSpec ? seatSpecCount(ty.seatSpec, t) : 0,
             reminderDays: ty?.reminderDays ?? 3,
           }}
         />

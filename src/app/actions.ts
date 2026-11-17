@@ -20,6 +20,7 @@ import {
   addClanAdminsAsOrgas,
 } from "@/lib/lans";
 import { parseSeatLabel } from "@/lib/seat-layout";
+import { parseSeatSpec } from "@/lib/seat-spec";
 import { rowLetter } from "@/lib/seat-labels";
 import { announceLan, postReminderNow, refreshLanMessagesSoon, unlinkChannel } from "@/lib/discord";
 import { sendReminderNow } from "@/lib/reminders";
@@ -376,7 +377,17 @@ export async function toggleSeatCell(lanId: string, row: number, col: number) {
     db.insert(seat).values({ lanId, row, col, label: `${rowLetterIn(lanId, row)}${col + 1}` }).run();
     if (col >= l.seatCols) db.update(lan).set({ seatCols: col + 1 }).where(eq(lan.id, lanId)).run();
   }
+  await seatsChanged(lanId);
   lanPath(lanId);
+}
+
+/**
+ * The seat plan sets the event's size (capacityOf): a new seat is a new spot, so the waitlist moves up,
+ * and the Discord post shows the new count. Fewer seats never send anyone back to the waitlist.
+ */
+async function seatsChanged(lanId: string) {
+  await promoteFromWaitlist(mustGetLan(lanId));
+  refreshLanMessagesSoon(lanId);
 }
 
 /** The letter of a row in a LAN's seat block (rows are one letter each). */
@@ -618,37 +629,8 @@ export async function toggleSeatRow(lanId: string, row: number) {
   } else {
     for (const s of existing) if (!s.userId) db.delete(seat).where(eq(seat.id, s.id)).run();
   }
+  await seatsChanged(lanId);
   lanPath(lanId);
-}
-
-/**
- * Parses a seat list like "F1-F20" or "F1-F10, G1-G10, H3" into rows of labels.
- * Each letter prefix becomes one row, in the order given.
- */
-function parseSeatSpec(spec: string, t: T): string[][] {
-  const rows = new Map<string, string[]>();
-  for (const raw of spec.split(/[\s,;]+/).filter(Boolean)) {
-    const range = raw.match(/^([A-Za-z]*)(\d+)-(?:([A-Za-z]*))?(\d+)$/);
-    const single = raw.match(/^([A-Za-z]*)(\d+)$/);
-    let prefix: string, from: number, to: number;
-    if (range && (!range[3] || range[3].toUpperCase() === range[1].toUpperCase())) {
-      [prefix, from, to] = [range[1].toUpperCase(), Number(range[2]), Number(range[4])];
-    } else if (single) {
-      [prefix, from, to] = [single[1].toUpperCase(), Number(single[2]), Number(single[2])];
-    } else {
-      throw shownError(t("errors.seatParse", { raw }));
-    }
-    if (!prefix) throw shownError(t("errors.seatRow", { raw }));
-    if (to < from) [from, to] = [to, from];
-    if (to - from > 200) throw shownError(t("errors.seatTooMany", { raw }));
-    const row = rows.get(prefix) ?? [];
-    for (let n = from; n <= to; n++) {
-      const label = `${prefix}${n}`;
-      if (!row.includes(label)) row.push(label);
-    }
-    rows.set(prefix, row);
-  }
-  return [...rows.values()];
 }
 
 /** Replaces the seat block with the given seat labels, keeping assignments for labels that remain. */
@@ -689,6 +671,7 @@ export async function setSeatsFromList(lanId: string, spec: string): Promise<{ e
   const r = applySeatSpec(lanId, spec, await getT());
   if (!r.error) {
     auditLan(mustGetLan(lanId), me.id, "seat.layout", { data: { spec: spec.trim().slice(0, 200), count: r.count } });
+    await seatsChanged(lanId);
     lanPath(lanId);
   }
   return r;

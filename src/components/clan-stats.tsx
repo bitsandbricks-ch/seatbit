@@ -6,7 +6,7 @@ import { Card, EmptyState, Pill, StatTile } from "./ui";
 import type { Clan } from "@/db/schema";
 import { clanStats, pct, type MemberStats } from "@/lib/clan-stats";
 import { fmtDay } from "@/lib/format";
-import { getDefaultNames } from "@/lib/lans";
+import { capacityOf, getDefaultNames } from "@/lib/lans";
 import { getT } from "@/i18n/server";
 
 /** The clan's Stats tab: turnout per event and who comes how often. Only for people with the stats permission. */
@@ -123,7 +123,7 @@ export async function ClanStats({ clan: c }: { clan: Clan }) {
                         </td>
                         <td className="px-2 py-2 text-right font-semibold text-bit">
                           {e.going}
-                          {e.lan.capacity != null && <span className="font-normal text-faint"> / {e.lan.capacity}</span>}
+                          {capacityOf(e.lan) != null && <span className="font-normal text-faint"> / {capacityOf(e.lan)}</span>}
                           {e.waitlist > 0 && <span className="block text-xs font-normal text-muted">{t("stats.waitlist", { count: e.waitlist })}</span>}
                         </td>
                         <td className="px-2 py-2 text-right">{e.maybe || "–"}</td>

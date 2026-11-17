@@ -10,7 +10,7 @@ import { requirePlatform } from "@/lib/session";
 import { STAFF_ROLES, platformCan } from "@/lib/platform-roles";
 import { getLegal } from "@/lib/legal";
 import { backupStatus } from "@/lib/backup";
-import { getDefaultNames } from "@/lib/lans";
+import { capacityOf, getDefaultNames } from "@/lib/lans";
 import { getT } from "@/i18n/server";
 import { ActionForm } from "@/components/action-form";
 
@@ -149,7 +149,7 @@ export default async function AdminPage() {
                     </span>
                     <span className="flex gap-1.5">
                       <Pill>
-                        {t("admin.going", { n: `${going.length}${l.capacity ? ` / ${l.capacity}` : ""}` })}
+                        {t("admin.going", { n: `${going.length}${capacityOf(l) ? ` / ${capacityOf(l)}` : ""}` })}
                       </Pill>
                       {noTicket ? <Pill tone="red">{t("admin.noTicket", { count: noTicket })}</Pill> : null}
                     </span>

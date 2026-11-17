@@ -53,7 +53,7 @@ export function LanTypeForm({ values }: { values: LanTypeValues }) {
         <Field label={t("typeForm.price")}>
           <Input name="price" defaultValue={values.price} />
         </Field>
-        <Field label={t("typeForm.spots")}>
+        <Field label={t("typeForm.spots")} hint={t("typeForm.spotsHint")}>
           <Input type="number" min={1} name="capacity" defaultValue={values.capacity} />
         </Field>
         <Field label={t("typeForm.seats")} hint={t("typeForm.seatsHint")}>

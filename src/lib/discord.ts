@@ -6,7 +6,7 @@ import { avatarUrl, clanCan, clanRole, getClan, myClans } from "./clans";
 import { roleCan } from "./clan-roles";
 import { platformCan } from "./platform-roles";
 import { type ChatReminderKind, fmtWhen, lanFacts, lanLink, lanSummary } from "./announce";
-import { getDisplayNames, getLan, signupClosed } from "./lans";
+import { capacityOf, getDisplayNames, getLan, signupClosed } from "./lans";
 import { type Json, api, discordEnabled } from "./discord-api";
 import type { DiscordMode } from "./discord-modes";
 import { getSetting } from "./settings";
@@ -143,7 +143,7 @@ export async function lanMessage(l: Lan) {
   const closed = !!signupClosed(l);
   const fields = lanFacts(l, t).map(([name, value]) => ({ name, value: clip(value, 1024), inline: true }));
   fields.push({
-    name: `${t("bot.coming")} (${s.going.length}${l.capacity ? `/${l.capacity}` : ""})`,
+    name: `${t("bot.coming")} (${s.going.length}${capacityOf(l) ? `/${capacityOf(l)}` : ""})`,
     value: list(s.going.map((g) => g.name)),
     inline: false,
   });

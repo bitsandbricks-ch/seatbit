@@ -19,7 +19,7 @@ import { Avatar } from "@/components/avatar";
 import { getAvatars, type AvatarData } from "@/lib/avatars";
 import { Card, Columns, Hint, LockedAnswerBadge, Notice, Page, Pill, Verified } from "@/components/ui";
 import { fmtDate, fmtTime, lanRange, relative } from "@/lib/format";
-import { attendanceLocked, getDisplayNames, getLan, getNames, pickNick, seatView, signupClosed, waitlistPositions } from "@/lib/lans";
+import { attendanceLocked, capacityOf, getDisplayNames, getLan, getNames, pickNick, seatView, signupClosed, waitlistPositions } from "@/lib/lans";
 import { canTakePart as mayTakePart, canViewLan, getCurrentUser, isLanManager, isProfileComplete } from "@/lib/session";
 import { clanRole, getClan } from "@/lib/clans";
 import { EventInvite } from "@/components/event-invite";
@@ -230,7 +230,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
     now,
     t,
   });
-  const full = l.capacity != null && going.length >= l.capacity;
+  const capacity = capacityOf(l);
+  const full = capacity != null && going.length >= capacity;
   // Interest check: the page is just the answer and who answered; the rest opens with sign-up.
   const interestPhase = l.interestCheck && !l.cancelledAt;
   const news = db
@@ -845,7 +846,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
 
       <TabPanel id="attendees">
         <Card
-          title={l.capacity ? t("event.attendeesTitleOf", { count: going.length, capacity: l.capacity }) : t("event.attendeesTitle", { count: going.length })}
+          title={capacity ? t("event.attendeesTitleOf", { count: going.length, capacity }) : t("event.attendeesTitle", { count: going.length })}
           actions={full && <Pill tone="red">{t("event.fullWaitlist")}</Pill>}
         >
           <AttendeeList t={t} title={t("event.coming")} list={going} profileBase={profileBase} names={names} verified={verified} avatars={avatars} profiles={profiles} seatOf={seatOf} marks={leadMarks} meId={me.id} />

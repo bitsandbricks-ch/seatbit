@@ -12,7 +12,7 @@ import { avatarMap } from "@/lib/avatars";
 import { EventHeader } from "@/components/event-header";
 import { Card, Notice, Page, Pill, btnDanger, headerAction, headerActionFrame } from "@/components/ui";
 import { fmtDate, relative, toInputValue } from "@/lib/format";
-import { freeSpots, getLan, getNames, interestSwitch, seatView, waitlistOf } from "@/lib/lans";
+import { capacityOf, freeSpots, getLan, getNames, interestSwitch, seatView, waitlistOf } from "@/lib/lans";
 import { WaitlistPanel } from "@/components/waitlist-panel";
 import { dueKinds } from "@/lib/reminders";
 import { isLanManager, requireUser } from "@/lib/session";
@@ -184,6 +184,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
     : [];
 
   const free = freeSpots(l);
+  const capacity = capacityOf(l);
   const waitlist = waitlistOf(id).map((r) => ({
     userId: r.userId,
     name: names.get(r.userId) ?? userById.get(r.userId)?.name ?? "?",
@@ -574,7 +575,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
           <div className="grid grid-cols-2 gap-px overflow-hidden rounded-card border border-line bg-line sm:grid-cols-4">
             <Stat
               label={t("bot.coming")}
-              value={`${going.length}${l.capacity ? ` / ${l.capacity}` : ""}`}
+              value={`${going.length}${capacity ? ` / ${capacity}` : ""}`}
               sub={t("manage.stat.waitlist", { count: count("waitlist") })}
               href={`/lans/${l.id}/manage?tab=attendees`}
             />
@@ -648,13 +649,13 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
       </TabPanel>
 
       <TabPanel id="attendees">
-      {(l.capacity != null || waitlist.length > 0) && (
+      {(capacity != null || waitlist.length > 0) && (
         <div id="waitlist" className="mb-4 scroll-mt-20 sm:mb-6">
           <Card
             title={`${t("event.waitlist")} (${waitlist.length})`}
             actions={
-              l.capacity != null && (
-                <Pill tone={free ? "emerald" : "amber"}>{t("manage.comingOf", { going: going.length, capacity: l.capacity })}</Pill>
+              capacity != null && (
+                <Pill tone={free ? "emerald" : "amber"}>{t("manage.comingOf", { going: going.length, capacity })}</Pill>
               )
             }
           >
@@ -887,6 +888,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
                 paymentDueDate: toInputValue(l.paymentDueDate),
                 price: l.price,
                 capacity: l.capacity?.toString() ?? "",
+                seatCount: seats.length,
                 reminderDays: l.reminderDays,
                 interestCheck: l.interestCheck,
                 interestSwitch: interestSwitch(l),

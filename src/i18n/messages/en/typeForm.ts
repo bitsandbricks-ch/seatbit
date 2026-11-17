@@ -5,6 +5,7 @@ export const typeForm = {
     "Optional. A member's profile on the event's site, with {id} where their LAN ID goes. Seatbit links each attendee's profile.",
   price: "Usual ticket price",
   spots: "Usual group spots",
+  spotsHint: "Used when the type has no seats. With seats, each seat is a spot.",
   seats: "Usual seats",
   seatsHint: "e.g. F1-F20. Copied into each new event of this type.",
   length: "Usual length (hours)",

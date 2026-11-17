@@ -30,6 +30,7 @@ export const lanForm = {
   pricePlaceholder: "e.g. 25 CHF",
   spots: "Group spots",
   spotsHint: "How many seats/tickets the group has. Empty = unlimited. Extra sign-ups go to a waitlist.",
+  spotsFromSeats: "Set by the seat plan: one spot per seat. Add or remove seats under Seats and the waitlist follows.",
   remindDays: "Remind days before deadline",
   description: "Description",
   saveChanges: "Save changes",
