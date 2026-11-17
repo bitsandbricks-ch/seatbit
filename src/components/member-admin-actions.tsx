@@ -99,7 +99,7 @@ export function MemberAdminActions({
           disabled={pending || lastAdmin}
           className={`${btnGhost} border border-line !text-danger`}
           onClick={async () =>
-            (await ask({ title: t("memberList.removeQ", { name }), confirm: t("dialog.remove"), danger: true })) &&
+            (await ask({ title: t("memberList.removeQ", { name }), body: t("memberList.removeBody"), confirm: t("dialog.remove"), danger: true })) &&
             run(() => removeClanMember(clanId, userId), () => router.push(`/clans/${slug}/settings?tab=members`))
           }
         >

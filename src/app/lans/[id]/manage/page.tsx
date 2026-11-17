@@ -274,6 +274,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
   const marksOf = (uid: string): StatusKind[] => {
     const r = rowByUser.get(uid);
     const m: StatusKind[] = [];
+    if (r && l.clanId && !memberIds.has(uid)) m.push("left");
     if (r && !r.paid && !r.ticketBought) m.push("noTicket");
     if (tracksBooking && r?.seatBooked) m.push("booked");
     if (userById.get(uid)?.isGuest) m.push("guest");
@@ -680,7 +681,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
             // Ticket and booking have their own columns here; the icons add what the table doesn't show.
             marks: [
               ...(seats.some((x) => x.userId === r.userId && x.locked) ? (["held"] as const) : []),
-              ...marksOf(r.userId).filter((k) => k === "guest" || k === "swap"),
+              ...marksOf(r.userId).filter((k) => k === "left" || k === "guest" || k === "swap"),
             ],
           }))}
           seats={[...seats].sort((a, b) => a.row - b.row || a.col - b.col)}

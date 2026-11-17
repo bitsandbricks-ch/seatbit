@@ -28,7 +28,7 @@ import { notify, notifyClanAdmins, notifyLater } from "@/lib/notify";
 import { requireClanPermission, requireLanManager, requireUser } from "@/lib/session";
 import { platformCan } from "@/lib/platform-roles";
 import { adminSetAttendance, type FormState } from "./actions";
-import { getDefaultNames } from "@/lib/lans";
+import { getDefaultNames, setAttendance } from "@/lib/lans";
 import { audit } from "@/lib/audit";
 import { UNLINKED, sendGuestDiscordDm } from "@/lib/discord";
 import type { ActionResult } from "@/app/admin/settings/actions";
@@ -36,7 +36,8 @@ import { cancelSupport } from "@/lib/billing";
 import { NAME_DISPLAYS, cleanName } from "@/lib/names";
 import { safeNext } from "@/lib/safe-url";
 import { overLimit } from "@/lib/rate-limit";
-import { withdrawFromClanEvents } from "@/lib/clan-leave";
+import { dropWishesAbout, withdrawFromClanEvents } from "@/lib/clan-leave";
+import { lanChanged } from "@/lib/live";
 
 const { clan, clanMember, clanInvite } = schema;
 
@@ -506,7 +507,18 @@ export async function deleteGuest(clanId: string, userId: string) {
   const me = await requireClanPermission(clanId, "members");
   const g = requireGuestOf(clanId, userId);
   audit({ actorId: me.id, action: "guest.delete", clanId, data: { guest: g.name } });
+  // Answers, seats and the rest go with the row (cascade); others' wishes about the guest don't,
+  // and a spot they held on an upcoming event goes to the waitlist first.
+  const lans = db
+    .select({ a: schema.attendance, l: schema.lan })
+    .from(schema.attendance)
+    .innerJoin(schema.lan, eq(schema.lan.id, schema.attendance.lanId))
+    .where(eq(schema.attendance.userId, userId))
+    .all();
+  for (const { a, l } of lans) if (a.status === "going" && l.endsAt > new Date()) await setAttendance(l, userId, "declined", { force: true });
   db.delete(schema.user).where(eq(schema.user.id, userId)).run();
+  dropWishesAbout(userId);
+  for (const { l } of lans) lanChanged(l.id);
   revalidatePath("/", "layout");
 }
 

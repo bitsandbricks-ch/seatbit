@@ -52,3 +52,58 @@ test("leaving a clan frees the spots one held and ends lead roles, but keeps ans
     await context.close();
   }
 });
+
+// Removing a member also clears what names them on the clan's upcoming events (others' seat wishes,
+// rides, their seat); an answer with a ticket stays and is marked for the leads.
+test("removing a member clears their seat, rides and the wishes naming them", async ({ as }) => {
+  const id = `e2e-removed-${Date.now()}`;
+  const now = new Date();
+  db()
+    .insert(schema.user)
+    .values({ id, name: "Rex Stone", firstName: "Rex", lastName: "Stone", email: `${id}@example.com`, emailVerified: true, createdAt: now, updatedAt: now })
+    .run();
+  db().insert(schema.clanMember).values({ clanId: CLAN_ID, userId: id, role: "member" }).run();
+  const open = createEvent({ capacity: 2, seats: ["A1", "A2"], attendees: [{ who: "anna", seat: "A2" }] });
+  db().insert(attendance).values({ lanId: open, userId: id, status: "going" }).run();
+  db().insert(attendance).values({ lanId: open, userId: userId("ben"), status: "waitlist", waitlistedAt: now }).run();
+  db().update(schema.seat).set({ userId: id }).where(and(eq(schema.seat.lanId, open), eq(schema.seat.label, "A1"))).run();
+  db()
+    .update(attendance)
+    .set({ wishRules: [{ kind: "next", userId: id }, { kind: "edge" }] })
+    .where(and(eq(attendance.lanId, open), eq(attendance.userId, userId("anna"))))
+    .run();
+  db().insert(schema.travelPost).values({ lanId: open, userId: id, kind: "ride", mode: "offer", town: "Bern" }).run();
+  const annaRide = db()
+    .insert(schema.travelPost)
+    .values({ lanId: open, userId: userId("anna"), kind: "ride", mode: "offer", town: "Zug", places: 3 })
+    .returning()
+    .get();
+  db().insert(schema.travelSpot).values({ postId: annaRide.id, userId: id }).run();
+  const ticketed = createEvent({ attendees: [{ who: "anna" }] });
+  db().insert(attendance).values({ lanId: ticketed, userId: id, status: "going", ticketBought: true }).run();
+  db()
+    .update(attendance)
+    .set({ wishRules: [{ kind: "near", userId: id }] })
+    .where(and(eq(attendance.lanId, ticketed), eq(attendance.userId, userId("anna"))))
+    .run();
+
+  const page = await as("alex");
+  await page.goto(`/clans/${CLAN_SLUG}/members/${id}`);
+  await page.getByRole("button", { name: "Remove from clan" }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toContainText("seat wishes, rides and teams that name them are cleared");
+  await dialog.getByRole("button", { name: "Remove" }).click();
+  await page.waitForURL(/tab=members/);
+
+  expect(answer(open, id)).toBeUndefined();
+  expect(answer(open, userId("ben"))?.status).toBe("going");
+  expect(answer(open, userId("anna"))?.wishRules).toEqual([{ kind: "edge" }]);
+  expect(db().select().from(schema.seat).where(eq(schema.seat.userId, id)).all()).toEqual([]);
+  expect(db().select().from(schema.travelPost).where(eq(schema.travelPost.userId, id)).all()).toEqual([]);
+  expect(db().select().from(schema.travelSpot).where(eq(schema.travelSpot.userId, id)).all()).toEqual([]);
+  // With a ticket they may still go: the answer and the wishes about them stay, and the leads see why.
+  expect(answer(ticketed, id)?.status).toBe("going");
+  expect(answer(ticketed, userId("anna"))?.wishRules).toEqual([{ kind: "near", userId: id }]);
+  await page.goto(`/lans/${ticketed}/manage?tab=attendees`);
+  await expect(page.getByTitle("No longer in the clan").first()).toBeAttached();
+});

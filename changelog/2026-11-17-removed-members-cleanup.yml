@@ -1,0 +1,16 @@
+date: 2026-11-17
+type: improved
+en:
+  title: "Removed members leave no traces on upcoming events"
+  text: >-
+    When someone leaves the clan or is removed, seat wishes that name them, their rides, sleeping spots,
+    seat swaps and teams on the clan's upcoming events are cleared too, also for people who left earlier.
+    Anyone who keeps a place because of a ticket or payment is marked as no longer in the clan for the leads.
+    Removing a member now says first what happens.
+de:
+  title: "Entfernte Mitglieder hinterlassen keine Spuren bei kommenden Events"
+  text: >-
+    Wer den Clan verlässt oder entfernt wird, verschwindet bei den kommenden Events des Clans auch aus den
+    Platzwünschen anderer, mit seinen Fahrten, Schlafplätzen, Platztauschen und Teams, auch bei Leuten, die
+    schon früher gegangen sind. Wer wegen Ticket oder Zahlung einen Platz behält, ist für die Leads als nicht
+    mehr im Clan markiert. Beim Entfernen eines Mitglieds steht jetzt zuerst, was passiert.

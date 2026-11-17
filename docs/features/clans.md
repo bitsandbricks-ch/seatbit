@@ -28,7 +28,7 @@ Everyone in a clan has one **clan role**:
 
 - A clan always keeps at least one admin.
 - Recruiters only remove plain members; people with a role are removed by an admin.
-- **Leave clan** at the bottom of the clan page asks first. Whoever leaves or is removed loses access to the clan's events, so their answers on its upcoming events are withdrawn like a "not coming": the seat frees up and the waitlist moves up. Answers with a ticket or a payment stay, for the leads to sort out. Their lead roles on the clan's events end too: only clan members can lead an event.
+- **Leave clan** at the bottom of the clan page asks first. Whoever leaves or is removed loses access to the clan's events, so their answers on its upcoming events are withdrawn like a "not coming": the seat frees up and the waitlist moves up. Others' seat wishes that name them, their seat swaps, the rides and sleeping spots they offered or took and their teams on those events go too. Answers with a ticket or a payment stay, for the leads to sort out: they may still go with their own ticket, and the event's *Manage* page marks them with a red "no longer in the clan" icon. Past events stay as they were. Their lead roles on the clan's events end too: only clan members can lead an event. Removing a member asks first and says the same. Deleting a guest also takes them out of others' seat wishes. People who left before this cleanup existed are cleaned up the same way when the server starts.
 - Admins change roles in the member list or on a member's profile under **Clan role**. The member gets a message.
 
 ![Clan role on a member's profile](../screenshots/desktop-member-role.png){ .shot }

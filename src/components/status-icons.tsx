@@ -2,13 +2,14 @@ import type { T } from "@/i18n/translate";
 
 /**
  * Small status icons for leads, the same everywhere (seat map, attendee lists): held seat, no ticket
- * yet, seat booked on the event's site, guest (no account yet), seat swap pending.
+ * yet, seat booked on the event's site, guest (no account yet), seat swap pending, no longer in the clan.
  * Pure markup, safe in server and client components.
  */
-export const STATUS_KINDS = ["held", "noTicket", "swap", "guest", "booked"] as const;
+export const STATUS_KINDS = ["left", "held", "noTicket", "swap", "guest", "booked"] as const;
 export type StatusKind = (typeof STATUS_KINDS)[number];
 
 const tones: Record<StatusKind, string> = {
+  left: "bg-danger/20 text-danger",
   held: "bg-warn/20 text-warn",
   noTicket: "bg-danger/20 text-danger",
   swap: "bg-seat-taken/25 text-seat-taken",
@@ -17,6 +18,12 @@ const tones: Record<StatusKind, string> = {
 };
 
 const paths: Record<StatusKind, React.ReactNode> = {
+  left: (
+    <>
+      <circle cx="9" cy="8" r="4" />
+      <path d="M2 21a7 7 0 0 1 14 0M16 11h6" />
+    </>
+  ),
   held: (
     <>
       <rect x="5" y="11" width="14" height="10" rx="2" />

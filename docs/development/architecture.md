@@ -124,7 +124,7 @@ Only "this event changed" goes over the stream, never data: the refreshed page l
 
 ## Background work
 
-`src/instrumentation.ts` runs inside the server process: every minute it publishes scheduled drafts, and every *Reminder check interval* minutes it sends due reminders. Setting the interval to `0` turns that off; `/api/cron/reminders` (with `CRON_SECRET`) does the same from outside. The same timer makes the scheduled backups (`src/lib/backup.ts`) and restore-tests the newest one (`src/lib/backup-drill.ts`). Wrap new background work in `runJob()` (`src/lib/jobs.ts`): it then shows on *Admin → Health* and in the `seatbit_job_*` metrics (`src/lib/metrics.ts`, served at `/api/metrics`).
+`src/instrumentation.ts` runs inside the server process: every minute it publishes scheduled drafts, and every *Reminder check interval* minutes it sends due reminders. Setting the interval to `0` turns that off; `/api/cron/reminders` (with `CRON_SECRET`) does the same from outside. The same timer makes the scheduled backups (`src/lib/backup.ts`) and restore-tests the newest one (`src/lib/backup-drill.ts`). Once after each start, `former-members` withdraws answers on upcoming events that people who left a clan still hold (`withdrawFormerMembers` in `src/lib/clan-leave.ts`), for data from before leaving cleaned up after itself. Wrap new background work in `runJob()` (`src/lib/jobs.ts`): it then shows on *Admin → Health* and in the `seatbit_job_*` metrics (`src/lib/metrics.ts`, served at `/api/metrics`).
 
 ## Rules
 
