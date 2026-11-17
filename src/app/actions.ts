@@ -7,7 +7,6 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db, schema } from "@/db";
 import { ATTENDANCE_STATUSES, type AttendanceStatus } from "@/db/schema";
-import { DISCORD_MODES } from "@/lib/discord-modes";
 import {
   mustGetLan,
   moveUp,
@@ -20,7 +19,6 @@ import {
   addClanAdminsAsOrgas,
 } from "@/lib/lans";
 import { parseSeatLabel } from "@/lib/seat-layout";
-import { parseSeatSpec } from "@/lib/seat-spec";
 import { rowLetter } from "@/lib/seat-labels";
 import { announceLan, postReminderNow, refreshLanMessagesSoon, unlinkChannel } from "@/lib/discord";
 import { sendReminderNow } from "@/lib/reminders";
@@ -30,8 +28,9 @@ import { appUrl } from "@/lib/mail";
 import { MAX_LOGGED_MOVES, autoPlanAfterWishes, planAndAssign } from "@/lib/seat-plan";
 import { eventMailVars, renderTemplate } from "@/lib/mail-templates";
 import { assertPlatform, canTakePart, canViewLan, requireClanPermission, requireLanManager, requireUser } from "@/lib/session";
-import { platformCan } from "@/lib/platform-roles";
 import { isClanMember } from "@/lib/clans";
+import { clanType, getType, addTypeToClan } from "@/lib/lan-types";
+import { parseSeatSpec } from "@/lib/seat-spec";
 import { lanAccountScope, saveLanAccount } from "@/lib/lan-accounts";
 import { validProfileUrl } from "@/lib/profile-link";
 import { cleanSocials, hiddenFromForm } from "@/lib/socials";
@@ -46,7 +45,7 @@ import { formError } from "@/i18n/form-errors";
 import type { T } from "@/i18n/translate";
 import { enforceLimit, overLimit } from "@/lib/rate-limit";
 
-const { attendance, seat, lan, user, lanOrga, lanType } = schema;
+const { attendance, seat, lan, user, lanOrga } = schema;
 
 const lanPath = (id: string) => {
   lanChanged(id);
@@ -74,11 +73,11 @@ export async function setNick(formData: FormData) {
   const me = await requireUser();
   const lanId = (formData.get("lanId") as string | null) || null;
   const typeId = (formData.get("typeId") as string | null) || null;
-  // Same scopes as setMyLanId: only events and LAN types the user can see.
+  // Same scopes as setMyLanId: only events the user can see, any (global) LAN type.
   if (lanId && !canViewLan(me, lanId)) throw await err("errors.gone");
   if (typeId) {
-    const t = db.select().from(lanType).where(eq(lanType.id, typeId)).get();
-    if (!t || (t.clanId && !isClanMember(me.id, t.clanId) && !platformCan(me, "view"))) throw await err("errors.gone");
+    // LAN types are global: anyone may keep a nick or ID for one.
+    if (!getType(typeId)) throw await err("errors.gone");
   }
   saveNick(me.id, String(formData.get("nick") ?? ""), { lanId, typeId });
   lanChanged(lanId);
@@ -94,8 +93,8 @@ export async function setMyLanId(formData: FormData) {
   const typeId = String(formData.get("typeId") ?? "");
   const lanId = String(formData.get("lanId") ?? "");
   if (typeId) {
-    const t = db.select().from(lanType).where(eq(lanType.id, typeId)).get();
-    if (!t || (t.clanId && !isClanMember(me.id, t.clanId) && !platformCan(me, "view"))) throw await err("errors.gone");
+    // LAN types are global: anyone may keep a nick or ID for one.
+    if (!getType(typeId)) throw await err("errors.gone");
     saveLanAccount(me.id, { lanId: null, typeId }, String(formData.get("lanAccount") ?? ""));
   } else {
     const l = mustGetLan(lanId);
@@ -307,8 +306,9 @@ export async function saveLan(_: FormState, formData: FormData): Promise<FormSta
   }
   const v = { ...rest, ...dates, dateTbd, interestCheck: inInterest };
   if (v.typeId) {
-    const t = db.select().from(lanType).where(eq(lanType.id, v.typeId)).get();
-    if (t?.clanId !== clanId) return { error: await tr("errors.typeOtherClan") };
+    if (!getType(v.typeId)) return { error: await tr("errors.gone") };
+    // An event of a type the clan hasn't picked yet puts the type on its list.
+    addTypeToClan(clanId, v.typeId);
   }
 
   let lanId = id;
@@ -328,7 +328,7 @@ export async function saveLan(_: FormState, formData: FormData): Promise<FormSta
     db.insert(lanOrga).values({ lanId: row.id, userId: me.id }).run();
     addClanAdminsAsOrgas(row.id, clanId);
     auditLan(row, me.id, "event.create");
-    const t = v.typeId ? db.select().from(lanType).where(eq(lanType.id, v.typeId)).get() : undefined;
+    const t = clanType(clanId, v.typeId);
     if (t?.seatSpec) applySeatSpec(row.id, t.seatSpec, await getT());
   }
   lanPath(lanId!);
@@ -865,72 +865,4 @@ export async function unpublishSeats(lanId: string) {
   db.update(lan).set({ seatsPublishedAt: null, seatPicking: false }).where(eq(lan.id, lanId)).run();
   auditLan(mustGetLan(lanId), me.id, "seats.reopen");
   lanPath(lanId);
-}
-
-// ---------------- LAN types (templates) ----------------
-
-const lanTypeInput = z.object({
-  name: z.string().trim().min(1).max(100),
-  description: z.string().max(5000).default(""),
-  location: z.string().max(200).default(""),
-  websiteUrl: optionalHttpUrl().default(""),
-  ticketUrl: optionalHttpUrl().default(""),
-  price: z.string().max(50).default(""),
-  capacity: z
-    .string()
-    .optional()
-    .transform((v) => (v ? Number(v) : null))
-    .pipe(z.number().int().min(1).nullable()),
-  reminderDays: z.coerce.number().int().min(0).max(60),
-  seatSpec: z.string().max(500).default(""),
-  durationHours: z.coerce.number().int().min(1).max(24 * 14),
-  answerDaysBefore: z
-    .string()
-    .optional()
-    .transform((v) => (v ? Number(v) : null))
-    .pipe(z.number().int().min(0).max(365).nullable()),
-  discordMode: z.enum(DISCORD_MODES).default("channel"),
-  profileUrl: profileUrlInput,
-});
-
-export async function saveLanType(_: FormState, formData: FormData): Promise<FormState> {
-  const id = (formData.get("id") as string) || null;
-  const existing = id ? db.select().from(lanType).where(eq(lanType.id, id)).get() : undefined;
-  // An edit stays in the type's own clan; a type of no clan (from before clans) isn't anyone's to edit.
-  if (id && !existing?.clanId) throw await err("errors.gone");
-  const clanId = existing?.clanId ?? String(formData.get("clanId") ?? "");
-  if (!clanId) return { error: await tr("errors.pickClan") };
-  const me = await requireClanPermission(clanId, "events");
-  const parsed = lanTypeInput.safeParse(
-    Object.fromEntries([...formData.entries()].filter(([k]) => k !== "id" && k !== "clanId")),
-  );
-  if (!parsed.success) {
-    return { error: formError(parsed.error, await getT()) };
-  }
-  if (parsed.data.seatSpec) {
-    try {
-      parseSeatSpec(parsed.data.seatSpec, await getT());
-    } catch (e) {
-      return { error: (e as Error).message };
-    }
-  }
-  if (id) db.update(lanType).set(parsed.data).where(eq(lanType.id, id)).run();
-  else db.insert(lanType).values({ ...parsed.data, clanId }).run();
-  audit({ actorId: me.id, action: "type.save", clanId, data: { type: parsed.data.name, created: !id } });
-  revalidatePath("/", "layout");
-  redirect(`/clans/${clanSlug(clanId)}/settings?tab=types`);
-}
-
-export async function deleteLanType(id: string) {
-  const t = db.select().from(lanType).where(eq(lanType.id, id)).get();
-  if (!t?.clanId) return;
-  const me = await requireClanPermission(t.clanId, "events");
-  db.delete(lanType).where(eq(lanType.id, id)).run();
-  audit({ actorId: me.id, action: "type.delete", clanId: t.clanId, data: { type: t.name } });
-  revalidatePath("/", "layout");
-  redirect(`/clans/${clanSlug(t.clanId)}/settings?tab=types`);
-}
-
-function clanSlug(clanId: string) {
-  return db.select({ slug: schema.clan.slug }).from(schema.clan).where(eq(schema.clan.id, clanId)).get()?.slug ?? "";
 }

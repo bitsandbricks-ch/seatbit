@@ -1,5 +1,5 @@
 import { shownError } from "./action-error";
-import type { T } from "../i18n/translate";
+import type { T } from "@/i18n/translate";
 
 /**
  * Parses a seat list like "F1-F20" or "F1-F10, G1-G10, H3" into rows of labels.

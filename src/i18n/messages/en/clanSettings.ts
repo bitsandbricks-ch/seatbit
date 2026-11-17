@@ -40,8 +40,6 @@ export const clanSettings = {
   memberInviteHint:
     "Members who aren't on your server see a “Join our Discord” button on the clan page, and get the link when their join request is approved. The bot creates the invite itself if it may (“Create Invite”), or paste your own.",
   server: "Server {id}",
-  typesHint:
-    "Recurring LAN parties like Lock & Load or SwitzerLAN. Each year's event is created from its type, and members keep one nick per type.",
   noTypes: "No LAN types yet.",
   seats: "seats {seats}",
   threadPerEvent: "Discord thread per event",

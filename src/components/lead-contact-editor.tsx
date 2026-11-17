@@ -9,10 +9,10 @@ import { ContactDetails } from "./lead-contacts";
 import { Field, Input, btnGhost, btnPrimary, btnSecondary, input } from "./ui";
 import { ActionForm } from "@/components/action-form";
 
-type Contact = Omit<LeadContact, "createdAt" | "typeId">;
+type Contact = Omit<LeadContact, "createdAt" | "typeId" | "clanId">;
 
 /** Organizer contacts of one LAN type: list with edit and delete, plus a form to add one. */
-export function LeadContactEditor({ typeId, contacts }: { typeId: string; contacts: Contact[] }) {
+export function LeadContactEditor({ clanId, typeId, contacts }: { clanId: string; typeId: string; contacts: Contact[] }) {
   const t = useT();
   const [editing, setEditing] = useState<string | null>(null);
   const [adding, setAdding] = useState(0);
@@ -25,7 +25,7 @@ export function LeadContactEditor({ typeId, contacts }: { typeId: string; contac
           {contacts.map((c) =>
             editing === c.id ? (
               <li key={c.id} className="py-3">
-                <ContactForm typeId={typeId} contact={c} onDone={() => setEditing(null)} />
+                <ContactForm clanId={clanId} typeId={typeId} contact={c} onDone={() => setEditing(null)} />
               </li>
             ) : (
               <li key={c.id} className="flex flex-wrap items-start justify-between gap-2 py-2.5">
@@ -46,14 +46,14 @@ export function LeadContactEditor({ typeId, contacts }: { typeId: string; contac
       <details className="rounded-card border border-line p-3" key={adding}>
         <summary className="cursor-pointer text-sm font-medium text-bit">{t("contacts.add")}</summary>
         <div className="mt-3">
-          <ContactForm typeId={typeId} onDone={() => setAdding((n) => n + 1)} />
+          <ContactForm clanId={clanId} typeId={typeId} onDone={() => setAdding((n) => n + 1)} />
         </div>
       </details>
     </div>
   );
 }
 
-function ContactForm({ typeId, contact: c, onDone }: { typeId: string; contact?: Contact; onDone: () => void }) {
+function ContactForm({ clanId, typeId, contact: c, onDone }: { clanId: string; typeId: string; contact?: Contact; onDone: () => void }) {
   const t = useT();
   const [state, action, pending] = useToastAction<FormState>(saveLeadContact, undefined);
   useEffect(() => {
@@ -62,7 +62,14 @@ function ContactForm({ typeId, contact: c, onDone }: { typeId: string; contact?:
   }, [state]);
   return (
     <form action={action} className="space-y-4">
-      {c ? <input type="hidden" name="id" value={c.id} /> : <input type="hidden" name="typeId" value={typeId} />}
+      {c ? (
+        <input type="hidden" name="id" value={c.id} />
+      ) : (
+        <>
+          <input type="hidden" name="clanId" value={clanId} />
+          <input type="hidden" name="typeId" value={typeId} />
+        </>
+      )}
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label={t("contacts.name")}>
           <Input name="name" defaultValue={c?.name} required maxLength={200} />

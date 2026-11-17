@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { and, asc, eq } from "drizzle-orm";
-import { db, schema } from "@/db";
+import { clanType, clanTypes } from "@/lib/lan-types";
 import { Card, Columns, Page, PageHeader, Segmented } from "@/components/ui";
 import { LanForm } from "@/components/lan-form";
 import { toInputValue } from "@/lib/format";
@@ -21,20 +20,9 @@ export default async function NewLanPage({ params, searchParams }: PageProps<"/c
   const { type } = await searchParams;
   // Clans this user can create events for, so they can switch here instead of going back.
   const managed = myClans(me.id).filter((m) => clanCan(me, m.clan.id, "events"));
-  const types = db
-    .select()
-    .from(schema.lanType)
-    .where(eq(schema.lanType.clanId, c.id))
-    .orderBy(asc(schema.lanType.name))
-    .all();
-  const ty =
-    typeof type === "string"
-      ? db
-          .select()
-          .from(schema.lanType)
-          .where(and(eq(schema.lanType.id, type), eq(schema.lanType.clanId, c.id)))
-          .get()
-      : undefined;
+  const types = clanTypes(c.id);
+  // Any global type works (saving puts it on the clan's list); the picker shows the clan's own.
+  const ty = typeof type === "string" ? clanType(c.id, type) : undefined;
 
   const start = new Date();
   start.setDate(start.getDate() + 30);
@@ -90,7 +78,7 @@ export default async function NewLanPage({ params, searchParams }: PageProps<"/c
       <Card>
         <LanForm
           key={ty?.id ?? "blank"}
-          types={types}
+          types={ty && !ty.used ? [...types, ty] : types}
           values={{
             clanId: c.id,
             typeId: ty?.id ?? "",

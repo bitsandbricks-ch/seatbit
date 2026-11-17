@@ -7,6 +7,7 @@ import { roleCan } from "./clan-roles";
 import { platformCan } from "./platform-roles";
 import { type ChatReminderKind, fmtWhen, lanFacts, lanLink, lanSummary } from "./announce";
 import { capacityOf, getDisplayNames, getLan, signupClosed } from "./lans";
+import { clanType } from "./lan-types";
 import { type Json, api, discordEnabled } from "./discord-api";
 import type { DiscordMode } from "./discord-modes";
 import { getSetting } from "./settings";
@@ -309,9 +310,8 @@ function forgetIfGone(channelId: string, e: unknown) {
 type Post = typeof discordMessage.$inferSelect;
 
 /** Where an event's Discord things go: its LAN type's setting, plain channel otherwise. */
-export function discordModeOf(l: Pick<Lan, "typeId">): DiscordMode {
-  if (!l.typeId) return "channel";
-  return db.select({ m: schema.lanType.discordMode }).from(schema.lanType).where(eq(schema.lanType.id, l.typeId)).get()?.m ?? "channel";
+export function discordModeOf(l: Pick<Lan, "typeId" | "clanId">): DiscordMode {
+  return clanType(l.clanId, l.typeId)?.discordMode ?? "channel";
 }
 
 /** Discord channel names: lowercase, dashes, no spaces. */

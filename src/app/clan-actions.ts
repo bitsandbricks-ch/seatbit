@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db, schema } from "@/db";
+import { clanTypes } from "@/lib/lan-types";
 import { GUEST_CLAIM_MODES } from "@/db/schema";
 import { clanCan, clanRole, clanmateIds, getClan, isClanSuspended, saveAvatar, uniqueSlug } from "@/lib/clans";
 import { MEMBER_ROLES, isMemberRole, type MemberRole } from "@/lib/clan-roles";
@@ -442,7 +443,7 @@ export async function updateGuest(clanId: string, userId: string, _: FormState, 
     return { error: await tr("errors.guestName") };
   }
   const { firstName, lastName, nick, email } = parsed.data;
-  const types = db.select({ id: schema.lanType.id }).from(schema.lanType).where(eq(schema.lanType.clanId, clanId)).all();
+  const types = clanTypes(clanId);
   const nicks = db.select().from(schema.nickname).where(eq(schema.nickname.userId, userId)).all();
   const lanAccounts = db.select().from(schema.lanAccount).where(eq(schema.lanAccount.userId, userId)).all();
   const nickOf = (typeId: string | null) => nicks.find((n) => !n.lanId && n.typeId === typeId)?.nick ?? "";

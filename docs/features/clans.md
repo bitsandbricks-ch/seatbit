@@ -76,19 +76,24 @@ The nick is the one for that event or LAN type, as always. Someone without a nic
 
 ## LAN types
 
-A **LAN type** describes a LAN party you go to regularly, e.g. *Lock & Load* or *SwitzerLAN*. New events are created from a type and copy its values.
+A **LAN type** describes a LAN party that happens regularly, e.g. *Lock & Load* or *SwitzerLAN*. LAN types are **shared by every clan** on the instance: [platform staff](admin.md#lan-types) add and edit them, so each LAN exists once and members keep one nick and LAN ID for it, whichever clan they go with.
 
-| Field | |
-| --- | --- |
-| Location, website, ticket shop, price | Copied to each event. |
-| Spots | How many people the group usually brings. Only used when the type has no seats: with seats, each seat is a spot. |
-| Seats | The seats you usually get, e.g. `F1-F20`. |
-| Usual length | In hours, e.g. Fri 18:00 to Sun 16:00 = 46. Sets the event's end. |
-| Answer by | Days before the start members must answer (default 30). |
-| Member profile link | Optional. A member's profile on the event's own site, with `{id}` where their LAN ID goes, e.g. `https://example.com/user/?id={id}`. See [Profile links](#profile-links). |
-| Discord | Where the bot posts these events, their reminders and news: the linked channel, a thread per event or a channel per event. See [Discord](discord.md#thread-or-channel-per-event). |
+Each clan picks the LAN types it goes to under *Clan settings → LAN types* (**Add a LAN type your clan goes to**). Creating an event of a type the clan doesn't have yet adds it too. A missing LAN? Ask the platform support to add it.
 
-A LAN type's page also holds its **organizer contacts** and its **lead to-dos**, see [Lead to-dos and contacts](lead-todos.md).
+New events are created from a type and copy its values: the shared details, plus your clan's own defaults.
+
+| Field | Who sets it | |
+| --- | --- | --- |
+| Location, website, ticket shop, price | Platform staff | Copied to each event. |
+| Usual length | Platform staff | In hours, e.g. Fri 18:00 to Sun 16:00 = 46. Sets the event's end. |
+| Member profile link | Platform staff | Optional. A member's profile on the event's own site, with `{id}` where their LAN ID goes, e.g. `https://example.com/user/?id={id}`. See [Profile links](#profile-links). |
+| Spots | Your clan | How many people the group usually brings. Only used when the type has no seats: with seats, each seat is a spot. |
+| Seats | Your clan | The seats you usually get, e.g. `F1-F20`. |
+| Answer by | Your clan | Days before the start members must answer (default 30). |
+| Reminders | Your clan | Days before the start the reminder goes out. |
+| Discord | Your clan | Where the bot posts these events, their reminders and news: the linked channel, a thread per event or a channel per event. See [Discord](discord.md#thread-or-channel-per-event). |
+
+The type's page in your clan also holds your clan's **organizer contacts** and **lead to-dos** for it, see [Lead to-dos and contacts](lead-todos.md). Other clans don't see them. **Remove from your clan** takes the type off your list with your defaults, contacts and to-dos for it; events of that type stay as they are.
 
 Members set a nick and their user ID **per LAN type**, so they enter their name for the event's own site once, not every year.
 
