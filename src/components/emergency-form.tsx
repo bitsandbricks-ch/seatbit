@@ -13,17 +13,20 @@ export function EmergencyForm({ values }: { values: { contactName: string; conta
   const [, action, pending] = useToastAction<EmergencyState>(updateEmergencyInfo, {});
   return (
     <form action={action} className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Field label={t("emergency.contactName")}>
-          <Input name="contactName" defaultValue={values.contactName} maxLength={MAX.name} autoComplete="off" placeholder={t("emergency.contactNamePh")} />
-        </Field>
-        <Field label={t("emergency.contactPhone")}>
-          <Input name="contactPhone" type="tel" defaultValue={values.contactPhone} maxLength={MAX.phone} autoComplete="off" placeholder={t("emergency.contactPhonePh")} />
+      {/* Contact left, dietary needs right on wide screens: the form stays short. */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid content-start gap-3 sm:grid-cols-2 lg:grid-cols-1">
+          <Field label={t("emergency.contactName")}>
+            <Input name="contactName" defaultValue={values.contactName} maxLength={MAX.name} autoComplete="off" placeholder={t("emergency.contactNamePh")} />
+          </Field>
+          <Field label={t("emergency.contactPhone")}>
+            <Input name="contactPhone" type="tel" defaultValue={values.contactPhone} maxLength={MAX.phone} autoComplete="off" placeholder={t("emergency.contactPhonePh")} />
+          </Field>
+        </div>
+        <Field label={t("emergency.diet")} hint={t("emergency.dietHint")}>
+          <textarea name="diet" defaultValue={values.diet} rows={3} maxLength={MAX.diet} className={`${input} lg:min-h-[8.5rem]`} placeholder={t("emergency.dietPh")} />
         </Field>
       </div>
-      <Field label={t("emergency.diet")} hint={t("emergency.dietHint")}>
-        <textarea name="diet" defaultValue={values.diet} rows={3} maxLength={MAX.diet} className={input} placeholder={t("emergency.dietPh")} />
-      </Field>
       <div className="flex items-center gap-3">
         <button disabled={pending} className={btnPrimary}>
           {t("common.save")}

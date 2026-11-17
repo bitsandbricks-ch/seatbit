@@ -52,7 +52,7 @@ export function PackingList({
   return (
     <Card title={t("packing.title")} actions={<span className="text-sm text-muted">{done} / {rows.length}</span>}>
       <p className="mb-3 text-sm text-muted">{t("packing.intro")}</p>
-      <ul className="grid gap-1">
+      <ul className="grid gap-x-4 gap-y-1 sm:grid-cols-2 xl:grid-cols-3">
         {rows.map((r) => (
           <li key={r.key} className="flex items-center gap-1 rounded-md hover:bg-raised">
             <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 px-2 py-1.5 text-sm">
@@ -84,7 +84,7 @@ export function PackingList({
         ))}
       </ul>
       <form
-        className="mt-3 flex gap-2"
+        className="mt-3 flex gap-2 sm:max-w-md"
         onSubmit={(e) => {
           e.preventDefault();
           run(() => addPackingItem(lanId, draft), () => setDraft(""));
