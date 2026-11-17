@@ -27,7 +27,7 @@ export function DiscordIdentity({
       </div>
       <div>
         <span className={label}>{t("discordVerify.userId")}</span>
-        <CopyField value={identity.id} />
+        <CopyField value={identity.id} label={t("discordVerify.userId")} />
       </div>
       {identity.verifiedAt ? (
         <div className="space-y-1">

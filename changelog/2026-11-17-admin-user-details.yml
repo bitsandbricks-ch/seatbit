@@ -1,0 +1,15 @@
+date: 2026-11-17
+type: new
+audience: admins
+en:
+  title: "User details for platform staff"
+  text: >-
+    Tap a name in the user list on the admin page to see that person's account: email, sign-in,
+    Discord, clans and roles, events with answers and seats, nicks and when they were last active.
+    Platform roles and suspensions work from there too.
+de:
+  title: "Benutzerdetails für das Plattform-Team"
+  text: >-
+    Tippe in der Benutzerliste der Admin-Seite auf einen Namen, um das Konto dieser Person zu sehen:
+    E-Mail, Anmeldung, Discord, Clans und Rollen, Events mit Antworten und Plätzen, Nicks und wann sie
+    zuletzt aktiv war. Plattformrollen und Sperren gehen auch von dort aus.

@@ -10,6 +10,7 @@ import { admin } from "./admin";
 import { adminDonations } from "./adminDonations";
 import { adminLog } from "./adminLog";
 import { adminSettings } from "./adminSettings";
+import { adminUser } from "./adminUser";
 import { attendees } from "./attendees";
 import { audit } from "./audit";
 import { auditLog } from "./auditLog";
@@ -127,6 +128,7 @@ export const en = {
   adminDonations,
   adminLog,
   adminSettings,
+  adminUser,
   attendees,
   audit,
   auditLog,

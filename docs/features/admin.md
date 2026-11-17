@@ -26,7 +26,7 @@ Every admin page has the same tab bar at the top, so you can switch between sect
 
 | Tab | |
 | --- | --- |
-| **Overview** | Everything on the instance. Give platform roles and suspend users or clans from the lists. Deleted accounts only show as a count. |
+| **Overview** | Everything on the instance. Give platform roles and suspend users or clans from the lists. Tap a user's name for their [user details](#user-details). Deleted accounts only show as a count. |
 | **Reports** | Abuse reports from members. See [Reports and suspensions](moderation.md). |
 | **Usage** | Accounts, active people, clans and events over time. All platform staff. See [Usage](#usage). |
 | **Backups** | Database backups: schedule, back up now, download. Owners only. See [Backups](../installation/operations.md#backups). |
@@ -38,6 +38,19 @@ Every admin page has the same tab bar at the top, so you can switch between sect
 A moderator sees the same tabs without the settings, and support without any buttons:
 
 ![Admin page of a moderator](../screenshots/desktop-admin-moderator.png){ .shot }
+
+## User details
+
+Tap a name in the user list on *Overview* to open that person's page. All platform staff see it; it shows what you need to help someone or to check an account:
+
+- **Account:** email (and whether it's verified), how they sign in, first name and surname, language, user ID to copy, since when the account exists and when it was last active. For guests: their clan, the invite email and when it was sent.
+- **Discord:** linked username and user ID, and whether the bot verified them on a clan's server. For guests, the Discord member a lead linked.
+- **Clans:** every clan they're in, with their role and since when. Each opens their member profile in that clan.
+- **Events:** every event they answered, across all clans, with their answer, seat and ticket.
+- **Nicks:** the default nick, the nick per LAN type and per event. Owners and admins also see the LAN IDs.
+- **Socials** from their profile.
+
+Give a platform role or suspend the account from the top of the page, as in the list. Emergency contacts and dietary needs don't show here: only the leads of an event see those.
 
 ## Platform settings
 
