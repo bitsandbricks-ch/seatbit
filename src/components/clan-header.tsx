@@ -2,6 +2,7 @@ import Link from "next/link";
 import { and, eq, gt } from "drizzle-orm";
 import type { ReactNode } from "react";
 import { db, schema } from "@/db";
+import { clanTypes } from "@/lib/lan-types";
 import type { Clan, ClanRole } from "@/db/schema";
 import { MANAGE_TAB_PERMS, isMemberRole, type ClanPermission } from "@/lib/clan-roles";
 import { getT } from "@/i18n/server";
@@ -122,7 +123,7 @@ export async function ClanHeader({
       ...(perms.has("stats") ? [{ id: "stats", label: t("clanHeader.stats") }] : []),
     ];
   } else {
-    const types = db.select({ id: schema.lanType.id }).from(schema.lanType).where(eq(schema.lanType.clanId, c.id)).all().length;
+    const types = clanTypes(c.id).length;
     const toCheck = c.paymentsEnabled && manageTabs.includes("payments") ? reportedCount(c.id) : 0;
     const all: Record<ClanManageTab, ClientTab> = {
       general: { id: "general", label: t("clanHeader.general") },

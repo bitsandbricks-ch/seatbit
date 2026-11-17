@@ -30,7 +30,7 @@ import { GuestEditForm, GuestForm } from "@/components/guest-form";
 import { GuestDiscordLink } from "@/components/guest-discord";
 import { guestDiscordLines } from "@/lib/guest-claim";
 import { ClanMemberAdmin } from "@/components/clan-member-list";
-import { Card, Columns, Page, btnDanger, btnGhost, btnPrimary, btnSecondary } from "@/components/ui";
+import { Card, Columns, Page, btnDanger, btnGhost, btnPrimary, btnSecondary, input } from "@/components/ui";
 import { appUrl } from "@/lib/mail";
 import { getDefaultNames } from "@/lib/lans";
 import { avatarData } from "@/lib/avatars";
@@ -47,6 +47,8 @@ import { ValidateDiscordButton } from "@/components/discord-verify-buttons";
 import { AuditLog, auditQuery, parseAuditFilter } from "@/components/audit-log";
 import { auditEntries, auditedEvents } from "@/lib/audit";
 import { ensureDefaultTasks, tasksAt } from "@/lib/lead-tasks";
+import { allTypes, clanTypes } from "@/lib/lan-types";
+import { addClanType } from "@/app/lan-type-actions";
 import { LeadTaskEditor } from "@/components/lead-task-editor";
 import { getT } from "@/i18n/server";
 import type { T } from "@/i18n/translate";
@@ -431,20 +433,14 @@ async function ChatTab({ t, clanId }: { t: T; clanId: string }) {
 }
 
 function TypesTab({ t, clanId, slug }: { t: T; clanId: string; slug: string }) {
-  const types = db.select().from(schema.lanType).where(eq(schema.lanType.clanId, clanId)).orderBy(asc(schema.lanType.name)).all();
+  const types = clanTypes(clanId);
+  const others = allTypes().filter((x) => !types.some((ty) => ty.id === x.id));
   ensureDefaultTasks(clanId);
   const clanTasks = tasksAt({ clanId });
   return (
     <div className="space-y-4 sm:space-y-6">
-    <Card
-      title={t("clanPage.links.types")}
-      actions={
-        <Link href={`/clans/${slug}/types/new`} className={btnPrimary}>
-          {t("typeForm.add")}
-        </Link>
-      }
-    >
-      <p className="mb-3 text-sm text-muted">{t("clanSettings.typesHint")}</p>
+    <Card title={t("clanPage.links.types")}>
+      <p className="mb-3 text-sm text-muted">{t("lanTypes.clanHint")}</p>
       {types.length === 0 ? (
         <p className="text-sm text-muted">{t("clanSettings.noTypes")}</p>
       ) : (
@@ -456,7 +452,7 @@ function TypesTab({ t, clanId, slug }: { t: T; clanId: string; slug: string }) {
                 <span className="block truncate text-xs text-muted">
                   {[
                     ty.location,
-                    ty.price,
+                    ty.capacity && t("lanTypes.spots", { count: ty.capacity }),
                     ty.seatSpec && t("clanSettings.seats", { seats: ty.seatSpec }),
                     ty.discordMode === "thread" && t("clanSettings.threadPerEvent"),
                     ty.discordMode === "event_channel" && t("clanSettings.channelPerEvent"),
@@ -477,6 +473,25 @@ function TypesTab({ t, clanId, slug }: { t: T; clanId: string; slug: string }) {
           ))}
         </ul>
       )}
+      <ActionForm action={addClanType.bind(null, clanId)} done={false} className="mt-4 flex flex-wrap items-end gap-2 border-t border-line pt-4">
+        <label className="min-w-0 flex-1 text-sm">
+          <span className="mb-1 block text-muted">{t("lanTypes.addLabel")}</span>
+          <select name="typeId" required disabled={others.length === 0} className={input} defaultValue="">
+            <option value="" disabled>
+              {others.length ? t("lanTypes.pick") : t("lanTypes.allAdded")}
+            </option>
+            {others.map((x) => (
+              <option key={x.id} value={x.id}>
+                {x.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button disabled={others.length === 0} className={btnPrimary}>
+          {t("lanTypes.add")}
+        </button>
+      </ActionForm>
+      <p className="mt-2 text-xs text-faint">{t("lanTypes.missing")}</p>
     </Card>
     <Card id="lead-tasks" title={t("leadTasks.allHeading")}>
       <p className="mb-3 text-sm text-muted">{t("leadTasks.allHint")}</p>
@@ -504,7 +519,7 @@ function GuestsTab({
   guests: User[];
   names: Map<string, { full: string; label: string }>;
 }) {
-  const types = db.select().from(schema.lanType).where(eq(schema.lanType.clanId, clanId)).orderBy(asc(schema.lanType.name)).all();
+  const types = clanTypes(clanId);
   const ids = guests.map((g) => g.id);
   const typeNicks = ids.length
     ? db.select().from(schema.nickname).where(and(inArray(schema.nickname.userId, ids), isNull(schema.nickname.lanId))).all()

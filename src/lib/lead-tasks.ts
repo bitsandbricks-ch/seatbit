@@ -5,8 +5,9 @@ import type { Lan, LanTask, LeadContact, LeadTask } from "@/db/schema";
 import { LEAD_STEP_DEPS, type LeadStep } from "./lead-checklist";
 import { makeT, type T } from "../i18n/translate";
 import { clanLocale } from "../i18n/user-locale";
+import { clanType } from "./lan-types";
 
-const { leadTask, leadContact, lanTask, lanType } = schema;
+const { leadTask, leadContact, lanTask } = schema;
 
 /**
  * Starter to-dos for every clan, for all LAN types. Added once per clan (also for clans that
@@ -45,20 +46,26 @@ export function tasksAt(scope: { clanId: string; typeId?: string | null; lanId?:
   const where = scope.lanId
     ? eq(leadTask.lanId, scope.lanId)
     : scope.typeId
-      ? and(eq(leadTask.typeId, scope.typeId), isNull(leadTask.lanId))
+      ? and(eq(leadTask.clanId, scope.clanId), eq(leadTask.typeId, scope.typeId), isNull(leadTask.lanId))
       : and(eq(leadTask.clanId, scope.clanId), isNull(leadTask.typeId), isNull(leadTask.lanId));
   return db.select().from(leadTask).where(where).orderBy(asc(leadTask.sort), asc(leadTask.createdAt)).all();
 }
 
-export function contactsOf(typeId: string) {
-  return db.select().from(leadContact).where(eq(leadContact.typeId, typeId)).orderBy(asc(leadContact.createdAt)).all();
+/** The clan's own contacts at the organizers of a LAN type. */
+export function contactsOf(clanId: string, typeId: string) {
+  return db
+    .select()
+    .from(leadContact)
+    .where(and(eq(leadContact.clanId, clanId), eq(leadContact.typeId, typeId)))
+    .orderBy(asc(leadContact.createdAt))
+    .all();
 }
 
 /** Every to-do that applies to an event: the clan's (unless its type opts out), its type's, then its own. */
 export function tasksForLan(l: Lan) {
   if (!l.clanId) return [];
   ensureDefaultTasks(l.clanId);
-  const type = l.typeId ? db.select().from(lanType).where(eq(lanType.id, l.typeId)).get() : undefined;
+  const type = clanType(l.clanId, l.typeId);
   const clanWide = !type || type.clanLeadTasks;
   const rows = db
     .select()
