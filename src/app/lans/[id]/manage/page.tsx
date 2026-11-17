@@ -55,6 +55,9 @@ import { ActionForm } from "@/components/action-form";
 import { canSeeEmergency, emergencyForLan, logEmergencyView } from "@/lib/emergency";
 import { EmergencyList } from "@/components/emergency-list";
 import type { StatusKind } from "@/components/status-icons";
+import { SeatVariants, VariantPreviewBar } from "@/components/seat-variants";
+import { listVariants } from "@/lib/seat-variants";
+import { movesBetween, seatsWithVariant } from "@/lib/seat-variant-math";
 
 const { attendance, seat, user, reminderLog } = schema;
 
@@ -206,7 +209,30 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
     priority: 0,
     order: 0,
   }));
-  const wishChecks = checkWishes(seats, planPeople, (uid) => names.get(uid) ?? "?", t, { nearRange: l.seatNearRange });
+  const checkSeats = (list: typeof seats) => checkWishes(list, planPeople, (uid) => names.get(uid) ?? "?", t, { nearRange: l.seatNearRange });
+  const liveChecks = checkSeats(seats);
+  // Seat plan variants, each checked against today's wishes (not the ones from when it was saved).
+  const coming = new Set(going.map((r) => r.userId));
+  const variants = seats.length > 0 ? listVariants(id) : [];
+  const variantViews = variants.map((v) => {
+    const vSeats = seatsWithVariant(seats, v.seats, coming);
+    const checks = checkSeats(vSeats);
+    return { v, seats: vSeats, checks, differs: movesBetween(seats, vSeats).length };
+  });
+  const seatedIn = (list: typeof seats) => list.filter((s) => s.userId && coming.has(s.userId)).length;
+  // ?variant=<id>: the map and the wish list show that variant instead of the live plan.
+  const preview = typeof sp.variant === "string" ? variantViews.find((x) => x.v.id === sp.variant) : undefined;
+  const wishChecks = preview?.checks ?? liveChecks;
+  // Preview: whose wishes the variant meets worse or better than the live plan.
+  const scoreOf = (list: typeof liveChecks) => new Map(list.map((c) => [c.userId, c.score ?? 1]));
+  const previewDelta = (() => {
+    if (!preview) return { worse: [] as string[], better: 0 };
+    const was = scoreOf(liveChecks);
+    const now = scoreOf(preview.checks);
+    const worse = [...now].filter(([u, x]) => x < (was.get(u) ?? 1) - 1e-9).map(([u]) => names.get(u) ?? "?").sort((a, b) => a.localeCompare(b));
+    const better = [...now].filter(([u, x]) => x > (was.get(u) ?? 1) + 1e-9).length;
+    return { worse, better };
+  })();
   // Manage → Seats: a lead changing one member's wishes (?editWishes=userId).
   const byName = (a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name);
   const wishMembers = going.map((r) => ({ id: r.userId, name: names.get(r.userId) ?? "?" })).sort(byName);
@@ -244,7 +270,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
         userId: r.userId,
         name: names.get(r.userId) ?? "?",
         full: people.get(r.userId)?.full,
-        seat: seatOf.get(r.userId) ?? null,
+        seat: (preview ? preview.seats.find((x) => x.userId === r.userId)?.label : seatOf.get(r.userId)) ?? null,
         items: c?.items ?? [],
         score: c?.score ?? null,
         note: r.wishNote,
@@ -455,6 +481,25 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               }
             />
           </Card>
+          {seats.length > 0 && (
+            <Card id="seat-variants" title={t("seatVariants.title")} actions={variants.length > 0 ? <Pill>{variants.length}</Pill> : undefined}>
+              <SeatVariants
+                lanId={l.id}
+                going={going.length}
+                live={{ seated: seatedIn(seats), score: overallScore(liveChecks) }}
+                rows={variantViews.map((x) => ({
+                  id: x.v.id,
+                  name: x.v.name,
+                  seated: seatedIn(x.seats),
+                  score: overallScore(x.checks),
+                  differs: x.differs,
+                  updated: fmtDate(x.v.updatedAt, t.locale),
+                }))}
+                previewId={preview?.v.id ?? null}
+                final={!!l.seatsPublishedAt}
+              />
+            </Card>
+          )}
           {seats.length > 0 && <PlanHistory rows={auditEntries({ lanId: l.id, group: "seats" }).rows} names={names} t={t} />}
           </div>
           {seats.length > 0 && !l.seatsPublishedAt && (
@@ -729,15 +774,30 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
       <TabPanel id="seats">
         {/* The seat plan is the main tool: the tapped seat's details above the full-width map, setup and the seat flow below. */}
         <div className="space-y-5">
+          {preview && (
+            <VariantPreviewBar
+              lanId={l.id}
+              id={preview.v.id}
+              name={preview.v.name}
+              differs={preview.differs}
+              final={!!l.seatsPublishedAt}
+              score={overallScore(preview.checks)}
+              liveScore={overallScore(liveChecks)}
+              worse={previewDelta.worse}
+              better={previewDelta.better}
+            />
+          )}
           {seats.length > 0 ? (
               <SeatMap
+                key={preview?.v.id ?? "live"}
                 lanId={l.id}
                 rows={l.seatRows}
                 cols={l.seatCols}
                 meId={me.id}
-                mode="admin"
+                mode={preview ? "view" : "admin"}
+                leadView={!!preview}
                 details="top"
-                seats={seats.map((s) => ({ ...seatView(s, people, avatars), marks: s.userId ? marksOf(s.userId) : undefined }))}
+                seats={(preview?.seats ?? seats).map((s) => ({ ...seatView(s, people, avatars), marks: s.userId ? marksOf(s.userId) : undefined }))}
                 assignable={going
                   .map((r) => {
                     const w = wishChecks.find((c) => c.userId === r.userId);

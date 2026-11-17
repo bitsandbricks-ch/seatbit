@@ -496,6 +496,15 @@ export async function seedDemo({ force = false, discord = false } = {}) {
         })
         .run();
     }
+    // Two saved seat plan variants the leads compare with the live plan.
+    const live = Object.fromEntries([...seatOwner].filter(([label]) => lakesideSeats.includes(label)));
+    const mirrored = Object.fromEntries(Object.entries(live).map(([label, u]) => [lakesideSeats[lakesideSeats.length - 1 - lakesideSeats.indexOf(label)], u]));
+    const swapped = { ...live };
+    const seatOfKey = (u: string) => Object.keys(live).find((label) => live[label] === u);
+    const [chiaraSeat, davidSeat] = [seatOfKey(ids.chiara), seatOfKey(ids.david)];
+    if (chiaraSeat && davidSeat) [swapped[chiaraSeat], swapped[davidSeat]] = [ids.david, ids.chiara];
+    tx.insert(s.seatVariant).values({ id: "demo-variant-window", lanId: events.lakeside, name: "Window side", seats: mirrored, createdBy: ids.alex }).run();
+    tx.insert(s.seatVariant).values({ id: "demo-variant-swap", lanId: events.lakeside, name: "Chiara and David swapped", seats: swapped, createdBy: ids.alex }).run();
     // Chiara asked Gina to swap; Gina accepted, waiting for a lead.
     tx.insert(s.seatSwap)
       .values({ lanId: events.lakeside, fromUserId: ids.chiara, toUserId: ids.gina, status: "accepted", note: "Want to sit at the end of the row" })

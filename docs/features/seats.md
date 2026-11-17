@@ -92,7 +92,25 @@ Seat pages update by themselves when the plan or someone's wishes change, so lea
 
 The **Seat wishes** card scores the current plan: for each member the share of their wishes that are met, weighted by their order (a met top wish counts more), and the average over everyone. **Needs a look** (the default) lists only members with a missed wish in their top 5, a missed "not right next to", or wishes that can't be checked yet; **Everyone** lists all members with wishes. Each member is one line, lowest score first: their seat, how many wishes are met, their score and the wishes the plan misses. Tap a member for all their wishes in order (✓ met, ✗ missed, an orange ✗ for a missed wish below the top 5, which counts little, · can't be checked yet because they or the other person have no seat) and their note. The seat details above the map show the same for one person.
 
-The **Plan history** card lists every change to the seats, newest first: re-plans (by a lead, or automatic after a wish change), moves, swaps, held seats and the final plan. For each re-plan it shows who moved from which seat to which, or that nobody moved.
+The **Plan history** card lists every change to the seats, newest first: re-plans (by a lead, or automatic after a wish change), moves, swaps, held seats, saved and applied variants, and the final plan. For each re-plan and each applied variant it shows who moved from which seat to which, or that nobody moved.
+
+### Variants
+
+The **Seat plan variants** card keeps seat arrangements under a name, so you can try something else and switch back. Only leads see variants; members only see the plan you apply.
+
+![Seat plan variants on Manage → Seats](../screenshots/desktop-manage-seat-variants.png){ .shot }
+
+- **Save current plan** keeps who sits where right now. Leave the name empty for "Variant 1", "Variant 2" and so on.
+- **Plan from wishes** lets the planner seat everyone from their seat wishes into a new variant, without touching the live seats. Held seats keep their person. Unlike **Re-plan everyone**, nobody's current seat counts, so you get a real alternative to a hand-made plan.
+- Each variant shows how many people coming have a seat in it, how well **today's** seat wishes are met (checked again every time, not when it was saved) and how many people would move compared with the live plan. The live plan is the first row, for comparison.
+- **Preview** shows the variant on the map and in the Seat wishes card. The bar above the map compares it with the live plan: the wish score of both, who it suits worse and how many it suits better. Tap a seat to see that person's wishes.
+
+    ![Previewing a variant](../screenshots/desktop-manage-variant-preview.png){ .shot }
+
+- **Apply** makes the variant the live plan. People who aren't coming any more are left out, and anyone coming who isn't in the variant has no seat afterwards. Like any seat change it clears the "booked on the event site" tick of everyone who moved. Before the plan is final nobody gets a message; once it is final, everyone who moved hears about their new seat.
+- **Save live plan here** overwrites a variant with the current plan, after you changed it on the map. **Rename** and **Delete** do what they say.
+
+An event keeps at most 20 variants. Variants store seat labels, so they survive re-entering the seat block; seats that no longer exist are skipped.
 
 ## Book on the event site
 

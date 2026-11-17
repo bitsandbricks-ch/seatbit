@@ -127,6 +127,10 @@ export async function deleteAccount(userId: string) {
     tx.run(
       sql`UPDATE attendance SET wish_rules = (SELECT json_group_array(json(value) ORDER BY key) FROM json_each(wish_rules) WHERE json_extract(value, '$.userId') IS NOT ${userId}) WHERE wish_rules LIKE ${`%"${userId}"%`}`,
     );
+    // Saved seat plan variants that seat this person.
+    tx.run(
+      sql`UPDATE seat_variant SET seats = (SELECT json_group_object(key, value) FROM json_each(seats) WHERE value IS NOT ${userId}) WHERE seats LIKE ${`%"${userId}"%`}`,
+    );
     tx.delete(schema.session).where(eq(schema.session.userId, userId)).run();
     tx.delete(schema.account).where(eq(schema.account.userId, userId)).run();
     tx.delete(schema.verification).where(eq(schema.verification.identifier, me.email)).run();

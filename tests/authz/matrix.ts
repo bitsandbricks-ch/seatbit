@@ -32,6 +32,7 @@ import * as discordVerify from "../../src/app/discord-verify-actions";
 import * as costs from "../../src/app/cost-actions";
 import * as seatPlan from "../../src/app/seat-plan-actions";
 import * as seatWish from "../../src/app/seat-wish-actions";
+import * as seatVariants from "../../src/app/seat-variant-actions";
 import * as teams from "../../src/app/team-actions";
 import * as search from "../../src/app/search-actions";
 import * as packingHistory from "../../src/app/packing-history-actions";
@@ -64,6 +65,7 @@ export const MODULES = {
   "cost-actions": costs,
   "seat-plan-actions": seatPlan,
   "seat-wish-actions": seatWish,
+  "seat-variant-actions": seatVariants,
   "team-actions": teams,
   "packing-history-actions": packingHistory,
   "search-actions": search,
@@ -184,6 +186,12 @@ export const SPECS: Spec[] = [
   { name: "actions.setSeatPicking", allow: EVENT_MANAGERS, run: () => actions.setSeatPicking(fx.pickLan, false) },
   { name: "actions.adminSetSeatFor", allow: LAN_MANAGERS, run: () => actions.adminSetSeatFor(fx.lan, ACTORS.member, fx.freeSeat) },
   { name: "actions.adminAutoAssignSeats", allow: LAN_MANAGERS, run: () => actions.adminAutoAssignSeats(fx.lan, "replan") },
+  { name: "seat-variant-actions.saveSeatVariant", allow: LAN_MANAGERS, run: () => seatVariants.saveSeatVariant(fx.lan, "Test") },
+  { name: "seat-variant-actions.planSeatVariant", allow: LAN_MANAGERS, run: () => seatVariants.planSeatVariant(fx.lan, "") },
+  { name: "seat-variant-actions.updateSeatVariant", allow: LAN_MANAGERS, run: () => seatVariants.updateSeatVariant(fx.seatVariant) },
+  { name: "seat-variant-actions.renameSeatVariant", allow: LAN_MANAGERS, run: () => seatVariants.renameSeatVariant(fx.seatVariant, "Aisle side") },
+  { name: "seat-variant-actions.applySeatVariant", allow: LAN_MANAGERS, run: () => seatVariants.applySeatVariant(fx.seatVariant) },
+  { name: "seat-variant-actions.deleteSeatVariant", allow: LAN_MANAGERS, run: () => seatVariants.deleteSeatVariant(fx.seatVariant) },
   { name: "seat-plan-actions.setSeatAutoPlan", allow: LAN_MANAGERS, run: () => seatPlan.setSeatAutoPlan(fx.lan, !lanFlag(fx.lan, "seat_auto_plan")) },
   {
     name: "seat-plan-actions.setSeatNearRange",
