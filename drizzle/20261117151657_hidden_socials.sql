@@ -1,0 +1,1 @@
+ALTER TABLE `user` ADD `hidden_socials` text DEFAULT '[]' NOT NULL;

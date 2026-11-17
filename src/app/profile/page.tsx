@@ -182,7 +182,7 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
       <TabPanel id="socials">
         <Card title={t("profile.socials")}>
           <p className="mb-4 text-sm text-muted">{t("profile.socialsIntro")}</p>
-          <SocialsForm values={me.socials ?? {}} />
+          <SocialsForm values={me.socials ?? {}} hidden={me.hiddenSocials ?? []} discordUsername={discord?.username ?? null} />
         </Card>
       </TabPanel>
 

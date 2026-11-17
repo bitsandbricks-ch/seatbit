@@ -23,6 +23,7 @@ import { ClientTabs, TabPanel, type ClientTab } from "@/components/client-tabs";
 import { DiscordButtons, WhatsAppTexts } from "@/components/chat-panel";
 import { whatsappTexts } from "@/lib/announce";
 import { discordEnabled, inviteUrl } from "@/lib/discord-api";
+import { discordInfo } from "@/lib/discord-verify";
 import { clanCan, getClan } from "@/lib/clans";
 import { SeatFlow } from "@/components/seat-flow";
 import { checkWishes, overallScore } from "@/lib/seating";
@@ -135,6 +136,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
   const going = rows.filter((r) => r.status === "going");
 
   const statusOrder = { going: 0, waitlist: 1, maybe: 2, declined: 3 };
+  const discordOf = discordInfo(rows.map((r) => r.userId));
   const tableRows = rows
     .map((r) => {
       const u = userById.get(r.userId)!;
@@ -155,6 +157,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
         seat: seatOf.get(r.userId) ?? null,
         seatId: seats.find((s) => s.userId === r.userId)?.id ?? null,
         seatBooked: l.externalPlanUrl && l.seatsPublishedAt ? r.seatBooked : null,
+        discord: discordOf.get(r.userId),
       };
     })
     .sort((a, b) => statusOrder[a.status] - statusOrder[b.status] || a.name.localeCompare(b.name));

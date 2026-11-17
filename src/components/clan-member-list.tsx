@@ -84,6 +84,8 @@ export type ClanMemberRow = {
   avatar?: AvatarData;
   /** Discord linked, or found on the clan's server by `/seatbit validate`. */
   discord?: DiscordState;
+  /** Their Discord user id, so the badge links to their Discord profile. */
+  discordId?: string;
 };
 
 type RoleFilter = "all" | MemberRole;
@@ -164,7 +166,7 @@ export function ClanMemberAdmin({
                 <Link href={`/clans/${slug}/members/${m.id}`} className="hover:text-bit hover:underline">
                   {m.name}
                 </Link>{" "}
-                {!m.isGuest && <Verified />} {m.discord && <DiscordBadge state={m.discord} t={t} />} <RolePill role={m.role} />
+                {!m.isGuest && <Verified />} {m.discord && <DiscordBadge state={m.discord} discordId={m.discordId} t={t} />} <RolePill role={m.role} />
                 {m.isGuest && <StatusIcon kind="guest" t={t} />}
               </span>
               <span className="block truncate text-xs text-muted">

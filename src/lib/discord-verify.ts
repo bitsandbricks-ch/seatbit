@@ -176,7 +176,12 @@ export function verifyReport(t: T, clan: string, r: VerifyResult) {
 
 /** Linked / verified per member, for the badges in lead views. Members without Discord are left out. */
 export function discordStates(userIds: string[]) {
-  const out = new Map<string, "linked" | "verified">();
+  return new Map([...discordInfo(userIds)].map(([k, v]) => [k, v.state]));
+}
+
+/** Like discordStates, plus the Discord user id, for lead views that link to the member's Discord profile. */
+export function discordInfo(userIds: string[]) {
+  const out = new Map<string, { state: "linked" | "verified"; id: string }>();
   if (userIds.length === 0) return out;
   const rows = db
     .select({ userId: account.userId, discordId: account.accountId, verifiedId: user.discordVerifiedId })
@@ -184,6 +189,6 @@ export function discordStates(userIds: string[]) {
     .innerJoin(user, eq(user.id, account.userId))
     .where(and(eq(account.providerId, "discord"), inArray(account.userId, userIds)))
     .all();
-  for (const r of rows) out.set(r.userId, r.verifiedId === r.discordId ? "verified" : "linked");
+  for (const r of rows) out.set(r.userId, { state: r.verifiedId === r.discordId ? "verified" : "linked", id: r.discordId });
   return out;
 }

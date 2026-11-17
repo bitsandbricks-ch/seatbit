@@ -25,6 +25,8 @@ export const profile = {
   avatar: "Avatar & colour",
   socials: "Socials",
   socialsIntro: "Your gaming and social accounts, so the others can add you. Members of your clans see them on your profile.",
+  socialShow: "Show on my profile",
+  socialFromDiscord: "Filled in from your linked Discord account. Save to keep it.",
   interests: "Events I hear about",
   interestsIntro: "Who gets a message when a new event is published. Pick the kinds of LANs you care about, per clan.",
   interestsAll: "All events",

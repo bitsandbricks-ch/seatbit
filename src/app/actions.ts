@@ -33,7 +33,7 @@ import { platformCan } from "@/lib/platform-roles";
 import { isClanMember } from "@/lib/clans";
 import { lanAccountScope, saveLanAccount } from "@/lib/lan-accounts";
 import { validProfileUrl } from "@/lib/profile-link";
-import { cleanSocials } from "@/lib/socials";
+import { cleanSocials, hiddenFromForm } from "@/lib/socials";
 import { optionalHttpUrl, safeNext } from "@/lib/safe-url";
 import { clearSeatBooked } from "@/lib/seat-booking";
 import { PROFILE_COLORS, PROFILE_ICONS, deleteUserAvatarFile, saveUserAvatar } from "@/lib/avatars";
@@ -138,8 +138,9 @@ export async function updateNotifications(_: AppearanceState, formData: FormData
 /** Gaming and social handles on the member's profile. Empty fields are dropped. */
 export async function updateSocials(_: AppearanceState, formData: FormData): Promise<AppearanceState> {
   const me = await requireUser();
+  const input = Object.fromEntries(formData.entries());
   db.update(user)
-    .set({ socials: cleanSocials(Object.fromEntries(formData.entries())) })
+    .set({ socials: cleanSocials(input), hiddenSocials: hiddenFromForm(input) })
     .where(eq(user.id, me.id))
     .run();
   revalidatePath("/", "layout");

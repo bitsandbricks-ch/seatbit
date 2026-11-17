@@ -183,6 +183,7 @@ export async function deleteAccount(userId: string) {
         avatarFile: null,
         icon: null,
         socials: {},
+        hiddenSocials: [],
         color: null,
         deletedAt: now,
       })
@@ -306,6 +307,7 @@ export function exportUserData(userId: string) {
       discordDms: me.discordDms,
       discord: { username: me.discordUsername, verifiedId: me.discordVerifiedId, verifiedAt: me.discordVerifiedAt },
       socials: me.socials,
+      hiddenSocials: me.hiddenSocials,
       avatar: { style: me.avatarStyle, uploadedPicture: !!me.avatarFile, discordPicture: me.image, icon: me.icon, color: me.color },
       createdAt: me.createdAt,
       updatedAt: me.updatedAt,

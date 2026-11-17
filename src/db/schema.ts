@@ -72,6 +72,8 @@ export const user = sqliteTable("user", {
   color: text("color"),
   /** Gaming and social handles shown on their member profile, keyed by SOCIALS in src/lib/socials.ts. */
   socials: text("socials", { mode: "json" }).$type<Record<string, string>>().default({}).notNull(),
+  /** SOCIALS keys the member filled in but hides from their profile. */
+  hiddenSocials: text("hidden_socials", { mode: "json" }).$type<string[]>().default([]).notNull(),
   /**
    * Set when the person deleted their account. The row stays (as "Deleted member", no email, no
    * logins) only so past events and the audit log keep their counts; everything personal is gone.

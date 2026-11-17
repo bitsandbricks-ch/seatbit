@@ -12,7 +12,7 @@ import { resendGuestDiscordDm, unlinkGuestDiscord, updateGuest } from "@/app/cla
 import { updateMemberLanInfo } from "@/app/member-lan-actions";
 import { MemberLanForm } from "@/components/member-lan-form";
 import { GuestDiscordLink } from "@/components/guest-discord";
-import { DiscordBadge } from "@/components/discord-badge";
+import { DiscordBadge, discordUserUrl } from "@/components/discord-badge";
 import { discordIdentity } from "@/lib/discord-verify";
 import { guestDiscordLines } from "@/lib/guest-claim";
 import { Card, Page, PageHeader, Pill, StatTile, StatusBadge, Verified, columns, stack } from "@/components/ui";
@@ -236,7 +236,13 @@ export async function MemberProfile({ slug, userId, variant }: { slug: string; u
           </Card>
 
           <Card title={t("member.socials")}>
-            <SocialList socials={u.socials ?? {}} discordId={discord?.accountId} />
+            <SocialList
+              socials={u.socials ?? {}}
+              discordId={discord?.accountId}
+              discordUsername={u.discordUsername}
+              hidden={u.hiddenSocials ?? []}
+              isSelf={isSelf}
+            />
           </Card>
 
           {seesPrivate && (
@@ -262,7 +268,9 @@ export async function MemberProfile({ slug, userId, variant }: { slug: string; u
                       <Row label="Discord">
                         {dIdentity ? (
                           <>
-                            {dIdentity.username ? `@${dIdentity.username}` : t("clanSettings.linked")}{" "}
+                            <a href={discordUserUrl(dIdentity.id)} target="_blank" rel="noreferrer" className="text-bit hover:underline">
+                              {dIdentity.username ? `@${dIdentity.username}` : t("clanSettings.linked")}
+                            </a>{" "}
                             <span className="font-mono text-xs text-muted">{dIdentity.id}</span>
                             {dIdentity.verifiedAt && (
                               <span className="block text-xs text-bit">{t("discordVerify.verifiedOn", { date: fmtDay(dIdentity.verifiedAt) })}</span>
