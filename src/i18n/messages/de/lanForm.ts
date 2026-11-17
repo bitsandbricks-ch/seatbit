@@ -33,6 +33,7 @@ export const lanForm: Messages["lanForm"] = {
   pricePlaceholder: "z. B. 25 CHF",
   spots: "Plätze der Gruppe",
   spotsHint: "Wie viele Plätze/Tickets die Gruppe hat. Leer = unbegrenzt. Weitere Anmeldungen kommen auf die Warteliste.",
+  spotsFromSeats: "Kommt vom Sitzplan: jeder Sitz ist ein Platz. Füge unter Plätze Sitze hinzu oder entferne sie, die Warteliste zieht mit.",
   remindDays: "Erinnern Tage vor der Frist",
   description: "Beschreibung",
   saveChanges: "Änderungen speichern",

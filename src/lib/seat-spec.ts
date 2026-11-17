@@ -30,3 +30,12 @@ export function parseSeatSpec(spec: string, t: T): string[][] {
   }
   return [...rows.values()];
 }
+
+/** How many seats a seat list holds; 0 when it is empty or can't be read. */
+export function seatSpecCount(spec: string, t: T): number {
+  try {
+    return parseSeatSpec(spec, t).reduce((n, r) => n + r.length, 0);
+  } catch {
+    return 0;
+  }
+}

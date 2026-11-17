@@ -7,6 +7,7 @@ export const typeForm: Messages["typeForm"] = {
     "Optional. Das Profil eines Mitglieds auf der Event-Seite, mit {id} dort, wo die LAN-ID hinkommt. Seatbit verlinkt das Profil jeder teilnehmenden Person.",
   price: "Üblicher Ticketpreis",
   spots: "Übliche Plätze der Gruppe",
+  spotsHint: "Gilt, wenn der Typ keine Sitze hat. Mit Sitzen ist jeder Sitz ein Platz.",
   seats: "Übliche Plätze",
   seatsHint: "z. B. F1-F20. Wird in jedes neue Event dieses Typs kopiert.",
   length: "Übliche Dauer (Stunden)",

@@ -8,7 +8,7 @@ import { requireUser, visibleLans } from "@/lib/session";
 import { buildChecklist, progress, type ChecklistStep } from "@/lib/checklist";
 import { listGames } from "@/lib/games";
 import { myGamesTodo } from "@/lib/games-todo";
-import { waitlistPositions } from "@/lib/lans";
+import { capacityOf, waitlistPositions } from "@/lib/lans";
 import { myClans } from "@/lib/clans";
 import { roleCan } from "@/lib/clan-roles";
 import { ClanAvatar } from "@/components/clan-avatar";
@@ -176,6 +176,7 @@ function LanCard({
         ? l.paymentDueDate
         : null;
   const allSet = asked && my?.status === "going" && !info.next;
+  const capacity = capacityOf(l);
   return (
     <Link
       href={l.publishedAt ? `/lans/${l.id}` : `/lans/${l.id}/manage`}
@@ -236,8 +237,8 @@ function LanCard({
           <span />
         )}
         <span className="flex items-center gap-3 text-muted">
-          <Meta icon="people" label={l.capacity ? t("home.goingOf", { going, capacity: l.capacity }) : t("home.going", { going })}>
-            {l.capacity ? `${going}/${l.capacity}` : going}
+          <Meta icon="people" label={capacity ? t("home.goingOf", { going, capacity }) : t("home.going", { going })}>
+            {capacity ? `${going}/${capacity}` : going}
           </Meta>
           {info.hasSeats && !l.cancelledAt && (
             <Meta icon="seat" label={info.freeSeats ? t("home.seatsFree", { count: info.freeSeats }) : t("home.noSeats")} warn={!info.freeSeats}>

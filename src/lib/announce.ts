@@ -2,7 +2,7 @@ import { fmtDate, lanStart } from "./format";
 import { and, eq, ne } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Lan, User } from "@/db/schema";
-import { getDisplayNames } from "./lans";
+import { capacityOf, getDisplayNames } from "./lans";
 import { appUrl } from "./mail";
 import { makeT, type T } from "../i18n/translate";
 
@@ -97,8 +97,9 @@ export async function whatsappTexts(l: Lan, t: T = makeT("en")) {
   const loc = t.locale;
   const s = await lanSummary(l);
   const link = lanLink(l);
-  const spots = l.capacity
-    ? ` ${t("whatsapp.spotsTaken", { going: s.going.length, capacity: l.capacity })}`
+  const capacity = capacityOf(l);
+  const spots = capacity
+    ? ` ${t("whatsapp.spotsTaken", { going: s.going.length, capacity })}`
     : ` ${t("whatsapp.going", { count: s.going.length })}`;
   const facts = lanFacts(l, t)
     .map(([k, v]) => `${k}: ${v}`)

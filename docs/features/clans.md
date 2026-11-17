@@ -87,7 +87,7 @@ New events are created from a type and copy its values: the shared details, plus
 | Location, website, ticket shop, price | Platform staff | Copied to each event. |
 | Usual length | Platform staff | In hours, e.g. Fri 18:00 to Sun 16:00 = 46. Sets the event's end. |
 | Member profile link | Platform staff | Optional. A member's profile on the event's own site, with `{id}` where their LAN ID goes, e.g. `https://example.com/user/?id={id}`. See [Profile links](#profile-links). |
-| Spots | Your clan | How many people the group usually brings. |
+| Spots | Your clan | How many people the group usually brings. Only used when the type has no seats: with seats, each seat is a spot. |
 | Seats | Your clan | The seats you usually get, e.g. `F1-F20`. |
 | Answer by | Your clan | Days before the start members must answer (default 30). |
 | Reminders | Your clan | Days before the start the reminder goes out. |

@@ -377,7 +377,17 @@ export async function toggleSeatCell(lanId: string, row: number, col: number) {
     db.insert(seat).values({ lanId, row, col, label: `${rowLetterIn(lanId, row)}${col + 1}` }).run();
     if (col >= l.seatCols) db.update(lan).set({ seatCols: col + 1 }).where(eq(lan.id, lanId)).run();
   }
+  await seatsChanged(lanId);
   lanPath(lanId);
+}
+
+/**
+ * The seat plan sets the event's size (capacityOf): a new seat is a new spot, so the waitlist moves up,
+ * and the Discord post shows the new count. Fewer seats never send anyone back to the waitlist.
+ */
+async function seatsChanged(lanId: string) {
+  await promoteFromWaitlist(mustGetLan(lanId));
+  refreshLanMessagesSoon(lanId);
 }
 
 /** The letter of a row in a LAN's seat block (rows are one letter each). */
@@ -619,6 +629,7 @@ export async function toggleSeatRow(lanId: string, row: number) {
   } else {
     for (const s of existing) if (!s.userId) db.delete(seat).where(eq(seat.id, s.id)).run();
   }
+  await seatsChanged(lanId);
   lanPath(lanId);
 }
 
@@ -660,6 +671,7 @@ export async function setSeatsFromList(lanId: string, spec: string): Promise<{ e
   const r = applySeatSpec(lanId, spec, await getT());
   if (!r.error) {
     auditLan(mustGetLan(lanId), me.id, "seat.layout", { data: { spec: spec.trim().slice(0, 200), count: r.count } });
+    await seatsChanged(lanId);
     lanPath(lanId);
   }
   return r;
