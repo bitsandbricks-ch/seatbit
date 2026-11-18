@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "e9aef030-c374-4344-910f-95a836998751",
-  "prevId": "b5edb13c-8bfe-4f05-ab39-ebc40b38d3ba",
+  "id": "5d43e7c3-8b22-48d4-b277-c0006d171676",
+  "prevId": "43f8a2ef-8078-4c79-ad28-f2067a08b65a",
   "tables": {
     "account": {
       "name": "account",
@@ -4366,6 +4366,103 @@
             "id"
           ],
           "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "seat_variant": {
+      "name": "seat_variant",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "lan_id": {
+          "name": "lan_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "seats": {
+          "name": "seats",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'{}'"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        }
+      },
+      "indexes": {
+        "seat_variant_lan_idx": {
+          "name": "seat_variant_lan_idx",
+          "columns": [
+            "lan_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "seat_variant_lan_id_lan_id_fk": {
+          "name": "seat_variant_lan_id_lan_id_fk",
+          "tableFrom": "seat_variant",
+          "tableTo": "lan",
+          "columnsFrom": [
+            "lan_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "seat_variant_created_by_user_id_fk": {
+          "name": "seat_variant_created_by_user_id_fk",
+          "tableFrom": "seat_variant",
+          "tableTo": "user",
+          "columnsFrom": [
+            "created_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
           "onUpdate": "no action"
         }
       },

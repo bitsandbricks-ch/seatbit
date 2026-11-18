@@ -1,9 +1,10 @@
 "use client";
 import { useState, useTransition } from "react";
 import { adminAutoAssignSeats, setSeatsFromList } from "@/app/actions";
+import { startThoroughSeatSearch } from "@/app/seat-variant-actions";
 import { setSeatAutoPlan, setSeatNearRange } from "@/app/seat-plan-actions";
 import { MAX_NEAR_RANGE, MIN_NEAR_RANGE } from "@/lib/seat-rules";
-import { btnPrimary, btnSecondary, input } from "./ui";
+import { Segmented, btnPrimary, btnSecondary, input } from "./ui";
 import { useT } from "@/i18n/client";
 import { useRunAction } from "./action-form";
 import { ask } from "./dialog";
@@ -17,6 +18,8 @@ export function SeatSetup({
   autoPlan,
   autoPlanBlocked,
   nearRange,
+  searching,
+  thoroughMinutes,
 }: {
   lanId: string;
   current: string;
@@ -28,6 +31,9 @@ export function SeatSetup({
   autoPlanBlocked: string | null;
   /** Seats apart that count as "near" for seat wishes. */
   nearRange: number;
+  /** A thorough search runs for this event: when it's done at the latest ("23:52"), else null. */
+  searching: string | null;
+  thoroughMinutes: number;
 }) {
   const t = useT();
   const [pending, start] = useTransition();
@@ -35,6 +41,7 @@ export function SeatSetup({
   const [auto, setAuto] = useState(autoPlan);
   const [range, setRange] = useState(String(nearRange));
   const [savedRange, setSavedRange] = useState(nearRange);
+  const [effort, setEffort] = useState<"quick" | "extended" | "thorough">("extended");
   const saveRange = () => {
     const n = Number(range);
     if (!range.trim() || !Number.isFinite(n) || n === savedRange) return setRange(String(savedRange));
@@ -83,31 +90,57 @@ export function SeatSetup({
         </p>
       </div>
       <div className="space-y-2">
-        <div className="flex flex-wrap gap-2">
-          <button
-            disabled={pending || unseated === 0 || free === 0}
-            className={btnSecondary}
-            onClick={() =>
-              start(async () => {
-                await run(() => adminAutoAssignSeats(lanId, "fill"), (n) => t("seatSetup.assigned", { count: n }));
-              })
-            }
-          >
-            {t("seatSetup.fill")}
-          </button>
-          <button
-            disabled={pending}
-            className={btnSecondary}
-            onClick={async () => {
-              if (!(await ask({ title: t("seatSetup.replanConfirm"), confirm: t("seatSetup.replan") }))) return;
-              start(async () => {
-                await run(() => adminAutoAssignSeats(lanId, "replan"), (n) => t("seatSetup.planned", { count: n }));
-              });
-            }}
-          >
-            {t("seatSetup.replan")}
-          </button>
-        </div>
+        <Segmented
+          label={t("seatSetup.effort")}
+          value={effort}
+          onChange={setEffort}
+          options={(["quick", "extended", "thorough"] as const).map((id) => ({ id, label: t(`seatSetup.efforts.${id}`) }))}
+        />
+        <p className="text-xs text-muted">
+          {effort === "thorough" ? t("seatSetup.effortHints.thorough", { minutes: thoroughMinutes }) : t(`seatSetup.effortHints.${effort}`)}
+        </p>
+        {effort === "thorough" ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              disabled={pending || !!searching}
+              className={btnSecondary}
+              onClick={() =>
+                start(async () => {
+                  await run(() => startThoroughSeatSearch(lanId), (r) => t("seatSetup.searchStarted", { name: r.name }));
+                })
+              }
+            >
+              {t("seatSetup.startSearch")}
+            </button>
+            {searching && <span className="text-xs text-muted">{t("seatSetup.searching", { time: searching })}</span>}
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            <button
+              disabled={pending || unseated === 0 || free === 0}
+              className={btnSecondary}
+              onClick={() =>
+                start(async () => {
+                  await run(() => adminAutoAssignSeats(lanId, "fill", effort), (n) => t("seatSetup.assigned", { count: n }));
+                })
+              }
+            >
+              {t("seatSetup.fill")}
+            </button>
+            <button
+              disabled={pending}
+              className={btnSecondary}
+              onClick={async () => {
+                if (!(await ask({ title: t("seatSetup.replanConfirm"), confirm: t("seatSetup.replan") }))) return;
+                start(async () => {
+                  await run(() => adminAutoAssignSeats(lanId, "replan", effort), (n) => t("seatSetup.planned", { count: n }));
+                });
+              }}
+            >
+              {t("seatSetup.replan")}
+            </button>
+          </div>
+        )}
         <p className="text-xs text-muted">
           {t("seatSetup.status", { unseated, free })}
         </p>

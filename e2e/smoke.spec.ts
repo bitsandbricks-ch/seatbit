@@ -168,6 +168,14 @@ test.describe("smoke", () => {
     }
   });
 
+  test("the web app manifest lets phones add Seatbit to the home screen", async ({ request }) => {
+    const res = await request.get("/manifest.webmanifest");
+    expect(res.status()).toBe(200);
+    const manifest = await res.json();
+    expect(manifest).toMatchObject({ name: "Seatbit", start_url: "/", display: "standalone" });
+    for (const icon of manifest.icons) expect((await request.get(icon.src)).status(), icon.src).toBe(200);
+  });
+
   test("the platform owner can open every admin page", async ({ as }) => {
     await visitAll(await as("alex"), ADMIN_PAGES);
   });

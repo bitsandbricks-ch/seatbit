@@ -1,0 +1,16 @@
+date: 2026-11-17
+type: new
+en:
+  title: "Seat plan variants for leads"
+  text: >-
+    Leads can save the seat plan under a name, let the planner make another one from the seat wishes,
+    and compare them: how many people are seated, how well today's seat wishes are met and who would move.
+    Preview a variant on the map, apply it with one click, rename or delete it. Members only ever see the
+    plan you apply.
+de:
+  title: "Sitzplan-Varianten für Leads"
+  text: >-
+    Leads können den Sitzplan unter einem Namen speichern, die Planung aus den Platzwünschen eine weitere
+    Variante machen lassen und sie vergleichen: wie viele einen Platz haben, wie gut die heutigen Platzwünsche
+    erfüllt sind und wer wechseln würde. Schau dir eine Variante auf der Karte an, übernimm sie mit einem Klick,
+    benenne sie um oder lösche sie. Mitglieder sehen immer nur den Plan, den ihr übernehmt.

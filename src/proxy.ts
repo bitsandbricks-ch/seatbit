@@ -43,7 +43,7 @@ export const config = {
   matcher: [
     {
       // Pages only: API routes, uploads and static files set their own headers (next.config.ts).
-      source: "/((?!api/|_next/static|_next/image|clan-avatar/|user-avatar/|favicon.ico|icon.svg|apple-icon.png|brand/).*)",
+      source: "/((?!api/|_next/static|_next/image|clan-avatar/|user-avatar/|favicon.ico|icon.svg|apple-icon.png|manifest.webmanifest|brand/).*)",
       missing: [
         { type: "header", key: "next-router-prefetch" },
         { type: "header", key: "purpose", value: "prefetch" },

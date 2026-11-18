@@ -40,6 +40,7 @@ export const settingDefs: Messages["settingDefs"] = {
   connect_webhookSecret: { label: "Connect-Webhook-Signing-Secret", help: "Von einem zweiten Webhook-Endpunkt in Stripe, der Ereignisse verbundener Konten empfängt, für die URL oben.", invalid: "Beginnt mit whsec_" },
   connect_feePercent: { label: "Plattformgebühr (%)", help: "Optionaler Anteil jeder Clan-Zahlung, der an dich geht, zusätzlich zu den Gebühren von Stripe (die der Clan bezahlt). 0 = nichts.", invalid: "Eine Zahl von 0 bis 20" },
   reminders_intervalMinutes: { label: "Prüfintervall für Erinnerungen (Minuten)", help: "Wie oft der Server nach fälligen Erinnerungen schaut. 0 schaltet die eingebaute Prüfung aus (verwende dann die Cron-URL).", invalid: "Muss eine ganze Zahl von 0 bis 1440 sein" },
+  seats_thoroughMinutes: { label: "Gründliche Sitzplatzsuche (Minuten)", help: "Wie lange die gründliche Sitzplatzsuche der Leads im Hintergrund laufen darf. Sie hört früher auf, sobald alle Platzwünsche erfüllt sind.", invalid: "Muss eine ganze Zahl von 1 bis 30 sein" },
   cron_secret: { label: "Cron-Secret", help: "Bearer-Token für GET /api/cron/reminders. Nicht gesetzt: der Endpunkt ist aus." },
   metrics_token: { label: "Metrik-Token", help: "Bearer-Token für GET /api/metrics (Prometheus). Nicht gesetzt: der Endpunkt ist aus." },
   backup_intervalHours: { label: "Backup alle (Stunden)", help: "Wie oft der Server die Datenbank sichert. 0 schaltet geplante Backups aus (zum Beispiel wenn ein Cron-Job scripts/backup.mjs ausführt).", invalid: "Muss eine ganze Zahl von 0 bis 168 sein" },

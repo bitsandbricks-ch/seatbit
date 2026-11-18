@@ -15,7 +15,7 @@ export function PlanHistory({ rows: all, names, t }: { rows: AuditEntry[]; names
   // Every entry is about this event: leave out "at <event>".
   const rows = all.map((r) => ({ ...r, data: { ...r.data, event: undefined } }));
   const detail = (r: AuditEntry, name: (id: string | null | undefined, fallback?: string) => string) => {
-    if (r.action !== "seat.auto") return null;
+    if (r.action !== "seat.auto" && r.action !== "seat.variantApply") return null;
     // Entries from before the history kept moves have no list: say nothing rather than "nobody".
     if (!Array.isArray(r.data.moves)) return null;
     const moves = decodeMoves(r.data.moves);

@@ -1,0 +1,16 @@
+date: 2026-11-17
+type: improved
+en:
+  title: "The seat planner meets more wishes"
+  text: >-
+    The automatic seat plan now moves whole groups of friends at once, also between rows, so it finds
+    plans that meet every wish far more often. Leads choose how hard it looks: Quick, Extended (several
+    searches, the new default) or Thorough, which keeps searching in the background for a few minutes and
+    saves the best plan as a variant to preview and apply.
+de:
+  title: "Die Sitzplanung erfüllt mehr Wünsche"
+  text: >-
+    Die automatische Sitzplanung verschiebt jetzt ganze Freundesgruppen auf einmal, auch zwischen Reihen,
+    und findet so viel öfter einen Plan, der alle Wünsche erfüllt. Leads wählen, wie gründlich sie sucht:
+    Schnell, Erweitert (mehrere Suchen, neu der Standard) oder Gründlich, das im Hintergrund ein paar Minuten
+    weitersucht und den besten Plan als Variante speichert, die ihr anschauen und übernehmen könnt.
