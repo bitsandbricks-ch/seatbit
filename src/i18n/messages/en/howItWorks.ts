@@ -32,7 +32,7 @@ export const howItWorks = {
   },
   lan: {
     title: "At the LAN",
-    body: "Tap «I'm here» when you arrive. Rides, places to sleep, packing list, games and shared costs are on the Trip tab.",
+    body: "Tap «I'm here» when you arrive. Rides, places to sleep and the packing list are on the Trip tab; games and shared costs have their own tabs.",
   },
   whoTitle: "Who are the organizers?",
   who: "People from your clan who plan this trip: they run the sign-up, the seats and the news. The LAN itself is run by the event's own team.",

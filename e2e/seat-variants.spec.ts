@@ -40,6 +40,7 @@ test.describe("seat plan variants", () => {
 
     const alex = await as("alex");
     await alex.goto(`/lans/${id}/manage?tab=seats`);
+    await alex.locator("#planning-tools > summary").click();
     const card = alex.locator("#seat-variants");
     await card.getByRole("textbox", { name: "Variant name" }).fill("Original");
     await card.getByRole("button", { name: "Save current plan" }).click();
@@ -86,6 +87,7 @@ test.describe("seat plan variants", () => {
 
     const alex = await as("alex");
     await alex.goto(`/lans/${id}/manage?tab=seats`);
+    await alex.locator("#planning-tools > summary").click();
     const card = alex.locator("#seat-variants");
     await card.getByRole("button", { name: "Plan from wishes" }).click();
     await expect(card.getByText("Variant 1")).toBeVisible();
@@ -122,6 +124,7 @@ test.describe("seat plan variants", () => {
 
     const alex = await as("alex");
     await alex.goto(`/lans/${id}/manage?tab=seats`);
+    await alex.locator("#planning-tools > summary").click();
     const card = alex.locator("#seat-variants");
     await card.getByRole("combobox", { name: "Compare with" }).selectOption({ label: "Plan A" });
     await expect(alex).toHaveURL(new RegExp(`vs=${id}-a`));

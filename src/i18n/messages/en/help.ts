@@ -44,13 +44,13 @@ export const help = {
     },
     trip: {
       title: "Trip",
-      status: "Rides, places to sleep, packing, games, costs",
+      status: "Rides, places to sleep, packing; games and costs",
       items: {
-        a: { q: "When does the Trip tab show up?", a: "A few weeks before the event (30 days unless your instance changed it), or earlier as soon as someone posted something there." },
+        a: { q: "When does the Trip tab show up?", a: "A few weeks before the event (30 days unless your instance changed it), or earlier as soon as someone posted a ride or packed something. It holds travel and the packing list; Games and Costs are their own tabs and always there." },
         b: { q: "Rides and places to sleep", a: "Offer free seats in your car or a place to sleep, or post where you need one from. Posts are grouped by town." },
         c: { q: "Packing list", a: "Your own list: tick what's packed and add your own items. Nobody else sees it." },
-        d: { q: "Games", a: "Vote for what you want to play and tick when it's installed: the venue's internet is often slow." },
-        e: { q: "Shared costs", a: "Note what you paid for the group (fuel, a room, snacks), split it, and see who owes whom. Settle up when you've paid each other back." },
+        d: { q: "Games", a: "On the Games tab: vote for what you want to play and tick when it's installed: the venue's internet is often slow." },
+        e: { q: "Shared costs", a: "On the Costs tab: note what you paid for the group (fuel, a room, snacks), split it, and see who owes whom. Settle up when you've paid each other back." },
       },
     },
     lan: {
@@ -93,7 +93,7 @@ export const help = {
       status: "Create an event, plan seats, finalize, book",
       items: {
         a: { q: "Create an event", a: "Start from a LAN type, so seats, deadlines and to-dos carry over. New events start as drafts that only organizers see; publish when it's ready." },
-        b: { q: "Plan the seats", a: "Enter the seat block on Manage → Seats. Members send wishes or pick their own; the planner fills the rest from their wishes. Save variants to compare plans." },
+        b: { q: "Plan the seats", a: "Enter the seat block on Manage → Seats the first time (later under Manage → Settings). Members send wishes or pick their own; Plan the seats fills the rest from their wishes. Save variants under Plan variants and history to compare plans." },
         c: { q: "Finalize and book", a: "When the plan is right, finalize it: wishes and self pick close and everyone sees their seat. Then book the seats on the event's site and tick each person." },
         d: { q: "Keep everyone posted", a: "Post news, send reminders and use the Organizer checklist and to-dos on Manage → Overview so nothing gets forgotten." },
       },

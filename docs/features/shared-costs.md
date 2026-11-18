@@ -2,7 +2,7 @@
 
 Someone paid for the group tickets, the fuel for the van or the snacks? Log it on the event, pick who it's split between, and Seatbit works out who owes whom. People tick off what they paid back. No money goes through Seatbit.
 
-**Who:** anyone coming · **Where:** event → *Trip* → *Costs*
+**Who:** anyone coming · **Where:** event → *Costs* tab
 
 !!! note "Shared costs or clan payments?"
     Shared costs are money **between members** (Ben paid the fuel, the others pay Ben back). Money the **clan** collects (dues, ticket money for the clan's account) is [clan payments](payments.md).

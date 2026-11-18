@@ -9,39 +9,14 @@ import { useT } from "@/i18n/client";
 import { useRunAction } from "./action-form";
 import { ask } from "./dialog";
 
-/** Lead tools: enter the seats the event gave the group, and auto-fill them. */
-export function SeatSetup({
-  lanId,
-  current,
-  unseated,
-  free,
-  autoPlan,
-  autoPlanBlocked,
-  nearRange,
-  searching,
-  thoroughMinutes,
-}: {
-  lanId: string;
-  current: string;
-  unseated: number;
-  free: number;
-  /** Re-plan whenever someone changes their wishes. */
-  autoPlan: boolean;
-  /** Why auto re-planning can't run right now (final plan, self pick), or null. */
-  autoPlanBlocked: string | null;
-  /** Seats apart that count as "near" for seat wishes. */
-  nearRange: number;
-  /** A thorough search runs for this event: when it's done at the latest ("23:52"), else null. */
-  searching: string | null;
-  thoroughMinutes: number;
-}) {
+/** One-time setup: the seats the event gave the group, and how far "near" reaches. On Manage → Settings (and Seats while empty). */
+export function SeatBlockForm({ lanId, current, nearRange }: { lanId: string; current: string; /** Seats apart that count as "near" for seat wishes. */ nearRange: number }) {
   const t = useT();
+  const run = useRunAction();
   const [pending, start] = useTransition();
   const [spec, setSpec] = useState(current);
-  const [auto, setAuto] = useState(autoPlan);
   const [range, setRange] = useState(String(nearRange));
   const [savedRange, setSavedRange] = useState(nearRange);
-  const [effort, setEffort] = useState<"quick" | "extended" | "thorough">("extended");
   const saveRange = () => {
     const n = Number(range);
     if (!range.trim() || !Number.isFinite(n) || n === savedRange) return setRange(String(savedRange));
@@ -58,7 +33,6 @@ export function SeatSetup({
       if (!ok) setRange(String(savedRange));
     });
   };
-  const run = useRunAction();
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -85,10 +59,64 @@ export function SeatSetup({
             {t("seatSetup.save")}
           </button>
         </div>
-        <p className="text-xs text-muted">
-          {t("seatSetup.hint")}
-        </p>
+        <p className="text-xs text-muted">{t("seatSetup.hint")}</p>
       </div>
+      <form
+        className="space-y-1"
+        onSubmit={(e) => {
+          e.preventDefault();
+          saveRange();
+        }}
+      >
+        <label className="flex flex-wrap items-center gap-2 text-sm text-fg/90">
+          {t("wishLead.nearRange")}
+          <input
+            type="number"
+            inputMode="numeric"
+            min={MIN_NEAR_RANGE}
+            max={MAX_NEAR_RANGE}
+            value={range}
+            disabled={pending}
+            onChange={(e) => setRange(e.target.value)}
+            onBlur={saveRange}
+            className={`${input} w-20 tabular-nums`}
+          />
+          {t("wishLead.nearRangeUnit")}
+        </label>
+        <p className="text-xs text-muted">{t("wishLead.nearRangeHint")}</p>
+      </form>
+    </div>
+  );
+}
+
+/** Daily tool on Manage → Seats: fill the free seats or re-plan from the wishes, by hand or automatically. */
+export function SeatPlanner({
+  lanId,
+  unseated,
+  free,
+  autoPlan,
+  autoPlanBlocked,
+  searching,
+  thoroughMinutes,
+}: {
+  lanId: string;
+  unseated: number;
+  free: number;
+  /** Re-plan whenever someone changes their wishes. */
+  autoPlan: boolean;
+  /** Why auto re-planning can't run right now (final plan, self pick), or null. */
+  autoPlanBlocked: string | null;
+  /** A thorough search runs for this event: when it's done at the latest ("23:52"), else null. */
+  searching: string | null;
+  thoroughMinutes: number;
+}) {
+  const t = useT();
+  const run = useRunAction();
+  const [pending, start] = useTransition();
+  const [auto, setAuto] = useState(autoPlan);
+  const [effort, setEffort] = useState<"quick" | "extended" | "thorough">("extended");
+  return (
+    <div className="space-y-4">
       <div className="space-y-2">
         <Segmented
           label={t("seatSetup.effort")}
@@ -164,30 +192,6 @@ export function SeatSetup({
             <span className="block text-xs text-muted">{autoPlanBlocked ?? t("seatSetup.autoHint")}</span>
           </span>
         </label>
-        <form
-          className="space-y-1"
-          onSubmit={(e) => {
-            e.preventDefault();
-            saveRange();
-          }}
-        >
-          <label className="flex flex-wrap items-center gap-2 text-sm text-fg/90">
-            {t("wishLead.nearRange")}
-            <input
-              type="number"
-              inputMode="numeric"
-              min={MIN_NEAR_RANGE}
-              max={MAX_NEAR_RANGE}
-              value={range}
-              disabled={pending}
-              onChange={(e) => setRange(e.target.value)}
-              onBlur={saveRange}
-              className={`${input} w-20 tabular-nums`}
-            />
-            {t("wishLead.nearRangeUnit")}
-          </label>
-          <p className="text-xs text-muted">{t("wishLead.nearRangeHint")}</p>
-        </form>
       </div>
     </div>
   );

@@ -19,7 +19,8 @@ import { dueKinds } from "@/lib/reminders";
 import { isLanManager, requireUser } from "@/lib/session";
 import { platformCan } from "@/lib/platform-roles";
 import { OrgaManager } from "@/components/orga-manager";
-import { SeatSetup } from "@/components/seat-setup";
+import { SeatBlockForm, SeatPlanner } from "@/components/seat-setup";
+import { Fold } from "@/components/fold";
 import { ClientTabs, TabPanel, type ClientTab } from "@/components/client-tabs";
 import { DiscordButtons, WhatsAppTexts } from "@/components/chat-panel";
 import { whatsappTexts } from "@/lib/announce";
@@ -233,6 +234,8 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
     : { id: null, name: t("seatVariants.liveShort"), seats, checks: liveChecks };
   // Seats on the map that differ from the compared plan (none while the map shows that plan itself).
   const shownSeats = preview?.seats ?? seats;
+  // Variants and history are folded on the Seats tab; open them while they are in use.
+  const toolsOpen = !!(preview || baseView || seatSearch);
   const changes = (preview?.v.id ?? null) === base.id ? new Map() : seatChanges(shownSeats, base.seats);
   const wishScores = (list: typeof liveChecks) => new Map(list.map((c) => [c.userId, c.score]));
   // Preview: whose wishes the variant meets worse or better than the compared plan.
@@ -403,6 +406,13 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
   const seatCards = (
           <div className="space-y-5">
           <div className="gap-5 lg:columns-2 [&>*]:mb-5 [&>*]:break-inside-avoid">
+          {/* First time only: the seat block itself lives on Settings once it's there. */}
+          {seats.length === 0 && (
+            <Card id="our-seats" title={t("manage.ourSeats")}>
+              <p className="mb-4 text-sm text-muted">{t("manage.ourSeatsHint")}</p>
+              <SeatBlockForm lanId={l.id} current="" nearRange={l.seatNearRange} />
+            </Card>
+          )}
           {seats.length > 0 && (
             <Card
               title={t("manage.seatSteps")}
@@ -479,46 +489,27 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               )}
             </Card>
           )}
-          <Card id="our-seats" title={t("manage.ourSeats")}>
-            <p className="mb-4 text-sm text-muted">{t("manage.ourSeatsHint")}</p>
-            <SeatSetup
-              lanId={l.id}
-              current={seatSpec(seats)}
-              unseated={going.length - seated}
-              free={freeSeats}
-              autoPlan={l.seatAutoPlan}
-              nearRange={l.seatNearRange}
-              searching={seatSearch ? fmtTime(new Date(seatSearch.until)) : null}
-              thoroughMinutes={thoroughMinutes()}
-              autoPlanBlocked={
-                l.seatsPublishedAt ? t("seatSetup.autoPaused.final") : l.seatPicking ? t("seatSetup.autoPaused.picking") : null
-              }
-            />
-          </Card>
           {seats.length > 0 && (
-            <Card id="seat-variants" title={t("seatVariants.title")} actions={variants.length > 0 ? <Pill>{variants.length}</Pill> : undefined}>
-              <SeatVariants
+            <Card id="planner" title={t("manage.planSeats")}>
+              <SeatPlanner
                 lanId={l.id}
-                going={going.length}
-                live={{ seated: seatedIn(seats), score: overallScore(liveChecks), vsBase: base.id ? movesBetween(base.seats, seats).length : undefined }}
-                baseId={base.id}
-                rows={variantViews.map((x) => ({
-                  id: x.v.id,
-                  name: x.v.name,
-                  seated: seatedIn(x.seats),
-                  score: overallScore(x.checks),
-                  differs: x.differs,
-                  vsBase: x.v.id === base.id ? undefined : base.id ? movesBetween(base.seats, x.seats).length : x.differs,
-                  updated: fmtDate(x.v.updatedAt, t.locale),
-                  proven: x.v.proven,
-                }))}
-                previewId={preview?.v.id ?? null}
-                final={!!l.seatsPublishedAt}
-                searching={seatSearch ? { name: seatSearch.name, until: fmtTime(new Date(seatSearch.until)) } : null}
+                unseated={going.length - seated}
+                free={freeSeats}
+                autoPlan={l.seatAutoPlan}
+                searching={seatSearch ? fmtTime(new Date(seatSearch.until)) : null}
+                thoroughMinutes={thoroughMinutes()}
+                autoPlanBlocked={
+                  l.seatsPublishedAt ? t("seatSetup.autoPaused.final") : l.seatPicking ? t("seatSetup.autoPaused.picking") : null
+                }
               />
+              <p className="mt-4 border-t border-line pt-3 text-xs text-muted">
+                {t("manage.seatBlockLine", { count: seats.length, spec: seatSpec(seats) })}{" "}
+                <Link href={`/lans/${l.id}/manage?tab=settings#our-seats`} className="text-bit underline">
+                  {t("manage.changeInSettings")}
+                </Link>
+              </p>
             </Card>
           )}
-          {seats.length > 0 && <PlanHistory rows={auditEntries({ lanId: l.id, group: "seats" }).rows} names={names} t={t} />}
           </div>
           {seats.length > 0 && !l.seatsPublishedAt && (
             <WishLeadEditor
@@ -540,6 +531,44 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               overall={overallScore(wishChecks)}
               filter={sp.wishes === "all" ? "all" : "look"}
             />}
+          {seats.length > 0 && (
+            <Fold
+              id="planning-tools"
+              storageKey="seatbit:manage-planning-tools"
+              open={toolsOpen}
+              summary={
+                <span>
+                  <span className="block font-semibold text-fg">{t("manage.planningTools")}</span>
+                  <span className="block text-xs text-muted">{t("manage.planningToolsHint", { count: variants.length })}</span>
+                </span>
+              }
+            >
+              <div className="mt-5 gap-5 lg:columns-2 [&>*]:mb-5 [&>*]:break-inside-avoid">
+                <Card id="seat-variants" title={t("seatVariants.title")} actions={variants.length > 0 ? <Pill>{variants.length}</Pill> : undefined}>
+                  <SeatVariants
+                    lanId={l.id}
+                    going={going.length}
+                    live={{ seated: seatedIn(seats), score: overallScore(liveChecks), vsBase: base.id ? movesBetween(base.seats, seats).length : undefined }}
+                    baseId={base.id}
+                    rows={variantViews.map((x) => ({
+                      id: x.v.id,
+                      name: x.v.name,
+                      seated: seatedIn(x.seats),
+                      score: overallScore(x.checks),
+                      differs: x.differs,
+                      vsBase: x.v.id === base.id ? undefined : base.id ? movesBetween(base.seats, x.seats).length : x.differs,
+                      updated: fmtDate(x.v.updatedAt, t.locale),
+                      proven: x.v.proven,
+                    }))}
+                    previewId={preview?.v.id ?? null}
+                    final={!!l.seatsPublishedAt}
+                    searching={seatSearch ? { name: seatSearch.name, until: fmtTime(new Date(seatSearch.until)) } : null}
+                  />
+                </Card>
+                <PlanHistory rows={auditEntries({ lanId: l.id, group: "seats" }).rows} names={names} t={t} />
+              </div>
+            </Fold>
+          )}
           </div>
   );
 
@@ -642,8 +671,8 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               </Link>
             </Notice>
           )}
-          {/* The numbers at a glance, one compact strip; each opens the tab with the details. */}
-          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-card border border-line bg-line sm:grid-cols-4">
+          {/* Who answered, one compact strip; tickets and seats are in the organizer checklist above. */}
+          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-card border border-line bg-line">
             <Stat
               label={t("bot.coming")}
               value={`${going.length}${capacity ? ` / ${capacity}` : ""}`}
@@ -655,18 +684,6 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               value={`${count("maybe")} / ${noAnswer}`}
               sub={t("manage.stat.notComing", { count: count("declined") })}
               href={`/lans/${l.id}/manage?tab=missing`}
-            />
-            <Stat
-              label={t("bot.tickets")}
-              value={`${withTicket} / ${going.length}`}
-              sub={t("leadSteps.notBought", { count: going.length - withTicket })}
-              href={`/lans/${l.id}/manage?tab=attendees`}
-            />
-            <Stat
-              label={t("event.tabs.seats")}
-              value={`${seated} / ${going.length}`}
-              sub={seats.length ? t("manage.stat.freeOf", { free: freeSeats, count: seats.length }) : t("manage.stat.noSeats")}
-              href={`/lans/${l.id}/manage?tab=seats`}
             />
           </div>
 
@@ -997,6 +1014,13 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               }}
             />
           </Card>
+
+          {seats.length > 0 && (
+            <Card id="our-seats" title={t("manage.ourSeats")}>
+              <p className="mb-4 text-sm text-muted">{t("manage.ourSeatsHint")}</p>
+              <SeatBlockForm lanId={l.id} current={seatSpec(seats)} nearRange={l.seatNearRange} />
+            </Card>
+          )}
 
           <Card title={t("manage.leads")}>
             <p className="mb-3 text-sm text-muted">{t("manage.leadsHint")}</p>

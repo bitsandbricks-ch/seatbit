@@ -20,7 +20,7 @@ export const eventGuide = {
   onSiteHidden: "Only organizers see this until the event starts",
   trip: "Trip",
   tripLabel: "Trip sections",
-  /** Short names inside the Trip tab's switch, so all four fit on a phone. */
+  /** Short names inside the Trip tab's switch (travel, packing) and in At a glance. */
   sections: { travel: "Travel", gear: "Packing", games: "Games", costs: "Costs" },
   sectionsLabel: "Sections",
   /** The hub's rows: one line each on why you'd open the section. */

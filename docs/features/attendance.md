@@ -19,9 +19,9 @@ Members answer whether they come, work through their checklist and report their 
 </figure>
 </div>
 
-The event page has a few tabs: **Overview**, **Seats**, **Attendees** and **Trip**, plus **Orders** while the event runs. Switching tabs is instant, and the address follows (`?tab=seats`), so reloading, bookmarks and the back button land on the same tab. A yellow dot on a tab means something waits for you there.
+The event page has a few tabs: **Overview**, **Seats**, **Attendees**, **Games**, **Costs** and **Trip**, plus **Orders** while the event runs. Switching tabs is instant, and the address follows (`?tab=seats`), so reloading, bookmarks and the back button land on the same tab. A yellow dot on a tab means something waits for you there.
 
-**Trip** groups everything around getting there: **Travel**, **Packing list**, **Games** and **Costs**, behind a small switch at the top of the tab. So the page starts simple, members only get it **30 days before the start** (setting *Trip tab opens*, see [configuration](../installation/configuration.md)), or earlier as soon as someone posted a ride, a game or a cost, or packed something. Until then the *At a glance* card says when it opens.
+**Trip** groups getting there: **Travel** and the **Packing list**, behind a small switch at the top of the tab. So the page starts simple, members only get it **30 days before the start** (setting *Trip tab opens*, see [configuration](../installation/configuration.md)), or earlier as soon as someone posted a ride or packed something. Until then the *At a glance* card says when it opens. **Games** and **Costs** are tabs of their own and always there.
 
 Organizers always see *Trip* and *Orders*. While members don't see them yet, they show muted with a crossed-out eye, so it's clear they are hidden from the others.
 
@@ -71,7 +71,7 @@ Turning *Next in line moves up* back on fills the free spots right away.
 
 #### Spots from the seat plan
 
-As soon as an event has seats in its [seat plan](seats.md), the seats are its spots: 20 seats means 20 people can come, and the number typed under *Spots* no longer counts (the field shows the seat count instead). Adding seats, under *Manage → Seats* or in the seat editor, opens spots, so the waitlist moves up like when someone stops coming. Removing seats never sends anyone back to the waitlist; with more people coming than seats, new answers just wait. Held seats count too: they are the group's, kept for someone. Events without a seat plan keep the typed number, and empty *Spots* means no limit.
+As soon as an event has seats in its [seat plan](seats.md), the seats are its spots: 20 seats means 20 people can come, and the number typed under *Spots* no longer counts (the field shows the seat count instead). Adding seats, under *Manage → Settings → Our seats* or in the seat editor, opens spots, so the waitlist moves up like when someone stops coming. Removing seats never sends anyone back to the waitlist; with more people coming than seats, new answers just wait. Held seats count too: they are the group's, kept for someone. Events without a seat plan keep the typed number, and empty *Spots* means no limit.
 
 People on the waitlist get no ticket reminders or nudges, and their checklist says *Wait for a spot* instead of pointing to the ticket shop: without a spot in the group's block a ticket may be wasted money. If they already bought one, they can still tick it off.
 

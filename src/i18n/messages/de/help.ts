@@ -44,13 +44,13 @@ export const help: Messages["help"] = {
     },
     trip: {
       title: "Reise",
-      status: "Fahrten, Schlafplätze, Packliste, Games, Kosten",
+      status: "Fahrten, Schlafplätze, Packliste; Games und Kosten",
       items: {
-        a: { q: "Wann erscheint der Tab «Reise»?", a: "Einige Wochen vor dem Event (30 Tage, ausser deine Instanz hat es geändert), oder früher, sobald jemand dort etwas eingetragen hat." },
+        a: { q: "Wann erscheint der Tab «Reise»?", a: "Einige Wochen vor dem Event (30 Tage, ausser deine Instanz hat es geändert), oder früher, sobald jemand eine Fahrt eingetragen oder etwas gepackt hat. Er enthält Anreise und Packliste; Games und Kosten haben eigene Tabs und sind immer da." },
         b: { q: "Fahrten und Schlafplätze", a: "Biete freie Plätze in deinem Auto oder einen Schlafplatz an, oder trag ein, von wo du eine Fahrt brauchst. Die Einträge sind nach Ort gruppiert." },
         c: { q: "Packliste", a: "Deine eigene Liste: Hak ab, was gepackt ist, und füg eigene Sachen hinzu. Niemand sonst sieht sie." },
-        d: { q: "Games", a: "Stimm ab, was du spielen möchtest, und hak ab, sobald es installiert ist: Das Internet an der LAN ist oft langsam." },
-        e: { q: "Geteilte Kosten", a: "Trag ein, was du für die Gruppe bezahlt hast (Benzin, ein Zimmer, Snacks), teil es auf und sieh, wer wem was schuldet. Rechnet ab, sobald ihr euch das Geld zurückgegeben habt." },
+        d: { q: "Games", a: "Im Tab «Games»: Stimm ab, was du spielen möchtest, und hak ab, sobald es installiert ist: Das Internet an der LAN ist oft langsam." },
+        e: { q: "Geteilte Kosten", a: "Im Tab «Kosten»: Trag ein, was du für die Gruppe bezahlt hast (Benzin, ein Zimmer, Snacks), teil es auf und sieh, wer wem was schuldet. Rechnet ab, sobald ihr euch das Geld zurückgegeben habt." },
       },
     },
     lan: {
@@ -93,7 +93,7 @@ export const help: Messages["help"] = {
       status: "Event erstellen, Plätze planen, definitiv machen, buchen",
       items: {
         a: { q: "Event erstellen", a: "Starte bei einem LAN-Typ, dann werden Plätze, Fristen und To-dos übernommen. Neue Events sind zuerst Entwürfe, die nur Organisatoren sehen; veröffentliche sie, wenn sie bereit sind." },
-        b: { q: "Plätze planen", a: "Trag den Platzblock unter Verwalten → Plätze ein. Mitglieder schicken Wünsche oder wählen selbst; die Planung verteilt den Rest nach ihren Wünschen. Speichere Varianten, um Pläne zu vergleichen." },
+        b: { q: "Plätze planen", a: "Trag den Platzblock beim ersten Mal unter Verwalten → Plätze ein (später unter Verwalten → Einstellungen). Mitglieder schicken Wünsche oder wählen selbst; «Plätze planen» verteilt den Rest nach ihren Wünschen. Speichere Varianten unter «Plan-Varianten und Verlauf», um Pläne zu vergleichen." },
         c: { q: "Definitiv machen und buchen", a: "Stimmt der Plan, mach ihn definitiv: Wünsche und Selbstwahl schliessen, und alle sehen ihren Platz. Dann buch die Plätze auf der Seite des Events und hak jede Person ab." },
         d: { q: "Alle auf dem Laufenden halten", a: "Schreib News, schick Erinnerungen und nutz die Organisator-Checkliste und die To-dos unter Verwalten → Übersicht, damit nichts vergessen geht." },
       },

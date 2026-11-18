@@ -15,7 +15,8 @@ test("the seat plan sets the size: a new seat moves the waitlist up", async ({ a
   await expect.poll(() => statusOf(id, "anna")).toBe("waitlist");
 
   const alex = await as("alex");
-  await alex.goto(`/lans/${id}/manage?tab=seats`);
+  // Once there are seats, the seat block is changed on Settings.
+  await alex.goto(`/lans/${id}/manage?tab=settings`);
   await alex.getByLabel("Seats the event gave us").fill("A1-A2");
   await alex.getByRole("button", { name: "Save seats" }).click();
   await expect(alex.getByText("Saved 2 seats.")).toBeVisible();

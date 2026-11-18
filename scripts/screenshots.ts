@@ -137,10 +137,12 @@ const openDisplayMenu = async (page: Page) => {
   await page.waitForTimeout(200);
 };
 
-/** Scrolls a card (by its id) to just below the sticky header. */
+/** Scrolls a card (by its id) to just below the sticky header, opening the folded section it sits in. */
 const scrollTo = (id: string) => async (page: Page) => {
   await page.evaluate((id) => {
     const el = document.getElementById(id);
+    const fold = el?.closest("details");
+    if (fold) fold.open = true;
     if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - (window.innerWidth > 640 ? 116 : 112), behavior: "instant" });
   }, id);
   await page.waitForTimeout(200);

@@ -11,7 +11,7 @@ The page starts with the flow of an event in one line (answer → ticket → sea
 | **Getting started** | Signing in, joining a clan, taking over a guest. |
 | **Events and sign-up** | Answers, interest checks, waitlist, tickets, the checklist. |
 | **Seats** | The seat block, seat wishes, self pick, what «final» means, who wants to sit near you, swaps. |
-| **Trip** | When the tab opens, rides and places to sleep, packing list, games, shared costs. |
+| **Trip** | When the tab opens, rides and places to sleep, packing list; the Games and Costs tabs. |
 | **At the LAN** | Check-in and orders. |
 | **Who does what** | Organizers, clan roles, and who runs the LAN itself. |
 | **Discord** | Sign-in, DMs, `/verify`. |

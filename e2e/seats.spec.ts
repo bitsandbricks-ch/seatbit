@@ -136,8 +136,8 @@ test.describe("seats", () => {
   test("leads set how far near is", async ({ as }) => {
     const id = createEvent({ seats: ["A1", "A2"], attendees: [{ who: "anna" }] });
     const alex = await as("alex");
-    await alex.goto(`/lans/${id}/manage?tab=seats`);
-    const field = alex.getByRole("spinbutton");
+    await alex.goto(`/lans/${id}/manage?tab=settings`);
+    const field = alex.locator("#our-seats").getByRole("spinbutton");
     await field.fill("6");
     await field.press("Enter");
     await expect.poll(() => db().select().from(lan).where(eq(lan.id, id)).get()?.seatNearRange).toBe(6);
@@ -194,6 +194,7 @@ test.describe("seats", () => {
     await expect.poll(() => Math.abs(colOf("anna") - colOf("ben"))).toBe(1);
 
     // The lead's open page picks the change up by itself, and the plan history says who moved.
+    await alex.locator("#planning-tools > summary").click();
     const history = alex.locator("#plan-history");
     await expect(history.getByText(/so the seats were re-planned/)).toBeVisible({ timeout: 20_000 });
     await expect(history.getByText(/moved:.*Anna.*→/).first()).toBeVisible();

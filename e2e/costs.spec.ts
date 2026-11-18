@@ -24,10 +24,10 @@ test("shared costs: a member logs an expense, another pays them back, the balanc
   await expect(anna.getByText("You get CHF 15.00 back in total.")).toBeVisible();
   expect(db().select().from(costExpense).where(eq(costExpense.lanId, lanId)).get()).toMatchObject({ amountCents: 3000, paidBy: userId("anna") });
 
-  // Ben sees what he owes, also on the Trip tab's dot, and marks it paid.
+  // Ben sees what he owes, also on the Costs tab's dot, and marks it paid.
   const ben = await as("ben");
   await ben.goto(`/lans/${lanId}?tab=costs`);
-  await expect(ben.getByRole("navigation", { name: "Sections" }).getByRole("link", { name: /^Trip/ })).toContainText("You owe CHF 15.00");
+  await expect(ben.getByRole("navigation", { name: "Sections" }).getByRole("link", { name: /^Costs/ })).toContainText("You owe CHF 15.00");
   await expect(ben.getByText("You owe CHF 15.00 in total.")).toBeVisible();
   await ben.getByRole("button", { name: "Mark as paid" }).click();
   await expect(ben.getByText("You're even.")).toBeVisible();
