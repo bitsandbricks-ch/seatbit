@@ -368,7 +368,7 @@ async function wishCommand(i: Interaction): Promise<Json> {
   if (problem) return reply(t("cmd.tooMany"));
   try {
     saveSeatWishes(l.id, me.id, w);
-    autoPlanAfterWishes(l.id, me.id);
+    await autoPlanAfterWishes(l.id, me.id);
   } catch {
     return reply(t("cmd.wishTooLong"));
   }

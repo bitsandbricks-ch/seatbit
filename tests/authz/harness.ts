@@ -57,6 +57,7 @@ export const fx = {
   travelOffer: "demo-ride-lea",
   travelRequest: "demo-ride-req",
   annaPackingItem: "demo-pack-anna",
+  seatVariant: "demo-seat-variant", // a saved seat plan variant on Lakeside
   game: "demo-game-cs",
   annaGame: "demo-game-anna",
   annaTeam: "demo-team-anna", // on the CS game, Anna is its captain and only player
@@ -133,6 +134,7 @@ export async function setup() {
   db.insert(s.clanMember).values({ clanId: fx.clan, userId: fx.annaClaimable, role: "member" }).run();
 
   // Things that belong to Anna, so others can try to touch them.
+  db.insert(s.seatVariant).values({ id: fx.seatVariant, lanId: fx.lan, name: "Window side", seats: {} }).run();
   db.insert(s.packingItem).values({ id: fx.annaPackingItem, lanId: fx.lan, userId: ACTORS.member, label: "Headset", packed: false }).run();
   db.insert(s.game).values({ id: fx.annaGame, lanId: fx.lan, name: "Anna's game", addedBy: ACTORS.member }).run();
   db.insert(s.team).values({ id: fx.annaTeam, gameId: fx.game, name: "Anna's team", size: 5, createdBy: ACTORS.member }).run();

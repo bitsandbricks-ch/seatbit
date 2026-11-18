@@ -614,6 +614,27 @@ export const seatSwap = sqliteTable(
   (t) => [index("seat_swap_lan_idx").on(t.lanId)],
 );
 
+/**
+ * A seat arrangement the leads saved under a name (who sits where), to compare and apply later.
+ * Only leads see variants; members only ever see the live plan in `seat`.
+ */
+export const seatVariant = sqliteTable(
+  "seat_variant",
+  {
+    id: id(),
+    lanId: text("lan_id")
+      .notNull()
+      .references(() => lan.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    /** Seat label -> user id. Labels, not seat ids, so a variant survives the leads re-entering the seat block. */
+    seats: text("seats", { mode: "json" }).$type<Record<string, string>>().default({}).notNull(),
+    createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  (t) => [index("seat_variant_lan_idx").on(t.lanId)],
+);
+
 // ---------- Games ----------
 
 /** A game someone suggested playing at a LAN. */
@@ -841,6 +862,7 @@ export type LanAccount = typeof lanAccount.$inferSelect;
 export type Seat = typeof seat.$inferSelect;
 export type TravelPost = typeof travelPost.$inferSelect;
 export type SeatSwap = typeof seatSwap.$inferSelect;
+export type SeatVariant = typeof seatVariant.$inferSelect;
 export type Game = typeof game.$inferSelect;
 
 // ---------- Platform settings ----------

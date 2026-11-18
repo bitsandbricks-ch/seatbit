@@ -75,6 +75,7 @@ export function SeatMap({
   actions,
   children,
   details: place = "side",
+  leadView = false,
 }: {
   lanId: string;
   rows: number;
@@ -94,6 +95,8 @@ export function SeatMap({
    * top: a compact strip above the map, everywhere, so the map keeps the full width (event page).
    */
   details?: "side" | "top";
+  /** Read-only map for a lead (a variant preview): tapped seats show the person's ticket and seat wishes. */
+  leadView?: boolean;
 }) {
   const admin = mode === "admin";
   const t = useT();
@@ -415,6 +418,7 @@ export function SeatMap({
         person={selected.userId ? people.get(selected.userId) : undefined}
         meId={meId}
         admin={admin}
+        leadView={leadView}
         picking={mode === "pick"}
         hasSeat={!!mySeat}
         assignable={assignable}
@@ -496,7 +500,7 @@ export function SeatMap({
                       : t("seatMap.pickNone")}
                   </p>
                 )}
-                {mode === "view" && (
+                {mode === "view" && !leadView && (
                   <p className="text-sm text-muted">
                     {mySeat
                       ? t.rich("seatMap.viewHas", { seat: <strong className="font-mono text-bit">{mySeat.label}</strong> })
@@ -664,6 +668,7 @@ function SeatDetails({
   person,
   meId,
   admin,
+  leadView = false,
   picking,
   hasSeat,
   assignable,
@@ -679,6 +684,8 @@ function SeatDetails({
   person?: SeatPerson;
   meId: string;
   admin: boolean;
+  /** Lead info (ticket, wishes) without the lead tools. */
+  leadView?: boolean;
   /** Seat-picking phase: members take a free seat themselves. */
   picking: boolean;
   hasSeat: boolean;
@@ -720,7 +727,7 @@ function SeatDetails({
   );
 
   const ticket =
-    admin && s.userId && person?.ticket ? (
+    (admin || leadView) && s.userId && person?.ticket ? (
       person.ticket === "ok" ? (
         <Pill tone="emerald">{t("seatMap.ticketOk")}</Pill>
       ) : person.ticket === "reported" ? (
@@ -729,7 +736,7 @@ function SeatDetails({
         <Pill tone="red">{t("seatMap.noTicket")}</Pill>
       )
     ) : null;
-  const wishes = admin && s.userId && person?.wishes && person.wishes.items.length > 0 && (
+  const wishes = (admin || leadView) && s.userId && person?.wishes && person.wishes.items.length > 0 && (
     <div className="mt-2">
       {person.wishes.score !== null && (
         <p className="mb-1 text-xs text-muted">{t("seatMap.wishesMet", { pct: `${Math.round(person.wishes.score * 100)}%` })}</p>
