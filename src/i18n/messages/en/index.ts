@@ -47,6 +47,7 @@ import { eventUi } from "./eventUi";
 import { food } from "./food";
 import { footer } from "./footer";
 import { formErrors } from "./formErrors";
+import { gameCatalog } from "./gameCatalog";
 import { games } from "./games";
 import { guestDiscord } from "./guestDiscord";
 import { guestForm } from "./guestForm";
@@ -170,6 +171,7 @@ export const en = {
   food,
   footer,
   formErrors,
+  gameCatalog,
   games,
   guestDiscord,
   guestForm,

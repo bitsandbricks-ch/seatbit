@@ -137,6 +137,15 @@ export const SETTINGS: SettingDef[] = [
         ? null
         : "Use a comma-separated list of IP ranges like 10.0.0.0/8",
   },
+  {
+    key: "games.steamLookup",
+    group: "general",
+    label: "Look up games on Steam",
+    kind: "bool",
+    env: "STEAM_LOOKUP",
+    default: "true",
+    help: "When people add a game, Seatbit asks the public Steam store for its name, cover, install size and LAN mode. Only the server calls Steam, with the game's name or id. Turn off if this server must not reach the internet; games are then entered by hand.",
+  },
 
   // Mail
   { key: "smtp.host", group: "mail", label: "SMTP host", kind: "text", env: "SMTP_HOST", placeholder: "smtp.example.com" },

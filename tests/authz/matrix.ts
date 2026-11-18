@@ -22,6 +22,7 @@ import * as payments from "../../src/app/payment-actions";
 import * as billing from "../../src/app/billing-actions";
 import * as tasks from "../../src/app/lead-task-actions";
 import * as lanTypes from "../../src/app/lan-type-actions";
+import * as gameCatalog from "../../src/app/game-catalog-actions";
 import * as moderation from "../../src/app/moderation-actions";
 import * as account from "../../src/app/account-actions";
 import * as locale from "../../src/app/locale-actions";
@@ -56,6 +57,7 @@ export const MODULES = {
   "billing-actions": billing,
   "lead-task-actions": tasks,
   "lan-type-actions": lanTypes,
+  "game-catalog-actions": gameCatalog,
   "moderation-actions": moderation,
   "account-actions": account,
   "locale-actions": locale,
@@ -104,6 +106,8 @@ const CLAN_PAYMENTS: Actor[] = ["organizer", "clanAdmin", "owner"];
 const PLATFORM_SETTINGS: Actor[] = ["owner"];
 /** Keep the global LAN types: platform owners, admins and support. */
 const TYPE_STAFF: Actor[] = ["support", "owner"];
+/** Keep the global game catalog: platform owners, admins and support. */
+const GAME_STAFF: Actor[] = ["support", "owner"];
 const PLATFORM_SUSPEND: Actor[] = ["moderator", "owner"];
 const NOBODY: Actor[] = [];
 /** Platform staff who may look at every clan's events, read-only. */
@@ -254,8 +258,32 @@ export const SPECS: Spec[] = [
     allow: ["member", ...LAN_MANAGERS],
     run: () => extras.updateGame(fx.annaGame, form({ name: "Anna's game 2", sizeGb: "3", url: "" })),
   },
+  {
+    // Leads may edit the game on their event, but the catalog details only who put it there or staff.
+    name: "lan-extras-actions.updateGame (catalog details)",
+    allow: ["owner"],
+    run: () => extras.updateGame(fx.catalogDupGame, form({ name: "Catalog game dup", sizeGb: "7", url: "" })),
+  },
   { name: "lan-extras-actions.setGameMark", allow: MEMBERS, run: () => extras.setGameMark(fx.game, "installed", true), positive: "organizer" },
   { name: "lan-extras-actions.nudgeMissing", allow: LAN_MANAGERS, run: () => extras.nudgeMissing(fx.lan, "ticket"), effect: "none" },
+
+  // ---------- game-catalog-actions.ts ----------
+  { name: "game-catalog-actions.findGames", allow: SIGNED_IN, effect: "none", run: () => gameCatalog.findGames("Catalog") },
+  { name: "game-catalog-actions.saveCatalogGame (new)", allow: GAME_STAFF, run: () => gameCatalog.saveCatalogGame(undefined, form({ name: `New game ${Date.now()}` })) },
+  {
+    name: "game-catalog-actions.saveCatalogGame (edit)",
+    allow: GAME_STAFF,
+    run: () => gameCatalog.saveCatalogGame(undefined, form({ id: fx.catalogGame, name: `Renamed game ${Date.now()}`, sizeGb: "12" })),
+  },
+  {
+    name: "game-catalog-actions.refreshCatalogFromSteam",
+    allow: NOBODY,
+    noPositive: "Steam lookups are off in tests; staff only, checked before the lookup",
+    run: () => gameCatalog.refreshCatalogFromSteam(fx.catalogDuplicate),
+  },
+  { name: "game-catalog-actions.removeCatalogCover", allow: GAME_STAFF, effect: "none", run: () => gameCatalog.removeCatalogCover(fx.catalogGame) },
+  { name: "game-catalog-actions.mergeCatalogGame", allow: GAME_STAFF, run: () => gameCatalog.mergeCatalogGame(fx.catalogDuplicate, form({ into: fx.catalogGame })) },
+  { name: "game-catalog-actions.deleteCatalogGame", allow: GAME_STAFF, run: () => gameCatalog.deleteCatalogGame(fx.catalogUnused) },
 
   // ---------- search-actions.ts ----------
   // Read-only, and limited to the caller's own clans (see e2e/search.spec.ts for what it finds).

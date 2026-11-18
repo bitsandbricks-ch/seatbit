@@ -28,6 +28,7 @@ export const ADMIN_SECTIONS: AdminSection[] = [
   { href: "/admin/health", label: "health.title", perm: "view" },
   { href: "/admin/log", label: "clanHeader.log", perm: "view" },
   { href: "/admin/types", label: "clanPage.links.types", perm: "types" },
+  { href: "/admin/games", label: "gameCatalog.title", perm: "games" },
   { href: "/admin/backups", label: "admin.backups", perm: "owner" },
   { href: "/admin/donations", label: "adminDonations.title", perm: "owner", enabled: donationsEnabled },
   { href: "/admin/settings", label: "admin.tabs.settings", perm: "settings" },

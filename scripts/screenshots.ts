@@ -331,6 +331,7 @@ const SHOTS: Shot[] = [
   { name: "desktop-admin-users", who: "alex", path: "/admin/users" },
   { name: "desktop-admin-user", who: "alex", path: "/admin/users/demo-ben", full: true },
   { name: "desktop-admin-types", who: "alex", path: "/admin/types" },
+  { name: "desktop-admin-games", who: "alex", path: "/admin/games" },
   { name: "desktop-admin-mail", who: "alex", path: "/admin/settings?tab=mail" },
   { name: "desktop-admin-discord", who: "alex", path: "/admin/settings?tab=discord" },
   { name: "desktop-admin-legal", who: "alex", path: "/admin/settings?tab=legal", full: true },

@@ -6,8 +6,10 @@ import { notify } from "./notify";
 import { makeT } from "../i18n/translate";
 import { localeOf } from "../i18n/user-locale";
 import { teamsByGame, type TeamView } from "./teams";
+import { coverUrl } from "./game-catalog";
+import { steamInstallUrl } from "./steam";
 
-const { game, gameVote, attendance, user, reminderLog, lan } = schema;
+const { game, gameVote, attendance, user, reminderLog, lan, catalogGame } = schema;
 const DAY = 24 * 60 * 60 * 1000;
 
 /** How long before the LAN the "install your games" reminder goes out. */
@@ -15,9 +17,21 @@ export const GAMES_REMINDER_DAYS = 2;
 
 export type GameView = {
   id: string;
+  /** The catalog entry with the details; null only for games from before the catalog. */
+  catalogId: string | null;
   name: string;
   sizeGb: number | null;
   url: string;
+  cover: string | null;
+  /** steam://install link that opens Steam's install dialog. */
+  installUrl: string | null;
+  minPlayers: number | null;
+  maxPlayers: number | null;
+  free: boolean | null;
+  lan: boolean | null;
+  /** May I fix the catalog details (I put it in the catalog, or platform staff)? Set by the page. */
+  canEditDetails?: boolean;
+  catalogBy: string | null;
   addedBy: string | null;
   votes: number;
   voters: string[];
@@ -30,7 +44,13 @@ export type GameView = {
 
 /** A LAN's games, most votes first, with my own marks. */
 export function listGames(lanId: string, meId?: string): GameView[] {
-  const games = db.select().from(game).where(eq(game.lanId, lanId)).all();
+  const games = db
+    .select({ g: game, c: catalogGame })
+    .from(game)
+    .leftJoin(catalogGame, eq(catalogGame.id, game.catalogId))
+    .where(eq(game.lanId, lanId))
+    .all()
+    .map(({ g, c }) => ({ ...g, c }));
   const teams = games.length ? teamsByGame(lanId) : new Map<string, TeamView[]>();
   const marks = games.length
     ? db.select().from(gameVote).where(inArray(gameVote.gameId, games.map((g) => g.id))).all()
@@ -41,9 +61,17 @@ export function listGames(lanId: string, meId?: string): GameView[] {
       const me = mine.find((m) => m.userId === meId);
       return {
         id: g.id,
-        name: g.name,
-        sizeGb: g.sizeGb,
-        url: g.url,
+        catalogId: g.c?.id ?? null,
+        name: g.c?.name ?? g.name,
+        sizeGb: g.c ? g.c.sizeGb : g.sizeGb,
+        url: g.c ? g.c.url : g.url,
+        cover: g.c ? coverUrl(g.c) : null,
+        installUrl: g.c?.steamAppId ? steamInstallUrl(g.c.steamAppId) : null,
+        minPlayers: g.c?.minPlayers ?? null,
+        maxPlayers: g.c?.maxPlayers ?? null,
+        free: g.c?.free ?? null,
+        lan: g.c?.lan ?? null,
+        catalogBy: g.c?.createdBy ?? null,
         addedBy: g.addedBy,
         votes: mine.filter((m) => m.vote).length,
         voters: mine.filter((m) => m.vote).map((m) => m.userId),
@@ -56,7 +84,7 @@ export function listGames(lanId: string, meId?: string): GameView[] {
     .sort((a, b) => b.votes - a.votes || a.name.localeCompare(b.name));
 }
 
-export type PastGame = { name: string; sizeGb: number | null; url: string; votes: number };
+export type PastGame = { catalogId: string | null; name: string; sizeGb: number | null; url: string; votes: number };
 
 /**
  * The games of the clan's previous event of the same LAN type that aren't on this list yet,
@@ -81,18 +109,13 @@ export function previousGames(l: Lan, limit = 12): { lanName: string; games: Pas
     .limit(1)
     .get();
   if (!prev) return null;
-  const have = new Set(
-    db
-      .select({ name: game.name })
-      .from(game)
-      .where(eq(game.lanId, l.id))
-      .all()
-      .map((g) => g.name.trim().toLowerCase()),
-  );
+  const here = listGames(l.id);
+  const have = new Set(here.map((g) => g.name.trim().toLowerCase()));
+  const haveIds = new Set(here.map((g) => g.catalogId).filter(Boolean));
   const games = listGames(prev.id)
-    .filter((g) => !have.has(g.name.trim().toLowerCase()))
+    .filter((g) => !have.has(g.name.trim().toLowerCase()) && !(g.catalogId && haveIds.has(g.catalogId)))
     .slice(0, limit)
-    .map((g) => ({ name: g.name, sizeGb: g.sizeGb, url: g.url, votes: g.votes }));
+    .map((g) => ({ catalogId: g.catalogId, name: g.name, sizeGb: g.sizeGb, url: g.url, votes: g.votes }));
   return games.length ? { lanName: prev.name, games } : null;
 }
 

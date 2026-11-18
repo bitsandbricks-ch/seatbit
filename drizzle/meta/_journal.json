@@ -365,6 +365,13 @@
       "when": 1794985983010,
       "tag": "20261118071303_seat_variant_proven",
       "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "6",
+      "when": 1794990079770,
+      "tag": "20261118082119_game_catalog",
+      "breakpoints": true
     }
   ]
 }

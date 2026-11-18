@@ -18,6 +18,8 @@ import { canTakePart, isLanManager, requireLanManager, requireUser } from "@/lib
 import { auditLan } from "@/lib/audit";
 import { optionalHttpUrl } from "@/lib/safe-url";
 import { enforceLimit } from "@/lib/rate-limit";
+import { canEditCatalog, catalogByName, getCatalogGame, linkSteam, nameKey, resolveCatalog, syncEventNames } from "@/lib/game-catalog";
+import { steamAppIdFromUrl } from "@/lib/steam";
 
 const { seat, seatSwap, game, gameVote, lanOrga, clanMember, user } = schema;
 
@@ -193,15 +195,37 @@ export async function decideSeatSwap(swapId: string, approve: boolean) {
 
 // ---------------- Games ----------------
 
-const gameInput = z.object({
-  name: z.string().trim().min(1).max(60),
-  sizeGb: z
+const optInt = (min: number, max: number) =>
+  z
     .string()
     .optional()
     .transform((v) => (v ? Math.round(Number(v)) : null))
-    .pipe(z.number().int().min(0).max(2000).nullable()),
+    .pipe(z.number().int().min(min).max(max).nullable());
+
+const optBool = z
+  .enum(["", "yes", "no"])
+  .optional()
+  .transform((v) => (v === "yes" ? true : v === "no" ? false : null));
+
+const gameInput = z.object({
+  name: z.string().trim().min(1).max(60),
+  sizeGb: optInt(0, 2000),
   url: optionalHttpUrl().default(""),
+  catalogId: z.string().max(64).optional(),
+  steamAppId: optInt(1, 9_999_999_999),
 });
+
+/** Catalog details, only sent by the edit form when I may change them. */
+const detailsInput = z
+  .object({
+    sizeGb: optInt(0, 2000),
+    url: optionalHttpUrl().default(""),
+    minPlayers: optInt(1, 1000),
+    maxPlayers: optInt(1, 1000),
+    free: optBool,
+    lan: optBool,
+  })
+  .refine((d) => d.minPlayers == null || d.maxPlayers == null || d.minPlayers <= d.maxPlayers, { path: ["maxPlayers"] });
 
 async function requireParticipant(lanId: string) {
   const me = await requireUser();
@@ -209,54 +233,110 @@ async function requireParticipant(lanId: string) {
   return me;
 }
 
+const field = (formData: FormData, k: string) => {
+  const v = formData.get(k);
+  return v == null ? undefined : String(v).trim();
+};
+
 const parseGame = (formData: FormData) =>
   gameInput.safeParse({
     name: formData.get("name") ?? "",
     sizeGb: formData.get("sizeGb") ?? "",
     url: String(formData.get("url") ?? "").trim(),
+    catalogId: field(formData, "catalogId") || undefined,
+    steamAppId: field(formData, "steamAppId") ?? "",
   });
 
-/** Another game of the LAN with the same name (case-insensitive), so the list has no duplicates. */
-const sameName = (lanId: string, name: string, exceptId?: string) =>
+/** Another game of the LAN with the same name (case-insensitive) or catalog entry, so the list has no duplicates. */
+const sameGame = (lanId: string, name: string, catalogId: string | null, exceptId?: string) =>
   db
     .select()
     .from(game)
     .where(eq(game.lanId, lanId))
     .all()
-    .find((g) => g.id !== exceptId && g.name.toLowerCase() === name.toLowerCase());
+    .find((g) => g.id !== exceptId && (nameKey(g.name) === nameKey(name) || (!!catalogId && g.catalogId === catalogId)));
 
-/** Suggests a game; the one who adds it votes for it. */
+/** Suggests a game, from the catalog or new to it; the one who adds it votes for it. */
 export async function addGame(lanId: string, formData: FormData): Promise<{ error?: string }> {
   const me = await requireParticipant(lanId);
   mustGetLan(lanId);
   const parsed = parseGame(formData);
   if (!parsed.success) return { error: formError(parsed.error, await getT()) };
-  const existing = sameName(lanId, parsed.data.name);
-  if (existing) return { error: await tr("errors.gameExists", { name: existing.name }) };
+  const before = sameGame(lanId, parsed.data.name, parsed.data.catalogId ?? null);
+  if (before) return { error: await tr("errors.gameExists", { name: before.name }) };
   if (db.select().from(game).where(eq(game.lanId, lanId)).all().length >= 50) return { error: await tr("errors.gamesFull") };
-  const g = db.insert(game).values({ lanId, ...parsed.data, addedBy: me.id }).returning().get();
+  const c = await resolveCatalog(parsed.data, me.id);
+  // Steam may know it under another name that is on the list already.
+  const existing = sameGame(lanId, c.name, c.id);
+  if (existing) return { error: await tr("errors.gameExists", { name: existing.name }) };
+  const g = db.insert(game).values({ lanId, catalogId: c.id, name: c.name, addedBy: me.id }).returning().get();
   db.insert(gameVote).values({ gameId: g.id, userId: me.id, vote: true }).run();
   lanPath(lanId);
   return {};
 }
 
-/** Fixes a game's name, size or link: whoever added it, or a lead. Votes and ticks stay. */
+/**
+ * Fixes a game on an event: whoever added it, or a lead. A new name points the event at another
+ * catalog game (or renames the entry, when I keep it and only this event uses it). The details
+ * change the catalog entry, so only whoever put it in the catalog or platform staff send them.
+ * Votes and ticks stay.
+ */
 export async function updateGame(gameId: string, formData: FormData): Promise<{ error?: string }> {
   const g = db.select().from(game).where(eq(game.id, gameId)).get();
   if (!g) throw await err("errors.gone");
   // Taking part first: who added it may have left the clan since.
   const me = await requireParticipant(g.lanId);
   if (g.addedBy !== me.id && !isLanManager(me, g.lanId)) throw await err("errors.gameEdit");
-  const parsed = parseGame(formData);
-  if (!parsed.success) return { error: formError(parsed.error, await getT()) };
-  const existing = sameName(g.lanId, parsed.data.name, g.id);
-  if (existing) return { error: await tr("errors.gameNameTaken", { name: existing.name }) };
-  db.update(game).set(parsed.data).where(eq(game.id, gameId)).run();
+  const name = z.string().trim().min(1).max(60).safeParse(formData.get("name") ?? "");
+  if (!name.success) return { error: formError(name.error, await getT()) };
+  const sendsDetails = formData.has("sizeGb");
+  const details = sendsDetails
+    ? detailsInput.safeParse({
+        sizeGb: field(formData, "sizeGb") ?? "",
+        url: field(formData, "url") ?? "",
+        minPlayers: field(formData, "minPlayers") ?? "",
+        maxPlayers: field(formData, "maxPlayers") ?? "",
+        free: field(formData, "free") ?? "",
+        lan: field(formData, "lan") ?? "",
+      })
+    : null;
+  if (details && !details.success) return { error: formError(details.error, await getT()) };
+
+  // Games from before the catalog get their entry now, made by whoever added them.
+  let c = (g.catalogId && getCatalogGame(g.catalogId)) || (await resolveCatalog({ name: g.name, sizeGb: g.sizeGb, url: g.url }, g.addedBy));
+  const wasLegacy = !g.catalogId;
+  if (nameKey(name.data) !== nameKey(c.name)) {
+    const taken = sameGame(g.lanId, name.data, null, g.id);
+    if (taken) return { error: await tr("errors.gameNameTaken", { name: taken.name }) };
+    const other = catalogByName(name.data);
+    const onlyHere = db.select().from(game).where(eq(game.catalogId, c.id)).all().every((x) => x.id === g.id);
+    if (!other && onlyHere && (canEditCatalog(me, c) || wasLegacy) && !c.steamAppId) {
+      db.update(schema.catalogGame).set({ name: name.data, nameKey: nameKey(name.data) }).where(eq(schema.catalogGame.id, c.id)).run();
+    } else {
+      c = await resolveCatalog({ name: name.data, ...(details?.data ? { sizeGb: details.data.sizeGb, url: details.data.url } : {}) }, me.id);
+      const dup = sameGame(g.lanId, c.name, c.id, g.id);
+      if (dup) return { error: await tr("errors.gameNameTaken", { name: dup.name }) };
+    }
+  } else if (name.data !== c.name && (canEditCatalog(me, c) || wasLegacy)) {
+    // Only the spelling changed ("cs2" → "CS2").
+    db.update(schema.catalogGame).set({ name: name.data }).where(eq(schema.catalogGame.id, c.id)).run();
+  }
+  c = getCatalogGame(c.id)!;
+
+  if (details?.data) {
+    if (!canEditCatalog(me, c) && !(wasLegacy && c.createdBy === g.addedBy)) throw await err("errors.gameDetails");
+    const d = details.data;
+    const appId = steamAppIdFromUrl(d.url);
+    db.update(schema.catalogGame).set(d).where(eq(schema.catalogGame.id, c.id)).run();
+    if (appId && !c.steamAppId) await linkSteam(c.id, appId);
+  }
+  db.update(game).set({ catalogId: c.id, name: getCatalogGame(c.id)!.name }).where(eq(game.id, gameId)).run();
+  syncEventNames(getCatalogGame(c.id)!);
   lanPath(g.lanId);
   return {};
 }
 
-/** Removes a game: whoever added it, or a lead. */
+/** Removes a game from the event (the catalog keeps it): whoever added it, or a lead. */
 export async function deleteGame(gameId: string) {
   const me = await requireUser();
   const g = db.select().from(game).where(eq(game.id, gameId)).get();
