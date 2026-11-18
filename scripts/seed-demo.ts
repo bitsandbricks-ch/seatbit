@@ -15,6 +15,9 @@
  * database that already has users, unless --force is given. With --discord the
  * users get (fake) Discord accounts instead of passwords, as on a real instance.
  */
+import fs from "node:fs";
+import path from "node:path";
+import zlib from "node:zlib";
 import { hashPassword } from "better-auth/crypto";
 import { and, count, eq } from "drizzle-orm";
 import { db, schema } from "../src/db";
@@ -591,15 +594,32 @@ export async function seedDemo({ force = false, discord = false } = {}) {
       .run();
 
     // ---------- Games ----------
+    // Catalog entries as Steam would fill them; plain gradient covers, since the demo doesn't reach Steam.
     const games = [
-      { id: "demo-game-cs", name: "Counter-Strike 2", sizeGb: 35, voters: ["alex", "ben", "chiara", "david", "finn", "jonas", "marco", "anna"], installed: ["alex", "ben", "david", "anna"] },
-      { id: "demo-game-aoe", name: "Age of Empires II: DE", sizeGb: 30, voters: ["anna", "lea", "gina", "alex", "elena"], installed: ["lea", "gina"] },
-      { id: "demo-game-tm", name: "Trackmania", sizeGb: 8, voters: ["finn", "nina", "chiara", "anna"], installed: ["nina", "chiara", "anna"] },
-      { id: "demo-game-r6", name: "Rainbow Six Siege", sizeGb: 85, voters: ["david", "jonas"], installed: [] as string[] },
+      { id: "demo-game-cs", name: "Counter-Strike 2", sizeGb: 85, steam: 730, free: true, lan: true, players: [2, 10], colors: ["#1b2838", "#de9b35"], voters: ["alex", "ben", "chiara", "david", "finn", "jonas", "marco", "anna"], installed: ["alex", "ben", "david", "anna"] },
+      { id: "demo-game-aoe", name: "Age of Empires II: DE", sizeGb: 30, steam: 813780, free: false, lan: true, players: [2, 8], colors: ["#3b2414", "#c9a45c"], voters: ["anna", "lea", "gina", "alex", "elena"], installed: ["lea", "gina"] },
+      { id: "demo-game-tm", name: "Trackmania", sizeGb: 8, steam: null, free: true, lan: null, players: null, colors: ["#0b3d2e", "#2ee59d"], voters: ["finn", "nina", "chiara", "anna"], installed: ["nina", "chiara", "anna"] },
+      { id: "demo-game-r6", name: "Rainbow Six Siege", sizeGb: 85, steam: 359550, free: false, lan: false, players: [2, 10], colors: ["#101820", "#5a6b7d"], voters: ["david", "jonas"], installed: [] as string[] },
     ];
     for (const g of games) {
+      tx.insert(s.catalogGame)
+        .values({
+          id: `${g.id}-catalog`,
+          name: g.name,
+          nameKey: g.name.toLowerCase(),
+          sizeGb: g.sizeGb,
+          steamAppId: g.steam,
+          url: g.steam ? `https://store.steampowered.com/app/${g.steam}/` : "https://www.ubisoft.com/en-gb/game/trackmania/trackmania",
+          free: g.free,
+          lan: g.lan,
+          minPlayers: g.players?.[0] ?? null,
+          maxPlayers: g.players?.[1] ?? null,
+          createdBy: ids[g.voters[0]],
+          cover: demoCover(`${g.id}-catalog`, g.colors),
+        })
+        .run();
       tx.insert(s.game)
-        .values({ id: g.id, lanId: events.lakeside, name: g.name, sizeGb: g.sizeGb, url: "https://example.com/games", addedBy: ids[g.voters[0]] })
+        .values({ id: g.id, lanId: events.lakeside, catalogId: `${g.id}-catalog`, name: g.name, addedBy: ids[g.voters[0]] })
         .run();
       const everyone = new Set([...g.voters, ...g.installed]);
       for (const key of everyone) {
@@ -846,4 +866,43 @@ if (process.argv[1]?.match(/seed-demo\.[tj]s$/)) {
       console.error(e instanceof Error ? e.message : e);
       process.exit(1);
     });
+}
+
+/** A 460×215 PNG with a diagonal gradient, stored like an uploaded cover; returns its file name. */
+function demoCover(id: string, [from, to]: string[]) {
+  const W = 460;
+  const H = 215;
+  const rgb = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const [a, b] = [rgb(from), rgb(to)];
+  const raw = Buffer.alloc((W * 3 + 1) * H);
+  for (let y = 0; y < H; y++) {
+    raw[y * (W * 3 + 1)] = 0;
+    for (let x = 0; x < W; x++) {
+      const t = Math.min(1, (x / W) * 0.7 + (y / H) * 0.3);
+      for (let c = 0; c < 3; c++) raw[y * (W * 3 + 1) + 1 + x * 3 + c] = Math.round(a[c] + (b[c] - a[c]) * t);
+    }
+  }
+  const chunk = (type: string, data: Buffer) => {
+    const len = Buffer.alloc(4);
+    len.writeUInt32BE(data.length);
+    const body = Buffer.concat([Buffer.from(type, "latin1"), data]);
+    const crc = Buffer.alloc(4);
+    crc.writeUInt32BE(zlib.crc32(body));
+    return Buffer.concat([len, body, crc]);
+  };
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(W, 0);
+  ihdr.writeUInt32BE(H, 4);
+  ihdr.set([8, 2, 0, 0, 0], 8);
+  const png = Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    chunk("IHDR", ihdr),
+    chunk("IDAT", zlib.deflateSync(raw)),
+    chunk("IEND", Buffer.alloc(0)),
+  ]);
+  const dir = path.join(path.dirname(process.env.DATABASE_PATH ?? path.join(process.cwd(), "data", "lan.db")), "uploads");
+  fs.mkdirSync(dir, { recursive: true });
+  const name = `game-${id}-demo.png`;
+  fs.writeFileSync(path.join(dir, name), png);
+  return name;
 }

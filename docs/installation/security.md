@@ -42,7 +42,7 @@ What Seatbit does to protect its users, and what you as the operator of an insta
 ### Kubernetes
 
 - Use the hardened deployment from [Kubernetes](kubernetes.md): non-root, read-only root filesystem, all capabilities dropped, no privilege escalation, `RuntimeDefault` seccomp, no service account token.
-- Add a `NetworkPolicy`: allow ingress only from your ingress controller on port 3000, and egress only to DNS and HTTPS (Discord, Stripe) plus your SMTP server. Seatbit never fetches addresses that users enter.
+- Add a `NetworkPolicy`: allow ingress only from your ingress controller on port 3000, and egress only to DNS and HTTPS (Discord, Stripe, the Steam store for [game lookups](configuration.md)) plus your SMTP server. Seatbit never fetches addresses that users enter: Steam lookups only go to `store.steampowered.com` and Steam's image hosts.
 
 ```yaml
 apiVersion: networking.k8s.io/v1

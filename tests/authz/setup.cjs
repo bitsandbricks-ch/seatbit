@@ -16,6 +16,7 @@ process.on("exit", () => fs.rmSync(dir, { recursive: true, force: true }));
 process.env.DATABASE_PATH = path.join(dir, "authz.db");
 process.env.BACKUP_DIR = path.join(dir, "backups");
 process.env.ALLOW_EMAIL_LOGIN = "1";
+process.env.STEAM_LOOKUP = "false";
 // tests/authz/matrix.ts uses the same values.
 process.env.CRON_SECRET = "test-cron-secret-0123456789";
 process.env.METRICS_TOKEN = "test-metrics-token-0123456789";

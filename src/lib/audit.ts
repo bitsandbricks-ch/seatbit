@@ -326,6 +326,12 @@ export function describeAudit(
       return t(d.created ? "audit.typeCreate" : "audit.typeEdit", v);
     case "type.delete":
       return t("audit.typeDelete", v);
+    case "game.save":
+      return t(d.created ? "audit.gameCreate" : "audit.gameEdit", v);
+    case "game.merge":
+      return t("audit.gameMerge", v);
+    case "game.delete":
+      return t("audit.gameDelete", v);
     case "type.clan_add":
       return t("audit.typeClanAdd", v);
     case "type.clan_settings":
