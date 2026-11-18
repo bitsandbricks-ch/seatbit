@@ -24,6 +24,15 @@ Migrations up to `0037` are numbered; newer ones are named by their creation tim
 !!! warning "Journal timestamps"
     Drizzle skips a migration whose journal `when` is older than the last applied one, silently. `npm run db:rebase` (below) always gives the branch's migration the newest `when`.
 
+## Indexes
+
+SQLite only uses an index whose first column is the one a query filters on: a unique index on `(lan_id, user_id)` helps "this person on this event", not "all events of this person". When you add a query that looks rows up by a column without its own index (someone's rows across events, a clan's events, the audit log by person), add an `index()` in the table's third argument and check the plan:
+
+```sh
+sqlite3 data/lan.db "EXPLAIN QUERY PLAN SELECT * FROM attendance WHERE user_id = 'x'"
+# SEARCH attendance USING INDEX attendance_user_idx (user_id=?)   <- good; SCAN attendance means every row is read
+```
+
 ## Merge conflicts in migrations
 
 Two branches that each add a migration both append to `_journal.json` and both point their snapshot at the same parent. Whoever merges second gets a conflict, and CI's `drizzle-kit check` fails. Don't fix that by hand:
