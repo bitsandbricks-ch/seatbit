@@ -106,6 +106,41 @@ test.describe("seat plan variants", () => {
     expect(db().select().from(seatVariant).where(eq(seatVariant.lanId, id)).all()).toHaveLength(0);
   });
 
+  test("a lead compares two variants and sees the seats that differ marked", async ({ as }) => {
+    const id = createEvent({
+      seats: ["A1", "A2", "A3"],
+      attendees: [
+        { who: "anna", ticket: true, seat: "A1" },
+        { who: "ben", ticket: true, seat: "A2" },
+        { who: "chiara", ticket: true, seat: "A3" },
+      ],
+    });
+    const [anna, ben, chiara] = [userId("anna"), userId("ben"), userId("chiara")];
+    db().insert(seatVariant).values({ id: `${id}-a`, lanId: id, name: "Plan A", seats: { A1: anna, A2: ben, A3: chiara } }).run();
+    // Plan B: Anna and Ben swapped, A3 left empty.
+    db().insert(seatVariant).values({ id: `${id}-b`, lanId: id, name: "Plan B", seats: { A1: ben, A2: anna } }).run();
+
+    const alex = await as("alex");
+    await alex.goto(`/lans/${id}/manage?tab=seats`);
+    const card = alex.locator("#seat-variants");
+    await card.getByRole("combobox", { name: "Compare with" }).selectOption({ label: "Plan A" });
+    await expect(alex).toHaveURL(new RegExp(`vs=${id}-a`));
+    await expect(card.getByText("Compared here")).toBeVisible();
+    // Plan B against Plan A: Anna and Ben swap, Chiara loses her seat.
+    await expect(card.locator("li", { hasText: "Plan B" }).getByText("3 people move")).toBeVisible();
+
+    await card.locator("li", { hasText: "Plan B" }).getByRole("link", { name: "Preview" }).click();
+    await expect(alex.getByText("Previewing variant Plan B")).toBeVisible();
+    await expect(alex.getByText("Compared with Plan A: 3 people sit elsewhere, marked on the map.")).toBeVisible();
+    await expect(alex.getByText("Someone else than in Plan A")).toBeVisible();
+    await expect(alex.getByText("Empty, taken in Plan A")).toBeVisible();
+    // A1 now has Ben; in Plan A Anna sat there.
+    await alex.getByRole("button", { name: /^Seat A1,/ }).click();
+    await expect(alex.getByText(/^In Plan A: .*Anna/)).toBeVisible();
+    // Nothing changed for real.
+    expect([seatOf(id, "anna"), seatOf(id, "ben"), seatOf(id, "chiara")]).toEqual(["A1", "A2", "A3"]);
+  });
+
   test("members don't see variants", async ({ as }) => {
     const id = createEvent({ seats: ["A1", "A2"], attendees: [{ who: "anna", ticket: true, seat: "A1" }] });
     db().insert(seatVariant).values({ lanId: id, name: "Secret plan", seats: { A2: userId("anna") } }).run();

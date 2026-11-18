@@ -58,7 +58,7 @@ import { EmergencyList } from "@/components/emergency-list";
 import type { StatusKind } from "@/components/status-icons";
 import { SeatVariants, VariantPreviewBar } from "@/components/seat-variants";
 import { listVariants } from "@/lib/seat-variants";
-import { movesBetween, seatsWithVariant } from "@/lib/seat-variant-math";
+import { movesBetween, seatChanges, seatsWithVariant } from "@/lib/seat-variant-math";
 
 const { attendance, seat, user, reminderLog } = schema;
 
@@ -225,11 +225,19 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
   // ?variant=<id>: the map and the wish list show that variant instead of the live plan.
   const preview = typeof sp.variant === "string" ? variantViews.find((x) => x.v.id === sp.variant) : undefined;
   const wishChecks = preview?.checks ?? liveChecks;
-  // Preview: whose wishes the variant meets worse or better than the live plan.
+  // ?vs=<id>: the plan everything is compared with, the live plan unless a variant is picked.
+  const baseView = typeof sp.vs === "string" ? variantViews.find((x) => x.v.id === sp.vs) : undefined;
+  const base = baseView
+    ? { id: baseView.v.id, name: baseView.v.name, seats: baseView.seats, checks: baseView.checks }
+    : { id: null, name: t("seatVariants.liveShort"), seats, checks: liveChecks };
+  // Seats on the map that differ from the compared plan (none while the map shows that plan itself).
+  const shownSeats = preview?.seats ?? seats;
+  const changes = (preview?.v.id ?? null) === base.id ? new Map() : seatChanges(shownSeats, base.seats);
+  // Preview: whose wishes the variant meets worse or better than the compared plan.
   const scoreOf = (list: typeof liveChecks) => new Map(list.map((c) => [c.userId, c.score ?? 1]));
   const previewDelta = (() => {
     if (!preview) return { worse: [] as string[], better: 0 };
-    const was = scoreOf(liveChecks);
+    const was = scoreOf(base.checks);
     const now = scoreOf(preview.checks);
     const worse = [...now].filter(([u, x]) => x < (was.get(u) ?? 1) - 1e-9).map(([u]) => names.get(u) ?? "?").sort((a, b) => a.localeCompare(b));
     const better = [...now].filter(([u, x]) => x > (was.get(u) ?? 1) + 1e-9).length;
@@ -490,13 +498,15 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               <SeatVariants
                 lanId={l.id}
                 going={going.length}
-                live={{ seated: seatedIn(seats), score: overallScore(liveChecks) }}
+                live={{ seated: seatedIn(seats), score: overallScore(liveChecks), vsBase: base.id ? movesBetween(base.seats, seats).length : undefined }}
+                baseId={base.id}
                 rows={variantViews.map((x) => ({
                   id: x.v.id,
                   name: x.v.name,
                   seated: seatedIn(x.seats),
                   score: overallScore(x.checks),
                   differs: x.differs,
+                  vsBase: x.v.id === base.id ? undefined : base.id ? movesBetween(base.seats, x.seats).length : x.differs,
                   updated: fmtDate(x.v.updatedAt, t.locale),
                   proven: x.v.proven,
                 }))}
@@ -789,6 +799,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               final={!!l.seatsPublishedAt}
               score={overallScore(preview.checks)}
               liveScore={overallScore(liveChecks)}
+              base={{ id: base.id, name: base.name, score: overallScore(base.checks), changed: preview.v.id === base.id ? null : movesBetween(base.seats, preview.seats).length }}
               worse={previewDelta.worse}
               better={previewDelta.better}
             />
@@ -803,7 +814,8 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
                 mode={preview ? "view" : "admin"}
                 leadView={!!preview}
                 details="top"
-                seats={(preview?.seats ?? seats).map((s) => ({ ...seatView(s, people, avatars), marks: s.userId ? marksOf(s.userId) : undefined }))}
+                compare={changes.size > 0 ? { name: base.name } : undefined}
+                seats={shownSeats.map((s) => ({ ...seatView(s, people, avatars), marks: s.userId ? marksOf(s.userId) : undefined, diff: changes.get(s.id) }))}
                 assignable={going
                   .map((r) => {
                     const w = wishChecks.find((c) => c.userId === r.userId);

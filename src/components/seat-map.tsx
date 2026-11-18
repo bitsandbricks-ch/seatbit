@@ -34,6 +34,8 @@ export type SeatView = {
   color?: string | null;
   /** Status icons for leads (no ticket, booked, guest, swap pending); "held" comes from `locked`. */
   marks?: StatusKind[];
+  /** Compared with another plan (`compare`): someone else sits here there, or this seat went empty. `was`: who sat here there. */
+  diff?: { kind: "changed" | "emptied"; was: string | null };
 };
 
 /** Extra info leads see about a person in the details pane. */
@@ -76,6 +78,7 @@ export function SeatMap({
   children,
   details: place = "side",
   leadView = false,
+  compare,
 }: {
   lanId: string;
   rows: number;
@@ -97,6 +100,8 @@ export function SeatMap({
   details?: "side" | "top";
   /** Read-only map for a lead (a variant preview): tapped seats show the person's ticket and seat wishes. */
   leadView?: boolean;
+  /** The plan the seats' `diff` marks compare against (a lead comparing seat plan variants). */
+  compare?: { name: string };
 }) {
   const admin = mode === "admin";
   const t = useT();
@@ -142,6 +147,11 @@ export function SeatMap({
     (!!s.nick && nameMatches(s.nick, q)) ||
     (!!s.name && nameMatches(s.name, q));
   const matchCount = q ? seats.filter(matches).length : 0;
+  /** "In Variant 2: Anna", for a seat that differs from the compared plan. */
+  const diffText = (s: SeatView) =>
+    compare && s.diff ? t("seatMap.wasHere", { name: compare.name, who: s.diff.was ? (people.get(s.diff.was)?.name ?? "?") : t("seatMap.wasFree") }) : "";
+  const anyChanged = !!compare && seats.some((s) => s.diff?.kind === "changed");
+  const anyEmptied = !!compare && seats.some((s) => s.diff?.kind === "emptied");
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -305,6 +315,8 @@ export function SeatMap({
         : dragOver === s.id
           ? "ring-2 ring-bit"
           : "";
+    // Compared with another plan: an inner outline, so it stays clear of the selection and search rings.
+    const changed = compare && s.diff ? (s.diff.kind === "changed" ? "outline-2 -outline-offset-2 outline-warn" : "outline-2 -outline-offset-2 outline-dashed outline-danger") : "";
     const short = s.nick ? s.nick.slice(0, 3) : s.label;
     // Corner icons: held plus the leads' marks, most important first; a compact seat only has room for one.
     const icons = sortKinds([...(s.locked ? (["held"] as const) : []), ...(s.marks ?? [])]).slice(0, compact ? 1 : 3);
@@ -319,10 +331,10 @@ export function SeatMap({
         onDragOver={canDrag ? (e) => (e.preventDefault(), setDragOver(s.id)) : undefined}
         onDragLeave={canDrag ? () => setDragOver(null) : undefined}
         onDrop={canDrag ? (e) => onDrop(e, s) : undefined}
-        title={`${s.label}${s.nick ? ` · ${s.name ?? s.nick}` : ""}${s.locked ? ` · ${t("seatMap.held")}` : ""}`}
-        aria-label={`${t("seatMap.seatAria", { seat: s.label })}, ${s.nick ? (s.name ?? s.nick) : t("seatMap.free")}${s.locked ? `, ${t("seatMap.held")}` : ""}`}
+        title={`${s.label}${s.nick ? ` · ${s.name ?? s.nick}` : ""}${s.locked ? ` · ${t("seatMap.held")}` : ""}${diffText(s) ? ` · ${diffText(s)}` : ""}`}
+        aria-label={`${t("seatMap.seatAria", { seat: s.label })}, ${s.nick ? (s.name ?? s.nick) : t("seatMap.free")}${s.locked ? `, ${t("seatMap.held")}` : ""}${diffText(s) ? `, ${diffText(s)}` : ""}`}
         aria-pressed={isSel}
-        className={`relative flex ${cell} w-full min-w-0 flex-col items-center justify-center overflow-hidden rounded-bit border px-0.5 text-center transition hover:brightness-125 ${tone} ${ring} ${dim ? "opacity-25" : ""} ${canDrag && taken ? "cursor-grab active:cursor-grabbing" : ""}`}
+        className={`relative flex ${cell} w-full min-w-0 flex-col items-center justify-center overflow-hidden rounded-bit border px-0.5 text-center transition hover:brightness-125 ${tone} ${ring} ${changed} ${dim ? "opacity-25" : ""} ${canDrag && taken ? "cursor-grab active:cursor-grabbing" : ""}`}
       >
         {taken && s.color && (
           <span aria-hidden className="absolute inset-x-1 bottom-0.5 h-[3px] rounded-full" style={{ background: s.color }} />
@@ -429,6 +441,7 @@ export function SeatMap({
         run={run}
         lanId={lanId}
         compact={compact}
+        diff={diffText(selected)}
       />
     );
 
@@ -564,6 +577,8 @@ export function SeatMap({
               <Legend cls="bg-raised border-line">{t("seatMap.legendFree")}</Legend>
               <Legend cls="bg-bit border-bit">{t("seatMap.legendYou")}</Legend>
               <Legend cls="bg-seat-taken/20 border-seat-taken/40">{t("seatMap.legendTaken")}</Legend>
+              {anyChanged && <Legend cls="border-line outline-2 -outline-offset-2 outline-warn">{t("seatMap.legendChanged", { name: compare!.name })}</Legend>}
+              {anyEmptied && <Legend cls="border-line outline-2 -outline-offset-2 outline-dashed outline-danger">{t("seatMap.legendEmptied", { name: compare!.name })}</Legend>}
               {/* Held seats (the lock) and, for leads, the other status icons: only the ones on the map. */}
               {sortKinds(seats.flatMap((x) => [...(x.locked ? (["held"] as const) : []), ...(x.marks ?? [])])).map((k) => (
                 <span key={k} className="inline-flex items-center gap-1.5">
@@ -679,6 +694,7 @@ function SeatDetails({
   run,
   lanId,
   compact = false,
+  diff,
 }: {
   seat: SeatView;
   person?: SeatPerson;
@@ -698,6 +714,8 @@ function SeatDetails({
   lanId: string;
   /** One line (seat, status, who) for the strip above the map. */
   compact?: boolean;
+  /** Who sits here in the compared plan, when that differs. */
+  diff?: string;
 }) {
   const t = useT();
   const [pick, setPick] = useState("");
@@ -726,6 +744,7 @@ function SeatDetails({
     </p>
   );
 
+  const diffLine = diff && <p className={`text-xs font-medium ${s.diff?.kind === "emptied" ? "text-danger" : "text-warn"}`}>{diff}</p>;
   const ticket =
     (admin || leadView) && s.userId && person?.ticket ? (
       person.ticket === "ok" ? (
@@ -767,6 +786,7 @@ function SeatDetails({
             {ticket}
             {close}
           </div>
+          {diffLine}
           {account}
           {wishes}
         </div>
@@ -794,6 +814,7 @@ function SeatDetails({
       ) : (
         <p className="text-sm text-muted">{s.locked ? t("seatMap.heldText") : t("seatMap.nobody")}</p>
       )}
+      {diffLine}
       </>
       )}
 

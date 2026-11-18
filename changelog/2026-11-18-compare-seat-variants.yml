@@ -1,0 +1,14 @@
+date: 2026-11-18
+type: improved
+en:
+  title: "Compare seat plan variants with each other"
+  text: >-
+    Leads can now compare any seat plan variant with any other one, not only with the live plan. On the map,
+    seats where someone else sits are marked orange and seats that went empty red; tap one to see who sits
+    there in the other plan.
+de:
+  title: "Sitzplan-Varianten untereinander vergleichen"
+  text: >-
+    Leads können jetzt jede Sitzplan-Variante mit jeder anderen vergleichen, nicht nur mit dem aktiven Plan.
+    Auf der Karte sind Plätze mit einer anderen Person orange markiert und leer gewordene Plätze rot; tipp
+    einen an, um zu sehen, wer im anderen Plan dort sitzt.
