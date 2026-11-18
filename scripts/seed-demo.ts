@@ -615,7 +615,8 @@ export async function seedDemo({ force = false, discord = false } = {}) {
           minPlayers: g.players?.[0] ?? null,
           maxPlayers: g.players?.[1] ?? null,
           createdBy: ids[g.voters[0]],
-          cover: demoCover(`${g.id}-catalog`, g.colors),
+          // Trackmania keeps no cover, to show the colour fill.
+          cover: g.steam ? demoCover(`${g.id}-catalog`, g.colors) : null,
         })
         .run();
       tx.insert(s.game)

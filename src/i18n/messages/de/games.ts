@@ -48,4 +48,8 @@ export const games: Messages["games"] = {
   minPlayers: "Min. Spieler",
   maxPlayers: "Max. Spieler",
   detailsLocked: "Grösse, Link und Spielerzahl gelten für alle Events. Nur wer das Game in den Katalog aufgenommen hat oder der Plattform-Support kann sie ändern.",
+  rank: "Platz {n}",
+  noVotes: "Noch keine Stimmen",
+  noInstalls: "Noch niemand",
+  catalogLink: "Alle Games",
 };

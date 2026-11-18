@@ -2,7 +2,7 @@
 import { useOptimistic, useRef, useState, useTransition, type ReactNode } from "react";
 import { addGame, deleteGame, setGameMark, updateGame } from "@/app/lan-extras-actions";
 import type { GameView, PastGame } from "@/lib/games";
-import { btnGhost, btnPrimary, btnSecondary, input } from "./ui";
+import { btnGhost, btnPrimary, btnSecondary, inlineLink, input } from "./ui";
 import { useT } from "@/i18n/client";
 import { useRunAction } from "./action-form";
 import { httpHref } from "@/lib/safe-url";
@@ -12,6 +12,8 @@ import { TeamChips } from "./team-panel";
 import { myGamesTodo } from "@/lib/games-todo";
 import { storeOf } from "@/lib/game-stores";
 import { GamePicker, type Picked } from "./game-picker";
+import { GameCover } from "./game-cover";
+import Link from "next/link";
 
 /** Games to play at the LAN: suggest, vote, and tick off what you installed. */
 export function GameList({
@@ -78,7 +80,10 @@ export function GameList({
   return (
     <div className="space-y-5">
       <p className="text-sm text-muted">
-        {t("games.intro")} {t("games.reminder", { days: reminderDays })}
+        {t("games.intro")} {t("games.reminder", { days: reminderDays })}{" "}
+        <Link href="/games" className={inlineLink}>
+          {t("games.catalogLink")}
+        </Link>
         {toInstall > 0 && (
           <span className="block text-warn">
             {gb ? t("games.stillNeedGb", { count: toInstall, gb }) : t("games.stillNeed", { count: toInstall })}
@@ -106,50 +111,42 @@ export function GameList({
                 />
               </li>
             ) : (
-              <li key={g.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-bit border border-line bg-surface px-3 py-2.5">
-                <span className="w-5 text-right text-sm tabular-nums text-faint">{i + 1}</span>
-                {g.cover && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={g.cover} alt="" loading="lazy" className="hidden h-[43px] w-[92px] shrink-0 self-start rounded object-cover sm:block" />
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium text-fg">
-                    {g.url ? (
+              <li
+                key={g.id}
+                className="grid grid-cols-[6.5rem_minmax(0,1fr)] gap-x-3 gap-y-3 rounded-bit border border-line bg-surface p-3 sm:grid-cols-[11rem_minmax(0,1fr)_auto] sm:gap-x-4"
+              >
+                <GameCover name={g.name} cover={g.cover} color={g.coverColor} className="w-full self-start sm:row-span-2">
+                  <span className="absolute left-1 top-1 rounded bg-ink/75 px-1.5 text-xs font-semibold tabular-nums text-fg" aria-label={t("games.rank", { n: i + 1 })}>
+                    {i + 1}
+                  </span>
+                </GameCover>
+                <div className="min-w-0">
+                  <p className="text-base font-semibold leading-snug text-fg sm:text-lg">
+                    {g.catalogId ? (
+                      <Link href={`/games/${g.catalogId}`} className="hover:text-bit hover:underline">
+                        {g.name}
+                      </Link>
+                    ) : g.url ? (
                       <a href={httpHref(g.url)} target="_blank" rel="noreferrer" className="hover:text-bit hover:underline">
                         {g.name}
                       </a>
                     ) : (
                       g.name
                     )}
-                    {g.sizeGb != null && <span className="ml-2 whitespace-nowrap text-xs font-normal text-muted">{g.sizeGb} GB</span>}
-                    {g.free && <GameTag>{t("games.free")}</GameTag>}
-                    {g.lan && <GameTag>{t("games.lanMode")}</GameTag>}
                   </p>
+                  <GameFacts g={g} />
                   <GameLinks g={g} />
-                  {g.addedBy && names[g.addedBy] && (
-                    <p className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-muted">
-                      <Avatar data={avatars[g.addedBy]} size={16} ring={false} />
-                      <span className="truncate">
-                        {t("games.addedBy", { name: g.addedBy === meId ? t("games.you") : names[g.addedBy] })}
-                      </span>
-                    </p>
-                  )}
-                  <p className="truncate text-xs text-muted" title={g.voters.map((v) => names[v] ?? "?").join(", ")}>
-                    {t("games.votes", { count: g.votes })}
-                    {g.votes ? `: ${g.voters.map((v) => names[v] ?? "?").join(", ")}` : ""} · {t("games.installedCount", { count: g.installed })}
-                  </p>
-                  <TeamChips g={g} meId={meId} canManage={canManage} canJoin={canAdd} people={{ names, avatars }} />
                 </div>
-                <div className="flex w-full items-center gap-2 pl-8 sm:w-auto sm:pl-0">
+                <div className="col-span-2 flex flex-wrap items-center gap-2 sm:col-span-1 sm:col-start-3 sm:row-start-1 sm:self-start">
                   <button
                     disabled={pending}
                     aria-pressed={voted(g)}
                     onClick={() => mark(g.id, "vote", !voted(g))}
-                    className={`min-h-9 rounded-md border px-3 text-sm transition ${voted(g) ? "border-bit bg-bit-soft text-bit" : "border-line text-muted hover:text-fg"}`}
+                    className={`min-h-10 rounded-md border px-3 text-sm font-medium transition ${voted(g) ? "border-bit bg-bit-soft text-bit" : "border-line text-muted hover:text-fg"}`}
                   >
                     {voted(g) ? t("games.voted") : t("games.vote")}
                   </button>
-                  <label className="flex min-h-9 items-center gap-2 rounded-md border border-line px-3 text-sm">
+                  <label className="flex min-h-10 items-center gap-2 rounded-md border border-line px-3 text-sm font-medium">
                     <input
                       type="checkbox"
                       checked={marks[`${g.id}:installed`] ?? g.myInstalled}
@@ -160,7 +157,7 @@ export function GameList({
                     {t("games.installed")}
                   </label>
                   {(g.addedBy === meId || canManage) && (
-                    <>
+                    <div className="flex gap-1">
                       <button
                         disabled={pending}
                         className={`${btnGhost} !px-2`}
@@ -178,8 +175,37 @@ export function GameList({
                       >
                         ✕
                       </button>
-                    </>
+                    </div>
                   )}
+                </div>
+                <div className="col-span-2 space-y-2 border-t border-line pt-3 sm:col-start-2 sm:row-start-2 sm:border-0 sm:pt-0">
+                  <PeopleRow
+                    label={t("games.votes", { count: g.votes })}
+                    icon="▲"
+                    ids={g.voters}
+                    names={names}
+                    avatars={avatars}
+                    meId={meId}
+                    empty={t("games.noVotes")}
+                  />
+                  <PeopleRow
+                    label={t("games.installedCount", { count: g.installed })}
+                    icon="✓"
+                    ids={g.installers}
+                    names={names}
+                    avatars={avatars}
+                    meId={meId}
+                    empty={t("games.noInstalls")}
+                  />
+                  {g.addedBy && names[g.addedBy] && (
+                    <p className="flex min-w-0 items-center gap-1.5 text-xs text-muted">
+                      <Avatar data={avatars[g.addedBy]} size={16} ring={false} />
+                      <span className="truncate">
+                        {t("games.addedBy", { name: g.addedBy === meId ? t("games.you") : names[g.addedBy] })}
+                      </span>
+                    </p>
+                  )}
+                  <TeamChips g={g} meId={meId} canManage={canManage} canJoin={canAdd} people={{ names, avatars }} />
                 </div>
               </li>
             ),
@@ -243,7 +269,74 @@ export function GameList({
 }
 
 function GameTag({ children }: { children: ReactNode }) {
-  return <span className="ml-2 whitespace-nowrap rounded border border-line px-1.5 py-px text-[11px] font-normal text-muted">{children}</span>;
+  return <span className="whitespace-nowrap rounded border border-line px-1.5 py-px text-xs text-muted">{children}</span>;
+}
+
+/** Size, players, free and LAN mode in one line. */
+function GameFacts({ g }: { g: GameView }) {
+  const t = useT();
+  const players = playersText(g, t);
+  if (g.sizeGb == null && !players && !g.free && !g.lan) return null;
+  return (
+    <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
+      {g.sizeGb != null && <span className="whitespace-nowrap">{g.sizeGb} GB</span>}
+      {players && <span className="whitespace-nowrap">{players}</span>}
+      {g.free && <GameTag>{t("games.free")}</GameTag>}
+      {g.lan && <GameTag>{t("games.lanMode")}</GameTag>}
+    </p>
+  );
+}
+
+function playersText(g: Pick<GameView, "minPlayers" | "maxPlayers">, t: ReturnType<typeof useT>) {
+  if (g.minPlayers != null && g.maxPlayers != null && g.minPlayers !== g.maxPlayers) return t("games.playersRange", { min: g.minPlayers, max: g.maxPlayers });
+  const n = g.maxPlayers ?? g.minPlayers;
+  return n ? t("games.players", { count: n }) : null;
+}
+
+/** Who voted, or who installed: the count, their avatars and names. */
+function PeopleRow({
+  label,
+  icon,
+  ids,
+  names,
+  avatars,
+  meId,
+  empty,
+}: {
+  label: string;
+  icon: string;
+  ids: string[];
+  names: Record<string, string>;
+  avatars: Record<string, AvatarData>;
+  meId: string;
+  empty: string;
+}) {
+  const t = useT();
+  const who = ids.map((id) => (id === meId ? t("games.you") : (names[id] ?? "?")));
+  return (
+    <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm sm:flex-nowrap">
+      <span className="w-24 shrink-0 font-medium text-fg sm:w-28">
+        <span aria-hidden className="mr-1 text-muted">
+          {icon}
+        </span>
+        <span>{label}</span>
+      </span>
+      {ids.length === 0 ? (
+        <span className="text-faint">{empty}</span>
+      ) : (
+        <>
+          <span className="flex shrink-0 -space-x-1.5" aria-hidden>
+            {ids.slice(0, 6).map((id) => (
+              <Avatar key={id} data={avatars[id]} size={24} ring={false} />
+            ))}
+          </span>
+          <span className="w-full min-w-0 truncate text-muted sm:w-auto" title={who.join(", ")}>
+            {who.join(", ")}
+          </span>
+        </>
+      )}
+    </div>
+  );
 }
 
 /** Store page and, for Steam games, a button that opens Steam's install dialog. */
@@ -251,16 +344,10 @@ function GameLinks({ g }: { g: GameView }) {
   const t = useT();
   const store = storeOf(g.url);
   const href = httpHref(g.url);
-  const players =
-    g.minPlayers != null && g.maxPlayers != null && g.minPlayers !== g.maxPlayers
-      ? t("games.playersRange", { min: g.minPlayers, max: g.maxPlayers })
-      : g.maxPlayers ?? g.minPlayers
-        ? t("games.players", { count: (g.maxPlayers ?? g.minPlayers)! })
-        : null;
-  if (!href && !g.installUrl && !players) return null;
-  const chip = "inline-flex min-h-7 items-center gap-1 rounded-md border border-line px-2 text-xs text-muted transition hover:border-bit hover:text-fg";
+  if (!href && !g.installUrl) return null;
+  const chip = "inline-flex min-h-8 items-center gap-1 rounded-md border border-line px-2.5 text-sm text-muted transition hover:border-bit hover:text-fg";
   return (
-    <p className="mt-1 flex flex-wrap items-center gap-1.5">
+    <p className="mt-2 flex flex-wrap items-center gap-1.5">
       {href && store && (
         <a href={href} target="_blank" rel="noreferrer" className={chip}>
           {store.name ?? t("games.website")} <span aria-hidden>↗</span>
@@ -271,7 +358,6 @@ function GameLinks({ g }: { g: GameView }) {
           <span aria-hidden>⤓</span> {t("games.install")}
         </a>
       )}
-      {players && <span className="text-xs text-muted">{players}</span>}
     </p>
   );
 }

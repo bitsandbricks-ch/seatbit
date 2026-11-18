@@ -42,4 +42,10 @@ export const gameCatalog: Messages["gameCatalog"] = {
   deleteHint: "Löschen geht nur bei Games, die kein Event verwendet. Die anderen führst du zusammen.",
   deleteQ: "{name} aus dem Katalog löschen?",
   deleteName: "{name} löschen",
+  publicSubtitle: "Alle Games auf diesem Seatbit, mit Grösse, Spielerzahl und Store-Links. Games fügst du im Games-Tab eines Events hinzu.",
+  manage: "Katalog verwalten",
+  edit: "Bearbeiten",
+  players: "Spieler",
+  yourEvents: "Deine Events mit diesem Game",
+  yourEventsNone: "Noch keines deiner Events hat dieses Game.",
 };
