@@ -93,7 +93,7 @@ export const help = {
       status: "Create an event, plan seats, finalize, book",
       items: {
         a: { q: "Create an event", a: "Start from a LAN type, so seats, deadlines and to-dos carry over. New events start as drafts that only organizers see; publish when it's ready." },
-        b: { q: "Plan the seats", a: "Enter the seat block on Manage → Seats. Members send wishes or pick their own; the planner fills the rest from their wishes. Save variants to compare plans." },
+        b: { q: "Plan the seats", a: "Enter the seat block on Manage → Seats the first time (later under Manage → Settings). Members send wishes or pick their own; Plan the seats fills the rest from their wishes. Save variants under Plan variants and history to compare plans." },
         c: { q: "Finalize and book", a: "When the plan is right, finalize it: wishes and self pick close and everyone sees their seat. Then book the seats on the event's site and tick each person." },
         d: { q: "Keep everyone posted", a: "Post news, send reminders and use the Organizer checklist and to-dos on Manage → Overview so nothing gets forgotten." },
       },

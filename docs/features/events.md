@@ -106,7 +106,7 @@ Organizers see **View / Manage** next to the event title. *Manage* has the tabs:
 
 | Tab | |
 | --- | --- |
-| **Overview** | The organizer checklist, [organizer to-dos and event contacts](lead-todos.md) (done ones fold away), a strip with the numbers (coming, unsure, tickets, seats; each opens its tab), deadlines. |
+| **Overview** | The organizer checklist, [organizer to-dos and event contacts](lead-todos.md) (done ones fold away), a strip with who answered (coming and waitlist, unsure and no answer; each opens its tab; tickets and seats are in the checklist), deadlines. |
 | **Seats** | The seat planner. See [Seats](seats.md#plan-the-seats). |
 | **People** | Switch between *Who's coming* (answers, tickets, LAN IDs, CSV export; see [Attendance](attendance.md#attendee-list)), *Who's missing* (who still owes something, with nudges; see [Who's missing](reminders.md#whos-missing)) and *Emergency* (see [Emergency contact and diet](emergency.md)). |
 | **News** | News for attendees, [manual reminders](reminders.md#manual-reminders), and Discord & WhatsApp: re-post the announcement, post reminders, WhatsApp texts. See [Discord](discord.md#per-event). |

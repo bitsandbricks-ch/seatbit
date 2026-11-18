@@ -1,0 +1,8 @@
+date: 2026-11-18
+type: improved
+en:
+  title: A tidier Seats tab for organizers
+  text: "Manage → Seats now shows what you use every day first: the seat steps, swaps, booking, planning and seat wishes. Plan variants and history are folded at the bottom, and the seats the event gave you and how far «near» reaches moved to Settings. The overview no longer repeats the ticket and seat numbers from the organizer checklist."
+de:
+  title: Ein aufgeräumter Tab «Plätze» für Organisatoren
+  text: "Verwalten → Plätze zeigt jetzt zuerst, was du jeden Tag brauchst: Platz-Schritte, Tausch, Buchung, Planung und Platzwünsche. Plan-Varianten und Verlauf sind unten eingeklappt, und die Plätze, die euch das Event gegeben hat, und wie weit «in der Nähe» reicht, sind in die Einstellungen gewandert. Die Übersicht wiederholt die Zahlen zu Tickets und Plätzen aus der Organisator-Checkliste nicht mehr."

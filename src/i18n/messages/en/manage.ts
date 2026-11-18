@@ -13,7 +13,12 @@ export const manage = {
   since: "since {date}",
   ourSeats: "Our seats",
   ourSeatsHint:
-    "Enter the seats the event gave the group, then assign them here or on the Attendees tab. Hold keeps a seat out of auto-assign, e.g. for a guest.",
+    "Enter the seats the event gave the group. You plan and assign them on the Seats tab. «Hold» keeps a seat out of auto-assign, e.g. for a guest.",
+  planSeats: "Plan the seats",
+  seatBlockLine: { one: "{count} seat: {spec}.", other: "{count} seats: {spec}." },
+  changeInSettings: "Change in Settings",
+  planningTools: "Plan variants and history",
+  planningToolsHint: { one: "{count} saved variant · compare plans and see who moved whom", other: "{count} saved variants · compare plans and see who moved whom" },
   seatSteps: "Seat steps",
   final: "final",
   notFinal: "not final",

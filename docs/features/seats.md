@@ -66,15 +66,15 @@ Below the ranked list, **Not right next to** lists people you don't want directl
 
 **Organizers can change a member's wishes**, e.g. when someone told them in person: on *Manage → Seats*, pick the member under **Change someone's wishes**, open a member in the **Seat wishes** card and choose **Change wishes**, or use the **Seat wishes** link under someone's seat in *Manage → People*. This works for guests without an account too. The editor is the same one members use, and the change shows in the event's log. Wishes an organizer adds say **Added by** and the organizer's name, for the member and the other organizers; moving a wish keeps that mark. The member gets no message by default. Tick **Tell … by Discord DM** in the editor and they get a DM with their wishes as they are now a minute after the organizer's last change (unless they turned DMs off on their profile); unticking it drops a DM that is still waiting.
 
-**How far "near" reaches** is set per event under *Manage → Seats → Our seats* ("“Near” means within … seats", 2 to 12, default 4). Changing it re-plans right away when automatic re-planning is on.
+**How far "near" reaches** is set per event under *Manage → Settings → Our seats* ("“Near” means within … seats", 2 to 12, default 4). Changing it re-plans right away when automatic re-planning is on.
 
 ## Plan the seats
 
-*Manage → Seats*.
+*Manage → Seats* has what you use day to day, top to bottom: the seat map, the **Seat steps** (self pick, finalize), seat swaps and booking, **Plan the seats** (fill or re-plan), and the **Seat wishes**. **Plan variants and history** at the bottom is folded until you open it; it opens by itself while you preview or compare a variant or an exact search runs. The one-time setup, the seats the event gave you and how far "near" reaches, is on *Manage → Settings → Our seats* (on the Seats tab only until the first seats are entered).
 
 ![Organizer seat plan](../screenshots/desktop-manage-seats.png){ .shot }
 
-**Our seats:** enter the seats the event gave you, e.g. `F1-F16, F19-F22`. Saving again keeps assignments for seats that stay in the list. **Edit seats** in the map shows every number of a row: tap a dashed one to add it, a seat to remove it.
+**Our seats** (*Manage → Settings*): enter the seats the event gave you, e.g. `F1-F16, F19-F22`. Saving again keeps assignments for seats that stay in the list. **Edit seats** in the map shows every number of a row: tap a dashed one to add it, a seat to remove it.
 
 Tap a seat: its details (who sits there, ticket, wishes) and these actions open in a strip above the map, so the map keeps the full width:
 
@@ -90,7 +90,7 @@ People coming without a seat are listed under **Not seated yet**: tap one, then 
 
 **Fill free seats** seats everyone without a seat; **Re-plan everyone** starts over. The planner follows seat wishes in each member's order, so when two wishes can't both be met the higher one wins, and it seats people with a ticket first. It looks at the whole plan at once: after a first rough plan it tries thousands of changes and keeps the plan that meets the most wishes for everyone together, weighted by each member's order. A change can swap two people, swap two groups of neighbours (also between rows, so a whole group of friends can change rows together) or move a group along the row while the others shift over to make room. That way a group moves over to give someone their edge seat even when that takes several steps, and a wish like "near Reykime" is still met when Reykime was seated earlier. The plan is worked out in full first and then saved in one go. The same wishes always give the same plan, and a re-plan keeps people on their seats unless moving them meets a wish better, so changing one member's wishes doesn't shuffle everyone else. Held seats never move, and **Fill free seats** leaves people who already have a seat where they are.
 
-**How hard the planner looks** (above the buttons) has three levels:
+**How hard the planner looks** (in *Plan the seats*, above the buttons) has three levels:
 
 | Level | What it does |
 | --- | --- |
@@ -104,26 +104,26 @@ How long Exact takes depends on the event and how much the wishes clash. In test
 
 The exact search uses [HiGHS](https://highs.dev/), an open-source optimisation solver, which runs inside Seatbit; nothing is sent anywhere.
 
-**Re-plan automatically when wishes change** (under *Our seats*) re-plans every seat that isn't held whenever someone changes their wishes, on the website or with `/wish`, and once right away when you turn it on. It pauses while self pick is on and once the plan is final, so it never moves a member's own pick or a final seat.
+**Re-plan automatically when wishes change** (under *Plan the seats*) re-plans every seat that isn't held whenever someone changes their wishes, on the website or with `/wish`, and once right away when you turn it on. It pauses while self pick is on and once the plan is final, so it never moves a member's own pick or a final seat.
 
 Seat pages update by themselves when the plan or someone's wishes change, so organizers and members don't need to reload (see [Live updates](events.md#live-updates)).
 
 The **Seat wishes** card scores the current plan: for each member the share of their wishes that are met, weighted by their order (a met top wish counts more), and the average over everyone. **Needs a look** (the default) lists only members with a missed wish in their top 5, a missed "not right next to", or wishes that can't be checked yet; **Everyone** lists all members with wishes. Each member is one line, lowest score first: their seat, how many wishes are met, their score and the wishes the plan misses. Tap a member for all their wishes in order (✓ met, ✗ missed, an orange ✗ for a missed wish below the top 5, which counts little, · can't be checked yet because they or the other person have no seat) and their note. The seat details above the map show the same for one person.
 
-The **Plan history** card lists every change to the seats, newest first: re-plans (by an organizer, or automatic after a wish change), moves, swaps, held seats, saved and applied variants, and the final plan. For each re-plan and each applied variant it shows who moved from which seat to which, or that nobody moved.
+The **Plan history** card (under *Plan variants and history*) lists every change to the seats, newest first: re-plans (by an organizer, or automatic after a wish change), moves, swaps, held seats, saved and applied variants, and the final plan. For each re-plan and each applied variant it shows who moved from which seat to which, or that nobody moved.
 
 ### Variants
 
-The **Seat plan variants** card keeps seat arrangements under a name, so you can try something else and switch back. Only organizers see variants; members only see the plan you apply.
+The **Seat plan variants** card (under *Plan variants and history*) keeps seat arrangements under a name, so you can try something else and switch back. Only organizers see variants; members only see the plan you apply.
 
 ![Seat plan variants on Manage → Seats](../screenshots/desktop-manage-seat-variants.png){ .shot }
 
 - **Save current plan** keeps who sits where right now. Leave the name empty for "Variant 1", "Variant 2" and so on.
-- **Plan from wishes** lets the planner (Extended) seat everyone from their seat wishes into a new variant, without touching the live seats. The **Thorough** search under *Our seats* saves its result here too. Held seats keep their person. Unlike **Re-plan everyone**, nobody's current seat counts, so you get a real alternative to a hand-made plan.
+- **Plan from wishes** lets the planner (Extended) seat everyone from their seat wishes into a new variant, without touching the live seats. The **Exact** search under *Plan the seats* saves its result here too. Held seats keep their person. Unlike **Re-plan everyone**, nobody's current seat counts, so you get a real alternative to a hand-made plan.
 - Each variant shows how many people coming have a seat in it, how well **today's** seat wishes are met (checked again every time, not when it was saved) and how many people sit elsewhere than in the compared plan. The live plan is the first row.
 - **Compare with** picks the plan the others are measured against: the live plan (the default) or any variant. The picked plan is marked *Compared here*.
 - **Preview** shows the variant on the map and in the Seat wishes card. The bar above the map compares it with the picked plan: the wish score of both, who it suits worse and how many it suits better. On the map, seats where someone else sits than in the compared plan have an **orange** outline and seats that went empty a dashed **red** one. Tap a seat to see that person's wishes and who sits there in the compared plan. With a variant picked and no preview open, the live map marks its differences to that variant the same way. Below the map, **Changes compared with …** lists everyone who sits elsewhere, gets a seat or has none, with their seat before and after and how well their seat wishes are met in each plan.
-- **Plan from wishes** lets the planner (Extended) seat everyone from their seat wishes into a new variant, without touching the live seats. The **Exact** search under *Our seats* saves its result here too. Held seats keep their person. Unlike **Re-plan everyone**, nobody's current seat counts, so you get a real alternative to a hand-made plan.
+- **Plan from wishes** lets the planner (Extended) seat everyone from their seat wishes into a new variant, without touching the live seats. The **Exact** search under *Plan the seats* saves its result here too. Held seats keep their person. Unlike **Re-plan everyone**, nobody's current seat counts, so you get a real alternative to a hand-made plan.
 - Each variant shows how many people coming have a seat in it, how well **today's** seat wishes are met (checked again every time, not when it was saved) and how many people would move compared with the live plan. The live plan is the first row, for comparison.
 - **Preview** shows the variant on the map and in the Seat wishes card. The bar above the map compares it with the live plan: the wish score of both, who it suits worse and how many it suits better. Tap a seat to see that person's wishes.
 
