@@ -98,6 +98,7 @@ import { search } from "./search";
 import { seatFlow } from "./seatFlow";
 import { seatMap } from "./seatMap";
 import { seatSetup } from "./seatSetup";
+import { seatVariants } from "./seatVariants";
 import { settingDefs } from "./settingDefs";
 import { settingGroups } from "./settingGroups";
 import { settingsUi } from "./settingsUi";
@@ -219,6 +220,7 @@ export const en = {
   seatFlow,
   seatMap,
   seatSetup,
+  seatVariants,
   settingDefs,
   settingGroups,
   settingsUi,

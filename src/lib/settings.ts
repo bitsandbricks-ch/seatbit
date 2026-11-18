@@ -524,6 +524,16 @@ export const SETTINGS: SettingDef[] = [
     validate: isInt(0, 1440),
   },
   {
+    key: "seats.thoroughMinutes",
+    group: "automation",
+    label: "Thorough seat search (minutes)",
+    kind: "number",
+    env: "SEAT_THOROUGH_MINUTES",
+    default: "2",
+    help: "How long the leads' thorough seat search may run in the background. It stops earlier once every seat wish is met.",
+    validate: isInt(1, 30),
+  },
+  {
     key: "cron.secret",
     group: "automation",
     label: "Cron secret",
