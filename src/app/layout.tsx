@@ -37,6 +37,8 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.BETTER_AUTH_URL ?? "http://localhost:3000"),
   title: "Seatbit",
   description: "Coordinate who in your group goes to which LAN party, tickets and seats",
+  // iPhones read these instead of the manifest when someone adds Seatbit to the home screen.
+  appleWebApp: { capable: true, title: "Seatbit", statusBarStyle: "default" },
 };
 
 /** Short hash of the commit this build came from, linked to it; nothing when the build had no git info. */
@@ -64,9 +66,16 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     <html lang={t.locale} data-theme={theme === "system" ? undefined : theme} className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans">
         <I18nProvider locale={t.locale}>
+        {/* First stop for keyboard users: past the top bar straight to the page. Visible only when focused. */}
+        <a
+          href="#main"
+          className="sr-only z-50 rounded-md bg-bit px-3 py-2 text-sm font-medium text-on-bit focus:not-sr-only focus:fixed focus:left-3 focus:top-3"
+        >
+          {t("common.skipToContent")}
+        </a>
         <Header />
         <MaintenanceBanner />
-        <main className="mx-auto w-full max-w-7xl flex-1 px-4 sm:px-6 pb-8 pt-5 sm:pt-8">{children}</main>
+        <main id="main" tabIndex={-1} className="outline-none mx-auto w-full max-w-7xl flex-1 px-4 sm:px-6 pb-8 pt-5 sm:pt-8">{children}</main>
         <footer className="flex flex-wrap justify-center gap-x-4 gap-y-1 border-t border-line/50 px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-5 text-xs text-muted sm:pb-6">
           <span>Seatbit</span>
           <Link href="/terms" className="hover:text-fg">
@@ -108,13 +117,13 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               {t.rich("footer.poweredBy", { site: <span className="font-semibold">bitsandbricks.ch</span> })}
             </a>
           </div>
+          {/* Desktop: pinned to the screen's bottom-left corner. Inside the footer, so screen readers find it there. */}
+          <CommitLink
+            sourceUrl={getLegal().sourceUrl}
+            className="fixed bottom-2 left-3 z-20 hidden text-[11px] text-faint sm:block"
+            title={commitTitle}
+          />
         </footer>
-        {/* Desktop: pinned to the screen's bottom-left corner. */}
-        <CommitLink
-          sourceUrl={getLegal().sourceUrl}
-          className="fixed bottom-2 left-3 z-20 hidden text-[11px] text-faint sm:block"
-          title={commitTitle}
-        />
         <Toaster />
         <DialogHost />
         </I18nProvider>

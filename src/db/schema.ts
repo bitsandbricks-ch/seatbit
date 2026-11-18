@@ -359,79 +359,84 @@ export const clanLanType = sqliteTable(
   (t) => [primaryKey({ columns: [t.clanId, t.typeId] }), index("clan_lan_type_type_idx").on(t.typeId)],
 );
 
-export const lan = sqliteTable("lan", {
-  id: id(),
-  clanId: text("clan_id").references(() => clan.id, { onDelete: "cascade" }),
-  typeId: text("type_id").references(() => lanType.id, { onDelete: "set null" }),
-  name: text("name").notNull(),
-  description: text("description").default("").notNull(),
-  location: text("location").default("").notNull(),
-  /** The event's own website (the LAN is run by someone else). */
-  websiteUrl: text("website_url").default("").notNull(),
-  /** Where members buy their ticket. */
-  ticketUrl: text("ticket_url").default("").notNull(),
-  startsAt: integer("starts_at", { mode: "timestamp_ms" }).notNull(),
-  endsAt: integer("ends_at", { mode: "timestamp_ms" }).notNull(),
-  /** Members must say whether they come by this date (e.g. before the group books its seat block). */
-  signupDeadline: integer("signup_deadline", { mode: "timestamp_ms" }),
-  /** Members must have bought their ticket by this date. */
-  paymentDueDate: integer("payment_due_date", { mode: "timestamp_ms" }),
-  price: text("price").default("").notNull(),
-  /** Spots the group has at the event (e.g. size of the reserved seat block); null = unlimited. */
-  capacity: integer("capacity"),
-  /**
-   * When a spot opens, move the first person on the waitlist to coming by themselves. Off: the leads
-   * get a notice and pick who moves up (e.g. they want to ask first who still has time).
-   */
-  waitlistAuto: integer("waitlist_auto", { mode: "boolean" }).default(true).notNull(),
-  /** Send due-date reminders this many days before a deadline. */
-  reminderDays: integer("reminder_days").default(3).notNull(),
-  seatRows: integer("seat_rows").default(6).notNull(),
-  seatCols: integer("seat_cols").default(10).notNull(),
-  /** When the leads finalized the seat plan (the last seat step, also after self pick); members only see seats after this. */
-  seatsPublishedAt: integer("seats_published_at", { mode: "timestamp_ms" }),
-  /** Whether attendees may pick their own seats. */
-  seatingOpen: integer("seating_open", { mode: "boolean" }).default(true).notNull(),
-  // Optional self-pick step: while on and the plan isn't final, members who are coming choose their own free seat.
-  // Stays on after finalizing (the event used self pick); reopening the plan turns it off.
-  seatPicking: integer("seat_picking", { mode: "boolean" }).default(false).notNull(),
-  /** Re-plan the seats whenever someone changes their seat wishes (until the plan is final; not during self pick). */
-  seatAutoPlan: integer("seat_auto_plan", { mode: "boolean" }).default(false).notNull(),
-  /** Seats apart that still count as "near" for seat wishes. */
-  seatNearRange: integer("seat_near_range").default(4).notNull(),
-  /**
-   * The event's own seat plan (e.g. lal.gg's DotLAN "Sitzplan" page), where each
-   * member books the seat the leads gave them. Per event: the plan id changes every year.
-   */
-  externalPlanUrl: text("external_plan_url").default("").notNull(),
-  /** Profile link pattern with {id} for the member's LAN ID; empty = the LAN type's. */
-  profileUrl: text("profile_url").default("").notNull(),
-  /**
-   * When a lead published the event. Null = draft: only leads and clan admins see it, and nobody is
-   * notified (no Discord post, no reminders) until it's published.
-   */
-  publishedAt: integer("published_at", { mode: "timestamp_ms" }),
-  /** A draft with this set goes live by itself at that time. */
-  publishAt: integer("publish_at", { mode: "timestamp_ms" }),
-  /**
-   * Optional first phase: members only answer coming / unsure / not coming (non-binding, no waitlist);
-   * seats, travel, games and the rest stay hidden. A lead then opens sign-up (sets it false), and the
-   * answers carry over.
-   */
-  interestCheck: integer("interest_check", { mode: "boolean" }).default(false).notNull(),
-  /** During the interest check: sign-up opens by itself at this time. */
-  signupOpensAt: integer("signup_opens_at", { mode: "timestamp_ms" }),
-  /**
-   * The date isn't fixed yet (only allowed during the interest check). startsAt/endsAt then hold a
-   * placeholder for sorting; show `dateHint` (e.g. "spring 2027") instead.
-   */
-  dateTbd: integer("date_tbd", { mode: "boolean" }).default(false).notNull(),
-  dateHint: text("date_hint").default("").notNull(),
-  /** Cancelled events stay visible (greyed out) but take no answers and send no reminders. */
-  cancelledAt: integer("cancelled_at", { mode: "timestamp_ms" }),
-  cancelReason: text("cancel_reason").default("").notNull(),
-  createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
-});
+export const lan = sqliteTable(
+  "lan",
+  {
+    id: id(),
+    clanId: text("clan_id").references(() => clan.id, { onDelete: "cascade" }),
+    typeId: text("type_id").references(() => lanType.id, { onDelete: "set null" }),
+    name: text("name").notNull(),
+    description: text("description").default("").notNull(),
+    location: text("location").default("").notNull(),
+    /** The event's own website (the LAN is run by someone else). */
+    websiteUrl: text("website_url").default("").notNull(),
+    /** Where members buy their ticket. */
+    ticketUrl: text("ticket_url").default("").notNull(),
+    startsAt: integer("starts_at", { mode: "timestamp_ms" }).notNull(),
+    endsAt: integer("ends_at", { mode: "timestamp_ms" }).notNull(),
+    /** Members must say whether they come by this date (e.g. before the group books its seat block). */
+    signupDeadline: integer("signup_deadline", { mode: "timestamp_ms" }),
+    /** Members must have bought their ticket by this date. */
+    paymentDueDate: integer("payment_due_date", { mode: "timestamp_ms" }),
+    price: text("price").default("").notNull(),
+    /** Spots the group has at the event (e.g. size of the reserved seat block); null = unlimited. */
+    capacity: integer("capacity"),
+    /**
+     * When a spot opens, move the first person on the waitlist to coming by themselves. Off: the leads
+     * get a notice and pick who moves up (e.g. they want to ask first who still has time).
+     */
+    waitlistAuto: integer("waitlist_auto", { mode: "boolean" }).default(true).notNull(),
+    /** Send due-date reminders this many days before a deadline. */
+    reminderDays: integer("reminder_days").default(3).notNull(),
+    seatRows: integer("seat_rows").default(6).notNull(),
+    seatCols: integer("seat_cols").default(10).notNull(),
+    /** When the leads finalized the seat plan (the last seat step, also after self pick); members only see seats after this. */
+    seatsPublishedAt: integer("seats_published_at", { mode: "timestamp_ms" }),
+    /** Whether attendees may pick their own seats. */
+    seatingOpen: integer("seating_open", { mode: "boolean" }).default(true).notNull(),
+    // Optional self-pick step: while on and the plan isn't final, members who are coming choose their own free seat.
+    // Stays on after finalizing (the event used self pick); reopening the plan turns it off.
+    seatPicking: integer("seat_picking", { mode: "boolean" }).default(false).notNull(),
+    /** Re-plan the seats whenever someone changes their seat wishes (until the plan is final; not during self pick). */
+    seatAutoPlan: integer("seat_auto_plan", { mode: "boolean" }).default(false).notNull(),
+    /** Seats apart that still count as "near" for seat wishes. */
+    seatNearRange: integer("seat_near_range").default(4).notNull(),
+    /**
+     * The event's own seat plan (e.g. lal.gg's DotLAN "Sitzplan" page), where each
+     * member books the seat the leads gave them. Per event: the plan id changes every year.
+     */
+    externalPlanUrl: text("external_plan_url").default("").notNull(),
+    /** Profile link pattern with {id} for the member's LAN ID; empty = the LAN type's. */
+    profileUrl: text("profile_url").default("").notNull(),
+    /**
+     * When a lead published the event. Null = draft: only leads and clan admins see it, and nobody is
+     * notified (no Discord post, no reminders) until it's published.
+     */
+    publishedAt: integer("published_at", { mode: "timestamp_ms" }),
+    /** A draft with this set goes live by itself at that time. */
+    publishAt: integer("publish_at", { mode: "timestamp_ms" }),
+    /**
+     * Optional first phase: members only answer coming / unsure / not coming (non-binding, no waitlist);
+     * seats, travel, games and the rest stay hidden. A lead then opens sign-up (sets it false), and the
+     * answers carry over.
+     */
+    interestCheck: integer("interest_check", { mode: "boolean" }).default(false).notNull(),
+    /** During the interest check: sign-up opens by itself at this time. */
+    signupOpensAt: integer("signup_opens_at", { mode: "timestamp_ms" }),
+    /**
+     * The date isn't fixed yet (only allowed during the interest check). startsAt/endsAt then hold a
+     * placeholder for sorting; show `dateHint` (e.g. "spring 2027") instead.
+     */
+    dateTbd: integer("date_tbd", { mode: "boolean" }).default(false).notNull(),
+    dateHint: text("date_hint").default("").notNull(),
+    /** Cancelled events stay visible (greyed out) but take no answers and send no reminders. */
+    cancelledAt: integer("cancelled_at", { mode: "timestamp_ms" }),
+    cancelReason: text("cancel_reason").default("").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  // Clan pages, home and reminders list a clan's upcoming (or past) events by end date.
+  (t) => [index("lan_clan_ends_idx").on(t.clanId, t.endsAt)],
+);
 
 export const ATTENDANCE_STATUSES = ["going", "maybe", "declined", "waitlist"] as const;
 export type AttendanceStatus = (typeof ATTENDANCE_STATUSES)[number];
@@ -470,7 +475,7 @@ export const attendance = sqliteTable(
       .$onUpdate(() => new Date())
       .notNull(),
   },
-  (t) => [uniqueIndex("attendance_lan_user_uq").on(t.lanId, t.userId)],
+  (t) => [uniqueIndex("attendance_lan_user_uq").on(t.lanId, t.userId), index("attendance_user_idx").on(t.userId)],
 );
 
 /** Organisers of a LAN: may edit its details, seats and attendance. */
@@ -485,7 +490,7 @@ export const lanOrga = sqliteTable(
       .references(() => user.id, { onDelete: "cascade" }),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
   },
-  (t) => [uniqueIndex("lan_orga_uq").on(t.lanId, t.userId)],
+  (t) => [uniqueIndex("lan_orga_uq").on(t.lanId, t.userId), index("lan_orga_user_idx").on(t.userId)],
 );
 
 /**
@@ -546,6 +551,8 @@ export const seat = sqliteTable(
   (t) => [
     uniqueIndex("seat_lan_pos_uq").on(t.lanId, t.row, t.col),
     uniqueIndex("seat_lan_user_uq").on(t.lanId, t.userId),
+    // Someone's seats across events (profiles, account export and deletion).
+    index("seat_user_idx").on(t.userId),
   ],
 );
 
@@ -935,7 +942,7 @@ export const auditLog = sqliteTable(
     action: text("action").notNull(),
     data: text("data", { mode: "json" }).$type<Record<string, unknown>>().default({}).notNull(),
   },
-  (t) => [index("audit_log_clan_idx").on(t.clanId, t.at), index("audit_log_lan_idx").on(t.lanId), index("audit_log_at_idx").on(t.at)],
+  (t) => [index("audit_log_clan_idx").on(t.clanId, t.at), index("audit_log_lan_idx").on(t.lanId), index("audit_log_at_idx").on(t.at), index("audit_log_actor_idx").on(t.actorId), index("audit_log_target_idx").on(t.targetUserId)],
 );
 
 export type AuditEntry = typeof auditLog.$inferSelect;

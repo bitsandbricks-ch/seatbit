@@ -355,8 +355,15 @@
     {
       "idx": 50,
       "version": "6",
-      "when": 1794983867856,
-      "tag": "20261118063747_seat_variant_proven",
+      "when": 1794983116619,
+      "tag": "20261118062516_lookup_indexes",
+      "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "6",
+      "when": 1794985983010,
+      "tag": "20261118071303_seat_variant_proven",
       "breakpoints": true
     }
   ]

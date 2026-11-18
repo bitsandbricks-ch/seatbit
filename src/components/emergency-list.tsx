@@ -3,7 +3,7 @@ import Link from "next/link";
 import type { AvatarData } from "@/lib/avatars";
 import type { T } from "@/i18n/translate";
 import { Avatar } from "./avatar";
-import { Card, Notice, Pill } from "./ui";
+import { Card, Notice, Pill, inlineLink } from "./ui";
 
 export type EmergencyRow = {
   userId: string;
@@ -69,7 +69,7 @@ export function EmergencyList({
                         {r.contactName}
                         {r.contactName && r.contactPhone && " · "}
                         {r.contactPhone && (
-                          <a href={telHref(r.contactPhone)} className="whitespace-nowrap text-bit hover:underline">
+                          <a href={telHref(r.contactPhone)} className={`whitespace-nowrap ${inlineLink}`}>
                             {r.contactPhone}
                           </a>
                         )}

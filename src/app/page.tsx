@@ -191,7 +191,7 @@ function LanCard({
               <ClanAvatar clan={clan} size={16} /> {clan.name}
             </p>
           )}
-          <h3 className="text-lg font-semibold tracking-tight">{l.name}</h3>
+          <h2 className="text-lg font-semibold tracking-tight">{l.name}</h2>
           <p className="text-sm text-muted">
             {lanWeekday(l, t.locale)}
             {!l.dateTbd &&

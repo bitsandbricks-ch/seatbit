@@ -2,63 +2,11 @@ import type { Page } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { schema } from "../src/db";
 import { db, expect, signInById, test } from "./fixtures";
+import { ADMIN_PAGES, CLAN, LAN, LEAD_PAGES, MEMBER_PAGES, NEWCOMER_PAGES } from "./pages";
 
 // Every page loads for the people who may see it: no error status, no crash in the browser, and
 // every visible button, link and field has a name for screen readers.
 // A cheap net under all the feature tests, run on the demo data.
-const LAN = "demo-lan-lakeside";
-const CLAN = "/clans/pixel-pirates";
-
-const MEMBER_PAGES = [
-  "/",
-  "/clans",
-  CLAN,
-  `${CLAN}/stats`,
-  `${CLAN}/members/demo-ben`,
-  `/lans/${LAN}`,
-  // Tabs switch on the client, so each one is loaded once to check what it shows.
-  ...["seats", "attendees", "trip", "travel", "gear", "games", "costs"].map((t) => `/lans/${LAN}?tab=${t}`),
-  "/lans/demo-lan-mountain",
-  "/lans/demo-lan-retro",
-  "/profile",
-  "/changelog",
-  "/terms",
-  "/privacy",
-];
-
-// Someone who just signed up and isn't in any clan yet: the empty states.
-const NEWCOMER_PAGES = ["/", "/clans", "/profile", ...["notifications", "data"].map((t) => `/profile?tab=${t}`), "/changelog", "/donate"];
-
-const LEAD_PAGES = [
-  `/lans/${LAN}/manage`,
-  ...["seats", "attendees", "missing", "emergency", "chat", "settings"].map((t) => `/lans/${LAN}/manage?tab=${t}`),
-  "/lans/demo-lan-lakeside-next/manage",
-  `${CLAN}/settings`,
-  `${CLAN}/lans/new`,
-  `${CLAN}/lans/new?type=demo-type-lakeside`,
-  `${CLAN}/types/demo-type-lakeside`,
-  `${CLAN}/payments/new`,
-  `${CLAN}/payments/demo-charge-dues`,
-];
-
-const ADMIN_PAGES = [
-  "/admin",
-  "/admin/reports",
-  "/admin/stats",
-  "/admin/health",
-  "/admin/log",
-  "/admin/backups",
-  "/admin/types",
-  "/admin/types/new",
-  "/admin/types/demo-type-lakeside",
-  `/admin/lans/${LAN}`,
-  "/admin/users",
-  "/admin/users/demo-ben",
-  ...["mail", "discord", "general", "automation", "maintenance", "legal", "billing", "connect", "templates", "server"].map(
-    (t) => `/admin/settings?tab=${t}`,
-  ),
-];
-
 /**
  * Visible buttons, links, fields and images that a screen reader can't name: no text, no aria-label, no
  * <label>. A placeholder alone doesn't count, it disappears once someone types.
@@ -166,6 +114,14 @@ test.describe("smoke", () => {
       expect(res.status(), from).toBe(308);
       expect(res.headers().location, from).toBe(to);
     }
+  });
+
+  test("the web app manifest lets phones add Seatbit to the home screen", async ({ request }) => {
+    const res = await request.get("/manifest.webmanifest");
+    expect(res.status()).toBe(200);
+    const manifest = await res.json();
+    expect(manifest).toMatchObject({ name: "Seatbit", start_url: "/", display: "standalone" });
+    for (const icon of manifest.icons) expect((await request.get(icon.src)).status(), icon.src).toBe(200);
   });
 
   test("the platform owner can open every admin page", async ({ as }) => {

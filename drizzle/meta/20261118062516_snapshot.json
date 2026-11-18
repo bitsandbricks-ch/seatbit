@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "254b02cb-0cc5-41a8-be5b-893ad26f5872",
+  "id": "5d43e7c3-8b22-48d4-b277-c0006d171676",
   "prevId": "43f8a2ef-8078-4c79-ad28-f2067a08b65a",
   "tables": {
     "account": {
@@ -307,6 +307,13 @@
             "user_id"
           ],
           "isUnique": true
+        },
+        "attendance_user_idx": {
+          "name": "attendance_user_idx",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
         }
       },
       "foreignKeys": {
@@ -423,6 +430,20 @@
           "name": "audit_log_at_idx",
           "columns": [
             "at"
+          ],
+          "isUnique": false
+        },
+        "audit_log_actor_idx": {
+          "name": "audit_log_actor_idx",
+          "columns": [
+            "actor_id"
+          ],
+          "isUnique": false
+        },
+        "audit_log_target_idx": {
+          "name": "audit_log_target_idx",
+          "columns": [
+            "target_user_id"
           ],
           "isUnique": false
         }
@@ -2876,7 +2897,16 @@
           "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "lan_clan_ends_idx": {
+          "name": "lan_clan_ends_idx",
+          "columns": [
+            "clan_id",
+            "ends_at"
+          ],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {
         "lan_clan_id_clan_id_fk": {
           "name": "lan_clan_id_clan_id_fk",
@@ -3125,6 +3155,13 @@
             "user_id"
           ],
           "isUnique": true
+        },
+        "lan_orga_user_idx": {
+          "name": "lan_orga_user_idx",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
         }
       },
       "foreignKeys": {
@@ -4178,6 +4215,13 @@
             "user_id"
           ],
           "isUnique": true
+        },
+        "seat_user_idx": {
+          "name": "seat_user_idx",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
         }
       },
       "foreignKeys": {
@@ -4364,13 +4408,6 @@
         "created_by": {
           "name": "created_by",
           "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "proven": {
-          "name": "proven",
-          "type": "integer",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
