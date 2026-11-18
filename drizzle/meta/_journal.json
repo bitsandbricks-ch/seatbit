@@ -351,6 +351,13 @@
       "when": 1794943717116,
       "tag": "20261117192837_seat_variants",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "6",
+      "when": 1794983116619,
+      "tag": "20261118062516_lookup_indexes",
+      "breakpoints": true
     }
   ]
 }
