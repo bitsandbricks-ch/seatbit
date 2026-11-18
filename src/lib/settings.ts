@@ -330,7 +330,7 @@ export const SETTINGS: SettingDef[] = [
     kind: "number",
     env: "TRIP_OPENS_DAYS",
     default: "30",
-    help: "Members see travel, packing list, games and costs from this many days before the start, or earlier once someone posted something there. Organizers always see it. 0 shows it all the time.",
+    help: "Members see travel and the packing list from this many days before the start, or earlier once someone posted something there. Organizers always see it. 0 shows it all the time.",
     validate: isInt(0, 365),
   },
 

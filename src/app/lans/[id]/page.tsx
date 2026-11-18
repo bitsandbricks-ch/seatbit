@@ -66,7 +66,7 @@ import { getNumberSetting } from "@/lib/settings";
 const { attendance, seat, nickname } = schema;
 
 const TABS = ["overview", "seats", "attendees", "trip", "travel", "gear", "games", "food", "costs"] as const;
-// "trip" was the tab that held travel, packing, games and costs; old links to it open travel.
+// "trip" holds travel and packing; old links to it open travel. Games and costs have their own tabs.
 
 /** Link previews (WhatsApp, Discord, ...): name, date and place of published events; drafts stay generic. */
 export async function generateMetadata({ params }: PageProps<"/lans/[id]">): Promise<Metadata> {
@@ -483,12 +483,12 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
     status: openFood ? t("eventGuide.rows.foodOpen", { count: openFood }) : t("eventGuide.rows.foodNone"),
     dot: foodLive && openFood > 0,
   };
-  // Trip (travel, packing, games, costs) opens for members some days before the event, or as soon as
-  // something is in it, so the page starts simple. Leads always see it, marked as hidden.
+  // Trip (travel and packing) opens for members some days before the event, or as soon as
+  // something is in it, so the page starts simple. Organizers always see it, marked as hidden.
+  // Games and costs have their own tabs and show all the time.
   const tripDays = getNumberSetting("event.tripOpensDays") ?? 30;
   const tripOpensAt = l.dateTbd ? null : new Date(l.startsAt.getTime() - tripDays * 86400_000);
-  const tripHasContent =
-    posts.length > 0 || games.length > 0 || costs.expenses.length > 0 || costs.settlements.length > 0 || packed.length > 0 || ownItems.length > 0;
+  const tripHasContent = posts.length > 0 || packed.length > 0 || ownItems.length > 0;
   const tripOpen = tripDays <= 0 || tripHasContent || (!!tripOpensAt && now >= tripOpensAt);
   const showTrip = tripOpen || isAdmin;
   const tripOpensText = tripOpensAt ? t("eventGuide.tripOpens", { date: fmtWeekday(tripOpensAt, t.locale) }) : t("eventGuide.tripLater");
@@ -565,12 +565,12 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
               : t("eventGuide.rows.costsNone"),
     },
     ...(showFood && !foodLive ? [onSite] : []),
-  ].flatMap((r) => (["travel", "gear", "games", "costs"].includes(r.id) ? (showTrip ? [{ ...r, hidden: tripHidden }] : []) : [r]));
+  ].flatMap((r) => (["travel", "gear"].includes(r.id) ? (showTrip ? [{ ...r, hidden: tripHidden }] : []) : [r]));
   if (!showTrip) sections.push({ id: "trip", label: t("eventGuide.trip"), status: tripOpensText });
 
-  // The tab bar: short, so it fits a phone. Travel, packing, games and costs share the Trip tab behind a switch.
+  // The tab bar: short, so it fits a phone. Travel and packing share the Trip tab behind a switch.
   const row = (rid: string) => sections.find((x) => x.id === rid);
-  const tripParts = ["travel", "gear", "games", "costs"].map((pid) => ({
+  const tripParts = ["travel", "gear"].map((pid) => ({
     id: pid,
     label: t(`eventGuide.sections.${pid as "travel"}`),
     dot: !!row(pid)?.dot,
@@ -587,6 +587,8 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
     ...(foodLive ? [onSiteTab] : []),
     { id: "seats", label: t("event.tabs.seats"), badge: row("seats")?.dot ? String(row("seats")?.status) : undefined, dot: true },
     { id: "attendees", label: t("event.tabs.attendees"), count: going.length },
+    { id: "games", label: t("event.tabs.games"), badge: row("games")?.dot ? String(row("games")?.status) : undefined, dot: true },
+    { id: "costs", label: t("event.tabs.costs"), badge: row("costs")?.dot ? String(row("costs")?.status) : undefined, dot: true },
     ...(showTrip
       ? [
           {
@@ -783,7 +785,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
 
       {yours}
 
-      <ClientTabs tabs={tabs} initial={!showTrip && ["travel", "gear", "games", "costs"].includes(tab) ? "overview" : tab} base={`/lans/${l.id}`} label={t("eventGuide.sectionsLabel")} partsLabel={t("eventGuide.tripLabel")}>
+      <ClientTabs tabs={tabs} initial={!showTrip && ["travel", "gear"].includes(tab) ? "overview" : tab} base={`/lans/${l.id}`} label={t("eventGuide.sectionsLabel")} partsLabel={t("eventGuide.tripLabel")}>
       {showTrip && (
       <TabPanel id="travel">
         <div>

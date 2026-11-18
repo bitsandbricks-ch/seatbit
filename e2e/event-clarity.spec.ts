@@ -40,7 +40,7 @@ test.describe("event page clarity", () => {
     await expect(checklist.getByRole("link", { name: /Ticket shop/ })).toHaveCount(0);
   });
 
-  test("the Trip tab opens a month before the event, earlier once something is in it", async ({ as }) => {
+  test("the Trip tab (travel, packing) opens a month before the event, earlier once something is in it", async ({ as }) => {
     const id = createEvent({ attendees: [{ who: "anna" }] });
     db().update(schema.lan).set({ startsAt: new Date(Date.now() + 60 * DAY), endsAt: new Date(Date.now() + 62 * DAY) }).where(eq(schema.lan.id, id)).run();
 
@@ -48,6 +48,9 @@ test.describe("event page clarity", () => {
     await anna.goto(`/lans/${id}`);
     await expect(tabs(anna).getByRole("link", { name: /^Trip/ })).toHaveCount(0);
     await expect(glance(anna).getByText(/^Opens /)).toBeVisible();
+    // Games and costs are their own tabs and don't wait.
+    await expect(tabs(anna).getByRole("link", { name: /^Games/ })).toBeVisible();
+    await expect(tabs(anna).getByRole("link", { name: /^Costs/ })).toBeVisible();
 
     // Leads see it, marked as hidden from the others.
     const alex = await as("alex");

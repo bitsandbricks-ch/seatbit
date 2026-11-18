@@ -33,7 +33,7 @@ export const howItWorks: Messages["howItWorks"] = {
   },
   lan: {
     title: "An der LAN",
-    body: "Tipp auf «Ich bin da», wenn du ankommst. Fahrten, Schlafplätze, Packliste, Games und geteilte Kosten findest du im Tab «Reise».",
+    body: "Tipp auf «Ich bin da», wenn du ankommst. Fahrten, Schlafplätze und die Packliste findest du im Tab «Reise», Games und geteilte Kosten in eigenen Tabs.",
   },
   whoTitle: "Wer sind die Organisatoren?",
   who: "Leute aus deinem Clan, die diese Reise planen: Sie kümmern sich um die Anmeldung, die Plätze und die News. Die LAN selbst führt das Team des Events durch.",

@@ -44,13 +44,13 @@ export const help: Messages["help"] = {
     },
     trip: {
       title: "Reise",
-      status: "Fahrten, Schlafplätze, Packliste, Games, Kosten",
+      status: "Fahrten, Schlafplätze, Packliste; Games und Kosten",
       items: {
-        a: { q: "Wann erscheint der Tab «Reise»?", a: "Einige Wochen vor dem Event (30 Tage, ausser deine Instanz hat es geändert), oder früher, sobald jemand dort etwas eingetragen hat." },
+        a: { q: "Wann erscheint der Tab «Reise»?", a: "Einige Wochen vor dem Event (30 Tage, ausser deine Instanz hat es geändert), oder früher, sobald jemand eine Fahrt eingetragen oder etwas gepackt hat. Er enthält Anreise und Packliste; Games und Kosten haben eigene Tabs und sind immer da." },
         b: { q: "Fahrten und Schlafplätze", a: "Biete freie Plätze in deinem Auto oder einen Schlafplatz an, oder trag ein, von wo du eine Fahrt brauchst. Die Einträge sind nach Ort gruppiert." },
         c: { q: "Packliste", a: "Deine eigene Liste: Hak ab, was gepackt ist, und füg eigene Sachen hinzu. Niemand sonst sieht sie." },
-        d: { q: "Games", a: "Stimm ab, was du spielen möchtest, und hak ab, sobald es installiert ist: Das Internet an der LAN ist oft langsam." },
-        e: { q: "Geteilte Kosten", a: "Trag ein, was du für die Gruppe bezahlt hast (Benzin, ein Zimmer, Snacks), teil es auf und sieh, wer wem was schuldet. Rechnet ab, sobald ihr euch das Geld zurückgegeben habt." },
+        d: { q: "Games", a: "Im Tab «Games»: Stimm ab, was du spielen möchtest, und hak ab, sobald es installiert ist: Das Internet an der LAN ist oft langsam." },
+        e: { q: "Geteilte Kosten", a: "Im Tab «Kosten»: Trag ein, was du für die Gruppe bezahlt hast (Benzin, ein Zimmer, Snacks), teil es auf und sieh, wer wem was schuldet. Rechnet ab, sobald ihr euch das Geld zurückgegeben habt." },
       },
     },
     lan: {

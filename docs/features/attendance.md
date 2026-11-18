@@ -19,9 +19,9 @@ Members answer whether they come, work through their checklist and report their 
 </figure>
 </div>
 
-The event page has a few tabs: **Overview**, **Seats**, **Attendees** and **Trip**, plus **Orders** while the event runs. Switching tabs is instant, and the address follows (`?tab=seats`), so reloading, bookmarks and the back button land on the same tab. A yellow dot on a tab means something waits for you there.
+The event page has a few tabs: **Overview**, **Seats**, **Attendees**, **Games**, **Costs** and **Trip**, plus **Orders** while the event runs. Switching tabs is instant, and the address follows (`?tab=seats`), so reloading, bookmarks and the back button land on the same tab. A yellow dot on a tab means something waits for you there.
 
-**Trip** groups everything around getting there: **Travel**, **Packing list**, **Games** and **Costs**, behind a small switch at the top of the tab. So the page starts simple, members only get it **30 days before the start** (setting *Trip tab opens*, see [configuration](../installation/configuration.md)), or earlier as soon as someone posted a ride, a game or a cost, or packed something. Until then the *At a glance* card says when it opens.
+**Trip** groups getting there: **Travel** and the **Packing list**, behind a small switch at the top of the tab. So the page starts simple, members only get it **30 days before the start** (setting *Trip tab opens*, see [configuration](../installation/configuration.md)), or earlier as soon as someone posted a ride or packed something. Until then the *At a glance* card says when it opens. **Games** and **Costs** are tabs of their own and always there.
 
 Organizers always see *Trip* and *Orders*. While members don't see them yet, they show muted with a crossed-out eye, so it's clear they are hidden from the others.
 

@@ -2,7 +2,7 @@
 
 Decide what to play and make sure everyone has it installed before the LAN.
 
-**Who:** members · **Where:** event → *Trip* → *Games*
+**Who:** members · **Where:** event → *Games* tab
 
 - **Suggest** a game: start typing its name and pick it from the list. The list shows games from the [game catalog](#game-catalog) first, then matching Steam games. A picked game brings its cover, install size, store link, player count and *Free* / *LAN mode* tags along. A name nobody has used yet goes into the catalog with the size and link you type. Each game shows who added it, with their avatar and the clan's name display.
 - **Store and install:** each game links to its store page (*Steam*, *Epic Games*, *GOG*, *Battle.net*, ... or *Website*). Steam games also get an **Install** button that opens Steam's install dialog on your computer, so you can start the download at home.
