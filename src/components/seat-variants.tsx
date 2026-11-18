@@ -33,6 +33,8 @@ export type VariantRow = VariantStats & {
   differs: number;
   /** "Changed 17.11.2026, 18:00". */
   updated: string;
+  /** From the exact search: proven best (for the wishes at that time), or best found in time. Null otherwise. */
+  proven: boolean | null;
 };
 
 const pct = (x: number | null) => (x === null ? "–" : `${Math.round(x * 100)}%`);
@@ -242,6 +244,11 @@ function Row({
           <span className="min-w-0 text-sm font-medium text-fg">
             <span className="break-words">{r.name}</span>
             <span className="ml-2 text-xs font-normal text-faint">{r.updated}</span>
+            {r.proven !== null && (
+              <span className="ml-2" title={t(r.proven ? "seatVariants.provenHint" : "seatVariants.notProvenHint")}>
+                <Pill tone={r.proven ? "emerald" : "amber"}>{t(r.proven ? "seatVariants.proven" : "seatVariants.notProven")}</Pill>
+              </span>
+            )}
           </span>
         )}
         <Stats s={r} going={going} base={baseName} isBase={r.id === baseId} />

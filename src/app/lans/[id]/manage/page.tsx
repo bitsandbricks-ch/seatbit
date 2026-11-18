@@ -508,6 +508,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
                   differs: x.differs,
                   vsBase: x.v.id === base.id ? undefined : base.id ? movesBetween(base.seats, x.seats).length : x.differs,
                   updated: fmtDate(x.v.updatedAt, t.locale),
+                  proven: x.v.proven,
                 }))}
                 previewId={preview?.v.id ?? null}
                 final={!!l.seatsPublishedAt}

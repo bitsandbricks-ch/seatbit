@@ -526,11 +526,11 @@ export const SETTINGS: SettingDef[] = [
   {
     key: "seats.thoroughMinutes",
     group: "automation",
-    label: "Thorough seat search (minutes)",
+    label: "Exact seat search (minutes)",
     kind: "number",
     env: "SEAT_THOROUGH_MINUTES",
-    default: "2",
-    help: "How long the leads' thorough seat search may run in the background. It stops earlier once every seat wish is met.",
+    default: "5",
+    help: "How long the leads' exact seat search may run in the background. It stops as soon as it has proven the best plan; if time runs out first, the leads get the best plan it found.",
     validate: isInt(1, 30),
   },
   {

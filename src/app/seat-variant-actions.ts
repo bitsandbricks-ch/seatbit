@@ -68,7 +68,7 @@ export async function updateSeatVariant(variantId: string) {
   const v = await variantOf(variantId);
   const me = await requireLanManager(v.lanId);
   const seats = liveArrangement(v.lanId);
-  db.update(seatVariant).set({ seats, updatedAt: new Date() }).where(eq(seatVariant.id, v.id)).run();
+  db.update(seatVariant).set({ seats, proven: null, updatedAt: new Date() }).where(eq(seatVariant.id, v.id)).run();
   auditLan(mustGetLan(v.lanId), me.id, "seat.variantUpdate", { data: { name: v.name, count: Object.keys(seats).length } });
   managePath(v.lanId);
 }

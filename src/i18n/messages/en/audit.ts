@@ -63,7 +63,7 @@ export const audit = {
   pickOpen: "opened seat self pick{at}",
   pickClose: "closed seat self pick{at}",
   variantSave: "saved the seat plan as variant “{name}”{at}",
-  variantThorough: "saved the thorough seat search result as variant “{name}”{at}",
+  variantThorough: "saved the exact seat search result as variant “{name}”{at}",
   variantPlan: "planned variant “{name}” from the seat wishes{at}",
   variantUpdate: "saved the current seat plan into variant “{name}”{at}",
   variantApply: "applied seat plan variant “{name}”{at}",

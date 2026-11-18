@@ -1,0 +1,15 @@
+date: 2026-11-18
+type: improved
+en:
+  title: "Exact seat search"
+  text: >-
+    The thorough seat search is now exact: it works out the best possible seat plan in the background and
+    saves it as a variant marked "Proven best", so you know no plan can meet the seat wishes better. When an
+    event is too big to prove in time, you get the best plan it found, marked "Best found".
+de:
+  title: "Exakte Platzsuche"
+  text: >-
+    Die gründliche Platzsuche ist jetzt exakt: Sie rechnet im Hintergrund den bestmöglichen Sitzplan aus und
+    speichert ihn als Variante mit «Bester Plan, bewiesen». So wisst ihr, dass kein Plan die Platzwünsche besser
+    erfüllen kann. Ist ein Event zu gross, um es rechtzeitig zu beweisen, bekommt ihr den besten gefundenen Plan,
+    markiert mit «Bester gefunden».

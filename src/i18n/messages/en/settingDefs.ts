@@ -38,7 +38,7 @@ export const settingDefs = {
   connect_webhookSecret: { label: "Connect webhook signing secret", help: "From a second webhook endpoint in Stripe that listens to events on connected accounts, for the URL shown above.", invalid: "Starts with whsec_" },
   connect_feePercent: { label: "Platform fee (%)", help: "Optional share of each clan payment that goes to you, on top of Stripe's own fees (which the clan pays). 0 = nothing.", invalid: "A number from 0 to 20" },
   reminders_intervalMinutes: { label: "Reminder check interval (minutes)", help: "How often the server checks for due reminders. 0 turns the built-in check off (use the cron URL instead).", invalid: "Must be a whole number from 0 to 1440" },
-  seats_thoroughMinutes: { label: "Thorough seat search (minutes)", help: "How long the leads' thorough seat search may run in the background. It stops earlier once every seat wish is met.", invalid: "Must be a whole number from 1 to 30" },
+  seats_thoroughMinutes: { label: "Exact seat search (minutes)", help: "How long the leads' exact seat search may run in the background. It stops as soon as it has proven the best plan; if time runs out first, the leads get the best plan it found.", invalid: "Must be a whole number from 1 to 30" },
   cron_secret: { label: "Cron secret", help: "Bearer token for GET /api/cron/reminders. Leave unset to disable the endpoint." },
   metrics_token: { label: "Metrics token", help: "Bearer token for GET /api/metrics (Prometheus). Leave unset to disable the endpoint." },
   backup_intervalHours: { label: "Backup every (hours)", help: "How often the server backs up the database. 0 turns scheduled backups off (for example when a cron job runs scripts/backup.mjs).", invalid: "Must be a whole number from 0 to 168" },

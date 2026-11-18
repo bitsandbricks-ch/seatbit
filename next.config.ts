@@ -17,7 +17,9 @@ const nextConfig: NextConfig = {
   // Self-contained server build for the container image (see Dockerfile).
   output: "standalone",
   env: { SEATBIT_COMMIT: commitSha() },
-  serverExternalPackages: ["better-sqlite3"],
+  serverExternalPackages: ["better-sqlite3", "highs"],
+  // The exact seat search loads HiGHS in a worker thread by path, which the tracing can't see.
+  outputFileTracingIncludes: { "/**": ["./node_modules/highs/package.json", "./node_modules/highs/build/highs.js", "./node_modules/highs/build/highs.wasm"] },
   poweredByHeader: false,
   // Old links. Here and not as a page calling redirect(): the root loading.tsx streams pages, so a
   // page redirect would answer 200 and jump on the client, showing the wrong page for a moment.

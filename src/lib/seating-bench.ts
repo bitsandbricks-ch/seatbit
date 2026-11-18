@@ -103,3 +103,24 @@ export function missedWishes(
     c.items.filter((i) => i.ok === false).map((i) => `${c.userId}: ${i.text}`),
   );
 }
+
+/**
+ * Adds `count` random wishes on top (right next to, not right next to, edge or a seat), so not
+ * every wish can be met any more: the case the exact search is for.
+ */
+export function addClashes(seed: number, seats: PlanSeat[], people: PlanPerson[], count: number) {
+  const rand = random(seed + 999);
+  const pick = <T>(a: T[]) => a[Math.floor(rand() * a.length)];
+  for (let i = 0; i < count; i++) {
+    const p = pick(people);
+    const o = pick(people);
+    if (p === o) continue;
+    const extra: SeatRule[] = [
+      { kind: "next", userId: o.userId },
+      { kind: "avoid", userId: o.userId },
+      { kind: "edge" },
+      { kind: "seat", seat: pick(seats).label },
+    ];
+    p.rules = normalizeRules([pick(extra), ...p.rules], p.userId);
+  }
+}

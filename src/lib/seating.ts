@@ -25,16 +25,21 @@ export type PlanPerson = {
  * `stay`: where people sat before a re-plan (userId -> seatId); they keep that seat unless moving
  * them meets a wish, so changing one wish doesn't shuffle everyone else around.
  */
-export type PlanOptions = { nearRange?: number; stay?: Map<string, string>; effort?: PlanEffort; until?: number };
+export type PlanOptions = {
+  nearRange?: number;
+  stay?: Map<string, string>;
+  effort?: PlanEffort;
+  until?: number;
+};
 /**
  * How hard the planner looks. "quick" runs the search once (re-plans after every wish change);
- * "extended" runs it several times from different random starts and keeps the best plan; "thorough"
- * keeps going until every wish is met or `until` (a time in ms) has passed, so it only runs in the
- * background (see planSeatsAsync).
+ * "extended" runs it several times from different random starts and keeps the best plan. "thorough"
+ * searches like extended here; the server then hands that plan to the exact solver (seat-milp.ts,
+ * see planArrangement), which proves it's the best or finds a better one until `until` (ms).
  */
 export type PlanEffort = "quick" | "extended" | "thorough";
 export const PLAN_EFFORTS: PlanEffort[] = ["quick", "extended", "thorough"];
-const RUNS: Record<PlanEffort, number> = { quick: 1, extended: 8, thorough: 10_000 };
+const RUNS: Record<PlanEffort, number> = { quick: 1, extended: 8, thorough: 8 };
 
 /** What the scoring needs besides who sits where. */
 type Ctx = { edges: Set<string>; range: number; stay: Map<string, string> | undefined };

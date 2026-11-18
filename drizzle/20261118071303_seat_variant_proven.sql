@@ -1,0 +1,1 @@
+ALTER TABLE `seat_variant` ADD `proven` integer;
