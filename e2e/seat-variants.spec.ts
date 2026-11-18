@@ -137,6 +137,12 @@ test.describe("seat plan variants", () => {
     // A1 now has Ben; in Plan A Anna sat there.
     await alex.getByRole("button", { name: /^Seat A1,/ }).click();
     await expect(alex.getByText(/^In Plan A: .*Anna/)).toBeVisible();
+    // The change list under the map spells it out.
+    const changes = alex.locator("#seat-compare");
+    await expect(changes.getByRole("heading", { name: "Changes compared with Plan A" })).toBeVisible();
+    await expect(changes.getByText("2 move · 1 has no seat")).toBeVisible();
+    await expect(changes.locator("li", { hasText: "Chiara" }).getByText("no seat")).toBeVisible();
+    await expect(changes.locator("li", { hasText: "Ben" })).toContainText("A2 → A1");
     // Nothing changed for real.
     expect([seatOf(id, "anna"), seatOf(id, "ben"), seatOf(id, "chiara")]).toEqual(["A1", "A2", "A3"]);
   });

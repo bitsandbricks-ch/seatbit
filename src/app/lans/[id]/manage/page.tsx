@@ -56,6 +56,7 @@ import { ActionForm } from "@/components/action-form";
 import { canSeeEmergency, emergencyForLan, logEmergencyView } from "@/lib/emergency";
 import { EmergencyList } from "@/components/emergency-list";
 import type { StatusKind } from "@/components/status-icons";
+import { SeatCompareChanges } from "@/components/seat-compare-changes";
 import { SeatVariants, VariantPreviewBar } from "@/components/seat-variants";
 import { listVariants } from "@/lib/seat-variants";
 import { movesBetween, seatChanges, seatsWithVariant } from "@/lib/seat-variant-math";
@@ -233,6 +234,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
   // Seats on the map that differ from the compared plan (none while the map shows that plan itself).
   const shownSeats = preview?.seats ?? seats;
   const changes = (preview?.v.id ?? null) === base.id ? new Map() : seatChanges(shownSeats, base.seats);
+  const wishScores = (list: typeof liveChecks) => new Map(list.map((c) => [c.userId, c.score]));
   // Preview: whose wishes the variant meets worse or better than the compared plan.
   const scoreOf = (list: typeof liveChecks) => new Map(list.map((c) => [c.userId, c.score ?? 1]));
   const previewDelta = (() => {
@@ -830,6 +832,16 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
                   })
                   .sort((a, b) => a.name.localeCompare(b.name))}
               >
+                {changes.size > 0 && (
+                  <SeatCompareChanges
+                    moves={movesBetween(base.seats, shownSeats)}
+                    shown={preview?.v.name ?? t("seatVariants.liveShort")}
+                    base={base.name}
+                    names={names}
+                    scores={{ base: wishScores(base.checks), shown: wishScores(wishChecks) }}
+                    t={t}
+                  />
+                )}
                 {seatCards}
               </SeatMap>
           ) : (

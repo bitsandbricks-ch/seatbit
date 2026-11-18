@@ -95,6 +95,7 @@ import { roleA } from "./roleA";
 import { roleInfo } from "./roleInfo";
 import { roles } from "./roles";
 import { search } from "./search";
+import { seatCompare } from "./seatCompare";
 import { seatFlow } from "./seatFlow";
 import { seatMap } from "./seatMap";
 import { seatSetup } from "./seatSetup";
@@ -217,6 +218,7 @@ export const en = {
   roleInfo,
   roles,
   search,
+  seatCompare,
   seatFlow,
   seatMap,
   seatSetup,
