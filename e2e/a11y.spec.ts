@@ -1,6 +1,9 @@
 import AxeBuilder from "@axe-core/playwright";
 import type { Page } from "@playwright/test";
-import { expect, test } from "./fixtures";
+import { eq, inArray } from "drizzle-orm";
+import * as schema from "../src/db/schema";
+import { PROFILE_COLORS } from "../src/lib/avatars";
+import { db, expect, signIn, test, userId, type Who } from "./fixtures";
 import { ADMIN_PAGES, LEAD_PAGES, MEMBER_PAGES } from "./pages";
 
 // Accessibility check with axe on every demo page, in the dark and the light theme: colour contrast,
@@ -60,4 +63,35 @@ test("keyboard users can skip the top bar", async ({ as }) => {
   await expect(skip).toBeVisible();
   await page.keyboard.press("Enter");
   await expect(page.locator("main#main")).toBeFocused();
+});
+
+test.describe("avatar letters", () => {
+  // Which colours show up elsewhere depends on the data, so every personal colour gets checked here.
+  const WHO: Who[] = ["anna", "ben", "chiara", "david", "elena"];
+  const ids = WHO.map(userId);
+  let before: { id: string; color: string | null; avatarStyle: "picture" | "icon" | "initials" }[] = [];
+  test.beforeAll(() => {
+    before = db().select({ id: schema.user.id, color: schema.user.color, avatarStyle: schema.user.avatarStyle }).from(schema.user).where(inArray(schema.user.id, ids)).all();
+  });
+  test.afterAll(() => {
+    for (const u of before) db().update(schema.user).set({ color: u.color, avatarStyle: u.avatarStyle }).where(eq(schema.user.id, u.id)).run();
+  });
+
+  for (const colorScheme of ["dark", "light"] as const) {
+    test(`every colour is readable in the ${colorScheme} theme`, async ({ browser }) => {
+      for (let i = 0; i < PROFILE_COLORS.length; i += ids.length) {
+        PROFILE_COLORS.slice(i, i + ids.length).forEach((c, j) =>
+          db().update(schema.user).set({ color: c.id, avatarStyle: "initials" }).where(eq(schema.user.id, ids[j])).run(),
+        );
+        const context = await browser.newContext({ colorScheme });
+        await signIn(context, "alex");
+        const page = await context.newPage();
+        await page.goto("/clans/pixel-pirates?tab=members");
+        await expect(page.getByRole("main").first()).toBeVisible();
+        const { violations } = await new AxeBuilder({ page }).setLegacyMode(true).withRules(["color-contrast"]).analyze();
+        expect(violations.flatMap((v) => v.nodes.map((n) => `${n.target.join(" ")}: ${n.failureSummary?.split("\n")[1]?.trim()}`))).toEqual([]);
+        await context.close();
+      }
+    });
+  }
 });

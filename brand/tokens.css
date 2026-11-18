@@ -40,6 +40,11 @@
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
+/* Avatar letters mix this much of the member's colour with the text colour, so every colour stays AA on its tinted circle. */
+:root {
+  --avatar-ink: 80%;
+}
+
 /*
  * Light theme: the same tokens with daylight values. Applies when someone picks
  * "Light", or picks "System" (the default) on a device set to light. The green
