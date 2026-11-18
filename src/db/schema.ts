@@ -629,6 +629,8 @@ export const seatVariant = sqliteTable(
     /** Seat label -> user id. Labels, not seat ids, so a variant survives the leads re-entering the seat block. */
     seats: text("seats", { mode: "json" }).$type<Record<string, string>>().default({}).notNull(),
     createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
+    /** From the exact search: true when it proved no plan meets the wishes (of that time) better, false when it ran out of time. Null otherwise. */
+    proven: integer("proven", { mode: "boolean" }),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" }).default(now).notNull(),
   },

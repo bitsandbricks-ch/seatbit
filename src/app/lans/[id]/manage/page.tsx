@@ -498,6 +498,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
                   score: overallScore(x.checks),
                   differs: x.differs,
                   updated: fmtDate(x.v.updatedAt, t.locale),
+                  proven: x.v.proven,
                 }))}
                 previewId={preview?.v.id ?? null}
                 final={!!l.seatsPublishedAt}
