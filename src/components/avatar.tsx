@@ -33,7 +33,7 @@ export function Avatar({ data, size = 28, ring = true }: { data: AvatarData | un
       style={{
         ...style,
         background: `color-mix(in oklab, ${data.color} 22%, var(--color-surface))`,
-        // Light theme darkens the letter so pale colours (gold, lime) stay readable.
+        // Mixed with the text colour (--avatar-ink in brand/tokens.css), so every colour stays readable in both themes.
         color: `color-mix(in oklab, ${data.color} var(--avatar-ink, 100%), var(--color-fg))`,
         fontSize: data.icon ? size * 0.55 : size * 0.38,
       }}

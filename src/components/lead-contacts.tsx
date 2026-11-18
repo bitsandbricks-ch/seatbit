@@ -1,9 +1,10 @@
 import type { LeadContact } from "@/db/schema";
 import type { T } from "@/i18n/translate";
+import { inlineLink } from "./ui";
 
 type Contact = Pick<LeadContact, "name" | "role" | "email" | "discord" | "phone" | "url" | "note">;
 
-const linkCls = "text-bit hover:underline break-all";
+const linkCls = `${inlineLink} break-all`;
 
 /** One organizer contact with every way to reach them. No hooks, so server and client pages both use it. */
 export function ContactDetails({ c, t, compact = false }: { c: Contact; t: T; compact?: boolean }) {

@@ -12,7 +12,7 @@ import {
 } from "@/app/actions";
 import { rowLetter } from "@/lib/seat-labels";
 import { missedBadly, type WishItem } from "@/lib/seating";
-import { Card, Pill, Segmented, btnGhost, btnPrimary, btnSecondary, input } from "./ui";
+import { Card, Pill, Segmented, btnGhost, btnPrimary, btnSecondary, inlineLink, input } from "./ui";
 import { nameMatches } from "@/lib/names";
 import { useT } from "@/i18n/client";
 import { useRunAction } from "./action-form";
@@ -716,7 +716,7 @@ function SeatDetails({
     <p className="mt-1 text-xs text-muted">
       {t.rich("seatMap.eventAccount", {
         account: person.profileUrl ? (
-          <a href={person.profileUrl} target="_blank" rel="noreferrer" className="font-mono text-bit hover:underline">
+          <a href={person.profileUrl} target="_blank" rel="noreferrer" className={`font-mono ${inlineLink}`}>
             {person.lanAccount} ↗
           </a>
         ) : (

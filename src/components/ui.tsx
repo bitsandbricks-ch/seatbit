@@ -12,7 +12,7 @@ export const btn =
   "inline-flex min-h-10 items-center justify-center gap-2 rounded-md px-3.5 py-2 text-sm font-medium transition select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bit active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 sm:min-h-9 sm:py-1.5";
 export const btnPrimary = `${btn} bg-bit text-on-bit hover:bg-bit-hover`;
 export const btnSecondary = `${btn} border border-line bg-raised text-fg hover:border-muted/40 hover:bg-line`;
-export const btnDanger = `${btn} bg-danger/90 text-white hover:bg-danger`;
+export const btnDanger = `${btn} bg-danger text-on-danger hover:bg-danger/85`;
 export const btnGhost = `${btn} text-muted hover:bg-raised hover:text-fg`;
 export const input =
   "w-full min-h-11 rounded-md border border-line bg-raised px-3 py-2 text-base text-fg placeholder:text-faint transition focus:border-bit focus:outline-none focus:ring-2 focus:ring-bit/25 disabled:opacity-60 sm:min-h-10 sm:text-sm";
@@ -20,6 +20,8 @@ export const input =
 export const headerActionFrame = "inline-flex rounded-lg border border-line bg-raised p-1";
 export const headerAction =
   "inline-flex min-h-10 items-center gap-1.5 rounded-md px-3.5 text-sm font-medium text-muted transition hover:bg-surface hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bit";
+/** A link inside running text: underlined, so it doesn't rely on colour alone (WCAG 1.4.1). */
+export const inlineLink = "text-bit underline decoration-bit/40 underline-offset-2 hover:decoration-bit";
 export const label = "mb-1.5 block text-xs font-medium uppercase tracking-wide text-muted";
 
 export function Card({

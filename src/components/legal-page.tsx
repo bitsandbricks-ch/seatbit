@@ -15,7 +15,7 @@ export async function LegalPage({ title, children }: { title: string; children: 
       )}
     <article
       className="max-w-3xl space-y-4 text-sm leading-relaxed text-fg/90
-        [&_a]:text-bit [&_a:hover]:underline
+        [&_a]:text-bit [&_a]:underline [&_a]:decoration-bit/40 [&_a]:underline-offset-2 [&_a:hover]:decoration-bit
         [&_h2]:pt-4 [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:text-fg
         [&_h3]:pt-2 [&_h3]:font-semibold [&_h3]:text-fg
         [&_li]:pl-1 [&_ol]:list-decimal [&_ol]:space-y-1 [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-5

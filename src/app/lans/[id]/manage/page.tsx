@@ -10,7 +10,7 @@ import { ReminderButtons } from "@/components/reminder-buttons";
 import { SeatMap } from "@/components/seat-map";
 import { avatarMap } from "@/lib/avatars";
 import { EventHeader } from "@/components/event-header";
-import { Card, Notice, Page, Pill, btnDanger, headerAction, headerActionFrame } from "@/components/ui";
+import { Card, Notice, Page, Pill, btnDanger, headerAction, headerActionFrame, inlineLink } from "@/components/ui";
 import { fmtDate, fmtTime, relative, toInputValue } from "@/lib/format";
 import { runningSeatSearch, thoroughMinutes } from "@/lib/seat-search";
 import { capacityOf, freeSpots, getLan, getNames, interestSwitch, seatView, waitlistOf } from "@/lib/lans";
@@ -437,7 +437,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
                   <p className="text-muted">
                     {t.rich("manage.bookingHint", {
                       plan: (
-                        <a href={httpHref(l.externalPlanUrl)} target="_blank" rel="noreferrer" className="text-bit hover:underline">
+                        <a href={httpHref(l.externalPlanUrl)} target="_blank" rel="noreferrer" className={inlineLink}>
                           {t("manage.eventSeatPlan")}
                         </a>
                       ),
