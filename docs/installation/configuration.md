@@ -26,6 +26,7 @@ A value saved in the platform settings wins over the environment variable. Clear
 | Default language (`en` or `de`): for browsers that want neither, mails to people without a choice and clans without their own Discord language | `DEFAULT_LOCALE` | `en` |
 | Look up games on Steam: name, cover, install size and LAN mode when people add a game ([more](../features/games.md#game-catalog)). Only the server calls the public Steam store, with the game's name or id; turn off if it must not reach the internet | `STEAM_LOOKUP` | `true` |
 | Currency for food orders and shared costs (also the default for new clan charges) | `FOOD_CURRENCY` | `CHF` |
+| Trip tab opens this many days before an event (travel, packing list, games, costs); earlier once something is in it, always for organizers; `0` shows it all the time | `TRIP_OPENS_DAYS` | `30` |
 | Clan payments: clans can track dues, ticket money and who paid ([more](../features/payments.md)) | `CLAN_PAYMENTS` | `true` |
 | **Email** | | |
 | SMTP host, port, encryption | `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURITY` | –, `587`, `starttls` |

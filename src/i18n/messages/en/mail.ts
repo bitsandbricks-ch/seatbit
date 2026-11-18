@@ -9,7 +9,7 @@ export const mail = {
   sentWith: "Sent with",
   textFooter: "Sent with Seatbit. Email settings: {settings}\nPrivacy: {privacy}\nTerms: {terms}",
   seatInfo: "You're sitting at {seat}.",
-  seatInfoBook: "You're sitting at {seat}. The leads book it on the event site for you.",
+  seatInfoBook: "You're sitting at {seat}. The organizers book it on the event site for you.",
   yourClan: "your clan",
-  seatInfoNone: "You don't have a seat yet, a lead will get back to you.",
+  seatInfoNone: "You don't have a seat yet, an organizer will get back to you.",
 };

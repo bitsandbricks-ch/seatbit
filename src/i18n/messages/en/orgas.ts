@@ -1,1 +1,1 @@
-export const orgas = { none: "No leads yet.", remove: "Remove {name} as lead", addPlaceholder: "Add a lead…", add: "Add" };
+export const orgas = { none: "No organizers yet.", remove: "Remove {name} as organizer", addPlaceholder: "Add an organizer…", add: "Add" };

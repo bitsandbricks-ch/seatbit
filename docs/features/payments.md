@@ -67,6 +67,6 @@ If the operator turned on [online payments for clans](../installation/stripe.md#
 - Refunds happen in the clan's Stripe Dashboard; a full refund opens the line again.
 - The clan pays Stripe's fees. The card says if the operator keeps a platform fee.
 
-Reminders follow the member's notification settings: mails only with email reminders on, DMs only with Discord DMs on. Guests have no address, so they get nothing; a lead collects from them in person.
+Reminders follow the member's notification settings: mails only with email reminders on, DMs only with Discord DMs on. Guests have no address, so they get nothing; an organizer collects from them in person.
 
 Members find their payments in the data export of their profile. When someone deletes their account, the clan keeps the lines (shown as "Deleted member") so the books still add up. When a guest is taken over by a real account, their lines move with them.

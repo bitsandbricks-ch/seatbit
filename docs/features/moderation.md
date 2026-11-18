@@ -6,7 +6,7 @@ Members report clans and events that break the rules. Reports go to the platform
 
 ## Reporting
 
-At the bottom of a clan page (except your own clan's admins) and of an event page (except for its leads) there is a small **Report this clan** or **Report this event** link. Pick a reason (spam, harassment, illegal content, impersonation, something else) and optionally say what's wrong.
+At the bottom of a clan page (except your own clan's admins) and of an event page (except for its organizers) there is a small **Report this clan** or **Report this event** link. Pick a reason (spam, harassment, illegal content, impersonation, something else) and optionally say what's wrong.
 
 ![Reporting a clan](../screenshots/phone-report-clan.png){ .shot-phone }
 

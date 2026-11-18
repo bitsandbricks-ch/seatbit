@@ -5,7 +5,7 @@ Reference for everything Seatbit does. Each page says who uses the feature and w
 Seatbit has three kinds of users:
 
 - **Members** answer for events, pick seats, offer rides and order food and split costs.
-- **Leads, clan admins, event managers and recruiters** run the clan and its events. See [roles](clans.md#roles).
+- **Organizers, clan admins, event managers and recruiters** run the clan and its events. See [roles](clans.md#roles).
 - **Platform staff** (owners, admins, moderators, support) run the instance. See [Platform admin](admin.md).
 
 ## Overview
@@ -18,19 +18,20 @@ Seatbit has three kinds of users:
 | [Languages](languages.md) | English and German, per person, for the app, mails and Discord. | Everyone |
 | [Light and dark theme](theme.md) | Light, dark or follow the device, from the top bar. | Everyone |
 | [What's new](whats-new.md) | What changed in Seatbit, in your language. | Everyone |
-| [Event lifecycle](events.md) | Create from a LAN type, drafts, publish or schedule, interest check, news, cancel, copy for next year. | Leads |
-| [Lead to-dos and contacts](lead-todos.md) | The leads' own to-dos per clan, LAN type or event (with due dates and steps they wait for), and the LAN organizers' contacts. | Leads |
-| [Attendance and tickets](attendance.md) | Coming / unsure / not coming, waitlist, checklist, tickets, attendee list and CSV export. | Members, leads |
-| [Seats](seats.md) | The group's seat block, seat wishes, self pick, planner, final plan, booking on the event site, swaps. | Members, leads |
-| [Reminders and who's missing](reminders.md) | Automatic reminders before deadlines, manual reminders and one-tap nudges. | Leads |
+| [Help page](help.md) | How Seatbit works for members and organizers, by topic, in English and German. | Everyone |
+| [Event lifecycle](events.md) | Create from a LAN type, drafts, publish or schedule, interest check, news, cancel, copy for next year. | Organizers |
+| [Organizer to-dos and contacts](lead-todos.md) | The organizers' own to-dos per clan, LAN type or event (with due dates and steps they wait for), and the event team's contacts. | Organizers |
+| [Attendance and tickets](attendance.md) | Coming / unsure / not coming, waitlist, checklist, tickets, attendee list and CSV export. | Members, organizers |
+| [Seats](seats.md) | The group's seat block, seat wishes, self pick, planner, final plan, booking on the event site, swaps. | Members, organizers |
+| [Reminders and who's missing](reminders.md) | Automatic reminders before deadlines, manual reminders and one-tap nudges. | Organizers |
 | [Travel and packing list](travel-packing.md) | Rides, places to sleep, a private packing list. | Members |
 | [Games](games.md) | Suggest and vote for games, track installs. | Members |
-| [Food orders](food.md) | Group orders at the LAN with a merged order list and who paid. | Members |
+| [Orders](food.md) | Food and shopping orders at the LAN with a merged order list and who paid. | Members |
 | [Shared costs](shared-costs.md) | Who paid what for the group, everyone's balance and who pays whom. | Members |
-| [Emergency contact and diet](emergency.md) | Members leave an emergency contact and dietary needs; only the event's leads see them. | Members, leads |
-| [Discord and WhatsApp](discord.md) | Bot announcements with answer buttons, reminders, DMs, slash commands; WhatsApp texts. | Clan admins, leads |
+| [Emergency contact and diet](emergency.md) | Members leave an emergency contact and dietary needs; only the event's organizers see them. | Members, organizers |
+| [Discord and WhatsApp](discord.md) | Bot announcements with answer buttons, reminders, DMs, slash commands; WhatsApp texts. | Clan admins, organizers |
 | [Clan payments](payments.md) | Dues, ticket money and shared costs: who owes what, who paid, reminders. | Clan admins, event managers |
-| [Audit log](audit-log.md) | What leads and admins changed. | Admins, event managers, recruiters |
+| [Audit log](audit-log.md) | What organizers and admins changed. | Admins, event managers, recruiters |
 | [Supporter badge](supporters.md) | Optional voluntary payments for clans (off by default). | Clan admins |
 | [Donations](donations.md) | Optional one-off donations to the instance, with a Donor badge (off by default). | Everyone |
 | [Platform admin](admin.md) | Platform roles, all clans, events and users, platform settings, mail templates. | Platform staff |

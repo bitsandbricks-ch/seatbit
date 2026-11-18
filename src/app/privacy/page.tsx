@@ -69,19 +69,19 @@ function PrivacyEn({ legal, payments, backupDays, online }: Props) {
       <h3>Emergency contact and dietary needs (optional)</h3>
       <p>
         If you fill them in on your profile: the name and phone number of an emergency contact, and your dietary needs
-        or allergies. Allergies can be health data. Only the leads of events you are coming to see them, until two days
-        after the event, and every time a lead opens them is logged. They are never sent by email or Discord and are
+        or allergies. Allergies can be health data. Only the organizers of events you are coming to see them, until two days
+        after the event, and every time an organizer opens them is logged. They are never sent by email or Discord and are
         not in attendee exports. Clear the fields to remove them.
       </p>
 
       <h3>Clans and LAN events</h3>
       <ul>
         <li>Which clans you belong to, and your role there (member, admin, waiting for approval)</li>
-        <li>For each event: whether you are coming, unsure or not coming, whether you bought a ticket, whether a lead confirmed it, and any note you add</li>
+        <li>For each event: whether you are coming, unsure or not coming, whether you bought a ticket, whether an organizer confirmed it, and any note you add</li>
         <li>Seat wishes (people you want to sit near or not next to, preferred position or seat) and the seat you are assigned</li>
-        <li>Whether you are a lead of an event</li>
-        <li>If your clan uses clan payments: what the clan&apos;s leads charged you (dues, ticket money, shared costs), the amount, whether you paid, how (cash, bank, TWINT, online) and when, and who ticked it off. The money itself never goes through Seatbit.</li>
-        <li>If a lead adds you as a guest before you have an account: the name, nickname and (if they have it) email address they enter, and your answers and seat for their events. The email is only used to send you the invite and to recognise you: when you sign in with a Discord account whose verified email matches, or through your claim link, this moves to your own account and the guest entry is deleted. If a lead tells the Discord bot which Discord member you are, we also keep your Discord user ID with the guest entry, send you one DM with your claim link, and move everything over when you sign in with that Discord account.</li>
+        <li>Whether you are an organizer of an event</li>
+        <li>If your clan uses clan payments: what the clan&apos;s organizers charged you (dues, ticket money, shared costs), the amount, whether you paid, how (cash, bank, TWINT, online) and when, and who ticked it off. The money itself never goes through Seatbit.</li>
+        <li>If an organizer adds you as a guest before you have an account: the name, nickname and (if they have it) email address they enter, and your answers and seat for their events. The email is only used to send you the invite and to recognise you: when you sign in with a Discord account whose verified email matches, or through your claim link, this moves to your own account and the guest entry is deleted. If an organizer tells the Discord bot which Discord member you are, we also keep your Discord user ID with the guest entry, send you one DM with your claim link, and move everything over when you sign in with that Discord account.</li>
         <li>Content clan admins enter: clan name, description and avatar, LAN types, events, invite links</li>
       </ul>
 
@@ -114,7 +114,7 @@ function PrivacyEn({ legal, payments, backupDays, online }: Props) {
       <ul>
         <li>Login sessions, with the IP address and browser (user agent) they were created from</li>
         <li>A log of which reminders were sent, so nobody gets the same one twice</li>
-        <li>An audit log of changes leads and admins make (for example who moved a seat, changed someone&apos;s answer, confirmed a ticket, changed a role or edited a guest), with the time, who made the change and who it was about</li>
+        <li>An audit log of changes organizers and admins make (for example who moved a seat, changed someone&apos;s answer, confirmed a ticket, changed a role or edited a guest), with the time, who made the change and who it was about</li>
         <li>Reports you send about a clan or event (reason, your message, the time), seen only by the platform staff who handle them; and, if your account is suspended, when and why</li>
         <li>Server logs (time, requested page, IP address, error messages) that our server keeps for a short time</li>
         <li>The days on which you used Seatbit (only the date, no times or pages), for usage statistics that only platform admins see as totals</li>
@@ -140,8 +140,8 @@ function PrivacyEn({ legal, payments, backupDays, online }: Props) {
       <h2>4. Who can see your data</h2>
       <ul>
         <li><strong>Members of your clans</strong> see your name, nickname, avatar and whether you are coming to that clan&apos;s events. Once the seat plan is final they see who sits where.</li>
-        <li><strong>Clan admins and event leads</strong> also see ticket status, notes and seat wishes for their events, and can export the attendee list. Clan admins see their clan&apos;s audit log.</li>
-        <li><strong>The leads of an event you are coming to</strong> see your emergency contact and dietary needs, if you gave them, until two days after the event.</li>
+        <li><strong>Clan admins and event organizers</strong> also see ticket status, notes and seat wishes for their events, and can export the attendee list. Clan admins see their clan&apos;s audit log.</li>
+        <li><strong>The organizers of an event you are coming to</strong> see your emergency contact and dietary needs, if you gave them, until two days after the event.</li>
         <li><strong>Clan admins and event managers</strong> see what each member owes the clan and who paid, if the clan uses clan payments.</li>
         <li><strong>People in a linked Discord channel</strong> see the bot&apos;s announcements, including the nicknames of who is coming, unsure or on the waitlist.</li>
         <li><strong>Platform admins</strong> of this Seatbit instance can see all data to run and support the Service.</li>
@@ -211,7 +211,7 @@ function PrivacyEn({ legal, payments, backupDays, online }: Props) {
       <p>
         You can delete your account yourself on your <Link href="/profile?tab=data">profile</Link> (Your data, Delete my
         account). We then delete your name, email, picture, Discord link, login sessions, nicknames, LAN IDs, clan
-        memberships, lead roles, seat wishes, seats, rides, packing lists and your answers to upcoming events. Your
+        memberships, organizer roles, seat wishes, seats, rides, packing lists and your answers to upcoming events. Your
         answers to past events (coming or not, ticket) stay with an anonymous &ldquo;Deleted member&rdquo; that
         can&apos;t be traced back to you, so your clan&apos;s event history still adds up; audit log entries show the
         same &ldquo;Deleted member&rdquo;. A clan where nobody else with a login is left is deleted with your account.
@@ -298,19 +298,19 @@ function PrivacyDe({ legal, payments, backupDays, online }: Props) {
       <h3>Notfallkontakt und Ernährung (freiwillig)</h3>
       <p>
         Falls du sie in deinem Profil ausfüllst: Name und Telefonnummer eines Notfallkontakts sowie deine Angaben zu
-        Ernährung oder Allergien. Allergien können Gesundheitsdaten sein. Nur die Leads von Events, an die du kommst,
-        sehen sie, bis zwei Tage nach dem Event, und jedes Öffnen durch einen Lead wird protokolliert. Sie gehen nie per
+        Ernährung oder Allergien. Allergien können Gesundheitsdaten sein. Nur die Organisatoren von Events, an die du kommst,
+        sehen sie, bis zwei Tage nach dem Event, und jedes Öffnen durch einen Organisator wird protokolliert. Sie gehen nie per
         E-Mail oder Discord raus und sind in keinem Teilnehmer-Export. Leere die Felder, um sie zu entfernen.
       </p>
 
       <h3>Clans und LAN-Events</h3>
       <ul>
         <li>Zu welchen Clans du gehörst und deine Rolle dort (Mitglied, Admin, wartet auf Freigabe)</li>
-        <li>Pro Event: ob du kommst, unsicher bist oder nicht kommst, ob du ein Ticket gekauft hast, ob ein Lead es bestätigt hat, und deine Notiz</li>
+        <li>Pro Event: ob du kommst, unsicher bist oder nicht kommst, ob du ein Ticket gekauft hast, ob ein Organisator es bestätigt hat, und deine Notiz</li>
         <li>Platzwünsche (neben wem du sitzen willst oder nicht, bevorzugte Position oder Platz) und dein zugeteilter Platz</li>
-        <li>Ob du Lead eines Events bist</li>
-        <li>Falls dein Clan Clan-Zahlungen nutzt: was die Leads des Clans dir verrechnet haben (Beiträge, Ticketgeld, geteilte Kosten), der Betrag, ob du bezahlt hast, wie (bar, Bank, TWINT, online) und wann, und wer es abgehakt hat. Das Geld selbst fliesst nie über Seatbit.</li>
-        <li>Wenn dich ein Lead als Gast hinzufügt, bevor du ein Konto hast: Name, Nickname und (falls bekannt) E-Mail-Adresse, die er einträgt, sowie deine Antworten und dein Platz bei seinen Events. Die E-Mail dient nur dazu, dir die Einladung zu schicken und dich zu erkennen: Meldest du dich mit einem Discord-Konto an, dessen bestätigte E-Mail übereinstimmt, oder über deinen Übernahme-Link, wandert alles auf dein eigenes Konto und der Gasteintrag wird gelöscht. Sagt ein Lead dem Discord-Bot, welches Discord-Mitglied du bist, speichern wir zusätzlich deine Discord-Benutzer-ID beim Gasteintrag, schicken dir eine DM mit deinem Übernahme-Link und übertragen alles, sobald du dich mit diesem Discord-Konto anmeldest.</li>
+        <li>Ob du Organisator eines Events bist</li>
+        <li>Falls dein Clan Clan-Zahlungen nutzt: was die Organisatoren des Clans dir verrechnet haben (Beiträge, Ticketgeld, geteilte Kosten), der Betrag, ob du bezahlt hast, wie (bar, Bank, TWINT, online) und wann, und wer es abgehakt hat. Das Geld selbst fliesst nie über Seatbit.</li>
+        <li>Wenn dich ein Organisator als Gast hinzufügt, bevor du ein Konto hast: Name, Nickname und (falls bekannt) E-Mail-Adresse, die er einträgt, sowie deine Antworten und dein Platz bei seinen Events. Die E-Mail dient nur dazu, dir die Einladung zu schicken und dich zu erkennen: Meldest du dich mit einem Discord-Konto an, dessen bestätigte E-Mail übereinstimmt, oder über deinen Übernahme-Link, wandert alles auf dein eigenes Konto und der Gasteintrag wird gelöscht. Sagt ein Organisator dem Discord-Bot, welches Discord-Mitglied du bist, speichern wir zusätzlich deine Discord-Benutzer-ID beim Gasteintrag, schicken dir eine DM mit deinem Übernahme-Link und übertragen alles, sobald du dich mit diesem Discord-Konto anmeldest.</li>
         <li>Inhalte, die Clan-Admins eintragen: Clan-Name, Beschreibung und Avatar, LAN-Typen, Events, Einladungslinks</li>
       </ul>
 
@@ -342,7 +342,7 @@ function PrivacyDe({ legal, payments, backupDays, online }: Props) {
       <ul>
         <li>Login-Sitzungen mit der IP-Adresse und dem Browser (User Agent), mit denen sie erstellt wurden</li>
         <li>Ein Protokoll, welche Erinnerungen verschickt wurden, damit niemand dieselbe zweimal bekommt</li>
-        <li>Ein Protokoll der Änderungen von Leads und Admins (zum Beispiel wer einen Platz verschoben, eine Antwort geändert, ein Ticket bestätigt, eine Rolle geändert oder einen Gast bearbeitet hat), mit Zeit, wer die Änderung gemacht hat und wen sie betrifft</li>
+        <li>Ein Protokoll der Änderungen von Organisatoren und Admins (zum Beispiel wer einen Platz verschoben, eine Antwort geändert, ein Ticket bestätigt, eine Rolle geändert oder einen Gast bearbeitet hat), mit Zeit, wer die Änderung gemacht hat und wen sie betrifft</li>
         <li>Meldungen, die du zu einem Clan oder Event schickst (Grund, deine Nachricht, Zeit), die nur die Plattform-Mitarbeitenden sehen, die sie bearbeiten; und falls dein Konto gesperrt wird, wann und warum</li>
         <li>Server-Logs (Zeit, aufgerufene Seite, IP-Adresse, Fehlermeldungen), die unser Server kurz aufbewahrt</li>
         <li>Die Tage, an denen du Seatbit benutzt hast (nur das Datum, keine Uhrzeit und keine Seiten), für Nutzungsstatistiken, die nur Plattform-Admins als Summen sehen</li>
@@ -368,8 +368,8 @@ function PrivacyDe({ legal, payments, backupDays, online }: Props) {
       <h2>4. Wer deine Daten sieht</h2>
       <ul>
         <li><strong>Mitglieder deiner Clans</strong> sehen deinen Namen, Nickname, Avatar und ob du an die Events dieses Clans kommst. Sobald der Sitzplan fixiert ist, sehen sie, wer wo sitzt.</li>
-        <li><strong>Clan-Admins und Event-Leads</strong> sehen zusätzlich Ticketstatus, Notizen und Platzwünsche ihrer Events und können die Teilnehmerliste exportieren. Clan-Admins sehen das Protokoll ihres Clans.</li>
-        <li><strong>Die Leads eines Events, an das du kommst,</strong> sehen deinen Notfallkontakt und deine Angaben zur Ernährung, falls du sie gemacht hast, bis zwei Tage nach dem Event.</li>
+        <li><strong>Clan-Admins und Event-Organisatoren</strong> sehen zusätzlich Ticketstatus, Notizen und Platzwünsche ihrer Events und können die Teilnehmerliste exportieren. Clan-Admins sehen das Protokoll ihres Clans.</li>
+        <li><strong>Die Organisatoren eines Events, an das du kommst,</strong> sehen deinen Notfallkontakt und deine Angaben zur Ernährung, falls du sie gemacht hast, bis zwei Tage nach dem Event.</li>
         <li><strong>Clan-Admins und Event-Manager</strong> sehen, was jedes Mitglied dem Clan schuldet und wer bezahlt hat, falls der Clan Clan-Zahlungen nutzt.</li>
         <li><strong>Leute in einem verknüpften Discord-Kanal</strong> sehen die Ankündigungen des Bots, inklusive der Nicknames derer, die kommen, unsicher sind oder auf der Warteliste stehen.</li>
         <li><strong>Plattform-Admins</strong> dieser Seatbit-Instanz können alle Daten sehen, um den Dienst zu betreiben und zu unterstützen.</li>
@@ -442,7 +442,7 @@ function PrivacyDe({ legal, payments, backupDays, online }: Props) {
       <p>
         Du kannst dein Konto selbst in deinem <Link href="/profile?tab=data">Profil</Link> löschen (Deine Daten, Mein
         Konto löschen). Dann löschen wir Name, E-Mail, Bild, Discord-Verknüpfung, Login-Sitzungen, Nicknames, LAN-IDs,
-        Clan-Mitgliedschaften, Lead-Rollen, Platzwünsche, Plätze, Fahrten, Packlisten und deine Antworten zu kommenden
+        Clan-Mitgliedschaften, Organisator-Rollen, Platzwünsche, Plätze, Fahrten, Packlisten und deine Antworten zu kommenden
         Events. Deine Antworten zu vergangenen Events (kommt oder nicht, Ticket) bleiben bei einem anonymen «Gelöschtes
         Mitglied», das sich nicht auf dich zurückführen lässt, damit die Event-Geschichte deines Clans aufgeht;
         Protokolleinträge zeigen dasselbe «Gelöschtes Mitglied». Ein Clan, in dem sonst niemand mit Login übrig ist, wird

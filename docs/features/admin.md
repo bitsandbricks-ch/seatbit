@@ -56,13 +56,13 @@ A moderator sees the same tabs without the settings, and support without any but
 Tap a name in *Admin → Users* (or under *Newest accounts* on the overview) to open that person's page. All platform staff see it; it shows what you need to help someone or to check an account:
 
 - **Account:** email (and whether it's verified), how they sign in, first name and surname, language, user ID to copy, since when the account exists and when it was last active. For guests: their clan, the invite email and when it was sent.
-- **Discord:** linked username and user ID, and whether the bot verified them on a clan's server. For guests, the Discord member a lead linked.
+- **Discord:** linked username and user ID, and whether the bot verified them on a clan's server. For guests, the Discord member an organizer linked.
 - **Clans:** every clan they're in, with their role and since when. Each opens their member profile in that clan.
 - **Events:** every event they answered, across all clans, with their answer, seat and ticket.
 - **Nicks:** the default nick, the nick per LAN type and per event. Owners and admins also see the LAN IDs, and can change the nick and LAN ID for every LAN type (**Edit nicks & LAN IDs**); the change shows in the platform audit log.
 - **Socials** from their profile.
 
-Give a platform role or suspend the account from the top of the page, as in the list. Emergency contacts and dietary needs don't show here: only the leads of an event see those.
+Give a platform role or suspend the account from the top of the page, as in the list. Emergency contacts and dietary needs don't show here: only the organizers of an event see those.
 
 ![User details](../screenshots/desktop-admin-user.png){ .shot }
 

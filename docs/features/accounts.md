@@ -20,7 +20,7 @@ Everything belongs to a clan. Depending on the clan's [join mode](clans.md#clan-
 
 - open an **invite link** and you're in;
 - click **Join** on the clan's page (*Clans* tab): you're in, or an admin approves you first;
-- were **added by a lead** as a guest and take it over by email, claim link or *That's me*. See [Guests](members-guests.md#guests).
+- were **added by an organizer** as a guest and take it over by email, claim link or *That's me*. See [Guests](members-guests.md#guests).
 
 ![Clans](../screenshots/phone-clans.png){ .shot width="300" }
 
@@ -39,8 +39,8 @@ Your profile has four tabs: **Account**, **At events**, **Notifications** and **
 | **Account** | **Details** | First name, surname and your default **nickname**, the app's [language](languages.md), and your **sign-in methods** (link Discord if you signed in another way). With Discord linked, the **Discord** card shows your username and user ID (with **Copy**) and whether you're [verified on your clan's server](discord.md#discord-verification), with a **Verify** button. The username is refreshed each time you sign in with Discord. |
 | | **Avatar** | Discord picture, uploaded picture, emoji or initials. The colour is the ring around your avatar and your seat on the plan. |
 | | **Socials** | Discord, Steam, Battle.net, Epic Games, Riot ID, EA app, Ubisoft Connect, Xbox, PlayStation, FACEIT, Twitch and YouTube. Fill in what you like; members of your clans see them on your profile, with links where the service has profile pages. Untick **Show on profile** to keep one to yourself (you still see it, marked *hidden*). With Discord linked, the Discord field starts with your Discord username. |
-| **At events** | **LAN nicks & IDs** | Per LAN type your clans go to (LAN types are the same in every clan): a nick for every event of that type (e.g. your name on the event's own site) and your user ID or ticket number there. Only leads see the ID, unless the LAN type has a [profile link](clans.md#profile-links). |
-| | **Emergency** | An emergency contact and your dietary needs or allergies, for the leads of events you come to. See [Emergency contact and diet](emergency.md). |
+| **At events** | **LAN nicks & IDs** | Per LAN type your clans go to (LAN types are the same in every clan): a nick for every event of that type (e.g. your name on the event's own site) and your user ID or ticket number there. Only organizers see the ID, unless the LAN type has a [profile link](clans.md#profile-links). |
+| | **Emergency** | An emergency contact and your dietary needs or allergies, for the organizers of events you come to. See [Emergency contact and diet](emergency.md). |
 | **Notifications** | | Switch **email reminders** or **Discord DMs** off (DMs need a linked Discord account) and send yourself a test DM. **Events I hear about**: per clan, all new events or only certain LAN types. One-off events always count. |
 | **Your data** | | Download or delete your data, see [below](#your-data). |
 
@@ -53,7 +53,7 @@ Your profile has four tabs: **Account**, **At events**, **Notifications** and **
 On the **Your data** tab:
 
 - **Download my data** gives you a JSON file with everything Seatbit stores about you: profile, socials, emergency contact and dietary needs, sign-in methods, nicks, LAN IDs, clans, every event answer with seat and seat wishes, rides, packing lists, games, swap requests and the audit log entries about you.
-- **Delete my account** (type `DELETE` to confirm) signs you out and deletes your name, email, picture, Discord link, socials, emergency contact and dietary needs, nicks, LAN IDs, clan memberships, lead roles, rides and packing lists, plus answers and seats for upcoming events (the waitlist moves up). Past events keep an anonymous *Deleted member* with only the answer, so history and stats still add up.
+- **Delete my account** (type `DELETE` to confirm) signs you out and deletes your name, email, picture, Discord link, socials, emergency contact and dietary needs, nicks, LAN IDs, clan memberships, organizer roles, rides and packing lists, plus answers and seats for upcoming events (the waitlist moves up). Past events keep an anonymous *Deleted member* with only the answer, so history and stats still add up.
 
 ![Delete my account](../screenshots/phone-profile-delete.png){ .shot width="300" }
 

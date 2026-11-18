@@ -237,6 +237,18 @@ const SHOTS: Shot[] = [
   { name: "phone-profile-de", who: "anna", path: "/profile", lang: "de" },
   { name: "phone-display-menu", who: "anna", path: "/", act: openDisplayMenu },
   { name: "phone-whats-new", who: "anna", path: "/changelog" },
+  { name: "phone-help", who: "anna", path: "/help" },
+  {
+    // The event's "How this event works" panel, opened from the checklist.
+    name: "phone-event-guide",
+    who: "anna",
+    path: MOUNTAIN,
+    act: async (page) => {
+      await page.getByRole("button", { name: "How this event works" }).first().click();
+      await page.getByRole("dialog").waitFor();
+      await page.waitForTimeout(300);
+    },
+  },
   { name: "phone-lans-light", who: "anna", path: "/", theme: "light" },
   { name: "phone-event-light", who: "anna", path: LAKESIDE, full: true, theme: "light" },
   { name: "phone-seat-plan-light", who: "anna", path: `${LAKESIDE}?tab=seats`, act: seat("F10"), theme: "light" },

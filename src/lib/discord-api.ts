@@ -113,7 +113,7 @@ export const commands = [
         ],
       },
       { type: 3, name: "seat", description: "A seat you'd like, e.g. F7", required: false, max_length: 12 },
-      { type: 3, name: "note", description: "Anything else the leads should know", required: false, max_length: 300 },
+      { type: 3, name: "note", description: "Anything else the organizers should know", required: false, max_length: 300 },
       { type: 5, name: "clear", description: "Start over: remove all your wishes first", required: false },
     ],
   },
@@ -130,7 +130,7 @@ export const commands = [
   },
   {
     name: "claim",
-    description: "Take over the guest profile your clan's leads made for you",
+    description: "Take over the guest profile your clan's organizers made for you",
     type: 1,
     dm_permission: false,
     options: [
@@ -140,7 +140,7 @@ export const commands = [
   {
     // Seatbit checks the caller may manage the clan's members; no Discord permission needed.
     name: "guest",
-    description: "Leads: tell Seatbit which Discord member a guest is, so they take it over",
+    description: "Organizers: tell Seatbit which Discord member a guest is, so they take it over",
     type: 1,
     dm_permission: false,
     options: [
@@ -194,13 +194,13 @@ const DE: Record<string, string> = {
   "At the edge": "Am Rand",
   "In the middle": "In der Mitte",
   "A seat you'd like, e.g. F7": "Ein Platz, den du gern hättest, z. B. F7",
-  "Anything else the leads should know": "Was die Leads sonst noch wissen sollten",
+  "Anything else the organizers should know": "Was die Organisatoren sonst noch wissen sollten",
   "Start over: remove all your wishes first": "Neu anfangen: zuerst alle Wünsche entfernen",
   "Upcoming LANs and your status, with buttons to answer": "Kommende LANs und dein Status, mit Knöpfen zum Antworten",
-  "Take over the guest profile your clan's leads made for you": "Übernimm das Gastprofil, das die Leads deines Clans für dich erstellt haben",
+  "Take over the guest profile your clan's organizers made for you": "Übernimm das Gastprofil, das die Organisatoren deines Clans für dich erstellt haben",
   "Only needed if I don't find you by name": "Nur nötig, wenn ich dich nicht über den Namen finde",
-  "Leads: tell Seatbit which Discord member a guest is, so they take it over":
-    "Leads: Sag Seatbit, welches Discord-Mitglied ein Gast ist, damit es ihn übernimmt",
+  "Organizers: tell Seatbit which Discord member a guest is, so they take it over":
+    "Organisatoren: Sag Seatbit, welches Discord-Mitglied ein Gast ist, damit es ihn übernimmt",
   "The guest in Seatbit": "Der Gast in Seatbit",
   "The Discord member (type to search)": "Das Discord-Mitglied (tippen zum Suchen)",
   "Seatbit bot settings for this server": "Seatbit-Bot-Einstellungen für diesen Server",

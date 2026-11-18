@@ -19,12 +19,12 @@ Someone paid for the group tickets, the fuel for the van or the snacks? Log it o
 
 ![Picking who shares an expense](../screenshots/phone-costs-split.png){ .shot }
 
-The amount is split in whole cents; leftover cents go to the first people, so the parts always add up. **Details** on an expense shows everyone's share. Who logged it, who paid it, or a lead can edit or delete it.
+The amount is split in whole cents; leftover cents go to the first people, so the parts always add up. **Details** on an expense shows everyone's share. Who logged it, who paid it, or an organizer can edit or delete it.
 
 ## Settle up
 
-- **Settle up** shows your total ("You owe CHF 20.25 in total") and the payments that even everything out, with as few payments as possible. You see the ones you're in; leads see all of them.
-- Once the money has changed hands, tap **Mark as paid** (you paid) or **Got it** (you received it). Like tickets, this is trust-based: either of the two, or a lead, can tick it.
+- **Settle up** shows your total ("You owe CHF 20.25 in total") and the payments that even everything out, with as few payments as possible. You see the ones you're in; organizers see all of them.
+- Once the money has changed hands, tap **Mark as paid** (you paid) or **Got it** (you received it). Like tickets, this is trust-based: either of the two, or an organizer, can tick it.
 - **Balances** lists everyone who isn't even: `+` gets money back, `−` still owes.
 - **Paid back** lists the ticked payments. **Undo** removes one ticked by mistake.
 - The *Costs* line in the event's *At a glance* card shows *You owe …* or *You get … back*.

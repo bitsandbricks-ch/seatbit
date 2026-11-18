@@ -1,7 +1,7 @@
 export const wishes = {
   empty: "No wishes yet: anywhere is fine. Add one below.",
   listLabel: "Seat wishes, most important first",
-  orderHint: "The leads try the top wish first. Drag ⠿ or use the arrows to change the order.",
+  orderHint: "The organizers try the top wish first. Drag ⠿ or use the arrows to change the order.",
   rule: {
     next: "Right next to {name}",
     near: "Near {name} (within {range} seats)",
@@ -29,9 +29,15 @@ export const wishes = {
   },
   avoid: {
     title: "Not right next to",
-    hint: "As many as you like. They aren't ranked: the planner always tries hard to keep them.",
+    hint: "As many as you like, in no order. The organizers always try to keep them.",
     none: "Nobody.",
     rule: "Not right next to {name}",
+  },
+  fans: {
+    title: "Want to sit near you",
+    next: "right next to you",
+    near: "near you",
+    add: "+ Add as my wish",
   },
   addTitle: "Add a wish",
   addButton: "Add",
@@ -49,9 +55,9 @@ export const wishes = {
   up: "Move up: {rule}",
   down: "Move down: {rule}",
   remove: "Remove: {rule}",
-  note: "Anything else for the leads?",
+  note: "Anything else for the organizers?",
   notePlaceholder: "e.g. need a power socket for a second PC",
-  saved: "Saved. The leads will try to make it work.",
+  saved: "Saved. The organizers will try to make it work.",
   errors: {
     tooManyNear: "At most {max} people near you. Remove one first.",
     tooMany: "At most {max} seat wishes. Remove one first.",

@@ -12,6 +12,8 @@ export type Tab = {
   badgeTone?: "warn" | "ok";
   /** Show the badge as a small dot (its text stays for screen readers), e.g. when a guide on the page already says what to do. */
   dot?: boolean;
+  /** Only you (a lead) see this tab for now: muted, with a crossed-out eye. The text says why, for the tooltip and screen readers. */
+  hidden?: string;
 };
 
 /**
@@ -49,9 +51,12 @@ export function Tabs({
                   aria-current={on ? "page" : undefined}
                   className={`flex min-h-11 items-center gap-1.5 whitespace-nowrap border-b-2 text-sm font-medium transition ${
                     on ? "border-bit text-fg" : "border-transparent text-muted hover:border-line hover:text-fg"
-                  }`}
+                  } ${t.hidden ? "opacity-60" : ""}`}
+                  title={t.hidden}
                 >
+                  {t.hidden && <HiddenIcon />}
                   {t.label}
+                  {t.hidden && <span className="sr-only">, {t.hidden}</span>}
                   {t.count !== undefined && (
                     <span className={`rounded-full px-1.5 py-px text-[11px] tabular-nums ${on ? "bg-bit-soft text-bit" : "bg-raised text-muted"}`}>
                       {t.count}
@@ -74,5 +79,18 @@ export function Tabs({
         <TabScroll active={active} />
       </nav>
     </div>
+  );
+}
+
+/** A crossed-out eye: something only leads see for now. */
+export function HiddenIcon({ label, className = "size-3.5" }: { label?: string; className?: string }) {
+  return (
+    <>
+      <svg viewBox="0 0 16 16" className={`${className} shrink-0`} aria-hidden fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M2 8s2.2-4 6-4c1 0 1.9.3 2.7.7M14 8s-2.2 4-6 4c-1 0-1.9-.3-2.7-.7" />
+        <path d="M6.6 9.4a2 2 0 0 1 2.8-2.8M2.5 13.5l11-11" />
+      </svg>
+      {label && <span className="sr-only">{label}</span>}
+    </>
   );
 }

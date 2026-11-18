@@ -28,12 +28,12 @@ Everyone in a clan has one **clan role**:
 
 - A clan always keeps at least one admin.
 - Recruiters only remove plain members; people with a role are removed by an admin.
-- **Leave clan** at the bottom of the clan page asks first. Whoever leaves or is removed loses access to the clan's events, so their answers on its upcoming events are withdrawn like a "not coming": the seat frees up and the waitlist moves up. Others' seat wishes that name them, their seat swaps, the rides and sleeping spots they offered or took and their teams on those events go too. Answers with a ticket or a payment stay, for the leads to sort out: they may still go with their own ticket, and the event's *Manage* page marks them with a red "no longer in the clan" icon. Past events stay as they were. Their lead roles on the clan's events end too: only clan members can lead an event. Removing a member asks first and says the same. Deleting a guest also takes them out of others' seat wishes. People who left before this cleanup existed are cleaned up the same way when the server starts.
+- **Leave clan** at the bottom of the clan page asks first. Whoever leaves or is removed loses access to the clan's events, so their answers on its upcoming events are withdrawn like a "not coming": the seat frees up and the waitlist moves up. Others' seat wishes that name them, their seat swaps, the rides and sleeping spots they offered or took and their teams on those events go too. Answers with a ticket or a payment stay, for the organizers to sort out: they may still go with their own ticket, and the event's *Manage* page marks them with a red "no longer in the clan" icon. Past events stay as they were. Their organizer roles on the clan's events end too: only clan members can organize an event. Removing a member asks first and says the same. Deleting a guest also takes them out of others' seat wishes. People who left before this cleanup existed are cleaned up the same way when the server starts.
 - Admins change roles in the member list or on a member's profile under **Clan role**. The member gets a message.
 
 ![Clan role on a member's profile](../screenshots/desktop-member-role.png){ .shot }
 
-**Leads** are set per event, on top of the clan role. They edit that event, its attendance and seats, and can add co-leads. Any member can be a lead of a single event. Whoever creates an event and all clan admins become its leads; admins and event managers can always manage every event. When an event has no leads of its own, its admins and event managers approve seat swaps and are listed as contacts.
+**Organizers** are set per event, on top of the clan role. They edit that event, its attendance and seats, and can add co-organizers. Any member can be an organizer of a single event. Whoever creates an event and all clan admins become its organizers; admins and event managers can always manage every event. When an event has no organizers of its own, its admins and event managers approve seat swaps and are listed as contacts.
 
 ## Clan settings
 
@@ -62,7 +62,7 @@ Everyone in a clan has one **clan role**:
 
 **Can members claim guests?** An admin confirms each claim (default), same name or nick moves over right away, or only with the guest's own link. See [Members claiming a guest](members-guests.md#members-claiming-a-guest).
 
-**How are members shown?** Pick how people appear on event pages, the seat map, the clan page, in the Discord bot and where leads manage the clan (event *Manage*, clan settings › *Members* and *Guests*, stats):
+**How are members shown?** Pick how people appear on event pages, the seat map, the clan page, in the Discord bot and where organizers manage the clan (event *Manage*, clan settings › *Members* and *Guests*, stats):
 
 | Name display | Example |
 | --- | --- |
@@ -72,7 +72,7 @@ Everyone in a clan has one **clan role**:
 
 The nick is the one for that event or LAN type, as always. Someone without a nick of their own shows as *Mike K.* in the shorter modes. When the display leaves part of the name out, the attendee list in event *Manage*, the member and guest lists in clan settings and a member's profile (for admins, recruiters and the member themself) show the full name in small print below it, so ticket checks still work, and search finds people by their full name too. The audit log, exports, the guest claim list and the admin page always use the full name.
 
-**Verified check mark:** a green check mark after a name means the person has their own Seatbit account (they signed in with Discord). [Guests](members-guests.md#guests) a lead typed in don't have it until they take their guest over.
+**Verified check mark:** a green check mark after a name means the person has their own Seatbit account (they signed in with Discord). [Guests](members-guests.md#guests) an organizer typed in don't have it until they take their guest over.
 
 ## LAN types
 
@@ -93,7 +93,7 @@ New events are created from a type and copy its values: the shared details, plus
 | Reminders | Your clan | Days before the start the reminder goes out. |
 | Discord | Your clan | Where the bot posts these events, their reminders and news: the linked channel, a thread per event or a channel per event. See [Discord](discord.md#thread-or-channel-per-event). |
 
-The type's page in your clan also holds your clan's **organizer contacts** and **lead to-dos** for it, see [Lead to-dos and contacts](lead-todos.md). Other clans don't see them. **Remove from your clan** takes the type off your list with your defaults, contacts and to-dos for it; events of that type stay as they are.
+The type's page in your clan also holds your clan's **event contacts** and **organizer to-dos** for it, see [Organizer to-dos and event contacts](lead-todos.md). Other clans don't see them. **Remove from your clan** takes the type off your list with your defaults, contacts and to-dos for it; events of that type stay as they are.
 
 Members set a nick and their user ID **per LAN type**, so they enter their name for the event's own site once, not every year.
 
@@ -107,7 +107,7 @@ Many LAN sites have a public page per participant, e.g. `https://example.com/use
 - in *Manage → People*, in the seat plan's details and in the CSV export,
 - on the member's clan profile and their own profile.
 
-An event can have its own link (event *Settings*); empty means the LAN type's. Without a profile link, LAN IDs stay visible to leads, admins and the member only.
+An event can have its own link (event *Settings*); empty means the LAN type's. Without a profile link, LAN IDs stay visible to organizers, admins and the member only.
 
 ## Stats
 

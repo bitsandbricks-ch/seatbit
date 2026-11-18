@@ -63,11 +63,11 @@ function TermsEn({ legal, payments, subs, donations, n, refund }: Props) {
         <li>You can delete your account at any time on your <Link href="/profile">profile</Link> (see the <Link href="/privacy">Privacy Policy</Link>).</li>
       </ul>
 
-      <h2>3. Clans, leads and admins</h2>
+      <h2>3. Clans, organizers and admins</h2>
       <p>
         Anyone can create a clan. Clan admins decide who can join, manage LAN types and events, and may approve,
-        add or remove members. Leads of an event can see and edit the attendance, ticket status, seat wishes and seat
-        assignments of that event. Clan admins and leads must only use this information to organise the group&apos;s
+        add or remove members. Organizers of an event can see and edit the attendance, ticket status, seat wishes and seat
+        assignments of that event. Clan admins and organizers must only use this information to organise the group&apos;s
         trip to the LAN, and must not copy it elsewhere for other purposes.
       </p>
       <p>
@@ -207,11 +207,11 @@ function TermsDe({ legal, payments, subs, donations, n, refund }: Props) {
         <li>Du kannst dein Konto jederzeit in deinem <Link href="/profile">Profil</Link> löschen (siehe <Link href="/privacy">Datenschutzerklärung</Link>).</li>
       </ul>
 
-      <h2>3. Clans, Leads und Admins</h2>
+      <h2>3. Clans, Organisatoren und Admins</h2>
       <p>
         Alle können einen Clan erstellen. Clan-Admins entscheiden, wer beitreten darf, verwalten LAN-Typen und Events
-        und können Mitglieder annehmen, hinzufügen oder entfernen. Leads eines Events sehen und bearbeiten Teilnahme,
-        Ticketstatus, Platzwünsche und Platzzuteilung dieses Events. Clan-Admins und Leads dürfen diese Angaben nur
+        und können Mitglieder annehmen, hinzufügen oder entfernen. Organisatoren eines Events sehen und bearbeiten Teilnahme,
+        Ticketstatus, Platzwünsche und Platzzuteilung dieses Events. Clan-Admins und Organisatoren dürfen diese Angaben nur
         nutzen, um die Reise der Gruppe an die LAN zu organisieren, und sie nicht für andere Zwecke anderswohin kopieren.
       </p>
       <p>

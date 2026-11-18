@@ -41,7 +41,7 @@ test.describe("seat swaps", () => {
     await ben.goto(`/lans/${id}?tab=seats`);
     await expect(ben.getByText("Next to Chiara")).toBeVisible();
     await ben.getByRole("button", { name: "Swap", exact: true }).click();
-    await expect(ben.getByText("You agreed. Waiting for a lead to approve.")).toBeVisible();
+    await expect(ben.getByText("You agreed. Waiting for an organizer to approve.")).toBeVisible();
     // Nothing moves until a lead approves.
     expect([seatOf(id, "anna"), seatOf(id, "ben")]).toEqual(["A1", "A2"]);
 

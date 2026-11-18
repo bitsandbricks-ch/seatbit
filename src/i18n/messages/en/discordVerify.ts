@@ -14,7 +14,7 @@ export const discordVerify = {
   linked: "Discord linked",
   // Bot
   noServerClan: "This server isn't linked to a clan yet. Run `/seatbit here` first.",
-  needAdmin: "Only leads who manage the members of **{clan}** can check them.",
+  needAdmin: "Only organizers who manage the members of **{clan}** can check them.",
   result: "Checked **{clan}**: {verified} of {total} members are on this server and now verified.",
   missing: "Not on this server ({count}): {names}",
   noDiscord: "No Discord linked ({count}): {names}",

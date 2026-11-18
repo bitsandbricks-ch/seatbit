@@ -13,6 +13,7 @@ export function LanChecklist({
   variant = "list",
   answer,
   links = {},
+  footer,
 }: {
   lanId: string;
   steps: ChecklistStep[];
@@ -24,6 +25,8 @@ export function LanChecklist({
   answer?: ReactNode;
   /** strip only: where an open step gets done, so the checklist takes you there instead of just naming the tab. */
   links?: Partial<Record<StepKey, string>>;
+  /** strip only: a last line under the steps, e.g. the "How this event works" button. */
+  footer?: ReactNode;
 }) {
   const { done, total } = progress(steps);
   if (variant === "strip")
@@ -37,6 +40,7 @@ export function LanChecklist({
         canReportTicket={canReportTicket}
         answer={answer}
         links={links}
+        footer={footer}
       />
     );
   return (
@@ -128,10 +132,12 @@ function ChecklistStrip({
   canReportTicket,
   answer,
   links,
+  footer,
 }: {
   lanId: string;
   steps: ChecklistStep[];
   answer?: ReactNode;
+  footer?: ReactNode;
   links: Partial<Record<StepKey, string>>;
   done: number;
   total: number;
@@ -255,6 +261,7 @@ function ChecklistStrip({
       ) : (
         focus && folded(focus, steps.indexOf(focus))
       )}
+      {footer && <div className="mt-3 border-t border-line pt-2.5">{footer}</div>}
     </section>
   );
 }

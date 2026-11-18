@@ -17,7 +17,7 @@ export const manage: Messages["manage"] = {
   ourSeatsHint:
     "Trag die Plätze ein, die das Event der Gruppe gegeben hat, und verteil sie hier oder im Tab Teilnehmende. «Halten» nimmt einen Platz aus der automatischen Verteilung, z. B. für einen Gast.",
   seatSteps: "Platz-Schritte",
-  final: "fix",
+  final: "definitiv",
   notFinal: "nicht fix",
   seatSwaps: "Platztausch",
   toApprove: "{count} zu bestätigen",
@@ -78,11 +78,11 @@ export const manage: Messages["manage"] = {
     "Postet in {channels} Kanal/Kanäle; diese LAN ist in {posts} gepostet. Mitglieder antworten mit den Knöpfen unter dem Post, die Teilnehmerliste aktualisiert sich live und Fristen-Erinnerungen werden automatisch gepostet (mit Erwähnung aller, die Discord verknüpft haben).",
   whatsappHint: "Fertige Nachrichten für die Community. Kopiere eine und füg sie in die Gruppe ein.",
   details: "Details",
-  leads: "Leads",
-  leadsHint: "Leads verwalten diese LAN und werden Mitgliedern als Kontakt angezeigt. Globale Admins können sie immer auch verwalten.",
+  leads: "Organisatoren",
+  leadsHint: "Organisatoren verwalten diese LAN und werden Mitgliedern als Kontakt angezeigt. Globale Admins können sie immer auch verwalten.",
   nextYear: "Nächstes Jahr",
   nextYearHint:
-    "Kopiert dieses Event als neuen Entwurf ein Jahr später: Details, Links, Fristen, Platzblock (leer) und Leads. Der Link zum Sitzplan des Events fällt weg, er ändert jedes Jahr.",
+    "Kopiert dieses Event als neuen Entwurf ein Jahr später: Details, Links, Fristen, Platzblock (leer) und Organisatoren. Der Link zum Sitzplan des Events fällt weg, er ändert jedes Jahr.",
   cancel: "Absagen",
   dangerZone: "Gefahrenzone",
   deleteLan: "Diese LAN löschen",

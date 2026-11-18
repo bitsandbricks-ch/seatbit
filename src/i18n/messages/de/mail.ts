@@ -11,7 +11,7 @@ export const mail: Messages["mail"] = {
   sentWith: "Gesendet mit",
   textFooter: "Gesendet mit Seatbit. E-Mail-Einstellungen: {settings}\nDatenschutz: {privacy}\nNutzungsbedingungen: {terms}",
   seatInfo: "Du sitzt auf {seat}.",
-  seatInfoBook: "Du sitzt auf {seat}. Die Leads buchen ihn für dich auf der Event-Seite.",
+  seatInfoBook: "Du sitzt auf {seat}. Die Organisatoren buchen ihn für dich auf der Event-Seite.",
   yourClan: "deinem Clan",
-  seatInfoNone: "Du hast noch keinen Platz, ein Lead meldet sich bei dir.",
+  seatInfoNone: "Du hast noch keinen Platz, ein Organisator meldet sich bei dir.",
 };

@@ -6,7 +6,8 @@ import { btnPrimary, input } from "./ui";
 import { useT } from "@/i18n/client";
 import { useRunAction } from "./action-form";
 import { MAX_NEAR, MAX_WISHES, addRule, changeRulePerson, isPersonRule, isRanked, moveRule, type SeatRule } from "@/lib/seat-rules";
-import { wishIcon, wishText } from "@/lib/wish-text";
+import { wishText } from "@/lib/wish-text";
+import { Icon } from "./icons";
 
 type Wishes = { rules: SeatRule[]; note: string };
 type AddKind = "next" | "near" | "seat" | "row";
@@ -29,6 +30,7 @@ export function SeatWishes({
   initial,
   nearRange,
   member,
+  fans = [],
 }: {
   lanId: string;
   /** People who can be picked for near / next to / not next to. */
@@ -43,6 +45,8 @@ export function SeatWishes({
   nearRange: number;
   /** A lead edits this member's wishes instead of their own. */
   member?: { id: string; name: string };
+  /** Who wished to sit next to or near me: shown as info, with a quick "add" back. */
+  fans?: { userId: string; name: string; kind: "next" | "near" }[];
 }) {
   const t = useT();
   const [rules, setRules] = useState<SeatRule[]>(initial.rules);
@@ -210,8 +214,39 @@ export function SeatWishes({
   const iconBtn =
     "inline-flex size-9 items-center justify-center rounded-md text-muted transition hover:bg-line hover:text-fg disabled:pointer-events-none disabled:opacity-30";
 
+  // People who wished for me and aren't in my own friendly wishes yet get a quick "add".
+  const mine = (id: string) => rules.some((r) => (r.kind === "next" || r.kind === "near") && r.userId === id);
+  const fanBlock = fans.length > 0 && (
+    <div className="rounded-md border border-bit/30 bg-bit-soft px-3 py-2.5">
+      <p className="flex items-center gap-1.5 font-medium text-fg">
+        <Icon name="near" className="size-4 text-bit" />
+        {t("wishes.fans.title")}
+      </p>
+      <ul className="mt-2 flex flex-wrap gap-1.5">
+        {fans.map((f) => (
+          <li key={f.userId} className="inline-flex items-center gap-1 rounded-full border border-line bg-surface py-0.5 pl-2.5 pr-1">
+            <span>{f.name}</span>
+            <span className="text-xs text-muted">· {t(f.kind === "next" ? "wishes.fans.next" : "wishes.fans.near")}</span>
+            {!mine(f.userId) && !member && (
+              <button
+                type="button"
+                disabled={pending || nearFull || full}
+                onClick={() => save(addRule(rules, { kind: "near", userId: f.userId }))}
+                title={nearFull ? t("wishes.nearFull", { max: MAX_NEAR }) : undefined}
+                className="ml-0.5 rounded-full px-2 py-0.5 text-xs font-medium text-bit hover:bg-raised disabled:opacity-40"
+              >
+                {t("wishes.fans.add")}
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+
   return (
     <div className="space-y-4 text-sm">
+      {fanBlock}
       {member && (
         <label className="flex items-start gap-2 rounded-md bg-raised/60 px-3 py-2.5">
           <input
@@ -271,8 +306,8 @@ export function SeatWishes({
                   {i + 1}
                 </span>
                 <span className="ml-1 min-w-0 flex-1 leading-tight [overflow-wrap:anywhere]">
-                  <span aria-hidden className="mr-1.5">
-                    {wishIcon(r)}
+                  <span aria-hidden className="mr-1.5 inline-block align-[-3px] text-muted">
+                    <Icon name={r.kind} />
                   </span>
                   {label}
                   {addedBy(r) && <span className="mt-0.5 block text-xs text-muted">{addedBy(r)}</span>}
@@ -382,8 +417,8 @@ export function SeatWishes({
 
       <fieldset disabled={pending} className="space-y-2 border-t border-line pt-4">
         <legend className="sr-only">{t("wishes.avoid.title")}</legend>
-        <p aria-hidden className="text-fg/90">
-          <span className="mr-1.5">🙅</span>
+        <p aria-hidden className="flex items-center gap-1.5 text-fg/90">
+          <Icon name="avoid" className="size-4 text-muted" />
           {t("wishes.avoid.title")}
         </p>
         <p className="text-xs text-muted">{t("wishes.avoid.hint")}</p>

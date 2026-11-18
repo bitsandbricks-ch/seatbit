@@ -1,6 +1,6 @@
 export const seatVariants = {
   title: "Seat plan variants",
-  hint: "Save who sits where under a name, try something else, and switch back. Only leads see variants; members see the live plan once it's final. Every variant is checked against today's seat wishes.",
+  hint: "Save who sits where under a name, try something else, and switch back. Only organizers see variants; members see the live plan once it's final. Every variant is checked against today's seat wishes.",
   name: "Variant name",
   namePlaceholder: "Name, e.g. Friends up front (optional)",
   thoroughName: "Exact search",

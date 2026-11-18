@@ -28,7 +28,7 @@ test.describe("interest check", () => {
 
     // No tabs, no checklist: just the answer and the list.
     await expect(page.getByRole("link", { name: /^(Seats|Trip)/ })).toHaveCount(0);
-    await expect(page.getByText("Seats, travel, packing, games and costs open once the Leads open sign-up.")).toBeVisible();
+    await expect(page.getByText("Seats, travel, packing, games and costs open once the organizers open sign-up.")).toBeVisible();
     // Members can't remind others.
     await expect(none.getByRole("button", { name: "Remind" })).toHaveCount(0);
 

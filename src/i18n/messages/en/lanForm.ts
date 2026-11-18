@@ -16,7 +16,7 @@ export const lanForm = {
   website: "Event website",
   plan: "Event seat plan",
   planHint:
-    "Where the leads book the group's seats on the event's own site (e.g. the lal.gg Sitzplan). The link changes every year, so set it per event.",
+    "Where the organizers book the group's seats on the event's own site (e.g. the lal.gg Sitzplan). The link changes every year, so set it per event.",
   profile: "Member profile link",
   profileHint: "A member's profile on the event's site, with {id} where their LAN ID goes. Empty uses the LAN type's link.",
   rough: "Rough date",

@@ -60,7 +60,7 @@ export const clanSettings = {
   profileEvents: "Profile and events",
   removeGuest: "Remove guest",
   logHint:
-    "Changes leads and admins made in this clan and its events. Members' own answers aren't listed. Entries are kept for a year.",
+    "Changes organizers and admins made in this clan and its events. Members' own answers aren't listed. Entries are kept for a year.",
   roles: "Roles",
-  rolesFoot: "Leads of a single event are set on the event's manage page.",
+  rolesFoot: "Organizers of a single event are set on the event's manage page.",
 };

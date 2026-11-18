@@ -16,7 +16,7 @@ export const discordVerify: Messages["discordVerify"] = {
   linked: "Discord verknüpft",
   // Bot
   noServerClan: "Dieser Server ist noch mit keinem Clan verknüpft. Führe zuerst `/seatbit here` aus.",
-  needAdmin: "Nur Leads, die die Mitglieder von **{clan}** verwalten, können sie prüfen.",
+  needAdmin: "Nur Organisatoren, die die Mitglieder von **{clan}** verwalten, können sie prüfen.",
   result: "**{clan}** geprüft: {verified} von {total} Mitgliedern sind auf diesem Server und jetzt bestätigt.",
   missing: "Nicht auf diesem Server ({count}): {names}",
   noDiscord: "Kein Discord verknüpft ({count}): {names}",

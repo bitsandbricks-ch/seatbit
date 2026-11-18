@@ -19,7 +19,7 @@ export const missingSteps: Messages["missingSteps"] = {
     ticket: "Kommen, haben aber nicht abgehakt, dass sie ein Ticket haben. Der Stupser verlinkt den Ticketshop und die Frist.",
     nick: "Kommen ohne Nick für den Sitzplan.",
     seat: "Selbstwahl ist an und sie haben ein Ticket, aber noch keinen Platz.",
-    book: "Haben einen festen Platz, aber noch kein Lead hat ihn auf dem Sitzplan des Events als gebucht abgehakt.",
+    book: "Haben einen definitiven Platz, aber noch kein Organisator hat ihn auf dem Sitzplan des Events als gebucht abgehakt.",
     confirm: "Sagen, sie hätten ein Ticket gekauft. Prüf es und bestätige es.",
     assign: "Kommen, aber ohne Platz im Block der Gruppe.",
   },

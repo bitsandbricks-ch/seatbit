@@ -59,28 +59,29 @@ test.describe("event guide", () => {
     await expect(anna.getByText("Zug")).toBeVisible();
   });
 
-  test("food orders sit in an On site tab that members get only while the event runs", async ({ as }) => {
+  test("orders sit in an Orders tab that members get only while the event runs", async ({ as }) => {
     const id = createEvent({ attendees: [{ who: "anna" }] });
 
     const anna = await as("anna");
     await anna.goto(`/lans/${id}`);
     await expect(tabs(anna).getByRole("link", { name: /^Trip/ })).toBeVisible();
-    await expect(tabs(anna).getByRole("link", { name: /^On site/ })).toHaveCount(0);
+    await expect(tabs(anna).getByRole("link", { name: /^Orders/ })).toHaveCount(0);
     await anna.goto(`/lans/${id}?tab=food`);
-    await expect(anna.getByText("Food orders show up here once the event starts.")).toBeVisible();
+    await expect(anna.getByText("Food and shopping orders show up here once the event starts.")).toBeVisible();
 
-    // Leads can set an order up before the event.
+    // Leads can set an order up before the event; the tab shows it's hidden from the others.
     const alex = await as("alex");
     await alex.goto(`/lans/${id}`);
-    await expect(tabs(alex).getByRole("link", { name: /^On site/ })).toBeVisible();
+    await expect(tabs(alex).getByRole("link", { name: /^Orders/ })).toBeVisible();
+    await expect(tabs(alex).getByRole("link", { name: /Orders/ })).toHaveAttribute("title", "Only organizers see this until the event starts");
 
     // The event starts: members get it too.
     const now = Date.now();
     db().update(schema.lan).set({ startsAt: new Date(now - 3600_000), endsAt: new Date(now + 86400_000) }).where(eq(schema.lan.id, id)).run();
     await anna.goto(`/lans/${id}`);
-    await tabs(anna).getByRole("link", { name: /^On site/ }).click();
+    await tabs(anna).getByRole("link", { name: /^Orders/ }).click();
     await expect(anna).toHaveURL(new RegExp(`\\?tab=food$`));
-    await expect(anna.getByText("Food orders show up here once the event starts.")).toHaveCount(0);
+    await expect(anna.getByText("Food and shopping orders show up here once the event starts.")).toHaveCount(0);
   });
 
   test("the Seats tab opens on your own seat", async ({ as }) => {

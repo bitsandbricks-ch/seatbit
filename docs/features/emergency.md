@@ -1,8 +1,8 @@
 # Emergency contact and dietary needs
 
-Members can leave an emergency contact and their dietary needs or allergies. The leads of an event they come to see them, so they know whom to call if something happens at the LAN and what to keep in mind when ordering food.
+Members can leave an emergency contact and their dietary needs or allergies. The organizers of an event they come to see them, so they know whom to call if something happens at the LAN and what to keep in mind when ordering food.
 
-**Who:** members fill it in, leads see it · **Where:** *Profile → Emergency*; event *Manage → People → Emergency*
+**Who:** members fill it in, organizers see it · **Where:** *Profile → Emergency*; event *Manage → People → Emergency*
 
 ## Fill it in
 
@@ -11,7 +11,7 @@ On *Profile → Emergency*, all optional:
 | Field | |
 | --- | --- |
 | **Emergency contact** | A name, e.g. "Anna Muster (sister)". |
-| **Their phone number** | Tapping it on the lead page calls the number. |
+| **Their phone number** | Tapping it on the organizer page calls the number. |
 | **Dietary needs and allergies** | Free text, e.g. "vegetarian" or "nut allergy, carries an EpiPen". |
 
 Clear all fields and save to remove it.
@@ -24,14 +24,14 @@ Clear all fields and save to remove it.
 </figure>
 <figure markdown>
 
-![Emergency tab for leads](../screenshots/phone-manage-emergency.png){ .shot }
+![Emergency tab for organizers](../screenshots/phone-manage-emergency.png){ .shot }
 
 </figure>
 </div>
 
-## For leads
+## For organizers
 
-*Manage → People → Emergency* lists everyone coming (not the waitlist) with their seat, emergency contact and dietary needs, and shows how many filled it in. A second card collects all dietary needs for food orders. On the event's *Food* tab, leads see how many people coming noted dietary needs, with a link to the list.
+*Manage → People → Emergency* lists everyone coming (not the waitlist) with their seat, emergency contact and dietary needs, and shows how many filled it in. A second card collects all dietary needs for food orders. On the event's *Food* tab, organizers see how many people coming noted dietary needs, with a link to the list.
 
 ![Emergency tab on desktop](../screenshots/desktop-manage-emergency.png){ .shot }
 
@@ -39,8 +39,8 @@ Clear all fields and save to remove it.
 
 Allergies can be health data, so access is narrow:
 
-- Only the event's leads and the clan's event managers (admins, organizers) see it, and only for people coming to that event. Platform staff don't get the tab just for being staff.
+- Only the event's organizers and the clan's event managers see it, and only for people coming to that event. Platform staff don't get the tab just for being staff.
 - The tab closes two days after the event ends.
-- Each time a lead opens the tab, the clan's [audit log](audit-log.md) notes it (at most once an hour per lead and event).
+- Each time an organizer opens the tab, the clan's [audit log](audit-log.md) notes it (at most once an hour per organizer and event).
 - It's never sent by mail or Discord and isn't in the attendee CSV export.
 - It's in the member's own **Download my data** file and is deleted with the account. See [Accounts and profile](accounts.md#your-data).

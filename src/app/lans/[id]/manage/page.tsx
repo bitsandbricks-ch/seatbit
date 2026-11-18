@@ -860,7 +860,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
                 <li key={n.id} className="text-sm">
                 <p className="whitespace-pre-wrap text-fg/90">{n.text}</p>
                 <p className="mt-1 flex items-center gap-3 text-xs text-faint">
-                  {n.authorId ? (names.get(n.authorId) ?? "Lead") : "Lead"} · {fmtDate(n.createdAt, t.locale)}
+                  {n.authorId ? (names.get(n.authorId) ?? t("event.lead")) : t("event.lead")} · {fmtDate(n.createdAt, t.locale)}
                   <DeleteNewsButton id={n.id} />
                 </p>
                 </li>

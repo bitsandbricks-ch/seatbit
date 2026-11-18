@@ -3,7 +3,7 @@ import type { Messages } from "../en";
 export const wishes: Messages["wishes"] = {
   empty: "Noch keine Wünsche: jeder Platz ist recht. Füg unten einen hinzu.",
   listLabel: "Platzwünsche, der wichtigste zuerst",
-  orderHint: "Die Leads versuchen zuerst den obersten Wunsch. Zieh an ⠿ oder nutz die Pfeile, um die Reihenfolge zu ändern.",
+  orderHint: "Die Organisatoren versuchen zuerst den obersten Wunsch. Zieh an ⠿ oder nutz die Pfeile, um die Reihenfolge zu ändern.",
   rule: {
     next: "Direkt neben {name}",
     near: "Nahe bei {name} (max. {range} Plätze)",
@@ -31,9 +31,15 @@ export const wishes: Messages["wishes"] = {
   },
   avoid: {
     title: "Nicht direkt neben",
-    hint: "So viele du willst. Sie haben keine Reihenfolge: die Planung hält sie immer möglichst ein.",
+    hint: "So viele du willst, ohne Reihenfolge. Die Organisatoren versuchen immer, sie einzuhalten.",
     none: "Niemand.",
     rule: "Nicht direkt neben {name}",
+  },
+  fans: {
+    title: "Möchten neben dir sitzen",
+    next: "direkt neben dir",
+    near: "in deiner Nähe",
+    add: "+ Als Wunsch",
   },
   addTitle: "Wunsch hinzufügen",
   addButton: "Hinzufügen",
@@ -51,9 +57,9 @@ export const wishes: Messages["wishes"] = {
   up: "Nach oben: {rule}",
   down: "Nach unten: {rule}",
   remove: "Entfernen: {rule}",
-  note: "Sonst noch etwas für die Leads?",
+  note: "Sonst noch etwas für die Organisatoren?",
   notePlaceholder: "z. B. brauche eine Steckdose für einen zweiten PC",
-  saved: "Gespeichert. Die Leads versuchen, es möglich zu machen.",
+  saved: "Gespeichert. Die Organisatoren versuchen, es möglich zu machen.",
   errors: {
     tooManyNear: "Maximal {max} Personen nahe bei dir. Entfern zuerst eine.",
     tooMany: "Maximal {max} Platzwünsche. Entfern zuerst einen.",

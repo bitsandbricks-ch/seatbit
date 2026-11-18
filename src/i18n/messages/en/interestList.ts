@@ -9,6 +9,6 @@ export const interestList = {
   remindQ: "Remind {count} who haven't answered?",
   remindBody: "They get a Discord DM or an email asking if they'd come. People reminded in the last 12 hours are skipped.",
   remindYes: "Send reminder",
-  later: "Seats, travel, packing, games and costs open once the Leads open sign-up.",
+  later: "Seats, travel, packing, games and costs open once the organizers open sign-up.",
   laterOn: "Seats, travel, packing, games and costs open with sign-up on {date}.",
 };

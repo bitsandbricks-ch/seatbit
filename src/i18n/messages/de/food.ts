@@ -1,8 +1,8 @@
 import type { Messages } from "../en";
 
 export const food: Messages["food"] = {
-  intro: "Pizza holen oder Burger bestellen an der LAN: Wer geht, startet eine Bestellung, alle tragen ein, was sie wollen, und es gibt eine Liste zum Vorlesen plus wer wie viel schuldet.",
-  none: "Noch keine Essensbestellungen.",
+  intro: "Pizza holen, Burger bestellen oder ein Einkauf im Supermarkt an der LAN: Wer geht, startet eine Bestellung, alle tragen ein, was sie möchten, und am Schluss gibt es eine Liste zum Vorlesen und wer wie viel schuldet.",
+  none: "Noch keine Bestellungen.",
   status: { open: "Offen", closed: "Geschlossen", ordered: "Bestellt" },
   lastCallPassed: "Bestellschluss vorbei",
   lastCallAt: "Bestellschluss {time}",
@@ -33,8 +33,8 @@ export const food: Messages["food"] = {
   reopen: "Wieder öffnen",
   tapAgain: "Nochmals tippen zum Löschen",
   delete: "Löschen",
-  start: "+ Essensbestellung starten",
-  startTitle: "Essensbestellung starten",
+  start: "+ Bestellung starten",
+  startTitle: "Bestellung starten",
   titlePh: "Pizza Samstagabend",
   from: "Von",
   shopPh: "Pizzeria Roma",

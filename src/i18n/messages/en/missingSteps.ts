@@ -17,7 +17,7 @@ export const missingSteps = {
     ticket: "Coming, but haven't ticked that they have a ticket. The nudge links the ticket shop and the deadline.",
     nick: "Coming without a nickname for the seat plan.",
     seat: "Self pick is on and they have a ticket, but no seat yet.",
-    book: "Have a final seat, but no lead ticked it as booked on the event's seat plan yet.",
+    book: "Have a final seat, but no organizer ticked it as booked on the event's seat plan yet.",
     confirm: "Said they bought a ticket. Check it and confirm it.",
     assign: "Coming, but without a seat in the group's block.",
   },

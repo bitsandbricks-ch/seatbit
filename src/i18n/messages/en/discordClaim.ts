@@ -2,7 +2,7 @@ export const discordClaim = {
   invalid: "Link no longer works",
   invalidHint: "It's older than a day. Run /claim in your clan's Discord server again for a new one.",
   gone: "Already taken over",
-  goneHint: "That guest isn't waiting anymore. If it was you, you're all set; otherwise talk to your leads.",
+  goneHint: "That guest isn't waiting anymore. If it was you, you're all set; otherwise talk to your organizers.",
   wrong: "Different Discord account",
   wrongHint: "This link is for the Discord account that ran /claim. Sign in with that one.",
   unlinked: "Link Discord first",
