@@ -65,7 +65,7 @@ export const audit: Messages["audit"] = {
   pickOpen: "hat die freie Platzwahl geöffnet{at}",
   pickClose: "hat die freie Platzwahl geschlossen{at}",
   variantSave: "hat den Sitzplan als Variante «{name}» gespeichert{at}",
-  variantThorough: "hat das Ergebnis der gründlichen Sitzplatzsuche als Variante «{name}» gespeichert{at}",
+  variantThorough: "hat das Ergebnis der exakten Platzsuche als Variante «{name}» gespeichert{at}",
   variantPlan: "hat die Variante «{name}» aus den Platzwünschen geplant{at}",
   variantUpdate: "hat den aktuellen Sitzplan in die Variante «{name}» gespeichert{at}",
   variantApply: "hat die Sitzplan-Variante «{name}» übernommen{at}",

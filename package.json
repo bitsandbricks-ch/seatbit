@@ -28,6 +28,7 @@
     "better-auth": "^1.7.20",
     "better-sqlite3": "^13.0.3",
     "drizzle-orm": "^0.45.4",
+    "highs": "^1.15.4",
     "next": "16.4.6",
     "nodemailer": "^10.5.0",
     "react": "19.3.1",

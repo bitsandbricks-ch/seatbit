@@ -2,6 +2,8 @@ import { and, asc, eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { clearSeatBooked } from "./seat-booking";
 import { planPeople } from "./seat-plan";
+import { exactPlan } from "./seat-milp";
+import { clampNearRange } from "./seat-rules";
 import { planSeatsAsync, type PlanEffort } from "./seating";
 import { arrangementOf, movesBetween, seatsWithVariant, type Arrangement } from "./seat-variant-math";
 
@@ -30,13 +32,26 @@ export const liveArrangement = (lanId: string) => arrangementOf(db.select().from
  * whoever sits there, like "Re-plan everyone"; unlike it, nobody's current seat counts, so the
  * leads get a real alternative to compare against their hand-made plan. `until` ends a thorough search.
  */
-export async function planArrangement(lanId: string, effort: PlanEffort = "extended", until?: number): Promise<Arrangement> {
+export async function planArrangement(
+  lanId: string,
+  effort: PlanEffort = "extended",
+  until?: number,
+  report?: { proven?: boolean },
+): Promise<Arrangement> {
   const seats = db.select().from(seat).where(eq(seat.lanId, lanId)).all();
   const everyone = planPeople(lanId);
   const nearRange = db.select({ r: lan.seatNearRange }).from(lan).where(eq(lan.id, lanId)).get()?.r;
   const kept = seats.map((s) => (s.locked ? s : { ...s, userId: null }));
   const seated = new Set(kept.map((s) => s.userId).filter(Boolean));
   const plan = await planSeatsAsync(kept, everyone.filter((p) => !seated.has(p.userId)), everyone, { nearRange, effort, until });
+  if (effort === "thorough" && until !== undefined) {
+    // The exact search starts from the annealing's plan: it proves that's the best, or finds a better one.
+    const occupant = new Map(kept.filter((s) => s.userId).map((s) => [s.id, s.userId!]));
+    for (const [uid, sid] of plan) occupant.set(sid, uid);
+    const exact = await exactPlan(kept, occupant, new Set(plan.keys()), everyone, clampNearRange(nearRange), until);
+    if (report) report.proven = exact.proven;
+    if (exact.plan) for (const [sid, uid] of exact.plan) plan.set(uid, sid);
+  }
   const label = new Map(seats.map((s) => [s.id, s.label]));
   const out = arrangementOf(kept);
   for (const [userId, seatId] of plan) out[label.get(seatId)!] = userId;
