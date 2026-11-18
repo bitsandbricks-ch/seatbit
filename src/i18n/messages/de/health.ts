@@ -38,7 +38,7 @@ export const health: Messages["health"] = {
   discordSettings: "Discord-Einstellungen",
   jobs: "Hintergrundjobs",
   jobsHint: "Seit dem Serverstart ({since}). Läufe über die Cron-URL zählen auch.",
-  job: { reminders: "Erinnerungen", publish: "Geplantes Veröffentlichen", backup: "Datenbank-Backup", restoreTest: "Test-Wiederherstellung" },
+  job: { reminders: "Erinnerungen", publish: "Geplantes Veröffentlichen", backup: "Datenbank-Backup", restoreTest: "Test-Wiederherstellung", backupOffsite: "Backup-Kopie ausser Haus" },
   everyN: { one: "Jede Minute", other: "Alle {count} Minuten" },
   cronOnly: "Eingebaute Prüfung aus, nur Cron-URL",
   runs: { one: "{count} Lauf", other: "{count} Läufe" },

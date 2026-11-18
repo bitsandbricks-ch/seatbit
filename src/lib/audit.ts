@@ -408,6 +408,8 @@ export function describeAudit(
       return t("audit.backupDownload", v);
     case "backup.delete":
       return t("audit.backupDelete", v);
+    case "backup.upload":
+      return t("audit.backupUpload", v);
     default:
       return e.action;
   }

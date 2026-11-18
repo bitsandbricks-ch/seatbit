@@ -6,6 +6,7 @@ export const settingGroups: Messages["settingGroups"] = {
   discord: { title: "Discord", help: "Eine Discord-Application dient für den Login-Button und den Bot." },
   google: { title: "Google-Login", help: "OAuth-Client für den Button «Mit Google anmelden»." },
   automation: { title: "Erinnerungen, Cron & Metriken", help: "Wie fällige Erinnerungen ausgelöst werden, und der Prometheus-Metrik-Endpunkt." },
+  offsite: { title: "Kopien ausser Haus (S3)", help: "Optional. Nach jedem Backup verschlüsselt Seatbit es mit deinem öffentlichen age-Schlüssel und lädt es in einen S3-kompatiblen Bucket. Nur der private Schlüssel, den du weg vom Server aufbewahrst, kann diese Kopien öffnen." },
   backup: { title: "Backups", help: "Seatbit kopiert seine Datenbank im laufenden Betrieb in den Backup-Ordner. Häng diesen Ordner als eigenes Volume ein und kopiere die Dateien auch weg vom Server." },
   billing: { title: "Supporter-Zahlungen", help: "Optional. Clans können diese Instanz mit einer freiwilligen jährlichen oder monatlichen Zahlung unterstützen, und alle können einmalig spenden, über Stripe. Supporter und Spender bekommen ein Abzeichen und ein Dankeschön, nie zusätzliche Funktionen. Standardmässig aus." },
   ops: { title: "Plattform-Discord", help: "Optional. Kanäle auf deinem eigenen Discord-Server, in denen der Bot dem Plattform-Team sagt, was auf dieser Instanz passiert. Der Bot muss auf diesem Server sein." },

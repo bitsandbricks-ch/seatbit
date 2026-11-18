@@ -423,6 +423,7 @@ export const SPECS: Spec[] = [
   { name: "admin/settings/actions.saveMaintenance", allow: PLATFORM_SETTINGS, run: () => settings.saveMaintenance({ ok: true, message: "", at: 0 }, form({ message: "Down soon", startsAt: day(1) })) },
   { name: "admin/backups/actions.backupNow", allow: ["owner"], run: () => backups.backupNow(), effect: "none" },
   { name: "admin/backups/actions.testNewestBackup", allow: ["owner"], run: () => backups.testNewestBackup(), effect: "none" },
+  { name: "admin/backups/actions.uploadNewestBackup", allow: ["owner"], run: () => backups.uploadNewestBackup(), effect: "none" },
   { name: "discord-verify-actions.verifyMyDiscord", allow: SIGNED_IN, run: () => discordVerify.verifyMyDiscord(), effect: "none" },
   { name: "discord-verify-actions.validateClanDiscord", allow: CLAN_MEMBERS_PERM, run: () => discordVerify.validateClanDiscord(fx.clan), effect: "none" },
   { name: "emergency-actions.updateEmergencyInfo", allow: SIGNED_IN, run: () => emergency.updateEmergencyInfo({}, form({ contactName: "Mum", contactPhone: "+41 79 000 00 00", diet: "" })) },

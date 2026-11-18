@@ -63,12 +63,15 @@ export async function register() {
     20_000,
   );
   // Scheduled database backups (interval and folder from the platform settings).
-  // Each new backup then gets a restore test (also ones a cron job wrote).
+  // Each new backup then gets a restore test and, when set up, an encrypted off-site copy
+  // (also ones a cron job wrote).
   const { runScheduledBackup } = await import("./lib/backup");
   const { runScheduledDrill } = await import("./lib/backup-drill");
+  const { runScheduledOffsite } = await import("./lib/backup-offsite");
   const backupTick = () =>
     void runScheduledBackup()
       .then(() => runScheduledDrill())
+      .then(() => runScheduledOffsite())
       .catch((e) => console.error("[backup] failed", e));
   // First check shortly after start, then look every minute whether the interval has passed.
   setTimeout(() => {

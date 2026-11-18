@@ -154,6 +154,7 @@ export const audit: Messages["audit"] = {
   backupCreate: "hat das Datenbank-Backup {file} erstellt",
   backupDownload: "hat das Datenbank-Backup {file} heruntergeladen",
   backupDelete: "hat das Datenbank-Backup {file} gelöscht",
+  backupUpload: "hat eine verschlüsselte Kopie des Datenbank-Backups {file} hochgeladen",
   platformRole: "hat die Plattform-Rolle von {who} auf {role} gesetzt",
   userSuspend: "hat {who} gesperrt",
   userUnsuspend: "hat {who} wieder freigeschaltet",

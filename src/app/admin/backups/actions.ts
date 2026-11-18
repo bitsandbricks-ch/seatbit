@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { audit } from "@/lib/audit";
 import { BackupError, createBackup, deleteBackup } from "@/lib/backup";
 import { drillEnabled, testRestore } from "@/lib/backup-drill";
+import { uploadBackup } from "@/lib/backup-offsite";
+import { fmtBytes } from "@/lib/format";
 import { requirePlatform } from "@/lib/session";
 import { getT } from "@/i18n/server";
 import type { ActionResult } from "../settings/actions";
@@ -48,5 +50,20 @@ export async function testNewestBackup(): Promise<ActionResult> {
       : done(false, t("backups.drill.failedNow", { name: r.name, error: r.error ?? "" }));
   } catch (e) {
     return done(false, t("backups.drill.failedNow", { name: "–", error: e instanceof Error ? e.message : String(e) }));
+  }
+}
+
+/** Encrypts the newest backup and uploads it to the bucket now (e.g. to try the settings). */
+export async function uploadNewestBackup(): Promise<ActionResult> {
+  const me = await requirePlatform("owner");
+  const t = await getT();
+  try {
+    const r = await uploadBackup();
+    revalidatePath("/admin/backups");
+    if (!r.ok) return done(false, t("backups.offsite.failedNow", { name: r.name, error: r.error ?? "" }));
+    audit({ actorId: me.id, action: "backup.upload", data: { file: r.name } });
+    return done(true, t("backups.offsite.uploadedNow", { name: r.name, size: fmtBytes(r.size ?? 0) }));
+  } catch (e) {
+    return done(false, t("backups.offsite.failedNow", { name: "–", error: e instanceof Error ? e.message : String(e) }));
   }
 }
