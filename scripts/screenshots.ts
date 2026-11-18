@@ -300,6 +300,7 @@ const SHOTS: Shot[] = [
   { name: "desktop-manage-seats", who: "alex", path: `${LAKESIDE}/manage?tab=seats`, act: seat("F12") },
   { name: "desktop-manage-seat-variants", who: "alex", path: `${LAKESIDE}/manage?tab=seats`, act: scrollTo("seat-variants") },
   { name: "desktop-manage-variant-preview", who: "alex", path: `${LAKESIDE}/manage?tab=seats&variant=demo-variant-swap` },
+  { name: "phone-manage-variant-compare", who: "alex", path: `${LAKESIDE}/manage?tab=seats&variant=demo-variant-swap&vs=demo-variant-window` },
   { name: "desktop-manage-chat", who: "alex", path: `${LAKESIDE}/manage?tab=chat` },
   { name: "desktop-manage-settings", who: "alex", path: `${LAKESIDE}/manage?tab=settings`, full: true },
   { name: "desktop-new-event", who: "alex", path: `${CLAN}/lans/new` },

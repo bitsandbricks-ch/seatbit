@@ -22,6 +22,8 @@ export type VariantStats = {
   seated: number;
   /** Weighted seat wish score 0..1, null when nobody has wishes that can be checked. */
   score: number | null;
+  /** People who sit somewhere else than in the compared plan; undefined when this is that plan. */
+  vsBase?: number;
 };
 
 export type VariantRow = VariantStats & {
@@ -37,6 +39,14 @@ const pct = (x: number | null) => (x === null ? "–" : `${Math.round(x * 100)}%
 const scoreText = (x: number | null) => (x === null ? "text-muted" : x >= 0.8 ? "text-bit" : x >= 0.5 ? "text-warn" : "text-danger");
 const small = "!min-h-8 !px-2.5 !py-1 text-xs";
 
+/** Manage → Seats with a variant on the map (`variant`) and the plan it is compared with (`vs`, live when null). */
+export function seatsHref(lanId: string, variant: string | null, vs: string | null) {
+  const q = new URLSearchParams({ tab: "seats" });
+  if (variant) q.set("variant", variant);
+  if (vs) q.set("vs", vs);
+  return `/lans/${lanId}/manage?${q}`;
+}
+
 /**
  * Manage → Seats: the leads' saved seat arrangements. Save the live plan under a name, let the
  * planner make one from the wishes, compare them against the live plan (seated, wish score, how
@@ -48,6 +58,7 @@ export function SeatVariants({
   going,
   rows,
   previewId,
+  baseId,
   final,
   searching,
 }: {
@@ -56,6 +67,8 @@ export function SeatVariants({
   going: number;
   rows: VariantRow[];
   previewId: string | null;
+  /** The variant everything is compared with; null: the live plan. */
+  baseId: string | null;
   /** The plan is final: applying a variant tells everyone who moved. */
   final: boolean;
   /** A thorough search runs in the background and will save variant `name`, by `until` at the latest. */
@@ -63,8 +76,11 @@ export function SeatVariants({
 }) {
   const t = useT();
   const run = useRunAction();
+  const router = useRouter();
   const [pending, start] = useTransition();
   const [name, setName] = useState("");
+  const liveName = t("seatVariants.live");
+  const baseName = rows.find((r) => r.id === baseId)?.name ?? null;
   const full = rows.length >= MAX_VARIANTS;
   const create = (fn: typeof saveSeatVariant) =>
     start(async () => {
@@ -99,13 +115,35 @@ export function SeatVariants({
       {searching && <Notice>{t("seatVariants.searching", searching)}</Notice>}
       {full && <p className="text-xs text-warn">{t("seatVariants.full", { max: MAX_VARIANTS })}</p>}
 
+      {/* With one variant, its preview already compares it with the live plan. */}
+      {rows.length > 1 && (
+        <div className="space-y-1">
+          <label className="flex flex-wrap items-center gap-2 text-sm text-muted">
+            {t("seatVariants.compareWith")}
+            <select
+              value={baseId ?? ""}
+              onChange={(e) => router.replace(`${seatsHref(lanId, previewId, e.target.value || null)}#seat-variants`, { scroll: false })}
+              className={`${input} !min-h-9 w-auto min-w-0 max-w-full flex-1 basis-48`}
+            >
+              <option value="">{liveName}</option>
+              {rows.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <p className="text-xs text-faint">{t("seatVariants.compareHint")}</p>
+        </div>
+      )}
+
       <ul className="divide-y divide-line rounded-md border border-line">
-        <li className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 bg-raised/50 px-3 py-2.5">
-          <span className="text-sm font-medium text-fg">{t("seatVariants.live")}</span>
-          <Stats s={live} going={going} />
+        <li className={`flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-3 py-2.5 ${baseId === null ? "bg-raised" : "bg-raised/50"}`}>
+          <span className="text-sm font-medium text-fg">{liveName}</span>
+          <Stats s={live} going={going} base={baseName} isBase={baseId === null && rows.length > 1} />
         </li>
         {rows.map((r) => (
-          <Row key={r.id} lanId={lanId} r={r} going={going} preview={r.id === previewId} final={final} />
+          <Row key={r.id} lanId={lanId} r={r} going={going} preview={r.id === previewId} baseId={baseId} baseName={baseName} final={final} />
         ))}
       </ul>
       {rows.length === 0 && <p className="text-sm text-muted">{t("seatVariants.none")}</p>}
@@ -113,28 +151,54 @@ export function SeatVariants({
   );
 }
 
-function Stats({ s, going, differs }: { s: VariantStats; going: number; differs?: number }) {
+/** `base`: the compared variant's name, null for the live plan. */
+function Stats({ s, going, base, isBase }: { s: VariantStats; going: number; base: string | null; isBase: boolean }) {
   const t = useT();
+  const differs = s.vsBase;
   return (
     <span className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted tabular-nums">
       <span>{t("seatVariants.seated", { seated: s.seated, going })}</span>
       <span>
         {t("seatVariants.wishes")} <span className={`font-medium ${scoreText(s.score)}`}>{pct(s.score)}</span>
       </span>
-      {differs !== undefined &&
-        (differs === 0 ? <Pill tone="emerald">{t("seatVariants.same")}</Pill> : <span>{t("seatVariants.differs", { count: differs })}</span>)}
+      {isBase ? (
+        <Pill>{t("seatVariants.comparing")}</Pill>
+      ) : (
+        differs !== undefined &&
+        (differs === 0 ? (
+          <Pill tone="emerald">{base === null ? t("seatVariants.same") : t("seatVariants.sameAs", { name: base })}</Pill>
+        ) : (
+          <span className={differs > 0 ? "text-warn" : ""}>{t("seatVariants.differs", { count: differs })}</span>
+        ))
+      )}
     </span>
   );
 }
 
-function Row({ lanId, r, going, preview, final }: { lanId: string; r: VariantRow; going: number; preview: boolean; final: boolean }) {
+function Row({
+  lanId,
+  r,
+  going,
+  preview,
+  baseId,
+  baseName,
+  final,
+}: {
+  lanId: string;
+  r: VariantRow;
+  going: number;
+  preview: boolean;
+  baseId: string | null;
+  baseName: string | null;
+  final: boolean;
+}) {
   const t = useT();
   const run = useRunAction();
   const router = useRouter();
   const [pending, start] = useTransition();
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(r.name);
-  const base = `/lans/${lanId}/manage?tab=seats`;
+  const base = seatsHref(lanId, null, baseId);
 
   const rename = () =>
     start(async () => {
@@ -180,7 +244,7 @@ function Row({ lanId, r, going, preview, final }: { lanId: string; r: VariantRow
             <span className="ml-2 text-xs font-normal text-faint">{r.updated}</span>
           </span>
         )}
-        <Stats s={r} going={going} differs={r.differs} />
+        <Stats s={r} going={going} base={baseName} isBase={r.id === baseId} />
       </div>
       <div className="flex flex-wrap gap-1.5">
         {preview ? (
@@ -188,7 +252,7 @@ function Row({ lanId, r, going, preview, final }: { lanId: string; r: VariantRow
             {t("seatVariants.closePreview")}
           </Link>
         ) : (
-          <Link href={`${base}&variant=${encodeURIComponent(r.id)}`} className={`${btnSecondary} ${small}`}>
+          <Link href={seatsHref(lanId, r.id, baseId)} className={`${btnSecondary} ${small}`}>
             {t("seatVariants.preview")}
           </Link>
         )}
@@ -216,7 +280,8 @@ function Row({ lanId, r, going, preview, final }: { lanId: string; r: VariantRow
           onClick={async () => {
             if (!(await ask({ title: t("seatVariants.deleteConfirm", { name: r.name }), confirm: t("seatVariants.delete"), danger: true }))) return;
             start(async () => {
-              if (await run(() => deleteSeatVariant(r.id), t("seatVariants.deleted", { name: r.name })) && preview) router.replace(base);
+              if ((await run(() => deleteSeatVariant(r.id), t("seatVariants.deleted", { name: r.name }))) && (preview || r.id === baseId))
+                router.replace(seatsHref(lanId, null, r.id === baseId ? null : baseId));
             });
           }}
         >
@@ -284,6 +349,7 @@ export function VariantPreviewBar({
   liveScore,
   worse,
   better,
+  base,
 }: {
   lanId: string;
   id: string;
@@ -296,26 +362,35 @@ export function VariantPreviewBar({
   worse: string[];
   /** How many it suits better. */
   better: number;
+  /** The plan it is compared with (live when id is null); `changed` null when it is this variant itself. */
+  base: { id: string | null; name: string; score: number | null; changed: number | null };
 }) {
   const t = useT();
-  const base = `/lans/${lanId}/manage?tab=seats`;
+  const back = seatsHref(lanId, null, base.id);
   return (
     <div className="space-y-2 rounded-card border border-bit/40 bg-bit/10 px-3 py-2.5 text-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="min-w-0 text-fg">
           {t.rich("seatVariants.previewing", { name: <strong className="font-semibold">{name}</strong> })}
           <span className="block text-xs text-muted">{t("seatVariants.previewHint", { count: differs })}</span>
+          {base.id && base.changed !== null && (
+            <span className="block text-xs text-warn">
+              {base.changed === 0 ? t("seatVariants.compareSame", { base: base.name }) : t("seatVariants.compareNote", { count: base.changed, base: base.name })}
+            </span>
+          )}
         </span>
         <span className="flex flex-wrap gap-2">
-          <Link href={`${base}#seat-variants`} className={btnSecondary}>
+          <Link href={`${back}#seat-variants`} className={btnSecondary}>
             {t("seatVariants.closePreview")}
           </Link>
-          <ApplyButton id={id} name={name} differs={differs} final={final} className={btnPrimary} after={base} />
+          <ApplyButton id={id} name={name} differs={differs} final={final} className={btnPrimary} after={back} />
         </span>
       </div>
       <p className="text-xs text-muted">
         {t("seatVariants.wishesNow")} <span className={`font-medium tabular-nums ${scoreText(score)}`}>{pct(score)}</span>{" "}
-        {t("seatVariants.wishesLive", { pct: pct(liveScore) })}
+        {base.id && base.changed !== null
+          ? t("seatVariants.wishesBase", { name: base.name, pct: pct(base.score) })
+          : t("seatVariants.wishesLive", { pct: pct(liveScore) })}
         {worse.length > 0 && (
           <>
             {" · "}

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { arrangementOf, cleanVariantName, movesBetween, nextVariantName, seatsWithVariant } from "./seat-variant-math";
+import { arrangementOf, cleanVariantName, movesBetween, nextVariantName, seatChanges, seatsWithVariant } from "./seat-variant-math";
 
 const seat = (label: string, col: number, userId: string | null = null, locked = false) => ({ id: label, row: 0, col, label, userId, locked });
 
@@ -49,4 +49,18 @@ test("variant names", () => {
   assert.equal(nextVariantName(["Variant 2", "Mine"], "Variant"), "Variant 3");
   assert.equal(nextVariantName(["variant 2"], "Variant"), "Variant 3");
   assert.equal(nextVariantName(["Variant 2", "Variant 3"], "Variant"), "Variant 4");
+});
+
+test("seatChanges marks seats with someone else and seats that went empty", () => {
+  const base = [seat("F1", 0, "a"), seat("F2", 1, "b"), seat("F3", 2), seat("F4", 3, "c")];
+  const shown = [seat("F1", 0, "a"), seat("F2", 1, "c"), seat("F3", 2, "d"), seat("F4", 3)];
+  assert.deepEqual(
+    [...seatChanges(shown, base)],
+    [
+      ["F2", { kind: "changed", was: "b" }],
+      ["F3", { kind: "changed", was: null }],
+      ["F4", { kind: "emptied", was: "c" }],
+    ],
+  );
+  assert.equal(seatChanges(base, base).size, 0);
 });

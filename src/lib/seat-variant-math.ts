@@ -56,3 +56,22 @@ export function nextVariantName(taken: string[], word: string) {
   while (used.has(`${word} ${n}`.toLowerCase())) n++;
   return `${word} ${n}`;
 }
+
+/** How a seat differs from the plan it is compared with: someone else (or someone new) sits here, or it went empty. */
+export type SeatChange = { kind: "changed" | "emptied"; was: string | null };
+
+/**
+ * Seat id -> change, for every seat whose person differs between `shown` and `base`. Both lists are
+ * the same seats (ids) with different people, as `seatsWithVariant` makes them.
+ */
+export function seatChanges(shown: Pick<PlanSeat, "id" | "userId">[], base: Pick<PlanSeat, "id" | "userId">[]): Map<string, SeatChange> {
+  const was = new Map(base.map((s) => [s.id, s.userId ?? null]));
+  const out = new Map<string, SeatChange>();
+  for (const s of shown) {
+    const before = was.get(s.id) ?? null;
+    const now = s.userId ?? null;
+    if (before === now) continue;
+    out.set(s.id, { kind: now ? "changed" : "emptied", was: before });
+  }
+  return out;
+}
