@@ -24,6 +24,7 @@ A value saved in the platform settings wins over the environment variable. Clear
 | Admin emails (become platform owner on sign-up) | `ADMIN_EMAILS` | |
 | Trusted proxies: IP ranges (CIDR) of your reverse proxy, so the login rate limit sees the visitor's address ([more](security.md#reverse-proxy)) | `TRUSTED_PROXIES` | private ranges (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, loopback, `fc00::/7`) |
 | Default language (`en` or `de`): for browsers that want neither, mails to people without a choice and clans without their own Discord language | `DEFAULT_LOCALE` | `en` |
+| Look up games on Steam: name, cover, install size and LAN mode when people add a game ([more](../features/games.md#game-catalog)). Only the server calls the public Steam store, with the game's name or id; turn off if it must not reach the internet | `STEAM_LOOKUP` | `true` |
 | Currency for food orders and shared costs (also the default for new clan charges) | `FOOD_CURRENCY` | `CHF` |
 | Trip tab opens this many days before an event (travel, packing list, games, costs); earlier once something is in it, always for leads; `0` shows it all the time | `TRIP_OPENS_DAYS` | `30` |
 | Clan payments: clans can track dues, ticket money and who paid ([more](../features/payments.md)) | `CLAN_PAYMENTS` | `true` |
@@ -60,6 +61,13 @@ A value saved in the platform settings wins over the environment variable. Clear
 | Keep backups for (days, `0` = keep all; the privacy policy shows this number) | `BACKUP_KEEP_DAYS` | `14` |
 | Backup folder (absolute path) | `BACKUP_DIR` | `/backups` in the image, else `./backups` |
 | Test each backup by restoring it (see [Restore test](operations.md#restore-test)) | `BACKUP_VERIFY` | `true` |
+| **Off-site copies** (on *Admin → Backups*, see [Off-site copies](operations.md#off-site-copies-encrypted-s3)) | | |
+| Encryption public key (age, `age1…`) | `BACKUP_PUBLIC_KEY` | |
+| S3 endpoint, bucket | `BACKUP_S3_ENDPOINT`, `BACKUP_S3_BUCKET` | |
+| Region | `BACKUP_S3_REGION` | `us-east-1` |
+| Folder in the bucket | `BACKUP_S3_PREFIX` | `seatbit/` |
+| Access key ID, secret access key | `BACKUP_S3_ACCESS_KEY`, `BACKUP_S3_SECRET_KEY` | |
+| Keep off-site copies for (days, `0` = keep all) | `BACKUP_S3_KEEP_DAYS` | `30` |
 | One-off donations on/off | `DONATIONS_ENABLED` | `false` |
 | Suggested donation amounts | `DONATION_AMOUNTS` | `10, 20, 50` |
 | Donation currency | `DONATION_CURRENCY` | `CHF` |

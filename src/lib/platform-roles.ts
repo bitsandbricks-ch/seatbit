@@ -13,19 +13,20 @@ export type StaffRole = (typeof STAFF_ROLES)[number];
  * roles: give and take platform roles. clans: manage any clan and event like their admins.
  * reports: the abuse report queue. suspend: suspend and restore users and clans.
  * types: add, edit and delete the global LAN types clans pick from.
+ * games: fix, merge and delete entries in the global game catalog.
  */
-export const PLATFORM_PERMISSIONS = ["view", "settings", "owner", "roles", "clans", "reports", "suspend", "types"] as const;
+export const PLATFORM_PERMISSIONS = ["view", "settings", "owner", "roles", "clans", "reports", "suspend", "types", "games"] as const;
 export type PlatformPermission = (typeof PLATFORM_PERMISSIONS)[number];
 
 export const PLATFORM_ROLE_PERMS: Record<StaffRole, readonly PlatformPermission[]> = {
   owner: PLATFORM_PERMISSIONS,
-  admin: ["view", "settings", "roles", "clans", "reports", "suspend", "types"],
+  admin: ["view", "settings", "roles", "clans", "reports", "suspend", "types", "games"],
   moderator: ["view", "reports", "suspend"],
-  support: ["view", "types"],
+  support: ["view", "types", "games"],
 };
 
 /** Settings groups only owners may see and change (backups hold everyone's data). */
-export const OWNER_SETTING_GROUPS: readonly string[] = ["billing", "legal", "backup"];
+export const OWNER_SETTING_GROUPS: readonly string[] = ["billing", "legal", "backup", "offsite"];
 
 export function isPlatformRole(r: string | null | undefined): r is PlatformRole {
   return !!r && (PLATFORM_ROLES as readonly string[]).includes(r);

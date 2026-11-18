@@ -42,7 +42,7 @@ What Seatbit does to protect its users, and what you as the operator of an insta
 ### Kubernetes
 
 - Use the hardened deployment from [Kubernetes](kubernetes.md): non-root, read-only root filesystem, all capabilities dropped, no privilege escalation, `RuntimeDefault` seccomp, no service account token.
-- Add a `NetworkPolicy`: allow ingress only from your ingress controller on port 3000, and egress only to DNS and HTTPS (Discord, Stripe) plus your SMTP server. Seatbit never fetches addresses that users enter.
+- Add a `NetworkPolicy`: allow ingress only from your ingress controller on port 3000, and egress only to DNS and HTTPS (Discord, Stripe, the Steam store for [game lookups](configuration.md)) plus your SMTP server. Seatbit never fetches addresses that users enter: Steam lookups only go to `store.steampowered.com` and Steam's image hosts.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -66,7 +66,7 @@ spec:
 
 ### Data
 
-- `/data` and the backups hold all personal data, including emails and LAN IDs. Keep both volumes private, encrypt backups you copy off the cluster, and delete old ones (Seatbit keeps its own backups for the time set in the admin settings).
+- `/data` and the backups hold all personal data, including emails and LAN IDs. Keep both volumes private, encrypt backups you copy off the cluster (the built-in [off-site copies](operations.md#off-site-copies-encrypted-s3) are encrypted for a key the server doesn't hold), and delete old ones (Seatbit keeps its own backups for the time set in the admin settings).
 - Only give the platform **owner** role to people who need backups and billing; use **admin**, **moderator** and **support** for everything else.
 
 ## Known limits

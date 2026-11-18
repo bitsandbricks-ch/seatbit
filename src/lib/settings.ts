@@ -54,6 +54,10 @@ export const SETTING_GROUPS = {
     title: "Backups",
     help: "Seatbit copies its database to the backup folder while it runs. Mount that folder on its own volume and copy the files off the server too.",
   },
+  offsite: {
+    title: "Off-site copies (S3)",
+    help: "Optional. After each backup, Seatbit encrypts it with your age public key and uploads it to an S3-compatible bucket. Only the private key, which you keep away from the server, can open these copies.",
+  },
   billing: {
     title: "Supporter payments",
     help: "Optional. Lets clans support this instance with a voluntary yearly or monthly payment, and people give one-off donations, through Stripe. Supporters and donors get a badge and a thank-you, never extra features. Off by default.",
@@ -81,6 +85,8 @@ const isInt = (min: number, max: number) => (v: string) =>
   /^\d+$/.test(v) && +v >= min && +v <= max ? null : `Must be a whole number from ${min} to ${max}`;
 /** "2026-11-14T18:00", the date picker's value (server-local time). */
 const isLocalDateTime = (v: string) => /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(v) && !Number.isNaN(new Date(v).getTime());
+/** age public keys: X25519 (age1…, 62 characters) or post-quantum hybrid (age1pq1…, longer). */
+export const AGE_RECIPIENT = /^age1(pq1)?[02-9ac-hj-np-z]{58,}$/;
 const isSnowflake = (v: string) => (/^\d{15,22}$/.test(v) ? null : "Discord ids are 15 to 22 digits");
 
 export const SETTINGS: SettingDef[] = [
@@ -130,6 +136,15 @@ export const SETTINGS: SettingDef[] = [
         .every((e) => /^[0-9a-fA-F:.]+\/\d{1,3}$/.test(e))
         ? null
         : "Use a comma-separated list of IP ranges like 10.0.0.0/8",
+  },
+  {
+    key: "games.steamLookup",
+    group: "general",
+    label: "Look up games on Steam",
+    kind: "bool",
+    env: "STEAM_LOOKUP",
+    default: "true",
+    help: "When people add a game, Seatbit asks the public Steam store for its name, cover, install size and LAN mode. Only the server calls Steam, with the game's name or id. Turn off if this server must not reach the internet; games are then entered by hand.",
   },
 
   // Mail
@@ -599,6 +614,78 @@ export const SETTINGS: SettingDef[] = [
     env: "BACKUP_VERIFY",
     default: "true",
     help: "After each new backup, the server restores a copy of it in its temp folder, runs the migrations on it and compares it with the live database. Needs free space for one database copy in /tmp.",
+  },
+
+  // Off-site copies: encrypted, in an S3-compatible bucket (src/lib/backup-offsite.ts)
+  {
+    key: "backup.publicKey",
+    group: "offsite",
+    label: "Encryption public key (age)",
+    kind: "text",
+    env: "BACKUP_PUBLIC_KEY",
+    placeholder: "age1…",
+    help: "The age public key the copies are encrypted for. Make a key pair with `node scripts/restore.mjs keygen` (or age-keygen) and keep the private key off the server. Nothing is uploaded without a key.",
+    validate: (v) => (AGE_RECIPIENT.test(v) ? null : "Use an age public key (age1…)"),
+  },
+  {
+    key: "backup.s3Endpoint",
+    group: "offsite",
+    label: "S3 endpoint",
+    kind: "text",
+    env: "BACKUP_S3_ENDPOINT",
+    placeholder: "https://s3.eu-central-1.amazonaws.com",
+    help: "Base URL of the S3 API (AWS, Backblaze B2, Cloudflare R2, MinIO, Garage, …). Buckets are addressed path-style: <endpoint>/<bucket>/<file>.",
+    validate: (v) => (/^https?:\/\/[^\s/]+(\/[^\s]*)?$/.test(v) ? null : "Use a URL like https://s3.example.com"),
+  },
+  {
+    key: "backup.s3Bucket",
+    group: "offsite",
+    label: "Bucket",
+    kind: "text",
+    env: "BACKUP_S3_BUCKET",
+    placeholder: "seatbit-backups",
+    help: "Off-site copies are on once the bucket, endpoint, both access keys and the public key are set.",
+    validate: (v) => (/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/.test(v) ? null : "Use a bucket name: 3 to 63 lowercase letters, digits, dots and dashes"),
+  },
+  {
+    key: "backup.s3Region",
+    group: "offsite",
+    label: "Region",
+    kind: "text",
+    env: "BACKUP_S3_REGION",
+    default: "us-east-1",
+    placeholder: "us-east-1",
+    help: "For request signing. Providers without regions accept us-east-1 (R2: auto).",
+  },
+  {
+    key: "backup.s3Prefix",
+    group: "offsite",
+    label: "Folder in the bucket",
+    kind: "text",
+    env: "BACKUP_S3_PREFIX",
+    default: "seatbit/",
+    placeholder: "seatbit/",
+    help: "Prefix for the file names, so several instances can share one bucket. Empty: the top of the bucket.",
+    validate: (v) => (/^[A-Za-z0-9._\-/]*$/.test(v) && !v.startsWith("/") ? null : "Letters, digits, dots, dashes and slashes only, not starting with a slash"),
+  },
+  { key: "backup.s3AccessKey", group: "offsite", label: "Access key ID", kind: "text", env: "BACKUP_S3_ACCESS_KEY" },
+  {
+    key: "backup.s3SecretKey",
+    group: "offsite",
+    label: "Secret access key",
+    kind: "secret",
+    env: "BACKUP_S3_SECRET_KEY",
+    help: "A key that may only put, list, read and delete in this bucket (or this folder) is enough.",
+  },
+  {
+    key: "backup.s3KeepDays",
+    group: "offsite",
+    label: "Keep off-site copies for (days)",
+    kind: "number",
+    env: "BACKUP_S3_KEEP_DAYS",
+    default: "30",
+    help: "Older copies in the bucket are deleted after each upload. The newest always stays. 0 keeps all of them, e.g. when a lifecycle rule or object lock on the bucket handles it. The privacy policy mentions the longer of this and the local retention.",
+    validate: isInt(0, 3650),
   },
 ];
 

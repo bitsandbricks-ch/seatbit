@@ -47,6 +47,7 @@ import { eventUi } from "./eventUi";
 import { food } from "./food";
 import { footer } from "./footer";
 import { formErrors } from "./formErrors";
+import { gameCatalog } from "./gameCatalog";
 import { games } from "./games";
 import { guestDiscord } from "./guestDiscord";
 import { guestForm } from "./guestForm";
@@ -97,6 +98,7 @@ import { roleA } from "./roleA";
 import { roleInfo } from "./roleInfo";
 import { roles } from "./roles";
 import { search } from "./search";
+import { seatCompare } from "./seatCompare";
 import { seatFlow } from "./seatFlow";
 import { seatMap } from "./seatMap";
 import { seatPhases } from "./seatPhases";
@@ -172,6 +174,7 @@ export const en = {
   food,
   footer,
   formErrors,
+  gameCatalog,
   games,
   guestDiscord,
   guestForm,
@@ -222,6 +225,7 @@ export const en = {
   roleInfo,
   roles,
   search,
+  seatCompare,
   seatFlow,
   seatMap,
   seatPhases,

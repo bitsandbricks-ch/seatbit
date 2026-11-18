@@ -18,6 +18,8 @@ export const LIMITS = {
   test: { max: 5, windowMs: 10 * 60 * 1000 },
   /** Discord member checks (one Discord API call per member). */
   validate: { max: 10, windowMs: 60 * 60 * 1000 },
+  /** Steam lookups while typing a game name (cached, but each new name is a call to Steam). */
+  lookup: { max: 120, windowMs: 10 * 60 * 1000 },
 } as const;
 
 /** Counts one use; true when the account is over the limit (the use isn't counted then). */

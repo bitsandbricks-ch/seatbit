@@ -12,13 +12,14 @@ import {
   nextBackupAt,
 } from "@/lib/backup";
 import { drillEnabled, lastDrill } from "@/lib/backup-drill";
+import { lastOffsite, offsiteConfig } from "@/lib/backup-offsite";
 import { fmtBytes, fmtDate, relative } from "@/lib/format";
 import { requirePlatform } from "@/lib/session";
 import { settingsForAdmin } from "@/lib/settings";
 import { localized } from "@/lib/settings-i18n";
 import { getT } from "@/i18n/server";
 import { saveSettings } from "../settings/actions";
-import { backupNow, testNewestBackup } from "./actions";
+import { backupNow, testNewestBackup, uploadNewestBackup } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -44,9 +45,11 @@ export default async function BackupsPage() {
   const drillOn = drillEnabled();
   // Overdue: scheduled backups are on, but the newest is more than twice the interval old.
   const overdue = hours > 0 && (!newest || now.getTime() - newest.at.getTime() > 2 * hours * 3600_000);
-  const fields = settingsForAdmin()
-    .filter((s) => s.group === "backup")
-    .map((s) => localized(s, t));
+  const all = settingsForAdmin().map((s) => localized(s, t));
+  const fields = all.filter((s) => s.group === "backup");
+  const offsiteFields = all.filter((s) => s.group === "offsite");
+  const offsite = offsiteConfig();
+  const upload = lastOffsite();
 
   return (
     <Page>
@@ -61,6 +64,10 @@ export default async function BackupsPage() {
       {hours <= 0 && <Notice tone="info">{t("backups.scheduleOff")}</Notice>}
       {drill && !drill.ok && (
         <Notice tone="danger">{t("backups.drill.failed", { name: drill.name, when: fmtDate(new Date(drill.at), t.locale), error: drill.error ?? "" })}</Notice>
+      )}
+
+      {offsite && !("missing" in offsite) && upload && !upload.ok && (
+        <Notice tone="danger">{t("backups.offsite.failed", { name: upload.name, when: fmtDate(new Date(upload.at), t.locale), error: upload.error ?? "" })}</Notice>
       )}
 
       <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
@@ -130,6 +137,42 @@ export default async function BackupsPage() {
         {drill?.ok && newest && newest.name !== drill.name && <p className="mt-1 text-xs text-faint">{t("backups.drill.notNewest")}</p>}
       </Card>
 
+      <Card
+        title={t("backups.offsite.title")}
+        actions={offsite && !("missing" in offsite) && newest ? <ActionButton action={uploadNewestBackup}>{t("backups.offsite.run")}</ActionButton> : undefined}
+      >
+        <p className="-mt-2 mb-3 text-sm text-muted">
+          {!offsite
+            ? t("backups.offsite.off")
+            : "missing" in offsite
+              ? t("backups.offsite.incomplete", { missing: offsite.missing.join(", ") })
+              : t("backups.offsite.help", { key: `${offsite.publicKey.slice(0, 12)}…`, target: `${offsite.bucket}/${offsite.prefix}` })}
+        </p>
+        {offsite && !("missing" in offsite) && (
+          <>
+            {upload ? (
+              <p className={`text-sm ${upload.ok ? "" : "text-danger"}`}>
+                {upload.ok
+                  ? t("backups.offsite.passed", {
+                      name: upload.name,
+                      when: fmtDate(new Date(upload.at), t.locale),
+                      size: fmtBytes(upload.size ?? 0),
+                      count: upload.remote ?? 0,
+                      total: fmtBytes(upload.remoteBytes ?? 0),
+                    })
+                  : t("backups.offsite.failedShort", { name: upload.name, when: fmtDate(new Date(upload.at), t.locale) })}
+              </p>
+            ) : (
+              <p className="text-sm text-muted">{t("backups.offsite.never")}</p>
+            )}
+            {upload?.ok && newest && newest.name !== upload.name && <p className="mt-1 text-xs text-faint">{t("backups.offsite.notNewest")}</p>}
+          </>
+        )}
+        <div className="mt-4">
+          <SettingsSection fields={offsiteFields} action={saveSettings.bind(null, "offsite")} />
+        </div>
+      </Card>
+
       <Card title={t("settingGroups.backup.title")}>
         <p className="-mt-2 mb-4 text-sm text-muted">{t("settingGroups.backup.help")}</p>
         <SettingsSection fields={fields} action={saveSettings.bind(null, "backup")} />
@@ -147,6 +190,11 @@ export default async function BackupsPage() {
         <pre tabIndex={0} className="mt-2 overflow-x-auto rounded-bit bg-raised p-3 text-xs">
           {/* i18n-ignore: command */}
           node scripts/restore.mjs restore latest --yes
+        </pre>
+        <p className="mt-3 text-sm text-muted">{t("backups.offsite.restore")}</p>
+        <pre tabIndex={0} className="mt-2 overflow-x-auto rounded-bit bg-raised p-3 text-xs">
+          {/* i18n-ignore: command */}
+          node scripts/restore.mjs restore s3:latest --key backup-key.txt --yes
         </pre>
         <p className="mt-3 text-xs text-faint">{t("backups.restoreDocs")}</p>
       </Card>

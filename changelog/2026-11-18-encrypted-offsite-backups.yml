@@ -1,0 +1,16 @@
+date: 2026-11-18
+type: new
+audience: admins
+en:
+  title: "Encrypted off-site backups"
+  text: >-
+    Seatbit can now encrypt each database backup and upload it to an S3-compatible bucket. Copies are
+    encrypted for an age public key, so only whoever holds the private key can open them. The restore
+    script restores straight from the bucket. Set it up under Admin → Backups or with environment variables.
+de:
+  title: "Verschlüsselte Backups ausser Haus"
+  text: >-
+    Seatbit kann jedes Datenbank-Backup jetzt verschlüsseln und in einen S3-kompatiblen Bucket hochladen.
+    Die Kopien sind für einen öffentlichen age-Schlüssel verschlüsselt, nur wer den privaten Schlüssel hat,
+    kann sie öffnen. Das Restore-Skript stellt direkt aus dem Bucket wieder her. Einrichten unter
+    Admin → Backups oder mit Umgebungsvariablen.

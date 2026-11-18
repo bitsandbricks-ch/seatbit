@@ -646,6 +646,40 @@ export const seatVariant = sqliteTable(
 
 // ---------- Games ----------
 
+/**
+ * The global game catalog: one entry per game for the whole instance, with the details every
+ * event shows (cover, size, store link, players). Events pick from it; votes stay per event.
+ */
+export const catalogGame = sqliteTable(
+  "catalog_game",
+  {
+    id: id(),
+    name: text("name").notNull(),
+    /** Lower-case trimmed name, so "CS2" and "cs2 " are one entry. */
+    nameKey: text("name_key").notNull(),
+    /** Steam app id when the game is on Steam: details, cover and the install link come from it. */
+    steamAppId: integer("steam_app_id"),
+    /** Install size in GB. */
+    sizeGb: integer("size_gb"),
+    /** Store or download page. */
+    url: text("url").default("").notNull(),
+    /** Stored cover picture (file name in the uploads folder). */
+    cover: text("cover"),
+    minPlayers: integer("min_players"),
+    maxPlayers: integer("max_players"),
+    /** Free to play; null when nobody knows. */
+    free: integer("free", { mode: "boolean" }),
+    /** Has a LAN mode (plays without internet); null when nobody knows. */
+    lan: integer("lan", { mode: "boolean" }),
+    /** Who put it in the catalog: may fix its details, like platform staff. */
+    createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+    /** Last time the details came from Steam. */
+    steamFetchedAt: integer("steam_fetched_at", { mode: "timestamp_ms" }),
+  },
+  (t) => [uniqueIndex("catalog_game_name_uq").on(t.nameKey), uniqueIndex("catalog_game_steam_uq").on(t.steamAppId)],
+);
+
 /** A game someone suggested playing at a LAN. */
 export const game = sqliteTable(
   "game",
@@ -654,15 +688,18 @@ export const game = sqliteTable(
     lanId: text("lan_id")
       .notNull()
       .references(() => lan.id, { onDelete: "cascade" }),
+    /** The catalog entry with the details. Null only for games from before the catalog. */
+    catalogId: text("catalog_id").references(() => catalogGame.id, { onDelete: "set null" }),
+    /** The catalog name when it was added, kept in step with the catalog. */
     name: text("name").notNull(),
-    /** Download size in GB, so people know what to install before they leave. */
+    /** Before the catalog: download size in GB. New games keep it in the catalog. */
     sizeGb: integer("size_gb"),
-    /** Store or download page. */
+    /** Before the catalog: store or download page. */
     url: text("url").default("").notNull(),
     addedBy: text("added_by").references(() => user.id, { onDelete: "set null" }),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
   },
-  (t) => [index("game_lan_idx").on(t.lanId)],
+  (t) => [index("game_lan_idx").on(t.lanId), index("game_catalog_idx").on(t.catalogId)],
 );
 
 /** A member's vote for a game and whether they installed it. */
@@ -873,6 +910,7 @@ export type TravelPost = typeof travelPost.$inferSelect;
 export type SeatSwap = typeof seatSwap.$inferSelect;
 export type SeatVariant = typeof seatVariant.$inferSelect;
 export type Game = typeof game.$inferSelect;
+export type CatalogGame = typeof catalogGame.$inferSelect;
 
 // ---------- Platform settings ----------
 

@@ -53,6 +53,8 @@ export default defineConfig({
       BACKUP_INTERVAL_HOURS: "0",
       SMTP_HOST: "",
       SMTP_URL: "",
+      // No calls to the Steam store from tests.
+      STEAM_LOOKUP: "false",
     },
   },
 });

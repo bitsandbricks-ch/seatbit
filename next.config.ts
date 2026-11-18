@@ -17,7 +17,8 @@ const nextConfig: NextConfig = {
   // Self-contained server build for the container image (see Dockerfile).
   output: "standalone",
   env: { SEATBIT_COMMIT: commitSha() },
-  serverExternalPackages: ["better-sqlite3", "highs"],
+  // age-encryption and aws4fetch stay plain packages in node_modules, so scripts/restore.mjs in the image can use them too.
+  serverExternalPackages: ["better-sqlite3", "highs", "age-encryption", "aws4fetch"],
   // The exact seat search loads HiGHS in a worker thread by path, which the tracing can't see.
   outputFileTracingIncludes: { "/**": ["./node_modules/highs/package.json", "./node_modules/highs/build/highs.js", "./node_modules/highs/build/highs.wasm"] },
   poweredByHeader: false,

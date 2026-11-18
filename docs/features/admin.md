@@ -11,9 +11,9 @@ Platform staff run the instance: they see all clans, events and users, change th
 | Role | Can |
 | --- | --- |
 | **Owner** | Everything, including the *Supporters* (billing) and *Operator & legal* settings and giving the owner role. |
-| **Admin** | Platform settings, mail templates and [LAN types](#lan-types), manage every clan and event like their admins, give and take the moderator and support roles, reports and suspensions. |
+| **Admin** | Platform settings, mail templates, [LAN types](#lan-types) and the [game catalog](#games), manage every clan and event like their admins, give and take the moderator and support roles, reports and suspensions. |
 | **Moderator** | The [report queue](moderation.md), suspending and restoring users and clans. No settings. |
-| **Support** | Read-only: the admin page, every clan and event, the audit log, to help people. Also keeps the [LAN types](#lan-types). |
+| **Support** | Read-only: the admin page, every clan and event, the audit log, to help people. Also keeps the [LAN types](#lan-types) and the [game catalog](#games). |
 
 The first account is always owner, as is anyone in the **Admin emails** setting. Give roles in *Admin → Users* or with the [admin CLI](../installation/operations.md#admin-cli). Nobody changes their own role, and admins can't touch owners or other admins, so there is always an owner. The last owner can't delete their account.
 
@@ -76,6 +76,19 @@ Seats, spots, deadlines, Discord placement, contacts and to-dos stay per clan: e
 
 ![LAN types on the admin page](../screenshots/desktop-admin-types.png){ .shot }
 
+## Games
+
+The **Games** tab is the [game catalog](games.md#game-catalog) every event picks from: one entry per game, with cover, install size, store link, Steam app id, player count, free or paid and LAN mode. Entries appear when someone adds a new game to an event; owners, admins and support can also add them here. Pasting a Steam link (or app id) fills the rest from Steam.
+
+- **Edit** an entry: the change shows on every event with that game. Upload a cover (PNG, JPG, WebP or GIF, up to 2 MB) or remove it.
+- **Fetch from Steam again** replaces size, cover, price and LAN mode with what Steam says now.
+- **Merge into another game** folds a duplicate (*CS2* and *Counter-Strike 2*) into the other entry: its events, votes, *installed* ticks and teams move over. An event that had both keeps one game with everyone's votes.
+- **Delete** only works for games no event uses; merge the others.
+
+Whoever put a game in the catalog can also fix its details from the event's games list.
+
+![Games on the admin page](../screenshots/desktop-admin-games.png){ .shot }
+
 ## Platform settings
 
 | Tab | | Docs |
@@ -108,7 +121,7 @@ To count active people, Seatbit notes the **days** someone used it (just the dat
 
 ## Backups
 
-*Admin → Backups* lists the database backups Seatbit makes by itself, with **Back up now**, download and delete, and the backup settings. Setup, where to store them and how to restore: [Backups](../installation/operations.md#backups).
+*Admin → Backups* lists the database backups Seatbit makes by itself, with **Back up now**, download and delete, the restore test, the encrypted off-site copies to an S3 bucket, and the backup settings. Setup, where to store them and how to restore: [Backups](../installation/operations.md#backups).
 ## Health
 
 *Admin → Health* shows how the server is doing. All platform staff see it, support included. Mail and Discord are checked live each time the page loads (with a 5 second limit), the rest comes from the running server:

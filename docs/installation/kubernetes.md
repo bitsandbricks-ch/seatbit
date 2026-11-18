@@ -123,7 +123,7 @@ The deployment above runs with `readOnlyRootFilesystem: true`: only `/data`, `/b
 
 ## Backups
 
-Seatbit backs itself up to `/backups` once a day (see [Backups](operations.md#backups)). Give it its own volume, as in the deployment above, e.g. a second PVC `seatbit-backups` on a different storage class or node than the data, and copy it off the cluster with your usual volume backup tool (Velero, Longhorn backups, ...).
+Seatbit backs itself up to `/backups` once a day (see [Backups](operations.md#backups)). Give it its own volume, as in the deployment above, e.g. a second PVC `seatbit-backups` on a different storage class or node than the data, and get copies off the cluster: the built-in [encrypted off-site copies](operations.md#off-site-copies-encrypted-s3) to an S3 bucket (set the `BACKUP_S3_*` variables and `BACKUP_PUBLIC_KEY`, the secret key from a Secret), or your usual volume backup tool (Velero, Longhorn backups, ...).
 
 Each new backup is restored as a test in `/tmp` (see [Restore test](operations.md#restore-test)), so the `tmp` emptyDir needs room for one copy of the database. To restore, see [Restore](operations.md#restore).
 

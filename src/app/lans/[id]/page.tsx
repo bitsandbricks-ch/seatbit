@@ -45,6 +45,7 @@ import { pastPackingItems } from "@/lib/packing-history";
 import { GameList } from "@/components/game-list";
 import { EventRecap } from "@/components/event-recap";
 import { GAMES_REMINDER_DAYS, listGames, previousGames } from "@/lib/games";
+import { platformCan } from "@/lib/platform-roles";
 import { myGamesTodo } from "@/lib/games-todo";
 import { SeatSwapPanel, type SwapView } from "@/components/seat-swaps";
 import { CheckInButton, DeleteNewsButton } from "@/components/event-extras";
@@ -819,6 +820,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           avatars={gameAvatars}
           reminderDays={GAMES_REMINDER_DAYS}
           lastTime={l.endsAt > now ? previousGames(l) : null}
+          catalogStaff={platformCan(me, "games")}
         />
       </TabPanel>
       )}

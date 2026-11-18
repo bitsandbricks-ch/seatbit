@@ -1,0 +1,9 @@
+date: 2026-11-18
+type: new
+audience: admins
+en:
+  title: Game catalog for platform staff
+  text: "Admin → Games lists every game on the instance. Owners, admins and support fix details, upload covers, fetch from Steam again and merge duplicates. Steam lookups can be turned off with the new setting “Look up games on Steam” (STEAM_LOOKUP)."
+de:
+  title: Game-Katalog für das Plattform-Team
+  text: "Unter Admin → Games stehen alle Games der Instanz. Owner, Admins und Support korrigieren Details, laden Cover hoch, holen Daten nochmals von Steam und führen Doppelte zusammen. Steam-Abfragen lassen sich mit der neuen Einstellung «Look up games on Steam» (STEAM_LOOKUP) ausschalten."

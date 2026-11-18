@@ -46,6 +46,10 @@ export const fx = {
   otherLan: "demo-lan-x",
   type: "",
   otherType: "demo-type-x", // a global type only the outsider's clan goes to
+  catalogGame: "authz-catalog-game",
+  catalogDuplicate: "authz-catalog-dup",
+  catalogUnused: "authz-catalog-unused",
+  catalogDupGame: "authz-catalog-dup-on-lakeside", // nobody's: only staff change its catalog details
   guest: "demo-yannick",
   guestClaim: "",
   invite: "demo-invite",
@@ -137,6 +141,15 @@ export async function setup() {
   db.insert(s.seatVariant).values({ id: fx.seatVariant, lanId: fx.lan, name: "Window side", seats: {} }).run();
   db.insert(s.packingItem).values({ id: fx.annaPackingItem, lanId: fx.lan, userId: ACTORS.member, label: "Headset", packed: false }).run();
   db.insert(s.game).values({ id: fx.annaGame, lanId: fx.lan, name: "Anna's game", addedBy: ACTORS.member }).run();
+  // Catalog games for the staff actions: one to edit, a duplicate to merge, one no event uses.
+  db.insert(s.catalogGame)
+    .values([
+      { id: fx.catalogGame, name: "Catalog game", nameKey: "catalog game" },
+      { id: fx.catalogDuplicate, name: "Catalog game dup", nameKey: "catalog game dup", steamAppId: 1234567 },
+      { id: fx.catalogUnused, name: "Unused game", nameKey: "unused game" },
+    ])
+    .run();
+  db.insert(s.game).values({ id: fx.catalogDupGame, lanId: fx.lan, name: "Catalog game dup", catalogId: fx.catalogDuplicate }).run();
   db.insert(s.team).values({ id: fx.annaTeam, gameId: fx.game, name: "Anna's team", size: 5, createdBy: ACTORS.member }).run();
   db.insert(s.teamMember).values({ teamId: fx.annaTeam, userId: ACTORS.member }).run();
   db.insert(s.costExpense).values({ id: fx.annaExpense, lanId: fx.lan, title: "Snacks", amountCents: 2000, paidBy: ACTORS.member, createdBy: ACTORS.member }).run();
