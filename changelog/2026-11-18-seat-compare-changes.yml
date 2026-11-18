@@ -1,0 +1,13 @@
+date: 2026-11-18
+type: improved
+en:
+  title: "List of changes when comparing seat plans"
+  text: >-
+    When leads compare two seat plans, a list below the map shows everyone who sits elsewhere, gets a seat
+    or has none, with their seat in both plans and how well their seat wishes are met in each.
+de:
+  title: "Liste der Änderungen beim Vergleich von Sitzplänen"
+  text: >-
+    Wenn Leads zwei Sitzpläne vergleichen, zeigt eine Liste unter der Karte alle, die anderswo sitzen, einen
+    Platz bekommen oder keinen haben, mit ihrem Platz in beiden Plänen und wie gut ihre Platzwünsche jeweils
+    erfüllt sind.
