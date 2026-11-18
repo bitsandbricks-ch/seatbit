@@ -1,8 +1,8 @@
-# Food orders
+# Orders
 
-The pizza run or a burger order at the LAN: everyone adds what they want, one person orders and ticks off who paid.
+The pizza run, a burger order or a supermarket trip at the LAN: everyone adds what they want, one person orders and ticks off who paid.
 
-**Who:** anyone coming · **Where:** event → *On site*, while the event runs (leads see it before, to set an order up in advance)
+**Who:** anyone coming · **Where:** event → *Orders*, while the event runs (from 6 hours before the start) (leads see it before, muted with a crossed-out eye, to set an order up in advance)
 
 ## Start an order
 

@@ -219,7 +219,7 @@ test.describe("seats", () => {
     await anna.getByRole("button", { name: /^Seat A3, free/ }).click();
     await anna.getByRole("button", { name: "Take this seat" }).click();
     await expect.poll(() => seatOf(id, "A3")?.userId).toBe(userId("anna"));
-    await expect(anna.getByText("Not final yet").first()).toBeVisible();
+    await expect(anna.getByText("You picked A3. You can still move until the leads make the plan final.")).toBeVisible();
 
     // Alex finalizes the plan.
     const alex = await as("alex");
@@ -230,7 +230,7 @@ test.describe("seats", () => {
 
     // Anna sees the final plan with her seat, and can't move any more.
     await anna.reload();
-    await expect(anna.getByText("Final", { exact: true }).first()).toBeVisible();
+    await expect(anna.getByText("The plan is final. Your seat only changes if you ask a lead.")).toBeVisible();
     await expect(anna.getByRole("button", { name: /^Seat A3, / })).toBeVisible();
     await anna.getByRole("button", { name: /^Seat A4, free/ }).click();
     await expect(anna.getByRole("button", { name: "Move here" })).toHaveCount(0);

@@ -7,6 +7,7 @@ export const checklist = {
   going: {
     title: "Say you're coming",
     done: "You're going.",
+    waitlistTitle: "Wait for a spot",
     waitlistAt: "You're #{place} on the waitlist.",
     waitlist: "You're on the waitlist.",
     deadline: "Answer before the deadline.",

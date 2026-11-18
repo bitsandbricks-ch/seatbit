@@ -76,6 +76,7 @@ export function SeatMap({
   title,
   actions,
   children,
+  intro,
   details: place = "side",
   leadView = false,
   compare,
@@ -93,6 +94,8 @@ export function SeatMap({
   actions?: ReactNode;
   /** Shown under the map in the left column, next to the details panel. */
   children?: ReactNode;
+  /** Above the hint line, e.g. the event page's seat phase bar. */
+  intro?: ReactNode;
   /**
    * Where a tapped seat's details go. side: their own column on desktop, a bottom sheet on phones (lead planner).
    * top: a compact strip above the map, everywhere, so the map keeps the full width (event page).
@@ -496,6 +499,7 @@ export function SeatMap({
               )}
             </div>
 
+            {intro}
             {/* Top style: the tapped seat takes the hint's place, so the map doesn't move far. */}
             {place === "top" && selected && !layout ? (
               <div className="rounded-md border border-line bg-raised/50 p-3 motion-safe:animate-[toast-in_160ms_ease-out]">

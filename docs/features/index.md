@@ -18,6 +18,7 @@ Seatbit has three kinds of users:
 | [Languages](languages.md) | English and German, per person, for the app, mails and Discord. | Everyone |
 | [Light and dark theme](theme.md) | Light, dark or follow the device, from the top bar. | Everyone |
 | [What's new](whats-new.md) | What changed in Seatbit, in your language. | Everyone |
+| [Help page](help.md) | How Seatbit works for members and leads, by topic, in English and German. | Everyone |
 | [Event lifecycle](events.md) | Create from a LAN type, drafts, publish or schedule, interest check, news, cancel, copy for next year. | Leads |
 | [Lead to-dos and contacts](lead-todos.md) | The leads' own to-dos per clan, LAN type or event (with due dates and steps they wait for), and the LAN organizers' contacts. | Leads |
 | [Attendance and tickets](attendance.md) | Coming / unsure / not coming, waitlist, checklist, tickets, attendee list and CSV export. | Members, leads |
@@ -25,7 +26,7 @@ Seatbit has three kinds of users:
 | [Reminders and who's missing](reminders.md) | Automatic reminders before deadlines, manual reminders and one-tap nudges. | Leads |
 | [Travel and packing list](travel-packing.md) | Rides, places to sleep, a private packing list. | Members |
 | [Games](games.md) | Suggest and vote for games, track installs. | Members |
-| [Food orders](food.md) | Group orders at the LAN with a merged order list and who paid. | Members |
+| [Orders](food.md) | Food and shopping orders at the LAN with a merged order list and who paid. | Members |
 | [Shared costs](shared-costs.md) | Who paid what for the group, everyone's balance and who pays whom. | Members |
 | [Emergency contact and diet](emergency.md) | Members leave an emergency contact and dietary needs; only the event's leads see them. | Members, leads |
 | [Discord and WhatsApp](discord.md) | Bot announcements with answer buttons, reminders, DMs, slash commands; WhatsApp texts. | Clan admins, leads |

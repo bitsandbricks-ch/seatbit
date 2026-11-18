@@ -19,23 +19,33 @@ Members answer whether they come, work through their checklist and report their 
 </figure>
 </div>
 
-The event page has a few tabs: **Overview**, **Seats**, **Attendees** and **Trip**, plus **On site** while the event runs. Switching tabs is instant, and the address follows (`?tab=seats`), so reloading, bookmarks and the back button land on the same tab. A yellow dot on a tab means something waits for you there.
+The event page has a few tabs: **Overview**, **Seats**, **Attendees** and **Trip**, plus **Orders** while the event runs. Switching tabs is instant, and the address follows (`?tab=seats`), so reloading, bookmarks and the back button land on the same tab. A yellow dot on a tab means something waits for you there.
 
-**Trip** groups everything around getting there: **Travel**, **Packing list**, **Games** and **Costs**, behind a small switch at the top of the tab.
+**Trip** groups everything around getting there: **Travel**, **Packing list**, **Games** and **Costs**, behind a small switch at the top of the tab. So the page starts simple, members only get it **30 days before the start** (setting *Trip tab opens*, see [configuration](../installation/configuration.md)), or earlier as soon as someone posted a ride, a game or a cost, or packed something. Until then the *At a glance* card says when it opens.
+
+Leads always see *Trip* and *Orders*. While members don't see them yet, they show muted with a crossed-out eye, so it's clear they are hidden from the others.
+
+## How this event works
+
+*How this event works* under the checklist (and the **?** next to the share icon) opens a panel with the whole flow in five steps: answer, ticket, seat, leads make the plan final (and book), at the LAN. The steps use the event's own deadlines and settings (waitlist rule, self pick or seat wishes, booking on the event's site), ticks the ones you're past and marks where you are. Below it, *Who are the leads?* says what leads do and lists the event's leads with Discord and email. The other explanations on the page are kept short and point here instead of repeating it.
+
+![How this event works](../screenshots/phone-event-guide.png){ .shot width="300" }
+
+For everything else there's the [help page](help.md) (*Help* in the footer).
 
 The overview starts with your answer and checklist, then an **At a glance** card: one line per tab with why you'd open it, and the same yellow dot:
 
 | Line | It says |
 | --- | --- |
-| **Seats** | *Pick your seat*, your seat, or whether the plan is final. |
+| **Seats** | *Free seats to pick*, your seat, or whether the plan is final. |
 | **Attendees** | How many are coming and waiting. |
 | **Travel** | Free seats in cars and how many are looking (dot: others need a [ride](travel-packing.md), until the event starts). |
 | **Packing list** | How much of your [packing list](travel-packing.md#packing-list) is packed (dot: in the last week, until all is packed). |
 | **Games** | Games you voted for and still have to install, or how many there are ([games](games.md)). |
 | **Costs** | *You owe …*, *You get … back* or *You're even* ([shared costs](shared-costs.md)). |
-| **On site** | Open [food orders](food.md). Only while the event runs, then right at the top; leads see the tab before that, to prepare an order. |
+| **Orders** | Open [orders](food.md) (food, supermarket). Only while the event runs, then right at the top; leads see the tab before that, to prepare an order. |
 
-Below it, the overview has the event's description, the leads' news and a **Details** card with the deadlines, the ticket price, your ticket and the leads to contact. The header stays short: the title with a small share icon, date and place in one line, and for leads a View / Manage switch (two small icons on phones). The event website and ticket shop are links at the top of the *At a glance* card; while you still need a ticket, the checklist's *Buy your ticket* step has a button to the ticket shop too.
+Below it, the overview has the event's description, the leads' news and a **Details** card with the deadlines, the ticket price and the leads to contact (your own ticket is in the checklist). The header stays short: the title with a small share icon, date and place in one line, and for leads a View / Manage switch (two small icons on phones). The event website and ticket shop are links at the top of the *At a glance* card; while you still need a ticket, the checklist's *Buy your ticket* step has a button to the ticket shop too.
 
 ## Answer
 
@@ -63,7 +73,7 @@ Turning *Next in line moves up* back on fills the free spots right away.
 
 As soon as an event has seats in its [seat plan](seats.md), the seats are its spots: 20 seats means 20 people can come, and the number typed under *Spots* no longer counts (the field shows the seat count instead). Adding seats, under *Manage → Seats* or in the seat editor, opens spots, so the waitlist moves up like when someone stops coming. Removing seats never sends anyone back to the waitlist; with more people coming than seats, new answers just wait. Held seats count too: they are the group's, kept for someone. Events without a seat plan keep the typed number, and empty *Spots* means no limit.
 
-People on the waitlist get no ticket reminders or nudges, and their checklist says to wait with buying one until they move up: without a spot in the group's block a ticket may be wasted money. If they already bought one, they can still tick it off.
+People on the waitlist get no ticket reminders or nudges, and their checklist says *Wait for a spot* instead of pointing to the ticket shop: without a spot in the group's block a ticket may be wasted money. If they already bought one, they can still tick it off.
 
 While people are waiting, a new *Coming* answer always queues up behind them, even when a spot is free, so nobody jumps the line.
 

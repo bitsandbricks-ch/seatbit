@@ -31,9 +31,15 @@ export const wishes: Messages["wishes"] = {
   },
   avoid: {
     title: "Nicht direkt neben",
-    hint: "So viele du willst. Sie haben keine Reihenfolge: die Planung hält sie immer möglichst ein.",
+    hint: "So viele du willst, ohne Reihenfolge. Die Leads versuchen immer, sie einzuhalten.",
     none: "Niemand.",
     rule: "Nicht direkt neben {name}",
+  },
+  fans: {
+    title: "Möchten neben dir sitzen",
+    next: "direkt neben dir",
+    near: "in deiner Nähe",
+    add: "+ Als Wunsch",
   },
   addTitle: "Wunsch hinzufügen",
   addButton: "Hinzufügen",

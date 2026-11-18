@@ -105,6 +105,7 @@ nav:
           - Light and dark theme: features/theme.md
           - Quick search: features/search.md
           - What's new: features/whats-new.md
+          - Help page: features/help.md
       - Events:
           - Event lifecycle: features/events.md
           - Lead to-dos and contacts: features/lead-todos.md
@@ -114,7 +115,7 @@ nav:
       - At the LAN:
           - Travel and packing list: features/travel-packing.md
           - Games: features/games.md
-          - Food orders: features/food.md
+          - Orders: features/food.md
           - Shared costs: features/shared-costs.md
           - Emergency contact and diet: features/emergency.md
       - Integrations:

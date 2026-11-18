@@ -43,7 +43,7 @@ export function buildChecklist(input: {
 
   steps.push({
     key: "going",
-    title: t("checklist.going.title"),
+    title: a?.status === "waitlist" ? t("checklist.going.waitlistTitle") : t("checklist.going.title"),
     state: going ? "done" : a?.status === "waitlist" ? "pending" : "todo",
     hint: going
       ? t("checklist.going.done")
@@ -68,7 +68,8 @@ export function buildChecklist(input: {
     key: "ticket",
     title: t("checklist.ticket.title"),
     // Trust based: the member's own "I have my ticket" is enough, no lead confirmation needed.
-    state: hasTicket ? "done" : "todo",
+    // On the waitlist it waits: nobody should buy a ticket before they have a spot.
+    state: hasTicket ? "done" : a?.status === "waitlist" ? "pending" : "todo",
     hint: hasTicket
       ? t("checklist.ticket.done")
       : a?.status === "waitlist"

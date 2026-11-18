@@ -17,7 +17,7 @@ export const manage: Messages["manage"] = {
   ourSeatsHint:
     "Trag die Plätze ein, die das Event der Gruppe gegeben hat, und verteil sie hier oder im Tab Teilnehmende. «Halten» nimmt einen Platz aus der automatischen Verteilung, z. B. für einen Gast.",
   seatSteps: "Platz-Schritte",
-  final: "fix",
+  final: "definitiv",
   notFinal: "nicht fix",
   seatSwaps: "Platztausch",
   toApprove: "{count} zu bestätigen",

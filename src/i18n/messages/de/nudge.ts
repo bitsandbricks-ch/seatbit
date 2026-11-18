@@ -23,5 +23,5 @@ export const nudge: Messages["nudge"] = {
   nick: "{lan}: Wie ist dein Nick?",
   nickText: "bitte trag den Nick ein, den du auf dem Sitzplan für {lan} willst.",
   seat: "{lan}: wähl deinen Platz",
-  seatText: "du kannst deinen Platz für {lan} selbst wählen, bis die Leads den Plan festlegen. Nimm einen freien im Tab Plätze.",
+  seatText: "du kannst deinen Platz für {lan} selbst wählen, bis die Leads den Plan definitiv machen. Nimm einen freien im Tab Plätze.",
 };

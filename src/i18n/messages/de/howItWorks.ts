@@ -1,0 +1,41 @@
+import type { Messages } from "../en";
+
+export const howItWorks: Messages["howItWorks"] = {
+  button: "So läuft dieses Event",
+  short: "So läufts",
+  title: "So läuft dieses Event",
+  youAreHere: "Du bist hier",
+  answer: {
+    title: "Sag, ob du kommst",
+    by: "Antworte bis {date}.",
+    any: "Antworte, sobald du es weisst.",
+    waitlistAuto: "Ist die Gruppe voll, kommst du auf die Warteliste. Wird ein Platz frei, rückt die erste Person automatisch nach und bekommt eine E-Mail und eine Discord-DM. Kommst du doch nicht? Antworte «Nicht dabei», damit die nächste Person schneller nachrückt.",
+    waitlistManual: "Ist die Gruppe voll, kommst du auf die Warteliste. Wird ein Platz frei, entscheiden die Leads, wer nachrückt, und du bekommst eine E-Mail und eine Discord-DM. Kommst du doch nicht? Antworte «Nicht dabei», damit die nächste Person schneller nachrückt.",
+  },
+  ticket: {
+    title: "Kauf dein Ticket",
+    by: "Kauf es bis {date} im Ticketshop des Events und hak dann «Ich habe mein Ticket» ab.",
+    any: "Kauf es im Ticketshop des Events und hak dann «Ich habe mein Ticket» ab.",
+    locked: "Ab dann ist deine Antwort fix: sag einem Lead Bescheid, wenn sich etwas ändert. Auf der Warteliste wartest du, bis du nachrückst.",
+  },
+  seat: {
+    title: "Hol dir deinen Platz",
+    block: "Das Event gibt unserer Gruppe einen Block mit {count} Plätzen ({range}).",
+    noBlock: "Die Leads tragen die Plätze der Gruppe ein, sobald das Event sie vergeben hat.",
+    pick: "Nimm dir im Tab «Plätze» selbst einen freien, bis die Leads den Plan abschliessen, oder schick Platzwünsche: neben wem du sitzen möchtest.",
+    wishes: "Schick im Tab «Plätze» Platzwünsche, wenn du magst: neben wem oder wo du sitzen möchtest. Die Leads planen die Plätze nach der Frist.",
+  },
+  final: {
+    title: "Leads machen den Plan definitiv",
+    titleBook: "Leads machen den Plan definitiv und buchen",
+    body: "Sie prüfen den Plan und machen ihn definitiv. Danach ändert sich dein Platz nur noch, wenn du einen Lead fragst.",
+    bodyBook: "Sie prüfen den Plan, machen ihn definitiv und buchen die Plätze auf der Seite des Events. Danach ändert sich dein Platz nur noch, wenn du einen Lead fragst.",
+  },
+  lan: {
+    title: "An der LAN",
+    body: "Tipp auf «Ich bin da», wenn du ankommst. Fahrten, Schlafplätze, Packliste, Games und geteilte Kosten findest du im Tab «Reise».",
+  },
+  whoTitle: "Wer sind die Leads?",
+  who: "Leute aus deinem Clan, die diese Reise planen: Sie kümmern sich um die Anmeldung, die Plätze und die News. Die LAN selbst führt das Team des Events durch.",
+  moreHelp: "Mehr Hilfe",
+};

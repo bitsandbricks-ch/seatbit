@@ -2,7 +2,7 @@ import type { Messages } from "../en";
 
 export const seatVariants: Messages["seatVariants"] = {
   title: "Sitzplan-Varianten",
-  hint: "Speichere, wer wo sitzt, unter einem Namen, probiere etwas anderes aus und wechsle zurück. Nur Leads sehen Varianten; Mitglieder sehen den aktiven Plan, sobald er final ist. Jede Variante wird mit den heutigen Platzwünschen geprüft.",
+  hint: "Speichere, wer wo sitzt, unter einem Namen, probiere etwas anderes aus und wechsle zurück. Nur Leads sehen Varianten; Mitglieder sehen den aktiven Plan, sobald er definitiv ist. Jede Variante wird mit den heutigen Platzwünschen geprüft.",
   name: "Name der Variante",
   namePlaceholder: "Name, z. B. Freunde vorne (optional)",
   thoroughName: "Exakte Suche",
@@ -35,8 +35,8 @@ export const seatVariants: Messages["seatVariants"] = {
     one: "Sie wird der aktive Sitzplan und {count} Person bekommt einen anderen Platz. Speichere zuerst den aktuellen Plan, wenn du ihn behalten willst.",
     other: "Sie wird der aktive Sitzplan und {count} Personen bekommen einen anderen Platz. Speichere zuerst den aktuellen Plan, wenn du ihn behalten willst.",
   },
-  applyFinal: "Der Plan ist final, darum bekommen alle, die wechseln, eine Nachricht zu ihrem neuen Platz.",
-  applyDraft: "Der Plan ist noch nicht final, darum bekommt niemand eine Nachricht.",
+  applyFinal: "Der Plan ist definitiv, darum bekommen alle, die wechseln, eine Nachricht zu ihrem neuen Platz.",
+  applyDraft: "Der Plan ist noch nicht definitiv, darum bekommt niemand eine Nachricht.",
   applied: { one: "«{name}» übernommen: {count} Person hat gewechselt.", other: "«{name}» übernommen: {count} Personen haben gewechselt." },
   rename: "Umbenennen",
   renamed: "Variante umbenannt.",

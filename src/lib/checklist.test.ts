@@ -35,6 +35,12 @@ test("waitlist is pending, not a to-do", () => {
   assert.match(steps[0].hint, /2/);
 });
 
+test("on the waitlist the ticket waits too, so it never shows up as the next step", () => {
+  const steps = buildChecklist({ ...base, lan: lan(), attendance: going({ status: "waitlist" }), waitlistPlace: 2 });
+  assert.equal(state(steps, "ticket"), "pending");
+  assert.equal(steps.find((s) => s.state === "todo" && !s.optional), undefined);
+});
+
 test("lead-assigned seats: wishes are optional and don't hold back the progress", () => {
   const steps = buildChecklist({ ...base, lan: lan(), attendance: going({ ticketBought: true }) });
   assert.deepEqual(keys(steps), ["going", "nick", "ticket", "wishes", "seat"]);

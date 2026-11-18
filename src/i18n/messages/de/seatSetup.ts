@@ -24,7 +24,7 @@ export const seatSetup: Messages["seatSetup"] = {
   searching: "Suche läuft, spätestens um {time} fertig.",
   auto: "Automatisch neu planen, wenn sich Wünsche ändern",
   autoHint: "Jede Änderung an Platzwünschen plant alle nicht reservierten Plätze neu. Offene Sitzplan-Seiten aktualisieren sich selbst.",
-  autoPaused: { final: "Pausiert: Der Plan ist final.", picking: "Pausiert, solange Mitglieder ihren Platz selbst wählen." },
+  autoPaused: { final: "Pausiert: Der Plan ist definitiv.", picking: "Pausiert, solange Mitglieder ihren Platz selbst wählen." },
   autoOnSaved: "Automatische Neuplanung ist an. Plätze neu geplant.",
   autoOffSaved: "Automatische Neuplanung ist aus.",
   status:

@@ -9,6 +9,7 @@ export const checklist: Messages["checklist"] = {
   going: {
     title: "Sag, dass du kommst",
     done: "Du bist dabei.",
+    waitlistTitle: "Auf einen Platz warten",
     waitlistAt: "Du bist #{place} auf der Warteliste.",
     waitlist: "Du bist auf der Warteliste.",
     deadline: "Antworte vor der Frist.",

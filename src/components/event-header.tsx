@@ -29,6 +29,7 @@ export async function EventHeader({
   canManage,
   tab,
   actions,
+  help,
 }: {
   lan: Lan;
   clan?: Clan;
@@ -36,6 +37,8 @@ export async function EventHeader({
   canManage: boolean;
   tab: string;
   actions?: ReactNode;
+  /** The "How this event works" icon, next to the share icon. */
+  help?: ReactNode;
 }) {
   const t = await getT();
   const keep = SHARED_TABS.includes(tab) && tab !== "overview" ? `?tab=${tab}` : "";
@@ -68,6 +71,7 @@ export async function EventHeader({
         <>
           {l.name}
           {share && <span className="ml-1.5 inline-block align-middle">{share}</span>}
+          {help && <span className="ml-0.5 inline-block align-middle">{help}</span>}
         </>
       }
       subtitle={

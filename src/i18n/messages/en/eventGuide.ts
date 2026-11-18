@@ -15,6 +15,9 @@ export const eventGuide = {
     back: "You get {amount} back",
   },
   glance: "At a glance",
+  tripOpens: "Opens {date}",
+  tripLater: "Opens closer to the event",
+  onSiteHidden: "Only leads see this until the event starts",
   trip: "Trip",
   tripLabel: "Trip sections",
   /** Short names inside the Trip tab's switch, so all four fit on a phone. */
@@ -24,7 +27,7 @@ export const eventGuide = {
   rows: {
     overview: "News, details and your nick",
     seatsNone: "No seats yet",
-    seatsPick: "Pick your seat",
+    seatsPick: "Free seats to pick",
     seatPicked: "You picked {seat}",
     seatFinal: "Your seat: {seat}",
     planOpen: "Seat plan not final yet",
@@ -38,11 +41,11 @@ export const eventGuide = {
     gamesNone: "No games yet",
     costsEven: "You're even",
     costsNone: "No shared costs yet",
-    foodOpen: { one: "Food order open", other: "{count} food orders open" },
-    foodNone: "No open food orders",
+    foodOpen: { one: "Order open", other: "{count} orders open" },
+    foodNone: "No open orders",
   },
   /** The section with food orders, there only while the event runs (leads: always). */
-  onSite: "On site",
-  onSiteLater: "Food orders show up here once the event starts.",
-  onSiteLeads: "Only leads see this tab before the event. Members get it once the event starts, so you can set up a food order in advance.",
+  onSite: "Orders",
+  onSiteLater: "Food and shopping orders show up here once the event starts.",
+  onSiteLeads: "Only leads see this tab before the event. Members get it once the event starts, so you can set up an order in advance.",
 };

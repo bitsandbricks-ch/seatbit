@@ -29,9 +29,15 @@ export const wishes = {
   },
   avoid: {
     title: "Not right next to",
-    hint: "As many as you like. They aren't ranked: the planner always tries hard to keep them.",
+    hint: "As many as you like, in no order. The leads always try to keep them.",
     none: "Nobody.",
     rule: "Not right next to {name}",
+  },
+  fans: {
+    title: "Want to sit near you",
+    next: "right next to you",
+    near: "near you",
+    add: "+ Add as my wish",
   },
   addTitle: "Add a wish",
   addButton: "Add",

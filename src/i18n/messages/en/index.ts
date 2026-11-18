@@ -51,7 +51,9 @@ import { games } from "./games";
 import { guestDiscord } from "./guestDiscord";
 import { guestForm } from "./guestForm";
 import { health } from "./health";
+import { help } from "./help";
 import { home } from "./home";
+import { howItWorks } from "./howItWorks";
 import { interestList } from "./interestList";
 import { joinPage } from "./joinPage";
 import { lanForm } from "./lanForm";
@@ -97,6 +99,7 @@ import { roles } from "./roles";
 import { search } from "./search";
 import { seatFlow } from "./seatFlow";
 import { seatMap } from "./seatMap";
+import { seatPhases } from "./seatPhases";
 import { seatSetup } from "./seatSetup";
 import { seatVariants } from "./seatVariants";
 import { settingDefs } from "./settingDefs";
@@ -173,7 +176,9 @@ export const en = {
   guestDiscord,
   guestForm,
   health,
+  help,
   home,
+  howItWorks,
   interestList,
   joinPage,
   lanForm,
@@ -219,6 +224,7 @@ export const en = {
   search,
   seatFlow,
   seatMap,
+  seatPhases,
   seatSetup,
   seatVariants,
   settingDefs,

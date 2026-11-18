@@ -17,7 +17,7 @@ export const mailVar: Messages["mailVar"] = {
   price: "Ticketpreis (leer, wenn nicht gesetzt)",
   ticketUrl: "Link zum Ticketshop (leer, wenn nicht gesetzt)",
   seat: "Ihr Platz (leer, wenn keiner)",
-  seat_final: "Ihr Platz (leer, wenn keiner oder der Plan nicht fixiert ist)",
+  seat_final: "Ihr Platz (leer, wenn keiner oder der Plan nicht definitiv ist)",
   seatInfo: "«Du sitzt auf F3.» oder ein Hinweis, dass noch kein Platz da ist",
   reason: "Grund, wie der Lead ihn geschrieben hat (leer, wenn keiner)",
   news: "Der News-Text",
