@@ -1,13 +1,13 @@
 export const waitlistPanel = {
   whenOpens: "When a spot opens",
   auto: "Next in line moves up",
-  manual: "Leads pick",
+  manual: "Organizers pick",
   noLimit: "No limit set",
   noFree: "No free spot",
   free: { one: "{count} free spot", other: "{count} free spots" },
   autoHint: "When someone stops coming, the first person in line moves to coming and gets an email and a Discord DM.",
   manualHint:
-    "When someone stops coming, the leads get a notice and move someone up by hand. Handy when you want to ask first who still has time.",
+    "When someone stops coming, the organizers get a notice and move someone up by hand. Handy when you want to ask first who still has time.",
   nobody: "Nobody is waiting.",
   waiting: "waiting {since}",
   ticketConfirmed: "ticket confirmed",

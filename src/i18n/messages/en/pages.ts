@@ -12,11 +12,11 @@ export const pages = {
   setPassword: "Set password",
   choosePassword: "Choose a new password",
   errorTitle: "Something went wrong",
-  errorHint: "That didn't work, but nothing you entered is lost. Try again, and if it keeps happening, tell a lead.",
+  errorHint: "That didn't work, but nothing you entered is lost. Try again, and if it keeps happening, tell an organizer.",
   errorCode: "Error {code}",
   tryAgain: "Try again",
   backToLans: "Back to LANs",
   notFound: "This seat is empty",
-  notFoundHint: "The page doesn't exist, or it belongs to a clan you're not in. Ask a lead for an invite link if you think you should see it.",
+  notFoundHint: "The page doesn't exist, or it belongs to a clan you're not in. Ask an organizer for an invite link if you think you should see it.",
   loading: "Loading…",
 };

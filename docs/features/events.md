@@ -2,11 +2,11 @@
 
 An **event** is one edition of a LAN the group attends. It goes from draft (optionally an interest check) to published, sign-up, the LAN itself, and next year's copy.
 
-**Who:** leads, clan admins and event managers create and run events; members answer · **Where:** *New event* on the *LANs* tab or the clan page; *Manage* on the event
+**Who:** organizers, clan admins and event managers create and run events; members answer · **Where:** *New event* on the *LANs* tab or the clan page; *Manage* on the event
 
 | Stage | Who sees it | What happens |
 | --- | --- | --- |
-| **Draft** | Leads, clan admins, event managers | Nothing goes out. |
+| **Draft** | Organizers, clan admins, event managers | Nothing goes out. |
 | **Interest check** (optional) | The clan | Only the *Would you come?* answer and who answered; date can stay open. |
 | **Published** | The clan | Announcement, answers, tickets, seats, reminders. |
 | **LAN day** | The clan | Check-in with *I'm here*. |
@@ -25,9 +25,9 @@ An **event** is one edition of a LAN the group attends. It goes from draft (opti
 | **Start, end** | Set the start and the end follows from the type's usual length. Moving the start moves the end by the same amount, so the event keeps its length, and the deadlines by the same number of days at their own time (an «answer by» at 23:59 stays at 23:59). |
 | **Answer by** | When the group must know who comes (e.g. before booking the seat block). Defaults from the type's days before. |
 | **Buy ticket by** | Deadline for tickets. |
-| **Spots** | How many people the group can bring. When full, new answers go on the [waitlist](attendance.md#waitlist); leads choose whether the next in line moves up by itself or they pick. Once the event has a seat plan, each seat is a spot: the field shows the seat count and can't be edited, and adding seats opens spots (see [Spots from the seat plan](attendance.md#spots-from-the-seat-plan)). |
+| **Spots** | How many people the group can bring. When full, new answers go on the [waitlist](attendance.md#waitlist); organizers choose whether the next in line moves up by itself or they pick. Once the event has a seat plan, each seat is a spot: the field shows the seat count and can't be edited, and adding seats opens spots (see [Spots from the seat plan](attendance.md#spots-from-the-seat-plan)). |
 | **Seats** | The seats the event gave the group, e.g. `F1-F16, F19-F22`. See [Seats](seats.md). |
-| **Event seat plan** | Link to the event's own seat plan where the leads book the group's seats (new every year). |
+| **Event seat plan** | Link to the event's own seat plan where the organizers book the group's seats (new every year). |
 | **Member profile link** | A member's profile on the event's site with `{id}` for their LAN ID. Empty uses the LAN type's. See [Profile links](clans.md#profile-links). |
 
 Every date field is a text box: type or paste `14.11.2026 18:00`, `14.11. 18` or `14.11.26 1800`, or open the calendar.
@@ -36,7 +36,7 @@ Every date field is a text box: type or paste `14.11.2026 18:00`, `14.11. 18` or
 
 ## Draft, publish and schedule
 
-A new event starts as a **draft**: only its leads, clan admins and event managers see it, and nothing goes out (no Discord post, no reminders, no messages).
+A new event starts as a **draft**: only its organizers, clan admins and event managers see it, and nothing goes out (no Discord post, no reminders, no messages).
 
 ![A draft event](../screenshots/desktop-event-draft.png){ .shot }
 
@@ -51,7 +51,7 @@ For when you're not sure yet if, or when, the group goes. Turn it on when creati
 
 - Members answer with the usual *I'm coming*, *Unsure* or *Not coming*. Nothing is binding yet, and the event's limit doesn't count, so nobody lands on the waitlist.
 - The event page shows only that answer, the description, news and **Who answered**: the members under *Coming*, *Unsure*, *Not coming* and *No answer yet*, with the clan's name display and avatars. Seats, travel, packing, games, costs and the checklist stay hidden until sign-up opens. Tap the counts in the banner to get to the list.
-- Leads get a **Remind** button on *No answer yet*. It sends the same nudge as [Who's missing](reminders.md) (Discord DM or email, at most once every 12 hours per person).
+- Organizers get a **Remind** button on *No answer yet*. It sends the same nudge as [Who's missing](reminders.md) (Discord DM or email, at most once every 12 hours per person).
 - The date can stay open with a rough hint like "Spring 2027".
 - **Open sign-up** (after setting the date) asks once, then opens the rest of the event. Everyone keeps their answer, and everyone except those who said no gets a "sign-up is open" message.
 - **Schedule…** next to it opens sign-up by itself at a date and time you pick; members see when. *Don't schedule* takes it back.
@@ -67,11 +67,11 @@ For when you're not sure yet if, or when, the group goes. Turn it on when creati
 
 ![Who answered the interest check](../screenshots/desktop-interest.png){ .shot }
 
-![Interest check, lead view](../screenshots/desktop-interest-manage.png){ .shot }
+![Interest check, organizer view](../screenshots/desktop-interest-manage.png){ .shot }
 
 ## Share an event
 
-Every published event has a **Share** button next to its title, for members and leads alike.
+Every published event has a **Share** button next to its title, for members and organizers alike.
 
 - **On a phone** it opens the phone's share sheet (WhatsApp, Discord, Signal, ...).
 - **On a computer** it copies the link and shows *Link copied*.
@@ -87,7 +87,7 @@ Someone who opens the link but can't see the event yet gets a card with the even
 | Signed out | *Sign in* or *Create an account*, then straight back to the event. New accounts fill in their name first. |
 | Signed in, not in the clan, clan is **open** | *Join clan*, then the event. |
 | Signed in, not in the clan, clan needs **approval** | *Ask to join*. The link opens the event once a clan admin lets them in. |
-| Signed in, not in the clan, clan is **invite-only** | A note to ask a lead for an [invite link](clans.md#clan-settings). |
+| Signed in, not in the clan, clan is **invite-only** | A note to ask an organizer for an [invite link](clans.md#clan-settings). |
 
 <div class="phones" markdown>
 <figure markdown>
@@ -102,23 +102,23 @@ For ready-made WhatsApp texts with the link (announcement, reminders), see *Mana
 
 ## Manage
 
-Leads see **View / Manage** next to the event title. *Manage* has the tabs:
+Organizers see **View / Manage** next to the event title. *Manage* has the tabs:
 
 | Tab | |
 | --- | --- |
-| **Overview** | The lead checklist, [lead to-dos and organizer contacts](lead-todos.md) (done ones fold away), a strip with the numbers (coming, unsure, tickets, seats; each opens its tab), deadlines. |
+| **Overview** | The organizer checklist, [organizer to-dos and event contacts](lead-todos.md) (done ones fold away), a strip with the numbers (coming, unsure, tickets, seats; each opens its tab), deadlines. |
 | **Seats** | The seat planner. See [Seats](seats.md#plan-the-seats). |
 | **People** | Switch between *Who's coming* (answers, tickets, LAN IDs, CSV export; see [Attendance](attendance.md#attendee-list)), *Who's missing* (who still owes something, with nudges; see [Who's missing](reminders.md#whos-missing)) and *Emergency* (see [Emergency contact and diet](emergency.md)). |
 | **News** | News for attendees, [manual reminders](reminders.md#manual-reminders), and Discord & WhatsApp: re-post the announcement, post reminders, WhatsApp texts. See [Discord](discord.md#per-event). |
-| **Settings** | Details, dates, spots, links, co-leads, copy, cancel, delete. |
+| **Settings** | Details, dates, spots, links, co-organizers, copy, cancel, delete. |
 
 ![Manage overview](../screenshots/desktop-manage.png){ .shot }
 
-### Lead checklist
+### Organizer checklist { #lead-checklist }
 
-The top of *Manage → Overview* lists what the leads still have to do for the event. Open steps link to the tab where you do them; on phones only the open steps show.
+The top of *Manage → Overview* lists what the organizers still have to do for the event. Open steps link to the tab where you do them; on phones only the open steps show.
 
-![Lead checklist on a phone](../screenshots/phone-lead-checklist.png){ .shot width="300" }
+![Organizer checklist on a phone](../screenshots/phone-lead-checklist.png){ .shot width="300" }
 
 | Step | Done when |
 | --- | --- |
@@ -126,13 +126,13 @@ The top of *Manage → Overview* lists what the leads still have to do for the e
 | **Open sign-up** | Only during an [interest check](#interest-check): you opened sign-up (waits while an opening is scheduled). |
 | **Enter the group's seats** | The seat block is entered. |
 | **Move people up from the waitlist** | Only when you move people up by hand and a spot is free. |
-| **Everyone has a ticket** | Everyone coming ticked *I have my ticket* (or a lead ticked it for them). Waits on members, nothing to confirm. |
+| **Everyone has a ticket** | Everyone coming ticked *I have my ticket* (or an organizer ticked it for them). Waits on members, nothing to confirm. |
 | **Seat everyone** | Everyone coming has a seat. With self pick on: *Members pick, you fill the gaps*. |
 | **Finalize the seat plan** | The plan is final. |
 | **Book the seats on the event site** | Only with an event seat plan link: every seat is ticked as booked. See [Seats](seats.md#book-on-the-event-site). |
 | **Approve seat swaps** | Only while swaps wait for approval. |
 
-Below it, the leads' own [to-dos](lead-todos.md) (e.g. *Send the seat list to the organizers*) can wait for these steps and open once they are done.
+Below it, the organizers' own [to-dos](lead-todos.md) (e.g. *Send the seat list to the event's team*) can wait for these steps and open once they are done.
 
 ### News
 
@@ -144,13 +144,13 @@ Short updates ("Doors open at 10:00, bring cash for pizza"). They show on the ev
 
 | Action | |
 | --- | --- |
-| **Copy for next year** | Creates next year's event as a draft: dates +1 year, seat block, leads. |
+| **Copy for next year** | Creates next year's event as a draft: dates +1 year, seat block, organizers. |
 | **Cancel event…** | Tells everyone who answered and turns the Discord post red. The event stays visible, greyed out. Can be undone. |
 | **Delete** | Removes a draft or an event for good. |
 
 ## Live updates
 
-The event page and *Manage* update by themselves when someone else changes something: answers, tickets, seats and wishes, games, food orders, costs, travel and packing, news, the lead to-dos. Changes from Discord commands show up the same way. You don't need to reload.
+The event page and *Manage* update by themselves when someone else changes something: answers, tickets, seats and wishes, games, food orders, costs, travel and packing, news, the organizer to-dos. Changes from Discord commands show up the same way. You don't need to reload.
 
 If you're typing in a field, dragging or have a dialog open, the page waits until you're done, so nothing you're entering gets lost. A tab in the background catches up when you come back to it.
 
@@ -160,4 +160,4 @@ Members coming tap **I'm here** when they arrive, and everyone sees who is still
 
 ## After the LAN
 
-Once an event is over, its overview starts with a short recap: who came, your seat, the most wanted games and how many tournament teams there were, and whether the shared costs are settled (or what you still owe, with a link to the *Costs* tab). Leads also get **Plan the next one**, which opens a new event of the same LAN type.
+Once an event is over, its overview starts with a short recap: who came, your seat, the most wanted games and how many tournament teams there were, and whether the shared costs are settled (or what you still owe, with a link to the *Costs* tab). Organizers also get **Plan the next one**, which opens a new event of the same LAN type.

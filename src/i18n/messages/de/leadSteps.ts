@@ -1,11 +1,11 @@
 import type { Messages } from "../en";
 
 export const leadSteps: Messages["leadSteps"] = {
-  heading: "Lead-Checkliste",
+  heading: "Organisator-Checkliste",
   publish: "Event veröffentlichen",
   publishDone: "Mitglieder sehen es.",
   publishScheduled: "Geht zur festgelegten Zeit von selbst online.",
-  publishDraft: "Es ist ein Entwurf: Nur Leads sehen es. Veröffentliche es oben.",
+  publishDraft: "Es ist ein Entwurf: Nur Organisatoren sehen es. Veröffentliche es oben.",
   signup: "Anmeldung öffnen",
   signupHint: "Die Interessensabfrage läuft. Nutze oben «Anmeldung öffnen», sobald ihr wisst, dass ihr geht.",
   signupScheduled: "Die Anmeldung geht am {date} von selbst auf.",

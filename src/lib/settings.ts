@@ -330,7 +330,7 @@ export const SETTINGS: SettingDef[] = [
     kind: "number",
     env: "TRIP_OPENS_DAYS",
     default: "30",
-    help: "Members see travel, packing list, games and costs from this many days before the start, or earlier once someone posted something there. Leads always see it. 0 shows it all the time.",
+    help: "Members see travel, packing list, games and costs from this many days before the start, or earlier once someone posted something there. Organizers always see it. 0 shows it all the time.",
     validate: isInt(0, 365),
   },
 
@@ -555,7 +555,7 @@ export const SETTINGS: SettingDef[] = [
     kind: "number",
     env: "SEAT_THOROUGH_MINUTES",
     default: "5",
-    help: "How long the leads' exact seat search may run in the background. It stops as soon as it has proven the best plan; if time runs out first, the leads get the best plan it found.",
+    help: "How long the organizers' exact seat search may run in the background. It stops as soon as it has proven the best plan; if time runs out first, the organizers get the best plan it found.",
     validate: isInt(1, 30),
   },
   {

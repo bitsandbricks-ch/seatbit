@@ -56,8 +56,8 @@ export const costs = {
     add: "Only people coming to this event can add expenses.",
     max: "This event already has {count} expenses. Delete an old one first.",
     gone: "This expense is gone.",
-    edit: "Only who paid, who logged it or a lead can change this expense.",
-    settle: "Only the two people in this payment or a lead can tick it off.",
+    edit: "Only who paid, who logged it or an organizer can change this expense.",
+    settle: "Only the two people in this payment or an organizer can tick it off.",
     self: "Pick two different people.",
   },
 };

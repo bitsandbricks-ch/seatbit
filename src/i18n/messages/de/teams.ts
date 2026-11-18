@@ -42,7 +42,7 @@ export const teams: Messages["teams"] = {
     alreadyIn: "Du bist schon in einem Team für dieses Spiel. Verlasse es zuerst.",
     full: "Dieses Team ist voll.",
     tooSmall: "Das Team hat schon mehr Spieler.",
-    captainOnly: "Das können nur der Captain des Teams oder ein Lead.",
+    captainOnly: "Das können nur der Captain des Teams oder ein Organisator.",
   },
   notice: {
     full: "{team} ist komplett für {lan}",

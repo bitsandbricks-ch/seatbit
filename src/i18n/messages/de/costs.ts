@@ -58,8 +58,8 @@ export const costs: Messages["costs"] = {
     add: "Nur Leute, die an dieses Event kommen, können Ausgaben eintragen.",
     max: "Dieses Event hat schon {count} Ausgaben. Lösch zuerst eine alte.",
     gone: "Diese Ausgabe gibt es nicht mehr.",
-    edit: "Nur wer bezahlt oder sie eingetragen hat oder ein Lead kann diese Ausgabe ändern.",
-    settle: "Nur die beiden Personen dieser Zahlung oder ein Lead können sie abhaken.",
+    edit: "Nur wer bezahlt oder sie eingetragen hat oder ein Organisator kann diese Ausgabe ändern.",
+    settle: "Nur die beiden Personen dieser Zahlung oder ein Organisator können sie abhaken.",
     self: "Wähle zwei verschiedene Personen.",
   },
 };

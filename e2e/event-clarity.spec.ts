@@ -18,7 +18,7 @@ test.describe("event page clarity", () => {
     await expect(panel.getByRole("heading", { name: "How this event works" })).toBeVisible();
     await expect(panel.getByText("You are here")).toBeVisible();
     await expect(panel.getByText(/block of 2 seats \(A1–A2\)/)).toBeVisible();
-    await expect(panel.getByText("Who are the leads?")).toBeVisible();
+    await expect(panel.getByText("Who are the organizers?")).toBeVisible();
     await expect(panel.getByText(/Alex/).first()).toBeVisible();
     await panel.getByRole("button", { name: "Close" }).click();
     await expect(panel).toBeHidden();

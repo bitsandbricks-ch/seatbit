@@ -14,11 +14,11 @@ export const pages: Messages["pages"] = {
   setPassword: "Passwort setzen",
   choosePassword: "Wähl ein neues Passwort",
   errorTitle: "Etwas ist schiefgelaufen",
-  errorHint: "Das hat nicht geklappt, aber nichts, was du eingegeben hast, ist verloren. Versuch es nochmals, und wenn es weiter passiert, sag es einem Lead.",
+  errorHint: "Das hat nicht geklappt, aber nichts, was du eingegeben hast, ist verloren. Versuch es nochmals, und wenn es weiter passiert, sag es einem Organisator.",
   errorCode: "Fehler {code}",
   tryAgain: "Nochmals versuchen",
   backToLans: "Zurück zu den LANs",
   notFound: "Dieser Platz ist leer",
-  notFoundHint: "Die Seite gibt es nicht, oder sie gehört zu einem Clan, in dem du nicht bist. Frag einen Lead nach einem Einladungslink, wenn du sie sehen solltest.",
+  notFoundHint: "Die Seite gibt es nicht, oder sie gehört zu einem Clan, in dem du nicht bist. Frag einen Organisator nach einem Einladungslink, wenn du sie sehen solltest.",
   loading: "Lädt…",
 };

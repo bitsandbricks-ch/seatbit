@@ -2,7 +2,7 @@
 
 The pizza run, a burger order or a supermarket trip at the LAN: everyone adds what they want, one person orders and ticks off who paid.
 
-**Who:** anyone coming · **Where:** event → *Orders*, while the event runs (from 6 hours before the start) (leads see it before, muted with a crossed-out eye, to set an order up in advance)
+**Who:** anyone coming · **Where:** event → *Orders*, while the event runs (from 6 hours before the start) (organizers see it before, muted with a crossed-out eye, to set an order up in advance)
 
 ## Start an order
 
@@ -22,7 +22,7 @@ Add how many, the item, a note ("no onions") and the price. Until the last call 
 
 - **To order** lists the same items merged ("4x Margherita"), to read out on the phone. **Copy order** puts it on the clipboard for a chat.
 - The order shows the total and what each person owes.
-- Whoever started the order (or a lead) closes it, marks it as ordered and ticks off who **paid**.
+- Whoever started the order (or an organizer) closes it, marks it as ordered and ticks off who **paid**.
 
 The currency is a platform setting (`FOOD_CURRENCY`, default CHF). See [Configuration](../installation/configuration.md).
 

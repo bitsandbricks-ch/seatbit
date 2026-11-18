@@ -15,7 +15,7 @@ export const wishLead = {
   nearRangeHint: "For “Near someone” wishes. “Right next to” always means the seat beside.",
   nearRangeSaved: "Saved: near means within {range} seats.",
   dm: {
-    subject: "A lead changed your seat wishes for {lan}",
+    subject: "An organizer changed your seat wishes for {lan}",
     text: "{lead} changed your seat wishes for {lan}. They are now:\n\n{wishes}\n\nYou can change them on the event page until the seat plan is final.",
     none: "No wishes: anywhere is fine.",
     note: "Note: {note}",

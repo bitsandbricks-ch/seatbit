@@ -17,7 +17,7 @@ export const eventGuide = {
   glance: "At a glance",
   tripOpens: "Opens {date}",
   tripLater: "Opens closer to the event",
-  onSiteHidden: "Only leads see this until the event starts",
+  onSiteHidden: "Only organizers see this until the event starts",
   trip: "Trip",
   tripLabel: "Trip sections",
   /** Short names inside the Trip tab's switch, so all four fit on a phone. */
@@ -47,5 +47,5 @@ export const eventGuide = {
   /** The section with food orders, there only while the event runs (leads: always). */
   onSite: "Orders",
   onSiteLater: "Food and shopping orders show up here once the event starts.",
-  onSiteLeads: "Only leads see this tab before the event. Members get it once the event starts, so you can set up an order in advance.",
+  onSiteLeads: "Only organizers see this tab before the event. Members get it once the event starts, so you can set up an order in advance.",
 };

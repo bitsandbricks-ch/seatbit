@@ -8,7 +8,7 @@ export const seatFlow = {
   pickOff: "Optional. Turn it on to let members take a free seat themselves. You still check and finalize the plan afterwards.",
   turnOff: "Turn self pick off",
   turnOn: "Turn on self pick",
-  finalize: "Leads finalize the plan",
+  finalize: "Organizers finalize the plan",
   finalized: "Finalized {date}. Members see the plan and changes you make now tell the people who moved.",
   reopen: "Reopen",
   check: "Check the seats, move anyone you need to, then finalize. This closes seat wishes and shows everyone the plan.",

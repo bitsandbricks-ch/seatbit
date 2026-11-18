@@ -1,6 +1,6 @@
 # Help page
 
-How Seatbit works, written for members and leads, in English and German.
+How Seatbit works, written for members and organizers, in English and German.
 
 **Who:** everyone, also signed out · **Where:** *Help* in the footer, `/help`, and *More help* in an event's *How this event works* panel
 
@@ -13,10 +13,10 @@ The page starts with the flow of an event in one line (answer → ticket → sea
 | **Seats** | The seat block, seat wishes, self pick, what «final» means, who wants to sit near you, swaps. |
 | **Trip** | When the tab opens, rides and places to sleep, packing list, games, shared costs. |
 | **At the LAN** | Check-in and orders. |
-| **Who does what** | Leads, clan roles, and who runs the LAN itself. |
+| **Who does what** | Organizers, clan roles, and who runs the LAN itself. |
 | **Discord** | Sign-in, DMs, `/verify`. |
 | **Notifications and your data** | Mails and DMs, emergency contact, language and theme, export and delete. |
-| **For leads** | Creating an event, planning seats, finalizing and booking, keeping everyone posted. |
+| **For organizers** | Creating an event, planning seats, finalizing and booking, keeping everyone posted. |
 
 On phones the topics come first as a list that jumps to their card; on desktop they stay in a sidebar.
 

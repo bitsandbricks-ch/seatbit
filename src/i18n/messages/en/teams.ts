@@ -40,7 +40,7 @@ export const teams = {
     alreadyIn: "You're already in a team for this game. Leave it first.",
     full: "This team is full.",
     tooSmall: "The team already has more players than that.",
-    captainOnly: "Only the team's captain or a lead can do that.",
+    captainOnly: "Only the team's captain or an organizer can do that.",
   },
   notice: {
     full: "{team} is complete for {lan}",

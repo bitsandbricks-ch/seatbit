@@ -2,7 +2,7 @@ import type { Messages } from "../en";
 
 export const contacts: Messages["contacts"] = {
   heading: "Kontakte der Veranstalter",
-  hint: "Die Leute bei den Veranstaltern der LAN, mit denen die Leads zu tun haben. Leads sehen sie bei jedem Event dieses Typs.",
+  hint: "Die Leute bei den Veranstaltern der LAN, mit denen die Organisatoren zu tun haben. Organisatoren sehen sie bei jedem Event dieses Typs.",
   fromType: "Vom LAN-Typ {type}.",
   none: "Noch keine Kontakte.",
   noType: "Kontakte gehören zu einem LAN-Typ. Dieses Event hat keinen.",

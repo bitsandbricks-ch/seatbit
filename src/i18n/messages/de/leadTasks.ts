@@ -2,7 +2,7 @@ import type { Messages } from "../en";
 
 export const leadTasks: Messages["leadTasks"] = {
   showDone: { one: "{count} erledigte zeigen", other: "{count} erledigte zeigen" },
-  heading: "Lead-To-dos",
+  heading: "Organisator-To-dos",
   hint: "Hak sie ab, wenn sie erledigt sind. Ein To-do geht auf, sobald die Schritte erledigt sind, auf die es wartet.",
   empty: "Noch keine To-dos für dieses Event.",
   waitingFor: "Geht auf nach: {steps}",
@@ -17,9 +17,9 @@ export const leadTasks: Messages["leadTasks"] = {
   addForEvent: "To-do nur für dieses Event hinzufügen",
   editType: "To-dos und Kontakte von {type} bearbeiten",
   editClan: "To-dos für alle LAN-Typen bearbeiten",
-  allHeading: "Lead-To-dos für alle LAN-Typen",
-  allHint: "Jedes Event des Clans bekommt diese, ausser sein LAN-Typ schaltet sie aus. Leads haken sie unter Verwalten → Übersicht ab.",
-  typeHeading: "Lead-To-dos",
+  allHeading: "Organisator-To-dos für alle LAN-Typen",
+  allHint: "Jedes Event des Clans bekommt diese, ausser sein LAN-Typ schaltet sie aus. Organisatoren haken sie unter Verwalten → Übersicht ab.",
+  typeHeading: "Organisator-To-dos",
   typeHint: "Jedes Event dieses Typs bekommt diese, nach den To-dos für alle LAN-Typen.",
   useClanTasks: "Auch die To-dos für alle LAN-Typen verwenden",
   none: "Noch keine To-dos.",
@@ -54,11 +54,11 @@ export const leadTasks: Messages["leadTasks"] = {
     },
     arrival: {
       title: "Infos zu Anreise und Aufbau mit der Gruppe teilen",
-      note: "Check-in-Zeiten, Parkplätze, was mitbringen. Als Lead-News posten, damit es alle bekommen.",
+      note: "Check-in-Zeiten, Parkplätze, was mitbringen. Als Organisator-News posten, damit es alle bekommen.",
     },
     thanks: {
       title: "Den Veranstaltern danken und notieren, was besser geht",
-      note: "Schreib auf, was gut lief und was nicht, damit die Leads nächstes Jahr Bescheid wissen.",
+      note: "Schreib auf, was gut lief und was nicht, damit die Organisatoren nächstes Jahr Bescheid wissen.",
     },
   },
 };

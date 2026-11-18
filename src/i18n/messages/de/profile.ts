@@ -8,7 +8,7 @@ export const profile: Messages["profile"] = {
   yourData: "Deine Daten",
   nickHint: "Dein Gamer-Tag, an jeder LAN sichtbar, ausser du setzt im Tab LAN-Nicks & IDs einen pro LAN-Typ.",
   emailReminders: "E-Mail-Erinnerungen",
-  emailRemindersHint: "Neue Events, News der Leads, Fristen, Tickets und der Tag vor einer LAN, an {email}.",
+  emailRemindersHint: "Neue Events, News der Organisatoren, Fristen, Tickets und der Tag vor einer LAN, an {email}.",
   discordDms: "Discord-DMs",
   discordDmsHint: "Wenn sich etwas für mich ändert: Platz, Sitzplan, Event-Details, Erinnerungen, Clan-Anfragen.",
   discordDmsLink: "Verknüpfe Discord unter Anmeldemethoden, um sie zu bekommen.",
@@ -36,7 +36,7 @@ export const profile: Messages["profile"] = {
   interestsHint: "Einmalige Events ohne Art erreichen dich immer. Du siehst trotzdem alle Events des Clans.",
   nicksPerType: "Nicks und IDs pro LAN-Typ",
   nicksPerTypeIntro:
-    "Ein Nick pro LAN-Typ, für alle Events dieses Typs. Leer lassen, um deinen Nickname zu verwenden. Darunter optional deine User-ID oder Ticketnummer an dieser LAN (z. B. auf lal.gg), damit die Leads dich zuordnen können. Hat der LAN-Typ einen Profil-Link, sieht dein Clan den Link zu deinem Profil auf der Event-Seite.",
+    "Ein Nick pro LAN-Typ, für alle Events dieses Typs. Leer lassen, um deinen Nickname zu verwenden. Darunter optional deine User-ID oder Ticketnummer an dieser LAN (z. B. auf lal.gg), damit die Organisatoren dich zuordnen können. Hat der LAN-Typ einen Profil-Link, sieht dein Clan den Link zu deinem Profil auf der Event-Seite.",
   typeId: "{type}-ID",
   yourProfileLink: "Dein Profil: {url}",
   addIdForLink: "Gib deine ID ein, um dein Profil auf der Event-Seite zu verlinken.",

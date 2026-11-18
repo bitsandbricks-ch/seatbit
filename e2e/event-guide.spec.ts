@@ -73,7 +73,7 @@ test.describe("event guide", () => {
     const alex = await as("alex");
     await alex.goto(`/lans/${id}`);
     await expect(tabs(alex).getByRole("link", { name: /^Orders/ })).toBeVisible();
-    await expect(tabs(alex).getByRole("link", { name: /Orders/ })).toHaveAttribute("title", "Only leads see this until the event starts");
+    await expect(tabs(alex).getByRole("link", { name: /Orders/ })).toHaveAttribute("title", "Only organizers see this until the event starts");
 
     // The event starts: members get it too.
     const now = Date.now();

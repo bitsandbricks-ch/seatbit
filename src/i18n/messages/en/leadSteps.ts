@@ -1,9 +1,9 @@
 export const leadSteps = {
-  heading: "Lead checklist",
+  heading: "Organizer checklist",
   publish: "Publish the event",
   publishDone: "Members see it.",
   publishScheduled: "Goes live by itself at the set time.",
-  publishDraft: "It's a draft: only leads see it. Publish it at the top.",
+  publishDraft: "It's a draft: only organizers see it. Publish it at the top.",
   signup: "Open sign-up",
   signupHint: "The interest check is running. Use Open sign-up at the top once you know you're going.",
   signupScheduled: "Sign-up opens by itself on {date}.",

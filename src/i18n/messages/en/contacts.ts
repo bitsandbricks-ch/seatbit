@@ -1,6 +1,6 @@
 export const contacts = {
-  heading: "Organizer contacts",
-  hint: "The people at the LAN's own organizers the leads deal with. Leads see them on every event of this type.",
+  heading: "Event contacts",
+  hint: "The people on the event's own team the organizers deal with. Organizers see them on every event of this type.",
   fromType: "From the LAN type {type}.",
   none: "No contacts yet.",
   noType: "Contacts belong to a LAN type. This event has none.",

@@ -17,7 +17,7 @@ export const eventGuide: Messages["eventGuide"] = {
   glance: "Auf einen Blick",
   tripOpens: "Öffnet am {date}",
   tripLater: "Öffnet näher am Event",
-  onSiteHidden: "Nur Leads sehen das, bis das Event beginnt",
+  onSiteHidden: "Nur Organisatoren sehen das, bis das Event beginnt",
   trip: "Reise",
   tripLabel: "Reise-Bereiche",
   sections: { travel: "Anreise", gear: "Packen", games: "Games", costs: "Kosten" },
@@ -44,5 +44,5 @@ export const eventGuide: Messages["eventGuide"] = {
   },
   onSite: "Bestellungen",
   onSiteLater: "Essens- und Einkaufsbestellungen erscheinen hier, sobald das Event beginnt.",
-  onSiteLeads: "Vor dem Event sehen nur Leads diesen Tab. Mitglieder bekommen ihn, sobald das Event beginnt. So kannst du eine Bestellung vorbereiten.",
+  onSiteLeads: "Vor dem Event sehen nur Organisatoren diesen Tab. Mitglieder bekommen ihn, sobald das Event beginnt. So kannst du eine Bestellung vorbereiten.",
 };

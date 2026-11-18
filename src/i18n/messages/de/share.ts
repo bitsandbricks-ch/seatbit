@@ -14,7 +14,7 @@ export const share: Messages["share"] = {
   signIn: "Anmelden",
   register: "Konto erstellen",
   pending: "Du hast angefragt, {clan} beizutreten. Sobald dich ein Clan-Admin aufnimmt, öffnet dieser Link das Event.",
-  inviteOnly: "{clan} ist nur auf Einladung. Frag einen Lead nach einem Einladungslink und öffne diesen Link dann nochmals.",
+  inviteOnly: "{clan} ist nur auf Einladung. Frag einen Organisator nach einem Einladungslink und öffne diesen Link dann nochmals.",
   joinOpenText: "Tritt {clan} bei, um zu sehen, wer kommt, und um zu antworten.",
   joinApprovalText: "Frag an, {clan} beizutreten. Sobald dich ein Clan-Admin aufnimmt, öffnet sich das Event.",
   join: "Clan beitreten",

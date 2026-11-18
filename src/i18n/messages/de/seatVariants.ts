@@ -2,7 +2,7 @@ import type { Messages } from "../en";
 
 export const seatVariants: Messages["seatVariants"] = {
   title: "Sitzplan-Varianten",
-  hint: "Speichere, wer wo sitzt, unter einem Namen, probiere etwas anderes aus und wechsle zurück. Nur Leads sehen Varianten; Mitglieder sehen den aktiven Plan, sobald er definitiv ist. Jede Variante wird mit den heutigen Platzwünschen geprüft.",
+  hint: "Speichere, wer wo sitzt, unter einem Namen, probiere etwas anderes aus und wechsle zurück. Nur Organisatoren sehen Varianten; Mitglieder sehen den aktiven Plan, sobald er definitiv ist. Jede Variante wird mit den heutigen Platzwünschen geprüft.",
   name: "Name der Variante",
   namePlaceholder: "Name, z. B. Freunde vorne (optional)",
   thoroughName: "Exakte Suche",

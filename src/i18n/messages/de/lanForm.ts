@@ -18,7 +18,7 @@ export const lanForm: Messages["lanForm"] = {
   website: "Event-Website",
   plan: "Sitzplan des Events",
   planHint:
-    "Wo die Leads die Plätze der Gruppe auf der Seite des Events buchen (z. B. der lal.gg-Sitzplan). Der Link ändert jedes Jahr, also setz ihn pro Event.",
+    "Wo die Organisatoren die Plätze der Gruppe auf der Seite des Events buchen (z. B. der lal.gg-Sitzplan). Der Link ändert jedes Jahr, also setz ihn pro Event.",
   profile: "Link zum Mitgliederprofil",
   profileHint: "Das Profil eines Mitglieds auf der Event-Seite, mit {id} dort, wo die LAN-ID hinkommt. Leer nimmt den Link des LAN-Typs.",
   rough: "Ungefähres Datum",

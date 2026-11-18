@@ -3,7 +3,7 @@ export const missing = {
   intro:
     "Who still owes the group something, step by step. A nudge goes out as a Discord DM (if they kept DMs on) and as a mail (if they kept email reminders on). Each person gets at most one nudge per step every {hours} hours.",
   steps: "Steps",
-  leadTodo: "lead to-do",
+  leadTodo: "organizer to-do",
   dmMail: "DM + mail",
   dm: "Discord DM",
   mailOnly: "Mail only",

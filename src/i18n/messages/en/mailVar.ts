@@ -2,7 +2,7 @@ export const mailVar = {
   firstName: "Their first name",
   firstName_guest: "The guest's first name",
   clan: "Clan name (also shown in the header)",
-  inviter: "Lead who sent it",
+  inviter: "Organizer who sent it",
   events: "Events they're signed up for (empty if none)",
   link: "Link to the event (the button goes there)",
   link_claim: "Personal claim link (the button goes there)",
@@ -17,7 +17,7 @@ export const mailVar = {
   seat: "Their seat (empty if none)",
   seat_final: "Their seat (empty if none or the plan isn't final)",
   seatInfo: "“You're sitting at F3.” or a note that they have no seat yet",
-  reason: "Why, as the lead wrote it (empty if none)",
+  reason: "Why, as the organizer wrote it (empty if none)",
   news: "The news text",
-  author: "Lead who wrote it",
+  author: "Organizer who wrote it",
 };

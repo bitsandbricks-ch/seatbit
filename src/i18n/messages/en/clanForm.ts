@@ -15,7 +15,7 @@ export const clanForm = {
   claimsOff: "No, only with the guest's own link",
   names: "How are members shown?",
   namesHint:
-    'Applies to event pages, the clan page, the Discord bot and the lead views. Leads still see the full name in small print where they manage events and members. Without a nick of their own, people show as "Mike K.".',
+    'Applies to event pages, the clan page, the Discord bot and the organizer views. Organizers still see the full name in small print where they manage events and members. Without a nick of their own, people show as "Mike K.".',
   nameDisplay: { full: 'Name "Nick" Surname', nameNick: 'Name "Nick"', nick: "Nick only" },
   language: "Language of Discord posts",
   languageHint: "The bot's posts in the clan's channels. Each member still gets the app, mails and DMs in their own language.",

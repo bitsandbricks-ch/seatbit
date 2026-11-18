@@ -12,5 +12,5 @@ export const memberList = {
   roleOf: "Role of {name}",
   giveUpAdmin: "Give up your own admin rights? You can't undo this yourself.",
   removeQ: "Remove {name} from the clan?",
-  removeBody: "They are taken off the clan's upcoming events: their seat goes to the waitlist, and seat wishes, rides and teams that name them are cleared. Answers with a ticket or payment stay, marked as no longer in the clan, for the leads to sort out. Past events stay as they were.",
+  removeBody: "They are taken off the clan's upcoming events: their seat goes to the waitlist, and seat wishes, rides and teams that name them are cleared. Answers with a ticket or payment stay, marked as no longer in the clan, for the organizers to sort out. Past events stay as they were.",
 };

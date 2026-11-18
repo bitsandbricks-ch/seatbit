@@ -17,8 +17,8 @@ export const wishLead: Messages["wishLead"] = {
   nearRangeHint: "Für Wünsche «Nahe bei jemandem». «Direkt neben» heisst immer der Platz daneben.",
   nearRangeSaved: "Gespeichert: nahe heisst innerhalb von {range} Plätzen.",
   dm: {
-    subject: "Ein Lead hat deine Platzwünsche für {lan} geändert",
-    text: "{lead} hat deine Platzwünsche für {lan} geändert. Sie sind jetzt:\n\n{wishes}\n\nDu kannst sie auf der Event-Seite ändern, bis der Sitzplan fixiert ist.",
+    subject: "Ein Organisator hat deine Platzwünsche für {lan} geändert",
+    text: "{lead} hat deine Platzwünsche für {lan} geändert. Sie sind jetzt:\n\n{wishes}\n\nDu kannst sie auf der Event-Seite ändern, bis der Sitzplan definitiv ist.",
     none: "Keine Wünsche: jeder Platz ist recht.",
     note: "Notiz: {note}",
     toggle: "{name} per Discord-DM informieren",

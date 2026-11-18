@@ -12,7 +12,7 @@ export const share = {
   signIn: "Sign in",
   register: "Create an account",
   pending: "You asked to join {clan}. Once a clan admin lets you in, this link opens the event.",
-  inviteOnly: "{clan} is invite-only. Ask one of its leads for an invite link, then open this link again.",
+  inviteOnly: "{clan} is invite-only. Ask one of its organizers for an invite link, then open this link again.",
   joinOpenText: "Join {clan} to see who's coming and to answer.",
   joinApprovalText: "Ask to join {clan}. Once a clan admin lets you in, the event opens for you.",
   join: "Join clan",

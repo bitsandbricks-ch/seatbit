@@ -1,6 +1,6 @@
 export const leadTasks = {
   showDone: { one: "Show {count} done", other: "Show {count} done" },
-  heading: "Lead to-dos",
+  heading: "Organizer to-dos",
   hint: "Tick them off when they're done. A to-do opens once the steps it waits for are done.",
   empty: "No to-dos for this event yet.",
   waitingFor: "Opens after: {steps}",
@@ -15,9 +15,9 @@ export const leadTasks = {
   addForEvent: "Add a to-do for this event only",
   editType: "Edit to-dos and contacts of {type}",
   editClan: "Edit the to-dos for all LAN types",
-  allHeading: "Lead to-dos for all LAN types",
-  allHint: "Every event of the clan gets these, unless its LAN type turns them off. Leads tick them off on Manage → Overview.",
-  typeHeading: "Lead to-dos",
+  allHeading: "Organizer to-dos for all LAN types",
+  allHint: "Every event of the clan gets these, unless its LAN type turns them off. Organizers tick them off on Manage → Overview.",
+  typeHeading: "Organizer to-dos",
   typeHint: "Every event of this type gets these, after the to-dos for all LAN types.",
   useClanTasks: "Also use the to-dos for all LAN types",
   none: "No to-dos yet.",
@@ -26,7 +26,7 @@ export const leadTasks = {
   dueStart: "On the start day",
   form: {
     title: "To-do",
-    titlePlaceholder: "Email the organizers about the group seat block",
+    titlePlaceholder: "Email the event's team about the group seat block",
     note: "Notes",
     noteHint: "How to do it, links, what to ask.",
     after: "Opens after",
@@ -43,20 +43,20 @@ export const leadTasks = {
   },
   defaults: {
     groupBlock: {
-      title: "Ask the organizers for a group seat block",
+      title: "Ask the event's team for a group seat block",
       note: "Tell them roughly how many of you are coming and ask by when they need the final list.",
     },
     seatList: {
-      title: "Send the seat list to the organizers",
+      title: "Send the seat list to the event's team",
       note: "Who sits where, with nicknames or LAN IDs if they ask for them.",
     },
     arrival: {
       title: "Share arrival and setup info with the group",
-      note: "Check-in times, parking, what to bring. Post it as lead news so everyone gets it.",
+      note: "Check-in times, parking, what to bring. Post it as organizer news so everyone gets it.",
     },
     thanks: {
-      title: "Thank the organizers and note what to do better",
-      note: "Write down what worked and what didn't, so next year's leads know.",
+      title: "Thank the event's team and note what to do better",
+      note: "Write down what worked and what didn't, so next year's organizers know.",
     },
   },
 };

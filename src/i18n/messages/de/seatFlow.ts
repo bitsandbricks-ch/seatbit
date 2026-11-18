@@ -2,7 +2,7 @@ import type { Messages } from "../en";
 
 export const seatFlow: Messages["seatFlow"] = {
   removeTakenQ: "{seat} ist von {name} belegt. Platz trotzdem entfernen?",
-  closed: "Geschlossen, als du festgelegt hast.",
+  closed: "Geschlossen, als du den Plan definitiv gemacht hast.",
   wishesHint: "Mitglieder sagen dir, neben wem und wo sie sitzen wollen. {wishes} von {count}, die kommen, haben bisher Wünsche geschickt.",
   pick: "Mitglieder wählen ihren Platz selbst",
   pickOn:
@@ -10,7 +10,7 @@ export const seatFlow: Messages["seatFlow"] = {
   pickOff: "Optional. Schalte es ein, damit Mitglieder selbst einen freien Platz nehmen. Danach prüfst du den Plan und legst ihn fest.",
   turnOff: "Selbstwahl ausschalten",
   turnOn: "Selbstwahl einschalten",
-  finalize: "Leads machen den Plan definitiv",
+  finalize: "Organisatoren machen den Plan definitiv",
   finalized: "Definitiv seit {date}. Mitglieder sehen den Plan, und Änderungen ab jetzt werden den Betroffenen mitgeteilt.",
   reopen: "Wieder öffnen",
   check: "Prüf die Plätze, verschieb wen nötig und leg den Plan dann fest. Das schliesst die Platzwünsche und zeigt allen den Plan.",

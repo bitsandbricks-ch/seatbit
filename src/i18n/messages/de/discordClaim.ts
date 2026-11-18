@@ -4,7 +4,7 @@ export const discordClaim: Messages["discordClaim"] = {
   invalid: "Link funktioniert nicht mehr",
   invalidHint: "Er ist älter als einen Tag. Führ /claim im Discord-Server deines Clans nochmals aus, um einen neuen zu bekommen.",
   gone: "Schon übernommen",
-  goneHint: "Dieser Gast wartet nicht mehr. Wenn du es warst, ist alles erledigt; sonst sprich mit deinen Leads.",
+  goneHint: "Dieser Gast wartet nicht mehr. Wenn du es warst, ist alles erledigt; sonst sprich mit deinen Organisatoren.",
   wrong: "Anderes Discord-Konto",
   wrongHint: "Dieser Link gilt für das Discord-Konto, das /claim ausgeführt hat. Melde dich mit diesem an.",
   unlinked: "Zuerst Discord verknüpfen",

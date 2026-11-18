@@ -17,7 +17,7 @@ export const clanForm: Messages["clanForm"] = {
   claimsOff: "Nein, nur mit dem eigenen Link des Gasts",
   names: "Wie werden Mitglieder angezeigt?",
   namesHint:
-    "Gilt für Event-Seiten, die Clan-Seite, den Discord-Bot und die Lead-Ansichten. Leads sehen beim Verwalten von Events und Mitgliedern weiterhin den vollen Namen klein darunter. Ohne eigenen Nick erscheinen Leute als «Mike K.».",
+    "Gilt für Event-Seiten, die Clan-Seite, den Discord-Bot und die Organisator-Ansichten. Organisatoren sehen beim Verwalten von Events und Mitgliedern weiterhin den vollen Namen klein darunter. Ohne eigenen Nick erscheinen Leute als «Mike K.».",
   nameDisplay: { full: 'Vorname "Nick" Nachname', nameNick: 'Vorname "Nick"', nick: "Nur Nick" },
   language: "Sprache der Discord-Posts",
   languageHint: "Die Posts des Bots in den Kanälen des Clans. App, Mails und DMs bekommt jedes Mitglied in seiner eigenen Sprache.",

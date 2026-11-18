@@ -6,7 +6,7 @@ export const profile = {
   yourData: "Your data",
   nickHint: "Your gamer tag, shown at every LAN unless you set one per LAN type on the LAN nicks & IDs tab.",
   emailReminders: "Email reminders",
-  emailRemindersHint: "New events, lead news, deadlines, tickets and the day before a LAN, sent to {email}.",
+  emailRemindersHint: "New events, organizer news, deadlines, tickets and the day before a LAN, sent to {email}.",
   discordDms: "Discord DMs",
   discordDmsHint: "When something changes for me: seat, seat plan, event details, reminders, clan requests.",
   discordDmsLink: "Link Discord under Sign-in methods to get them.",
@@ -34,7 +34,7 @@ export const profile = {
   interestsHint: "One-off events without a kind always reach you. You still see every event of the clan.",
   nicksPerType: "Nicks and IDs per LAN type",
   nicksPerTypeIntro:
-    "One nick per LAN type, used for every event of that type. Leave it empty to use your nickname. Below it, optionally your user ID or ticket number at that LAN (e.g. on lal.gg), so the leads can match you up. Where the LAN type has a profile link, your clan sees the link to your profile on the event's site.",
+    "One nick per LAN type, used for every event of that type. Leave it empty to use your nickname. Below it, optionally your user ID or ticket number at that LAN (e.g. on lal.gg), so the organizers can match you up. Where the LAN type has a profile link, your clan sees the link to your profile on the event's site.",
   typeId: "{type} ID",
   yourProfileLink: "Your profile: {url}",
   addIdForLink: "Add your ID to link your profile on the event's site.",

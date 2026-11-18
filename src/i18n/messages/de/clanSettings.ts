@@ -62,7 +62,7 @@ export const clanSettings: Messages["clanSettings"] = {
   profileEvents: "Profil und Events",
   removeGuest: "Gast entfernen",
   logHint:
-    "Änderungen, die Leads und Admins in diesem Clan und seinen Events gemacht haben. Eigene Antworten der Mitglieder sind nicht aufgeführt. Einträge werden ein Jahr aufbewahrt.",
+    "Änderungen, die Organisatoren und Admins in diesem Clan und seinen Events gemacht haben. Eigene Antworten der Mitglieder sind nicht aufgeführt. Einträge werden ein Jahr aufbewahrt.",
   roles: "Rollen",
-  rolesFoot: "Leads eines einzelnen Events werden auf der Verwaltungsseite des Events gesetzt.",
+  rolesFoot: "Organisatoren eines einzelnen Events werden auf der Verwaltungsseite des Events gesetzt.",
 };

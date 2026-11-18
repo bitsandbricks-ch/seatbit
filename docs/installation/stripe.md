@@ -96,7 +96,7 @@ A clan admin opens *Manage → Payments* and presses **Connect Stripe**. Stripe 
 ### How it works
 
 - Seatbit stores the clan's Stripe account ID and whether it can take payments, and for each paid line the Stripe payment ID. Card and TWINT details stay with Stripe.
-- `checkout.session.completed` (or `…async_payment_succeeded` for slower methods) marks the line **paid online**. A full refund in the clan's dashboard (`charge.refunded`) sets it back to open, so the lead can waive it if that was the point.
+- `checkout.session.completed` (or `…async_payment_succeeded` for slower methods) marks the line **paid online**. A full refund in the clan's dashboard (`charge.refunded`) sets it back to open, so the organizer can waive it if that was the point.
 - `account.updated` keeps "can take payments" current; `account.application.deauthorized` unlinks a clan that removed your platform in Stripe. **Unlink Stripe account** in Seatbit only forgets the link; the clan's Stripe account stays theirs.
 - Every event is checked against the signing secret and applied once.
 

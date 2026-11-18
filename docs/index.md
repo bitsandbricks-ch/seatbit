@@ -14,7 +14,7 @@ Seatbit is a self-hostable web app that helps a clan coordinate going to **LAN p
 
     ---
 
-    What Seatbit does, page by page: events, attendance, seats, clans, guests, Discord and more. For members, leads and admins.
+    What Seatbit does, page by page: events, attendance, seats, clans, guests, Discord and more. For members, organizers and admins.
 
     [:octicons-arrow-right-24: Features](features/index.md)
 
@@ -52,10 +52,10 @@ Seatbit is a self-hostable web app that helps a clan coordinate going to **LAN p
 | **Clan** | Your group: members, roles, LAN types, events and its Discord server. A clan only sees its own events. See [Clans and roles](features/clans.md). |
 | **LAN type** | A LAN party that happens regularly (e.g. *Lock & Load*), shared by every clan: location, links and length. Each clan adds its usual spots and seats. See [LAN types](features/clans.md#lan-types). |
 | **Event** | One edition of a LAN the group attends, usually created from a LAN type. See [Event lifecycle](features/events.md). |
-| **Lead** | A member who runs a single event: attendance, tickets, seats. Clan admins and event managers can run every event. |
+| **Organizer** | A member who runs a single event: attendance, tickets, seats. Clan admins and event managers can run every event. |
 | **Spots** | How many people the group can bring. When full, new answers go on a waitlist. |
 | **Seat block** | The seats the event gave the group, e.g. `F1-F16, F19-F22`. See [Seats](features/seats.md). |
-| **Guest** | A person without a Seatbit account, added by leads, who can take over the guest later. See [Guests](features/members-guests.md#guests). |
+| **Guest** | A person without a Seatbit account, added by organizers, who can take over the guest later. See [Guests](features/members-guests.md#guests). |
 | **Platform admin** | Runs the instance: platform settings, all clans and users. See [Platform admin](features/admin.md). |
 
 ![The seat plan of an event](screenshots/desktop-event-seats.png){ .shot }

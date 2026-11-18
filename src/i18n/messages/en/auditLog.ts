@@ -15,7 +15,7 @@ export const auditLog = {
   platformOnly: "Platform only",
   show: "Show",
   empty: "Nothing logged yet",
-  emptyHint: "Changes by leads and admins show up here: seat moves, answer changes, roles, guests, publishing and cancelling.",
+  emptyHint: "Changes by organizers and admins show up here: seat moves, answer changes, roles, guests, publishing and cancelling.",
   deletedMember: "Deleted member",
   deletedClan: "deleted clan",
   platform: "platform",

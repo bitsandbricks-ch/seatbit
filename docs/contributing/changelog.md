@@ -41,7 +41,7 @@ de:
 - Short: a title that reads on its own, and a sentence or two if it needs explaining.
 - The changelog is public. Leave out what the public doesn't need: internal details, how something was built, which setting or file changed.
 - **Keep bug fixes vague**: *Fixed a problem with reminder mails*, *Fixed a display issue on the seat plan*. Never describe how a bug could be triggered or abused; for security fixes write only *Security improvements* (German *Verbesserungen an der Sicherheit*).
-- Use the app's words: *lead* (German *Lead*, never "orga"), *Coming / Unsure / Not coming*, *Manage*.
+- Use the app's words: *organizer* (German *Organisator*, never "orga" or "Lead"), *Coming / Unsure / Not coming*, *Manage*.
 - German: Swiss spelling (*ss*, never *ß*), *du*, quotes «…».
 - One entry per change people notice. A big pull request can add two files; a follow-up fix to an unreleased entry edits that entry instead of adding one.
 

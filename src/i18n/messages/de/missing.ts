@@ -5,7 +5,7 @@ export const missing: Messages["missing"] = {
   intro:
     "Wer der Gruppe noch etwas schuldet, Schritt für Schritt. Ein Stupser geht als Discord-DM raus (wenn DMs an sind) und als Mail (wenn E-Mail-Erinnerungen an sind). Jede Person bekommt pro Schritt höchstens alle {hours} Stunden einen Stupser.",
   steps: "Schritte",
-  leadTodo: "Lead-Aufgabe",
+  leadTodo: "Organisator-Aufgabe",
   dmMail: "DM + Mail",
   dm: "Discord-DM",
   mailOnly: "Nur Mail",
