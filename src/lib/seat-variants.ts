@@ -2,7 +2,7 @@ import { and, asc, eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { clearSeatBooked } from "./seat-booking";
 import { planPeople } from "./seat-plan";
-import { planSeats } from "./seating";
+import { planSeatsAsync, type PlanEffort } from "./seating";
 import { arrangementOf, movesBetween, seatsWithVariant, type Arrangement } from "./seat-variant-math";
 
 const { attendance, lan, seat, seatVariant } = schema;
@@ -28,15 +28,15 @@ export const liveArrangement = (lanId: string) => arrangementOf(db.select().from
 /**
  * A fresh plan from everyone's seat wishes, without touching the live seats. Held seats keep
  * whoever sits there, like "Re-plan everyone"; unlike it, nobody's current seat counts, so the
- * leads get a real alternative to compare against their hand-made plan.
+ * leads get a real alternative to compare against their hand-made plan. `until` ends a thorough search.
  */
-export function planArrangement(lanId: string): Arrangement {
+export async function planArrangement(lanId: string, effort: PlanEffort = "extended", until?: number): Promise<Arrangement> {
   const seats = db.select().from(seat).where(eq(seat.lanId, lanId)).all();
   const everyone = planPeople(lanId);
   const nearRange = db.select({ r: lan.seatNearRange }).from(lan).where(eq(lan.id, lanId)).get()?.r;
   const kept = seats.map((s) => (s.locked ? s : { ...s, userId: null }));
   const seated = new Set(kept.map((s) => s.userId).filter(Boolean));
-  const plan = planSeats(kept, everyone.filter((p) => !seated.has(p.userId)), everyone, { nearRange });
+  const plan = await planSeatsAsync(kept, everyone.filter((p) => !seated.has(p.userId)), everyone, { nearRange, effort, until });
   const label = new Map(seats.map((s) => [s.id, s.label]));
   const out = arrangementOf(kept);
   for (const [userId, seatId] of plan) out[label.get(seatId)!] = userId;

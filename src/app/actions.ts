@@ -780,15 +780,20 @@ export async function adminSetSeatFor(lanId: string, userId: string, seatId: str
 /**
  * Seats attendees who are coming, using their seat wishes. "fill" only seats
  * people without a seat; "replan" first clears every seat that isn't held.
- * People with a confirmed or reported ticket go first.
+ * People with a confirmed or reported ticket go first. "extended" searches longer (a few seconds at most).
  */
-export async function adminAutoAssignSeats(lanId: string, mode: "fill" | "replan" = "fill"): Promise<number> {
+export async function adminAutoAssignSeats(
+  lanId: string,
+  mode: "fill" | "replan" = "fill",
+  effort: "quick" | "extended" = "quick",
+): Promise<number> {
   const me = await requireLanManager(lanId);
-  const { plan, seats, moves } = planAndAssign(lanId, mode);
+  const how = effort === "extended" ? "extended" : "quick";
+  const { plan, seats, moves } = await planAndAssign(lanId, mode === "replan" ? "replan" : "fill", how);
   lanPath(lanId);
   // After the plan is out, tell people whose seat changed.
   const l = mustGetLan(lanId);
-  auditLan(l, me.id, "seat.auto", { data: { mode, count: plan.size, moves: moves.slice(0, MAX_LOGGED_MOVES) } });
+  auditLan(l, me.id, "seat.auto", { data: { mode, effort: how, count: plan.size, moves: moves.slice(0, MAX_LOGGED_MOVES) } });
   if (l.seatsPublishedAt) {
     const label = new Map(seats.map((s) => [s.id, s.label]));
     notifyLater(async () => {
@@ -804,7 +809,7 @@ export async function setMySeatWishes(lanId: string, input: z.input<typeof wishI
   if (!canTakePart(me, lanId)) throw await err("errors.joinFirst");
   if (l.seatsPublishedAt) throw await err("errors.planFinalAsk");
   saveSeatWishes(lanId, me.id, input, await getT());
-  autoPlanAfterWishes(lanId, me.id);
+  await autoPlanAfterWishes(lanId, me.id);
   lanPath(lanId);
 }
 

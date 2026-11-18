@@ -30,6 +30,7 @@ import * as backups from "../../src/app/admin/backups/actions";
 import * as emergency from "../../src/app/emergency-actions";
 import * as discordVerify from "../../src/app/discord-verify-actions";
 import * as costs from "../../src/app/cost-actions";
+import { seatSearchDone } from "../../src/lib/seat-search";
 import * as seatPlan from "../../src/app/seat-plan-actions";
 import * as seatWish from "../../src/app/seat-wish-actions";
 import * as seatVariants from "../../src/app/seat-variant-actions";
@@ -188,6 +189,15 @@ export const SPECS: Spec[] = [
   { name: "actions.adminAutoAssignSeats", allow: LAN_MANAGERS, run: () => actions.adminAutoAssignSeats(fx.lan, "replan") },
   { name: "seat-variant-actions.saveSeatVariant", allow: LAN_MANAGERS, run: () => seatVariants.saveSeatVariant(fx.lan, "Test") },
   { name: "seat-variant-actions.planSeatVariant", allow: LAN_MANAGERS, run: () => seatVariants.planSeatVariant(fx.lan, "") },
+  {
+    name: "seat-variant-actions.startThoroughSeatSearch",
+    allow: LAN_MANAGERS,
+    run: async () => {
+      const r = await seatVariants.startThoroughSeatSearch(fx.lan);
+      await seatSearchDone(fx.lan); // the variant is saved in the background
+      return r;
+    },
+  },
   { name: "seat-variant-actions.updateSeatVariant", allow: LAN_MANAGERS, run: () => seatVariants.updateSeatVariant(fx.seatVariant) },
   { name: "seat-variant-actions.renameSeatVariant", allow: LAN_MANAGERS, run: () => seatVariants.renameSeatVariant(fx.seatVariant, "Aisle side") },
   { name: "seat-variant-actions.applySeatVariant", allow: LAN_MANAGERS, run: () => seatVariants.applySeatVariant(fx.seatVariant) },

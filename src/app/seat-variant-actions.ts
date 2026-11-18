@@ -8,6 +8,7 @@ import { mustGetLan } from "@/lib/lans";
 import { notifyLater, notifySeatChanged } from "@/lib/notify";
 import { MAX_LOGGED_MOVES } from "@/lib/seat-plan";
 import { encodeMove } from "@/lib/seating";
+import { startSeatSearch } from "@/lib/seat-search";
 import { applyArrangement, listVariants, liveArrangement, planArrangement } from "@/lib/seat-variants";
 import { MAX_VARIANTS, cleanVariantName, nextVariantName, type Arrangement } from "@/lib/seat-variant-math";
 import { requireLanManager } from "@/lib/session";
@@ -45,7 +46,21 @@ export async function saveSeatVariant(lanId: string, name: string) {
 /** Lets the planner seat everyone from their wishes into a new variant; the live seats stay as they are. */
 export async function planSeatVariant(lanId: string, name: string) {
   const me = await requireLanManager(lanId);
-  return create(lanId, me.id, String(name ?? ""), planArrangement(lanId), "wishes");
+  return create(lanId, me.id, String(name ?? ""), await planArrangement(lanId), "wishes");
+}
+
+/**
+ * Starts the thorough search in the background; it saves its best plan as a new variant when it's
+ * done. Returns when it will be done at the latest (ms), so the leads know when to look.
+ */
+export async function startThoroughSeatSearch(lanId: string) {
+  const me = await requireLanManager(lanId);
+  const taken = listVariants(lanId);
+  if (taken.length >= MAX_VARIANTS) throw await err("errors.tooManyVariants", { max: MAX_VARIANTS });
+  const name = nextVariantName(taken.map((v) => v.name), await tr("seatVariants.thoroughName"));
+  const search = startSeatSearch(lanId, me.id, name);
+  managePath(lanId);
+  return { until: search.until, name: search.name };
 }
 
 /** Overwrites a variant with the live plan (after the leads changed it on the map). */

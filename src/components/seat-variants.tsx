@@ -14,7 +14,7 @@ import {
 import { MAX_VARIANT_NAME, MAX_VARIANTS } from "@/lib/seat-variant-math";
 import { useRunAction } from "./action-form";
 import { ask } from "./dialog";
-import { Pill, btnGhost, btnPrimary, btnSecondary, input } from "./ui";
+import { Notice, Pill, btnGhost, btnPrimary, btnSecondary, input } from "./ui";
 
 /** How a seat arrangement does: the live plan or a saved variant, worked out on the server. */
 export type VariantStats = {
@@ -49,6 +49,7 @@ export function SeatVariants({
   rows,
   previewId,
   final,
+  searching,
 }: {
   lanId: string;
   live: VariantStats;
@@ -57,6 +58,8 @@ export function SeatVariants({
   previewId: string | null;
   /** The plan is final: applying a variant tells everyone who moved. */
   final: boolean;
+  /** A thorough search runs in the background and will save variant `name`, by `until` at the latest. */
+  searching: { name: string; until: string } | null;
 }) {
   const t = useT();
   const run = useRunAction();
@@ -93,6 +96,7 @@ export function SeatVariants({
           {t("seatVariants.planNew")}
         </button>
       </form>
+      {searching && <Notice>{t("seatVariants.searching", searching)}</Notice>}
       {full && <p className="text-xs text-warn">{t("seatVariants.full", { max: MAX_VARIANTS })}</p>}
 
       <ul className="divide-y divide-line rounded-md border border-line">

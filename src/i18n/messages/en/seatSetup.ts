@@ -9,6 +9,17 @@ export const seatSetup = {
   replanConfirm: "Re-plan all seats that aren't held? Current assignments will change.",
   planned: { one: "Planned {count} seat from scratch.", other: "Planned {count} seats from scratch." },
   replan: "Re-plan everyone",
+  effort: "How hard the planner looks",
+  efforts: { quick: "Quick", extended: "Extended", thorough: "Thorough" },
+  effortHints: {
+    quick: "One search, about as fast as the automatic re-plan.",
+    extended: "Several searches from different starts, keeps the best plan. Takes a few seconds at most.",
+    thorough:
+      "Keeps searching in the background for up to {minutes} min (stops as soon as every wish is met) and saves the best plan as a new variant below. The live seats stay as they are.",
+  },
+  startSearch: "Start thorough search",
+  searchStarted: "Searching in the background. The result appears as “{name}” under Seat plan variants.",
+  searching: "Search running, done by {time} at the latest.",
   auto: "Re-plan automatically when wishes change",
   autoHint: "Every change to someone's seat wishes re-plans all seats that aren't held. Open seat pages update by themselves.",
   autoPaused: { final: "Paused: the plan is final.", picking: "Paused while members pick their own seats." },

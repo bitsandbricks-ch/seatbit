@@ -3,6 +3,8 @@ export const seatVariants = {
   hint: "Save who sits where under a name, try something else, and switch back. Only leads see variants; members see the live plan once it's final. Every variant is checked against today's seat wishes.",
   name: "Variant name",
   namePlaceholder: "Name, e.g. Friends up front (optional)",
+  thoroughName: "Thorough search",
+  searching: "Thorough search running. Its best plan appears here as “{name}” by {until} at the latest.",
   defaultName: "Variant",
   saveLive: "Save current plan",
   planNew: "Plan from wishes",

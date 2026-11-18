@@ -46,7 +46,7 @@ export async function setMemberSeatWishes(lanId: string, userId: string, input: 
     .orderBy(desc(auditLog.at))
     .get();
   if (!recent) auditLan(l, me.id, "seat.wishes", { targetUserId: userId });
-  autoPlanAfterWishes(lanId, me.id);
+  await autoPlanAfterWishes(lanId, me.id);
   revalidatePath(`/lans/${lanId}`);
   revalidatePath(`/lans/${lanId}/manage`);
 }

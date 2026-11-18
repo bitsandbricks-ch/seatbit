@@ -40,6 +40,7 @@ A value saved in the platform settings wins over the environment variable. Clear
 | **Reminders** | | |
 | Reminder check interval (minutes, `0` = off) | `REMINDER_INTERVAL_MINUTES` | `60` |
 | Cron secret for `/api/cron/reminders` | `CRON_SECRET` | |
+| Thorough seat search: how long it may run in the background (minutes, 1 to 30) | `SEAT_THOROUGH_MINUTES` | `2` |
 | Metrics token for `/api/metrics` (unset = endpoint off, see [Metrics](operations.md#metrics)) | `METRICS_TOKEN` | |
 | **Maintenance** (see [Maintenance banner](../features/admin.md#maintenance-banner)) | | |
 | Banner message (start and end are set in the admin UI) | `MAINTENANCE_MESSAGE` | |

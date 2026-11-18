@@ -11,7 +11,8 @@ import { SeatMap } from "@/components/seat-map";
 import { avatarMap } from "@/lib/avatars";
 import { EventHeader } from "@/components/event-header";
 import { Card, Notice, Page, Pill, btnDanger, headerAction, headerActionFrame } from "@/components/ui";
-import { fmtDate, relative, toInputValue } from "@/lib/format";
+import { fmtDate, fmtTime, relative, toInputValue } from "@/lib/format";
+import { runningSeatSearch, thoroughMinutes } from "@/lib/seat-search";
 import { capacityOf, freeSpots, getLan, getNames, interestSwitch, seatView, waitlistOf } from "@/lib/lans";
 import { WaitlistPanel } from "@/components/waitlist-panel";
 import { dueKinds } from "@/lib/reminders";
@@ -214,6 +215,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
   // Seat plan variants, each checked against today's wishes (not the ones from when it was saved).
   const coming = new Set(going.map((r) => r.userId));
   const variants = seats.length > 0 ? listVariants(id) : [];
+  const seatSearch = runningSeatSearch(id);
   const variantViews = variants.map((v) => {
     const vSeats = seatsWithVariant(seats, v.seats, coming);
     const checks = checkSeats(vSeats);
@@ -467,7 +469,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               )}
             </Card>
           )}
-          <Card title={t("manage.ourSeats")}>
+          <Card id="our-seats" title={t("manage.ourSeats")}>
             <p className="mb-4 text-sm text-muted">{t("manage.ourSeatsHint")}</p>
             <SeatSetup
               lanId={l.id}
@@ -476,6 +478,8 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
               free={freeSeats}
               autoPlan={l.seatAutoPlan}
               nearRange={l.seatNearRange}
+              searching={seatSearch ? fmtTime(new Date(seatSearch.until)) : null}
+              thoroughMinutes={thoroughMinutes()}
               autoPlanBlocked={
                 l.seatsPublishedAt ? t("seatSetup.autoPaused.final") : l.seatPicking ? t("seatSetup.autoPaused.picking") : null
               }
@@ -497,6 +501,7 @@ export default async function ManageLanPage({ params, searchParams }: PageProps<
                 }))}
                 previewId={preview?.v.id ?? null}
                 final={!!l.seatsPublishedAt}
+                searching={seatSearch ? { name: seatSearch.name, until: fmtTime(new Date(seatSearch.until)) } : null}
               />
             </Card>
           )}
