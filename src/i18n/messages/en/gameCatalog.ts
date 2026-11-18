@@ -40,4 +40,10 @@ export const gameCatalog = {
   deleteHint: "Only games no event uses can be deleted. Merge the others.",
   deleteQ: "Delete {name} from the catalog?",
   deleteName: "Delete {name}",
+  publicSubtitle: "Every game on this Seatbit, with size, players and store links. Add games from an event's Games tab.",
+  manage: "Manage catalog",
+  edit: "Edit",
+  players: "Players",
+  yourEvents: "Your events with this game",
+  yourEventsNone: "None of your events has this game yet.",
 };

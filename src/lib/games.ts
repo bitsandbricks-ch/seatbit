@@ -6,7 +6,7 @@ import { notify } from "./notify";
 import { makeT } from "../i18n/translate";
 import { localeOf } from "../i18n/user-locale";
 import { teamsByGame, type TeamView } from "./teams";
-import { coverUrl } from "./game-catalog";
+import { coverUrl, gameColor } from "./game-catalog";
 import { steamInstallUrl } from "./steam";
 
 const { game, gameVote, attendance, user, reminderLog, lan, catalogGame } = schema;
@@ -36,6 +36,10 @@ export type GameView = {
   votes: number;
   voters: string[];
   installed: number;
+  /** Who ticked "installed". */
+  installers: string[];
+  /** Fill for the cover box when there is no picture, from the profile colours. */
+  coverColor: string;
   myVote: boolean;
   myInstalled: boolean;
   /** Tournament teams for this game. */
@@ -76,6 +80,8 @@ export function listGames(lanId: string, meId?: string): GameView[] {
         votes: mine.filter((m) => m.vote).length,
         voters: mine.filter((m) => m.vote).map((m) => m.userId),
         installed: mine.filter((m) => m.installed).length,
+        installers: mine.filter((m) => m.installed).map((m) => m.userId),
+        coverColor: gameColor(g.c?.id ?? g.name),
         myVote: !!me?.vote,
         myInstalled: !!me?.installed,
         teams: teams.get(g.id) ?? [],

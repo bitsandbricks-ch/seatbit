@@ -46,4 +46,8 @@ export const games = {
   minPlayers: "Min. players",
   maxPlayers: "Max. players",
   detailsLocked: "Size, link and players are shared by every event. Only who put the game in the catalog or platform support can change them.",
+  rank: "Place {n}",
+  noVotes: "No votes yet",
+  noInstalls: "Nobody yet",
+  catalogLink: "All games",
 };

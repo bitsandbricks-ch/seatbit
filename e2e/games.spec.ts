@@ -26,7 +26,8 @@ test.describe("games", () => {
     await expect(anna.getByRole("button", { name: "Add Unreal Tournament again" })).toHaveCount(0);
     // Added like any other game: on the list with 8 GB, and Anna's vote.
     const row = anna.getByRole("listitem").filter({ hasText: "Unreal Tournament" }).filter({ hasText: "8 GB" });
-    await expect(row.getByText(/^1 vote: Anna/)).toBeVisible();
+    await expect(row.getByText("1 vote", { exact: true })).toBeVisible();
+    await expect(row.getByTitle("you", { exact: true }).first()).toBeVisible();
   });
 
   test("vote and installed show at once and are saved", async ({ as }) => {
@@ -39,7 +40,8 @@ test.describe("games", () => {
     await row.getByRole("checkbox", { name: "Installed" }).check();
     await row.getByRole("button", { name: "▲ Vote" }).click();
     await expect(row.getByRole("button", { name: "▲ Voted" })).toBeVisible();
-    await expect(row.getByText(/^1 vote: Anna/)).toBeVisible();
+    await expect(row.getByText("1 vote", { exact: true })).toBeVisible();
+    await expect(row.getByTitle("you", { exact: true }).first()).toBeVisible();
     await expect(row.getByRole("checkbox", { name: "Installed" })).toBeChecked();
     expect(db().select().from(schema.gameVote).where(eq(schema.gameVote.gameId, g.id)).get()).toMatchObject({
       userId: userId("anna"),
@@ -87,7 +89,8 @@ test.describe("games", () => {
     await form.getByLabel("Game").fill("Trackmania 2");
     await form.getByLabel("Store link").fill("https://example.com/trackmania");
     await form.getByRole("button", { name: "Save" }).click();
-    await expect(alex.getByRole("link", { name: "Trackmania 2" })).toHaveAttribute("href", "https://example.com/trackmania");
+    const row = alex.getByRole("listitem").filter({ hasText: "Trackmania 2" });
+    await expect(row.getByRole("link", { name: /Website/ })).toHaveAttribute("href", "https://example.com/trackmania");
   });
 });
 
@@ -112,7 +115,8 @@ test.describe("game catalog", () => {
     await expect(row.getByText("LAN mode")).toBeVisible();
     await expect(row.getByRole("link", { name: /Steam/ })).toHaveAttribute("href", "https://store.steampowered.com/app/427520/");
     await expect(row.getByRole("link", { name: /Install/ })).toHaveAttribute("href", /^steam:\/\/install\/\d+$/);
-    await expect(row.getByText(/^1 vote: Anna/)).toBeVisible();
+    await expect(row.getByText("1 vote", { exact: true })).toBeVisible();
+    await expect(row.getByTitle("you", { exact: true }).first()).toBeVisible();
   });
 
   test("a new name goes into the catalog, and the next event finds it", async ({ as }) => {
@@ -147,6 +151,27 @@ test.describe("game catalog", () => {
     await expect(form.getByText(/Only who put the game in the catalog/)).toBeVisible();
   });
 
+  test("everyone signed in sees a game's page, read-only, with their own events", async ({ as }) => {
+    const id = createEvent({ attendees: [{ who: "anna" }] });
+    const name = `Quake III ${Date.now()}`;
+    const c = db()
+      .insert(schema.catalogGame)
+      .values({ name, nameKey: name.toLowerCase(), sizeGb: 1, minPlayers: 2, maxPlayers: 16, free: false, url: "https://www.gog.com/en/game/quake_iii" })
+      .returning()
+      .get();
+    db().insert(schema.game).values({ lanId: id, name, catalogId: c.id, addedBy: userId("anna") }).run();
+    const anna = await as("anna");
+    await anna.goto(`/lans/${id}?tab=games`);
+    await anna.getByRole("link", { name, exact: true }).click();
+    await expect(anna).toHaveURL(new RegExp(`/games/${c.id}`));
+    await expect(anna.getByRole("heading", { name })).toBeVisible();
+    await expect(anna.getByText("2–16 players")).toBeVisible();
+    await expect(anna.getByRole("link", { name: /GOG/ })).toHaveAttribute("href", "https://www.gog.com/en/game/quake_iii");
+    await expect(anna.getByRole("link", { name: "Edit" })).toHaveCount(0);
+    await anna.goto("/games");
+    await expect(anna.getByRole("link", { name: new RegExp(name) })).toBeVisible();
+  });
+
   test("platform staff merge duplicates, votes move along", async ({ as }) => {
     const id = createEvent({ attendees: [{ who: "anna" }] });
     const stamp = Date.now();
@@ -166,7 +191,8 @@ test.describe("game catalog", () => {
     await anna.goto(`/lans/${id}?tab=games`);
     const row = anna.getByRole("listitem").filter({ hasText: keep.name });
     await expect(row.getByText("35 GB", { exact: true })).toBeVisible();
-    await expect(row.getByText(/^1 vote: Anna/)).toBeVisible();
+    await expect(row.getByText("1 vote", { exact: true })).toBeVisible();
+    await expect(row.getByTitle("you", { exact: true }).first()).toBeVisible();
   });
 });
 

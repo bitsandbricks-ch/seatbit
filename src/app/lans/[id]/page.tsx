@@ -299,7 +299,7 @@ export default async function LanPage({ params, searchParams }: PageProps<"/lans
           .sort((a, b) => +a.createdAt - +b.createdAt)
           .map((it) => ({ id: it.id, label: it.label, packed: it.packed }));
 
-  const gamePeople = [...new Set(games.flatMap((g) => [...g.voters, ...g.teams.flatMap((x) => x.members), ...(g.addedBy ? [g.addedBy] : [])]))];
+  const gamePeople = [...new Set(games.flatMap((g) => [...g.voters, ...g.installers, ...g.teams.flatMap((x) => x.members), ...(g.addedBy ? [g.addedBy] : [])]))];
   const gameNames = Object.fromEntries(await getDisplayNames(id, gamePeople));
   const gameAvatars = Object.fromEntries(getAvatars(gamePeople));
 

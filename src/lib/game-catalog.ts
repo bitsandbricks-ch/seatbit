@@ -5,6 +5,7 @@ import { db, schema } from "@/db";
 import type { CatalogGame } from "@/db/schema";
 import { AVATAR_MIME, sniffImage, uploadsDir } from "./clans";
 import { platformCan } from "./platform-roles";
+import { PROFILE_COLORS } from "./avatars";
 import { getBoolSetting } from "./settings";
 import { fetchSteamDetails, fetchSteamImage, steamAppIdFromUrl, steamStoreUrl, type SteamDetails } from "./steam";
 
@@ -40,6 +41,13 @@ export function allCatalogGames() {
 /** Who may change a catalog entry's details: whoever put it in the catalog, and platform staff with "games". */
 export const canEditCatalog = (u: { id: string; role: string }, c: Pick<CatalogGame, "createdBy">) =>
   platformCan(u, "games") || (!!c.createdBy && c.createdBy === u.id);
+
+/** A stable colour per game for the cover box when it has no picture. */
+export function gameColor(key: string) {
+  let h = 0;
+  for (const ch of key) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return PROFILE_COLORS[h % PROFILE_COLORS.length].id;
+}
 
 export const coverUrl = (c: Pick<CatalogGame, "id" | "cover">) => (c.cover ? `/game-cover/${c.id}?v=${encodeURIComponent(c.cover)}` : null);
 
