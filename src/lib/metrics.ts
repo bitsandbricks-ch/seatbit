@@ -8,6 +8,7 @@ import fs from "node:fs";
 import { db, dbFile } from "../db";
 import { backupDisk, backupIntervalHours, backupStatus, listBackups } from "./backup";
 import { drillEnabled, lastDrill } from "./backup-drill";
+import { lastOffsite, offsiteConfig } from "./backup-offsite";
 import { jobsSnapshot } from "./jobs";
 import { liveConnections } from "./live";
 
@@ -62,6 +63,8 @@ export function collect(): Metric[] {
   const bStatus = backupStatus();
   const disk = backupDisk();
   const drill = lastDrill();
+  const offsite = offsiteConfig();
+  const upload = lastOffsite();
 
   const metrics: Metric[] = [
     gauge("seatbit_info", "Version of the running server (always 1).", [
@@ -156,6 +159,16 @@ export function collect(): Metric[] {
       drill?.ok && drill.backupAt ? Date.parse(drill.backupAt) / 1000 : 0,
     ),
     gauge("seatbit_backup_restore_test_duration_seconds", "How long the last restore test took.", drill ? drill.ms / 1000 : 0),
+    gauge("seatbit_backup_offsite_enabled", "1 when encrypted off-site copies are fully set up, 0 when off or incomplete.", offsite && !("missing" in offsite) ? 1 : 0),
+    gauge("seatbit_backup_offsite_ok", "1 when the last off-site upload worked, 0 when it failed or none ran yet.", upload?.ok ? 1 : 0),
+    gauge("seatbit_backup_offsite_timestamp_seconds", "When the last successful off-site upload ran (0 = never).", upload?.okAt ? Date.parse(upload.okAt) / 1000 : 0),
+    gauge(
+      "seatbit_backup_offsite_backup_timestamp_seconds",
+      "When the backup the last successful off-site upload carried was written (0 = none). Alert when this falls far behind seatbit_backup_last_timestamp_seconds.",
+      upload?.okBackupAt ? Date.parse(upload.okBackupAt) / 1000 : 0,
+    ),
+    gauge("seatbit_backup_offsite_files", "Encrypted copies in the bucket after the last upload.", upload?.remote ?? 0),
+    gauge("seatbit_backup_offsite_size_bytes", "Encrypted copies in the bucket together, after the last upload.", upload?.remoteBytes ?? 0),
   ];
   if (disk) {
     metrics.push(

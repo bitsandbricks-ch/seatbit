@@ -59,6 +59,13 @@ A value saved in the platform settings wins over the environment variable. Clear
 | Keep backups for (days, `0` = keep all; the privacy policy shows this number) | `BACKUP_KEEP_DAYS` | `14` |
 | Backup folder (absolute path) | `BACKUP_DIR` | `/backups` in the image, else `./backups` |
 | Test each backup by restoring it (see [Restore test](operations.md#restore-test)) | `BACKUP_VERIFY` | `true` |
+| **Off-site copies** (on *Admin → Backups*, see [Off-site copies](operations.md#off-site-copies-encrypted-s3)) | | |
+| Encryption public key (age, `age1…`) | `BACKUP_PUBLIC_KEY` | |
+| S3 endpoint, bucket | `BACKUP_S3_ENDPOINT`, `BACKUP_S3_BUCKET` | |
+| Region | `BACKUP_S3_REGION` | `us-east-1` |
+| Folder in the bucket | `BACKUP_S3_PREFIX` | `seatbit/` |
+| Access key ID, secret access key | `BACKUP_S3_ACCESS_KEY`, `BACKUP_S3_SECRET_KEY` | |
+| Keep off-site copies for (days, `0` = keep all) | `BACKUP_S3_KEEP_DAYS` | `30` |
 | One-off donations on/off | `DONATIONS_ENABLED` | `false` |
 | Suggested donation amounts | `DONATION_AMOUNTS` | `10, 20, 50` |
 | Donation currency | `DONATION_CURRENCY` | `CHF` |

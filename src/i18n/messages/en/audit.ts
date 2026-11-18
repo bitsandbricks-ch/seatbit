@@ -152,6 +152,7 @@ export const audit = {
   backupCreate: "made the database backup {file}",
   backupDownload: "downloaded the database backup {file}",
   backupDelete: "deleted the database backup {file}",
+  backupUpload: "uploaded an encrypted copy of the database backup {file}",
   platformRole: "set {who}'s platform role to {role}",
   userSuspend: "suspended {who}",
   userUnsuspend: "restored {who}",

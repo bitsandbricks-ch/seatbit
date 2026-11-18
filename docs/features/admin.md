@@ -108,7 +108,7 @@ To count active people, Seatbit notes the **days** someone used it (just the dat
 
 ## Backups
 
-*Admin → Backups* lists the database backups Seatbit makes by itself, with **Back up now**, download and delete, and the backup settings. Setup, where to store them and how to restore: [Backups](../installation/operations.md#backups).
+*Admin → Backups* lists the database backups Seatbit makes by itself, with **Back up now**, download and delete, the restore test, the encrypted off-site copies to an S3 bucket, and the backup settings. Setup, where to store them and how to restore: [Backups](../installation/operations.md#backups).
 ## Health
 
 *Admin → Health* shows how the server is doing. All platform staff see it, support included. Mail and Discord are checked live each time the page loads (with a 5 second limit), the rest comes from the running server:

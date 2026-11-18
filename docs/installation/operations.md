@@ -20,11 +20,60 @@ A failed backup shows on the admin page and logs a `[backup] failed` line. Downl
 
 ### Where to keep them
 
-Mount `/backups` as its **own volume**, so a broken data volume doesn't take the backups with it (see [Docker](docker.md#docker-compose) and [Kubernetes](kubernetes.md#backups)). It must be writable for uid 1001. Then also copy the folder off the server now and then, e.g. with restic, rsync or your volume snapshots: a backup on the same disk doesn't help when the disk dies.
+Mount `/backups` as its **own volume**, so a broken data volume doesn't take the backups with it (see [Docker](docker.md#docker-compose) and [Kubernetes](kubernetes.md#backups)). It must be writable for uid 1001. Then also get copies off the server: turn on the encrypted [off-site copies](#off-site-copies-encrypted-s3) to an S3 bucket, or copy the folder elsewhere with restic, rsync or your volume snapshots. A backup on the same disk doesn't help when the disk dies.
 
-The privacy policy says how long backups are kept, from the **Keep backups for** setting.
+The privacy policy says how long backups are kept, from the **Keep backups for** setting (or **Keep off-site copies for**, when off-site copies are on and that is longer).
 
 If *Admin → Backups* says the folder **isn't writable**, the volume on `/backups` belongs to another user. The server runs as uid 1001: on Kubernetes set `fsGroup: 1001` in the pod's `securityContext` (as in the [example](kubernetes.md#example)). For volume types that ignore `fsGroup` (hostPath, some NFS shares), run `chown -R 1001:1001` on the folder, or use an init container that does. With Docker: `sudo chown -R 1001:1001 backups`.
+
+### Off-site copies (encrypted, S3)
+
+A backup on the same server or cluster doesn't help when that place is gone. So Seatbit can also put an **encrypted copy of each backup into an S3-compatible bucket** (AWS S3, Backblaze B2, Cloudflare R2, Wasabi, MinIO, Garage, …), on another provider or at home.
+
+- Copies are encrypted with [age](https://age-encryption.org) for a **public key**. The server never has the private key, so neither the server nor the bucket can open old copies: only you, with the private key kept somewhere else (a password manager, a printout in a drawer).
+- After each new backup (also ones a cron job wrote with `scripts/backup.mjs`), the server encrypts it as it streams and uploads `seatbit-YYYYMMDD-HHMMSS.db.age` to `<bucket>/<folder>`. It then checks the stored size and deletes copies older than **Keep off-site copies for** (the newest always stays). A failed upload is retried after an hour or with the next backup.
+- The local backups stay as they are: the restore test and quick restores use them.
+- *Admin → Backups* shows the last upload, the copies in the bucket and **Upload newest backup**, to try the settings. A failed upload also shows on *Admin → Health* (job `backup-offsite`), in the ops Discord channel and in the [metrics](#metrics).
+
+**1. Make a key pair**, on your own machine or in the container:
+
+```sh
+docker run --rm ghcr.io/bitsandbricks-ch/seatbit:main node scripts/restore.mjs keygen > seatbit-backup-key.txt
+```
+
+The file holds the private key (`AGE-SECRET-KEY-1…`) and, in a comment, the public key (`age1…`); the script prints the public key again. Keep the file off the server. `age-keygen` from the age tools works the same. Without the private key, the copies can't be restored, by anyone.
+
+**2. Make a bucket and a key for it.** Give the access key only what it needs on that bucket (or folder): put, list, get and delete objects. Turning on versioning or object lock on the bucket keeps copies safe even from someone who has that key; then set **Keep off-site copies for** to `0` and let a lifecycle rule delete old ones.
+
+**3. Set it up** on *Admin → Backups* or with environment variables (secrets in a Kubernetes Secret):
+
+```sh
+BACKUP_PUBLIC_KEY=age1...
+BACKUP_S3_ENDPOINT=https://s3.eu-central-1.amazonaws.com
+BACKUP_S3_BUCKET=seatbit-backups
+BACKUP_S3_REGION=eu-central-1
+BACKUP_S3_PREFIX=seatbit/            # default
+BACKUP_S3_ACCESS_KEY=AKIAEXAMPLE
+BACKUP_S3_SECRET_KEY=example-secret
+BACKUP_S3_KEEP_DAYS=30               # default
+```
+
+Buckets are addressed path-style (`<endpoint>/<bucket>/<file>`), which every S3-compatible store understands. Copies are on once a bucket, an endpoint, both access keys and a public key are set; with a bucket but something missing, *Admin → Backups* says what. Press **Upload newest backup** once to check.
+
+**Restore from an off-site copy** with the restore script. It needs the bucket as environment variables (the same `BACKUP_S3_*` values as the app; it doesn't read the admin settings, since in a real loss the database holding them is gone) and the private key, as a file (`--key`) or in `BACKUP_PRIVATE_KEY` / `BACKUP_PRIVATE_KEY_FILE`:
+
+```sh
+node scripts/restore.mjs list --s3                                    # copies in the bucket, newest first
+node scripts/restore.mjs verify s3:latest --key key.txt               # download, decrypt and test, change nothing
+node scripts/restore.mjs fetch latest --key key.txt                   # save it decrypted to the backup folder
+node scripts/restore.mjs restore s3:latest --key key.txt --yes        # put it in place of the database
+node scripts/restore.mjs restore s3:seatbit-20261112-023000.db.age --key key.txt --yes
+node scripts/restore.mjs restore ./seatbit-20261112-023000.db.age --key key.txt --yes   # a copy you downloaded
+```
+
+The rest works as in [Restore](#restore): stop Seatbit first; the script tests the backup and keeps the current database. You can also do it by hand with the age tool: download the file from the bucket, `age -d -i key.txt seatbit-….db.age > seatbit.db`, and continue with step 2 of [Restore](#restore).
+
+On Kubernetes, pass the key and bucket to the restore pod from a Secret, e.g. `kubectl create secret generic seatbit-restore --from-file=key.txt=seatbit-backup-key.txt`, mounted read-only, with `--key /secret/key.txt`. Delete that Secret again afterwards: the private key doesn't belong in the cluster.
 
 ### Backups from a cron job instead
 
@@ -144,11 +193,12 @@ The metrics only hold totals, no names, clans or ids:
 | `seatbit_database_size_bytes`, `seatbit_database_wal_bytes` | SQLite file and WAL size. |
 | `seatbit_users{kind}`, `seatbit_active_users{window}`, `seatbit_sessions`, `seatbit_clans` | Accounts and guests, active accounts in the last 1/7/30 days, signed-in sessions, clans. |
 | `seatbit_events{state}`, `seatbit_upcoming_attendances{status}`, `seatbit_open_reports` | Events (draft, upcoming, past, cancelled), answers to upcoming events, unhandled abuse reports. |
-| `seatbit_job_runs_total{job}`, `seatbit_job_failures_total{job}`, `seatbit_job_last_success_timestamp_seconds{job}`, `seatbit_job_running{job}` | Background jobs: `reminders`, `publish`, `backup`, `restore-test`, `upgrade`, `former-members`. |
+| `seatbit_job_runs_total{job}`, `seatbit_job_failures_total{job}`, `seatbit_job_last_success_timestamp_seconds{job}`, `seatbit_job_running{job}` | Background jobs: `reminders`, `publish`, `backup`, `restore-test`, `backup-offsite`, `upgrade`, `former-members`. |
 | `seatbit_problems_total{kind}`, `seatbit_mails_total{result}` | Server errors, failed mails and Discord calls (as on *Admin → Health*), mails sent. |
 | `seatbit_live_connections` | Open live update streams: event pages that refresh by themselves. |
 | `seatbit_backup_files`, `seatbit_backup_size_bytes`, `seatbit_backup_last_timestamp_seconds`, `seatbit_backup_interval_seconds`, `seatbit_backup_last_failed` | Backups in the folder and when the newest was written. |
 | `seatbit_backup_disk_free_bytes`, `seatbit_backup_disk_size_bytes` | Space on the backup volume. |
+| `seatbit_backup_offsite_enabled`, `seatbit_backup_offsite_ok`, `seatbit_backup_offsite_timestamp_seconds`, `seatbit_backup_offsite_backup_timestamp_seconds`, `seatbit_backup_offsite_files`, `seatbit_backup_offsite_size_bytes` | The [off-site copies](#off-site-copies-encrypted-s3): set up or not, whether the last upload worked, when the last good one ran and which backup it carried, copies in the bucket. |
 | `seatbit_backup_restore_test_ok`, `seatbit_backup_restore_test_timestamp_seconds`, `seatbit_backup_restore_test_backup_timestamp_seconds`, `seatbit_backup_restore_test_duration_seconds` | The last [restore test](#restore-test). |
 
 Counters start at 0 when the server starts. HTTP request rates and latencies aren't in here; take them from your ingress controller or reverse proxy.
@@ -217,6 +267,13 @@ groups:
       - alert: SeatbitRestoreTestBehind
         # The newest backup that passed a restore test is more than two days older than the newest backup.
         expr: seatbit_backup_restore_test_enabled == 1 and seatbit_backup_last_timestamp_seconds - seatbit_backup_restore_test_backup_timestamp_seconds > 2 * 86400
+        for: 1h
+      - alert: SeatbitOffsiteBackupFailing
+        expr: seatbit_backup_offsite_enabled == 1 and seatbit_backup_offsite_ok == 0 and seatbit_backup_files > 0
+        for: 2h
+      - alert: SeatbitOffsiteBackupBehind
+        # The newest off-site copy is more than two days older than the newest local backup.
+        expr: seatbit_backup_offsite_enabled == 1 and seatbit_backup_last_timestamp_seconds - seatbit_backup_offsite_backup_timestamp_seconds > 2 * 86400
         for: 1h
       - alert: SeatbitBackupDiskFull
         expr: seatbit_backup_disk_free_bytes < 3 * seatbit_database_size_bytes

@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { ContactEmail, LegalPage, Operator } from "@/components/legal-page";
 import { getLegal, type Legal } from "@/lib/legal";
 import { billingEnabled } from "@/lib/billing";
-import { backupKeepDays } from "@/lib/backup";
+import { backupRetentionDays } from "@/lib/backup-offsite";
 import { donationsEnabled } from "@/lib/donations";
 import { connectEnabled } from "@/lib/connect";
 import { getLocale, getT } from "@/i18n/server";
@@ -24,8 +24,8 @@ export default async function PrivacyPage() {
   if (legal.privacyUrl) redirect(legal.privacyUrl);
   // Stripe only appears where the operator turned on Supporter payments.
   const payments = billingEnabled() || donationsEnabled();
-  // The backup retention from the platform settings; 0 (keep all) is said as "as long as needed".
-  const backupDays = backupKeepDays();
+  // The backup retention from the platform settings (the longer of local and off-site copies); 0 (keep all) is said as "as long as needed".
+  const backupDays = backupRetentionDays();
   // Clans' own Stripe accounts only where online clan payments are on.
   const online = connectEnabled();
   const props = { legal, payments, backupDays, online };

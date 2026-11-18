@@ -66,7 +66,7 @@ spec:
 
 ### Data
 
-- `/data` and the backups hold all personal data, including emails and LAN IDs. Keep both volumes private, encrypt backups you copy off the cluster, and delete old ones (Seatbit keeps its own backups for the time set in the admin settings).
+- `/data` and the backups hold all personal data, including emails and LAN IDs. Keep both volumes private, encrypt backups you copy off the cluster (the built-in [off-site copies](operations.md#off-site-copies-encrypted-s3) are encrypted for a key the server doesn't hold), and delete old ones (Seatbit keeps its own backups for the time set in the admin settings).
 - Only give the platform **owner** role to people who need backups and billing; use **admin**, **moderator** and **support** for everything else.
 
 ## Known limits
