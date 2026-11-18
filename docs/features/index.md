@@ -48,5 +48,6 @@ Seatbit has three kinds of users:
 
     ![A dialog asking "Delete the LAN type Lakeside LAN?" on a phone](../screenshots/phone-confirm-dialog.png){ .shot width="280" }
 
+- **On your home screen.** Add Seatbit to your phone's home screen (Chrome: menu › *Add to home screen* or *Install app*; Safari on iPhone: Share › *Add to Home Screen*). It then opens like an app, with its own icon and without the browser bar.
 - **People** are shown as *Anna "Nova" Frei*: first name, nick, surname.
 - **View / Manage:** clan and event pages have a *View* mode for everyone and a *Manage* mode for people with a role.

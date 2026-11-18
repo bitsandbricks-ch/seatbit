@@ -37,6 +37,8 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.BETTER_AUTH_URL ?? "http://localhost:3000"),
   title: "Seatbit",
   description: "Coordinate who in your group goes to which LAN party, tickets and seats",
+  // iPhones read these instead of the manifest when someone adds Seatbit to the home screen.
+  appleWebApp: { capable: true, title: "Seatbit", statusBarStyle: "default" },
 };
 
 /** Short hash of the commit this build came from, linked to it; nothing when the build had no git info. */
