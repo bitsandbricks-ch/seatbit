@@ -38,6 +38,7 @@ To hand a guest over to its owner:
 | **Claim link** | Copy the guest's link and send it yourself (WhatsApp, Discord, ...). Whoever opens it, signs in and clicks **That's me, take it over** takes the guest over; just opening it (or a chat app's link preview) changes nothing. If the sign-in already took the guest over (verified email or linked Discord), the link says so instead of asking. **New link** invalidates the old one. |
 | **That's me** | The member claims the guest themselves, on the website or with `/claim` on Discord. See below. |
 | **`/guest` on Discord** | Say which Discord member the guest is. See [On Discord](#on-discord). |
+| **Link to a member** | The guest already has a Seatbit account in the clan: link them on the guest's profile. See [Linking a guest to a member](#linking-a-guest-to-a-member). |
 
 ### Members claiming a guest
 
@@ -63,7 +64,17 @@ Safeguards, whatever the setting:
 - Declined claims and guests marked *Not me* aren't suggested again.
 - Every claim, approval and decline is in the [audit log](audit-log.md).
 
-The guest's events, seat and nicks become the member's.
+The guest's events, seat and nicks become the member's. Where both answered the same event, see [what stays](#when-both-answered-the-same-event).
+
+### Linking a guest to a member
+
+Sometimes the person behind a guest is already a member, e.g. they joined on their own instead of using the guest's link. Admins and recruiters open the guest's profile (Members → the guest) and use **Link to a member**: search the member by name or email and click **Link**. A confirm dialog says what happens, including the events both answered. Everything set up for the guest (answers, tickets, seats, nicks, LAN IDs, organizer roles, rides, sleeping spots, payments, others' seat wishes naming the guest) moves to the member, the guest disappears, and the member gets a note. It can't be undone, and it shows in the clan's [audit log](audit-log.md).
+
+Clan admins can link only to members of the clan. Platform owners and admins can also do it from the guest's page under **Admin → Users**, and pick any account; someone not in the clan yet becomes a member with the guest's role.
+
+#### When both answered the same event
+
+Linking, claiming and the Discord commands all follow the same rule: the answer that is further along stays, and its seat goes with it. From strongest: ticket confirmed by an organizer, ticket reported, coming, waitlist, unsure, not coming. On a tie the member's own answer stays. So a guest with a ticket replaces the member's *unsure*, but a member who is coming keeps their answer and seat over a guest who is also just coming. Everything else (nicks, LAN IDs, organizer roles) stays the member's where both have one.
 
 ### On Discord
 
