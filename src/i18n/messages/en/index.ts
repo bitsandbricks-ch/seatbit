@@ -51,6 +51,7 @@ import { gameCatalog } from "./gameCatalog";
 import { games } from "./games";
 import { guestDiscord } from "./guestDiscord";
 import { guestForm } from "./guestForm";
+import { guestLink } from "./guestLink";
 import { health } from "./health";
 import { help } from "./help";
 import { home } from "./home";
@@ -178,6 +179,7 @@ export const en = {
   games,
   guestDiscord,
   guestForm,
+  guestLink,
   health,
   help,
   home,

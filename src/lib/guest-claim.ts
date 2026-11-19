@@ -15,6 +15,7 @@ import { sendTemplate } from "./mail-templates";
 import { notifyClanAdmins, notifyLater } from "./notify";
 import { audit } from "./audit";
 import { nameKeys } from "./names";
+import { guestAnswerWins } from "./answer-strength";
 
 const { clanMember, attendance, seat, nickname, lanOrga } = schema;
 
@@ -23,7 +24,8 @@ export const normEmail = (e: string) => e.trim().toLowerCase();
 /**
  * The real account `meId` takes over guest `g`: clan membership, attendance, seats,
  * nicks, lead roles, rides and sleeping spots move over, then the guest is deleted.
- * Where both have something for the same LAN, the real account's stays.
+ * Where both have something for the same LAN, the real account's stays, except the answer:
+ * there the one further along wins (see `guestAnswerWins`), together with its seat.
  * Empty first name / surname on the account are filled from the guest.
  */
 export function mergeGuestInto(g: User, meId: string) {
@@ -45,13 +47,23 @@ export function mergeGuestInto(g: User, meId: string) {
       else if (mine.role === "pending")
         tx.update(clanMember).set({ role: m.role }).where(and(eq(clanMember.clanId, m.clanId), eq(clanMember.userId, meId))).run();
     }
+    // Both answered the same event: the answer that is further along (ticket, coming, ...) stays,
+    // so linking never throws away a ticket. Its seat goes with it.
+    const guestWonLans = new Set<string>();
     for (const a of tx.select().from(attendance).where(eq(attendance.userId, g.id)).all()) {
       const mine = tx.select().from(attendance).where(and(eq(attendance.lanId, a.lanId), eq(attendance.userId, meId))).get();
-      if (!mine) tx.update(attendance).set({ userId: meId }).where(eq(attendance.id, a.id)).run();
+      if (mine && !guestAnswerWins(a, mine)) continue;
+      if (mine) {
+        tx.delete(attendance).where(eq(attendance.id, mine.id)).run();
+        guestWonLans.add(a.lanId);
+      }
+      tx.update(attendance).set({ userId: meId }).where(eq(attendance.id, a.id)).run();
     }
     for (const s of tx.select().from(seat).where(eq(seat.userId, g.id)).all()) {
       const mine = tx.select().from(seat).where(and(eq(seat.lanId, s.lanId), eq(seat.userId, meId))).get();
-      if (!mine) tx.update(seat).set({ userId: meId }).where(eq(seat.id, s.id)).run();
+      if (mine && !guestWonLans.has(s.lanId)) continue;
+      if (mine) tx.update(seat).set({ userId: null }).where(eq(seat.id, mine.id)).run();
+      tx.update(seat).set({ userId: meId }).where(eq(seat.id, s.id)).run();
     }
     const myNicks = tx.select().from(nickname).where(eq(nickname.userId, meId)).all();
     for (const n of tx.select().from(nickname).where(eq(nickname.userId, g.id)).all()) {

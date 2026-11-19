@@ -24,6 +24,8 @@ import { UserAdminActions } from "../../user-admin-actions";
 import { updateUserLanInfo } from "@/app/member-lan-actions";
 import { MemberLanForm } from "@/components/member-lan-form";
 import { allTypes } from "@/lib/lan-types";
+import { GuestLinkForm } from "@/components/guest-link-form";
+import { guestLinkCandidates } from "@/lib/guest-link";
 
 /**
  * One account for platform staff: who it is, how they sign in, their Discord, clans, nicks and
@@ -240,6 +242,22 @@ export default async function AdminUserPage({ params }: PageProps<"/admin/users/
               <CopyField value={u.id} label={t("adminUser.userId")} />
             </div>
           </Card>
+
+          {u.isGuest && u.guestClanId && platformCan(me, "clans") && (
+            <Card title={t("guestLink.title")}>
+              <p className="mb-3 text-sm text-muted">
+                {t("guestLink.hint", { guest: u.firstName || u.name })}{" "}
+                {t("guestLink.hintStaff", { clan: clanName(u.guestClanId) ?? "—" })}
+              </p>
+              <GuestLinkForm
+                clanId={u.guestClanId}
+                guestId={u.id}
+                guestName={u.name}
+                candidates={guestLinkCandidates(u, true)}
+                afterHref="/admin/users/{id}"
+              />
+            </Card>
+          )}
 
           <Card title="Discord">
             {u.isGuest ? (

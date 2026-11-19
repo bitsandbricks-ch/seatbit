@@ -11,6 +11,8 @@ import { resendGuestDiscordDm, unlinkGuestDiscord, updateGuest } from "@/app/cla
 import { updateMemberLanInfo } from "@/app/member-lan-actions";
 import { MemberLanForm } from "@/components/member-lan-form";
 import { GuestDiscordLink } from "@/components/guest-discord";
+import { GuestLinkForm } from "@/components/guest-link-form";
+import { guestLinkCandidates } from "@/lib/guest-link";
 import { discordUserUrl } from "@/components/discord-badge";
 import { MemberBadges } from "@/components/member-badges";
 import { memberBadges } from "@/lib/member-badges";
@@ -297,6 +299,22 @@ export async function MemberProfile({ slug, userId, variant }: { slug: string; u
                 </div>
               )}
               <p className="mt-3 text-xs text-faint">{t(isSelf && !isManager ? "member.onlyManagersYou" : "member.onlyManagers")}</p>
+            </Card>
+          )}
+
+          {u.isGuest && isManager && (
+            <Card title={t("guestLink.title")}>
+              <p className="mb-3 text-sm text-muted">
+                {t("guestLink.hint", { guest: u.firstName || u.name })}
+                {platformCan(me, "clans") && ` ${t("guestLink.hintStaff", { clan: c.name })}`}
+              </p>
+              <GuestLinkForm
+                clanId={c.id}
+                guestId={u.id}
+                guestName={u.name}
+                candidates={guestLinkCandidates(u, platformCan(me, "clans"))}
+                afterHref={`/clans/${c.slug}/members/{id}`}
+              />
             </Card>
           )}
 

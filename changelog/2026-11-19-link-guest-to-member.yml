@@ -1,0 +1,8 @@
+date: 2026-11-19
+type: new
+en:
+  title: "Link a guest to a member"
+  text: "Clan admins and recruiters can now say on a guest's profile which member the guest really is: **Link to a member** moves the guest's answers, seats, nicks, rides and payments to that account. If both answered the same event, the answer that is further along (a ticket beats a plain «coming») stays, together with its seat. Instance admins can do the same from the user page in the admin area."
+de:
+  title: "Gast mit Mitglied verknüpfen"
+  text: "Clan-Admins und Recruiter können jetzt im Profil eines Gasts sagen, welches Mitglied der Gast in Wirklichkeit ist: **Mit Mitglied verknüpfen** überträgt Antworten, Plätze, Nicks, Fahrten und Zahlungen des Gasts auf dieses Konto. Haben beide beim selben Event geantwortet, bleibt die Antwort, die weiter ist (ein Ticket schlägt ein einfaches «dabei»), samt Platz. Instanz-Admins können das auch auf der Benutzerseite im Admin-Bereich."

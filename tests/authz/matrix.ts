@@ -13,6 +13,7 @@ import { ALL_ACTORS, fx, form, ACTORS } from "./harness";
 import { db } from "../../src/db";
 import * as actions from "../../src/app/actions";
 import * as clanActions from "../../src/app/clan-actions";
+import * as guestLink from "../../src/app/guest-link-actions";
 import * as memberLan from "../../src/app/member-lan-actions";
 import * as eventActions from "../../src/app/event-actions";
 import * as extras from "../../src/app/lan-extras-actions";
@@ -48,6 +49,7 @@ import * as live from "../../src/app/api/live/[lanId]/route";
 export const MODULES = {
   actions,
   "clan-actions": clanActions,
+  "guest-link-actions": guestLink,
   "member-lan-actions": memberLan,
   "event-actions": eventActions,
   "lan-extras-actions": extras,
@@ -416,6 +418,7 @@ export const SPECS: Spec[] = [
   },
   { name: "clan-actions.resendGuestDiscordDm", allow: CLAN_MEMBERS_PERM, run: () => clanActions.resendGuestDiscordDm(fx.clan, fx.guest), effect: "none" },
   { name: "clan-actions.unlinkGuestDiscord", allow: CLAN_MEMBERS_PERM, run: () => clanActions.unlinkGuestDiscord(fx.clan, fx.guest), effect: "none" },
+  { name: "guest-link-actions.linkGuestToMember", allow: CLAN_MEMBERS_PERM, run: () => guestLink.linkGuestToMember(fx.clan, fx.guest, ACTORS.member) },
   { name: "clan-actions.renewGuestLink", allow: CLAN_MEMBERS_PERM, run: () => clanActions.renewGuestLink(fx.clan, fx.guest) },
   { name: "clan-actions.claimGuest", allow: SIGNED_IN, run: () => clanActions.claimGuest("claim-anna"), positive: "member" },
   { name: "clan-actions.claimGuestFromDiscord", allow: NOBODY, noPositive: "needs a Discord ticket", run: () => clanActions.claimGuestFromDiscord("no-such-ticket") },

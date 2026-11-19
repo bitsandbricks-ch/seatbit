@@ -61,6 +61,7 @@ Tap a name in *Admin → Users* (or under *Newest accounts* on the overview) to 
 - **Events:** every event they answered, across all clans, with their answer, seat and ticket.
 - **Nicks:** the default nick, the nick per LAN type and per event. Owners and admins also see the LAN IDs, and can change the nick and LAN ID for every LAN type (**Edit nicks & LAN IDs**); the change shows in the platform audit log.
 - **Socials** from their profile.
+- **Link to a member** (guests only, owners and admins): move the guest to any real account, as a clan admin would on the guest's profile. See [Linking a guest to a member](members-guests.md#linking-a-guest-to-a-member).
 
 Give a platform role or suspend the account from the top of the page, as in the list. Emergency contacts and dietary needs don't show here: only the organizers of an event see those.
 
