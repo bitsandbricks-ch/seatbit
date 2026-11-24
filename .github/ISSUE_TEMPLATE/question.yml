@@ -1,0 +1,22 @@
+name: Question
+description: Ask how something works or how to set it up
+labels: [question]
+body:
+  - type: markdown
+    attributes:
+      value: Check the [documentation](https://bitsandbricks-ch.github.io/seatbit/) first; many setup questions are answered there.
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+      description: What do you want to do, and what did you try?
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where are you?
+      options:
+        - Using Seatbit as a member or organizer
+        - Running my own instance
+        - Working on the code
