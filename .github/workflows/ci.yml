@@ -90,6 +90,12 @@ jobs:
     name: Docs
     if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
     uses: ./.github/workflows/docs.yml
+    # A called workflow may not ask for more than its caller grants, even in a job
+    # that is skipped; docs.yml's deploy job only runs from main.
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
 
   security:
     name: Security
