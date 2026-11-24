@@ -232,7 +232,7 @@ test.describe("seats", () => {
     // Anna sees the final plan with her seat, and can't move any more.
     await anna.reload();
     await expect(anna.getByText("The plan is final. Your seat only changes if you ask an organizer.")).toBeVisible();
-    await expect(anna.getByRole("button", { name: /^Seat A3, / })).toBeVisible();
+    await expect(anna.getByRole("button", { name: /^Seat A3\b/ })).toBeVisible();
     await anna.getByRole("button", { name: /^Seat A4, free/ }).click();
     await expect(anna.getByRole("button", { name: "Move here" })).toHaveCount(0);
   });

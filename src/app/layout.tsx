@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
 import { Header } from "@/components/header";
+import { pageWidth } from "@/components/ui";
 import { MaintenanceBanner } from "@/components/maintenance-banner";
 import { DialogHost } from "@/components/dialog";
 import { Toaster } from "@/components/toast";
@@ -75,7 +76,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         </a>
         <Header />
         <MaintenanceBanner />
-        <main id="main" tabIndex={-1} className="outline-none mx-auto w-full max-w-7xl flex-1 px-4 sm:px-6 pb-8 pt-5 sm:pt-8">{children}</main>
+        <main id="main" tabIndex={-1} className={`${pageWidth} flex-1 pb-8 pt-5 outline-none sm:pt-8`}>{children}</main>
         <footer className="flex flex-wrap justify-center gap-x-4 gap-y-1 border-t border-line/50 px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-5 text-xs text-muted sm:pb-6">
           <span>Seatbit</span>
           <Link href="/terms" className="hover:text-fg">

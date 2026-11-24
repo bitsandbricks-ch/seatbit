@@ -12,6 +12,7 @@ import { getT } from "@/i18n/server";
 import { getTheme } from "@/lib/theme-server";
 import { DisplayMenu } from "./display-menu";
 import { QuickSearch } from "./quick-search";
+import { pageWidth } from "./ui";
 
 export async function Header() {
   const me = await getCurrentUser();
@@ -29,6 +30,7 @@ export async function Header() {
     ? [
         { href: "/", label: t("nav.lans"), icon: "calendar" },
         { href: "/clans", label: t("nav.clans"), icon: "users" },
+        { href: "/games", label: t("nav.games"), icon: "gamepad" },
         ...(isStaff(me) ? [{ href: "/admin", label: t("nav.admin"), icon: "shield" } as NavItem] : []),
       ]
     : [];
@@ -36,7 +38,7 @@ export async function Header() {
   return (
     <>
       <header className="sticky top-0 z-30 border-b border-line bg-ink/85 backdrop-blur supports-[backdrop-filter]:bg-ink/70">
-        <div className="mx-auto flex h-14 max-w-7xl items-center gap-6 px-4 sm:px-6">
+        <div className={`${pageWidth} flex h-14 items-center gap-6`}>
           <Link href="/" className="flex shrink-0 items-center" aria-label={t("nav.home")}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/brand/seatbit-logo.svg" alt="Seatbit" className="h-7 w-auto light:hidden" />
@@ -52,7 +54,7 @@ export async function Header() {
                 <Link
                   href="/profile"
                   className="flex min-w-0 items-center gap-2 rounded-full border border-line bg-surface py-1 pl-1 pr-3 text-sm text-fg transition hover:border-bit/60"
-                  aria-label={t("nav.yourProfile")}
+                  aria-label={`${display}, ${t("nav.yourProfile")}`}
                 >
                   <Avatar data={avatarData(me)} size={28} ring={false} />
                   <span className="max-w-[7rem] truncate">{display}</span>

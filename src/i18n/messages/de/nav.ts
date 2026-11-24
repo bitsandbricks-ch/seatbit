@@ -3,6 +3,7 @@ import type { Messages } from "../en";
 export const nav: Messages["nav"] = {
   lans: "LANs",
   clans: "Clans",
+  games: "Spiele",
   admin: "Admin",
   profile: "Profil",
   home: "Seatbit Startseite",
