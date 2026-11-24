@@ -138,7 +138,7 @@ test.describe("seat plan variants", () => {
     await expect(alex.getByText("Someone else than in Plan A")).toBeVisible();
     await expect(alex.getByText("Empty, taken in Plan A")).toBeVisible();
     // A1 now has Ben; in Plan A Anna sat there.
-    await alex.getByRole("button", { name: /^Seat A1,/ }).click();
+    await alex.getByRole("button", { name: /^Seat A1\b/ }).click();
     await expect(alex.getByText(/^In Plan A: .*Anna/)).toBeVisible();
     // The change list under the map spells it out.
     const changes = alex.locator("#seat-compare");

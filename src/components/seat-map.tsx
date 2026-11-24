@@ -335,7 +335,8 @@ export function SeatMap({
         onDragLeave={canDrag ? () => setDragOver(null) : undefined}
         onDrop={canDrag ? (e) => onDrop(e, s) : undefined}
         title={`${s.label}${s.nick ? ` · ${s.name ?? s.nick}` : ""}${s.locked ? ` · ${t("seatMap.held")}` : ""}${diffText(s) ? ` · ${diffText(s)}` : ""}`}
-        aria-label={`${t("seatMap.seatAria", { seat: s.label })}, ${s.nick ? (s.name ?? s.nick) : t("seatMap.free")}${s.locked ? `, ${t("seatMap.held")}` : ""}${diffText(s) ? `, ${diffText(s)}` : ""}`}
+        // Holds what the cell shows (number, then nick), so voice control can name it.
+        aria-label={`${t("seatMap.seatAria", { seat: s.label })}${taken && s.nick ? ` ${compact ? short : s.nick}` : ""}, ${s.nick ? (s.name ?? s.nick) : t("seatMap.free")}${s.locked ? `, ${t("seatMap.held")}` : ""}${diffText(s) ? `, ${diffText(s)}` : ""}`}
         aria-pressed={isSel}
         className={`relative flex ${cell} w-full min-w-0 flex-col items-center justify-center overflow-hidden rounded-bit border px-0.5 text-center transition hover:brightness-125 ${tone} ${ring} ${changed} ${dim ? "opacity-25" : ""} ${canDrag && taken ? "cursor-grab active:cursor-grabbing" : ""}`}
       >
@@ -353,12 +354,16 @@ export function SeatMap({
           <>
             {/* Taken seats show the nick, so the number moves into a corner badge to keep the order readable. */}
             {taken && <SeatNo label={s.label} className="absolute left-0.5 top-0.5" style={{ maxWidth: icons.length ? "calc(100% - 15px)" : "calc(100% - 4px)" }} />}
+            {/* A space between number and nick, so the cell's text reads "F1 Dex" like its name (flex drops it visually). */}
+            {taken && " "}
             <span className={`w-full truncate font-mono text-xs leading-none ${taken ? "mt-2.5 font-semibold" : ""}`}>{short}</span>
           </>
         ) : (
           <>
             {taken ? (
-              <SeatNo label={s.label} />
+              <>
+                <SeatNo label={s.label} />{" "}
+              </>
             ) : (
               <span className="font-mono text-[11px] leading-none opacity-75">
                 {s.label}

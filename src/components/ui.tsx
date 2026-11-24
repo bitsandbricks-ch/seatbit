@@ -76,12 +76,18 @@ export function Input(props: ComponentProps<"input">) {
 }
 
 /*
- * Page layout. Every page sits in the same container as the top bar (max-w-7xl,
+ * Page layout. Every page sits in the same container as the top bar (`pageWidth`,
  * set once in the root layout), so titles, tabs and cards line up with the logo
  * on every page and nothing jumps when you navigate. Pages never set their own
  * max width. The only exceptions are single-card flows (sign in, welcome, claim,
  * join), which use `cardPage`, and long text, which keeps a readable measure.
  */
+
+/**
+ * The one content width, shared by the top bar and the page. 96rem leaves room for
+ * seat maps and side columns on big screens without stretching text cards edge to edge.
+ */
+export const pageWidth = "mx-auto w-full max-w-[96rem] px-4 sm:px-6 lg:px-8";
 
 /** Vertical rhythm between a page's blocks (header, tabs, cards). */
 export const stack = "space-y-4 sm:space-y-6";

@@ -29,7 +29,7 @@ Every game exists once per Seatbit instance, in the **game catalog**, so the det
 
 - **From Steam:** pick a Steam game, or paste its Steam store link, and Seatbit fills in the name, cover, install size (from Steam's system requirements, rounded up), whether it's free and whether it has a LAN mode. Steam doesn't say how many players a game takes; add that by hand. The cover is copied to your Seatbit server once, so looking at the list never sends your browser to Steam.
 - **Other stores** (Epic Games, GOG, Battle.net, ...) have no public data to read, so their size and link are typed in.
-- **Everyone signed in** can look through the catalog under *Games* (`/games`, or *All games* on an event's Games tab) and open a game's page: cover, size, players, price, LAN mode, store and install links, and the events of theirs that play it. It's read-only; games are added from an event.
+- **Everyone signed in** can look through the catalog under *Games* in the main menu (the top bar on a computer, the tab bar on a phone; or *All games* on an event's Games tab) and open a game's page: cover, size, players, price, LAN mode, store and install links, and the events of theirs that play it. It's read-only; games are added from an event.
 - Platform owners, admins and support keep the catalog tidy under [*Admin → Games*](admin.md#games): fix details, upload a cover, fetch from Steam again, and merge duplicates.
 
 ![The game catalog](../screenshots/desktop-game-catalog.png){ .shot }

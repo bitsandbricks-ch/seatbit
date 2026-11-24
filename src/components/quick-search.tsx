@@ -95,12 +95,12 @@ export function QuickSearch() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label={t("search.label")}
         title={`${t("search.open")} (${mac ? "⌘" : "Ctrl+"}K)`}
         className="flex h-9 items-center gap-2 rounded-full border border-line bg-surface px-2.5 text-sm text-muted transition hover:border-bit/60 hover:text-fg"
       >
         {icon}
-        <span className="hidden lg:inline">{t("search.open")}</span>
+        {/* Named by its own text (no aria-label), so voice control ("click Search") finds it; phones get it read only. */}
+        <span className="sr-only lg:not-sr-only">{t("search.open")}</span>
         <kbd className="hidden rounded border border-line px-1 font-sans text-[11px] text-faint lg:inline">{mac ? "⌘K" : "Ctrl K" /* i18n-ignore */}</kbd>
       </button>
       <dialog
