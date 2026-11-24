@@ -40,13 +40,18 @@ Rules:
 
 Dark-first. Bit Green is the only brand accent and it always means "you / yours / go".
 
+The greys, `warn` and `danger` (dark) come from the shared BitsAndBricks tokens
+([`@bitsandbricks/tokens`](https://github.com/bitsandbricks-ch/ui), `--bnb-*`), so Seatbit reads as a
+sibling of the other BitsAndBricks apps; `brand/tokens.css` maps them to Seatbit's names and adds Bit
+Green and the seat colours. Change a shared grey in the tokens, not here.
+
 | Token | Hex | Role |
 | --- | --- | --- |
-| `ink` | `#0B0B0F` | Page background |
-| `surface` | `#16161D` | Cards and panels |
-| `raised` | `#1F1F28` | Inputs, hover, free seats |
-| `line` | `#2A2A35` | Borders |
-| `fg` | `#F4F4F5` | Main text |
+| `ink` | `#0F0F11` | Page background |
+| `surface` | `#161618` | Cards and panels |
+| `raised` | `#1F1F23` | Inputs, hover, free seats |
+| `line` | `#2C2C31` | Borders |
+| `fg` | `#EDEDEF` | Main text |
 | `muted` | `#A1A1AA` | Secondary text |
 | `faint` | `#8A8A94` | Hints, footer |
 | `bit` | `#2EE59D` | **Bit Green**: your seat, primary buttons, "going" |
@@ -56,7 +61,7 @@ Dark-first. Bit Green is the only brand accent and it always means "you / yours 
 | `seat-taken` | `#38BDF8` | Someone else's seat |
 | `warn` | `#FBBF24` | Due soon, maybe |
 | `danger` | `#F87171` | Overdue, unpaid, can't make it |
-| `on-danger` | `#0B0B0F` | Text on a danger fill (delete buttons) |
+| `on-danger` | `#0F0F11` | Text on a danger fill (delete buttons) |
 
 Text on a Bit Green button is `on-bit` (ink), not white. Bit Green on ink is 12:1 and muted on surface is 7:1, both well above WCAG AA.
 `faint` is 5.3:1 on surface and 4.8:1 on raised, so small hints stay AA too; `bit-deep` on white is 3.2:1, so use
@@ -70,11 +75,11 @@ brand's home; light is the same tokens with daylight values, set in `brand/token
 
 | Token | Light | Note |
 | --- | --- | --- |
-| `ink` | `#F5F5F7` | Page background |
+| `ink` | `#F6F6F7` | Page background |
 | `surface` | `#FFFFFF` | Cards and panels |
-| `raised` | `#EEEEF2` | Inputs, hover, free seats |
-| `line` | `#DCDCE3` | Borders |
-| `fg` | `#111118` | 18.8:1 on surface |
+| `raised` | `#EFEFF1` | Inputs, hover, free seats |
+| `line` | `#E0E0E4` | Borders |
+| `fg` | `#18181B` | 17.7:1 on surface |
 | `muted` | `#52525B` | 7.7:1 on surface |
 | `faint` | `#6B6B75` | 5.3:1 on surface |
 | `bit` | `#036C4E` | `bit-ink`, so green text stays AA on tinted cards too (6.4:1 on surface) |
@@ -111,7 +116,7 @@ Friendly, short, a bit nerdy, never cringe. Talk like the orga in the group chat
 
 - Source of truth for all of this is the repo `bitsandbricks-ch/seatbit`, folder `brand/`.
 
-- `brand/tokens.css` is a Tailwind 4 `@theme` block with every token above. Import it from `globals.css`.
+- `brand/tokens.css` is a Tailwind 4 `@theme` block with every token above, on top of `@bitsandbricks/tokens/tokens.css`. `globals.css` imports both, the shared one first.
 - `src/app/icon.svg`, `favicon.ico`, `apple-icon.png` and `opengraph-image.png` are picked up by Next.js automatically.
 - `public/brand/` holds the files the app references at runtime (for example the header logo).
 - `brand/generate.py` regenerates all SVGs (needs `fonttools` and the Geist TTFs from the `geist` npm package).

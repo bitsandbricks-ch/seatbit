@@ -25,6 +25,7 @@
     "test:authz": "node --require ./tests/authz/setup.cjs --import tsx --test tests/authz/authz.test.ts"
   },
   "dependencies": {
+    "@bitsandbricks/tokens": "0.3.0",
     "age-encryption": "^0.3.1",
     "aws4fetch": "^1.0.20",
     "better-auth": "^1.7.25",

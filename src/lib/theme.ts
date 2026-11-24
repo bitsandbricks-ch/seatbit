@@ -1,5 +1,7 @@
 // Shared by server and client code: no server-only imports here.
 
+import { neutrals } from "@bitsandbricks/tokens";
+
 export const THEMES = ["system", "light", "dark"] as const;
 export type Theme = (typeof THEMES)[number];
 
@@ -8,5 +10,5 @@ export const THEME_COOKIE = "seatbit-theme";
 
 export const isTheme = (v: unknown): v is Theme => typeof v === "string" && (THEMES as readonly string[]).includes(v);
 
-/** Page background per theme, for the browser's toolbar colour. Same values as brand/tokens.css. */
-export const THEME_COLORS = { dark: "#0b0b0f", light: "#f5f5f7" } as const;
+/** Page background per theme, for the browser's toolbar colour: the shared tokens' --bnb-bg. */
+export const THEME_COLORS = { dark: neutrals.dark.bg, light: neutrals.light.bg } as const;
