@@ -6,6 +6,7 @@ export const footer: Messages["footer"] = {
   privacy: "Datenschutz",
   source: "Quellcode",
   coffee: "Spendier mir einen Kaffee",
+  nav: "Fusszeile",
   poweredBy: "Powered by {site}",
   commit: "Commit {sha}",
 };

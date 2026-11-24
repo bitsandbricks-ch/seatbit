@@ -4,6 +4,7 @@ export const footer = {
   privacy: "Privacy",
   source: "Source",
   coffee: "Buy me a coffee",
+  nav: "Footer",
   poweredBy: "Powered by {site}",
   commit: "Commit {sha}",
 };

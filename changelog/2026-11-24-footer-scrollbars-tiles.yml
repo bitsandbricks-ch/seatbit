@@ -1,0 +1,8 @@
+date: 2026-11-24
+type: improved
+en:
+  title: "Calmer footer, slim scroll bars and clearer number tiles"
+  text: "The footer is one quiet line that lines up with the page, with fewer colours. Scroll bars are thin and follow the light and dark theme. Number tiles on the stats pages are larger and easier to scan, with a small icon for each figure."
+de:
+  title: "Ruhigere Fusszeile, schmale Scrollbalken und klarere Zahlenkacheln"
+  text: "Die Fusszeile ist eine ruhige Zeile, die mit der Seite bündig ist, mit weniger Farben. Scrollbalken sind schmal und passen sich dem hellen und dunklen Design an. Die Zahlenkacheln auf den Statistikseiten sind grösser und leichter zu überblicken, mit einem kleinen Symbol pro Wert."

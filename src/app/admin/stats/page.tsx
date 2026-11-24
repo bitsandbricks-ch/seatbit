@@ -50,17 +50,19 @@ export default async function UsageStatsPage({ searchParams }: PageProps<"/admin
 
       <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
         <StatTile
+          icon="people"
           label={t("usage.accounts")}
           value={String(totals.users)}
           sub={t("usage.new30", { count: totals.newUsers30 })}
         />
         <StatTile
+          icon="bell"
           label={t("usage.active30")}
           value={String(totals.active30)}
           sub={totals.users ? t("usage.ofAccounts", { pct: Math.round((totals.active30 / totals.users) * 100) }) : undefined}
         />
-        <StatTile label={t("usage.clans")} value={String(totals.clans)} sub={t("usage.activeClans30", { count: totals.activeClans30 })} />
-        <StatTile label={t("usage.upcoming")} value={String(totals.upcoming)} sub={t("usage.held12m", { count: totals.held12m })} />
+        <StatTile icon="people" label={t("usage.clans")} value={String(totals.clans)} sub={t("usage.activeClans30", { count: totals.activeClans30 })} />
+        <StatTile icon="calendar" label={t("usage.upcoming")} value={String(totals.upcoming)} sub={t("usage.held12m", { count: totals.held12m })} />
       </div>
 
       <Card title={t("usage.people")}>

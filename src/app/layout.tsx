@@ -56,7 +56,6 @@ function CommitLink({ sourceUrl, className, title }: { sourceUrl: string; classN
   );
 }
 
-const badge = "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition";
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const t = await getT();
@@ -77,56 +76,46 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <Header />
         <MaintenanceBanner />
         <main id="main" tabIndex={-1} className={`${pageWidth} flex-1 pb-8 pt-5 outline-none sm:pt-8`}>{children}</main>
-        <footer className="flex flex-wrap justify-center gap-x-4 gap-y-1 border-t border-line/50 px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-5 text-xs text-muted sm:pb-6">
-          <span>Seatbit</span>
-          <Link href="/terms" className="hover:text-fg">
-            {t("footer.terms")}
-          </Link>
-          <Link href="/privacy" className="hover:text-fg">
-            {t("footer.privacy")}
-          </Link>
-          <Link href="/help" className="hover:text-fg">
-            {t("help.title")}
-          </Link>
-          <Link href="/changelog" className="hover:text-fg">
-            {t("changelog.footerLink")}
-          </Link>
-          <a href={getLegal().sourceUrl} target="_blank" rel="noreferrer" className="hover:text-fg">
-            {t("footer.source")}
-          </a>
-          {donationsEnabled() && (
-            <Link href="/donate" className="hover:text-fg">
-              {t("footer.donate")}
-            </Link>
-          )}
-          <LanguageLinks />
-          {/* Phones: the screen corner is taken by the tab bar, so the hash stays in the footer. */}
-          <CommitLink sourceUrl={getLegal().sourceUrl} className="sm:hidden" title={commitTitle} />
-          <div className="flex w-full flex-wrap justify-center gap-2 pt-2">
-            <a
-              href="https://buymeacoffee.com/bitsandbricks"
-              target="_blank"
-              rel="noreferrer"
-              className={`${badge} border-warn/40 bg-warn/10 text-warn hover:bg-warn/20`}
-            >
-              <span aria-hidden>☕</span> {t("footer.coffee")}
-            </a>
-            {/* Please keep this attribution when you host your own instance. */}
-            <a
-              href="https://bitsandbricks.ch"
-              target="_blank"
-              rel="noreferrer"
-              className={`${badge} border-bit/40 bg-bit-soft text-bit hover:bg-bit/20`}
-            >
-              {t.rich("footer.poweredBy", { site: <span className="font-semibold">bitsandbricks.ch</span> })}
-            </a>
+        <footer className="border-t border-line/50 pb-[calc(5.5rem+env(safe-area-inset-bottom))] text-xs text-muted sm:pb-0">
+          <div className={`${pageWidth} flex flex-col items-center gap-3 py-5 sm:flex-row sm:justify-between`}>
+            <nav aria-label={t("footer.nav")} className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/brand/seatbit-mark.svg" alt="" className="size-4 light:hidden" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/brand/seatbit-mark-light.svg" alt="" className="hidden size-4 light:block" />
+              <Link href="/help" className="hover:text-fg">
+                {t("help.title")}
+              </Link>
+              <Link href="/changelog" className="hover:text-fg">
+                {t("changelog.footerLink")}
+              </Link>
+              <Link href="/terms" className="hover:text-fg">
+                {t("footer.terms")}
+              </Link>
+              <Link href="/privacy" className="hover:text-fg">
+                {t("footer.privacy")}
+              </Link>
+              <a href={getLegal().sourceUrl} target="_blank" rel="noreferrer" className="hover:text-fg">
+                {t("footer.source")}
+              </a>
+              {donationsEnabled() && (
+                <Link href="/donate" className="hover:text-fg">
+                  {t("footer.donate")}
+                </Link>
+              )}
+              <a href="https://buymeacoffee.com/bitsandbricks" target="_blank" rel="noreferrer" className="hover:text-fg">
+                {t("footer.coffee")}
+              </a>
+            </nav>
+            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+              <LanguageLinks />
+              {/* Please keep this attribution when you host your own instance. */}
+              <a href="https://bitsandbricks.ch" target="_blank" rel="noreferrer" className="hover:text-fg">
+                {t.rich("footer.poweredBy", { site: <span className="font-semibold text-bit">bitsandbricks.ch</span> })}
+              </a>
+              <CommitLink sourceUrl={getLegal().sourceUrl} className="text-faint" title={commitTitle} />
+            </div>
           </div>
-          {/* Desktop: pinned to the screen's bottom-left corner. Inside the footer, so screen readers find it there. */}
-          <CommitLink
-            sourceUrl={getLegal().sourceUrl}
-            className="fixed bottom-2 left-3 z-20 hidden text-[11px] text-faint sm:block"
-            title={commitTitle}
-          />
         </footer>
         <Toaster />
         <DialogHost />

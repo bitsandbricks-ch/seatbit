@@ -10,7 +10,7 @@ Images are built for every change on `main` and published to the GitHub Containe
 | `:sha-<short sha>` | A specific commit. |
 | `:1.2.3` | Releases, when there are tags. |
 
-The short commit hash the running image was built from sits in the bottom-left corner of the screen (in the footer on phones), linked to that commit under your **Source code URL**. That tells you at a glance which build is live.
+The short commit hash the running image was built from sits at the end of the footer, linked to that commit under your **Source code URL**. That tells you at a glance which build is live.
 
 If you build the image yourself, pass the commit in, since the build context has no `.git`:
 
