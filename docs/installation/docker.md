@@ -4,7 +4,8 @@ Images are built for every change on `main` and published to the GitHub Containe
 
 | Tag | Use |
 | --- | --- |
-| `ghcr.io/bitsandbricks-ch/seatbit:main` | Latest build of `main`. |
+| `ghcr.io/bitsandbricks-ch/seatbit:main` | Latest build of `main` (also tagged `:dev`). |
+| `:latest` | Newest release, once there are releases (`v*` tags). |
 | `:main-<UTC timestamp>-<sha>` | Every main build, sortable (for automatic updates, e.g. Flux image policies). |
 | `:sha-<short sha>` | A specific commit. |
 | `:1.2.3` | Releases, when there are tags. |

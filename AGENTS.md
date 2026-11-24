@@ -21,7 +21,7 @@ A self-hostable web app that helps a clan coordinate going to LAN parties run by
    - `npm run test:authz` when you added or changed a server action or a download route (permission matrix)
    - `mkdocs build --strict` when you touched `docs/` or `mkdocs.yml` (`pip install -r docs/requirements.txt`)
 3. **Pull request:** open it as a **draft**. Fill in the template (`.github/pull_request_template.md`): what and why, screenshots for UI changes, the checklist. Link the issue.
-4. **CI:** wait for the checks (`CI`, `Docs`, `Container image`, `Security`). Fix failures yourself; never skip, disable or weaken a check or test to get green.
+4. **CI:** wait for the checks (`CI passed` waits on `CI`, `Docs`, `Container image` and `Security`). Fix failures yourself; never skip, disable or weaken a check or test to get green.
 5. **When you are done, mark the pull request ready for review.** Done means: the task is complete, the checklist is ticked, and all checks are green. Leave it as a draft only while work is still open or you are blocked, and say why in the description.
 6. **Keep it mergeable:** whenever `main` moves while your pull request is open, merge `main` into your branch right away, without being asked, resolve conflicts and push. Don't let a pull request sit stale; an old conflict is harder to resolve than a fresh one.
 7. **Never merge** your own pull request, and never force-push to a branch someone else is working on. Merging is the maintainer's call.
