@@ -72,7 +72,7 @@ export function DisplayMenu({ theme: initial }: { theme: Theme }) {
     <div ref={box} className="relative">
       <button
         type="button"
-        aria-label={t("display.menu")}
+        aria-label={`${locale.toUpperCase()}, ${t("display.menu")}`}
         title={t("display.menu")}
         aria-haspopup="true"
         aria-expanded={open}

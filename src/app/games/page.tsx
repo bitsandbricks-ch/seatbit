@@ -33,7 +33,7 @@ export default async function GamesPage() {
           <p className="text-sm text-muted">{t("gameCatalog.empty")}</p>
         </Card>
       ) : (
-        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
           {games.map((g) => (
             <li key={g.id}>
               <Link href={`/games/${g.id}`} className="block rounded-card border border-line bg-surface p-2 transition hover:border-bit/60">

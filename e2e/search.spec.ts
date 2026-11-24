@@ -20,7 +20,7 @@ test.describe("quick search", () => {
     await box.press("Enter");
     await expect(page).toHaveURL(new RegExp(`/lans/${id}$`));
 
-    await page.getByRole("button", { name: "Search events, people and clans" }).click();
+    await page.getByRole("button", { name: /^Search/ }).click();
     await box.fill("byte");
     await page.getByRole("option", { name: /Ben "Byte" Huber/ }).click();
     await expect(page).toHaveURL(/\/clans\/pixel-pirates\/members\/demo-ben$/);
@@ -29,7 +29,7 @@ test.describe("quick search", () => {
   test("says when nothing matches", async ({ as }) => {
     const page = await as("anna");
     await page.goto("/");
-    await page.getByRole("button", { name: "Search events, people and clans" }).click();
+    await page.getByRole("button", { name: /^Search/ }).click();
     await page.getByRole("combobox").fill("zzzz-nothing");
     await expect(page.getByText("Nothing found for “zzzz-nothing”.")).toBeVisible();
   });

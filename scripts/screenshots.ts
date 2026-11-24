@@ -121,7 +121,8 @@ async function setMaintenance(page: Page) {
 }
 
 const seat = (label: string) => async (page: Page) => {
-  await page.locator(`[aria-label^="Seat ${label},"], [aria-label="Seat ${label}"]`).first().click();
+  // Taken seats carry the nick after the number ("Seat F10 Dex, …"), free ones a comma.
+  await page.locator(`[aria-label^="Seat ${label},"], [aria-label^="Seat ${label} "], [aria-label="Seat ${label}"]`).first().click();
   // Phones: show the whole seat card below the sticky header and tabs.
   await page.evaluate(() => {
     if (window.innerWidth > 640) return;
