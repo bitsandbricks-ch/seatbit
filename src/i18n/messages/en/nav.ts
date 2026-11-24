@@ -1,6 +1,7 @@
 export const nav = {
   lans: "LANs",
   clans: "Clans",
+  games: "Games",
   admin: "Admin",
   profile: "Profile",
   home: "Seatbit home",
