@@ -54,7 +54,7 @@ export async function Header() {
                 <Link
                   href="/profile"
                   className="flex min-w-0 items-center gap-2 rounded-full border border-line bg-surface py-1 pl-1 pr-3 text-sm text-fg transition hover:border-bit/60"
-                  aria-label={t("nav.yourProfile")}
+                  aria-label={`${display}, ${t("nav.yourProfile")}`}
                 >
                   <Avatar data={avatarData(me)} size={28} ring={false} />
                   <span className="max-w-[7rem] truncate">{display}</span>
