@@ -1,8 +1,8 @@
 name: Security
 
 on:
-  pull_request:
-  merge_group:
+  # Pull requests and the merge queue run this from ci.yml, so `CI passed` waits on it.
+  workflow_call:
   push:
     branches: [main]
   # New vulnerabilities show up without any change on our side.
@@ -28,8 +28,8 @@ jobs:
     name: Permission tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
           cache: npm
@@ -45,7 +45,7 @@ jobs:
       contents: read
       security-events: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       # package-lock.json, docs/requirements.txt, the Dockerfile and committed secrets.
       - name: Trivy (repository)
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
@@ -70,7 +70,7 @@ jobs:
         if: always() && hashFiles('trivy-repo.sarif') != ''
         # Needs code scanning on the repository; without it the scan above still fails on findings.
         continue-on-error: true
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@1bd86f2fdb4b86187fa4059f16f31a3202acc9ea # v4.39.4
         with:
           sarif_file: trivy-repo.sarif
           category: trivy-repo
@@ -82,11 +82,11 @@ jobs:
       contents: read
       security-events: write
     steps:
-      - uses: actions/checkout@v7
-      - uses: docker/setup-buildx-action@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
       # Same Dockerfile as the Container image workflow; its amd64 layer cache makes this quick.
       - name: Build image
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           platforms: linux/amd64
@@ -117,7 +117,7 @@ jobs:
       - name: Upload to code scanning
         if: always() && hashFiles('trivy-image.sarif') != ''
         continue-on-error: true
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@1bd86f2fdb4b86187fa4059f16f31a3202acc9ea # v4.39.4
         with:
           sarif_file: trivy-image.sarif
           category: trivy-image

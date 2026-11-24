@@ -1,21 +1,21 @@
 # CI and releases
 
-All checks run on GitHub Actions. Every pull request must pass them before it is merged.
+All checks run on GitHub Actions. Every pull request must pass them before it is merged. On pull requests and in the merge queue, the CI workflow also runs Docs, Security and Container image (as reusable workflows) and ends with one job, **CI passed**, that waits on all of them. That is the only check the ruleset requires, so jobs can be added or renamed without touching the ruleset ([BitsAndBricks handbook](https://github.com/bitsandbricks-ch/handbook/blob/main/core/github.md#cicd)).
 
 ## Workflows
 
 | Workflow | When | What |
 | --- | --- | --- |
-| **CI** (`ci.yml`) | Pull requests, merge queue, pushes to `main` | Existing screenshots unchanged, lint, `drizzle-kit check` (colliding migrations), untranslated text, typecheck, unit tests, build, render every page on demo data (smoke test), then the [end-to-end tests](testing.md). The screenshots and, on failure, the Playwright report are attached to the run. |
-| **Docs** (`docs.yml`) | Pull requests, merge queue; `main` publishes | `mkdocs build --strict` (broken links and missing images fail), deploy to GitHub Pages. |
-| **Container image** (`image.yml`) | Pull requests and the merge queue build; `main` and `v*` tags push | Native amd64 and arm64 builds, merged into one multi-arch image on GHCR. |
-| **Security** (`security.yml`) | Pull requests, merge queue, `main`, and weekly on Monday | [Permission tests](permission-tests.md); Trivy scans of the dependencies, the Dockerfile and committed secrets, and of the built container image. Fixable high and critical findings fail the job; on `main` and the weekly run the findings also go to the repository's code scanning (if it is turned on). |
+| **CI** (`ci.yml`) | Pull requests, merge queue, pushes to `main` | On pull requests and the merge queue also Docs, Security and Container image, then *CI passed*. Existing screenshots unchanged, lint, `drizzle-kit check` (colliding migrations), untranslated text, typecheck, unit tests, build, render every page on demo data (smoke test), then the [end-to-end tests](testing.md). The screenshots and, on failure, the Playwright report are attached to the run. |
+| **Docs** (`docs.yml`) | Called by CI for pull requests and the merge queue; `main` builds and publishes | `mkdocs build --strict` (broken links and missing images fail), deploy to GitHub Pages. |
+| **Container image** (`image.yml`) | Called by CI for pull requests and the merge queue (build only); `main` and `v*` tags push | Native amd64 and arm64 builds, merged into one multi-arch image on GHCR. |
+| **Security** (`security.yml`) | Called by CI for pull requests and the merge queue; `main`, and weekly on Monday | [Permission tests](permission-tests.md); Trivy scans of the dependencies, the Dockerfile and committed secrets, and of the built container image. Fixable high and critical findings fail the job; on `main` and the weekly run the findings also go to the repository's code scanning (if it is turned on). |
 | **Screenshots** (`screenshots.yml`) | Pushes to `main` that touch the UI | Regenerate `docs/screenshots/` and open or update an *Update screenshots* pull request. See [Screenshots](screenshots.md). |
 | **Cancel runs of closed pull requests** (`cancel-closed.yml`) | A pull request is merged or closed | Cancels that pull request's queued and running checks, including code scanning's. |
 
 Each workflow has a `concurrency` group per branch or pull request, so a new push cancels the older run of the same pull request (and a new merge the older `main` build). GitHub doesn't stop a pull request's runs when it is merged or closed, though; with a stack of pull requests that left over a hundred runs queued for the shared runners, and `main` waited behind them. `cancel-closed.yml` cancels them instead. Code scanning (CodeQL, if turned on in its default setup) runs once per push to `main` and per pull request with no such group.
 
-Dependabot opens grouped pull requests: weekly npm updates (minor and patch together, security fixes together as soon as they are out), weekly updates of the Node.js base image in the `Dockerfile` (within the same major version), and monthly GitHub Actions and docs (pip) updates.
+Every action in the workflows is pinned to a full commit sha with its version as a comment (`uses: actions/checkout@<sha> # v7.0.1`); Dependabot updates both. Dependabot opens grouped pull requests: weekly npm updates (minor and patch together, security fixes together as soon as they are out), weekly updates of the Node.js base image in the `Dockerfile` (within the same major version), and monthly GitHub Actions and docs (pip) updates.
 
 When the Security workflow fails on `main` without a change of yours, a new vulnerability was published: merge the Dependabot pull request that fixes it, or bump the dependency yourself.
 
@@ -24,7 +24,7 @@ When the Security workflow fails on `main` without a change of yours, a new vuln
 Many pull requests run in parallel, and each merge makes the others stale. Two repository settings keep that cheap; a maintainer turns them on under **Settings**:
 
 1. **General → Pull Requests → Allow auto-merge.** A pull request can then be set to *merge when ready* and lands as soon as its checks are green and it is approved, instead of waiting to be noticed.
-2. **Rules → Rulesets → New branch ruleset** for `main` with **Require status checks to pass** (*Lint, typecheck, build*, *build* from Docs, *Build amd64* and *Build arm64*) and **Require merge queue**. The queue merges ready pull requests one by one and tests each on top of the ones before it, so two pull requests that each pass alone can't break `main` together. The CI, Docs and Container image workflows run on `merge_group` for this.
+2. **Rules → Rulesets → New branch ruleset** for `main` with **Require status checks to pass** (only *CI passed*) and **Require merge queue**. The queue merges ready pull requests one by one and tests each on top of the ones before it, so two pull requests that each pass alone can't break `main` together. CI runs on `merge_group` for this, and with it Docs, Security and Container image.
 
 Without the merge queue, merge ready pull requests soon after they are green, oldest first.
 
@@ -32,8 +32,10 @@ Without the merge queue, merge ready pull requests soon after they are green, ol
 
 | Tag | |
 | --- | --- |
-| `:main` | Latest build of `main`. |
-| `:main-<UTC timestamp>-<sha>` | Every main build, sortable. |
+| `:latest` | Newest release (`v*` tag). |
+| `:dev` | Newest build of `main`. |
+| `:main` | Newest build of `main` (same as `:dev`). |
+| `:main-<UTC timestamp>-<sha>` | Every main build, sortable (Flux image policies follow it). |
 | `:sha-<short sha>` | A specific commit. |
 | `:1.2.3` | Releases, from `v1.2.3` tags. |
 

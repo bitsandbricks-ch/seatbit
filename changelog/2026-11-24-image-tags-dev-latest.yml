@@ -1,0 +1,13 @@
+date: 2026-11-24
+type: improved
+audience: admins
+en:
+  title: "New image tags: dev and latest"
+  text: >-
+    The container image is now also tagged `:dev` for the newest build of main, and `:latest` for the
+    newest release once there are releases. `:main` and the other tags stay as they are.
+de:
+  title: "Neue Image-Tags: dev und latest"
+  text: >-
+    Das Container-Image hat jetzt zusätzlich den Tag `:dev` für den neusten Build von main und `:latest`
+    für das neuste Release, sobald es Releases gibt. `:main` und die anderen Tags bleiben wie bisher.
