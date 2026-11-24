@@ -2,6 +2,8 @@
 
 AI coding agents (Claude Code, Codex, Copilot, ...) follow [AGENTS.md](https://github.com/bitsandbricks-ch/seatbit/blob/main/AGENTS.md) in the repository root; `CLAUDE.md` imports it. The rules are the same as for humans, written down so an agent can follow them without asking.
 
+Seatbit follows the [BitsAndBricks handbook](https://github.com/bitsandbricks-ch/handbook), profile **web-app**. AGENTS.md lists where Seatbit differs from it; Seatbit's own decisions are in [Decisions](../decisions/index.md).
+
 ## Summary
 
 | Rule | |
