@@ -2,6 +2,8 @@
 
 These rules are for AI coding agents (Claude Code, Codex, Copilot, ...) working on Seatbit. Humans: see [CONTRIBUTING.md](CONTRIBUTING.md), the same rules apply to you in spirit. `CLAUDE.md` imports this file.
 
+This repo follows the [BitsAndBricks handbook](https://github.com/bitsandbricks-ch/handbook), profile **web-app** (see `.mason.toml`). Read its README, the `core/` chapters, the blocks the web-app profile lists and `decisions/`. This file wins where the two differ; the differences are listed under [Where Seatbit differs from the handbook](#where-seatbit-differs-from-the-handbook). Seatbit's own decisions are in `docs/decisions/`, its threat model in `docs/threat-model.md`.
+
 ## What Seatbit is
 
 A self-hostable web app that helps a clan coordinate going to LAN parties run by others: who comes, tickets, seats, travel, packing lists, games, plus a Discord bot. Not a tool for running a LAN. Docs: `docs/` (MkDocs), user-facing overview: `README.md`.
@@ -55,6 +57,22 @@ A self-hostable web app that helps a clan coordinate going to LAN parties run by
 - **Don't commit re-rendered screenshots** in a feature pull request: binary files can't be merged, so every parallel branch would conflict on them. After a merge to `main`, the `Screenshots` workflow regenerates them and opens a pull request. CI fails a pull request that modifies an existing `docs/screenshots/*.png`; undo with `git checkout origin/main -- docs/screenshots`. A **new** shot is a new file: commit it when your docs use it. Show reviewers the UI change in the pull request description (or the CI `screenshots` artifact).
 
 <!-- BEGIN:nextjs-agent-rules -->
+
+## Where Seatbit differs from the handbook
+
+Follow the Seatbit column; the handbook rule does not apply here. The handbook asks for a written reason per difference; rows marked TODO still need one from the maintainer.
+
+| Topic | Seatbit | Handbook (v1) | Why |
+| --- | --- | --- | --- |
+| Stack | Next.js, Tailwind CSS, Drizzle with SQLite | React, Vite, Mantine; Flask, SQLAlchemy, Alembic | Existing apps keep their stack (handbook [decision 0001](https://github.com/bitsandbricks-ch/handbook/blob/main/decisions/0001-stack-standard.md)) |
+| Components | Own Tailwind components (`src/components/ui.tsx`), no UI library | `@bitsandbricks/ui` (Mantine) | [docs/decisions/0002](docs/decisions/0002-own-tailwind-components.md) |
+| Migrations | Drizzle, timestamped, `npm run db:rebase` after merging `main` | Timestamped Alembic revisions | Drizzle is this app's ORM (decision 0001); same idea, other tool |
+| Changelog | One YAML file per change in `changelog/`, English and German, shown on the *What's new* page; no `CHANGELOG.md` and no versions yet | Fragments in `changelog.d/` or `changes/`, collected into `CHANGELOG.md` at release | Every merged change counts while there are no versions; the app reads the YAML for its *What's new* page |
+| Dependency updates | Dependabot, grouped | Renovate with the shared preset ([0005](https://github.com/bitsandbricks-ch/handbook/blob/main/decisions/0005-renovate.md)) | TODO: switches once the Renovate app is installed on the org |
+| Merging | Merge commits on `main` | Squash merge only | TODO: open question (repo setting; stacked pull requests) |
+| Accent colour | Bit Green on every primary button | Accent only for plan, approve and apply | TODO: open question |
+| Admin sign-in | Discord only, no MFA of Seatbit's own ([docs/decisions/0001](docs/decisions/0001-discord-sign-in.md)) | MFA required for admins | TODO: open question |
+| Formatting | ESLint only, no Prettier, no pre-commit hook | Formatter in CI and a pre-commit hook | TODO: open question |
 
 ## This is NOT the Next.js you know
 

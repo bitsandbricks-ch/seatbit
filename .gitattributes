@@ -1,0 +1,5 @@
+# Generated files: never edited by hand, folded in diffs.
+package-lock.json linguist-generated=true
+drizzle/meta/** linguist-generated=true
+# Rendered by `npm run screenshots` and the Screenshots workflow.
+docs/screenshots/** linguist-generated=true

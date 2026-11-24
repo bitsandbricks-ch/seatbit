@@ -149,6 +149,14 @@ nav:
       - Screenshots: development/screenshots.md
       - CI and releases: development/ci.md
       - Permission tests: development/permission-tests.md
+      - Threat model: threat-model.md
+      - Decisions:
+          - decisions/index.md
+          - Sign-in with Discord only: decisions/0001-discord-sign-in.md
+          - Own Tailwind components: decisions/0002-own-tailwind-components.md
+          - Files that don't conflict: decisions/0003-files-that-dont-conflict.md
+          - Screenshots from main: decisions/0004-screenshots-from-main.md
+          - Global LAN types: decisions/0005-global-lan-types.md
   - Contributing:
       - contributing/index.md
       - Code guidelines: contributing/guidelines.md

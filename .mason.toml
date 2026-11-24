@@ -1,0 +1,5 @@
+# Mason's per-repo settings: which handbook profile and version this repo follows.
+# https://github.com/bitsandbricks-ch/handbook
+[handbook]
+profile = "web-app"
+version = "v1"
