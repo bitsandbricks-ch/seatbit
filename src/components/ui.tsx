@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
+import { Icon, type IconName } from "./icons";
 
 // Small pieces with built-in text live in a client module so they can use the translations.
 export { Hint, LockedAnswerBadge, StatusBadge, Verified } from "./ui-client";
@@ -275,13 +276,17 @@ export function Skeleton({ className = "" }: { className?: string }) {
   return <div className={`animate-pulse rounded-md bg-raised ${className}`} aria-hidden />;
 }
 
-/** A headline number with a label above and a short note below. */
-export function StatTile({ label, value, sub }: { label: string; value: string; sub?: string }) {
+/** A headline number with a label and optional icon above and a short note below (same layout as Hubra's StatTile). */
+export function StatTile({ label, value, sub, icon }: { label: string; value: string; sub?: string; icon?: IconName }) {
   return (
-    <div className="min-w-0 rounded-card border border-line bg-surface p-3 sm:p-4">
-      <div className="truncate text-xs text-muted">{label}</div>
-      <div className="mt-1 text-2xl font-bold tabular-nums sm:text-3xl">{value}</div>
-      {sub && <div className="truncate text-xs text-faint">{sub}</div>}
+    <div className="flex min-w-0 flex-col rounded-card border border-line bg-surface p-3 sm:p-5">
+      <div className="flex items-start justify-between gap-2">
+        <span className="truncate text-xs font-semibold text-muted sm:text-sm">{label}</span>
+        {/* Phones fit three tiles in a row, so the label gets the room there. */}
+        {icon && <Icon name={icon} className="hidden size-5 shrink-0 text-bit sm:block" />}
+      </div>
+      <div className="mt-1 text-2xl font-bold leading-tight tabular-nums sm:mt-2.5 sm:text-[1.75rem]">{value}</div>
+      {sub && <div className="mt-0.5 truncate text-xs text-muted sm:mt-1.5 sm:text-sm">{sub}</div>}
     </div>
   );
 }

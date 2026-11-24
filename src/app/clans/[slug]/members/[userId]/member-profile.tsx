@@ -142,12 +142,14 @@ export async function MemberProfile({ slug, userId, variant }: { slug: string; u
   const stats = (
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <StatTile
+          icon="seat"
           label={t("member.attended")}
           value={String(attended)}
           sub={past.length ? t("member.ofPast", { count: past.length }) : t("member.noPast")}
         />
-        <StatTile label={t("stats.answered")} value={pct(answeredPast, past.length)} sub={t("member.ofPastEvents")} />
+        <StatTile icon="chat" label={t("stats.answered")} value={pct(answeredPast, past.length)} sub={t("member.ofPastEvents")} />
         <StatTile
+          icon="calendar"
           label={t("member.comingNext")}
           value={String(upcoming.filter((e) => e.a?.status === "going").length)}
           sub={t("member.ofUpcoming", { count: upcoming.length })}

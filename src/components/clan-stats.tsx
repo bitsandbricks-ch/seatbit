@@ -40,17 +40,20 @@ export async function ClanStats({ clan: c }: { clan: Clan }) {
       <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
         <StatTile
           label={t("stats.members")}
+          icon="people"
           value={String(totalMembers)}
           sub={guests ? t("stats.guestsNoLogin", { count: guests }) : t("stats.allLogin")}
         />
-        <StatTile label={t("stats.events")} value={String(past.length)} sub={t("stats.pastUpcoming", { count: upcoming.length })} />
+        <StatTile icon="calendar" label={t("stats.events")} value={String(past.length)} sub={t("stats.pastUpcoming", { count: upcoming.length })} />
         <StatTile
           label={t("stats.answerRate")}
+          icon="chat"
           value={pct(sum(past, "answered"), sum(past, "asked"))}
           sub={t("stats.answerRateSub")}
         />
         <StatTile
           label={t("stats.turnout")}
+          icon="seat"
           value={pct(sum(past, "going"), sum(past, "asked"))}
           sub={
             past.length

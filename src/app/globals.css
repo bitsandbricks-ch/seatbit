@@ -62,6 +62,26 @@ select {
   cursor: pointer;
 }
 
+/* Thin, quiet scroll bars in the text colour, like Hubra's, instead of the grey system bars. */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--color-fg) 22%, transparent) transparent;
+}
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--color-fg) 18%, transparent);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklab, var(--color-fg) 32%, transparent);
+}
+
 /* Sideways-scrolling tab bars hint that there's more by fading the edge. */
 .scroll-fade-x {
   scrollbar-width: none;
