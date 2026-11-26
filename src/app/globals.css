@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "@bitsandbricks/tokens/tokens.css";
 @import "../../brand/tokens.css";
 
 :root {

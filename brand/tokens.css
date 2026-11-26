@@ -1,99 +1,87 @@
 /*
- * Seatbit design tokens (Tailwind 4).
+ * Seatbit design tokens (Tailwind 4) on top of the shared BitsAndBricks tokens.
  * Usage in src/app/globals.css:
  *   @import "tailwindcss";
+ *   @import "@bitsandbricks/tokens/tokens.css";
  *   @import "../../brand/tokens.css";
  * Then use classes like bg-ink, bg-surface, border-line, text-fg, text-muted,
  * bg-bit, text-bit, bg-seat-taken, text-warn, text-danger.
+ *
+ * Neutrals, status colours and the light/dark switch come from @bitsandbricks/tokens (--bnb-*),
+ * so Seatbit reads as a sibling of the other BitsAndBricks apps. Seatbit adds its accent (Bit Green)
+ * and the few colours only it has (seats, avatars).
  */
 @theme {
-  /* Neutrals: the "dark room" of a LAN hall */
-  --color-ink: #0b0b0f;        /* page background */
-  --color-surface: #16161d;    /* cards, panels */
-  --color-raised: #1f1f28;     /* inputs, hover, free seats */
-  --color-line: #2a2a35;       /* borders, dividers */
-  --color-fg: #f4f4f5;         /* primary text */
-  --color-muted: #a1a1aa;      /* secondary text */
-  --color-faint: #8a8a94;      /* hints, footers (AA on surface and raised) */
+  /* Neutrals: the "dark room" of a LAN hall, from the shared tokens */
+  --color-ink: var(--bnb-bg);           /* page background */
+  --color-surface: var(--bnb-surface);  /* cards, panels */
+  --color-raised: var(--bnb-raised);    /* inputs, hover, free seats */
+  --color-line: var(--bnb-line);        /* borders, dividers */
+  --color-fg: var(--bnb-fg);            /* primary text */
+  --color-muted: var(--bnb-muted);      /* secondary text */
+  --color-faint: #8a8a94;               /* hints, footers: AA on surface and raised (light: the tokens' faint) */
 
-  /* Brand: Bit Green, the colour of "your seat" */
-  --color-bit: #2ee59d;        /* primary accent, your seat, primary buttons (text on it: ink) */
-  --color-bit-hover: #5cefb5;
-  --color-bit-deep: #0e9f6e;   /* accent on light backgrounds, logos on white */
-  --color-bit-ink: #036c4e;    /* green text on light backgrounds (AA) */
-  --color-on-bit: #0b0b0f;     /* text on bit fills */
-  --color-bit-soft: #2ee59d1f; /* tinted badge / selected background */
+  /* Brand: Bit Green, the colour of "your seat". The accent itself is set below. */
+  --color-bit: var(--bnb-accent);       /* primary accent, your seat, primary buttons */
+  --color-bit-hover: var(--bnb-accent-hover);
+  --color-bit-deep: #0e9f6e;            /* accent on light backgrounds, logos on white */
+  --color-bit-ink: #036c4e;             /* green text on light backgrounds (AA) */
+  --color-on-bit: var(--bnb-on-accent); /* text on bit fills */
+  --color-bit-soft: var(--bnb-accent-soft); /* tinted badge / selected background */
 
   /* Seat-map + status */
-  --color-seat-taken: #38bdf8; /* someone else's seat */
+  --color-seat-taken: #38bdf8;          /* someone else's seat */
   --color-seat-locked: #3f3f46;
-  --color-warn: #fbbf24;       /* due soon, maybe */
-  --color-danger: #f87171;     /* overdue, unpaid, can't make it */
-  --color-on-danger: #0b0b0f;  /* text on danger fills */
+  --color-warn: var(--bnb-warn);        /* due soon, maybe (light: deeper, see below) */
+  --color-danger: var(--bnb-err);       /* overdue, unpaid, can't make it (light: deeper, see below) */
+  --color-on-danger: var(--bnb-on-status); /* text on danger fills */
 
   /* Shape */
-  --radius-bit: 0.375rem;      /* seat cells, small chips */
-  --radius-card: 0.875rem;     /* cards, panels */
+  --radius-bit: 0.375rem;               /* seat cells, small chips */
+  --radius-card: 0.875rem;              /* cards, panels */
 
   /* Type: Geist + Geist Mono, loaded via next/font in layout.tsx */
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
-/* Avatar letters mix this much of the member's colour with the text colour, so every colour stays AA on its tinted circle. */
+/*
+ * Seatbit's accent, Bit Green: bright on dark, deep enough on light that green text stays AA on white.
+ * Text on it: ink in the dark theme, white in the light one.
+ */
 :root {
+  --bnb-accent-light: #036c4e;
+  --bnb-accent-dark: #2ee59d;
+  --bnb-on-accent-light: #ffffff;
+  --bnb-on-accent-dark: #0b0b0f;
+  /* Avatar letters mix this much of the member's colour with the text colour, so every colour stays AA on its tinted circle. */
   --avatar-ink: 80%;
 }
 
 /*
- * Light theme: the same tokens with daylight values. Applies when someone picks
- * "Light", or picks "System" (the default) on a device set to light. The green
- * gets deeper so text-bit stays readable on white (AA), and text on green fills
- * turns white. Keep both blocks the same.
+ * Light theme: the shared tokens switch themselves (data-theme="light", or "System" on a device set
+ * to light). Only Seatbit's own colours need daylight values here. Keep both blocks the same.
+ * Warn and danger stay a shade deeper than the tokens' light ones, and faint in dark a shade lighter:
+ * Seatbit puts them on tinted notices, badges and raised rows, where the token values fall under AA
+ * (e2e/a11y.spec.ts). Drop these once the tokens cover it.
  */
 :root[data-theme="light"] {
   color-scheme: light;
-  --color-ink: #f5f5f7;
-  --color-surface: #ffffff;
-  --color-raised: #eeeef2;
-  --color-line: #dcdce3;
-  --color-fg: #111118;
-  --color-muted: #52525b;
-  --color-faint: #6b6b75;
-  --color-bit: #036c4e;
-  --color-bit-hover: #065f46;
-  --color-bit-deep: #036c4e;
-  --color-bit-ink: #036c4e;
-  --color-on-bit: #ffffff;
-  --color-bit-soft: #036c4e17;
   --color-seat-taken: #075985;
   --color-seat-locked: #d4d4d8;
+  --color-faint: var(--bnb-faint);
   --color-warn: #9a4508;
   --color-danger: #b91c1c;
-  --color-on-danger: #ffffff;
   --avatar-ink: 45%;
 }
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
     color-scheme: light;
-    --color-ink: #f5f5f7;
-    --color-surface: #ffffff;
-    --color-raised: #eeeef2;
-    --color-line: #dcdce3;
-    --color-fg: #111118;
-    --color-muted: #52525b;
-    --color-faint: #6b6b75;
-    --color-bit: #036c4e;
-    --color-bit-hover: #065f46;
-    --color-bit-deep: #036c4e;
-    --color-bit-ink: #036c4e;
-    --color-on-bit: #ffffff;
-    --color-bit-soft: #036c4e17;
     --color-seat-taken: #075985;
     --color-seat-locked: #d4d4d8;
+    --color-faint: var(--bnb-faint);
     --color-warn: #9a4508;
     --color-danger: #b91c1c;
-    --color-on-danger: #ffffff;
     --avatar-ink: 45%;
   }
 }
